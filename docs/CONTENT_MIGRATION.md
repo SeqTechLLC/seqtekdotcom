@@ -43,7 +43,7 @@ Each value in `case-studies-content.json` is one giant newline-delimited string.
 
 | Source (per record) | Target field | Transformation |
 |---|---|---|
-| URL key (`https://www.seqtek.com/<slug>`) | `slug` | Strip host. For 5 URLs with Wix garbage slugs (`case-study-3..5`, `organizational-strategy-1-1-1-3*`), use the destination slug from INTEGRATIONS.md §8 redirect map — do **not** regenerate |
+| URL key (`https://www.seqtek.com/<slug>`) | `slug` | Strip host. For 5 URLs with Wix garbage slugs (`case-study-3..5`, `organizational-strategy-1-1-1-3*`), use the destination slug from INTEGRATIONS.md §9 redirect map — do **not** regenerate |
 | First standalone title line above first `The Problem` / `Overview` heading (e.g., `Transforming Data Challenges into Strategic Insights`, `Airline Automation`, `Scaling the Banking Industry`) | `title` | Trim; this is sometimes preceded by a subtitle/tagline line — disambiguate per record |
 | Tagline line above the title (e.g., `Discover how our tailored data strategies helped…`, `Empowering on-site teams with real-time tools…`) | `subtitle` | Trim |
 | Text between `The Problem` / `Modernizing Systems` / `Legacy System Limitations` heading and the next section heading | `problem` | HTML → Lexical (see §4). Wrap each paragraph as `paragraph` |
@@ -78,7 +78,7 @@ Each value in `case-studies-content.json` is one giant newline-delimited string.
 | Source | Target field | Transformation |
 |---|---|---|
 | Title line | `title` | Trim |
-| — | `slug` | Generate from title via `slugify`, then override using INTEGRATIONS.md §8 redirect map where present |
+| — | `slug` | Generate from title via `slugify`, then override using INTEGRATIONS.md §9 redirect map where present |
 | Truncated excerpt (the `…teams can actually do their jobs better…` text) | `excerpt` | Trim, append ellipsis if cut |
 | Date line (`Jan 20`, `Dec 2, 2025`, etc.) | `publishedAt` | Parse with `date-fns` — `MMM d, yyyy` and bare `MMM d` (assume current year for the latter). Set time to `09:00 America/Chicago` |
 | — | `content` | Empty Lexical doc (single empty paragraph). Editor pastes body from Wix manually or via a follow-up re-crawl |
@@ -127,7 +127,7 @@ Caveats:
 
 ## 6. Slug handling
 
-Preserve old slugs where they're publishable; rewrite where they're Wix garbage. The destination slug always wins. Source of truth for the rewrite is INTEGRATIONS.md §8 redirect map.
+Preserve old slugs where they're publishable; rewrite where they're Wix garbage. The destination slug always wins. Source of truth for the rewrite is INTEGRATIONS.md §9 redirect map.
 
 | Source slug | Destination slug |
 |---|---|
@@ -213,7 +213,7 @@ Manual checks:
 - Random sample 3 case studies + 3 pages
 - Verify rich text renders correctly in the admin Lexical viewer
 - Verify all referenced images are present and load (or are flagged null where missing)
-- Verify slugs match the redirect map in INTEGRATIONS.md §8
+- Verify slugs match the redirect map in INTEGRATIONS.md §9
 - Verify draft status across all imported records
 - Spot-check internal links — broken Wix internal links won't auto-fix, flag and edit
 - Verify the `homepage` global hero copy matches expectations and the stats decision (see §11) is honored

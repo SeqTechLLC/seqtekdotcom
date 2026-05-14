@@ -59,18 +59,21 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 
 | ID | Task | Status | Output |
 |---|---|---|---|
-| D-1 | Design system extension — type scale, color ramps, spacing, radius, shadow, motion tokens | 🟡 | `docs/DESIGN_SYSTEM.md` with Tailwind v4 `@theme` block |
+| D-1 | Design system extension — type scale, color ramps, spacing, radius, shadow, motion tokens | ✅ | `docs/DESIGN_SYSTEM.md` — major-third type scale, ramps from brand seeds, AA floor / AAA hero contrast, full Tailwind v4 `@theme` block |
+| DS-1 | TestimonialCarousel — autoplay vs manual-only decision | 🟡 | Confirm during D-3 wireframe pass; accessibility implications |
+| DS-2 | Homepage hero size — `text-display-xl` (61px) vs `text-display` (49px) | 🟡 | Depends on hero copy draft (CONTENT-REQUIREMENTS §4) |
+| DS-3 | Lexical rich-text styling — validate `@tailwindcss/typography` matches design system | 🟡 | Validate during Phase 1 stack spike (D-13). May need a `prose-seqtek` override class. |
 | D-2 | Component / block inventory | ✅ | `docs/BLOCK_LIBRARY.md` |
 | D-3 | 5 archetype wireframes (Home, About, Service Pillar, Service Detail, Case Study) | 🟡 | Excalidraw or Figma; block-order sketches |
 | D-4 | ARCHITECTURE.md updates: Testing Strategy + CDK Infrastructure sections | ✅ | §12 (Testing) + §13 (Infrastructure as Code) added |
-| D-5 | Email/SMTP for Payload (auth + password reset) — SES integration spec | 🟡 | Add to INTEGRATIONS.md |
-| D-6 | CSP rollout mechanism — report endpoint + promote-to-enforce trigger | 🟡 | Spec in INTEGRATIONS.md |
-| D-7 | S3 → CloudFront origin auth — recommend private bucket + Origin Access Control | 🟡 | Update ARCHITECTURE.md §5 |
+| D-5 | Email/SMTP for Payload (auth + password reset) — SES integration spec | ✅ | New INTEGRATIONS.md §6 Transactional Email (AWS SES) — SDK approach, bounce alarm at 5%, env vars added |
+| D-6 | CSP rollout mechanism — report endpoint + promote-to-enforce trigger | ✅ | INTEGRATIONS.md §8 Rollout mechanism subsection — `/api/csp-report`, CloudWatch metric filter, 5-item promote checklist |
+| D-7 | S3 → CloudFront origin auth — private bucket + Origin Access Control | ✅ | New "Media Storage — S3 + CloudFront with OAC" subsection added to ARCHITECTURE.md §5 |
 | D-8 | Migration script field-mapping spec (audit JSON → Payload collections) | ✅ | `docs/CONTENT_MIGRATION.md` — per-collection field mapping, plain-text segmentation strategy, idempotency design |
 | D-9 | Auth/roles workflow — draft/publish/scheduled-publish permissions | ✅ | Permissions matrix + scheduled-publish design added to ARCHITECTURE.md §6 |
-| D-10 | GTM consent bridge — implement `__hs_opt_in_consent` trigger | 🟡 | GTM container JSON + INTEGRATIONS.md detail |
-| D-11 | Form submission failure UX (retry/queue/error states) | 🟡 | Add to INTEGRATIONS.md §1.2 |
-| D-12 | Error pages — 404 + 500 + maintenance mode designs | 🟡 | Wireframe + copy |
+| D-10 | GTM consent bridge — implement `__hs_opt_in_consent` trigger | ✅ | INTEGRATIONS.md §2.2 Implementation subsection — bridge `<script>` snippet, `infra/gtm/container.json` versioning, consent reqs on pixel tags |
+| D-11 | Form submission failure UX (retry/queue/error states) | ✅ | INTEGRATIONS.md §1.2 Failure handling — state machine, error-class table, dataLayer events, mailto fallback |
+| D-12 | Error pages — 404 + 500 + maintenance mode designs | ✅ | `docs/ERROR_PAGES.md` — 404, 500, maintenance, slow-request handling with tracking + a11y |
 | D-13 | Stack spike: scaffold exact versions and verify build (Phase 1 Task 1.0) | 🟡 | Pinned `package.json` + working hello-world commit |
 
 ---
@@ -79,10 +82,10 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 
 | ID | Fix | Status |
 |---|---|---|
-| F-1 | INTEGRATIONS.md §10 — remove "Amplify Console" reference; replace with CloudFront + ACM | ✅ |
+| F-1 | INTEGRATIONS.md §11 (was §10) — remove "Amplify Console" reference; replace with CloudFront + ACM | ✅ |
 | F-2 | CONTENT-REQUIREMENTS.md — mark Mission/Vision/Values as resolved (in brand kit), note core values still need behavioral rewrite | ✅ |
 | F-3 | ARCHITECTURE.md — pin Next/React/Payload/Tailwind versions after D-13 spike | 🟡 |
-| F-4 | CSP `frame-src` allowlist — add `meetings.hubspot.com` and `*.hubspotusercontent.com` | ✅ | Synced across INTEGRATIONS.md §7 and ARCHITECTURE.md §6 |
+| F-4 | CSP `frame-src` allowlist — add `meetings.hubspot.com` and `*.hubspotusercontent.com` | ✅ | Synced across INTEGRATIONS.md §8 (was §7) and ARCHITECTURE.md §6 |
 | F-5 | CONTENT-REQUIREMENTS.md §1.E — bump WCAG citation to 2.2 AA throughout (mixed 2.1/2.2 today) | ✅ | Audit found the doc was already consistent at 2.2 — no edits needed |
 
 ---
@@ -137,7 +140,7 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 - [ ] SEO: structured data (JSON-LD), dynamic sitemap, meta tags
 - [ ] Accessibility audit (axe + manual screen reader pass)
 - [ ] Performance optimization until Lighthouse CI passes ARCHITECTURE.md §7 thresholds
-- [ ] 301 redirects from old Wix URLs (per INTEGRATIONS.md §8)
+- [ ] 301 redirects from old Wix URLs (per INTEGRATIONS.md §9)
 - [ ] Cookie consent flow end-to-end test (HubSpot ↔ GTM bridge)
 - [ ] CSP promoted from report-only to enforcing
 - [ ] Cross-browser/device QA (Chrome, Safari, Firefox; iOS, Android)

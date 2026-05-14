@@ -528,6 +528,61 @@ The Dockerfile uses a multi-stage build: a `node:24-alpine` builder stage runs `
 
 The EC2 instance runs Docker and pulls the latest image from ECR on launch. The launch template's user data script handles this bootstrapping automatically, making every instance fully self-provisioning.
 
+### Media Storage — S3 + CloudFront with Origin Access Control
+
+Media uploads (Payload's `media` collection) live in S3 and are served to the public exclusively through CloudFront. The bucket is fully private; CloudFront accesses it via **Origin Access Control (OAC)**, which signs origin requests to S3 with SigV4. OAC supersedes the legacy Origin Access Identity (OAI) — AWS has recommended OAC over OAI since 2022 because it supports every S3 region and feature (including SSE-KMS) and produces a cleaner audit trail than OAI's bucket-policy principal match.
+
+**Bucket configuration:**
+
+- Per-environment buckets to prevent cross-environment media leakage: `seqtek-media-prod` and `seqtek-media-staging` (referenced in §5 Branch Strategy)
+- Block Public Access enabled with all four toggles on (`BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy`, `RestrictPublicBuckets`)
+- Object ownership set to `BucketOwnerEnforced` — ACLs are disabled entirely, which is the modern AWS-recommended default
+- Server-side encryption: SSE-S3 by default. SSE-KMS is a drop-in replacement if a future compliance regime requires customer-managed keys (OAC supports both)
+- Versioning enabled — load-bearing for OAC's audit trail and for the lifecycle policy below (see §9 for full backup retention)
+
+**CloudFront origin configuration:**
+
+- Origin host is the bucket's **regional** endpoint (`seqtek-media-prod.s3.us-east-1.amazonaws.com`), not the website endpoint. The website endpoint serves HTTP only and doesn't support OAC
+- OAC attached to the origin with SigV4 signing
+- Viewer protocol policy: `redirect-to-https`
+- Cache policy: AWS managed `CachingOptimized` (long TTL). Payload's S3 adapter writes objects under `<media-id>/<filename>`, so any content change produces a new key — cache busting happens naturally via new URLs, no invalidation needed for media
+- Custom error response: S3 returns 403 for any object the bucket policy doesn't allow (which includes missing objects, since anonymous reads aren't permitted). The distribution rewrites 403 → 404 so missing media surfaces the correct status code. No custom response page — just the status remap
+
+**Bucket policy** (production; the staging bucket has the analogous statement for its own distribution):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowCloudFrontServicePrincipalRead",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudfront.amazonaws.com" },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::seqtek-media-prod/*",
+      "Condition": {
+        "StringEquals": {
+          "AWS:SourceArn": "arn:aws:cloudfront::ACCOUNT_ID:distribution/DISTRIBUTION_ID"
+        }
+      }
+    }
+  ]
+}
+```
+
+The `AWS:SourceArn` condition scopes read access to the one specific distribution — any other CloudFront distribution in any account is denied even if it tries to OAC-sign requests.
+
+**Payload write access:** The EC2 instance profile holds an IAM policy granting `s3:PutObject`, `s3:DeleteObject`, and `s3:GetObject` on `arn:aws:s3:::seqtek-media-prod/*` (and the staging ARN on staging instances). `@payloadcms/storage-s3` uses the default AWS SDK credential chain, which picks up the instance profile automatically via IMDSv2 (hop limit 2, see Container Strategy above). No static AWS credentials live anywhere in the system — not in the container, not in Parameter Store, not in the repo.
+
+**Object key strategy:** Payload stores uploads at `<media-id>/<filename>`. Filenames are preserved for SEO-friendly URLs. The per-environment bucket split above prevents staging media from ever resolving against the production distribution.
+
+**Lifecycle policy** (managed in the data stack — see §13):
+
+- Noncurrent versions transition to S3 Glacier Instant Retrieval after 90 days
+- Noncurrent versions are permanently deleted after 365 days
+- Current versions are never expired — media is part of published content
+- Incomplete multipart uploads are aborted after 7 days
+
 ### Deployment Pipeline (GitHub Actions)
 
 On push to `main`:

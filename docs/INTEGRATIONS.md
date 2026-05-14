@@ -65,6 +65,35 @@ SEQTEK's forms must look native to the site design, not like HubSpot iframe embe
 
 **Fallback:** If a form needs features only available in HubSpot's embed (conditional logic, progressive profiling), use HubSpot's embed code as an iframe. Acceptable for lower-priority forms where design control matters less.
 
+#### Failure handling
+
+Every form on the site goes through the same submission state machine and error model. No silent drops.
+
+**Client-side validation:** Zod schemas per form (or React Hook Form with the Zod resolver). All fields validate before submit fires; the submit button stays disabled until the schema passes. Field-level errors render inline as the user types or on blur.
+
+**Submission state machine:** `idle → submitting → (success | error)`.
+- `submitting`: submit button disabled, spinner visible, fields locked.
+- `success`: form replaced with a confirmation block (clear next-step copy, no residual form UI).
+- `error`: form values preserved, inline error message rendered above the submit button with a retry button. The user never has to re-enter what they typed.
+
+**Error classes and copy:**
+
+| Class | Trigger | Auto-retry | User-facing copy |
+|---|---|---|---|
+| `4xx` | HubSpot Forms API returns 400/422 (validation) | No — a 4xx will repeat | "Some information looks invalid. Please check the highlighted fields and try again." Server-returned field errors are mapped to inline field-level errors when the payload includes them. |
+| `5xx` | HubSpot Forms API returns 500–599 | Single retry, 1s backoff | "We couldn't reach our forms service right now. Please try again in a moment, or email contact@seqtek.com directly." A `mailto:contact@seqtek.com` link renders as a fallback action. |
+| `network` / `timeout` | Fetch reject, or no response within 15s | Same path as `5xx` | Same copy as 5xx. |
+
+**GTM dataLayer events** pushed from the submission lifecycle:
+
+| Event | Payload | When |
+|---|---|---|
+| `form_submission_attempt` | `{ formId }` | On submit fire, before the network call |
+| `form_submission_success` | `{ formId }` | On 200 response from HubSpot |
+| `form_submission_failure` | `{ formId, errorClass: '4xx' \| '5xx' \| 'network' \| 'timeout' }` | On any terminal failure (after retry, if applicable) |
+
+**Data handling:** No payment or sensitive data is collected by any form on this site. The contact, newsletter, and workshop-inquiry forms capture name, email, company, and message only — no SSN, no payment, no health data. This constrains the failure surface meaningfully: a failed submission can be safely retried client-side without secondary-storage concerns.
+
 ### 1.3 Chat Widget
 
 The HubSpot Messages chat widget loads automatically with the tracking script. Fully configured in the HubSpot portal — no custom code needed.
@@ -162,6 +191,44 @@ GTM must integrate with HubSpot's cookie consent banner to conditionally fire pi
 Setting the defaults inline (rather than relying solely on GTM-container-side defaults) ensures `window.dataLayer` already reflects "all denied" by the time GTM or HubSpot arrive — neither's load order is deterministic under `afterInteractive`. The `wait_for_update: 500` window gives HubSpot's banner time to read its prior-consent cookie on returning visits and fire `__hs_opt_in_consent` before any tag evaluates consent.
 
 **HubSpot–GTM consent bridge:** HubSpot's cookie banner fires a `__hs_opt_in_consent` event. A GTM Custom Event trigger listens for this and pushes a `consent` update (`gtag('consent', 'update', { ... })`) reflecting the user's choice. For returning visitors with a prior-consent cookie, HubSpot fires the event on initialization — no banner UI is shown, but the consent state is rehydrated through the same path. Several community GTM templates implement this bridge.
+
+#### Implementation
+
+The consent default script (above) initializes `dataLayer` and the `gtag` shim. Directly after it — same `<head>`, same request nonce — register the HubSpot bridge as a second inline script:
+
+```html
+<script nonce="{REQUEST_NONCE}">
+  window.addEventListener('__hs_opt_in_consent', (e) => {
+    const c = (e && e.detail) || {};
+    gtag('consent', 'update', {
+      analytics_storage: c.analytics ? 'granted' : 'denied',
+      ad_storage: c.advertisement ? 'granted' : 'denied',
+      ad_user_data: c.advertisement ? 'granted' : 'denied',
+      ad_personalization: c.advertisement ? 'granted' : 'denied',
+      functionality_storage: 'granted'
+    });
+  });
+</script>
+```
+
+Registering the listener inline (before GTM and HubSpot load under `afterInteractive`) guarantees the bridge is already wired when HubSpot fires the event — either from the banner interaction (first-time visitor) or from rehydrating the consent cookie on init (returning visitor). The returning-visitor case takes exactly the same listener path: no banner UI is shown, but consent state is restored before any tag evaluates.
+
+**GTM container configuration:** Tag, trigger, and variable configuration lives in the GTM web UI. On every meaningful change, export the container as JSON and commit it to `infra/gtm/container.json`. This gives the configuration a reviewable diff, a rollback target, and a reproducible state — without it, the container is effectively unversioned production config.
+
+**Paid pixel tag configuration in GTM** — all 8 Meta Pixels, the LinkedIn Insight Tag, and the Google Ads conversion tag (AW-810041431) are configured with:
+
+- **Required additional consent:** `ad_storage`
+- **Consent mode "Wait for update" behavior:** enabled — the tag respects the `wait_for_update: 500` window from the consent default, giving HubSpot's banner time to rehydrate a prior-consent cookie before the tag evaluates and either fires or holds.
+
+**Test plan** — exercise three flows in staging via the GTM Preview/Debug mode:
+
+| Flow | Expected pixel-fire pattern |
+|---|---|
+| Accept all | Analytics + all ad-storage tags fire after the consent update event |
+| Deny all | No analytics, no ad-storage tags fire; functionality-only tags allowed |
+| Customize (analytics yes, advertising no) | Analytics fires; Meta/LinkedIn/Google Ads tags held; no ad-storage beacons leave the page |
+
+Each scenario should be verified in the GTM Debug pane (tag fire/not-fire status) and corroborated against Network tab — no pixel host should appear in network traffic for the Deny flow.
 
 ### 2.3 Managed Pixels
 
@@ -356,7 +423,43 @@ When the webhook fires `revalidateTag('posts')`, all pages that fetched posts da
 
 ---
 
-## 6. Environment Variables — Complete Inventory
+## 6. Transactional Email (AWS SES)
+
+Payload sends authentication and password-reset emails out of the box, and the site itself will eventually send notification emails (form acknowledgements, future workflows). In development, Payload's default behavior — log emails to the console — is fine. Production requires a real transport.
+
+**Decision: AWS SES via the v2 SDK (`@aws-sdk/client-sesv2`), not SMTP.** The SDK path uses the EC2 instance profile for credentials — the same credential flow already established for S3 (see §7 Environment Variables). No SMTP password to rotate, no static secret in env, no IAM user. SMTP would require a long-lived `AWS_SES_SMTP_PASSWORD` derived from an IAM user's secret key, which is exactly the credential shape this stack otherwise avoids.
+
+### Production Prerequisites
+
+1. **Verify the sending domain** (`seqtek.com`) as an SES identity. Domain-level verification (not single-address) so any `@seqtek.com` sender works.
+2. **Publish DKIM** (3 CNAME records, generated by SES) and **SPF** (`v=spf1 include:amazonses.com -all`, or merged with existing SPF) records in the `seqtek.com` zone.
+3. **Request production access.** SES accounts start in sandbox mode: outbound is restricted to verified addresses, capped at 200/day, 1/sec. Request increase before launch; AWS turnaround is usually <24h with a clear use case.
+
+### Bounce and Complaint Handling
+
+A configuration set is attached to every send, with event publishing to an SNS topic for `Bounce` and `Complaint` events. A CloudWatch metric filter on the SNS subscription (or directly on a delivery-event Lambda) emits bounce-rate and complaint-rate metrics. **Alarm on bounce rate >5% rolling 24h** — AWS's account-suspension threshold is 10%, so alarming at 5% gives lead time to investigate before SES throttles or pauses the account. Complaint-rate alarm at 0.1% (AWS threshold: 0.5%).
+
+### Failure Mode
+
+If SES is unreachable (network, throttle, regional outage), Payload's mailer logs the error and the request continues. **The password-reset endpoint returns the same generic response — "If an account exists, we'll send a reset link" — regardless of whether the send actually succeeded.** This is the standard security posture: response copy must not vary on account existence or on send success, or it becomes an account-enumeration oracle. Reset link delivery is best-effort from the user's perspective; operationally, the bounce/complaint pipeline (above) is what surfaces real send failures.
+
+### Addresses
+
+- **From:** `no-reply@seqtek.com` — distinct from any human mailbox, makes the system origin clear.
+- **Reply-To:** set to a monitored inbox (e.g., `contact@seqtek.com`) on any user-facing message where a reply is plausible (form acknowledgements). Omit for auth/reset emails where a reply makes no sense.
+
+### Environment Variables
+
+| Variable | Purpose | Example |
+|---|---|---|
+| `SES_REGION` | SES API region (verified identity must live here) | `us-east-1` |
+| `SES_FROM_ADDRESS` | Default From address | `no-reply@seqtek.com` |
+
+**No AWS credentials in env.** The EC2 instance profile carries an IAM policy granting `ses:SendEmail` and `ses:SendRawEmail` scoped to the verified identity ARN. Same credential discovery path as S3 (IMDSv2, hop limit 2 — see §7).
+
+---
+
+## 7. Environment Variables — Complete Inventory
 
 ### Server-Side Only (Never Exposed to Browser)
 
@@ -368,6 +471,8 @@ When the webhook fires `revalidateTag('posts')`, all pages that fetched posts da
 | `S3_REGION` | AWS region | `us-east-1` |
 | `S3_BUCKET_HOSTNAME` | For next/image remotePatterns | `seqtek-media.s3.us-east-1.amazonaws.com` |
 | `REVALIDATION_SECRET` | Webhook validation | Random 32+ character string |
+| `SES_REGION` | AWS region for SES (verified identity lives here) | `us-east-1` |
+| `SES_FROM_ADDRESS` | Default From address for transactional email | `no-reply@seqtek.com` |
 
 **S3 authentication:** No static AWS credentials are used. In production and staging, the EC2 instance profile (IAM role) provides S3 access; the AWS SDK inside the container auto-discovers and rotates credentials via IMDSv2 (hop limit 2 — set in the launch template's metadata options so the container can reach IMDS through Docker's bridge network). Locally, Payload falls back to filesystem storage when the S3 env vars are absent — see [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md). `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are not used anywhere in this codebase.
 
@@ -401,6 +506,11 @@ S3_BUCKET_HOSTNAME=
 # ISR Revalidation
 REVALIDATION_SECRET=
 
+# AWS SES (Transactional Email)
+# Credentials come from the EC2 instance profile in production — no static keys.
+SES_REGION=
+SES_FROM_ADDRESS=
+
 # Public Configuration
 NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_HUBSPOT_PORTAL_ID=
@@ -412,7 +522,7 @@ NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID=
 
 ---
 
-## 7. Content Security Policy (CSP)
+## 8. Content Security Policy (CSP)
 
 The authoritative CSP policy lives in [ARCHITECTURE.md §6](ARCHITECTURE.md#content-security-policy). This section enumerates the third-party hostnames each integration adds and why.
 
@@ -434,13 +544,37 @@ The authoritative CSP policy lives in [ARCHITECTURE.md §6](ARCHITECTURE.md#cont
 
 - **Consent default init** runs as a small inline `<head>` script carrying the request nonce — it must execute before any third-party script. See §2.2 for the snippet.
 - **`style-src` is path-scoped** in the middleware: public routes get `'self'`; `/admin/*` gets `'self' 'unsafe-inline'` to accommodate the Payload admin's Lexical editor.
-- **Rollout**: start in staging with `Content-Security-Policy-Report-Only` to surface violations without breaking the page. Promote to enforcing once the report endpoint is clean.
+- **Rollout**: start in staging with `Content-Security-Policy-Report-Only` to surface violations without breaking the page. Promote to enforcing once the report endpoint is clean. See *Rollout mechanism* below for the operational pieces.
+
+### Rollout mechanism
+
+**Environment posture:**
+
+| Environment | Mode | Rationale |
+|---|---|---|
+| Dev | Enforcing | Surface CSP issues at development time, where they are cheapest to fix. Local breakage is acceptable; production breakage is not. |
+| Staging | `Content-Security-Policy-Report-Only` | Collects real violations under production-like traffic without blocking the page. The soak environment for promotion. |
+| Production | Enforcing | Set only after the staging soak passes the promote-to-enforce checklist below. |
+
+**Report endpoint:** `app/api/csp-report/route.ts` accepts violation reports with content type `application/csp-report` or `application/reports+json`, validates the basic shape (presence of `violated-directive` / `blocked-uri` or the modern report `body` equivalent), and writes a structured JSON line to stdout. CloudWatch Logs picks them up via the container's `awslogs` Docker log driver — no separate shipper needed.
+
+**Metrics and alerting:** a CloudWatch metric filter on the log group emits a count metric per directive per day. Alarm: if a single directive exceeds **100 violations/hour**, page the on-call. That threshold is high enough to ignore normal browser-extension noise but low enough to catch a real regression — typically a new third-party (marketing tag, embedded widget) introducing an unallowed origin.
+
+**Promote-to-enforce checklist (staging → production):**
+
+1. Report-Only header active in staging for **7+ days** against production-like traffic.
+2. No **new** violation directives in the last **3 days** of that window. Existing/known violations from third parties are acceptable noise.
+3. Known-violation list maintained in `docs/CSP_VIOLATIONS_KNOWN.md` (future doc — out of scope here) so the on-call can distinguish "expected" from "new" without archeology.
+4. Sign-off from one engineer (recorded in the cutover ticket).
+5. Cutover date set in the team calendar with an owner. Don't let Report-Only become permanent — a Report-Only policy is observability, not enforcement.
+
+**Report retention:** 30 days on the CSP report log group. Long enough to debug a regression introduced in the prior release cycle, short enough to keep CloudWatch costs sane.
 
 Note: ARCHITECTURE.md §6 CSP table should be kept in sync with this list — if it isn't, treat this doc as authoritative.
 
 ---
 
-## 8. 301 Redirect Map — Complete
+## 9. 301 Redirect Map — Complete
 
 All redirects configured in `next.config.ts` `redirects()`. These preserve any SEO value from the existing Wix URLs.
 
@@ -468,7 +602,7 @@ All redirects configured in `next.config.ts` `redirects()`. These preserve any S
 
 ---
 
-## 9. Third-Party Script Loading Order
+## 10. Third-Party Script Loading Order
 
 The loading order matters for performance and consent compliance.
 
@@ -494,7 +628,7 @@ The loading order matters for performance and consent compliance.
 
 ---
 
-## 10. Pre-Launch Checklist
+## 11. Pre-Launch Checklist
 
 ### HubSpot
 - [ ] Verify portal ID 8504846 is active and accessible
