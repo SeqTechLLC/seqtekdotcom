@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: 255 255 255;
+    --color-fg: 17 17 17;
+    --color-accent: 26 95 122;
+  }
+
+  body {
+    color: rgb(var(--color-fg));
+    background: rgb(var(--color-bg));
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
