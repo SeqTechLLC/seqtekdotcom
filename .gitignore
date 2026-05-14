@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+.turbo/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+*.lcov
+
+# Audit data (private — see docs/LOCAL_DEVELOPMENT.md)
+audit/
+
+# Payload local media uploads (see docs/LOCAL_DEVELOPMENT.md)
+media/
+
+# TypeScript build info
+*.tsbuildinfo
+next-env.d.ts
+
+# Lighthouse reports
+.lighthouseci/
+
+# CDK
+infra/cdk.out/
+infra/.cdk.staging/
+
+# Payload generated types (committed only if we decide to — typically gitignored)
+src/payload-types.ts
+
+# Misc
+*.pem
