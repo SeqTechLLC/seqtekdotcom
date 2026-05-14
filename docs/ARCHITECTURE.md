@@ -639,6 +639,21 @@ Every Payload collection has explicit access control functions:
 
 Draft content is never exposed to the public API or rendered on the public site without authentication.
 
+| Operation | Public | Editor | Admin |
+|---|---|---|---|
+| View published content | ✓ | ✓ | ✓ |
+| View drafts | — | ✓ | ✓ |
+| Create content | — | ✓ | ✓ |
+| Update own content | — | ✓ | ✓ |
+| Update others' content | — | ✓ | ✓ |
+| Publish content | — | ✓ | ✓ |
+| Schedule publish (future `publishedAt`) | — | ✓ | ✓ |
+| Delete content | — | — | ✓ |
+| Manage users | — | — | ✓ |
+| Access `/admin` | — | ✓ | ✓ |
+
+**Scheduled publishing:** Editors set a future `publishedAt` date on any draft. A Payload `beforeChange` hook enforces the invariant — if `publishedAt` is in the future, `status` is forced back to `draft` regardless of what the editor submitted. A scheduled job runs every 5 minutes (AWS EventBridge rule → API route trigger at `/api/cron/publish-scheduled`, secured with a shared secret matching the revalidation pattern) and queries for documents where `status = 'draft'` AND `publishedAt <= now()`. Matching documents are flipped to `published`, and the same `afterChange` revalidation path runs — ISR cache busts, CloudFront paths invalidate, content goes live. Editors get publish-at-a-time without standing up a separate scheduling service, and the invariant holds even if the cron misfires (a manual save will still respect the future date).
+
 ### Content Security Policy
 
 CSP is enforced via nonce-based policy generated per-request in Next.js middleware (`src/middleware.ts`). This approach provides real XSS protection — unlike `unsafe-inline`, a nonce-based policy ensures only scripts explicitly trusted by the server can execute.
@@ -655,7 +670,7 @@ CSP is enforced via nonce-based policy generated per-request in Next.js middlewa
 | `img-src` | `'self'` `data:` `*.hubspot.com` `*.hsforms.net` S3 hostname | CMS media + HubSpot form images |
 | `font-src` | `'self'` | Self-hosted fonts only |
 | `connect-src` | `'self'` `*.hubspot.com` `*.hs-analytics.net` `*.hsforms.net` `*.hs-banner.com` `*.usemessages.com` `*.googletagmanager.com` | Analytics + form submissions |
-| `frame-src` | `'self'` `*.hubspot.com` `*.hsforms.net` | HubSpot form embeds |
+| `frame-src` | `'self'` `*.hubspot.com` `*.hsforms.net` `meetings.hubspot.com` `*.hubspotusercontent.com` | HubSpot form + Meetings iframe embeds; Meetings static assets |
 
 ### HTTP Security Headers
 
@@ -858,3 +873,109 @@ Since this is an open-source portfolio piece, code quality must be exemplary.
 | **6. Launch** | DNS cutover. Monitor errors/performance. Google Search Console submission. Redirect verification. CloudFront cache behavior validation. | 1 week |
 
 **Total engineering estimate: 7-11 weeks** (code only — content production runs in parallel and is the likely bottleneck).
+
+---
+
+## 12. Testing Strategy
+
+Tests exist to protect load-bearing logic and catch regressions before they ship. A marketing site doesn't need 90% line coverage on view components — it needs absolute confidence that access control, content hooks, and the revalidation pipeline behave correctly under every deploy.
+
+### Test Pyramid
+
+| Tool | Purpose | Runtime |
+|---|---|---|
+| **Vitest** | Unit tests for Payload access functions, hooks, slug generation, metadata builders, structured data generators, utility modules | Pre-commit hook + CI on every commit |
+| **Playwright** | E2E flows — admin login, content publish + ISR revalidation, HubSpot form submission, public page rendering, 301 redirect verification | CI on every PR; nightly run on `main` against staging |
+| **axe-core** | Accessibility assertions wired into Playwright. Fails CI on any WCAG 2.2 AA violation | CI on every PR (inside Playwright suite) |
+| **Lighthouse CI** | Performance budgets matching §7 targets exactly | CI on every PR |
+| **`aws-cdk-lib/assertions`** | Infrastructure invariants (covered in §13) | CI on every PR |
+
+Vitest runs on every commit via a Husky pre-commit hook and again in CI. Playwright + axe + Lighthouse run on every pull request via GitHub Actions against an ephemeral preview environment (`next start` against a disposable Postgres container and an S3 stub backed by the local filesystem). A nightly Playwright run hits the deployed staging environment to catch drift between code and infrastructure that PR-time tests can't see.
+
+### Coverage Philosophy
+
+Test load-bearing logic exhaustively. Access control functions, Payload hooks (`beforeChange` slug enforcement, `afterChange` revalidation), the scheduled-publish job, and the `/api/revalidate` secret validation are all unit-tested with every branch covered. UI components are tested via Playwright at the page level — visual regression and accessibility checks catch what unit assertions can't articulate. No coverage gate on component files. The CI gate is "all tests pass and Lighthouse budgets hold," not a coverage percentage.
+
+### Test Data
+
+Vitest uses Postgres via `testcontainers` — each suite spins up a real Postgres container, runs Payload migrations, seeds fixtures, and tears down. No mocking the database; the access control logic depends on real Postgres queries and we test it against real Postgres. Playwright runs against `next start` connected to a disposable Postgres container with S3 stubbed to the local filesystem (Payload's S3 adapter is replaced with the disk adapter for the test run). Fixtures are deterministic — the same seed script runs before every Playwright suite.
+
+### Visual Regression
+
+Playwright captures screenshots of the 5 archetype pages from BLOCK_LIBRARY.md (Home, About, Service Pillar, Service Detail, Case Study) at 3 viewports — 375px, 768px, 1440px — for 15 baseline snapshots. Tolerance is tuned to ignore CMS-driven content text and image differences (per-block masking on dynamic content regions) while still flagging layout, color, and typography changes. Baselines are committed to the repo; failures produce a side-by-side diff in the PR.
+
+### Lighthouse CI Budgets
+
+Budgets match §7 numbers exactly. CI fails if Mobile LCP > 2.0s, TBT > 100ms, or Performance score < 95. Budgets are checked against the 5 archetype pages on a throttled mobile profile. Lighthouse CI runs against the same ephemeral preview as Playwright — same code, same data, same network conditions every run.
+
+---
+
+## 13. Infrastructure as Code
+
+All AWS infrastructure is defined in **AWS CDK (TypeScript)**. No console clicks, no Terraform, no untracked drift. Every resource — VPC, ALB, ASG, RDS, S3, CloudFront, IAM roles, CloudWatch alarms — is declared in code, reviewed via PR, and deployed via CI.
+
+### Why CDK
+
+CDK keeps the entire stack in TypeScript alongside the application. The same engineers who write the app write the infrastructure, using the same language, the same tsconfig, the same linter. CDK generates CloudFormation, which means AWS-native rollback, drift detection, and change-set previews come for free. The L2/L3 constructs for the exact services we use (ALB, ASG, ECR, RDS, CloudFront, ACM, Route53) are mature and well-documented. For an AWS-only shop like SEQTEK, CDK is the strongest fit — Terraform's cross-cloud abstraction is overhead we don't need.
+
+### Project Structure
+
+```
+infra/
+├── bin/
+│   └── app.ts                    # CDK app entry
+├── lib/
+│   ├── network-stack.ts          # VPC, subnets, SGs, NAT
+│   ├── data-stack.ts             # RDS, S3, Parameter Store
+│   ├── compute-stack.ts          # ECR, ALB, ASG, launch template, IAM
+│   ├── edge-stack.ts             # CloudFront, ACM, Route53
+│   └── observability-stack.ts    # CloudWatch alarms, SNS topics
+├── test/                         # CDK assertion tests
+├── cdk.json
+├── package.json
+└── tsconfig.json
+```
+
+### Stack Split Rationale
+
+Stacks are split by blast radius and rate of change. The network stack (VPC, subnets, security groups, NAT) changes maybe once a year. The compute stack changes on every deploy. Keeping them in separate CloudFormation stacks means an ASG launch template update doesn't drag the VPC plan through CloudFormation's change-set diff — faster deploys, smaller failure surface, no risk of an unrelated resource being touched. Data and edge stacks sit between those two extremes; observability is its own stack because alarms reference resources across all the others and centralizing them keeps the cross-stack references one-directional.
+
+### Environment Handling
+
+One CDK app deploys both production and staging environments via CDK context. `cdk deploy -c env=staging SeqtekStaging*` deploys the staging stacks; `cdk deploy -c env=prod SeqtekProd*` deploys production. Stack names are prefixed (`SeqtekProdNetwork`, `SeqtekStagingNetwork`, `SeqtekProdCompute`, etc.) so the two environments coexist in the same AWS account without name collisions. Per-environment values (instance sizes, RDS class, domain names) live in `cdk.json` under the `context` key, keyed by environment.
+
+### Bootstrap
+
+`cdk bootstrap aws://<account>/<region>` runs once per account/region. Bootstrap provisions the CDK toolkit stack (S3 staging bucket, ECR repository for assets, deploy IAM roles). A dedicated deploy IAM role is referenced via `--role-arn` on every `cdk deploy` — engineers never deploy with their own credentials, only CI does, and CI assumes the deploy role via OIDC.
+
+### CI/CD Integration
+
+| Trigger | CDK Step | Approval |
+|---|---|---|
+| **PR opened/updated** | `cdk synth` + `cdk diff --strict` posted as PR comment | None (read-only) |
+| **Merge to `main`** | Docker build/push to ECR, then `cdk deploy SeqtekProd*Compute --require-approval never` | None (compute only) |
+| **Network/data stack changes** | `cdk deploy SeqtekProdNetwork` or `SeqtekProdData` via `workflow_dispatch` | Manual approval in GitHub Environments |
+| **CDK assertion tests** | `vitest run infra/test/` | None (gating CI) |
+
+Compute stack deploys are fully automated — they happen on every merge to `main` after the Docker build and ECR push. Network and data stack changes require a `workflow_dispatch` trigger with a manual approval gate. This matches the blast-radius split: deploying a new app version is routine, modifying the VPC or RDS instance is a planned operation.
+
+### Secrets and Config
+
+Parameter Store holds all environment-specific values. CDK references them at deploy time via `StringParameter.valueFromLookup()` (resolved during synth, baked into the CloudFormation template) for values that are safe to embed, or via `StringParameter.fromStringParameterName()` (resolved at runtime by CloudFormation) for values that must stay out of the synthesized template. No secrets in CDK code, no secrets in the synthesized template for sensitive values. The application reads from Parameter Store at runtime via the instance profile — same chain as the AWS SDK credentials.
+
+### Local Dev
+
+Engineers run `cdk synth` and `cdk diff` locally to validate changes against the current account state. `cdk deploy` from a developer machine is forbidden for prod and staging — those deploys only happen through CI. `cdk destroy` is allowed only against ephemeral preview stacks (a future addition; not in scope at launch). The `cdk.json` `app` command points at `npx ts-node bin/app.ts` so no build step is required for local synth.
+
+### CDK Assertion Tests
+
+Vitest-compatible tests under `infra/test/` use `aws-cdk-lib/assertions` to verify critical invariants on the synthesized templates:
+
+- RDS instance is in a private isolated subnet (no internet route)
+- ALB has an HTTPS listener with TLS 1.2+ policy
+- S3 media bucket has versioning enabled and public access blocked
+- CloudFront distribution has the correct Origin Access Control attached to the S3 origin
+- EC2 instance profile has the expected IAM policies and no wildcards on sensitive actions
+- All security groups deny ingress from `0.0.0.0/0` except the CloudFront-fronted ALB on 443
+
+These tests run in the same CI workflow as the application tests and gate the deploy. An infrastructure change that breaks an invariant fails the PR before `cdk deploy` ever runs.

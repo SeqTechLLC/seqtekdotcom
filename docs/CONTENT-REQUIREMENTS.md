@@ -181,10 +181,11 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
    - **Writing rule:** Lead with the client's world, not SEQTEK's history. "Organizations across Oklahoma face..." before "We've spent 25 years..."
 
 4. **Mission / Vision / Values**
-   - **Mission statement:** 1 sentence. What SEQTEK does and for whom. Replace the current "help organizations innovate, implement, and deliver a better tomorrow" — which is interchangeable with any consulting firm on earth.
-   - **Vision statement:** 1 sentence. What the world looks like when SEQTEK succeeds.
-   - **Core values:** 4-6 values with name + 1-2 sentence explanation each. Per Patrick Lencioni (The Advantage, 2012): values must be behavioral, not aspirational. "We return every client call within 4 hours" is a value. "Excellence" is not.
-   - **Action required:** Leadership alignment session to define these. They must be real, not aspirational buzzwords.
+   - **Mission statement (settled — from the official brand kit):** "SEQTEK delivers transformative technologies and processes by saying what we do, doing what we say and supporting what we have done so that our customers are more efficient, productive and profitable."
+   - **Vision statement (settled — from the official brand kit):** "Our vision is to be the leading digital transformation company in the Midwest, empowering businesses to reach their full potential through innovative solutions."
+   - **Core values (names settled — from the official brand kit):** The seven values and their names are fixed: Respect, Diligence, Improvement, Excellence, Trust, Value, Humility. However, the one-line descriptions in the current brand kit are aspirational rather than behavioral. The clearest example: "Excellence — Be excellent in everything we do" is the textbook case Patrick Lencioni warns against in *The Advantage* (2012). Values, per Lencioni, must describe observable, falsifiable behaviors — not virtues to aspire to. "Be excellent" cannot be measured, disproved, or used to make a hiring or firing decision.
+   - **Recommended behavioral rewrite:** Keep all seven names. Rework each one-line description to describe an observable behavior. Example pattern — **Diligence:** name stays; description becomes something like "We deliver what we promised, on the day we promised it." (Observable. Falsifiable. Earned, not aspired to.) Apply the same treatment to the other six. This rewrite should ship with the About page; it does not require renaming or reordering the values themselves.
+   - **Action required:** Behavioral rewrite of the seven core values, keeping the existing names but reworking each one-line description to describe an observable behavior (per Lencioni, *The Advantage*, 2012). Content lead drafts; leadership approves.
 
 5. **Localshoring Preview**
    - 1 paragraph summary of the localshoring model.

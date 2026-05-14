@@ -20,11 +20,11 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 
 | ID | Decision | Status | Owner | Notes |
 |---|---|---|---|---|
-| BR-1 | Sequoyah heritage in brand narrative — keep, drop, or layered approach | 🔴 | Leadership | Recommended: SEQTEK as mark (surface), Sequoyah as story depth (`/about/our-story`, Touchstone). See R-1/R-2/R-3 research. |
+| BR-1 | Sequoyah heritage in brand narrative — keep, drop, or layered approach | 🔴 | Leadership | Research-backed recommendation in `BRAND_STRATEGY_RESEARCH.md`: SEQTEK as surface mark, Sequoyah as opt-in depth on `/about`, one homepage link, explicit cultural-acknowledgement line. Awaiting leadership sign-off. |
 | BR-2 | Body font — Avenir (paid) vs free substitute for web | 🔴 | Marketing | Avenir is paid; can't ship in a public repo. Recommend DM Sans, Inter, or Nunito Sans for web; reserve Avenir for print. |
-| BR-3 | Canonical physical address — Sapulpa (brand kit) vs Tulsa (content doc) | 🔴 | Operations | Affects footer, contact page, `LocalBusiness` structured data. |
+| BR-3 | Canonical physical address — Sapulpa (brand kit) vs Tulsa (content doc) | 🔴 | Operations | Affects footer, contact page, `LocalBusiness` structured data. Confirmed in source data: current privacy policy claims Sapulpa in body but Tulsa in footer — inconsistency exists in production today. |
 | BR-4 | Core values — rewrite from aspirational to behavioral (per Lencioni) | 🟡 | Content lead | Brand kit values are aspirational ("Be excellent in everything we do"). Not launch-blocking; do before About pages publish. |
-| BR-5 | Canonical company stats (years/projects/lives) — pick one set | 🔴 | Leadership | Current site has two conflicting sets. Blocks any stats-bar content. |
+| BR-5 | Canonical company stats (years/projects/lives) — pick one set | 🔴 | Leadership | Both stat sets confirmed in source data: homepage `20+`/`411+`/`8221+` vs about `25+`/`500+`/`10,000+`. Migration script imports both verbatim and flags for resolution rather than pre-selecting. Blocks any stats-bar content. |
 | BR-6 | Cherokee Nation courtesy outreach (optional) | 🟡 | Leadership | Depends on BR-1. Not required — Sequoyah is a public historical figure and Oklahoma is full of institutions named after him. Nice-to-have goodwill gesture; could yield a positive PR story if leadership chooses. Not a launch gate. |
 | BR-7 | Photo shoot scope — leadership only, or leadership + extended team (6-8) | 🟡 | Leadership | Affects team page design. Recommend extended team per Hinge research. |
 
@@ -37,6 +37,8 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 | C-3 | Leadership interviews (Hank, Dana, Brent) — bios + story + timeline | 🟡 | Content lead |
 | C-4 | Founder video — Hank tells origin story (3-5 min, professionally shot) | 🟡 | Content lead |
 | C-5 | Client logo permission verification | 🟡 | Content lead |
+| C-6 | Blog post bodies — not in audit (only titles + dates + truncated excerpts). Decide: re-crawl current Wix site for full bodies, re-write from scratch, or import as stubs and rewrite during Tier 3 | 🟡 | Content lead |
+| C-7 | Case study hero images, testimonials, and metrics arrays — all missing from audit; every imported case study needs editor follow-up before publish | 🟡 | Content lead |
 
 ---
 
@@ -44,12 +46,12 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 
 | ID | Task | Owner | Output |
 |---|---|---|---|
-| R-1 | Hinge Research Institute studies on professional services branding and "Visible Experts" | TBD | Brief: which differentiators drive lead quality |
-| R-2 | Origin-story B2B consulting case studies (5-10 firms with strong narratives) | TBD | Comparable patterns and what worked |
-| R-3 | Oklahoma businesses honoring Native heritage in their branding — patterns and tone | TBD | Reference set: how comparable Oklahoma firms have handled this well |
-| R-4 | B2B trust signal research for professional services sites | TBD | Synthesis informing design system + content decisions |
-| R-5 | Edelman Trust Barometer 2024+2025 — B2B sections | TBD | Citation-ready stats for leadership presentation |
-| R-6 | Competitor brand audit — 5-8 comparable regional firms | TBD | Differentiation gap analysis |
+| R-1 | Hinge Research Institute studies on professional services branding and "Visible Experts" | ✅ | Synthesized in `BRAND_STRATEGY_RESEARCH.md` §2 |
+| R-2 | Origin-story B2B consulting case studies (5-10 firms with strong narratives) | ✅ | Ten-firm table in `BRAND_STRATEGY_RESEARCH.md` §3 |
+| R-3 | Oklahoma businesses honoring Native heritage in their branding — patterns and tone | ✅ | `BRAND_STRATEGY_RESEARCH.md` §4 (with flagged thin-finding caveats) |
+| R-4 | B2B trust signal research for professional services sites | ✅ | `BRAND_STRATEGY_RESEARCH.md` §5 — consolidated citations |
+| R-5 | Edelman Trust Barometer 2024+2025 — B2B sections | ✅ | Cited within §5 |
+| R-6 | Competitor brand audit — 5-8 comparable regional firms | ✅ | Ten-firm audit + positioning gaps in `BRAND_STRATEGY_RESEARCH.md` §6 |
 
 ---
 
@@ -60,12 +62,12 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 | D-1 | Design system extension — type scale, color ramps, spacing, radius, shadow, motion tokens | 🟡 | `docs/DESIGN_SYSTEM.md` with Tailwind v4 `@theme` block |
 | D-2 | Component / block inventory | ✅ | `docs/BLOCK_LIBRARY.md` |
 | D-3 | 5 archetype wireframes (Home, About, Service Pillar, Service Detail, Case Study) | 🟡 | Excalidraw or Figma; block-order sketches |
-| D-4 | ARCHITECTURE.md updates: Testing Strategy + CDK Infrastructure sections | 🟡 | New §12 (Testing), §13 (Infrastructure as Code) |
+| D-4 | ARCHITECTURE.md updates: Testing Strategy + CDK Infrastructure sections | ✅ | §12 (Testing) + §13 (Infrastructure as Code) added |
 | D-5 | Email/SMTP for Payload (auth + password reset) — SES integration spec | 🟡 | Add to INTEGRATIONS.md |
 | D-6 | CSP rollout mechanism — report endpoint + promote-to-enforce trigger | 🟡 | Spec in INTEGRATIONS.md |
 | D-7 | S3 → CloudFront origin auth — recommend private bucket + Origin Access Control | 🟡 | Update ARCHITECTURE.md §5 |
-| D-8 | Migration script field-mapping spec (audit JSON → Payload collections) | 🟡 | New `docs/CONTENT_MIGRATION.md` |
-| D-9 | Auth/roles workflow — draft/publish/scheduled-publish permissions | 🟡 | Update ARCHITECTURE.md §6 |
+| D-8 | Migration script field-mapping spec (audit JSON → Payload collections) | ✅ | `docs/CONTENT_MIGRATION.md` — per-collection field mapping, plain-text segmentation strategy, idempotency design |
+| D-9 | Auth/roles workflow — draft/publish/scheduled-publish permissions | ✅ | Permissions matrix + scheduled-publish design added to ARCHITECTURE.md §6 |
 | D-10 | GTM consent bridge — implement `__hs_opt_in_consent` trigger | 🟡 | GTM container JSON + INTEGRATIONS.md detail |
 | D-11 | Form submission failure UX (retry/queue/error states) | 🟡 | Add to INTEGRATIONS.md §1.2 |
 | D-12 | Error pages — 404 + 500 + maintenance mode designs | 🟡 | Wireframe + copy |
@@ -77,11 +79,11 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 
 | ID | Fix | Status |
 |---|---|---|
-| F-1 | INTEGRATIONS.md §10 — remove "Amplify Console" reference; replace with CloudFront + ACM | 🟡 |
-| F-2 | CONTENT-REQUIREMENTS.md — mark Mission/Vision/Values as resolved (in brand kit), note core values still need behavioral rewrite | 🟡 |
+| F-1 | INTEGRATIONS.md §10 — remove "Amplify Console" reference; replace with CloudFront + ACM | ✅ |
+| F-2 | CONTENT-REQUIREMENTS.md — mark Mission/Vision/Values as resolved (in brand kit), note core values still need behavioral rewrite | ✅ |
 | F-3 | ARCHITECTURE.md — pin Next/React/Payload/Tailwind versions after D-13 spike | 🟡 |
-| F-4 | INTEGRATIONS.md — CSP `frame-src` allowlist must include `meetings.hubspot.com` and `*.hubspotusercontent.com` | 🟡 |
-| F-5 | CONTENT-REQUIREMENTS.md §1.E — bump WCAG citation to 2.2 AA throughout (mixed 2.1/2.2 today) | 🟡 |
+| F-4 | CSP `frame-src` allowlist — add `meetings.hubspot.com` and `*.hubspotusercontent.com` | ✅ | Synced across INTEGRATIONS.md §7 and ARCHITECTURE.md §6 |
+| F-5 | CONTENT-REQUIREMENTS.md §1.E — bump WCAG citation to 2.2 AA throughout (mixed 2.1/2.2 today) | ✅ | Audit found the doc was already consistent at 2.2 — no edits needed |
 
 ---
 

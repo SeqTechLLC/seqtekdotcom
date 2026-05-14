@@ -424,7 +424,7 @@ The authoritative CSP policy lives in [ARCHITECTURE.md §6](ARCHITECTURE.md#cont
 |---|---|---|---|
 | HubSpot tracking + analytics | `connect-src` | `*.hubspot.com`, `*.hs-analytics.net`, `*.hs-banner.com`, `*.usemessages.com` | Analytics beacons, banner config, chat |
 | HubSpot Forms API | `connect-src` | `*.hsforms.net` | Custom form submissions |
-| HubSpot forms / Meetings embeds | `frame-src` | `*.hubspot.com`, `*.hsforms.net` | Iframe embeds for Meetings + fallback form embed |
+| HubSpot forms / Meetings embeds | `frame-src` | `*.hubspot.com`, `*.hsforms.net`, `meetings.hubspot.com`, `*.hubspotusercontent.com` | Iframe embeds for Meetings (meetings.hubspot.com) + Meetings static assets + fallback form embed |
 | HubSpot form / chat imagery | `img-src` | `*.hubspot.com`, `*.hsforms.net` | Form field icons, chat assets |
 | GTM + GA | `connect-src` | `*.googletagmanager.com`, `*.google-analytics.com` | Container fetch, analytics beacons |
 | ScoreApp (only if iframe variant) | `frame-src` | `*.scoreapp.com` | Optional — omit if using outbound link (recommended; see §3.1) |
@@ -435,6 +435,8 @@ The authoritative CSP policy lives in [ARCHITECTURE.md §6](ARCHITECTURE.md#cont
 - **Consent default init** runs as a small inline `<head>` script carrying the request nonce — it must execute before any third-party script. See §2.2 for the snippet.
 - **`style-src` is path-scoped** in the middleware: public routes get `'self'`; `/admin/*` gets `'self' 'unsafe-inline'` to accommodate the Payload admin's Lexical editor.
 - **Rollout**: start in staging with `Content-Security-Policy-Report-Only` to surface violations without breaking the page. Promote to enforcing once the report endpoint is clean.
+
+Note: ARCHITECTURE.md §6 CSP table should be kept in sync with this list — if it isn't, treat this doc as authoritative.
 
 ---
 
@@ -521,10 +523,13 @@ The loading order matters for performance and consent compliance.
 - [ ] Test assessment flow end-to-end
 
 ### DNS & SSL
-- [ ] Configure custom domain in Amplify Console
-- [ ] Set up www -> non-www redirect (or vice versa)
-- [ ] Verify SSL certificate provisioned
-- [ ] Plan DNS cutover window (low-traffic time)
+- [ ] Provision ACM certificate in us-east-1 for `seqtek.com` and `www.seqtek.com`
+- [ ] Attach ACM certificate to the CloudFront distribution as the alternate domain certificate
+- [ ] Configure CloudFront alternate domain names (CNAMEs) for apex and www
+- [ ] Configure Route 53 (or external DNS) A/AAAA alias records pointing apex and www to the CloudFront distribution
+- [ ] Set up `www.seqtek.com` → `seqtek.com` redirect via CloudFront function or distribution behavior
+- [ ] Verify SSL certificate is valid, attached, and auto-renews (ACM handles renewal automatically)
+- [ ] Plan DNS cutover window (low-traffic time, weekend morning preferred)
 
 ### SEO
 - [ ] Submit new sitemap to Google Search Console
