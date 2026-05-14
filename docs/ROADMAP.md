@@ -63,7 +63,7 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 | D-2 | Component / block inventory | ✅ | `docs/BLOCK_LIBRARY.md` |
 | D-3 | 5 archetype wireframes (Home, About, Service Pillar, Service Detail, Case Study) | 🟡 | Excalidraw or Figma; block-order sketches |
 | D-4 | ARCHITECTURE.md updates: Testing Strategy + CDK Infrastructure sections | ✅ | §12 (Testing) + §13 (Infrastructure as Code) added |
-| D-5 | Email/SMTP for Payload (auth + password reset) — SES integration spec | 🟡 | Add to INTEGRATIONS.md |
+| D-5 | Email/SMTP for Payload (auth + password reset) — SES integration spec | 🟡 | Add to INTEGRATIONS.md. **Likely moot** if D-14 (Google SSO) lands — no password resets to send. Still need SES for any future transactional email. |
 | D-6 | CSP rollout mechanism — report endpoint + promote-to-enforce trigger | 🟡 | Spec in INTEGRATIONS.md |
 | D-7 | S3 → CloudFront origin auth — recommend private bucket + Origin Access Control | 🟡 | Update ARCHITECTURE.md §5 |
 | D-8 | Migration script field-mapping spec (audit JSON → Payload collections) | ✅ | `docs/CONTENT_MIGRATION.md` — per-collection field mapping, plain-text segmentation strategy, idempotency design |
@@ -71,7 +71,8 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 | D-10 | GTM consent bridge — implement `__hs_opt_in_consent` trigger | 🟡 | GTM container JSON + INTEGRATIONS.md detail |
 | D-11 | Form submission failure UX (retry/queue/error states) | 🟡 | Add to INTEGRATIONS.md §1.2 |
 | D-12 | Error pages — 404 + 500 + maintenance mode designs | 🟡 | Wireframe + copy |
-| D-13 | Stack spike: scaffold exact versions and verify build (Phase 1 Task 1.0) | 🟡 | Pinned `package.json` + working hello-world commit |
+| D-13 | Stack spike: scaffold exact versions and verify build (Phase 1 Task 1.0) | 🟢 | Pinned `package.json` + working hello-world commit. Branch: `spike/stack-validation`. Auth deferred — spike uses Payload local strategy (un/pw); SSO comes in D-14. |
+| D-14 | Google OAuth SSO for `/admin` via `@authsmith/payload-auth-plugin`, restricted to `@seqtechllc.com` domain | 🟡 | Replaces email/password as primary admin auth. Add plugin + `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` to Parameter Store. Update ARCHITECTURE.md §6. Eliminates D-5 dependency. Implement in Phase 1 after spike validates the core stack. |
 
 ---
 
