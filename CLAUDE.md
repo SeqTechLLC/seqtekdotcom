@@ -22,6 +22,7 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 - `docs/BLOCK_LIBRARY.md` — block/component inventory
 - `docs/CONTENT-REQUIREMENTS.md` — content needs
 - `docs/INTEGRATIONS.md` — HubSpot, GTM, ScoreApp, CSP
+- `docs/decisions/` — Architecture Decision Records (ADRs): non-obvious technical choices, options considered, trade-offs accepted, when to revisit. Read `docs/decisions/README.md` first.
 
 ## Current phase
 
