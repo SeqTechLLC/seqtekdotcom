@@ -1,0 +1,9 @@
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "warning: gitleaks not installed — skipping secret scan."
+  echo "install: brew install gitleaks  (mac)"
+  echo "         apt install gitleaks   (debian/ubuntu)"
+  echo "         https://github.com/gitleaks/gitleaks#installing  (other)"
+  exit 0
+fi
+
+gitleaks protect --staged --redact -v

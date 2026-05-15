@@ -1,0 +1,29 @@
+title = "SEQTEK website — gitleaks config"
+
+# Inherit gitleaks' built-in rule set (AWS, GCP, Azure, Stripe, GitHub tokens,
+# generic API keys, high-entropy strings, private keys, etc.).
+[extend]
+useDefault = true
+
+# Project-wide allowlist. Keep this tight — broad excludes defeat the point.
+[allowlist]
+description = "SEQTEK project allowlist"
+paths = [
+  '''^node_modules/''',
+  '''^\.next/''',
+  '''^playwright-report/''',
+  '''^test-results/''',
+  '''^playwright/\.cache/''',
+  '''^tests/e2e/screenshots/''',
+  # Wix audit artifacts — public marketing scrape, no secrets, ~5MB of JSON
+  '''^audit/.*\.(json|html)$''',
+  # npm hashes look high-entropy but are not secrets
+  '''^package-lock\.json$''',
+]
+regexes = [
+  # .env.example placeholder
+  '''replace_me_with_a_32_byte_random_hex_value''',
+  # Public marketing-side identifiers documented in INTEGRATIONS.md
+  '''AW-810041431''',         # Google Ads conversion ID (public)
+  '''GTM-[A-Z0-9]+''',         # GTM container IDs (public)
+]
