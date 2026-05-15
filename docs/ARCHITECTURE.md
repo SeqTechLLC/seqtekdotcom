@@ -939,13 +939,13 @@ Tests exist to protect load-bearing logic and catch regressions before they ship
 
 | Tool | Purpose | Runtime |
 |---|---|---|
-| **Vitest** | Unit tests for Payload access functions, hooks, slug generation, metadata builders, structured data generators, utility modules | Pre-commit hook + CI on every commit |
+| **Vitest** | Unit tests for Payload access functions, hooks, slug generation, metadata builders, structured data generators, utility modules | CI on every PR (gates merge to `main` via branch protection) |
 | **Playwright** | E2E flows — admin login, content publish + ISR revalidation, HubSpot form submission, public page rendering, 301 redirect verification | CI on every PR; nightly run on `main` against staging |
 | **axe-core** | Accessibility assertions wired into Playwright. Fails CI on any WCAG 2.2 AA violation | CI on every PR (inside Playwright suite) |
 | **Lighthouse CI** | Performance budgets matching §7 targets exactly | CI on every PR |
 | **`aws-cdk-lib/assertions`** | Infrastructure invariants (covered in §13) | CI on every PR |
 
-Vitest runs on every commit via a Husky pre-commit hook and again in CI. Playwright + axe + Lighthouse run on every pull request via GitHub Actions against an ephemeral preview environment (`next start` against a disposable Postgres container and an S3 stub backed by the local filesystem). A nightly Playwright run hits the deployed staging environment to catch drift between code and infrastructure that PR-time tests can't see.
+Pre-commit runs gitleaks only — kept fast so commit cadence isn't punished. The full test suite (Vitest + Playwright + axe + Lighthouse) runs in CI on every pull request and gates merge to `main` via branch protection. Playwright runs against an ephemeral preview environment (`next start` against a disposable Postgres container and an S3 stub backed by the local filesystem). A nightly Playwright run hits the deployed staging environment to catch drift between code and infrastructure that PR-time tests can't see.
 
 ### Coverage Philosophy
 
