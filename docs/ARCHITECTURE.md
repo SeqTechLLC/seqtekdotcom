@@ -752,7 +752,7 @@ The repo is public — a single accidental commit of credentials means they are 
 
 1. **Pre-commit hook (gitleaks):** Runs automatically on every commit via Husky. Scans staged changes for AWS keys, database URLs, high-entropy strings, and common secret patterns. Rejects the commit if a match is found. Configured via `.gitleaks.toml` in the repo root.
 2. **CI check:** GitHub Actions runs `gitleaks` against the full diff on every PR. Catches anything that bypassed the local hook (e.g., contributor without Husky installed).
-3. **`.gitignore`:** `.env.local`, `.env*.local`, `audit/`, and any file matching common credential patterns.
+3. **`.gitignore`:** `.env.local`, `.env*.local`, `audit/`, `brandkit/`, and any file matching common credential patterns.
 4. **`.env.example`:** Committed with variable names and comments only — no values, no placeholders that look like real secrets.
 
 ### What to Keep Out of the Public Repo
@@ -761,7 +761,7 @@ The repo is public — a single accidental commit of credentials means they are 
 - No hardcoded API keys, tokens, passwords, or connection strings
 - No internal IP addresses, VPN configurations, or infrastructure details
 - No client names in content that haven't been approved for public use
-- The `audit/` directory is gitignored — it contains crawled content from the current Wix site and internal analysis. Kept locally for reference during content migration, not published.
+- The `audit/` and `brandkit/` directories are gitignored — `audit/` contains crawled content from the current Wix site (SEQTEK marketing IP); `brandkit/` contains brand-standard PDFs and trademarked logo assets. Both kept outside the repo entirely (sibling directory by convention; never committed). Not published in this repo.
 
 ---
 

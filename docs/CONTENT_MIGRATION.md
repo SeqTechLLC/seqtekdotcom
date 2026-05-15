@@ -5,7 +5,7 @@
 
 How content from the existing Wix site gets moved into Payload CMS. The script lives at `src/payload/seed/migrateFromAudit.ts` and runs via `npx tsx`. Idempotent — re-running updates existing records by slug rather than creating duplicates.
 
-The source audit files are in the **gitignored** `audit/` directory at the repo root. They were produced by Playwright crawls and are stored as text-extraction (not structured HTML) — every record value is a single newline-delimited string of visible page text with the Wix chrome (`Skip to Main Content`, nav links, footer block) embedded at the top and bottom. Boilerplate stripping is therefore a hard requirement before anything else.
+The source audit files live **outside this public repo** (SEQTEK marketing IP). By convention they sit at `~/projects/seqtek-internal/audit/` — a sibling of the repo. The seed script reads `process.env.AUDIT_DIR` (defaults to that path). The files were produced by Playwright crawls and are stored as text-extraction (not structured HTML) — every record value is a single newline-delimited string of visible page text with the Wix chrome (`Skip to Main Content`, nav links, footer block) embedded at the top and bottom. Boilerplate stripping is therefore a hard requirement before anything else.
 
 ## 1. Source data inventory
 

@@ -126,17 +126,17 @@ The default setup starts with an empty database. Payload creates the schema on f
 
 ### Seeding from Audit Data
 
-The `src/payload/seed/migrateFromAudit.ts` script imports extracted content from the `audit/` directory (crawled data from the current Wix site). This directory is gitignored — it contains internal content and is only available to team members who ran the original site audit.
+The `src/payload/seed/migrateFromAudit.ts` script imports extracted content from a private audit directory (Playwright crawl of the current Wix site). The directory is **kept outside this repo** and is only available to SEQTEK team members. By convention it lives at `~/projects/seqtek-internal/audit/` (a sibling of the repo); set the `AUDIT_DIR` env var if you keep it elsewhere.
 
-If you have the `audit/` directory:
+If you have the audit directory:
 
 ```bash
-npx tsx src/payload/seed/migrateFromAudit.ts
+AUDIT_DIR=/path/to/audit npx tsx src/payload/seed/migrateFromAudit.ts
 ```
 
 This populates all collections with real content: case studies, services, team members, blog posts, etc. Useful for testing the full site experience with realistic data.
 
-If you don't have the `audit/` directory, you can still develop against the full site — you'll just need to create sample content manually in the admin panel.
+If you don't have the audit directory, you can still develop against the full site — you'll just need to create sample content manually in the admin panel.
 
 ---
 

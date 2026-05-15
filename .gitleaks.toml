@@ -15,8 +15,6 @@ paths = [
   '''^test-results/''',
   '''^playwright/\.cache/''',
   '''^tests/e2e/screenshots/''',
-  # Wix audit artifacts — public marketing scrape, no secrets, ~5MB of JSON
-  '''^audit/.*\.(json|html)$''',
   # npm hashes look high-entropy but are not secrets
   '''^package-lock\.json$''',
 ]

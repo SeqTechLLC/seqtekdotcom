@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Status:** Design — Pre-Implementation (Phase 1: token translation to v3 config pending)
-**Depends on:** Brand kit (`brandkit/brandkit.pdf`), `BRAND_STRATEGY_RESEARCH.md`, ADR `docs/decisions/0001-tailwind-v3.md`
+**Depends on:** SEQTEK brand kit (private — kept outside this repo, see CLAUDE.md for local convention), `BRAND_STRATEGY_RESEARCH.md`, ADR `docs/decisions/0001-tailwind-v3.md`
 **Blocked on:** BR-2 (web font licensing decision — see ROADMAP.md)
 
 The foundation tokens for the SEQTEK website. The token reference in §14 is written in Tailwind v4 `@theme` syntax for clarity — the actual implementation uses Tailwind v3 per ADR 0001 and translates these tokens into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, etc.) plus `:root` CSS custom properties in `src/app/(frontend)/styles.css`. Translation is a Phase 1 task; this doc remains the source of truth for token *values* — when this doc and the Tailwind config disagree, this doc wins.
@@ -23,7 +23,7 @@ The foundation tokens for the SEQTEK website. The token reference in §14 is wri
 
 ### 2.1 Brand seeds
 
-From the official brand kit (`brandkit/brandkit.pdf`), four immutable values:
+From the official SEQTEK brand kit (kept privately outside this repo), four immutable values:
 
 | Name | Hex | Role |
 |---|---|---|
@@ -495,7 +495,7 @@ No information conveyed by color alone. Error states pair color with an icon and
 
 ## 13. Logo and brand mark
 
-Logo files ship in `brandkit/Logos-…zip` and are the only source for the wordmark — no recreations, no traces. Rules marked **(brand kit)** are quoted from `brandkit.pdf`; rules marked **(design system)** are conventions added here and should be confirmed with marketing if challenged.
+Logo files live in the SEQTEK brand kit (kept privately outside this repo) and are the only source for the wordmark — no recreations, no traces. Rules marked **(brand kit)** are quoted from the brand kit PDF; rules marked **(design system)** are conventions added here and should be confirmed with marketing if challenged.
 
 ### 13.1 Spelling — non-negotiable
 

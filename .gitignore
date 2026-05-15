@@ -34,8 +34,9 @@ Thumbs.db
 coverage/
 *.lcov
 
-# Audit data (private — see docs/LOCAL_DEVELOPMENT.md)
+# Private SEQTEK assets — never committed to public repo. See CLAUDE.md.
 audit/
+brandkit/
 
 # Payload local media uploads (see docs/LOCAL_DEVELOPMENT.md)
 media/
