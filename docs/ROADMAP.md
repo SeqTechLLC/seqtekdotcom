@@ -108,7 +108,7 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 - [ ] HubSpot + GTM in root layout with nonce-aware loading
 - [ ] Health endpoint + CloudWatch alarms wired up
 - [ ] Testing scaffold: Vitest, Playwright, axe-core, Lighthouse CI in GitHub Actions
-- [ ] gitleaks pre-commit hook + CI check
+- [x] gitleaks pre-commit hook (CI check still pending — wire into the GitHub Actions workflow alongside the test pipeline)
 - [ ] Apply design tokens from D-1 to Tailwind config
 
 ### Phase 2 — Content models (1 week)
