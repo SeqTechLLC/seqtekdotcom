@@ -588,12 +588,12 @@ All redirects configured in `next.config.ts` `redirects()`. These preserve any S
 | `/organizational-strategy-1-5` | `/resources/organizational-maturity-assessment` | Yes |
 | `/organizational-strategy-1-1-1-3` | `/case-studies/airline-automation` | Yes |
 | `/organizational-strategy-1-1-1-3-1` | `/case-studies/oil-gas-modernization` | Yes |
-| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration` | Yes |
+| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform` | Yes |
 | `/organizational-strategy-1-3-1-1-1` | `/case-studies` | Yes |
-| `/case-study-3` | `/case-studies/mobile-apps-remote-areas` | Yes |
-| `/case-study-4` | `/case-studies/retail-velocity` | Yes |
-| `/case-study-5` | `/case-studies/data-strategic-insights` | Yes |
-| `/driving-innovation-case-study` | `/case-studies/healthcare-ux-innovation` | Yes |
+| `/case-study-3` | `/case-studies/mobile-apps-remote-operations` | Yes |
+| `/case-study-4` | `/case-studies/retail-pos-update-experience` | Yes |
+| `/case-study-5` | `/case-studies/data-warehouse-strategy` | Yes |
+| `/driving-innovation-case-study` | `/case-studies/healthcare-ux-redesign` | Yes |
 | `/modernizing-healthcare-case-study` | `/case-studies/healthcare-data-modernization` | Yes |
 | `/contact` | `/contact` | Yes |
 | `/privacy-policy` | `/privacy-policy` | Yes |

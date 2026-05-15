@@ -111,11 +111,11 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 ├── /case-studies/                                   Case Studies Index (PILLAR)
 │   ├── /case-studies/airline-automation
 │   ├── /case-studies/oil-gas-modernization
-│   ├── /case-studies/banking-integration
-│   ├── /case-studies/data-strategic-insights
-│   ├── /case-studies/retail-velocity
-│   ├── /case-studies/mobile-apps-remote-areas
-│   ├── /case-studies/healthcare-ux-innovation
+│   ├── /case-studies/banking-integration-platform
+│   ├── /case-studies/data-warehouse-strategy
+│   ├── /case-studies/retail-pos-update-experience
+│   ├── /case-studies/mobile-apps-remote-operations
+│   ├── /case-studies/healthcare-ux-redesign
 │   └── /case-studies/healthcare-data-modernization
 │
 ├── /industries/                                     Industries Index (PILLAR)
@@ -841,11 +841,11 @@ Per Google Search Central (2024 site migration guidance) and Moz: **failing to i
 | `/organizational-strategy-1-5` | `/resources/organizational-maturity-assessment` | Assessment |
 | `/organizational-strategy-1-1-1-3` | `/case-studies/airline-automation` | Verify mapping |
 | `/organizational-strategy-1-1-1-3-1` | `/case-studies/oil-gas-modernization` | Verify mapping |
-| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration` | Verify mapping |
-| `/case-study-3` | `/case-studies/mobile-apps-remote-areas` | Verify mapping |
-| `/case-study-4` | `/case-studies/retail-velocity` | Verify mapping |
-| `/case-study-5` | `/case-studies/data-strategic-insights` | Verify mapping |
-| `/driving-innovation-case-study` | `/case-studies/healthcare-ux-innovation` | |
+| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform` | Verify mapping |
+| `/case-study-3` | `/case-studies/mobile-apps-remote-operations` | Verify mapping |
+| `/case-study-4` | `/case-studies/retail-pos-update-experience` | Verify mapping |
+| `/case-study-5` | `/case-studies/data-warehouse-strategy` | Verify mapping |
+| `/driving-innovation-case-study` | `/case-studies/healthcare-ux-redesign` | |
 | `/modernizing-healthcare-case-study` | `/case-studies/healthcare-data-modernization` | |
 | `/contact` | `/contact` | Verify no trailing differences |
 | `/privacy-policy` | `/privacy-policy` | Same path |

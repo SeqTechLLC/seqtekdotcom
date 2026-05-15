@@ -5,7 +5,7 @@
 **Depends on:** Brand kit (`brandkit/brandkit.pdf`), `BRAND_STRATEGY_RESEARCH.md`
 **Blocked on:** BR-2 (web font licensing decision — see ROADMAP.md)
 
-The foundation tokens for the SEQTEK website. Everything here flows into a single Tailwind v4 `@theme` block (§13) that the application reads. Source of truth — when this doc and a Tailwind config disagree, this doc wins.
+The foundation tokens for the SEQTEK website. Everything here flows into a single Tailwind v4 `@theme` block (§14) that the application reads. Source of truth — when this doc and a Tailwind config disagree, this doc wins.
 
 ---
 
@@ -493,7 +493,96 @@ No information conveyed by color alone. Error states pair color with an icon and
 
 ---
 
-## 13. Tailwind v4 `@theme` block
+## 13. Logo and brand mark
+
+Logo files ship in `brandkit/Logos-…zip` and are the only source for the wordmark — no recreations, no traces. Rules marked **(brand kit)** are quoted from `brandkit.pdf`; rules marked **(design system)** are conventions added here and should be confirmed with marketing if challenged.
+
+### 13.1 Spelling — non-negotiable
+
+**(brand kit)** SEQTEK is **always all caps**. Never spell it `SeqTek`, `Seqtek`, or `Seqtech`. This applies to:
+
+- Visible body copy and headings
+- HTML `<title>`, meta tags, OG tags
+- Image `alt` text on logo files
+- ARIA labels and accessible names
+- Schema.org structured data (`Organization.name`)
+- Any user-facing string in the codebase
+
+Recommended Phase 1 task: add a CI text check that fails on regex `\b[Ss]eq([Tt]ek|tech)\b` outside the canonical "SEQTEK" spelling.
+
+### 13.2 Variants
+
+The supplied zip contains three logo variants. The **Q-only** mark referenced by the brand kit is not in the zip — request from marketing before using as a favicon or social avatar; do **not** crop the wordmark to fake one.
+
+| Variant | Asset (transparent BG) | Use when |
+|---|---|---|
+| Black wordmark with tagline | `Black Logo-Transparent.png` / `Black SEQTEK Logo BG.ai` | Light surfaces (background luminance ≥ 0.70) |
+| Black wordmark, no tagline | `Black-logo-w-o-tagline-transparent-background.png` | Wordmark renders below ~120px wide; tagline becomes illegible |
+| White wordmark with tagline | `White SEQTEK Logo-Transparent.png` / `White SEQTEK Logo.ai` | Dark surfaces (`brand-navy-700`+, `brand-black`, dark imagery) |
+| White wordmark, no tagline | `White-logo-w-o-tagline-transparent-background.png` | Same as above, sub-120px renders |
+| Q-only mark | _Not supplied — request from marketing_ | Favicons, social avatars, sub-96px contexts |
+
+Native master files (`.ai`) are for print and ad units; the web app uses the PNGs (and inline SVG once converted from `.ai`).
+
+### 13.3 Tagline
+
+**(brand kit)** Official tagline: **"Delivering Transformative Technologies Since 1999"**.
+
+Tagline appears in:
+- Footer (paired with the wordmark, set in `--font-display`, color `--color-text-muted` on light or `--color-text-inverted` on navy)
+- Email signatures (per brand kit)
+
+Tagline does **not** appear in:
+- Header / nav (logo only — header is dense already)
+- Favicons or social avatars
+- Any context where the wordmark renders below ~120px wide
+- Marketing campaigns that need a different sub-headline (the tagline is the brand line, not an ad-of-the-day slot)
+
+Tagline must always carry the **"Since 1999"** clause — never trim to "Delivering Transformative Technologies".
+
+### 13.4 Clearspace and minimum size
+
+**(design system — brand kit does not specify; confirm with marketing if challenged)**
+
+- **Clearspace:** equal to the cap height of the "S" in the wordmark, on all four sides. No other content (text, image edges, UI controls) may enter that zone.
+- **Minimum width — full wordmark:** 96px on screen. Below 96px, drop the tagline; below the tagline-drop point, switch to the Q-only mark.
+- **Minimum width — wordmark with tagline:** 200px on screen. Tagline tracking and weight assume this floor.
+- **Minimum width — Q-only mark:** 24px (favicon size).
+
+### 13.5 Background and color use
+
+The wordmark only ships in two colors — black and white. Pair to background contrast, not to brand-color whim.
+
+| Background | Required logo | Notes |
+|---|---|---|
+| White / `--color-bg` | Black wordmark | Default site case |
+| `--color-brand-navy-700` through `-900` | White wordmark | Footer, dark hero variants |
+| `--color-brand-black` | White wordmark | High-contrast surfaces |
+| Photographic / textured | White wordmark **with scrim** | Apply 40% navy overlay (`rgb(31 50 101 / 0.4)`) before placing logo. Never place the wordmark directly on busy imagery. |
+| `--color-brand-green-*` | Avoid | Green is the accent color, not a logo background — competes with the quill highlight inside the Q. If unavoidable, use the white wordmark on `green-700` or darker (passes 4.5:1). |
+
+### 13.6 Improper uses — do not
+
+- Recolor the wordmark in any way (only the supplied black and white assets are sanctioned)
+- Apply outline, emboss, drop-shadow, glow, gradient, or any filter
+- Stretch, skew, rotate, or otherwise distort the wordmark
+- Place the wordmark on a background that fails 3:1 contrast against the wordmark fill (use the alternate variant instead)
+- Crop the "Q" out of the wordmark to use as a standalone icon — request the proper Q-only mark
+- Rebuild or trace the wordmark in code, fonts, or vector tools — only the supplied assets are canonical
+- Spell SEQTEK in anything other than all-caps anywhere in the product (see §13.1)
+- Replace the tagline, paraphrase it, or trim "Since 1999"
+
+### 13.7 Implementation notes
+
+- Logo assets live under `public/brand/` so they're served by Next.js without going through the bundler. Filenames preserve the brand-kit names (do not rename — keeps provenance traceable to the zip).
+- Use `<Image>` for raster variants; convert `.ai` files to optimized SVG once and inline the Q-only mark for crisp rendering at all sizes.
+- Wordmark `alt` text: `"SEQTEK"` (the canonical spelling — not `"SEQTEK logo"`, which creates redundant screen-reader output when paired with surrounding brand context).
+- Footer wordmark + tagline lockup is a primitive — see BLOCK_LIBRARY.md (`<BrandLockup variant="footer" />`); add as primitive if not yet listed.
+- Favicon set must be generated from the Q-only mark once supplied; until then, defer favicon work and ship a placeholder `favicon.ico` pulled from the wordmark "Q" letterform (replace before launch).
+
+---
+
+## 14. Tailwind v4 `@theme` block
 
 The copy-pasteable deliverable. Lives in `src/styles/globals.css` per ARCHITECTURE.md §4. Component code reads via Tailwind utility classes; no hex values appear outside this block.
 
@@ -695,11 +784,11 @@ The copy-pasteable deliverable. Lives in `src/styles/globals.css` per ARCHITECTU
 
 ---
 
-## 14. Open questions and dependencies
+## 15. Open questions and dependencies
 
 | ID | Question | Where blocked |
 |---|---|---|
-| BR-2 | Web font licensing — purchase Avenir web license, use Inter as the working web face, or use a different free family (DM Sans, Nunito Sans). Affects only `--font-display` and `--font-body` in §13. | ROADMAP.md (leadership/marketing) |
+| BR-2 | Web font licensing — purchase Avenir web license, use Inter as the working web face, or use a different free family (DM Sans, Nunito Sans). Affects only `--font-display` and `--font-body` in §14. | ROADMAP.md (leadership/marketing) |
 | DS-1 | Should `<TestimonialCarousel>` autoplay by default, or only manual advancement? Accessibility implications. | Confirm during D-3 wireframe pass |
 | DS-2 | Does the homepage hero use `text-display-xl` (61px) or scale back to `text-display` (49px) on smaller hero copy? Decide after first hero copy draft lands. | Content (CONTENT-REQUIREMENTS §4 — homepage hero copy) |
 | DS-3 | Lexical rich-text styling — confirm `@tailwindcss/typography` `prose` defaults match this design system's body/heading scales. May need a `prose-seqtek` override class. | Validate during Phase 1 stack spike (D-13) |
