@@ -66,7 +66,7 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 | D-2 | Component / block inventory | ✅ | `docs/BLOCK_LIBRARY.md` |
 | D-3 | 5 archetype wireframes (Home, About, Service Pillar, Service Detail, Case Study) | 🟡 | Excalidraw or Figma; block-order sketches |
 | D-4 | ARCHITECTURE.md updates: Testing Strategy + CDK Infrastructure sections | ✅ | §12 (Testing) + §13 (Infrastructure as Code) added |
-| D-5 | Email/SMTP for Payload (auth + password reset) — SES integration spec | ✅ | New INTEGRATIONS.md §6 Transactional Email (AWS SES) — SDK approach, bounce alarm at 5%, env vars added |
+| D-5 | Email/SMTP for Payload (auth + password reset) — SES integration spec | ✅ | New INTEGRATIONS.md §6 Transactional Email (AWS SES) — SDK approach, bounce alarm at 5%, env vars added. **Scope note:** Password-reset use becomes moot once D-14 (Google SSO) ships, but SES is still required for any future transactional email. |
 | D-6 | CSP rollout mechanism — report endpoint + promote-to-enforce trigger | ✅ | INTEGRATIONS.md §8 Rollout mechanism subsection — `/api/csp-report`, CloudWatch metric filter, 5-item promote checklist |
 | D-7 | S3 → CloudFront origin auth — private bucket + Origin Access Control | ✅ | New "Media Storage — S3 + CloudFront with OAC" subsection added to ARCHITECTURE.md §5 |
 | D-8 | Migration script field-mapping spec (audit JSON → Payload collections) | ✅ | `docs/CONTENT_MIGRATION.md` — per-collection field mapping, plain-text segmentation strategy, idempotency design |
@@ -74,7 +74,8 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 | D-10 | GTM consent bridge — implement `__hs_opt_in_consent` trigger | ✅ | INTEGRATIONS.md §2.2 Implementation subsection — bridge `<script>` snippet, `infra/gtm/container.json` versioning, consent reqs on pixel tags |
 | D-11 | Form submission failure UX (retry/queue/error states) | ✅ | INTEGRATIONS.md §1.2 Failure handling — state machine, error-class table, dataLayer events, mailto fallback |
 | D-12 | Error pages — 404 + 500 + maintenance mode designs | ✅ | `docs/ERROR_PAGES.md` — 404, 500, maintenance, slow-request handling with tracking + a11y |
-| D-13 | Stack spike: scaffold exact versions and verify build (Phase 1 Task 1.0) | 🟡 | Pinned `package.json` + working hello-world commit |
+| D-13 | Stack spike: scaffold exact versions and verify build (Phase 1 Task 1.0) | ✅ | Stack validated on `spike/stack-validation`: Next 16.2.3 + React 19.2.4 + Payload 3.84 + Postgres 16 + Tailwind v3.4 + Lexical. Playwright smoke passes against both dev (`:3100`) and a Docker container (`:3200`, 327MB image). Spike-only: `force-dynamic` on the homepage so `docker build` doesn't need DB/secrets — Phase 1 switches to ISR. Pinned versions are now load-bearing in `package.json`. |
+| D-14 | Google OAuth SSO for `/admin` via `@authsmith/payload-auth-plugin`, restricted to `@seqtechllc.com` domain | 🟡 | Replaces email/password as primary admin auth. Add plugin + `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` to Parameter Store. Update ARCHITECTURE.md §6. Eliminates D-5 dependency. Implement in Phase 1 after spike validates the core stack. |
 
 ---
 

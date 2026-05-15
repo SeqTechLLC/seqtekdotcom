@@ -14,7 +14,7 @@
 | **Database** | AWS RDS PostgreSQL | Shared infrastructure for CMS + future extensibility (portal, gated resources, etc.). Managed backups, failover. |
 | **Hosting** | EC2 + CloudFront + ALB | Long-lived Node process for Payload CMS. ACM for auto-renewing SSL. CloudFront CDN at the edge. ALB for health checks and zero-downtime deploys. SEQTEK is an AWS shop — no new vendor accounts. |
 | **Container** | Docker + Amazon ECR | Reproducible builds. Eliminates platform mismatches between CI and production. ECR keeps images in-ecosystem. |
-| **Styling** | Tailwind CSS v4 | Utility-first, design tokens via CSS custom properties, excellent performance (only ships used CSS). |
+| **Styling** | Tailwind CSS v3 | Utility-first, design tokens via `tailwind.config.js`, excellent performance (only ships used CSS). v3 chosen over v4 — see [ADR 0001](decisions/0001-tailwind-v3.md). |
 | **Rich Text** | Lexical (via `@payloadcms/richtext-lexical`) | Payload v3 default. Extensible block-based editor with serialization to React components. |
 | **Image Optimization** | `next/image` + `sharp` | Automatic format conversion (WebP/AVIF), responsive sizing, lazy loading. |
 | **Media Storage** | AWS S3 (via `@payloadcms/storage-s3`) | Centralizes media in durable, CDN-friendly storage. Decouples uploads from the EC2 instance filesystem. |
@@ -35,8 +35,8 @@
 | @payloadcms/db-postgres | 3.x | Postgres adapter |
 | @payloadcms/richtext-lexical | 3.x | Rich text editor |
 | @payloadcms/storage-s3 | 3.x | S3 media storage |
-| tailwindcss | 4.x | Styling |
-| @tailwindcss/typography | 0.5.x | Prose styling for CMS rich text (imported via `@plugin` in Tailwind v4) |
+| tailwindcss | ^3.4 | Styling — see [ADR 0001](decisions/0001-tailwind-v3.md) |
+| @tailwindcss/typography | 0.5.x | Prose styling for CMS rich text (registered in `tailwind.config.js` `plugins` array) |
 | graphql | ^16.8.1 | Required peer dependency for Payload |
 | sharp | latest | Image optimization (required by next/image) |
 | @next/third-parties | latest | GTM integration optimized for Next.js |
@@ -439,7 +439,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   └── utils.ts                       # General utilities
 │   │
 │   └── styles/
-│       └── globals.css                    # Tailwind v4 @theme (brand tokens), @plugin imports, custom properties
+│       └── globals.css                    # @tailwind base/components/utilities, brand-token CSS custom properties
 │
 ├── public/
 │   ├── fonts/                             # Self-hosted font files
@@ -721,7 +721,7 @@ CSP is enforced via nonce-based policy generated per-request in Next.js middlewa
 |---|---|---|
 | `default-src` | `'self'` | Baseline restriction |
 | `script-src` | `'nonce-{random}'` `'strict-dynamic'` | Nonce-based trust propagation |
-| `style-src` | `'self'` on public routes; `'self' 'unsafe-inline'` on `/admin/*` | Tailwind v4 compiles to static CSS — public pages don't need inline styles. The Payload admin's Lexical editor does need `'unsafe-inline'`, so the middleware applies the broader policy only when the request path begins with `/admin/`. |
+| `style-src` | `'self'` on public routes; `'self' 'unsafe-inline'` on `/admin/*` | Tailwind compiles to static CSS — public pages don't need inline styles. The Payload admin's Lexical editor does need `'unsafe-inline'`, so the middleware applies the broader policy only when the request path begins with `/admin/`. |
 | `img-src` | `'self'` `data:` `*.hubspot.com` `*.hsforms.net` S3 hostname | CMS media + HubSpot form images |
 | `font-src` | `'self'` | Self-hosted fonts only |
 | `connect-src` | `'self'` `*.hubspot.com` `*.hs-analytics.net` `*.hsforms.net` `*.hs-banner.com` `*.usemessages.com` `*.googletagmanager.com` | Analytics + form submissions |

@@ -54,5 +54,15 @@ infra/.cdk.staging/
 # Payload generated types (committed only if we decide to — typically gitignored)
 src/payload-types.ts
 
+# Scratch workspace (template scaffolds, throwaway experiments)
+.scratch/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/tests/e2e/screenshots/
+
 # Misc
 *.pem
