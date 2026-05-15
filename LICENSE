@@ -1,0 +1,64 @@
+SEQTEK Website — License
+
+This repository contains two categories of materials, licensed differently:
+
+================================================================================
+1. CODE — MIT License
+================================================================================
+
+Everything in this repository EXCEPT the files listed in section 2 below is
+released under the MIT License. The canonical license text follows:
+
+    Copyright (c) 2026 SeqTech, LLC
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+
+================================================================================
+2. PROPRIETARY CONTENT — All Rights Reserved
+================================================================================
+
+The following files contain SEQTEK's strategic, marketing, and brand content
+("Proprietary Content"). The MIT License above does NOT apply to these files.
+
+  - docs/CONTENT-REQUIREMENTS.md
+  - docs/BRAND_STRATEGY_RESEARCH.md
+  - any future content under src/content/, src/copy/, or content/
+  - any committed brand-asset files (note: brand kit PDF and logo files are
+    deliberately not committed to this repository — see CLAUDE.md)
+
+The Proprietary Content is published in this repository for transparency and
+portfolio purposes only. All rights are reserved by SeqTech, LLC. You may not
+reproduce, distribute, modify, translate, or create derivative works of the
+Proprietary Content without prior written permission from SeqTech, LLC.
+
+Reading the Proprietary Content for educational reference is permitted; reusing
+its substance in your own work is not.
+
+================================================================================
+3. TRADEMARKS
+================================================================================
+
+"SEQTEK", the SEQTEK wordmark, and the SEQTEK quill-in-Q logo mark are
+trademarks of SeqTech, LLC. The MIT License above does not grant any rights to
+use the SEQTEK name, marks, or trade dress in derivative works, including but
+not limited to product names, branding, marketing materials, or domain names
+that may suggest affiliation, endorsement, or sponsorship by SeqTech, LLC.
+
+If you fork this repository as a learning reference and need to deploy a
+running copy, please replace the SEQTEK branding with your own.

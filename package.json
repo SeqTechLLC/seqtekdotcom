@@ -2,7 +2,7 @@
   "name": "seqtek-website",
   "version": "0.1.0",
   "description": "SEQTEK marketing website — Next.js + Payload CMS",
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "type": "module",
   "scripts": {
