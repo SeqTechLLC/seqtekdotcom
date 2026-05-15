@@ -1,9 +1,16 @@
+#
+# Pre-commit pipeline:
+#   1. gitleaks  — block on staged secrets (warns if not installed)
+#   2. lint-staged — format + lint staged files only (fast)
+#
+
 if ! command -v gitleaks >/dev/null 2>&1; then
   echo "warning: gitleaks not installed — skipping secret scan."
   echo "install: brew install gitleaks  (mac)"
   echo "         apt install gitleaks   (debian/ubuntu)"
   echo "         https://github.com/gitleaks/gitleaks#installing  (other)"
-  exit 0
+else
+  gitleaks protect --staged --redact -v || exit 1
 fi
 
-gitleaks protect --staged --redact -v
+npx --no -- lint-staged

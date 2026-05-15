@@ -7,41 +7,41 @@
 
 ## 1. Tech Stack
 
-| Component | Choice | Rationale |
-|---|---|---|
-| **Framework** | Next.js 16 (App Router, TypeScript) | Static generation + SSR where needed. React ecosystem. Turbopack default. Industry standard for portfolio-quality marketing sites. |
-| **CMS** | Payload CMS v3 (self-hosted) | TypeScript-native, embeds directly in Next.js, Postgres-backed. A technology consulting company should run its own CMS — not use a SaaS blog platform. |
-| **Database** | AWS RDS PostgreSQL | Shared infrastructure for CMS + future extensibility (portal, gated resources, etc.). Managed backups, failover. |
-| **Hosting** | EC2 + CloudFront + ALB | Long-lived Node process for Payload CMS. ACM for auto-renewing SSL. CloudFront CDN at the edge. ALB for health checks and zero-downtime deploys. SEQTEK is an AWS shop — no new vendor accounts. |
-| **Container** | Docker + Amazon ECR | Reproducible builds. Eliminates platform mismatches between CI and production. ECR keeps images in-ecosystem. |
-| **Styling** | Tailwind CSS v3 | Utility-first, design tokens via `tailwind.config.js`, excellent performance (only ships used CSS). v3 chosen over v4 — see [ADR 0001](decisions/0001-tailwind-v3.md). |
-| **Rich Text** | Lexical (via `@payloadcms/richtext-lexical`) | Payload v3 default. Extensible block-based editor with serialization to React components. |
-| **Image Optimization** | `next/image` + `sharp` | Automatic format conversion (WebP/AVIF), responsive sizing, lazy loading. |
-| **Media Storage** | AWS S3 (via `@payloadcms/storage-s3`) | Centralizes media in durable, CDN-friendly storage. Decouples uploads from the EC2 instance filesystem. |
-| **Fonts** | Self-hosted in `/public/fonts` | No Google Fonts CDN dependency. Eliminates extra DNS lookup and connection. `font-display: swap` for performance. |
-| **Linting** | ESLint + Prettier | `next/core-web-vitals` config. Strict TypeScript. Consistent formatting. |
-| **Secret Detection** | gitleaks + Husky | Pre-commit hook + CI check. Prevents accidental credential commits in a public repo. |
+| Component              | Choice                                       | Rationale                                                                                                                                                                                        |
+| ---------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Framework**          | Next.js 16 (App Router, TypeScript)          | Static generation + SSR where needed. React ecosystem. Turbopack default. Industry standard for portfolio-quality marketing sites.                                                               |
+| **CMS**                | Payload CMS v3 (self-hosted)                 | TypeScript-native, embeds directly in Next.js, Postgres-backed. A technology consulting company should run its own CMS — not use a SaaS blog platform.                                           |
+| **Database**           | AWS RDS PostgreSQL                           | Shared infrastructure for CMS + future extensibility (portal, gated resources, etc.). Managed backups, failover.                                                                                 |
+| **Hosting**            | EC2 + CloudFront + ALB                       | Long-lived Node process for Payload CMS. ACM for auto-renewing SSL. CloudFront CDN at the edge. ALB for health checks and zero-downtime deploys. SEQTEK is an AWS shop — no new vendor accounts. |
+| **Container**          | Docker + Amazon ECR                          | Reproducible builds. Eliminates platform mismatches between CI and production. ECR keeps images in-ecosystem.                                                                                    |
+| **Styling**            | Tailwind CSS v3                              | Utility-first, design tokens via `tailwind.config.js`, excellent performance (only ships used CSS). v3 chosen over v4 — see [ADR 0001](decisions/0001-tailwind-v3.md).                           |
+| **Rich Text**          | Lexical (via `@payloadcms/richtext-lexical`) | Payload v3 default. Extensible block-based editor with serialization to React components.                                                                                                        |
+| **Image Optimization** | `next/image` + `sharp`                       | Automatic format conversion (WebP/AVIF), responsive sizing, lazy loading.                                                                                                                        |
+| **Media Storage**      | AWS S3 (via `@payloadcms/storage-s3`)        | Centralizes media in durable, CDN-friendly storage. Decouples uploads from the EC2 instance filesystem.                                                                                          |
+| **Fonts**              | Self-hosted in `/public/fonts`               | No Google Fonts CDN dependency. Eliminates extra DNS lookup and connection. `font-display: swap` for performance.                                                                                |
+| **Linting**            | ESLint + Prettier                            | `next/core-web-vitals` config. Strict TypeScript. Consistent formatting.                                                                                                                         |
+| **Secret Detection**   | gitleaks + Husky                             | Pre-commit hook + CI check. Prevents accidental credential commits in a public repo.                                                                                                             |
 
 **Version compatibility:** Payload CMS v3 deeply integrates with Next.js — it shares the same Node process, injects admin routes, and hooks into the build pipeline. `@payloadcms/next@3.84+` explicitly supports Next.js 16 (`>=16.2.2`). When upgrading either package independently, always verify the peer dependency range in `@payloadcms/next` before merging.
 
 ### Key Packages
 
-| Package | Version | Purpose |
-|---|---|---|
-| next | 16.x | Framework |
-| react, react-dom | 19.x | UI library |
-| payload | 3.x | CMS |
-| @payloadcms/next | 3.x | Payload-Next.js integration |
-| @payloadcms/db-postgres | 3.x | Postgres adapter |
-| @payloadcms/richtext-lexical | 3.x | Rich text editor |
-| @payloadcms/storage-s3 | 3.x | S3 media storage |
-| tailwindcss | ^3.4 | Styling — see [ADR 0001](decisions/0001-tailwind-v3.md) |
-| @tailwindcss/typography | 0.5.x | Prose styling for CMS rich text (registered in `tailwind.config.js` `plugins` array) |
-| graphql | ^16.8.1 | Required peer dependency for Payload |
-| sharp | latest | Image optimization (required by next/image) |
-| @next/third-parties | latest | GTM integration optimized for Next.js |
-| husky | latest | Git hooks (runs gitleaks on pre-commit) |
-| gitleaks | latest (system) | Secret leak detection — pre-commit + CI |
+| Package                      | Version         | Purpose                                                                              |
+| ---------------------------- | --------------- | ------------------------------------------------------------------------------------ |
+| next                         | 16.x            | Framework                                                                            |
+| react, react-dom             | 19.x            | UI library                                                                           |
+| payload                      | 3.x             | CMS                                                                                  |
+| @payloadcms/next             | 3.x             | Payload-Next.js integration                                                          |
+| @payloadcms/db-postgres      | 3.x             | Postgres adapter                                                                     |
+| @payloadcms/richtext-lexical | 3.x             | Rich text editor                                                                     |
+| @payloadcms/storage-s3       | 3.x             | S3 media storage                                                                     |
+| tailwindcss                  | ^3.4            | Styling — see [ADR 0001](decisions/0001-tailwind-v3.md)                              |
+| @tailwindcss/typography      | 0.5.x           | Prose styling for CMS rich text (registered in `tailwind.config.js` `plugins` array) |
+| graphql                      | ^16.8.1         | Required peer dependency for Payload                                                 |
+| sharp                        | latest          | Image optimization (required by next/image)                                          |
+| @next/third-parties          | latest          | GTM integration optimized for Next.js                                                |
+| husky                        | latest          | Git hooks (runs gitleaks on pre-commit)                                              |
+| gitleaks                     | latest (system) | Secret leak detection — pre-commit + CI                                              |
 
 ---
 
@@ -52,229 +52,245 @@ All collections are defined in TypeScript. Payload auto-generates the database s
 ### Document Collections
 
 #### `users`
+
 Payload's built-in auth collection. Controls access to the admin panel at `/admin`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `email` | email | Login identifier |
+| Field   | Type           | Notes                            |
+| ------- | -------------- | -------------------------------- |
+| `email` | email          | Login identifier                 |
 | `roles` | select (multi) | `admin`, `editor` — saved to JWT |
-| `name` | text | Display name |
+| `name`  | text           | Display name                     |
 
 Access: Email/password auth with JWT. No public registration. Accounts created by admins only.
 
 #### `pages`
+
 Generic content pages (About, Contact, Privacy Policy, etc.).
 
-| Field | Type | Notes |
-|---|---|---|
-| `title` | text | Required |
-| `slug` | text | Auto-generated from title, editable |
-| `content` | richText (Lexical) | Page body with embedded blocks |
-| `hero` | group | headline, subheadline, backgroundImage, cta |
-| `seo` | group | metaTitle, metaDescription, ogImage |
-| `status` | select | `draft`, `published` |
+| Field     | Type               | Notes                                       |
+| --------- | ------------------ | ------------------------------------------- |
+| `title`   | text               | Required                                    |
+| `slug`    | text               | Auto-generated from title, editable         |
+| `content` | richText (Lexical) | Page body with embedded blocks              |
+| `hero`    | group              | headline, subheadline, backgroundImage, cta |
+| `seo`     | group              | metaTitle, metaDescription, ogImage         |
+| `status`  | select             | `draft`, `published`                        |
 
 #### `posts`
+
 Blog posts at `/insights/[slug]`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `title` | text | Required |
-| `slug` | text | Auto-generated from title |
-| `excerpt` | textarea | 1-2 sentence summary for listings and meta |
-| `content` | richText (Lexical) | Post body with inline CTA blocks |
-| `featuredImage` | upload (media) | Required — no stock photos |
-| `author` | relationship -> teamMembers | Required |
-| `categories` | relationship -> categories (hasMany) | For filtering and archive pages |
-| `relatedPosts` | relationship -> posts (hasMany) | Manual curation, max 3 |
-| `relatedServices` | relationship -> services (hasMany) | For contextual CTAs |
-| `seo` | group | metaTitle, metaDescription, ogImage |
-| `publishedAt` | date | Controls ordering and display |
-| `status` | select | `draft`, `published` |
+| Field             | Type                                 | Notes                                      |
+| ----------------- | ------------------------------------ | ------------------------------------------ |
+| `title`           | text                                 | Required                                   |
+| `slug`            | text                                 | Auto-generated from title                  |
+| `excerpt`         | textarea                             | 1-2 sentence summary for listings and meta |
+| `content`         | richText (Lexical)                   | Post body with inline CTA blocks           |
+| `featuredImage`   | upload (media)                       | Required — no stock photos                 |
+| `author`          | relationship -> teamMembers          | Required                                   |
+| `categories`      | relationship -> categories (hasMany) | For filtering and archive pages            |
+| `relatedPosts`    | relationship -> posts (hasMany)      | Manual curation, max 3                     |
+| `relatedServices` | relationship -> services (hasMany)   | For contextual CTAs                        |
+| `seo`             | group                                | metaTitle, metaDescription, ogImage        |
+| `publishedAt`     | date                                 | Controls ordering and display              |
+| `status`          | select                               | `draft`, `published`                       |
 
 Versions: Enabled with drafts for preview before publishing.
 
 #### `caseStudies`
+
 The most important content type. Each gets a dedicated page at `/case-studies/[slug]`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `title` | text | Required |
-| `slug` | text | Auto-generated from title |
-| `subtitle` | text | Short outcome-focused tagline |
-| `industry` | relationship -> industries | Required |
-| `services` | relationship -> services (hasMany) | Which SEQTEK services were applied |
-| `client` | group | `name` (text), `logo` (upload, optional), `isAnonymized` (checkbox) |
-| `heroImage` | upload (media) | Must be project-relevant — not stock |
-| `problem` | richText | The challenge the client faced |
-| `solution` | richText | What SEQTEK did |
-| `impact` | richText | Results and outcomes |
-| `metrics` | array | Objects with `number` (text), `label` (text), `context` (text) |
-| `technologies` | array of text | Tag list (e.g., ".NET", "React", "AWS") |
-| `testimonial` | relationship -> testimonials | Optional — client quote about this engagement |
-| `relatedCaseStudies` | relationship -> caseStudies (hasMany) | Max 3 |
-| `seo` | group | metaTitle, metaDescription, ogImage |
-| `publishedAt` | date | |
-| `status` | select | `draft`, `published` |
+| Field                | Type                                  | Notes                                                               |
+| -------------------- | ------------------------------------- | ------------------------------------------------------------------- |
+| `title`              | text                                  | Required                                                            |
+| `slug`               | text                                  | Auto-generated from title                                           |
+| `subtitle`           | text                                  | Short outcome-focused tagline                                       |
+| `industry`           | relationship -> industries            | Required                                                            |
+| `services`           | relationship -> services (hasMany)    | Which SEQTEK services were applied                                  |
+| `client`             | group                                 | `name` (text), `logo` (upload, optional), `isAnonymized` (checkbox) |
+| `heroImage`          | upload (media)                        | Must be project-relevant — not stock                                |
+| `problem`            | richText                              | The challenge the client faced                                      |
+| `solution`           | richText                              | What SEQTEK did                                                     |
+| `impact`             | richText                              | Results and outcomes                                                |
+| `metrics`            | array                                 | Objects with `number` (text), `label` (text), `context` (text)      |
+| `technologies`       | array of text                         | Tag list (e.g., ".NET", "React", "AWS")                             |
+| `testimonial`        | relationship -> testimonials          | Optional — client quote about this engagement                       |
+| `relatedCaseStudies` | relationship -> caseStudies (hasMany) | Max 3                                                               |
+| `seo`                | group                                 | metaTitle, metaDescription, ogImage                                 |
+| `publishedAt`        | date                                  |                                                                     |
+| `status`             | select                                | `draft`, `published`                                                |
 
 #### `services`
+
 Individual service pages at `/services/[pillar]/[slug]`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `title` | text | e.g., "Change Management & Transformation" |
-| `slug` | text | Auto-generated |
-| `pillar` | relationship -> servicePillars | Which of the 3 pillars this belongs to |
-| `description` | richText | Detailed service description (800-1200 words target) |
-| `approach` | richText | Methodology / how SEQTEK delivers this service |
-| `deliverables` | array of text | Bulleted list of what the client receives |
-| `icon` | text | Icon identifier for card displays |
-| `relatedCaseStudies` | relationship -> caseStudies (hasMany) | |
-| `faq` | array | Objects with `question` (text), `answer` (richText) |
-| `seo` | group | |
-| `order` | number | Display ordering within pillar |
-| `status` | select | `draft`, `published` |
+| Field                | Type                                  | Notes                                                |
+| -------------------- | ------------------------------------- | ---------------------------------------------------- |
+| `title`              | text                                  | e.g., "Change Management & Transformation"           |
+| `slug`               | text                                  | Auto-generated                                       |
+| `pillar`             | relationship -> servicePillars        | Which of the 3 pillars this belongs to               |
+| `description`        | richText                              | Detailed service description (800-1200 words target) |
+| `approach`           | richText                              | Methodology / how SEQTEK delivers this service       |
+| `deliverables`       | array of text                         | Bulleted list of what the client receives            |
+| `icon`               | text                                  | Icon identifier for card displays                    |
+| `relatedCaseStudies` | relationship -> caseStudies (hasMany) |                                                      |
+| `faq`                | array                                 | Objects with `question` (text), `answer` (richText)  |
+| `seo`                | group                                 |                                                      |
+| `order`              | number                                | Display ordering within pillar                       |
+| `status`             | select                                | `draft`, `published`                                 |
 
 #### `servicePillars`
+
 The 3 top-level groupings at `/services/[slug]`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `title` | text | "Organizational Strategy", "Technology & Data", "AI & Automation" |
-| `slug` | text | |
-| `description` | richText | Pillar overview |
-| `heroImage` | upload (media) | |
-| `seo` | group | |
-| `order` | number | Display ordering (1, 2, 3) |
+| Field         | Type           | Notes                                                             |
+| ------------- | -------------- | ----------------------------------------------------------------- |
+| `title`       | text           | "Organizational Strategy", "Technology & Data", "AI & Automation" |
+| `slug`        | text           |                                                                   |
+| `description` | richText       | Pillar overview                                                   |
+| `heroImage`   | upload (media) |                                                                   |
+| `seo`         | group          |                                                                   |
+| `order`       | number         | Display ordering (1, 2, 3)                                        |
 
 #### `teamMembers`
+
 Team bios for `/about/team` and blog post authorship.
 
-| Field | Type | Notes |
-|---|---|---|
-| `name` | text | Full name |
-| `slug` | text | |
-| `title` | text | Job title (e.g., "CEO") |
-| `role` | text | 1-sentence role description |
-| `photo` | upload (media) | Professional headshot — required |
-| `bio` | richText | 200-350 words for leadership, 75-150 for others |
-| `expertise` | array of text | Areas of expertise |
-| `certifications` | array of text | PMP, AWS, PROSCI, etc. |
-| `education` | array | Objects with `degree` (text), `institution` (text) |
-| `linkedinUrl` | text | |
-| `email` | text | Optional |
-| `personalFacts` | array of text | 1-2 humanizing details |
-| `quote` | textarea | Personal philosophy quote |
-| `isLeadership` | checkbox | Controls featured display |
-| `order` | number | Display ordering |
+| Field            | Type           | Notes                                              |
+| ---------------- | -------------- | -------------------------------------------------- |
+| `name`           | text           | Full name                                          |
+| `slug`           | text           |                                                    |
+| `title`          | text           | Job title (e.g., "CEO")                            |
+| `role`           | text           | 1-sentence role description                        |
+| `photo`          | upload (media) | Professional headshot — required                   |
+| `bio`            | richText       | 200-350 words for leadership, 75-150 for others    |
+| `expertise`      | array of text  | Areas of expertise                                 |
+| `certifications` | array of text  | PMP, AWS, PROSCI, etc.                             |
+| `education`      | array          | Objects with `degree` (text), `institution` (text) |
+| `linkedinUrl`    | text           |                                                    |
+| `email`          | text           | Optional                                           |
+| `personalFacts`  | array of text  | 1-2 humanizing details                             |
+| `quote`          | textarea       | Personal philosophy quote                          |
+| `isLeadership`   | checkbox       | Controls featured display                          |
+| `order`          | number         | Display ordering                                   |
 
 #### `testimonials`
+
 Full-attribution testimonials used across the site.
 
-| Field | Type | Notes |
-|---|---|---|
-| `quote` | textarea | The testimonial text |
-| `personName` | text | Full name (NOT first name + initial) |
-| `personTitle` | text | Job title |
-| `company` | text | Company name |
-| `photo` | upload (media) | Headshot |
-| `caseStudy` | relationship -> caseStudies | Optional link to related case study |
-| `isActive` | checkbox | Controls visibility |
+| Field         | Type                        | Notes                                |
+| ------------- | --------------------------- | ------------------------------------ |
+| `quote`       | textarea                    | The testimonial text                 |
+| `personName`  | text                        | Full name (NOT first name + initial) |
+| `personTitle` | text                        | Job title                            |
+| `company`     | text                        | Company name                         |
+| `photo`       | upload (media)              | Headshot                             |
+| `caseStudy`   | relationship -> caseStudies | Optional link to related case study  |
+| `isActive`    | checkbox                    | Controls visibility                  |
 
 #### `workshops`
+
 Touchstone Workshop pages at `/touchstone-workshops/[slug]`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `title` | text | e.g., "Five Dysfunctions Workshop" |
-| `slug` | text | |
-| `description` | richText | Full workshop description |
-| `format` | richText | Agenda, duration, format details |
-| `audience` | richText | Who this workshop is for |
-| `deliverables` | array of text | What participants leave with |
-| `facilitator` | relationship -> teamMembers | |
-| `testimonial` | relationship -> testimonials | From a past participant |
-| `order` | number | Sequence in the 3-workshop progression |
-| `seo` | group | |
+| Field          | Type                         | Notes                                  |
+| -------------- | ---------------------------- | -------------------------------------- |
+| `title`        | text                         | e.g., "Five Dysfunctions Workshop"     |
+| `slug`         | text                         |                                        |
+| `description`  | richText                     | Full workshop description              |
+| `format`       | richText                     | Agenda, duration, format details       |
+| `audience`     | richText                     | Who this workshop is for               |
+| `deliverables` | array of text                | What participants leave with           |
+| `facilitator`  | relationship -> teamMembers  |                                        |
+| `testimonial`  | relationship -> testimonials | From a past participant                |
+| `order`        | number                       | Sequence in the 3-workshop progression |
+| `seo`          | group                        |                                        |
 
 #### `industries`
+
 Industry/vertical pages at `/industries/[slug]`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `title` | text | e.g., "Energy & Oil/Gas" |
-| `slug` | text | |
-| `description` | richText | Industry context and challenges |
-| `relevantServices` | relationship -> services (hasMany) | |
-| `clientLogos` | array of upload (media) | Industry-specific logos |
-| `seo` | group | |
+| Field              | Type                               | Notes                           |
+| ------------------ | ---------------------------------- | ------------------------------- |
+| `title`            | text                               | e.g., "Energy & Oil/Gas"        |
+| `slug`             | text                               |                                 |
+| `description`      | richText                           | Industry context and challenges |
+| `relevantServices` | relationship -> services (hasMany) |                                 |
+| `clientLogos`      | array of upload (media)            | Industry-specific logos         |
+| `seo`              | group                              |                                 |
 
 #### `locations`
+
 Market landing pages at `/consulting/[slug]`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `city` | text | e.g., "Tulsa" |
-| `slug` | text | e.g., "tulsa" |
-| `description` | richText | SEQTEK's presence in this market |
-| `address` | group | street, city, state, zip (if physical office) |
-| `hasOffice` | checkbox | |
-| `seo` | group | |
+| Field         | Type     | Notes                                         |
+| ------------- | -------- | --------------------------------------------- |
+| `city`        | text     | e.g., "Tulsa"                                 |
+| `slug`        | text     | e.g., "tulsa"                                 |
+| `description` | richText | SEQTEK's presence in this market              |
+| `address`     | group    | street, city, state, zip (if physical office) |
+| `hasOffice`   | checkbox |                                               |
+| `seo`         | group    |                                               |
 
 #### `media`
+
 Payload's built-in upload collection with S3 storage adapter.
 
-| Field | Type | Notes |
-|---|---|---|
-| `alt` | text | Required — accessibility and SEO. Validation enforced in schema. |
-| `caption` | text | Optional |
+| Field     | Type | Notes                                                            |
+| --------- | ---- | ---------------------------------------------------------------- |
+| `alt`     | text | Required — accessibility and SEO. Validation enforced in schema. |
+| `caption` | text | Optional                                                         |
 
 #### `categories`
+
 Blog post categories.
 
-| Field | Type | Notes |
-|---|---|---|
+| Field   | Type | Notes                                    |
+| ------- | ---- | ---------------------------------------- |
 | `title` | text | e.g., "AI Strategy", "Change Management" |
-| `slug` | text | |
+| `slug`  | text |                                          |
 
 Access: Public read (no draft status on categories). Create/update requires admin or editor. Delete requires admin.
 
 ### Globals (Singletons)
 
 #### `siteSettings`
+
 Company-wide settings edited in one place, used across the site.
 
-| Field | Type | Notes |
-|---|---|---|
-| `companyName` | text | "SEQTEK" |
-| `tagline` | text | |
-| `phone` | text | |
-| `email` | text | |
-| `address` | group | street, city, state, zip |
-| `socialLinks` | group | linkedinUrl, twitterUrl, facebookUrl |
-| `footerText` | text | Copyright line |
-| `stats` | array | Objects with `number` (text), `label` (text), `suffix` (text) — e.g., "25+", "Years", "" |
+| Field         | Type  | Notes                                                                                    |
+| ------------- | ----- | ---------------------------------------------------------------------------------------- |
+| `companyName` | text  | "SEQTEK"                                                                                 |
+| `tagline`     | text  |                                                                                          |
+| `phone`       | text  |                                                                                          |
+| `email`       | text  |                                                                                          |
+| `address`     | group | street, city, state, zip                                                                 |
+| `socialLinks` | group | linkedinUrl, twitterUrl, facebookUrl                                                     |
+| `footerText`  | text  | Copyright line                                                                           |
+| `stats`       | array | Objects with `number` (text), `label` (text), `suffix` (text) — e.g., "25+", "Years", "" |
 
 #### `navigation`
+
 Controls the site navigation structure.
 
-| Field | Type | Notes |
-|---|---|---|
-| `mainNav` | array | Objects with `label` (text), `url` (text), `children` (array) |
-| `footerNav` | array | Same structure |
-| `ctaButton` | group | `label` (text), `url` (text) — the nav CTA button |
+| Field       | Type  | Notes                                                         |
+| ----------- | ----- | ------------------------------------------------------------- |
+| `mainNav`   | array | Objects with `label` (text), `url` (text), `children` (array) |
+| `footerNav` | array | Same structure                                                |
+| `ctaButton` | group | `label` (text), `url` (text) — the nav CTA button             |
 
 #### `homepage`
+
 Homepage-specific content.
 
-| Field | Type | Notes |
-|---|---|---|
-| `hero` | group | headline, subheadline, backgroundImage, cta |
-| `stats` | relationship -> siteSettings.stats | Or inline |
-| `featuredCaseStudy` | relationship -> caseStudies | Highlighted on homepage |
-| `brandTeaser` | group | headline, body (short Sequoyah teaser), linkUrl |
-| `clientLogos` | array of upload (media) | Logo bar |
-| `featuredTestimonials` | relationship -> testimonials (hasMany) | Max 3 |
+| Field                  | Type                                   | Notes                                           |
+| ---------------------- | -------------------------------------- | ----------------------------------------------- |
+| `hero`                 | group                                  | headline, subheadline, backgroundImage, cta     |
+| `stats`                | relationship -> siteSettings.stats     | Or inline                                       |
+| `featuredCaseStudy`    | relationship -> caseStudies            | Highlighted on homepage                         |
+| `brandTeaser`          | group                                  | headline, body (short Sequoyah teaser), linkUrl |
+| `clientLogos`          | array of upload (media)                | Logo bar                                        |
+| `featuredTestimonials` | relationship -> testimonials (hasMany) | Max 3                                           |
 
 ---
 
@@ -286,32 +302,32 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 
 **Fallback revalidation:** Time-based ISR acts as a safety net in case the on-demand hook fails. Set conservatively — not for freshness, just for resilience.
 
-| Route | Strategy | Fallback Revalidate | Notes |
-|---|---|---|---|
-| `/` | ISR | 3600s (1hr) | Homepage — changes infrequently |
-| `/about`, `/about/*` | ISR | 3600s | Rarely changes |
-| `/services` | ISR | 3600s | Overview page |
-| `/services/[pillar]` | ISR | 3600s | Pillar landing pages |
-| `/services/[pillar]/[service]` | ISR | 3600s | Individual services |
-| `/case-studies` | ISR | 3600s | Listing + individual |
-| `/case-studies/[slug]` | ISR | 3600s | Individual case studies |
-| `/insights` | ISR | 3600s | Blog listing |
-| `/insights/[slug]` | ISR | 3600s | Individual posts |
-| `/touchstone-workshops` | ISR | 3600s | Workshop landing |
-| `/touchstone-workshops/[slug]` | ISR | 3600s | Individual workshops |
-| `/industries/[slug]` | ISR | 3600s | Industry pages |
-| `/consulting/[market]` | ISR | 3600s | Market landing pages |
-| `/contact` | Static | N/A | Form is client-side (HubSpot) |
-| `/resources/organizational-maturity-assessment` | Static | N/A | ScoreApp link/embed |
-| `/privacy-policy` | ISR | 86400s (24hr) | |
-| `/admin/[[...segments]]` | SSR (no cache) | N/A | Payload admin panel — authenticated only |
-| `/api/*` | SSR | N/A | Payload API routes + webhook handlers |
-| `/sitemap.xml` | ISR | 3600s | Dynamic from Payload content |
-| `/robots.txt` | Static | N/A | |
+| Route                                           | Strategy       | Fallback Revalidate | Notes                                    |
+| ----------------------------------------------- | -------------- | ------------------- | ---------------------------------------- |
+| `/`                                             | ISR            | 3600s (1hr)         | Homepage — changes infrequently          |
+| `/about`, `/about/*`                            | ISR            | 3600s               | Rarely changes                           |
+| `/services`                                     | ISR            | 3600s               | Overview page                            |
+| `/services/[pillar]`                            | ISR            | 3600s               | Pillar landing pages                     |
+| `/services/[pillar]/[service]`                  | ISR            | 3600s               | Individual services                      |
+| `/case-studies`                                 | ISR            | 3600s               | Listing + individual                     |
+| `/case-studies/[slug]`                          | ISR            | 3600s               | Individual case studies                  |
+| `/insights`                                     | ISR            | 3600s               | Blog listing                             |
+| `/insights/[slug]`                              | ISR            | 3600s               | Individual posts                         |
+| `/touchstone-workshops`                         | ISR            | 3600s               | Workshop landing                         |
+| `/touchstone-workshops/[slug]`                  | ISR            | 3600s               | Individual workshops                     |
+| `/industries/[slug]`                            | ISR            | 3600s               | Industry pages                           |
+| `/consulting/[market]`                          | ISR            | 3600s               | Market landing pages                     |
+| `/contact`                                      | Static         | N/A                 | Form is client-side (HubSpot)            |
+| `/resources/organizational-maturity-assessment` | Static         | N/A                 | ScoreApp link/embed                      |
+| `/privacy-policy`                               | ISR            | 86400s (24hr)       |                                          |
+| `/admin/[[...segments]]`                        | SSR (no cache) | N/A                 | Payload admin panel — authenticated only |
+| `/api/*`                                        | SSR            | N/A                 | Payload API routes + webhook handlers    |
+| `/sitemap.xml`                                  | ISR            | 3600s               | Dynamic from Payload content             |
+| `/robots.txt`                                   | Static         | N/A                 |                                          |
 
 ### On-Demand Revalidation
 
-Payload's `afterChange` hook calls `revalidateTag()` directly within the same Node process — no external webhook needed. When an editor publishes a case study, the hook revalidates the ISR cache on the origin *and* issues a targeted CloudFront invalidation for the affected paths (e.g., `/case-studies/the-slug` + `/case-studies`). Content updates propagate to all edge locations immediately.
+Payload's `afterChange` hook calls `revalidateTag()` directly within the same Node process — no external webhook needed. When an editor publishes a case study, the hook revalidates the ISR cache on the origin _and_ issues a targeted CloudFront invalidation for the affected paths (e.g., `/case-studies/the-slug` + `/case-studies`). Content updates propagate to all edge locations immediately.
 
 For external integrations that need to trigger revalidation (e.g., a CI pipeline), the `/api/revalidate` endpoint accepts POST requests secured with a shared secret (`REVALIDATION_SECRET`). Requests without a valid secret are rejected with 401.
 
@@ -319,15 +335,15 @@ For external integrations that need to trigger revalidation (e.g., a CI pipeline
 
 ISR revalidation only updates the page cache on the EC2 origin. CloudFront edge caches sit in front of the ALB and will continue serving stale content until their TTL expires. Explicit cache behaviors ensure each route type gets the right caching strategy:
 
-| Path Pattern | Origin | Cache Policy | TTL | Notes |
-|---|---|---|---|---|
-| `/_next/static/*` | ALB | Long-lived | 1 year (immutable) | Content-hashed by Next.js — new deploys use new URLs |
-| `/media/*` | S3 bucket | Long-lived | 1 year | Versioning handled by S3 object keys |
-| `/admin/*` | ALB | `CachingDisabled` | None | Payload admin panel — authenticated, dynamic, never cached |
-| `/api/*` | ALB | `CachingDisabled` | None | Payload API routes, health checks, webhooks |
-| `Default (*)` | ALB | Short-lived | 60-120s | Public HTML pages — ISR-generated, short edge TTL |
+| Path Pattern      | Origin    | Cache Policy      | TTL                | Notes                                                      |
+| ----------------- | --------- | ----------------- | ------------------ | ---------------------------------------------------------- |
+| `/_next/static/*` | ALB       | Long-lived        | 1 year (immutable) | Content-hashed by Next.js — new deploys use new URLs       |
+| `/media/*`        | S3 bucket | Long-lived        | 1 year             | Versioning handled by S3 object keys                       |
+| `/admin/*`        | ALB       | `CachingDisabled` | None               | Payload admin panel — authenticated, dynamic, never cached |
+| `/api/*`          | ALB       | `CachingDisabled` | None               | Payload API routes, health checks, webhooks                |
+| `Default (*)`     | ALB       | Short-lived       | 60-120s            | Public HTML pages — ISR-generated, short edge TTL          |
 
-**Content-publish invalidation:** When an editor publishes content, the Payload `afterChange` hook revalidates the ISR cache on the origin *and* issues a targeted CloudFront invalidation for the affected paths (e.g., `/case-studies/the-slug` + `/case-studies`). This eliminates edge staleness — editors see their content live immediately. The invalidation targets specific paths, not `/*`, so it stays well within the 1,000 free invalidation paths per month.
+**Content-publish invalidation:** When an editor publishes content, the Payload `afterChange` hook revalidates the ISR cache on the origin _and_ issues a targeted CloudFront invalidation for the affected paths (e.g., `/case-studies/the-slug` + `/case-studies`). This eliminates edge staleness — editors see their content live immediately. The invalidation targets specific paths, not `/*`, so it stays well within the 1,000 free invalidation paths per month.
 
 **Deploy-time invalidation:** The CI/CD pipeline issues a CloudFront invalidation for `/*` after each deploy to ensure new HTML and assets are served immediately.
 
@@ -474,7 +490,7 @@ CI/CD (GitHub Actions)
     ├── Build Docker image
     ├── Push to Amazon ECR
     └── Trigger ASG Instance Refresh (blue-green)
-    
+
 CloudFront (CDN + SSL termination)
     │  - ACM certificate (auto-renewing, zero maintenance)
     │  - Edge caching for static assets and ISR pages
@@ -599,11 +615,11 @@ The Instance Refresh process: ASG launches a new instance with the updated launc
 
 ### Branch Strategy & Environments
 
-| Branch | Deploys To | Database | Purpose |
-|---|---|---|---|
-| `main` | Production EC2 (`seqtek.com`) | `seqtek_prod` on RDS | Stable, reviewed code only |
-| `staging` | Staging EC2 (staging subdomain) | `seqtek_staging` on RDS | Pre-production testing |
-| feature branches | Local development | Local Postgres (Docker Compose) | Development |
+| Branch           | Deploys To                      | Database                        | Purpose                    |
+| ---------------- | ------------------------------- | ------------------------------- | -------------------------- |
+| `main`           | Production EC2 (`seqtek.com`)   | `seqtek_prod` on RDS            | Stable, reviewed code only |
+| `staging`        | Staging EC2 (staging subdomain) | `seqtek_staging` on RDS         | Pre-production testing     |
+| feature branches | Local development               | Local Postgres (Docker Compose) | Development                |
 
 Staging shares the RDS instance with production but uses a separate logical database. Connection limits are enforced per-database (`ALTER ROLE ... CONNECTION LIMIT`) to prevent staging from starving production. Development runs against a local Postgres instance via Docker Compose — no risk to RDS resources, and developers don't need VPN access or RDS credentials to work on features. Each deployed environment has its own S3 bucket to prevent media collisions.
 
@@ -652,22 +668,23 @@ The repo is public on GitHub. This is standard for marketing sites and consisten
 
 All secrets and configuration are managed via environment variables, never committed to the repo.
 
-| Variable | Scope | Classification | Purpose |
-|---|---|---|---|
-| `DATABASE_URL` | Server | **Secret** | Postgres connection string (includes credentials) |
-| `PAYLOAD_SECRET` | Server | **Secret** | Payload encryption key for auth tokens |
-| `S3_BUCKET` | Server | Config | S3 bucket name |
-| `S3_REGION` | Server | Config | AWS region |
-| `S3_BUCKET_HOSTNAME` | Server | Config | For next/image remotePatterns |
-| `REVALIDATION_SECRET` | Server | **Secret** | Validates webhook requests |
-| `NEXT_PUBLIC_SITE_URL` | Client | Public | Canonical URL (`https://seqtek.com`) |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | Client | Public | HubSpot portal (8504846) |
-| `NEXT_PUBLIC_GTM_ID` | Client | Public | GTM container ID |
-| `NEXT_PUBLIC_SCOREAPP_URL` | Client | Public | ScoreApp assessment URL |
+| Variable                        | Scope  | Classification | Purpose                                           |
+| ------------------------------- | ------ | -------------- | ------------------------------------------------- |
+| `DATABASE_URL`                  | Server | **Secret**     | Postgres connection string (includes credentials) |
+| `PAYLOAD_SECRET`                | Server | **Secret**     | Payload encryption key for auth tokens            |
+| `S3_BUCKET`                     | Server | Config         | S3 bucket name                                    |
+| `S3_REGION`                     | Server | Config         | AWS region                                        |
+| `S3_BUCKET_HOSTNAME`            | Server | Config         | For next/image remotePatterns                     |
+| `REVALIDATION_SECRET`           | Server | **Secret**     | Validates webhook requests                        |
+| `NEXT_PUBLIC_SITE_URL`          | Client | Public         | Canonical URL (`https://seqtek.com`)              |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | Client | Public         | HubSpot portal (8504846)                          |
+| `NEXT_PUBLIC_GTM_ID`            | Client | Public         | GTM container ID                                  |
+| `NEXT_PUBLIC_SCOREAPP_URL`      | Client | Public         | ScoreApp assessment URL                           |
 
 **S3 authentication:** No static AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`). The EC2 instance profile provides S3 access via IAM role. The container reaches the instance metadata service (IMDSv2, hop limit 2) to auto-discover and auto-rotate credentials. Payload's S3 storage adapter uses the default AWS credential chain — no configuration needed beyond the bucket name and region.
 
 **Rules:**
+
 - `.env.local` and all `.env*.local` files are in `.gitignore` (Next.js default)
 - `.env.example` is committed with variable names only, no values
 - All `NEXT_PUBLIC_*` vars are intentionally public (visible in client-side JS)
@@ -694,18 +711,18 @@ Every Payload collection has explicit access control functions:
 
 Draft content is never exposed to the public API or rendered on the public site without authentication.
 
-| Operation | Public | Editor | Admin |
-|---|---|---|---|
-| View published content | ✓ | ✓ | ✓ |
-| View drafts | — | ✓ | ✓ |
-| Create content | — | ✓ | ✓ |
-| Update own content | — | ✓ | ✓ |
-| Update others' content | — | ✓ | ✓ |
-| Publish content | — | ✓ | ✓ |
-| Schedule publish (future `publishedAt`) | — | ✓ | ✓ |
-| Delete content | — | — | ✓ |
-| Manage users | — | — | ✓ |
-| Access `/admin` | — | ✓ | ✓ |
+| Operation                               | Public | Editor | Admin |
+| --------------------------------------- | ------ | ------ | ----- |
+| View published content                  | ✓      | ✓      | ✓     |
+| View drafts                             | —      | ✓      | ✓     |
+| Create content                          | —      | ✓      | ✓     |
+| Update own content                      | —      | ✓      | ✓     |
+| Update others' content                  | —      | ✓      | ✓     |
+| Publish content                         | —      | ✓      | ✓     |
+| Schedule publish (future `publishedAt`) | —      | ✓      | ✓     |
+| Delete content                          | —      | —      | ✓     |
+| Manage users                            | —      | —      | ✓     |
+| Access `/admin`                         | —      | ✓      | ✓     |
 
 **Scheduled publishing:** Editors set a future `publishedAt` date on any draft. A Payload `beforeChange` hook enforces the invariant — if `publishedAt` is in the future, `status` is forced back to `draft` regardless of what the editor submitted. A scheduled job runs every 5 minutes (AWS EventBridge rule → API route trigger at `/api/cron/publish-scheduled`, secured with a shared secret matching the revalidation pattern) and queries for documents where `status = 'draft'` AND `publishedAt <= now()`. Matching documents are flipped to `published`, and the same `afterChange` revalidation path runs — ISR cache busts, CloudFront paths invalidate, content goes live. Editors get publish-at-a-time without standing up a separate scheduling service, and the invariant holds even if the cron misfires (a manual save will still respect the future date).
 
@@ -717,26 +734,26 @@ CSP is enforced via nonce-based policy generated per-request in Next.js middlewa
 
 **Allowlisted origins:**
 
-| Directive | Allowed Sources | Reason |
-|---|---|---|
-| `default-src` | `'self'` | Baseline restriction |
-| `script-src` | `'nonce-{random}'` `'strict-dynamic'` | Nonce-based trust propagation |
-| `style-src` | `'self'` on public routes; `'self' 'unsafe-inline'` on `/admin/*` | Tailwind compiles to static CSS — public pages don't need inline styles. The Payload admin's Lexical editor does need `'unsafe-inline'`, so the middleware applies the broader policy only when the request path begins with `/admin/`. |
-| `img-src` | `'self'` `data:` `*.hubspot.com` `*.hsforms.net` S3 hostname | CMS media + HubSpot form images |
-| `font-src` | `'self'` | Self-hosted fonts only |
-| `connect-src` | `'self'` `*.hubspot.com` `*.hs-analytics.net` `*.hsforms.net` `*.hs-banner.com` `*.usemessages.com` `*.googletagmanager.com` | Analytics + form submissions |
-| `frame-src` | `'self'` `*.hubspot.com` `*.hsforms.net` `meetings.hubspot.com` `*.hubspotusercontent.com` | HubSpot form + Meetings iframe embeds; Meetings static assets |
+| Directive     | Allowed Sources                                                                                                              | Reason                                                                                                                                                                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `default-src` | `'self'`                                                                                                                     | Baseline restriction                                                                                                                                                                                                                    |
+| `script-src`  | `'nonce-{random}'` `'strict-dynamic'`                                                                                        | Nonce-based trust propagation                                                                                                                                                                                                           |
+| `style-src`   | `'self'` on public routes; `'self' 'unsafe-inline'` on `/admin/*`                                                            | Tailwind compiles to static CSS — public pages don't need inline styles. The Payload admin's Lexical editor does need `'unsafe-inline'`, so the middleware applies the broader policy only when the request path begins with `/admin/`. |
+| `img-src`     | `'self'` `data:` `*.hubspot.com` `*.hsforms.net` S3 hostname                                                                 | CMS media + HubSpot form images                                                                                                                                                                                                         |
+| `font-src`    | `'self'`                                                                                                                     | Self-hosted fonts only                                                                                                                                                                                                                  |
+| `connect-src` | `'self'` `*.hubspot.com` `*.hs-analytics.net` `*.hsforms.net` `*.hs-banner.com` `*.usemessages.com` `*.googletagmanager.com` | Analytics + form submissions                                                                                                                                                                                                            |
+| `frame-src`   | `'self'` `*.hubspot.com` `*.hsforms.net` `meetings.hubspot.com` `*.hubspotusercontent.com`                                   | HubSpot form + Meetings iframe embeds; Meetings static assets                                                                                                                                                                           |
 
 ### HTTP Security Headers
 
 Applied to all routes via `next.config.ts`:
 
-| Header | Value | Purpose |
-|---|---|---|
-| `X-Frame-Options` | `DENY` | Prevents clickjacking |
-| `X-Content-Type-Options` | `nosniff` | Prevents MIME type sniffing |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | Controls referrer leakage |
-| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | Disables unused browser APIs |
+| Header                   | Value                                      | Purpose                      |
+| ------------------------ | ------------------------------------------ | ---------------------------- |
+| `X-Frame-Options`        | `DENY`                                     | Prevents clickjacking        |
+| `X-Content-Type-Options` | `nosniff`                                  | Prevents MIME type sniffing  |
+| `Referrer-Policy`        | `strict-origin-when-cross-origin`          | Controls referrer leakage    |
+| `Permissions-Policy`     | `camera=(), microphone=(), geolocation=()` | Disables unused browser APIs |
 
 ### Rate Limiting
 
@@ -767,17 +784,17 @@ The repo is public — a single accidental commit of credentials means they are 
 
 ## 7. Performance Targets
 
-| Metric | Target | Current (Wix) | How We Achieve It |
-|---|---|---|---|
-| Desktop LCP | <500ms | 1.7s | ISR static pages, self-hosted fonts, optimized images |
-| Mobile LCP | <2.0s | 7.8s | No Wix framework overhead, lazy-loaded third-party scripts, responsive images |
-| FCP | <1.0s | 0.7s desktop / 1.9s mobile | Font preloading, critical CSS inlined by Tailwind |
-| CLS | 0 | Unknown | Explicit image dimensions, no layout shift from fonts |
-| TBT | <100ms | 4ms desktop / 348ms mobile | Third-party scripts deferred (`afterInteractive`, `lazyOnload`) |
-| Lighthouse Performance | 95+ | 92 desktop / 66 mobile | All of the above |
-| Lighthouse Best Practices | 95+ | 54 | No Wix framework overhead, proper security headers |
-| Lighthouse SEO | 95+ | 85 | Structured data, semantic HTML, meta tags |
-| Lighthouse Accessibility | 95+ | Unknown | WCAG 2.1 AA compliance |
+| Metric                    | Target | Current (Wix)              | How We Achieve It                                                             |
+| ------------------------- | ------ | -------------------------- | ----------------------------------------------------------------------------- |
+| Desktop LCP               | <500ms | 1.7s                       | ISR static pages, self-hosted fonts, optimized images                         |
+| Mobile LCP                | <2.0s  | 7.8s                       | No Wix framework overhead, lazy-loaded third-party scripts, responsive images |
+| FCP                       | <1.0s  | 0.7s desktop / 1.9s mobile | Font preloading, critical CSS inlined by Tailwind                             |
+| CLS                       | 0      | Unknown                    | Explicit image dimensions, no layout shift from fonts                         |
+| TBT                       | <100ms | 4ms desktop / 348ms mobile | Third-party scripts deferred (`afterInteractive`, `lazyOnload`)               |
+| Lighthouse Performance    | 95+    | 92 desktop / 66 mobile     | All of the above                                                              |
+| Lighthouse Best Practices | 95+    | 54                         | No Wix framework overhead, proper security headers                            |
+| Lighthouse SEO            | 95+    | 85                         | Structured data, semantic HTML, meta tags                                     |
+| Lighthouse Accessibility  | 95+    | Unknown                    | WCAG 2.1 AA compliance                                                        |
 
 ### How to Hit These Numbers
 
@@ -801,22 +818,23 @@ The repo is public — a single accidental commit of credentials means they are 
 
 ### CloudWatch Alarms
 
-| Alarm | Metric | Threshold | Action |
-|---|---|---|---|
-| **5xx Error Rate** | ALB HTTPCode_Target_5XX | >5 in 5 minutes | SNS → email notification |
-| **Unhealthy Host** | ALB UnHealthyHostCount | >0 for 2 minutes | SNS → email notification |
-| **CPU Utilization** | EC2 CPUUtilization | >80% sustained 10 min | SNS → evaluate scaling |
-| **Memory Utilization** | EC2 (CloudWatch Agent) | >85% sustained 10 min | SNS → evaluate instance size |
-| **Disk Usage** | EC2 (CloudWatch Agent) | >80% | SNS → clean ISR cache or resize volume |
-| **RDS CPU** | RDS CPUUtilization | >80% sustained 10 min | SNS → evaluate instance class |
-| **RDS Free Storage** | RDS FreeStorageSpace | <2 GB | SNS → increase storage |
-| **RDS Connections** | RDS DatabaseConnections | >80% of max | SNS → investigate connection leaks |
+| Alarm                  | Metric                  | Threshold             | Action                                 |
+| ---------------------- | ----------------------- | --------------------- | -------------------------------------- |
+| **5xx Error Rate**     | ALB HTTPCode_Target_5XX | >5 in 5 minutes       | SNS → email notification               |
+| **Unhealthy Host**     | ALB UnHealthyHostCount  | >0 for 2 minutes      | SNS → email notification               |
+| **CPU Utilization**    | EC2 CPUUtilization      | >80% sustained 10 min | SNS → evaluate scaling                 |
+| **Memory Utilization** | EC2 (CloudWatch Agent)  | >85% sustained 10 min | SNS → evaluate instance size           |
+| **Disk Usage**         | EC2 (CloudWatch Agent)  | >80%                  | SNS → clean ISR cache or resize volume |
+| **RDS CPU**            | RDS CPUUtilization      | >80% sustained 10 min | SNS → evaluate instance class          |
+| **RDS Free Storage**   | RDS FreeStorageSpace    | <2 GB                 | SNS → increase storage                 |
+| **RDS Connections**    | RDS DatabaseConnections | >80% of max           | SNS → investigate connection leaks     |
 
 ### Application Logging
 
 The Node process writes to stdout/stderr. Docker captures container logs via the `json-file` or `awslogs` logging driver. The CloudWatch Agent forwards logs to CloudWatch Logs for centralized search and retention.
 
 Log levels:
+
 - **Error:** Unhandled exceptions, database failures, S3 upload errors
 - **Warn:** Failed login attempts, rate limit hits, revalidation failures
 - **Info:** Deployment events, process restarts, migration runs
@@ -835,13 +853,13 @@ If error volume or debugging complexity warrants it, add Sentry for application-
 
 ### Backups
 
-| Resource | Strategy | Retention | Recovery |
-|---|---|---|---|
-| **RDS PostgreSQL** | Automated daily snapshots + continuous transaction logs | 7 days | Point-in-time restore to any second within the retention window |
-| **S3 Media Bucket** | Versioning enabled on the bucket | 90-day lifecycle rule on non-current versions | Restore any previous version of an object |
-| **Docker Images** | ECR retains tagged images | Lifecycle policy: keep last 10 tagged images | Roll back by deploying a previous image tag |
-| **EC2 Instance** | Nothing to back up — instance is disposable | N/A | Launch template + Docker image + Parameter Store = fully reconstructable |
-| **ISR Cache** | Not backed up — regenerates on next request | N/A | Self-healing; cache warming script accelerates cold start |
+| Resource            | Strategy                                                | Retention                                     | Recovery                                                                 |
+| ------------------- | ------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------ |
+| **RDS PostgreSQL**  | Automated daily snapshots + continuous transaction logs | 7 days                                        | Point-in-time restore to any second within the retention window          |
+| **S3 Media Bucket** | Versioning enabled on the bucket                        | 90-day lifecycle rule on non-current versions | Restore any previous version of an object                                |
+| **Docker Images**   | ECR retains tagged images                               | Lifecycle policy: keep last 10 tagged images  | Roll back by deploying a previous image tag                              |
+| **EC2 Instance**    | Nothing to back up — instance is disposable             | N/A                                           | Launch template + Docker image + Parameter Store = fully reconstructable |
+| **ISR Cache**       | Not backed up — regenerates on next request             | N/A                                           | Self-healing; cache warming script accelerates cold start                |
 
 RDS automated backups are enabled at instance creation. The backup window should be set to a low-traffic period (e.g., 06:00–07:00 UTC). Manual snapshots can be taken before major migrations and retained indefinitely.
 
@@ -869,15 +887,15 @@ If the instance fails — hardware issue, OS crash, failed health check — the 
 
 ### Failure Scenarios
 
-| Scenario | Impact | Recovery | Time |
-|---|---|---|---|
-| **EC2 hardware failure** | Site down (CloudFront serves stale cache briefly) | ASG replaces instance automatically | ~3 minutes |
-| **Application crash** | Docker restart policy relaunches the container | Automatic (Docker `--restart=unless-stopped`) | ~10 seconds |
-| **Bad deploy** | New instance fails health check | ASG Instance Refresh aborts, old instance stays running | Zero impact — blue-green protects against this |
-| **RDS failure (single-AZ)** | Site errors on all DB-dependent pages | RDS restores from automated backup | ~15-30 minutes |
-| **RDS failure (multi-AZ)** | Brief interruption | Automatic failover to standby | ~1-2 minutes |
-| **S3 outage** | Media images broken, uploads fail | Wait for AWS resolution (99.999999999% durability) | Extremely rare |
-| **CloudFront outage** | Site unreachable | Wait for AWS resolution | Extremely rare |
+| Scenario                    | Impact                                            | Recovery                                                | Time                                           |
+| --------------------------- | ------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------- |
+| **EC2 hardware failure**    | Site down (CloudFront serves stale cache briefly) | ASG replaces instance automatically                     | ~3 minutes                                     |
+| **Application crash**       | Docker restart policy relaunches the container    | Automatic (Docker `--restart=unless-stopped`)           | ~10 seconds                                    |
+| **Bad deploy**              | New instance fails health check                   | ASG Instance Refresh aborts, old instance stays running | Zero impact — blue-green protects against this |
+| **RDS failure (single-AZ)** | Site errors on all DB-dependent pages             | RDS restores from automated backup                      | ~15-30 minutes                                 |
+| **RDS failure (multi-AZ)**  | Brief interruption                                | Automatic failover to standby                           | ~1-2 minutes                                   |
+| **S3 outage**               | Media images broken, uploads fail                 | Wait for AWS resolution (99.999999999% durability)      | Extremely rare                                 |
+| **CloudFront outage**       | Site unreachable                                  | Wait for AWS resolution                                 | Extremely rare                                 |
 
 ### RDS Multi-AZ Decision
 
@@ -918,14 +936,14 @@ Since this is an open-source portfolio piece, code quality must be exemplary.
 
 ## 11. Implementation Phases
 
-| Phase | Scope | Estimated Duration |
-|---|---|---|
-| **1. Foundation** | Next.js + Payload + Tailwind scaffold. Dockerfile + ECR repository. EC2 + ALB + CloudFront infrastructure. RDS + S3 provisioning. GitHub Actions CI/CD with blue-green deploys. Base layout components (Header, Footer, Nav). CSP middleware. HubSpot + GTM in root layout. CloudWatch alarms + health endpoint. | 1-2 weeks |
-| **2. Content Models** | All Payload collections and globals defined. Admin panel functional. Seed script imports audit data into Payload. | 1 week |
-| **3. Core Pages** | Homepage, About section (4 pages), Services (overview + 3 pillars + 15 services), Case Studies (listing + 8 pages), Contact + booking. | 2-3 weeks |
-| **4. Content & Blog** | Blog (listing + posts + categories), Touchstone Workshops (landing + 3 pages), Assessment landing page, Industry pages, Market landing pages. | 1-2 weeks |
-| **5. Polish** | SEO (structured data, sitemap, meta tags). Accessibility audit. Performance optimization. 301 redirects from old Wix URLs. Cookie consent flow. Cross-browser/device QA. | 1-2 weeks |
-| **6. Launch** | DNS cutover. Monitor errors/performance. Google Search Console submission. Redirect verification. CloudFront cache behavior validation. | 1 week |
+| Phase                 | Scope                                                                                                                                                                                                                                                                                                            | Estimated Duration |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **1. Foundation**     | Next.js + Payload + Tailwind scaffold. Dockerfile + ECR repository. EC2 + ALB + CloudFront infrastructure. RDS + S3 provisioning. GitHub Actions CI/CD with blue-green deploys. Base layout components (Header, Footer, Nav). CSP middleware. HubSpot + GTM in root layout. CloudWatch alarms + health endpoint. | 1-2 weeks          |
+| **2. Content Models** | All Payload collections and globals defined. Admin panel functional. Seed script imports audit data into Payload.                                                                                                                                                                                                | 1 week             |
+| **3. Core Pages**     | Homepage, About section (4 pages), Services (overview + 3 pillars + 15 services), Case Studies (listing + 8 pages), Contact + booking.                                                                                                                                                                           | 2-3 weeks          |
+| **4. Content & Blog** | Blog (listing + posts + categories), Touchstone Workshops (landing + 3 pages), Assessment landing page, Industry pages, Market landing pages.                                                                                                                                                                    | 1-2 weeks          |
+| **5. Polish**         | SEO (structured data, sitemap, meta tags). Accessibility audit. Performance optimization. 301 redirects from old Wix URLs. Cookie consent flow. Cross-browser/device QA.                                                                                                                                         | 1-2 weeks          |
+| **6. Launch**         | DNS cutover. Monitor errors/performance. Google Search Console submission. Redirect verification. CloudFront cache behavior validation.                                                                                                                                                                          | 1 week             |
 
 **Total engineering estimate: 7-11 weeks** (code only — content production runs in parallel and is the likely bottleneck).
 
@@ -937,13 +955,13 @@ Tests exist to protect load-bearing logic and catch regressions before they ship
 
 ### Test Pyramid
 
-| Tool | Purpose | Runtime |
-|---|---|---|
-| **Vitest** | Unit tests for Payload access functions, hooks, slug generation, metadata builders, structured data generators, utility modules | CI on every PR (gates merge to `main` via branch protection) |
-| **Playwright** | E2E flows — admin login, content publish + ISR revalidation, HubSpot form submission, public page rendering, 301 redirect verification | CI on every PR; nightly run on `main` against staging |
-| **axe-core** | Accessibility assertions wired into Playwright. Fails CI on any WCAG 2.2 AA violation | CI on every PR (inside Playwright suite) |
-| **Lighthouse CI** | Performance budgets matching §7 targets exactly | CI on every PR |
-| **`aws-cdk-lib/assertions`** | Infrastructure invariants (covered in §13) | CI on every PR |
+| Tool                         | Purpose                                                                                                                                | Runtime                                                      |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Vitest**                   | Unit tests for Payload access functions, hooks, slug generation, metadata builders, structured data generators, utility modules        | CI on every PR (gates merge to `main` via branch protection) |
+| **Playwright**               | E2E flows — admin login, content publish + ISR revalidation, HubSpot form submission, public page rendering, 301 redirect verification | CI on every PR; nightly run on `main` against staging        |
+| **axe-core**                 | Accessibility assertions wired into Playwright. Fails CI on any WCAG 2.2 AA violation                                                  | CI on every PR (inside Playwright suite)                     |
+| **Lighthouse CI**            | Performance budgets matching §7 targets exactly                                                                                        | CI on every PR                                               |
+| **`aws-cdk-lib/assertions`** | Infrastructure invariants (covered in §13)                                                                                             | CI on every PR                                               |
 
 Pre-commit runs gitleaks only — kept fast so commit cadence isn't punished. The full test suite (Vitest + Playwright + axe + Lighthouse) runs in CI on every pull request and gates merge to `main` via branch protection. Playwright runs against an ephemeral preview environment (`next start` against a disposable Postgres container and an S3 stub backed by the local filesystem). A nightly Playwright run hits the deployed staging environment to catch drift between code and infrastructure that PR-time tests can't see.
 
@@ -1005,12 +1023,12 @@ One CDK app deploys both production and staging environments via CDK context. `c
 
 ### CI/CD Integration
 
-| Trigger | CDK Step | Approval |
-|---|---|---|
-| **PR opened/updated** | `cdk synth` + `cdk diff --strict` posted as PR comment | None (read-only) |
-| **Merge to `main`** | Docker build/push to ECR, then `cdk deploy SeqtekProd*Compute --require-approval never` | None (compute only) |
-| **Network/data stack changes** | `cdk deploy SeqtekProdNetwork` or `SeqtekProdData` via `workflow_dispatch` | Manual approval in GitHub Environments |
-| **CDK assertion tests** | `vitest run infra/test/` | None (gating CI) |
+| Trigger                        | CDK Step                                                                                | Approval                               |
+| ------------------------------ | --------------------------------------------------------------------------------------- | -------------------------------------- |
+| **PR opened/updated**          | `cdk synth` + `cdk diff --strict` posted as PR comment                                  | None (read-only)                       |
+| **Merge to `main`**            | Docker build/push to ECR, then `cdk deploy SeqtekProd*Compute --require-approval never` | None (compute only)                    |
+| **Network/data stack changes** | `cdk deploy SeqtekProdNetwork` or `SeqtekProdData` via `workflow_dispatch`              | Manual approval in GitHub Environments |
+| **CDK assertion tests**        | `vitest run infra/test/`                                                                | None (gating CI)                       |
 
 Compute stack deploys are fully automated — they happen on every merge to `main` after the Docker build and ECR push. Network and data stack changes require a `workflow_dispatch` trigger with a manual approval gate. This matches the blast-radius split: deploying a new app version is routine, modifying the VPC or RDS instance is a planned operation.
 
@@ -1081,6 +1099,6 @@ Crawlers that ignore `Crawl-delay` or hammer `.md` endpoints in tight loops get 
 
 ### 14.6 What AICO is not
 
-- Not a justification for cloaking, content-negotiation tricks that serve different content to different bots, or any pattern Google would consider deceptive (per Search Central spam policy). The HTML and Markdown projections are the *same content* in different shapes — explicitly allowed.
+- Not a justification for cloaking, content-negotiation tricks that serve different content to different bots, or any pattern Google would consider deceptive (per Search Central spam policy). The HTML and Markdown projections are the _same content_ in different shapes — explicitly allowed.
 - Not a reason to add a separate "AI version" of pages with different copy for crawlers. One canonical content source, two render projections.
 - Not a substitute for SEO. SEO investment (structured data, internal linking, page performance, content quality) is what makes the citation surface valuable; AICO is what makes that surface efficient to crawl.

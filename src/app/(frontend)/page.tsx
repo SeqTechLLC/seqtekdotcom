@@ -33,7 +33,8 @@ export default async function HomePage() {
         <section data-testid="empty-state">
           <h1 className="text-4xl font-bold tracking-tight">No page yet</h1>
           <p className="mt-4 text-lg">
-            Create a page with slug <code className="rounded bg-gray-100 px-1.5 py-0.5">home</code> in{' '}
+            Create a page with slug <code className="rounded bg-gray-100 px-1.5 py-0.5">home</code>{' '}
+            in{' '}
             <Link className="text-blue-700 underline" href="/admin">
               /admin
             </Link>{' '}

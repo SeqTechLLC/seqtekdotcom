@@ -17,6 +17,7 @@ The HubSpot tracking script loads on every page via the root `layout.tsx`.
 **Script:** `//js.hs-scripts.com/8504846.js`
 
 **Loading strategy:** Next.js `<Script>` component with `strategy="afterInteractive"`. Never render-blocking. This single script includes:
+
 - HubSpot analytics
 - Cookie consent banner
 - Chat widget (HubSpot Messages)
@@ -25,6 +26,7 @@ The HubSpot tracking script loads on every page via the root `layout.tsx`.
 - Ad pixel bridge (`hsadspixel`)
 
 **Implementation:**
+
 ```
 Root Layout (layout.tsx)
   └── <Script src="//js.hs-scripts.com/8504846.js" strategy="afterInteractive" />
@@ -32,7 +34,7 @@ Root Layout (layout.tsx)
 
 No additional HubSpot scripts need to be loaded individually — the main tracking script bootstraps everything else based on portal configuration.
 
-**Ordering note:** The HubSpot tracking script and GTM both load with `afterInteractive`, so their exact load order is not deterministic. The GTM consent default state (`gtag('consent', 'default', { ... denied })`) must therefore be initialized via an inline `<head>` script *before* either third-party loads. See §2.2 for the snippet.
+**Ordering note:** The HubSpot tracking script and GTM both load with `afterInteractive`, so their exact load order is not deterministic. The GTM consent default state (`gtag('consent', 'default', { ... denied })`) must therefore be initialized via an inline `<head>` script _before_ either third-party loads. See §2.2 for the snippet.
 
 ### 1.2 Forms
 
@@ -49,14 +51,15 @@ SEQTEK's forms must look native to the site design, not like HubSpot iframe embe
 
 **Forms to build:**
 
-| Form | Location | Fields | HubSpot Form GUID |
-|---|---|---|---|
-| Contact | `/contact` | First name, last name, email, phone, inquiry type (dropdown), message | TBD — create in HubSpot |
-| Book a Call | `/contact/book-a-call` | HubSpot Meetings embed (see 1.4) | N/A (Meetings widget) |
-| Newsletter | Blog sidebar/footer | Email | TBD |
-| Workshop Inquiry | `/touchstone-workshops` | Name, email, company, workshop interest, message | TBD |
+| Form             | Location                | Fields                                                                | HubSpot Form GUID       |
+| ---------------- | ----------------------- | --------------------------------------------------------------------- | ----------------------- |
+| Contact          | `/contact`              | First name, last name, email, phone, inquiry type (dropdown), message | TBD — create in HubSpot |
+| Book a Call      | `/contact/book-a-call`  | HubSpot Meetings embed (see 1.4)                                      | N/A (Meetings widget)   |
+| Newsletter       | Blog sidebar/footer     | Email                                                                 | TBD                     |
+| Workshop Inquiry | `/touchstone-workshops` | Name, email, company, workshop interest, message                      | TBD                     |
 
 **Form submission flow:**
+
 1. User fills out custom React form (client-side validation with Zod or native)
 2. On submit, POST to HubSpot Forms API
 3. HubSpot creates/updates a contact and triggers any configured workflows
@@ -72,24 +75,25 @@ Every form on the site goes through the same submission state machine and error 
 **Client-side validation:** Zod schemas per form (or React Hook Form with the Zod resolver). All fields validate before submit fires; the submit button stays disabled until the schema passes. Field-level errors render inline as the user types or on blur.
 
 **Submission state machine:** `idle → submitting → (success | error)`.
+
 - `submitting`: submit button disabled, spinner visible, fields locked.
 - `success`: form replaced with a confirmation block (clear next-step copy, no residual form UI).
 - `error`: form values preserved, inline error message rendered above the submit button with a retry button. The user never has to re-enter what they typed.
 
 **Error classes and copy:**
 
-| Class | Trigger | Auto-retry | User-facing copy |
-|---|---|---|---|
-| `4xx` | HubSpot Forms API returns 400/422 (validation) | No — a 4xx will repeat | "Some information looks invalid. Please check the highlighted fields and try again." Server-returned field errors are mapped to inline field-level errors when the payload includes them. |
-| `5xx` | HubSpot Forms API returns 500–599 | Single retry, 1s backoff | "We couldn't reach our forms service right now. Please try again in a moment, or email contact@seqtek.com directly." A `mailto:contact@seqtek.com` link renders as a fallback action. |
-| `network` / `timeout` | Fetch reject, or no response within 15s | Same path as `5xx` | Same copy as 5xx. |
+| Class                 | Trigger                                        | Auto-retry               | User-facing copy                                                                                                                                                                          |
+| --------------------- | ---------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `4xx`                 | HubSpot Forms API returns 400/422 (validation) | No — a 4xx will repeat   | "Some information looks invalid. Please check the highlighted fields and try again." Server-returned field errors are mapped to inline field-level errors when the payload includes them. |
+| `5xx`                 | HubSpot Forms API returns 500–599              | Single retry, 1s backoff | "We couldn't reach our forms service right now. Please try again in a moment, or email contact@seqtek.com directly." A `mailto:contact@seqtek.com` link renders as a fallback action.     |
+| `network` / `timeout` | Fetch reject, or no response within 15s        | Same path as `5xx`       | Same copy as 5xx.                                                                                                                                                                         |
 
 **GTM dataLayer events** pushed from the submission lifecycle:
 
-| Event | Payload | When |
-|---|---|---|
-| `form_submission_attempt` | `{ formId }` | On submit fire, before the network call |
-| `form_submission_success` | `{ formId }` | On 200 response from HubSpot |
+| Event                     | Payload                                                            | When                                                 |
+| ------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------- |
+| `form_submission_attempt` | `{ formId }`                                                       | On submit fire, before the network call              |
+| `form_submission_success` | `{ formId }`                                                       | On 200 response from HubSpot                         |
 | `form_submission_failure` | `{ formId, errorClass: '4xx' \| '5xx' \| 'network' \| 'timeout' }` | On any terminal failure (after retry, if applicable) |
 
 **Data handling:** No payment or sensitive data is collected by any form on this site. The contact, newsletter, and workshop-inquiry forms capture name, email, company, and message only — no SSN, no payment, no health data. This constrains the failure surface meaningfully: a failed submission can be safely retried client-side without secondary-storage concerns.
@@ -99,6 +103,7 @@ Every form on the site goes through the same submission state machine and error 
 The HubSpot Messages chat widget loads automatically with the tracking script. Fully configured in the HubSpot portal — no custom code needed.
 
 Configuration in HubSpot:
+
 - Target pages (show on all or specific pages)
 - Availability hours
 - Chatflows (bot or live agent)
@@ -121,6 +126,7 @@ For the `/contact/book-a-call` page:
 HubSpot provides a cookie consent banner as part of the tracking script (`//js.hs-banner.com/v2/8504846/banner.js`, loaded automatically by the main tracking script).
 
 **Configuration in HubSpot portal (Privacy & Consent settings):**
+
 - Cookie categorization: Necessary, Analytics, Advertising, Functionality
 - Consent collection: Opt-in (GDPR-style) or notice-only (depends on legal requirements)
 - Banner appearance: Customizable colors and text — should match site brand
@@ -165,6 +171,7 @@ GTM must integrate with HubSpot's cookie consent banner to conditionally fire pi
 ```
 
 **GTM Consent Mode defaults:**
+
 - `analytics_storage`: denied
 - `ad_storage`: denied
 - `ad_user_data`: denied
@@ -175,8 +182,10 @@ GTM must integrate with HubSpot's cookie consent banner to conditionally fire pi
 
 ```html
 <script nonce="{REQUEST_NONCE}">
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){ dataLayer.push(arguments); }
+  window.dataLayer = window.dataLayer || []
+  function gtag() {
+    dataLayer.push(arguments)
+  }
   gtag('consent', 'default', {
     analytics_storage: 'denied',
     ad_storage: 'denied',
@@ -184,7 +193,7 @@ GTM must integrate with HubSpot's cookie consent banner to conditionally fire pi
     ad_personalization: 'denied',
     functionality_storage: 'granted',
     wait_for_update: 500,
-  });
+  })
 </script>
 ```
 
@@ -199,15 +208,15 @@ The consent default script (above) initializes `dataLayer` and the `gtag` shim. 
 ```html
 <script nonce="{REQUEST_NONCE}">
   window.addEventListener('__hs_opt_in_consent', (e) => {
-    const c = (e && e.detail) || {};
+    const c = (e && e.detail) || {}
     gtag('consent', 'update', {
       analytics_storage: c.analytics ? 'granted' : 'denied',
       ad_storage: c.advertisement ? 'granted' : 'denied',
       ad_user_data: c.advertisement ? 'granted' : 'denied',
       ad_personalization: c.advertisement ? 'granted' : 'denied',
-      functionality_storage: 'granted'
-    });
-  });
+      functionality_storage: 'granted',
+    })
+  })
 </script>
 ```
 
@@ -222,10 +231,10 @@ Registering the listener inline (before GTM and HubSpot load under `afterInterac
 
 **Test plan** — exercise three flows in staging via the GTM Preview/Debug mode:
 
-| Flow | Expected pixel-fire pattern |
-|---|---|
-| Accept all | Analytics + all ad-storage tags fire after the consent update event |
-| Deny all | No analytics, no ad-storage tags fire; functionality-only tags allowed |
+| Flow                                      | Expected pixel-fire pattern                                                               |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Accept all                                | Analytics + all ad-storage tags fire after the consent update event                       |
+| Deny all                                  | No analytics, no ad-storage tags fire; functionality-only tags allowed                    |
 | Customize (analytics yes, advertising no) | Analytics fires; Meta/LinkedIn/Google Ads tags held; no ad-storage beacons leave the page |
 
 Each scenario should be verified in the GTM Debug pane (tag fire/not-fire status) and corroborated against Network tab — no pixel host should appear in network traffic for the Deny flow.
@@ -233,6 +242,7 @@ Each scenario should be verified in the GTM Debug pane (tag fire/not-fire status
 ### 2.3 Managed Pixels
 
 All tracking pixels are configured INSIDE GTM, not in the Next.js codebase. This means:
+
 - Pixel scripts never appear in source code
 - Marketing can add/modify pixels without code deploys
 - Consent requirements are configured per tag in GTM
@@ -240,18 +250,18 @@ All tracking pixels are configured INSIDE GTM, not in the Next.js codebase. This
 
 **Pixels managed in GTM:**
 
-| Pixel | Count | Consent Requirement | Notes |
-|---|---|---|---|
-| Meta Pixel (Tulsa A) | 1 | ad_storage | A/B test variant |
-| Meta Pixel (Tulsa B) | 1 | ad_storage | A/B test variant |
-| Meta Pixel (OKC A) | 1 | ad_storage | |
-| Meta Pixel (OKC B) | 1 | ad_storage | |
-| Meta Pixel (NW Arkansas A) | 1 | ad_storage | |
-| Meta Pixel (NW Arkansas B) | 1 | ad_storage | |
-| Meta Pixel (Kansas City A) | 1 | ad_storage | |
-| Meta Pixel (Kansas City B) | 1 | ad_storage | |
-| LinkedIn Insight Tag | 1 | ad_storage | |
-| Google Ads (AW-810041431) | 1 | ad_storage | Conversion tracking |
+| Pixel                      | Count | Consent Requirement | Notes               |
+| -------------------------- | ----- | ------------------- | ------------------- |
+| Meta Pixel (Tulsa A)       | 1     | ad_storage          | A/B test variant    |
+| Meta Pixel (Tulsa B)       | 1     | ad_storage          | A/B test variant    |
+| Meta Pixel (OKC A)         | 1     | ad_storage          |                     |
+| Meta Pixel (OKC B)         | 1     | ad_storage          |                     |
+| Meta Pixel (NW Arkansas A) | 1     | ad_storage          |                     |
+| Meta Pixel (NW Arkansas B) | 1     | ad_storage          |                     |
+| Meta Pixel (Kansas City A) | 1     | ad_storage          |                     |
+| Meta Pixel (Kansas City B) | 1     | ad_storage          |                     |
+| LinkedIn Insight Tag       | 1     | ad_storage          |                     |
+| Google Ads (AW-810041431)  | 1     | ad_storage          | Conversion tracking |
 
 **Action required:** Verify all pixel IDs from the current Wix site and configure them in the GTM container. The current site loads these directly — they need to be moved into GTM for proper consent management.
 
@@ -259,15 +269,15 @@ All tracking pixels are configured INSIDE GTM, not in the Next.js codebase. This
 
 Push custom events to GTM's dataLayer for conversion tracking:
 
-| Event | Trigger | Purpose |
-|---|---|---|
-| `form_submission` | Any HubSpot form submitted | Track lead conversions |
-| `contact_form_submit` | Contact form submitted | Primary conversion |
-| `booking_complete` | HubSpot Meetings booking | High-value conversion |
-| `assessment_start` | ScoreApp link clicked | Assessment funnel tracking |
-| `newsletter_signup` | Newsletter form submitted | Email list growth |
-| `case_study_view` | Case study page viewed | Content engagement |
-| `cta_click` | Any CTA button clicked | CTA effectiveness |
+| Event                 | Trigger                    | Purpose                    |
+| --------------------- | -------------------------- | -------------------------- |
+| `form_submission`     | Any HubSpot form submitted | Track lead conversions     |
+| `contact_form_submit` | Contact form submitted     | Primary conversion         |
+| `booking_complete`    | HubSpot Meetings booking   | High-value conversion      |
+| `assessment_start`    | ScoreApp link clicked      | Assessment funnel tracking |
+| `newsletter_signup`   | Newsletter form submitted  | Email list growth          |
+| `case_study_view`     | Case study page viewed     | Content engagement         |
+| `cta_click`           | Any CTA button clicked     | CTA effectiveness          |
 
 Implementation: Push to `window.dataLayer` from React event handlers. GTM triggers fire on these events and can route them to any configured pixel/tag.
 
@@ -284,6 +294,7 @@ Implementation: Push to `window.dataLayer` from React event handlers. GTM trigge
 The `/resources/organizational-maturity-assessment` page serves as a conversion-optimized landing page that explains the assessment and links out to ScoreApp.
 
 **Page structure:**
+
 1. What the assessment measures
 2. What the user gets back (report format, insights)
 3. How long it takes
@@ -296,6 +307,7 @@ The `/resources/organizational-maturity-assessment` page serves as a conversion-
 ### 3.2 Alternative: ScoreApp Embed
 
 If ScoreApp provides an embed/iframe option:
+
 - Embed below the explanatory content on the landing page
 - Keeps users on-site
 - Trade-off: iframe styling conflicts, additional load time, mobile responsiveness depends on ScoreApp
@@ -305,6 +317,7 @@ If ScoreApp provides an embed/iframe option:
 ### 3.3 ScoreApp + HubSpot Integration
 
 ScoreApp likely has a native HubSpot integration or webhook capability:
+
 - Assessment completions should create/update contacts in HubSpot
 - Assessment scores and results should be synced as contact properties
 - This is configured in ScoreApp's settings, not in the website code
@@ -314,6 +327,7 @@ ScoreApp likely has a native HubSpot integration or webhook capability:
 ### 3.4 Tracking
 
 When the "Take the Assessment" CTA is clicked:
+
 - Push `assessment_start` event to GTM dataLayer
 - GTM can fire conversion events on configured pixels
 - Track outbound click for attribution
@@ -362,6 +376,7 @@ This is the most important integration detail to get right. Incorrect consent ha
 ```
 
 **Key principles:**
+
 - No tracking fires before consent
 - Consent state persists across page navigations (HubSpot cookie)
 - Returning visitors with prior consent don't see the banner again
@@ -450,10 +465,10 @@ If SES is unreachable (network, throttle, regional outage), Payload's mailer log
 
 ### Environment Variables
 
-| Variable | Purpose | Example |
-|---|---|---|
-| `SES_REGION` | SES API region (verified identity must live here) | `us-east-1` |
-| `SES_FROM_ADDRESS` | Default From address | `no-reply@seqtek.com` |
+| Variable           | Purpose                                           | Example               |
+| ------------------ | ------------------------------------------------- | --------------------- |
+| `SES_REGION`       | SES API region (verified identity must live here) | `us-east-1`           |
+| `SES_FROM_ADDRESS` | Default From address                              | `no-reply@seqtek.com` |
 
 **No AWS credentials in env.** The EC2 instance profile carries an IAM policy granting `ses:SendEmail` and `ses:SendRawEmail` scoped to the verified identity ARN. Same credential discovery path as S3 (IMDSv2, hop limit 2 — see §7).
 
@@ -463,29 +478,29 @@ If SES is unreachable (network, throttle, regional outage), Payload's mailer log
 
 ### Server-Side Only (Never Exposed to Browser)
 
-| Variable | Purpose | Example Value |
-|---|---|---|
-| `DATABASE_URL` | Postgres connection string | `postgresql://user:pass@host:5432/seqtek` |
-| `PAYLOAD_SECRET` | Payload auth token encryption | Random 32+ character string |
-| `S3_BUCKET` | S3 bucket name for media | `seqtek-media` |
-| `S3_REGION` | AWS region | `us-east-1` |
-| `S3_BUCKET_HOSTNAME` | For next/image remotePatterns | `seqtek-media.s3.us-east-1.amazonaws.com` |
-| `REVALIDATION_SECRET` | Webhook validation | Random 32+ character string |
-| `SES_REGION` | AWS region for SES (verified identity lives here) | `us-east-1` |
-| `SES_FROM_ADDRESS` | Default From address for transactional email | `no-reply@seqtek.com` |
+| Variable              | Purpose                                           | Example Value                             |
+| --------------------- | ------------------------------------------------- | ----------------------------------------- |
+| `DATABASE_URL`        | Postgres connection string                        | `postgresql://user:pass@host:5432/seqtek` |
+| `PAYLOAD_SECRET`      | Payload auth token encryption                     | Random 32+ character string               |
+| `S3_BUCKET`           | S3 bucket name for media                          | `seqtek-media`                            |
+| `S3_REGION`           | AWS region                                        | `us-east-1`                               |
+| `S3_BUCKET_HOSTNAME`  | For next/image remotePatterns                     | `seqtek-media.s3.us-east-1.amazonaws.com` |
+| `REVALIDATION_SECRET` | Webhook validation                                | Random 32+ character string               |
+| `SES_REGION`          | AWS region for SES (verified identity lives here) | `us-east-1`                               |
+| `SES_FROM_ADDRESS`    | Default From address for transactional email      | `no-reply@seqtek.com`                     |
 
 **S3 authentication:** No static AWS credentials are used. In production and staging, the EC2 instance profile (IAM role) provides S3 access; the AWS SDK inside the container auto-discovers and rotates credentials via IMDSv2 (hop limit 2 — set in the launch template's metadata options so the container can reach IMDS through Docker's bridge network). Locally, Payload falls back to filesystem storage when the S3 env vars are absent — see [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md). `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are not used anywhere in this codebase.
 
 ### Client-Side (`NEXT_PUBLIC_` Prefix — Visible in Browser JS)
 
-| Variable | Purpose | Example Value |
-|---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | Canonical URL, OG tags | `https://seqtek.com` |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | HubSpot portal | `8504846` |
-| `NEXT_PUBLIC_GTM_ID` | GTM container | `GTM-XXXXXXX` |
-| `NEXT_PUBLIC_SCOREAPP_URL` | ScoreApp assessment URL | `https://app.scoreapp.com/...` |
-| `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID` | Contact form GUID | HubSpot form ID |
-| `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID` | Newsletter form GUID | HubSpot form ID |
+| Variable                                 | Purpose                 | Example Value                  |
+| ---------------------------------------- | ----------------------- | ------------------------------ |
+| `NEXT_PUBLIC_SITE_URL`                   | Canonical URL, OG tags  | `https://seqtek.com`           |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`          | HubSpot portal          | `8504846`                      |
+| `NEXT_PUBLIC_GTM_ID`                     | GTM container           | `GTM-XXXXXXX`                  |
+| `NEXT_PUBLIC_SCOREAPP_URL`               | ScoreApp assessment URL | `https://app.scoreapp.com/...` |
+| `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`    | Contact form GUID       | HubSpot form ID                |
+| `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID` | Newsletter form GUID    | HubSpot form ID                |
 
 ### `.env.example` (Committed to Repo)
 
@@ -530,31 +545,31 @@ The authoritative CSP policy lives in [ARCHITECTURE.md §6](ARCHITECTURE.md#cont
 
 ### Hostnames Added by Each Integration
 
-| Integration | Directive | Hosts | Reason |
-|---|---|---|---|
-| HubSpot tracking + analytics | `connect-src` | `*.hubspot.com`, `*.hs-analytics.net`, `*.hs-banner.com`, `*.usemessages.com` | Analytics beacons, banner config, chat |
-| HubSpot Forms API | `connect-src` | `*.hsforms.net` | Custom form submissions |
-| HubSpot forms / Meetings embeds | `frame-src` | `*.hubspot.com`, `*.hsforms.net`, `meetings.hubspot.com`, `*.hubspotusercontent.com` | Iframe embeds for Meetings (meetings.hubspot.com) + Meetings static assets + fallback form embed |
-| HubSpot form / chat imagery | `img-src` | `*.hubspot.com`, `*.hsforms.net` | Form field icons, chat assets |
-| GTM + GA | `connect-src` | `*.googletagmanager.com`, `*.google-analytics.com` | Container fetch, analytics beacons |
-| ScoreApp (only if iframe variant) | `frame-src` | `*.scoreapp.com` | Optional — omit if using outbound link (recommended; see §3.1) |
-| Media (S3 / CloudFront) | `img-src` | Value of `S3_BUCKET_HOSTNAME` (or media CloudFront hostname in prod) | Payload-uploaded media |
+| Integration                       | Directive     | Hosts                                                                                | Reason                                                                                           |
+| --------------------------------- | ------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| HubSpot tracking + analytics      | `connect-src` | `*.hubspot.com`, `*.hs-analytics.net`, `*.hs-banner.com`, `*.usemessages.com`        | Analytics beacons, banner config, chat                                                           |
+| HubSpot Forms API                 | `connect-src` | `*.hsforms.net`                                                                      | Custom form submissions                                                                          |
+| HubSpot forms / Meetings embeds   | `frame-src`   | `*.hubspot.com`, `*.hsforms.net`, `meetings.hubspot.com`, `*.hubspotusercontent.com` | Iframe embeds for Meetings (meetings.hubspot.com) + Meetings static assets + fallback form embed |
+| HubSpot form / chat imagery       | `img-src`     | `*.hubspot.com`, `*.hsforms.net`                                                     | Form field icons, chat assets                                                                    |
+| GTM + GA                          | `connect-src` | `*.googletagmanager.com`, `*.google-analytics.com`                                   | Container fetch, analytics beacons                                                               |
+| ScoreApp (only if iframe variant) | `frame-src`   | `*.scoreapp.com`                                                                     | Optional — omit if using outbound link (recommended; see §3.1)                                   |
+| Media (S3 / CloudFront)           | `img-src`     | Value of `S3_BUCKET_HOSTNAME` (or media CloudFront hostname in prod)                 | Payload-uploaded media                                                                           |
 
 ### Implementation Notes
 
 - **Consent default init** runs as a small inline `<head>` script carrying the request nonce — it must execute before any third-party script. See §2.2 for the snippet.
 - **`style-src` is path-scoped** in the middleware: public routes get `'self'`; `/admin/*` gets `'self' 'unsafe-inline'` to accommodate the Payload admin's Lexical editor.
-- **Rollout**: start in staging with `Content-Security-Policy-Report-Only` to surface violations without breaking the page. Promote to enforcing once the report endpoint is clean. See *Rollout mechanism* below for the operational pieces.
+- **Rollout**: start in staging with `Content-Security-Policy-Report-Only` to surface violations without breaking the page. Promote to enforcing once the report endpoint is clean. See _Rollout mechanism_ below for the operational pieces.
 
 ### Rollout mechanism
 
 **Environment posture:**
 
-| Environment | Mode | Rationale |
-|---|---|---|
-| Dev | Enforcing | Surface CSP issues at development time, where they are cheapest to fix. Local breakage is acceptable; production breakage is not. |
-| Staging | `Content-Security-Policy-Report-Only` | Collects real violations under production-like traffic without blocking the page. The soak environment for promotion. |
-| Production | Enforcing | Set only after the staging soak passes the promote-to-enforce checklist below. |
+| Environment | Mode                                  | Rationale                                                                                                                         |
+| ----------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Dev         | Enforcing                             | Surface CSP issues at development time, where they are cheapest to fix. Local breakage is acceptable; production breakage is not. |
+| Staging     | `Content-Security-Policy-Report-Only` | Collects real violations under production-like traffic without blocking the page. The soak environment for promotion.             |
+| Production  | Enforcing                             | Set only after the staging soak passes the promote-to-enforce checklist below.                                                    |
 
 **Report endpoint:** `app/api/csp-report/route.ts` accepts violation reports with content type `application/csp-report` or `application/reports+json`, validates the basic shape (presence of `violated-directive` / `blocked-uri` or the modern report `body` equivalent), and writes a structured JSON line to stdout. CloudWatch Logs picks them up via the container's `awslogs` Docker log driver — no separate shipper needed.
 
@@ -578,25 +593,25 @@ Note: ARCHITECTURE.md §6 CSP table should be kept in sync with this list — if
 
 All redirects configured in `next.config.ts` `redirects()`. These preserve any SEO value from the existing Wix URLs.
 
-| Source | Destination | Permanent |
-|---|---|---|
-| `/about-us-1` | `/about` | Yes |
-| `/our-services` | `/services` | Yes |
-| `/workshops` | `/touchstone-workshops` | Yes |
-| `/blog-old` | `/insights` | Yes |
-| `/blog-old/:path*` | `/insights/:path*` | Yes |
-| `/organizational-strategy-1-5` | `/resources/organizational-maturity-assessment` | Yes |
-| `/organizational-strategy-1-1-1-3` | `/case-studies/airline-automation` | Yes |
-| `/organizational-strategy-1-1-1-3-1` | `/case-studies/oil-gas-modernization` | Yes |
-| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform` | Yes |
-| `/organizational-strategy-1-3-1-1-1` | `/case-studies` | Yes |
-| `/case-study-3` | `/case-studies/mobile-apps-remote-operations` | Yes |
-| `/case-study-4` | `/case-studies/retail-pos-update-experience` | Yes |
-| `/case-study-5` | `/case-studies/data-warehouse-strategy` | Yes |
-| `/driving-innovation-case-study` | `/case-studies/healthcare-ux-redesign` | Yes |
-| `/modernizing-healthcare-case-study` | `/case-studies/healthcare-data-modernization` | Yes |
-| `/contact` | `/contact` | Yes |
-| `/privacy-policy` | `/privacy-policy` | Yes |
+| Source                                 | Destination                                     | Permanent |
+| -------------------------------------- | ----------------------------------------------- | --------- |
+| `/about-us-1`                          | `/about`                                        | Yes       |
+| `/our-services`                        | `/services`                                     | Yes       |
+| `/workshops`                           | `/touchstone-workshops`                         | Yes       |
+| `/blog-old`                            | `/insights`                                     | Yes       |
+| `/blog-old/:path*`                     | `/insights/:path*`                              | Yes       |
+| `/organizational-strategy-1-5`         | `/resources/organizational-maturity-assessment` | Yes       |
+| `/organizational-strategy-1-1-1-3`     | `/case-studies/airline-automation`              | Yes       |
+| `/organizational-strategy-1-1-1-3-1`   | `/case-studies/oil-gas-modernization`           | Yes       |
+| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform`    | Yes       |
+| `/organizational-strategy-1-3-1-1-1`   | `/case-studies`                                 | Yes       |
+| `/case-study-3`                        | `/case-studies/mobile-apps-remote-operations`   | Yes       |
+| `/case-study-4`                        | `/case-studies/retail-pos-update-experience`    | Yes       |
+| `/case-study-5`                        | `/case-studies/data-warehouse-strategy`         | Yes       |
+| `/driving-innovation-case-study`       | `/case-studies/healthcare-ux-redesign`          | Yes       |
+| `/modernizing-healthcare-case-study`   | `/case-studies/healthcare-data-modernization`   | Yes       |
+| `/contact`                             | `/contact`                                      | Yes       |
+| `/privacy-policy`                      | `/privacy-policy`                               | Yes       |
 
 **Post-launch verification:** After DNS cutover, crawl all old URLs to confirm 301 responses and correct destinations. Use a tool like Screaming Frog or a simple script.
 
@@ -631,6 +646,7 @@ The loading order matters for performance and consent compliance.
 ## 11. Pre-Launch Checklist
 
 ### HubSpot
+
 - [ ] Verify portal ID 8504846 is active and accessible
 - [ ] Create form GUIDs for: Contact, Newsletter, Workshop Inquiry
 - [ ] Configure HubSpot Meetings for booking page
@@ -640,6 +656,7 @@ The loading order matters for performance and consent compliance.
 - [ ] Test form submissions create contacts in HubSpot
 
 ### GTM
+
 - [ ] Create or verify GTM container
 - [ ] Migrate all 8 Meta Pixel IDs from current Wix site into GTM tags
 - [ ] Configure LinkedIn Insight Tag in GTM
@@ -651,12 +668,14 @@ The loading order matters for performance and consent compliance.
 - [ ] Test: deny all actually blocks all non-essential tracking
 
 ### ScoreApp
+
 - [ ] Confirm ScoreApp account and assessment URL
 - [ ] Review ScoreApp-HubSpot integration options
 - [ ] Configure assessment results to sync with HubSpot contacts
 - [ ] Test assessment flow end-to-end
 
 ### DNS & SSL
+
 - [ ] Provision ACM certificate in us-east-1 for `seqtek.com` and `www.seqtek.com`
 - [ ] Attach ACM certificate to the CloudFront distribution as the alternate domain certificate
 - [ ] Configure CloudFront alternate domain names (CNAMEs) for apex and www
@@ -666,6 +685,7 @@ The loading order matters for performance and consent compliance.
 - [ ] Plan DNS cutover window (low-traffic time, weekend morning preferred)
 
 ### SEO
+
 - [ ] Submit new sitemap to Google Search Console
 - [ ] Verify all 301 redirects resolve correctly
 - [ ] Test structured data with Google's Rich Results Test
@@ -673,6 +693,7 @@ The loading order matters for performance and consent compliance.
 - [ ] Check canonical URLs on all pages
 
 ### Security
+
 - [ ] Verify no secrets in committed code (scan repo)
 - [ ] Test Payload admin requires authentication
 - [ ] Verify webhook endpoint rejects invalid secrets

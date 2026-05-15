@@ -46,18 +46,18 @@ The content model is defined in TypeScript. From those definitions, Payload gene
 
 From a single collection config like `CaseStudies.ts`:
 
-| Generated Artifact | Description |
-|---|---|
-| Postgres table + columns | Via Drizzle ORM, managed through migrations |
-| `GET /api/case-studies` | Paginated, filterable list endpoint |
-| `POST /api/case-studies` | Create endpoint |
-| `GET /api/case-studies/:id` | Single document endpoint |
-| `PATCH /api/case-studies/:id` | Update endpoint |
-| `DELETE /api/case-studies/:id` | Delete endpoint |
-| GraphQL types + resolvers | Full CRUD queries and mutations |
-| TypeScript interface | `CaseStudy` type usable across the app |
-| Admin list view | Sortable, filterable table in `/admin` |
-| Admin edit form | Field-appropriate inputs (rich text editor, relationship picker, upload widget, etc.) |
+| Generated Artifact             | Description                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------- |
+| Postgres table + columns       | Via Drizzle ORM, managed through migrations                                           |
+| `GET /api/case-studies`        | Paginated, filterable list endpoint                                                   |
+| `POST /api/case-studies`       | Create endpoint                                                                       |
+| `GET /api/case-studies/:id`    | Single document endpoint                                                              |
+| `PATCH /api/case-studies/:id`  | Update endpoint                                                                       |
+| `DELETE /api/case-studies/:id` | Delete endpoint                                                                       |
+| GraphQL types + resolvers      | Full CRUD queries and mutations                                                       |
+| TypeScript interface           | `CaseStudy` type usable across the app                                                |
+| Admin list view                | Sortable, filterable table in `/admin`                                                |
+| Admin edit form                | Field-appropriate inputs (rich text editor, relationship picker, upload widget, etc.) |
 
 ### The Build Pipeline
 
@@ -163,16 +163,16 @@ export default buildConfig({
 
 ### Key Config Options
 
-| Option | Purpose |
-|---|---|
-| `editor` | Default rich text editor for all `richText` fields |
-| `db` | Database adapter (Postgres for production, SQLite for dev if needed) |
-| `collections` | Array of collection configs |
-| `globals` | Array of global configs |
-| `plugins` | Plugin array (S3 storage, SEO, search, etc.) |
-| `admin.livePreview` | Enables in-admin preview panel with your frontend |
-| `cors` | Allowed origins for API requests |
-| `secret` | JWT signing key (must be set via env var, never hardcoded) |
+| Option              | Purpose                                                              |
+| ------------------- | -------------------------------------------------------------------- |
+| `editor`            | Default rich text editor for all `richText` fields                   |
+| `db`                | Database adapter (Postgres for production, SQLite for dev if needed) |
+| `collections`       | Array of collection configs                                          |
+| `globals`           | Array of global configs                                              |
+| `plugins`           | Plugin array (S3 storage, SEO, search, etc.)                         |
+| `admin.livePreview` | Enables in-admin preview panel with your frontend                    |
+| `cors`              | Allowed origins for API requests                                     |
+| `secret`            | JWT signing key (must be set via env var, never hardcoded)           |
 
 ---
 
@@ -235,16 +235,16 @@ export const Posts: CollectionConfig = {
 
 ### Important Config Properties
 
-| Property | Purpose |
-|---|---|
-| `slug` | URL segment and database table name. Use kebab-case for multi-word: `'case-studies'` |
-| `admin.useAsTitle` | Which field displays as the document title in lists and relationship pickers |
-| `admin.defaultColumns` | Columns shown in the list view |
-| `admin.listSearchableFields` | Fields included in the admin search |
-| `admin.group` | Groups collections in the admin sidebar |
-| `versions.drafts` | Enables draft/publish workflow with version history |
-| `timestamps` | Auto-adds `createdAt` and `updatedAt` fields |
-| `orderable` | Enables drag-and-drop reordering in admin list view |
+| Property                     | Purpose                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| `slug`                       | URL segment and database table name. Use kebab-case for multi-word: `'case-studies'` |
+| `admin.useAsTitle`           | Which field displays as the document title in lists and relationship pickers         |
+| `admin.defaultColumns`       | Columns shown in the list view                                                       |
+| `admin.listSearchableFields` | Fields included in the admin search                                                  |
+| `admin.group`                | Groups collections in the admin sidebar                                              |
+| `versions.drafts`            | Enables draft/publish workflow with version history                                  |
+| `timestamps`                 | Auto-adds `createdAt` and `updatedAt` fields                                         |
+| `orderable`                  | Enables drag-and-drop reordering in admin list view                                  |
 
 ---
 
@@ -321,14 +321,14 @@ await payload.updateGlobal({
 
 ### When to Use Globals vs. Collections
 
-| Use Case | Choice | Why |
-|---|---|---|
-| Company info, social links | Global | One instance, site-wide |
-| Navigation menu structure | Global | One nav, used on every page |
-| Homepage hero/CTA config | Global | One homepage |
-| Blog posts | Collection | Many instances |
-| Team members | Collection | Many instances |
-| Testimonials | Collection | Many instances, reused across pages |
+| Use Case                   | Choice     | Why                                 |
+| -------------------------- | ---------- | ----------------------------------- |
+| Company info, social links | Global     | One instance, site-wide             |
+| Navigation menu structure  | Global     | One nav, used on every page         |
+| Homepage hero/CTA config   | Global     | One homepage                        |
+| Blog posts                 | Collection | Many instances                      |
+| Team members               | Collection | Many instances                      |
+| Testimonials               | Collection | Many instances, reused across pages |
 
 ---
 
@@ -336,46 +336,46 @@ await payload.updateGlobal({
 
 ### Scalar Fields
 
-| Type | Stores | Admin Widget | Notes |
-|---|---|---|---|
-| `text` | `string` | Text input | `minLength`, `maxLength`, `unique` |
-| `textarea` | `string` | Multi-line input | For longer unformatted text |
-| `number` | `number` | Number input | `min`, `max`, integer or float |
-| `email` | `string` | Email input | Built-in format validation |
-| `date` | `string` (ISO) | Date picker | Optional time picker via `admin.date` |
-| `checkbox` | `boolean` | Toggle | `defaultValue: true/false` |
-| `json` | `object` | JSON editor | For arbitrary structured data |
-| `point` | `[number, number]` | Coordinate input | Geospatial (longitude, latitude) |
+| Type       | Stores             | Admin Widget     | Notes                                 |
+| ---------- | ------------------ | ---------------- | ------------------------------------- |
+| `text`     | `string`           | Text input       | `minLength`, `maxLength`, `unique`    |
+| `textarea` | `string`           | Multi-line input | For longer unformatted text           |
+| `number`   | `number`           | Number input     | `min`, `max`, integer or float        |
+| `email`    | `string`           | Email input      | Built-in format validation            |
+| `date`     | `string` (ISO)     | Date picker      | Optional time picker via `admin.date` |
+| `checkbox` | `boolean`          | Toggle           | `defaultValue: true/false`            |
+| `json`     | `object`           | JSON editor      | For arbitrary structured data         |
+| `point`    | `[number, number]` | Coordinate input | Geospatial (longitude, latitude)      |
 
 ### Selection Fields
 
-| Type | Stores | Admin Widget | Notes |
-|---|---|---|---|
-| `select` | `string` or `string[]` | Dropdown | `hasMany: true` for multi-select. Options: `[{ label, value }]` |
-| `radio` | `string` | Radio buttons | Same options format as select |
+| Type     | Stores                 | Admin Widget  | Notes                                                           |
+| -------- | ---------------------- | ------------- | --------------------------------------------------------------- |
+| `select` | `string` or `string[]` | Dropdown      | `hasMany: true` for multi-select. Options: `[{ label, value }]` |
+| `radio`  | `string`               | Radio buttons | Same options format as select                                   |
 
 ### Relational Fields
 
-| Type | Stores | Admin Widget | Notes |
-|---|---|---|---|
-| `relationship` | `id` or `id[]` | Searchable dropdown | `relationTo: 'collection-slug'`, `hasMany: true` for many-to-many |
-| `upload` | `id` | File picker + upload widget | `relationTo: 'media'` — points to an upload-enabled collection |
+| Type           | Stores         | Admin Widget                | Notes                                                             |
+| -------------- | -------------- | --------------------------- | ----------------------------------------------------------------- |
+| `relationship` | `id` or `id[]` | Searchable dropdown         | `relationTo: 'collection-slug'`, `hasMany: true` for many-to-many |
+| `upload`       | `id`           | File picker + upload widget | `relationTo: 'media'` — points to an upload-enabled collection    |
 
 ### Structural Fields (no database column)
 
-| Type | Purpose | Notes |
-|---|---|---|
-| `group` | Nest fields under a namespace | Creates a JSON column in Postgres |
-| `array` | Repeatable set of fields | Each item has its own `id` |
-| `blocks` | Repeatable, polymorphic content | Each item has `blockType` + fields. See [Section 6](#6-blocks) |
-| `tabs` | Organize fields into tabs in admin | Purely visual — no effect on data shape (named tabs) or nests under tab name (unnamed tabs) |
-| `collapsible` | Collapsible field group in admin | Purely visual organization |
-| `row` | Horizontal layout in admin | Places fields side by side |
+| Type          | Purpose                            | Notes                                                                                       |
+| ------------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| `group`       | Nest fields under a namespace      | Creates a JSON column in Postgres                                                           |
+| `array`       | Repeatable set of fields           | Each item has its own `id`                                                                  |
+| `blocks`      | Repeatable, polymorphic content    | Each item has `blockType` + fields. See [Section 6](#6-blocks)                              |
+| `tabs`        | Organize fields into tabs in admin | Purely visual — no effect on data shape (named tabs) or nests under tab name (unnamed tabs) |
+| `collapsible` | Collapsible field group in admin   | Purely visual organization                                                                  |
+| `row`         | Horizontal layout in admin         | Places fields side by side                                                                  |
 
 ### Rich Text
 
-| Type | Stores | Admin Widget | Notes |
-|---|---|---|---|
+| Type       | Stores             | Admin Widget           | Notes                                        |
+| ---------- | ------------------ | ---------------------- | -------------------------------------------- |
 | `richText` | JSON AST (Lexical) | Lexical WYSIWYG editor | See [Section 7](#7-lexical-rich-text-editor) |
 
 ### Field Config Patterns
@@ -507,9 +507,7 @@ const StatsBlock: Block = {
 const ContentBlock: Block = {
   slug: 'content',
   interfaceName: 'ContentBlock',
-  fields: [
-    { name: 'body', type: 'richText', required: true },
-  ],
+  fields: [{ name: 'body', type: 'richText', required: true }],
 }
 
 const CTABlock: Block = {
@@ -604,14 +602,14 @@ When queried, a blocks field returns:
 
 ### Block Properties
 
-| Property | Purpose |
-|---|---|
-| `slug` | Stored as `blockType` in the data — the discriminator |
-| `interfaceName` | Name of the generated TypeScript type |
-| `labels` | Human-readable names in the admin block picker |
-| `imageURL` / `imageAltText` | Thumbnail preview in the block selector |
-| `fields` | Array of field configs specific to this block type |
-| `minRows` / `maxRows` | On the parent `blocks` field — constrain how many blocks total |
+| Property                    | Purpose                                                        |
+| --------------------------- | -------------------------------------------------------------- |
+| `slug`                      | Stored as `blockType` in the data — the discriminator          |
+| `interfaceName`             | Name of the generated TypeScript type                          |
+| `labels`                    | Human-readable names in the admin block picker                 |
+| `imageURL` / `imageAltText` | Thumbnail preview in the block selector                        |
+| `fields`                    | Array of field configs specific to this block type             |
+| `minRows` / `maxRows`       | On the parent `blocks` field — constrain how many blocks total |
 
 ---
 
@@ -795,15 +793,31 @@ Hooks are lifecycle functions that run server-side at specific points in a docum
 export const Posts: CollectionConfig = {
   slug: 'posts',
   hooks: {
-    beforeValidate: [/* runs before Payload validates the data */],
-    beforeChange: [/* runs after validation, before database write */],
-    afterChange: [/* runs after database write — side effects go here */],
-    beforeRead: [/* runs before returning data from a query */],
-    afterRead: [/* runs after data is read, before returning to caller */],
-    beforeDelete: [/* runs before deletion */],
-    afterDelete: [/* runs after deletion */],
+    beforeValidate: [
+      /* runs before Payload validates the data */
+    ],
+    beforeChange: [
+      /* runs after validation, before database write */
+    ],
+    afterChange: [
+      /* runs after database write — side effects go here */
+    ],
+    beforeRead: [
+      /* runs before returning data from a query */
+    ],
+    afterRead: [
+      /* runs after data is read, before returning to caller */
+    ],
+    beforeDelete: [
+      /* runs before deletion */
+    ],
+    afterDelete: [
+      /* runs after deletion */
+    ],
   },
-  fields: [/* ... */],
+  fields: [
+    /* ... */
+  ],
 }
 ```
 
@@ -813,10 +827,10 @@ export const Posts: CollectionConfig = {
 
 ```typescript
 const setPublishedDate: CollectionBeforeChangeHook = async ({
-  data,       // the incoming data (mutable)
-  req,        // the request object (includes user, payload instance)
-  operation,  // 'create' or 'update'
-  originalDoc // the existing document (null on create)
+  data, // the incoming data (mutable)
+  req, // the request object (includes user, payload instance)
+  operation, // 'create' or 'update'
+  originalDoc, // the existing document (null on create)
 }) => {
   if (data.status === 'published' && !data.publishedAt) {
     data.publishedAt = new Date().toISOString()
@@ -829,10 +843,10 @@ const setPublishedDate: CollectionBeforeChangeHook = async ({
 
 ```typescript
 const revalidateOnChange: CollectionAfterChangeHook = async ({
-  doc,        // the saved document (with id, timestamps, etc.)
-  req,        // request object
-  operation,  // 'create' or 'update'
-  previousDoc // the document before the change
+  doc, // the saved document (with id, timestamps, etc.)
+  req, // request object
+  operation, // 'create' or 'update'
+  previousDoc, // the document before the change
 }) => {
   if (doc.status === 'published') {
     revalidateTag(`posts-${doc.slug}`)
@@ -845,8 +859,8 @@ const revalidateOnChange: CollectionAfterChangeHook = async ({
 
 ```typescript
 const stripInternalFields: CollectionAfterReadHook = async ({
-  doc,  // the document as read from the database
-  req,  // request object
+  doc, // the document as read from the database
+  req, // request object
 }) => {
   if (!req.user?.roles?.includes('admin')) {
     delete doc.internalNotes
@@ -886,12 +900,12 @@ const stripInternalFields: CollectionAfterReadHook = async ({
 
 ### Common Hook Patterns for This Project
 
-| Hook | Pattern | Where Used |
-|---|---|---|
-| `afterChange` | Revalidate ISR cache + CloudFront path | All published content collections |
-| `beforeChange` | Auto-generate slug from title | Posts, case studies, services, workshops |
-| `beforeChange` | Set `publishedAt` on first publish | Posts, case studies |
-| `afterRead` | Strip draft content for unauthenticated requests | All content collections |
+| Hook           | Pattern                                          | Where Used                               |
+| -------------- | ------------------------------------------------ | ---------------------------------------- |
+| `afterChange`  | Revalidate ISR cache + CloudFront path           | All published content collections        |
+| `beforeChange` | Auto-generate slug from title                    | Posts, case studies, services, workshops |
+| `beforeChange` | Set `publishedAt` on first publish               | Posts, case studies                      |
+| `afterRead`    | Strip draft content for unauthenticated requests | All content collections                  |
 
 ---
 
@@ -964,8 +978,7 @@ Create shared access functions in `src/payload/access/`:
 // src/payload/access/isAdmin.ts
 import type { Access } from 'payload'
 
-export const isAdmin: Access = ({ req }) =>
-  req.user?.roles?.includes('admin') || false
+export const isAdmin: Access = ({ req }) => req.user?.roles?.includes('admin') || false
 
 // src/payload/access/isAdminOrEditor.ts
 export const isAdminOrEditor: Access = ({ req }) =>
@@ -985,12 +998,12 @@ The admin panel checks access functions to decide what to show. When checking pe
 ```typescript
 // Wrong — will throw when checking admin UI permissions
 read: ({ req, id }) => {
-  return id === req.user?.id  // id is undefined during permission check
+  return id === req.user?.id // id is undefined during permission check
 }
 
 // Correct
 read: ({ req, id }) => {
-  if (!id) return true  // Allow the UI to load
+  if (!id) return true // Allow the UI to load
   return id === req.user?.id
 }
 ```
@@ -1015,18 +1028,17 @@ const payload = await getPayload({ config })
 **Find (list with filtering and pagination):**
 
 ```typescript
-const { docs, totalDocs, totalPages, hasNextPage, hasPrevPage, page } =
-  await payload.find({
-    collection: 'posts',
-    where: {
-      status: { equals: 'published' },
-      categories: { in: ['ai-strategy', 'change-management'] },
-    },
-    sort: '-publishedAt',
-    limit: 10,
-    page: 1,
-    depth: 1,
-  })
+const { docs, totalDocs, totalPages, hasNextPage, hasPrevPage, page } = await payload.find({
+  collection: 'posts',
+  where: {
+    status: { equals: 'published' },
+    categories: { in: ['ai-strategy', 'change-management'] },
+  },
+  sort: '-publishedAt',
+  limit: 10,
+  page: 1,
+  depth: 1,
+})
 ```
 
 **Find by ID:**
@@ -1082,19 +1094,19 @@ await payload.delete({
 
 ### Query Operators
 
-| Operator | Example | SQL Equivalent |
-|---|---|---|
-| `equals` | `{ status: { equals: 'published' } }` | `= 'published'` |
-| `not_equals` | `{ status: { not_equals: 'draft' } }` | `!= 'draft'` |
-| `greater_than` | `{ views: { greater_than: 100 } }` | `> 100` |
-| `greater_than_equal` | `{ views: { greater_than_equal: 100 } }` | `>= 100` |
-| `less_than` | `{ views: { less_than: 50 } }` | `< 50` |
-| `less_than_equal` | `{ views: { less_than_equal: 50 } }` | `<= 50` |
-| `in` | `{ category: { in: ['a', 'b'] } }` | `IN ('a', 'b')` |
-| `not_in` | `{ category: { not_in: ['a'] } }` | `NOT IN ('a')` |
-| `exists` | `{ publishedAt: { exists: true } }` | `IS NOT NULL` |
-| `contains` | `{ title: { contains: 'react' } }` | `ILIKE '%react%'` |
-| `like` | `{ title: { like: 'react%' } }` | `ILIKE 'react%'` |
+| Operator             | Example                                  | SQL Equivalent    |
+| -------------------- | ---------------------------------------- | ----------------- |
+| `equals`             | `{ status: { equals: 'published' } }`    | `= 'published'`   |
+| `not_equals`         | `{ status: { not_equals: 'draft' } }`    | `!= 'draft'`      |
+| `greater_than`       | `{ views: { greater_than: 100 } }`       | `> 100`           |
+| `greater_than_equal` | `{ views: { greater_than_equal: 100 } }` | `>= 100`          |
+| `less_than`          | `{ views: { less_than: 50 } }`           | `< 50`            |
+| `less_than_equal`    | `{ views: { less_than_equal: 50 } }`     | `<= 50`           |
+| `in`                 | `{ category: { in: ['a', 'b'] } }`       | `IN ('a', 'b')`   |
+| `not_in`             | `{ category: { not_in: ['a'] } }`        | `NOT IN ('a')`    |
+| `exists`             | `{ publishedAt: { exists: true } }`      | `IS NOT NULL`     |
+| `contains`           | `{ title: { contains: 'react' } }`       | `ILIKE '%react%'` |
+| `like`               | `{ title: { like: 'react%' } }`          | `ILIKE 'react%'`  |
 
 **Logical operators:**
 
@@ -1115,11 +1127,11 @@ where: {
 
 Controls how deeply relationships are populated:
 
-| Depth | Behavior | Use When |
-|---|---|---|
-| `0` | Relationships return IDs only | You only need to know if a relationship exists |
-| `1` | First-level relationships are full objects | Most common — you need the related document's fields |
-| `2` | Nested relationships within related documents are also populated | You need the related document's related documents |
+| Depth | Behavior                                                         | Use When                                             |
+| ----- | ---------------------------------------------------------------- | ---------------------------------------------------- |
+| `0`   | Relationships return IDs only                                    | You only need to know if a relationship exists       |
+| `1`   | First-level relationships are full objects                       | Most common — you need the related document's fields |
+| `2`   | Nested relationships within related documents are also populated | You need the related document's related documents    |
 
 **Performance note:** Higher depth means more database joins. Default is `1`. Set explicitly — don't rely on the default.
 
@@ -1318,8 +1330,7 @@ Use these with `next/image`:
 
 ```tsx
 import Image from 'next/image'
-
-<Image
+;<Image
   src={doc.featuredImage.sizes.hero.url}
   alt={doc.featuredImage.alt}
   width={doc.featuredImage.sizes.hero.width}
@@ -1400,10 +1411,10 @@ export function LivePreviewPost({ initialData }: { initialData: Post }) {
 
 ### Development vs. Production
 
-| Environment | Strategy | Config |
-|---|---|---|
-| Local dev | Push mode — auto-syncs schema on startup | `push: true` (default when `NODE_ENV !== 'production'`) |
-| Production | Explicit migrations — reviewed SQL files | `push: false` |
+| Environment | Strategy                                 | Config                                                  |
+| ----------- | ---------------------------------------- | ------------------------------------------------------- |
+| Local dev   | Push mode — auto-syncs schema on startup | `push: true` (default when `NODE_ENV !== 'production'`) |
+| Production  | Explicit migrations — reviewed SQL files | `push: false`                                           |
 
 ### Creating Migrations
 
@@ -1643,11 +1654,7 @@ seoPlugin({
 import { revalidateTag } from 'next/cache'
 import type { CollectionAfterChangeHook } from 'payload'
 
-export const revalidateOnChange: CollectionAfterChangeHook = async ({
-  doc,
-  collection,
-  req,
-}) => {
+export const revalidateOnChange: CollectionAfterChangeHook = async ({ doc, collection, req }) => {
   const collectionSlug = collection?.slug || ''
 
   if (doc._status === 'published' || doc.status === 'published') {

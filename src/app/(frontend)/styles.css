@@ -12,7 +12,11 @@
   body {
     color: rgb(var(--color-fg));
     background: rgb(var(--color-bg));
-    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 }

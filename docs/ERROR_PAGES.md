@@ -64,20 +64,20 @@ The same rules apply as the rest of the site (CONTENT-REQUIREMENTS §5A). Three 
 
 Client-side events fired into the GTM dataLayer:
 
-| Event | Where fired | What it captures |
-|---|---|---|
-| `page_not_found` | 404 page client component | Requested path |
-| `error_boundary_caught` | 500 page client component | Request ID, error name |
-| `maintenance_view` | Maintenance page client script | Timestamp |
+| Event                   | Where fired                    | What it captures       |
+| ----------------------- | ------------------------------ | ---------------------- |
+| `page_not_found`        | 404 page client component      | Requested path         |
+| `error_boundary_caught` | 500 page client component      | Request ID, error name |
+| `maintenance_view`      | Maintenance page client script | Timestamp              |
 
 Server-side logging and user surfacing:
 
-| Error class | Logged in | Surfaced to user |
-|---|---|---|
-| 404 | CloudWatch Logs (request log) | Yes — 404 page |
-| 500 | CloudWatch Logs (stack trace + request ID) | Yes — 500 page with request ID |
-| Slow request timeout | CloudWatch Logs (warn level) | Yes — 500 page after timeout fires |
-| Maintenance | n/a | Yes — maintenance page |
+| Error class          | Logged in                                  | Surfaced to user                   |
+| -------------------- | ------------------------------------------ | ---------------------------------- |
+| 404                  | CloudWatch Logs (request log)              | Yes — 404 page                     |
+| 500                  | CloudWatch Logs (stack trace + request ID) | Yes — 500 page with request ID     |
+| Slow request timeout | CloudWatch Logs (warn level)               | Yes — 500 page after timeout fires |
+| Maintenance          | n/a                                        | Yes — maintenance page             |
 
 ---
 

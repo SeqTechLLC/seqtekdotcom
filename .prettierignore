@@ -1,0 +1,21 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+.turbo/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Generated
+src/payload-types.ts
+src/payload-generated-schema.ts
+src/app/(payload)/admin/importMap.js
+package-lock.json
+
+# Lockfiles + binary
+*.tsbuildinfo
+*.pem

@@ -6,13 +6,13 @@ How to get the SEQTEK website running on your machine.
 
 ## Prerequisites
 
-| Tool | Version | Check |
-|---|---|---|
-| **Node.js** | 24.x (active LTS) | `node --version` |
-| **npm** | Bundled with Node 24 | `npm --version` |
-| **Docker** | Any recent version | `docker --version` |
+| Tool               | Version                           | Check                    |
+| ------------------ | --------------------------------- | ------------------------ |
+| **Node.js**        | 24.x (active LTS)                 | `node --version`         |
+| **npm**            | Bundled with Node 24              | `npm --version`          |
+| **Docker**         | Any recent version                | `docker --version`       |
 | **Docker Compose** | V2 (included with Docker Desktop) | `docker compose version` |
-| **Git** | Any recent version | `git --version` |
+| **Git**            | Any recent version                | `git --version`          |
 
 No AWS credentials, VPN access, or cloud accounts are needed for local development.
 
@@ -48,23 +48,23 @@ Copy `.env.example` to `.env.local` and fill in the values below. Only two are r
 
 ### Required
 
-| Variable | Local Value | Notes |
-|---|---|---|
-| `DATABASE_URL` | `postgresql://seqtek:seqtek@localhost:5432/seqtek_dev` | Matches the Docker Compose Postgres config |
-| `PAYLOAD_SECRET` | Any random string (32+ chars) | Used for JWT signing. Generate with `openssl rand -hex 32` |
+| Variable         | Local Value                                            | Notes                                                      |
+| ---------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
+| `DATABASE_URL`   | `postgresql://seqtek:seqtek@localhost:5432/seqtek_dev` | Matches the Docker Compose Postgres config                 |
+| `PAYLOAD_SECRET` | Any random string (32+ chars)                          | Used for JWT signing. Generate with `openssl rand -hex 32` |
 
 ### Optional (leave blank for local dev)
 
-| Variable | Local Value | Notes |
-|---|---|---|
-| `S3_BUCKET` | *(empty)* | Not needed. See [Media Storage](#media-storage-no-s3-needed) below |
-| `S3_REGION` | *(empty)* | |
-| `S3_BUCKET_HOSTNAME` | *(empty)* | |
-| `REVALIDATION_SECRET` | Any string | Only needed if testing the `/api/revalidate` webhook endpoint |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | Used for canonical URLs and OG meta tags |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | *(empty)* | HubSpot forms won't render without this, which is fine for dev |
-| `NEXT_PUBLIC_GTM_ID` | *(empty)* | GTM won't load without this, which is fine for dev |
-| `NEXT_PUBLIC_SCOREAPP_URL` | *(empty)* | Assessment link won't work, which is fine for dev |
+| Variable                        | Local Value             | Notes                                                              |
+| ------------------------------- | ----------------------- | ------------------------------------------------------------------ |
+| `S3_BUCKET`                     | _(empty)_               | Not needed. See [Media Storage](#media-storage-no-s3-needed) below |
+| `S3_REGION`                     | _(empty)_               |                                                                    |
+| `S3_BUCKET_HOSTNAME`            | _(empty)_               |                                                                    |
+| `REVALIDATION_SECRET`           | Any string              | Only needed if testing the `/api/revalidate` webhook endpoint      |
+| `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3000` | Used for canonical URLs and OG meta tags                           |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | _(empty)_               | HubSpot forms won't render without this, which is fine for dev     |
+| `NEXT_PUBLIC_GTM_ID`            | _(empty)_               | GTM won't load without this, which is fine for dev                 |
+| `NEXT_PUBLIC_SCOREAPP_URL`      | _(empty)_               | Assessment link won't work, which is fine for dev                  |
 
 ### What's NOT in .env.local
 
@@ -94,6 +94,7 @@ docker compose down -v
 ```
 
 The Postgres container:
+
 - Runs on `localhost:5432`
 - Creates a database `seqtek_dev` with user `seqtek` / password `seqtek`
 - Data persists in a Docker volume between restarts
@@ -110,6 +111,7 @@ Production and staging store media uploads in S3 (authenticated via IAM role on 
 When the S3 environment variables are absent, Payload falls back to local filesystem storage. Uploaded images, documents, and other media are written to disk inside the project directory. This is gitignored and works transparently — the admin panel upload UI, image rendering, and `next/image` optimization all function identically.
 
 You do not need to:
+
 - Create an S3 bucket
 - Configure AWS credentials
 - Set up a mock S3 service (like MinIO or LocalStack)
@@ -196,17 +198,17 @@ curl -X POST http://localhost:3000/api/revalidate \
 
 ## How Local Dev Differs from Production
 
-| Aspect | Local | Production |
-|---|---|---|
-| **App server** | `next dev` (HMR, no optimization) | `node server.js` (standalone build in Docker) |
-| **Database** | Docker Compose Postgres on localhost | RDS PostgreSQL (private subnet) |
-| **Media storage** | Local filesystem (gitignored) | S3 bucket via IAM role |
-| **AWS credentials** | None needed | IAM instance profile via IMDS |
-| **CDN** | None | CloudFront |
-| **SSL** | None (HTTP on port 3000) | ACM cert on CloudFront |
-| **ISR** | Dev mode — pages render on every request | Static generation + on-demand revalidation |
-| **CSP** | Enforced (same middleware) | Enforced (same middleware) |
-| **Secret detection** | Pre-commit hook (gitleaks) | Pre-commit hook + CI check |
+| Aspect               | Local                                    | Production                                    |
+| -------------------- | ---------------------------------------- | --------------------------------------------- |
+| **App server**       | `next dev` (HMR, no optimization)        | `node server.js` (standalone build in Docker) |
+| **Database**         | Docker Compose Postgres on localhost     | RDS PostgreSQL (private subnet)               |
+| **Media storage**    | Local filesystem (gitignored)            | S3 bucket via IAM role                        |
+| **AWS credentials**  | None needed                              | IAM instance profile via IMDS                 |
+| **CDN**              | None                                     | CloudFront                                    |
+| **SSL**              | None (HTTP on port 3000)                 | ACM cert on CloudFront                        |
+| **ISR**              | Dev mode — pages render on every request | Static generation + on-demand revalidation    |
+| **CSP**              | Enforced (same middleware)               | Enforced (same middleware)                    |
+| **Secret detection** | Pre-commit hook (gitleaks)               | Pre-commit hook + CI check                    |
 
 The CSP middleware runs in both environments, so you'll catch CSP violations during development. If a third-party script or resource is blocked in dev, it will also be blocked in production.
 
