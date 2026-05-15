@@ -108,7 +108,8 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 - [ ] HubSpot + GTM in root layout with nonce-aware loading
 - [ ] Health endpoint + CloudWatch alarms wired up
 - [ ] Testing scaffold: Vitest, Playwright, axe-core, Lighthouse CI in GitHub Actions
-- [x] gitleaks pre-commit hook (CI check still pending — wire into the GitHub Actions workflow alongside the test pipeline)
+- [x] gitleaks pre-commit hook + GitHub Actions secret scan job (`gitleaks/gitleaks-action@v2`) on push/PR
+- [x] Quality CI workflow (`.github/workflows/ci.yml`): typecheck + lint + format:check on push to any branch + PR to main; lint-staged on pre-commit. Test pipeline (Vitest + Playwright + axe + Lighthouse) still pending — separate workflow tracked at line above
 - [ ] Apply design tokens from D-1 to Tailwind config
 
 ### Phase 2 — Content models (1 week)
