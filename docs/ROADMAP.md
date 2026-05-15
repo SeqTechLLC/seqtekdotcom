@@ -59,7 +59,7 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 
 | ID | Task | Status | Output |
 |---|---|---|---|
-| D-1 | Design system extension — type scale, color ramps, spacing, radius, shadow, motion tokens | ✅ | `docs/DESIGN_SYSTEM.md` — major-third type scale, ramps from brand seeds, AA floor / AAA hero contrast, full Tailwind v4 `@theme` block |
+| D-1 | Design system extension — type scale, color ramps, spacing, radius, shadow, motion tokens | ✅ | `docs/DESIGN_SYSTEM.md` — major-third type scale, ramps from brand seeds, AA floor / AAA hero contrast, logo usage rules. Token reference written in v4 `@theme` syntax; v3 `tailwind.config.mjs` translation is a Phase 1 task. |
 | DS-1 | TestimonialCarousel — autoplay vs manual-only decision | 🟡 | Confirm during D-3 wireframe pass; accessibility implications |
 | DS-2 | Homepage hero size — `text-display-xl` (61px) vs `text-display` (49px) | 🟡 | Depends on hero copy draft (CONTENT-REQUIREMENTS §4) |
 | DS-3 | Lexical rich-text styling — validate `@tailwindcss/typography` matches design system | 🟡 | Validate during Phase 1 stack spike (D-13). May need a `prose-seqtek` override class. |
@@ -88,6 +88,7 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 | F-3 | ARCHITECTURE.md — pin Next/React/Payload/Tailwind versions after D-13 spike | 🟡 |
 | F-4 | CSP `frame-src` allowlist — add `meetings.hubspot.com` and `*.hubspotusercontent.com` | ✅ | Synced across INTEGRATIONS.md §8 (was §7) and ARCHITECTURE.md §6 |
 | F-5 | CONTENT-REQUIREMENTS.md §1.E — bump WCAG citation to 2.2 AA throughout (mixed 2.1/2.2 today) | ✅ | Audit found the doc was already consistent at 2.2 — no edits needed |
+| F-6 | AICO baseline — `llms.txt` + `llms-full.txt` route, `.md` alternatives for content pages, differentiated `robots.txt` per AI crawler, CloudFront cache rules tuned for crawler traffic, byline + last-updated metadata on Insights and Case Studies | 🟡 | Spec lives in ARCHITECTURE.md §14 (crawl mechanics) and CONTENT-REQUIREMENTS.md §8 (citation/schema layer). Implement in Phase 2 alongside structured data. AICO is treated as a sub-discipline of SEO — no new term being coined publicly. |
 
 ---
 
@@ -97,7 +98,7 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 
 ### Phase 1 — Foundation (1-2 weeks)
 
-- [ ] **Task 1.0 (gates everything):** Stack spike. Scaffold Next 16 + Payload 3.84+ + Postgres + Tailwind v4 + Lexical + S3 fallback. Verify Docker standalone build. Pin all versions. → D-13
+- [x] **Task 1.0 (gates everything):** Stack spike. Scaffolded Next 16.2.3 + Payload 3.84 + Postgres 16 + Tailwind v3.4 + Lexical, with admin login, Lexical authoring, and public render verified by Playwright against both dev and a Docker container. Versions pinned in `package.json`. → D-13 ✅, S3 fallback deferred to Task 1.x
 - [ ] Next.js + Payload + Tailwind scaffold from spike
 - [ ] CDK app: VPC, ALB, ASG, RDS, S3, ECR, CloudFront, ACM, Parameter Store, IAM, CloudWatch alarms
 - [ ] Dockerfile multi-stage + ECR repository
@@ -162,7 +163,7 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 
 1. **Content production lag.** Engineering can build with placeholder content; launch requires real content. Per CONTENT-REQUIREMENTS §7, this is the bottleneck. Start C-1, C-2, C-3 in week 1.
 2. **Sequoyah decision deadlock (BR-1).** Affects About pages, homepage hero, brand tone, design system illustrations. Block on a *written* decision from leadership, not consensus.
-3. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+ + Tailwind v4. Verify in Phase 1 Task 1.0 before committing. If any combo is broken, downgrade Next or Tailwind first (don't downgrade Payload — that's the constraint).
+3. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+. Tailwind v4 was evaluated and rejected during the spike — see ADR `docs/decisions/0001-tailwind-v3.md`. The combo is now validated end-to-end (D-13 ✅); if a future minor-version bump breaks the combo, downgrade Next first (don't downgrade Payload — that's the constraint).
 4. **CDK learning curve.** If the engineer hasn't shipped CDK before, add 1-2 weeks to Phase 1.
 5. **Font licensing surprise.** Resolve BR-2 before Phase 1 styling work or every component restyles when the font swaps.
 6. **CSP report-only oversight.** Easy to leave running in report-only past launch and never enforce. Calendar a hard date to flip enforce in Phase 5.

@@ -918,6 +918,36 @@ Per HubSpot's topic cluster research (2024): sites with a deliberate internal li
 
 **Link audit post-launch:** Use Screaming Frog or Sitebulb to identify orphan pages (pages with zero internal links pointing to them). Every page on the site should have a minimum of 3 internal links pointing to it.
 
+### AI Crawler Readiness (AICO)
+
+Treated as a sub-discipline of SEO, not a separate program. Most of what makes content rank in AI-powered search is what makes content rank in classic search — distinctive opinions, citeable claims, structured data, fast pages. The content-side requirements specific to AI crawlers are below; the infrastructure side (differentiated `robots.txt`, `.md` parallel routes, `llms.txt`/`llms-full.txt`, edge-cache strategy) lives in ARCHITECTURE.md §14.
+
+**Citation hooks — required on every Insights post and Case Study:**
+- **Author byline** with link to that team member's `/about/team/[slug]` page. LLMs cite content that has a named human author far more readily than anonymous content.
+- **Publication date** (ISO 8601 in JSON-LD `datePublished`) and **last-updated date** (`dateModified`) — both visible to readers and present in structured data. AI search engines deprioritize content that looks stale.
+- **Source citations** for every statistic, claim, or research reference — inline in the prose, formatted as parenthetical citations or footnoted links to primary sources. Per Princeton/Georgia Tech GEO research (2023): pages with citations to external sources are 40% more likely to be cited by LLMs than uncited pages.
+- **Distinctive claims over generic boilerplate.** "We deliver excellence" gets ignored; "Our localshoring model puts a senior engineer on-site within a 4-hour drive of every Tulsa, OKC, NW Arkansas, and Kansas City client" gets cited. Specificity is what makes content quotable.
+
+**Answer-shaped content where it fits:**
+- FAQ blocks on Service Detail and Industry pages — already required (per §4 Service Page and §4 Industry Page) — render with `FAQPage` JSON-LD so the questions are machine-extractable.
+- Case studies follow a problem → approach → result → metrics structure (per §4 Case Study Page). The result and metrics sections are what LLMs cite when summarizing capability.
+- Lead with the answer in long-form posts. Inverted-pyramid structure (conclusion in the first paragraph, supporting detail below) is what AI crawlers excerpt for snippet generation.
+
+**Verifiable, attributable, current:**
+- Every quoted testimonial has a named source with role + company (per §6 Testimonial Requirements). Anonymous testimonials are AICO-poison — LLMs treat them as unverifiable and downweight the page.
+- Every team member bio includes job title, years of experience, areas of expertise, and at minimum one external sameAs link (LinkedIn). Person schema is required (per Structured Data Schemas above) and the LinkedIn link is the verification path.
+- Article schema requires `image` — every Insights post needs a 1200×630 social card image, not a stock placeholder.
+
+**What this means for the editor workflow:**
+- Publishing flow blocks publishing on missing author, missing publication date, or missing primary citation source for any post containing a numeric claim. Validation lives in the Payload `beforeValidate` hook.
+- "Last updated" auto-stamps on any field edit to the body or hero — editors don't manually set it. A "no-op republish" button exists for the case where an editor has reviewed a post and confirms it's still current without changing copy (touches `dateModified` only).
+- Insights posts older than 18 months without a `lastReviewedAt` value surface in the admin dashboard for review. Stale-but-still-true content gets re-stamped; outdated content gets updated or unpublished.
+
+**Out of scope for launch (deferred to post-launch optimization):**
+- Cohort analysis of which posts get cited by which AI search surfaces. Wait until there's enough traffic data to be meaningful.
+- Bespoke `llms.txt` curation per audience segment. v1 is a single curated index per ARCHITECTURE.md §14.3.
+- A/B testing inverted-pyramid vs. traditional structure. Pick inverted-pyramid as default; revisit if data warrants.
+
 ---
 
 ## 9. CTA Strategy

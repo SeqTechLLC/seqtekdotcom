@@ -7,9 +7,9 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 - Next.js 16 + React 19 (App Router, TypeScript)
 - Payload CMS v3.84+ (embedded in Next.js, Postgres-backed)
 - PostgreSQL (RDS in prod, Docker Compose locally)
-- Tailwind v4 (CSS-first `@theme`)
+- Tailwind v3 (config-based; v3 chosen over v4 — see `docs/decisions/0001-tailwind-v3.md`)
 - AWS: EC2 + ALB + CloudFront, Docker via ECR, blue-green via ASG
-- Identity: Google Workspace (`@seqtechllc.com`) via OAuth plugin (planned post-spike — see ROADMAP D-14)
+- Identity: Google Workspace (`@seqtechllc.com`) via OAuth plugin (ROADMAP D-14, Phase 1 — see `docs/decisions/0002-auth-strategy.md`)
 
 ## Source of truth
 
@@ -20,13 +20,17 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 - `docs/LOCAL_DEVELOPMENT.md` — running locally
 - `docs/PAYLOAD_DEVELOPMENT.md` — Payload patterns
 - `docs/BLOCK_LIBRARY.md` — block/component inventory
-- `docs/CONTENT-REQUIREMENTS.md` — content needs
-- `docs/INTEGRATIONS.md` — HubSpot, GTM, ScoreApp, CSP
+- `docs/DESIGN_SYSTEM.md` — color, type, spacing, motion tokens; logo usage rules
+- `docs/BRAND_STRATEGY_RESEARCH.md` — voice, positioning, narrative direction
+- `docs/CONTENT-REQUIREMENTS.md` — content needs (incl. SEO/AICO under §8)
+- `docs/CONTENT_MIGRATION.md` — Wix audit JSON → Payload migration script spec
+- `docs/INTEGRATIONS.md` — HubSpot, GTM, ScoreApp, CSP, SES
+- `docs/ERROR_PAGES.md` — 404, 500, maintenance, slow-request handling
 - `docs/decisions/` — Architecture Decision Records (ADRs): non-obvious technical choices, options considered, trade-offs accepted, when to revisit. Read `docs/decisions/README.md` first.
 
 ## Current phase
 
-Pre-implementation. Branch `spike/stack-validation` proves the Next 16 + React 19 + Payload 3.84+ + Tailwind v4 combo builds (ROADMAP D-13 / Phase 1 Task 1.0). Phase 1 proper begins after spike merges.
+Phase 1 — implementation begins. The stack-validation spike (`spike/stack-validation`, ROADMAP D-13) merged to main on 2026-05-15. Working scaffold lives at the repo root: Next 16.2.3 + React 19.2.4 + Payload 3.84 + Postgres 16 + Tailwind v3.4 + Lexical, with admin login, Lexical authoring, and public render verified by Playwright against both dev and a Docker container.
 
 ## Conventions
 

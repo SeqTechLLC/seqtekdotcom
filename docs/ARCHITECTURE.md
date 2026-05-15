@@ -1034,3 +1034,53 @@ Vitest-compatible tests under `infra/test/` use `aws-cdk-lib/assertions` to veri
 - All security groups deny ingress from `0.0.0.0/0` except the CloudFront-fronted ALB on 443
 
 These tests run in the same CI workflow as the application tests and gate the deploy. An infrastructure change that breaks an invariant fails the PR before `cdk deploy` ever runs.
+
+---
+
+## 14. AI Crawl Mechanics (AICO)
+
+AI crawl optimization is treated as a sub-discipline of SEO, not a separate program. The mechanics that distinguish it from classic crawler-budget SEO are: **explicit per-crawler robots policy, plain-text content alternatives, edge-cache strategy tuned for crawler traffic, and a curated content index for LLMs.** The citation/schema/byline layer of AICO lives in CONTENT-REQUIREMENTS.md §8; this section covers the infrastructure and rendering pieces.
+
+### 14.1 Differentiated `robots.txt`
+
+Generic `User-agent: *` rules don't distinguish crawlers that cite-with-attribution from crawlers that scrape-for-training-only. Production `robots.txt` enumerates known AI crawlers and sets policy per-bot:
+
+- **Allow with full access** — `Googlebot`, `Bingbot`, `DuckDuckBot`, `ClaudeBot` (Anthropic, citation-attributing), `PerplexityBot` (citation-attributing), `OAI-SearchBot` (OpenAI's search-citation crawler, distinct from `GPTBot`)
+- **Allow with `Crawl-delay: 10` cap** — `GPTBot` (OpenAI training), `Google-Extended` (Bard/Gemini training), `CCBot` (Common Crawl), `Bytespider` (ByteDance training). Allowed because we're a public consulting firm and broad LLM training-data presence is a positioning win, but rate-limited to keep origin cost bounded.
+- **Disallow** — `Amazonbot` (no citation surface for our segment), unknown crawlers identifying as `*Bot*` with no documented citation behavior. Reviewed quarterly.
+
+`robots.txt` is served from `app/robots.ts` (Next.js metadata route) so it can be generated, version-controlled, and tested. A unit test asserts every entry in the allow/cap/disallow tables produces the expected directive.
+
+### 14.2 Plain-text alternatives — `.md` parallel routes
+
+Every content page (`/insights/[slug]`, `/case-studies/[slug]`, `/services/[slug]`, `/services/[pillar]/[slug]`, `/industries/[slug]`, `/about/*`) is served in two shapes from a single content source:
+
+- **HTML** at the canonical URL — for browsers and crawlers that render
+- **Markdown** at the same path with `.md` suffix (e.g., `/insights/foo.md`) — for LLMs ingesting the content. ~10x smaller payload than the rendered HTML, no CSS/JS, no analytics, no ad units. Served with `Content-Type: text/markdown; charset=utf-8`.
+
+Implementation: a single Next.js dynamic route per content type emits HTML by default and Markdown when the URL ends in `.md` (or when `Accept: text/markdown` is the only accepted type). The Markdown projection is generated from the same Lexical document model used to render HTML, so the two never drift. Frontmatter on the `.md` response carries title, author, publication date, last-updated date, canonical URL, and structured-data summary.
+
+The `.md` routes are listed in `sitemap.xml` alongside HTML URLs (separate `<url>` entries), and CloudFront caches them with the same TTL as the HTML.
+
+### 14.3 `llms.txt` and `llms-full.txt`
+
+Per Anthropic's emerging convention, the site exposes a curated index for LLM consumption:
+
+- **`/llms.txt`** — single Markdown document. Lists the highest-signal content with one-sentence summaries, grouped by intent (services, case studies, the localshoring model, how to engage). Equivalent to `sitemap.xml` for humans-reading-LLMs.
+- **`/llms-full.txt`** — same index, with the full Markdown body of each linked page concatenated. A single fetch lets an LLM ingest the entire site without N requests.
+
+Both are generated at build time from Payload (so editor-publishable changes propagate via the standard revalidation hook), served with long CloudFront TTL, and listed in `robots.txt` via `Allow:` on the path.
+
+### 14.4 Edge cache for crawler traffic
+
+CloudFront cache behaviors (per ARCHITECTURE.md §3 Cache Behaviors) are tuned so well-behaved crawlers hit the edge, not origin. The `.md` routes, `llms.txt`, `llms-full.txt`, and `sitemap.xml` get long TTL (24h browser, 7d edge) with `stale-while-revalidate: 86400` so the edge keeps serving while the origin regenerates. Crawler-heavy paths get the same treatment as static assets — one origin request per cache invalidation, not per visit.
+
+### 14.5 Rate limits for abusive crawlers
+
+Crawlers that ignore `Crawl-delay` or hammer `.md` endpoints in tight loops get rate-limited at the WAF layer (per §6 Rate Limiting — added when needed, not pre-emptively). Trigger: any single User-Agent producing >300 requests/5min from a single source IP. Action: 429 with `Retry-After: 600`. Logged to CloudWatch for review; durable-bad-actor User-Agents move to the `Disallow` list in `robots.txt` at the next quarterly review.
+
+### 14.6 What AICO is not
+
+- Not a justification for cloaking, content-negotiation tricks that serve different content to different bots, or any pattern Google would consider deceptive (per Search Central spam policy). The HTML and Markdown projections are the *same content* in different shapes — explicitly allowed.
+- Not a reason to add a separate "AI version" of pages with different copy for crawlers. One canonical content source, two render projections.
+- Not a substitute for SEO. SEO investment (structured data, internal linking, page performance, content quality) is what makes the citation surface valuable; AICO is what makes that surface efficient to crawl.

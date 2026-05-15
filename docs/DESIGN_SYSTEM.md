@@ -1,11 +1,11 @@
 # SEQTEK Website — Design System
 
 **Date:** 2026-05-14
-**Status:** Design — Pre-Implementation
-**Depends on:** Brand kit (`brandkit/brandkit.pdf`), `BRAND_STRATEGY_RESEARCH.md`
+**Status:** Design — Pre-Implementation (Phase 1: token translation to v3 config pending)
+**Depends on:** Brand kit (`brandkit/brandkit.pdf`), `BRAND_STRATEGY_RESEARCH.md`, ADR `docs/decisions/0001-tailwind-v3.md`
 **Blocked on:** BR-2 (web font licensing decision — see ROADMAP.md)
 
-The foundation tokens for the SEQTEK website. Everything here flows into a single Tailwind v4 `@theme` block (§14) that the application reads. Source of truth — when this doc and a Tailwind config disagree, this doc wins.
+The foundation tokens for the SEQTEK website. The token reference in §14 is written in Tailwind v4 `@theme` syntax for clarity — the actual implementation uses Tailwind v3 per ADR 0001 and translates these tokens into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, etc.) plus `:root` CSS custom properties in `src/app/(frontend)/styles.css`. Translation is a Phase 1 task; this doc remains the source of truth for token *values* — when this doc and the Tailwind config disagree, this doc wins.
 
 ---
 
@@ -14,7 +14,7 @@ The foundation tokens for the SEQTEK website. Everything here flows into a singl
 1. **Brand depth, not brand decoration.** The brand kit gives us four colors, a logo, and a wordmark. The design system multiplies that into a working palette without inventing visual identity that isn't ours.
 2. **Content is the conversion asset.** Case studies, service pages, and blog posts are content-dense. The type scale, line height, and spacing rhythms favor scanability over hero drama. (See `BRAND_STRATEGY_RESEARCH.md` §2 — Hinge findings on content as the top growth lever.)
 3. **Trust by detail.** Per WCAG 2.2 AA minimum, with AAA contrast on hero copy where the first impression is set. Real photography over stock. Full-attribution components over anonymous ones. Type metrics tuned for actual reading.
-4. **One source of truth.** Tailwind v4's `@theme` block is the published API. Component code reads tokens via utility classes (`text-text-primary`, `bg-accent`); component code does not hardcode hex values, sizes, or durations.
+4. **One source of truth.** This doc defines token values; `tailwind.config.mjs` (v3) is the published API. Component code reads tokens via utility classes (`text-text-primary`, `bg-accent`); component code does not hardcode hex values, sizes, or durations.
 5. **Light mode is v1 scope.** Dark mode and high-contrast mode are deferred per ROADMAP.md (D-1 decision). When added later, semantic tokens are the swap point — primitives don't change.
 
 ---
@@ -582,9 +582,9 @@ The wordmark only ships in two colors — black and white. Pair to background co
 
 ---
 
-## 14. Tailwind v4 `@theme` block
+## 14. Tailwind theme tokens (reference)
 
-The copy-pasteable deliverable. Lives in `src/styles/globals.css` per ARCHITECTURE.md §4. Component code reads via Tailwind utility classes; no hex values appear outside this block.
+The token reference. Per ADR 0001 the implementation uses Tailwind v3 — these `@theme` declarations translate to `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, `.boxShadow`, etc.) and `:root` CSS custom properties in `src/app/(frontend)/styles.css`. The v4 `@theme` syntax is preserved here because it documents intent compactly; the v3 translation is a Phase 1 task and lives in code, not this doc. When values diverge, this doc wins for *values* and the config file wins for *naming/utility shape*.
 
 ```css
 @import "tailwindcss";
