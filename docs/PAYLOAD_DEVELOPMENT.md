@@ -135,15 +135,15 @@ export default buildConfig({
   // Admin panel config
   admin: {
     livePreview: {
-      url: ({ data, collectionConfig }) => {
-        const slug = data?.slug
-        if (!slug) return ''
-        switch (collectionConfig?.slug) {
-          case 'posts': return `${process.env.NEXT_PUBLIC_SITE_URL}/insights/${slug}`
-          case 'case-studies': return `${process.env.NEXT_PUBLIC_SITE_URL}/case-studies/${slug}`
-          default: return `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`
-        }
-      },
+      // Routes to a dedicated preview API that resolves relations server-side and
+      // streams the rendered page back. Live preview form data only contains IDs
+      // for relationship fields, not populated objects — never reach into
+      // `data.someRelation.slug` here. See §12 for the full pattern.
+      url: ({ data, collectionConfig, req }) =>
+        `${process.env.NEXT_PUBLIC_SITE_URL}/api/preview` +
+        `?collection=${collectionConfig?.slug}` +
+        `&slug=${data?.slug ?? ''}` +
+        `&token=${req?.user ? 'authed' : ''}`,
       collections: ['posts', 'case-studies', 'pages', 'services'],
       breakpoints: [
         { label: 'Mobile', name: 'mobile', width: 375, height: 667 },
@@ -200,7 +200,11 @@ export const Posts: CollectionConfig = {
   access: {
     read: ({ req }) => {
       if (req.user) return true
-      return { status: { equals: 'published' } }
+      // `_status` is Payload's auto-managed draft state field (created when
+      // `versions.drafts: true`). Filtering on `_status` correctly hides
+      // unpublished drafts of previously-published documents — a user-defined
+      // `status` field would not, since the prior draft still has the old value.
+      return { _status: { equals: 'published' } }
     },
     create: ({ req }) => req.user?.roles?.includes('editor') || false,
     update: ({ req }) => req.user?.roles?.includes('editor') || false,
@@ -906,7 +910,7 @@ const isAdminOrEditor: Access = ({ req }) => {
 
 const publishedOrAuthenticated: Access = ({ req }) => {
   if (req.user) return true
-  return { status: { equals: 'published' } }
+  return { _status: { equals: 'published' } }
 }
 
 export const Posts: CollectionConfig = {
@@ -1344,18 +1348,18 @@ In `payload.config.ts`:
 ```typescript
 admin: {
   livePreview: {
-    url: ({ data, collectionConfig }) => {
+    // The `url` callback receives the form state being edited — for relationship
+    // fields this is the related doc's *ID*, not a populated object. Reaching
+    // into `data?.someRelation?.slug` will always be undefined here. The robust
+    // pattern is to point at a dedicated preview API route that resolves the
+    // relations server-side (where `req.payload.findByID` is available) and
+    // returns the rendered page.
+    url: ({ data, collectionConfig, req }) => {
       const base = process.env.NEXT_PUBLIC_SITE_URL
-      const slug = data?.slug
-      if (!slug) return ''
-
-      switch (collectionConfig?.slug) {
-        case 'posts': return `${base}/insights/${slug}`
-        case 'case-studies': return `${base}/case-studies/${slug}`
-        case 'services': return `${base}/services/${data?.pillar?.slug || 'unknown'}/${slug}`
-        case 'pages': return `${base}/${slug}`
-        default: return `${base}/${slug}`
-      }
+      return `${base}/api/preview` +
+        `?collection=${collectionConfig?.slug}` +
+        `&id=${data?.id ?? ''}` +
+        `&slug=${data?.slug ?? ''}`
     },
     collections: ['posts', 'case-studies', 'pages', 'services', 'workshops'],
     breakpoints: [
@@ -1366,6 +1370,8 @@ admin: {
   },
 }
 ```
+
+The `/api/preview` route handler validates the user has admin access (via the Payload session cookie), looks up the document with `payload.findByID({ collection, id, depth: 2 })` so relations are populated, computes the canonical URL (e.g., `/services/${pillar.slug}/${service.slug}` for service pages), and either redirects to that URL with a draft cookie set or renders the page directly with the populated draft data. This keeps relation resolution in one place and avoids the form-state pitfall.
 
 ### Frontend Preview Component
 
@@ -1590,18 +1596,33 @@ These are starting points, not dependencies. Once copied, they're your code to m
 
 ### Slug Auto-Generation
 
-Payload provides a built-in slug field helper:
+Payload provides a built-in slug field helper. It returns a single field (not an array) and takes an optional config object — call it as `slugField()` for defaults, or pass overrides:
 
 ```typescript
 import { slugField } from 'payload'
 
 fields: [
   { name: 'title', type: 'text', required: true },
-  ...slugField('title'),
+  slugField({ useAsSlug: 'title' }), // `useAsSlug` defaults to 'title'; shown for clarity
 ]
 ```
 
-Or build it manually with a `beforeValidate` hook if you need custom slugification logic (see Section 8).
+For custom slugification (e.g., transliteration, special-character handling), pass a `slugify` function:
+
+```typescript
+import { slugField } from 'payload'
+import slugify from 'slugify'
+
+fields: [
+  { name: 'title', type: 'text', required: true },
+  slugField({
+    useAsSlug: 'title',
+    slugify: ({ valueToSlugify }) => slugify(valueToSlugify, { lower: true, strict: true }),
+  }),
+]
+```
+
+Or build it manually with a `beforeValidate` hook if you need behavior the helper doesn't expose (see Section 8).
 
 ### SEO Fields via Plugin
 
