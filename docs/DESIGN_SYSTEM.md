@@ -1,7 +1,7 @@
 # SEQTEK Website — Design System
 
 **Date:** 2026-05-14
-**Status:** Design — Pre-Implementation (Phase 1: token translation to v3 config pending)
+**Status:** Reference — Phase 1 (token translation to v3 config pending)
 **Depends on:** SEQTEK brand kit (private — kept outside this repo, see CLAUDE.md for local convention), `BRAND_STRATEGY_RESEARCH.md`, ADR `docs/decisions/0001-tailwind-v3.md`
 **Blocked on:** BR-2 (web font licensing decision — see ROADMAP.md)
 

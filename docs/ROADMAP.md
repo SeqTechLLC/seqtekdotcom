@@ -1,16 +1,16 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-14
-**Status:** Pre-implementation planning
+**Last updated:** 2026-05-20
+**Status:** Phase 1 — implementation
 
-Single source of truth for what's open, what's blocked, what's next on the website rebuild. Keep current. When something moves status, edit this file in the same commit.
+Single source of truth for what's open, what's blocked, what's next on the website rebuild. Keep current. When something moves status, edit this file in the same commit. Completed items are archived in [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) so this file stays focused on active work.
 
 ## Status legend
 
 - 🔴 **Blocked** — waiting on a person or external dependency
 - 🟡 **Open** — defined, not started
 - 🟢 **In progress**
-- ✅ **Done**
+- ✅ **Done** (moved to `PROJECT_HISTORY.md`)
 
 ---
 
@@ -42,57 +42,27 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 
 ---
 
-## 2. Research tasks
+## 2. Design & engineering open work
 
-| ID  | Task                                                                                     | Owner | Output                                                               |
-| --- | ---------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------- |
-| R-1 | Hinge Research Institute studies on professional services branding and "Visible Experts" | ✅    | Synthesized in `BRAND_STRATEGY_RESEARCH.md` §2                       |
-| R-2 | Origin-story B2B consulting case studies (5-10 firms with strong narratives)             | ✅    | Ten-firm table in `BRAND_STRATEGY_RESEARCH.md` §3                    |
-| R-3 | Oklahoma businesses honoring Native heritage in their branding — patterns and tone       | ✅    | `BRAND_STRATEGY_RESEARCH.md` §4 (with flagged thin-finding caveats)  |
-| R-4 | B2B trust signal research for professional services sites                                | ✅    | `BRAND_STRATEGY_RESEARCH.md` §5 — consolidated citations             |
-| R-5 | Edelman Trust Barometer 2024+2025 — B2B sections                                         | ✅    | Cited within §5                                                      |
-| R-6 | Competitor brand audit — 5-8 comparable regional firms                                   | ✅    | Ten-firm audit + positioning gaps in `BRAND_STRATEGY_RESEARCH.md` §6 |
-
----
-
-## 3. Design & engineering open work
-
-| ID   | Task                                                                                                       | Status | Output                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ---- | ---------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D-1  | Design system extension — type scale, color ramps, spacing, radius, shadow, motion tokens                  | ✅     | `docs/DESIGN_SYSTEM.md` — major-third type scale, ramps from brand seeds, AA floor / AAA hero contrast, logo usage rules. Token reference written in v4 `@theme` syntax; v3 `tailwind.config.mjs` translation is a Phase 1 task.                                                                                                                                                                           |
-| DS-1 | TestimonialCarousel — autoplay vs manual-only decision                                                     | 🟡     | Confirm during D-3 wireframe pass; accessibility implications                                                                                                                                                                                                                                                                                                                                              |
-| DS-2 | Homepage hero size — `text-display-xl` (61px) vs `text-display` (49px)                                     | 🟡     | Depends on hero copy draft (CONTENT-REQUIREMENTS §4)                                                                                                                                                                                                                                                                                                                                                       |
-| DS-3 | Lexical rich-text styling — validate `@tailwindcss/typography` matches design system                       | 🟡     | Validate during Phase 1 stack spike (D-13). May need a `prose-seqtek` override class.                                                                                                                                                                                                                                                                                                                      |
-| D-2  | Component / block inventory                                                                                | ✅     | `docs/BLOCK_LIBRARY.md`                                                                                                                                                                                                                                                                                                                                                                                    |
-| D-3  | 5 archetype wireframes (Home, About, Service Pillar, Service Detail, Case Study)                           | 🟡     | Excalidraw or Figma; block-order sketches                                                                                                                                                                                                                                                                                                                                                                  |
-| D-4  | ARCHITECTURE.md updates: Testing Strategy + CDK Infrastructure sections                                    | ✅     | §12 (Testing) + §13 (Infrastructure as Code) added                                                                                                                                                                                                                                                                                                                                                         |
-| D-5  | Email/SMTP for Payload (auth + password reset) — SES integration spec                                      | ✅     | New INTEGRATIONS.md §6 Transactional Email (AWS SES) — SDK approach, bounce alarm at 5%, env vars added. **Scope note:** Password-reset use becomes moot once D-14 (Google SSO) ships, but SES is still required for any future transactional email.                                                                                                                                                       |
-| D-6  | CSP rollout mechanism — report endpoint + promote-to-enforce trigger                                       | ✅     | INTEGRATIONS.md §8 Rollout mechanism subsection — `/api/csp-report`, CloudWatch metric filter, 5-item promote checklist                                                                                                                                                                                                                                                                                    |
-| D-7  | S3 → CloudFront origin auth — private bucket + Origin Access Control                                       | ✅     | New "Media Storage — S3 + CloudFront with OAC" subsection added to ARCHITECTURE.md §5                                                                                                                                                                                                                                                                                                                      |
-| D-8  | Migration script field-mapping spec (audit JSON → Payload collections)                                     | ✅     | `docs/CONTENT_MIGRATION.md` — per-collection field mapping, plain-text segmentation strategy, idempotency design                                                                                                                                                                                                                                                                                           |
-| D-9  | Auth/roles workflow — draft/publish/scheduled-publish permissions                                          | ✅     | Permissions matrix + scheduled-publish design added to ARCHITECTURE.md §6                                                                                                                                                                                                                                                                                                                                  |
-| D-10 | GTM consent bridge — implement `__hs_opt_in_consent` trigger                                               | ✅     | INTEGRATIONS.md §2.2 Implementation subsection — bridge `<script>` snippet, `infra/gtm/container.json` versioning, consent reqs on pixel tags                                                                                                                                                                                                                                                              |
-| D-11 | Form submission failure UX (retry/queue/error states)                                                      | ✅     | INTEGRATIONS.md §1.2 Failure handling — state machine, error-class table, dataLayer events, mailto fallback                                                                                                                                                                                                                                                                                                |
-| D-12 | Error pages — 404 + 500 + maintenance mode designs                                                         | ✅     | `docs/ERROR_PAGES.md` — 404, 500, maintenance, slow-request handling with tracking + a11y                                                                                                                                                                                                                                                                                                                  |
-| D-13 | Stack spike: scaffold exact versions and verify build (Phase 1 Task 1.0)                                   | ✅     | Stack validated on `spike/stack-validation`: Next 16.2.3 + React 19.2.4 + Payload 3.84 + Postgres 16 + Tailwind v3.4 + Lexical. Playwright smoke passes against both dev (`:3100`) and a Docker container (`:3200`, 327MB image). Spike-only: `force-dynamic` on the homepage so `docker build` doesn't need DB/secrets — Phase 1 switches to ISR. Pinned versions are now load-bearing in `package.json`. |
-| D-14 | Google OAuth SSO for `/admin` via `@authsmith/payload-auth-plugin`, restricted to `@seqtechllc.com` domain | 🟡     | Replaces email/password as primary admin auth. Add plugin + `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` to Parameter Store. Update ARCHITECTURE.md §6. Eliminates D-5 dependency. Implement in Phase 1 after spike validates the core stack.                                                                                                                                                                 |
+| ID   | Task                                                                                                       | Status | Notes                                                                                                                                                                                                                |
+| ---- | ---------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-1 | TestimonialCarousel — autoplay vs manual-only decision                                                     | 🟡     | Confirm during D-3 wireframe pass; accessibility implications                                                                                                                                                        |
+| DS-2 | Homepage hero size — `text-display-xl` (61px) vs `text-display` (49px)                                     | 🟡     | Depends on hero copy draft (CONTENT-REQUIREMENTS §4)                                                                                                                                                                 |
+| DS-3 | Lexical rich-text styling — validate `@tailwindcss/typography` matches design system                       | 🟡     | Validate during Phase 1; may need a `prose-seqtek` override class                                                                                                                                                    |
+| D-3  | 5 archetype wireframes (Home, About, Service Pillar, Service Detail, Case Study)                           | 🟡     | Excalidraw or Figma; block-order sketches                                                                                                                                                                            |
+| D-14 | Google OAuth SSO for `/admin` via `@authsmith/payload-auth-plugin`, restricted to `@seqtechllc.com` domain | 🟡     | Replaces email/password as primary admin auth. Add plugin + `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` to Parameter Store. Update ARCHITECTURE.md §6. Eliminates D-5 dependency. Implement in Phase 1 after Task 1.x. |
 
 ---
 
-## 4. Doc fixes
+## 3. Doc fixes
 
-| ID  | Fix                                                                                                                                                                                                                                                 | Status |
+| ID  | Fix                                                                                                                                                                                                                                                 | Status | Notes                                                                                                                                                                                                                                       |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F-1 | INTEGRATIONS.md §11 (was §10) — remove "Amplify Console" reference; replace with CloudFront + ACM                                                                                                                                                   | ✅     |
-| F-2 | CONTENT-REQUIREMENTS.md — mark Mission/Vision/Values as resolved (in brand kit), note core values still need behavioral rewrite                                                                                                                     | ✅     |
-| F-3 | ARCHITECTURE.md — pin Next/React/Payload/Tailwind versions after D-13 spike                                                                                                                                                                         | 🟡     |
-| F-4 | CSP `frame-src` allowlist — add `meetings.hubspot.com` and `*.hubspotusercontent.com`                                                                                                                                                               | ✅     | Synced across INTEGRATIONS.md §8 (was §7) and ARCHITECTURE.md §6                                                                                                                                                                            |
-| F-5 | CONTENT-REQUIREMENTS.md §1.E — bump WCAG citation to 2.2 AA throughout (mixed 2.1/2.2 today)                                                                                                                                                        | ✅     | Audit found the doc was already consistent at 2.2 — no edits needed                                                                                                                                                                         |
 | F-6 | AICO baseline — `llms.txt` + `llms-full.txt` route, `.md` alternatives for content pages, differentiated `robots.txt` per AI crawler, CloudFront cache rules tuned for crawler traffic, byline + last-updated metadata on Insights and Case Studies | 🟡     | Spec lives in ARCHITECTURE.md §14 (crawl mechanics) and CONTENT-REQUIREMENTS.md §8 (citation/schema layer). Implement in Phase 2 alongside structured data. AICO is treated as a sub-discipline of SEO — no new term being coined publicly. |
 
 ---
 
-## 5. Implementation phases
+## 4. Implementation phases
 
 Carrying over the structure from ARCHITECTURE.md §11 with refinements from this planning pass.
 
@@ -160,7 +130,7 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 
 ---
 
-## 6. Risks to watch
+## 5. Risks to watch
 
 1. **Content production lag.** Engineering can build with placeholder content; launch requires real content. Per CONTENT-REQUIREMENTS §7, this is the bottleneck. Start C-1, C-2, C-3 in week 1.
 2. **Sequoyah decision deadlock (BR-1).** Affects About pages, homepage hero, brand tone, design system illustrations. Block on a _written_ decision from leadership, not consensus.

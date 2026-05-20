@@ -17,6 +17,7 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 
 - `docs/ARCHITECTURE.md` — system design, stack rationale, deployment
 - `docs/ROADMAP.md` — current status, open decisions, phase tracker
+- `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
 - `docs/LOCAL_DEVELOPMENT.md` — running locally
 - `docs/PAYLOAD_DEVELOPMENT.md` — Payload patterns
 - `docs/BLOCK_LIBRARY.md` — block/component inventory

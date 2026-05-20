@@ -1,12 +1,12 @@
 # SEQTEK Website — Block & Component Library
 
 **Date:** 2026-05-14
-**Status:** Design — Pre-Implementation
+**Status:** Reference — Phase 1 implementation
 
 This is the engineering bridge between **what** content lives on the site (CONTENT-REQUIREMENTS.md) and **how** Payload + React represent it. It enumerates every block, primitive, and section component, with field schemas and page-composition mappings.
 
 For Payload field-type reference, see PAYLOAD_DEVELOPMENT.md §5–6.
-For visual treatment (color, type, spacing), see DESIGN_SYSTEM.md (pending — D-1).
+For visual treatment (color, type, spacing), see DESIGN_SYSTEM.md.
 
 ---
 

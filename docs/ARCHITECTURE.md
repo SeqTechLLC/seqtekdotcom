@@ -14,7 +14,7 @@
 | **Database**           | AWS RDS PostgreSQL                           | Shared infrastructure for CMS + future extensibility (portal, gated resources, etc.). Managed backups, failover.                                                                                 |
 | **Hosting**            | EC2 + CloudFront + ALB                       | Long-lived Node process for Payload CMS. ACM for auto-renewing SSL. CloudFront CDN at the edge. ALB for health checks and zero-downtime deploys. SEQTEK is an AWS shop — no new vendor accounts. |
 | **Container**          | Docker + Amazon ECR                          | Reproducible builds. Eliminates platform mismatches between CI and production. ECR keeps images in-ecosystem.                                                                                    |
-| **Styling**            | Tailwind CSS v3                              | Utility-first, design tokens via `tailwind.config.js`, excellent performance (only ships used CSS). v3 chosen over v4 — see [ADR 0001](decisions/0001-tailwind-v3.md).                           |
+| **Styling**            | Tailwind CSS v3                              | Utility-first, design tokens via `tailwind.config.mjs`, excellent performance (only ships used CSS). v3 chosen over v4 — see [ADR 0001](decisions/0001-tailwind-v3.md).                          |
 | **Rich Text**          | Lexical (via `@payloadcms/richtext-lexical`) | Payload v3 default. Extensible block-based editor with serialization to React components.                                                                                                        |
 | **Image Optimization** | `next/image` + `sharp`                       | Automatic format conversion (WebP/AVIF), responsive sizing, lazy loading.                                                                                                                        |
 | **Media Storage**      | AWS S3 (via `@payloadcms/storage-s3`)        | Centralizes media in durable, CDN-friendly storage. Decouples uploads from the EC2 instance filesystem.                                                                                          |
@@ -26,22 +26,24 @@
 
 ### Key Packages
 
-| Package                      | Version         | Purpose                                                                              |
-| ---------------------------- | --------------- | ------------------------------------------------------------------------------------ |
-| next                         | 16.x            | Framework                                                                            |
-| react, react-dom             | 19.x            | UI library                                                                           |
-| payload                      | 3.x             | CMS                                                                                  |
-| @payloadcms/next             | 3.x             | Payload-Next.js integration                                                          |
-| @payloadcms/db-postgres      | 3.x             | Postgres adapter                                                                     |
-| @payloadcms/richtext-lexical | 3.x             | Rich text editor                                                                     |
-| @payloadcms/storage-s3       | 3.x             | S3 media storage                                                                     |
-| tailwindcss                  | ^3.4            | Styling — see [ADR 0001](decisions/0001-tailwind-v3.md)                              |
-| @tailwindcss/typography      | 0.5.x           | Prose styling for CMS rich text (registered in `tailwind.config.js` `plugins` array) |
-| graphql                      | ^16.8.1         | Required peer dependency for Payload                                                 |
-| sharp                        | latest          | Image optimization (required by next/image)                                          |
-| @next/third-parties          | latest          | GTM integration optimized for Next.js                                                |
-| husky                        | latest          | Git hooks (runs gitleaks on pre-commit)                                              |
-| gitleaks                     | latest (system) | Secret leak detection — pre-commit + CI                                              |
+Versions below are the pinned set from `package.json` after the D-13 stack-validation spike (2026-05-15). Bump deliberately — Payload's coupling to Next means upgrades need to land together.
+
+| Package                      | Version         | Purpose                                                                               |
+| ---------------------------- | --------------- | ------------------------------------------------------------------------------------- |
+| next                         | ^16.2.6         | Framework                                                                             |
+| react, react-dom             | 19.2.4          | UI library                                                                            |
+| payload                      | ^3.84.0         | CMS                                                                                   |
+| @payloadcms/next             | ^3.84.0         | Payload-Next.js integration                                                           |
+| @payloadcms/db-postgres      | ^3.84.0         | Postgres adapter                                                                      |
+| @payloadcms/richtext-lexical | ^3.84.0         | Rich text editor                                                                      |
+| @payloadcms/storage-s3       | ^3.84.0         | S3 media storage (added in Phase 1; not yet in `package.json`)                        |
+| tailwindcss                  | ^3.4.17         | Styling — see [ADR 0001](decisions/0001-tailwind-v3.md)                               |
+| @tailwindcss/typography      | ^0.5.16         | Prose styling for CMS rich text (registered in `tailwind.config.mjs` `plugins` array) |
+| graphql                      | ^16.8.1         | Required peer dependency for Payload                                                  |
+| sharp                        | 0.34.2          | Image optimization (required by next/image)                                           |
+| @next/third-parties          | latest          | GTM integration optimized for Next.js (added in Phase 1)                              |
+| husky                        | ^9.1.7          | Git hooks (runs gitleaks on pre-commit)                                               |
+| gitleaks                     | latest (system) | Secret leak detection — pre-commit + CI                                               |
 
 ---
 

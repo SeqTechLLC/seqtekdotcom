@@ -1,7 +1,7 @@
 # SEQTEK Website — Content Migration Specification
 
 **Date:** 2026-05-14
-**Status:** Design — Pre-Implementation
+**Status:** Reference — Phase 2 implementation (seed script)
 
 How content from the existing Wix site gets moved into Payload CMS. The script lives at `src/payload/seed/migrateFromAudit.ts` and runs via `npx tsx`. Idempotent — re-running updates existing records by slug rather than creating duplicates.
 

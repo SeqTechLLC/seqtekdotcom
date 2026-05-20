@@ -1,7 +1,7 @@
 # Payload CMS v3 — Development Guide
 
 **Date:** May 2026
-**Status:** Reference — Pre-Implementation
+**Status:** Reference — Phase 1 implementation
 
 This is a practical reference for developing with Payload CMS v3 in the SEQTEK website project. It covers collection design, block development, Lexical editor customization, hooks, access control, querying, and admin panel configuration.
 

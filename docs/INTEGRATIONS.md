@@ -1,7 +1,7 @@
 # SEQTEK Website — Integration Specifications
 
 **Date:** May 2026
-**Status:** Design — Pre-Implementation
+**Status:** Reference — Phase 1 implementation
 
 ---
 
