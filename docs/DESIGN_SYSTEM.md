@@ -1,9 +1,8 @@
 # SEQTEK Website — Design System
 
-**Date:** 2026-05-14
+**Date:** 2026-05-14 (updated 2026-05-20: BR-2 resolved — Nunito Sans selected)
 **Status:** Reference — Phase 1 (token translation to v3 config pending)
 **Depends on:** SEQTEK brand kit (private — kept outside this repo, see CLAUDE.md for local convention), `BRAND_STRATEGY_RESEARCH.md`, ADR `docs/decisions/0001-tailwind-v3.md`
-**Blocked on:** BR-2 (web font licensing decision — see ROADMAP.md)
 
 The foundation tokens for the SEQTEK website. The token reference in §14 is written in Tailwind v4 `@theme` syntax for clarity — the actual implementation uses Tailwind v3 per ADR 0001 and translates these tokens into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, etc.) plus `:root` CSS custom properties in `src/app/(frontend)/styles.css`. Translation is a Phase 1 task; this doc remains the source of truth for token _values_ — when this doc and the Tailwind config disagree, this doc wins.
 
@@ -168,13 +167,13 @@ Verified pairings for white text on a colored background (for buttons, badges, d
 
 ### 3.1 Families
 
-| Role         | Family                                              | Notes                                                                                                                                                                                    |
-| ------------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Display + UI | `Inter`                                             | Web placeholder pending BR-2 resolution. Modern geometric sans with a wide weight range; closest free analogue to Avenir's tone. Self-hosted in `/public/fonts/` per ARCHITECTURE.md §1. |
-| Body         | `Inter`                                             | Same family used throughout for cohesion.                                                                                                                                                |
-| Monospace    | `ui-monospace, 'SF Mono', 'Roboto Mono', monospace` | System stack — no custom mono font loaded. Used in code blocks only.                                                                                                                     |
+| Role         | Family                                              | Notes                                                                                                                                                                                                                                                                                        |
+| ------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Display + UI | `Nunito Sans`                                       | Selected 2026-05-20 (BR-2) as the open-source Avenir analogue: humanist geometric sans with similar terminal shapes, proportions, and warmth; SIL OFL licensed, self-hostable. Self-hosted in `/public/fonts/` per ARCHITECTURE.md §1; print materials retain Avenir Book per the brand kit. |
+| Body         | `Nunito Sans`                                       | Same family used throughout for cohesion.                                                                                                                                                                                                                                                    |
+| Monospace    | `ui-monospace, 'SF Mono', 'Roboto Mono', monospace` | System stack — no custom mono font loaded. Used in code blocks only.                                                                                                                                                                                                                         |
 
-**BR-2 dependency:** Avenir Book is the brand font but it is paid and cannot ship in a public repo. Once BR-2 resolves (purchase Avenir web license vs select a free alternative vs designate Avenir for print only), this section changes by one CSS variable. Component code is family-agnostic via `--font-display` and `--font-body`.
+**Print vs. web split:** Avenir Book remains the brand font in print materials (per the brand kit). It is a paid foundry font and cannot ship in a public repo, so the web face is Nunito Sans — the closest open-source analogue. Component code is family-agnostic via `--font-display` and `--font-body`; only the CSS variables in §14 change if the web face is ever revisited.
 
 ### 3.2 Type scale — major-third (1.25×)
 
@@ -211,7 +210,7 @@ Line heights tighten as type size grows — display copy at 1.6 line-height look
 
 ### 3.4 Weights
 
-Inter is loaded in four weights to keep the network payload small:
+Nunito Sans is loaded in four weights to keep the network payload small:
 
 | Token           | Weight | Use                                       |
 | --------------- | ------ | ----------------------------------------- |
@@ -220,7 +219,7 @@ Inter is loaded in four weights to keep the network payload small:
 | `font-semibold` | 600    | H4, H3, H2                                |
 | `font-bold`     | 700    | H1, display, emphatic inline (`<strong>`) |
 
-`font-display` style attribute is `swap` (per ARCHITECTURE.md §7) — fallback system font renders immediately while Inter loads.
+`font-display` style attribute is `swap` (per ARCHITECTURE.md §7) — fallback system font renders immediately while Nunito Sans loads.
 
 ### 3.5 Letter spacing
 
@@ -687,8 +686,8 @@ The token reference. Per ADR 0001 the implementation uses Tailwind v3 — these 
   /* ─────────────────────────────────────────────────────
    * TYPOGRAPHY
    * ───────────────────────────────────────────────────── */
-  --font-display: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', monospace;
 
   /* Type scale — major-third (1.25×) from 16px base */
@@ -717,7 +716,7 @@ The token reference. Per ADR 0001 the implementation uses Tailwind v3 — these 
   --tracking-normal: 0;
   --tracking-wide: 0.025em;
 
-  /* Weights — Inter only loads these four to keep payload tight */
+  /* Weights — Nunito Sans only loads these four to keep payload tight */
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -793,11 +792,10 @@ The token reference. Per ADR 0001 the implementation uses Tailwind v3 — these 
 
 ## 15. Open questions and dependencies
 
-| ID   | Question                                                                                                                                                                                            | Where blocked                                          |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| BR-2 | Web font licensing — purchase Avenir web license, use Inter as the working web face, or use a different free family (DM Sans, Nunito Sans). Affects only `--font-display` and `--font-body` in §14. | ROADMAP.md (leadership/marketing)                      |
-| DS-1 | Should `<TestimonialCarousel>` autoplay by default, or only manual advancement? Accessibility implications.                                                                                         | Confirm during D-3 wireframe pass                      |
-| DS-2 | Does the homepage hero use `text-display-xl` (61px) or scale back to `text-display` (49px) on smaller hero copy? Decide after first hero copy draft lands.                                          | Content (CONTENT-REQUIREMENTS §4 — homepage hero copy) |
-| DS-3 | Lexical rich-text styling — confirm `@tailwindcss/typography` `prose` defaults match this design system's body/heading scales. May need a `prose-seqtek` override class.                            | Validate during Phase 1 stack spike (D-13)             |
+| ID   | Question                                                                                                                                                                 | Where blocked                                          |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| DS-1 | Should `<TestimonialCarousel>` autoplay by default, or only manual advancement? Accessibility implications.                                                              | Confirm during D-3 wireframe pass                      |
+| DS-2 | Does the homepage hero use `text-display-xl` (61px) or scale back to `text-display` (49px) on smaller hero copy? Decide after first hero copy draft lands.               | Content (CONTENT-REQUIREMENTS §4 — homepage hero copy) |
+| DS-3 | Lexical rich-text styling — confirm `@tailwindcss/typography` `prose` defaults match this design system's body/heading scales. May need a `prose-seqtek` override class. | Validate during Phase 1 stack spike (D-13)             |
 
 These do not block applying the rest of the design system. They block specific pieces.

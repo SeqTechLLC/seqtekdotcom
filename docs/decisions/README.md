@@ -53,7 +53,8 @@ A concrete trigger that should reopen this decision (e.g., "we hit X scale," "ve
 
 ## Index
 
-| #                             | Title                                                | Status   | Date       |
-| ----------------------------- | ---------------------------------------------------- | -------- | ---------- |
-| [0001](0001-tailwind-v3.md)   | Use Tailwind CSS v3, not v4 or plain CSS             | Accepted | 2026-05-14 |
-| [0002](0002-auth-strategy.md) | Payload local auth in spike, Google OAuth in Phase 1 | Accepted | 2026-05-14 |
+| #                                        | Title                                                | Status   | Date       |
+| ---------------------------------------- | ---------------------------------------------------- | -------- | ---------- |
+| [0001](0001-tailwind-v3.md)              | Use Tailwind CSS v3, not v4 or plain CSS             | Accepted | 2026-05-14 |
+| [0002](0002-auth-strategy.md)            | Payload local auth in spike, Google OAuth in Phase 1 | Accepted | 2026-05-14 |
+| [0003](0003-sequoyah-brand-narrative.md) | Lean into the Sequoyah heritage as brand depth       | Accepted | 2026-05-20 |

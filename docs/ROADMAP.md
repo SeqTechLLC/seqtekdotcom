@@ -1,6 +1,6 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-20
+**Last updated:** 2026-05-20 (BR-1, BR-2, BR-3 resolved; BR-4 drafted; BR-5/BR-6/BR-7 updated)
 **Status:** Phase 1 — implementation
 
 Single source of truth for what's open, what's blocked, what's next on the website rebuild. Keep current. When something moves status, edit this file in the same commit. Completed items are archived in [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) so this file stays focused on active work.
@@ -18,15 +18,14 @@ Single source of truth for what's open, what's blocked, what's next on the websi
 
 ### Branding & narrative
 
-| ID   | Decision                                                                 | Status | Owner        | Notes                                                                                                                                                                                                                                 |
-| ---- | ------------------------------------------------------------------------ | ------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| BR-1 | Sequoyah heritage in brand narrative — keep, drop, or layered approach   | 🔴     | Leadership   | Research-backed recommendation in `BRAND_STRATEGY_RESEARCH.md`: SEQTEK as surface mark, Sequoyah as opt-in depth on `/about`, one homepage link, explicit cultural-acknowledgement line. Awaiting leadership sign-off.                |
-| BR-2 | Body font — Avenir (paid) vs free substitute for web                     | 🔴     | Marketing    | Avenir is paid; can't ship in a public repo. Recommend DM Sans, Inter, or Nunito Sans for web; reserve Avenir for print.                                                                                                              |
-| BR-3 | Canonical physical address — Sapulpa (brand kit) vs Tulsa (content doc)  | 🔴     | Operations   | Affects footer, contact page, `LocalBusiness` structured data. Confirmed in source data: current privacy policy claims Sapulpa in body but Tulsa in footer — inconsistency exists in production today.                                |
-| BR-4 | Core values — rewrite from aspirational to behavioral (per Lencioni)     | 🟡     | Content lead | Brand kit values are aspirational ("Be excellent in everything we do"). Not launch-blocking; do before About pages publish.                                                                                                           |
-| BR-5 | Canonical company stats (years/projects/lives) — pick one set            | 🔴     | Leadership   | Both stat sets confirmed in source data: homepage `20+`/`411+`/`8221+` vs about `25+`/`500+`/`10,000+`. Migration script imports both verbatim and flags for resolution rather than pre-selecting. Blocks any stats-bar content.      |
-| BR-6 | Cherokee Nation courtesy outreach (optional)                             | 🟡     | Leadership   | Depends on BR-1. Not required — Sequoyah is a public historical figure and Oklahoma is full of institutions named after him. Nice-to-have goodwill gesture; could yield a positive PR story if leadership chooses. Not a launch gate. |
-| BR-7 | Photo shoot scope — leadership only, or leadership + extended team (6-8) | 🟡     | Leadership   | Affects team page design. Recommend extended team per Hinge research.                                                                                                                                                                 |
+_BR-1, BR-2, BR-3 resolved on 2026-05-20 — see `PROJECT_HISTORY.md`. Items remaining:_
+
+| ID   | Decision                                              | Status | Owner        | Notes                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---- | ----------------------------------------------------- | ------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BR-4 | Core values — behavioral + marketing-friendly rewrite | 🟢     | Content lead | Pattern / anti-pattern rewrite for all 7 values in `docs/VALUES_REWRITE.md` (2026-05-20), ordered for marketing arc (Trust → Respect), keyed against brand-kit verbatim. Kenn-approved as dev placeholder. Leadership sign-off deferred to Phase 5.5 launch readiness review (per `project_internal_dynamics.md`). Voice pass + page integration spec are the only pre-launch active items. |
+| BR-5 | Canonical company stats (years / projects / lives)    | 🟢     | Leadership   | Years resolved: **25+** (founded 1999, per leadership 2026-05-20). Projects and lives-touched counts remain placeholder; Kenn following up on canonical numbers. Migration script keeps source-of-truth flags on both stat sets until projects/lives close.                                                                                                                                 |
+| BR-6 | Cherokee Nation courtesy outreach (optional)          | 🟡     | Leadership   | Deferred to pre-launch. Sequoyah is a public historical figure honored across Oklahoma without controversy; outreach is a goodwill gesture, not a permission gate. Reasoning recorded in ADR 0003. Decision happens at Phase 5.5 launch readiness review.                                                                                                                                   |
+| BR-7 | Photo shoot scope — leadership + extended team        | 🟢     | Kenn         | Kenn coordinating: image library access in progress; managing-partner + leadership headshots still to schedule. Extended team coverage per Hinge research (firms with visible team pages convert better). Ties into long-lead content item C-2.                                                                                                                                             |
 
 ### Content collection (long lead time — start now)
 
@@ -119,6 +118,22 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 - [ ] Cross-browser/device QA (Chrome, Safari, Firefox; iOS, Android)
 - [ ] Error pages (404/500/maintenance)
 
+### Phase 5.5 — Launch readiness review (1 week)
+
+The content-and-copy gate before DNS cutover. Per `project_internal_dynamics.md`, leadership engages here, not during dev. Precondition: Phase 5 complete; staging fully rendered with final content in place (no lorem ipsum, no `[PLACEHOLDER]` tags); content lead has already done a voice-consistency pass against `BRAND_STRATEGY_RESEARCH.md` §5+§8.
+
+- [ ] **Core values** (`BR-4`) — leadership reads the 7 Pattern / anti-pattern pairs on the rendered `/about/our-values` page; signs off or iterates
+- [ ] **Sequoyah acknowledgement** (`BR-1`) — leadership reads the homepage trust-block sentence, the `/about/our-story` narrative, and the cultural-acknowledgement line on the rendered pages; signs off or iterates (suggested copy in ADR 0003)
+- [ ] **Stats confirmation** (`BR-5`) — final projects-delivered and lives-touched numbers locked in; "25+ years" already settled
+- [ ] **Cherokee Nation courtesy outreach** (`BR-6`) — decision to send or skip; if send, draft notification and route
+- [ ] **Faith framing decision** — leadership reviews whether and how the brand-kit faith elements ("biblical principles," "grace and trust") surface on `/about/our-story` (flagged in `docs/VALUES_REWRITE.md` adjacent findings)
+- [ ] **Mission, vision, hero copy** pass in context across homepage, About landing, service pillar heroes, case study heroes
+- [ ] **Testimonial attribution** (`C-1`) — every quoted testimonial confirmed with named attribution
+- [ ] **Leadership bios and headshots** (`C-3`, `BR-7`) — Hank, Dana, Brent (and extended team if scope expanded) approve their own bio copy and photos
+- [ ] **Case study copy** (`C-7`) — each of 8 case studies has hero image, named client testimonial, and metrics array; client confirmation where possible
+- [ ] **Legal / privacy** — privacy policy uses canonical Cheyenne address (no Sapulpa references anywhere); terms and cookie banner reviewed
+- [ ] **Sign-off captured in writing** — leadership approvals recorded (Google Doc, signed email, or equivalent) so decisions don't get re-litigated post-launch
+
 ### Phase 6 — Launch (1 week)
 
 - [ ] DNS cutover (low-traffic window)
@@ -133,8 +148,6 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 ## 5. Risks to watch
 
 1. **Content production lag.** Engineering can build with placeholder content; launch requires real content. Per CONTENT-REQUIREMENTS §7, this is the bottleneck. Start C-1, C-2, C-3 in week 1.
-2. **Sequoyah decision deadlock (BR-1).** Affects About pages, homepage hero, brand tone, design system illustrations. Block on a _written_ decision from leadership, not consensus.
-3. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+. Tailwind v4 was evaluated and rejected during the spike — see ADR `docs/decisions/0001-tailwind-v3.md`. The combo is now validated end-to-end (D-13 ✅); if a future minor-version bump breaks the combo, downgrade Next first (don't downgrade Payload — that's the constraint).
-4. **CDK learning curve.** If the engineer hasn't shipped CDK before, add 1-2 weeks to Phase 1.
-5. **Font licensing surprise.** Resolve BR-2 before Phase 1 styling work or every component restyles when the font swaps.
-6. **CSP report-only oversight.** Easy to leave running in report-only past launch and never enforce. Calendar a hard date to flip enforce in Phase 5.
+2. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+. Tailwind v4 was evaluated and rejected during the spike — see ADR `docs/decisions/0001-tailwind-v3.md`. The combo is now validated end-to-end (D-13 ✅); if a future minor-version bump breaks the combo, downgrade Next first (don't downgrade Payload — that's the constraint).
+3. **CDK learning curve.** If the engineer hasn't shipped CDK before, add 1-2 weeks to Phase 1.
+4. **CSP report-only oversight.** Easy to leave running in report-only past launch and never enforce. Calendar a hard date to flip enforce in Phase 5.

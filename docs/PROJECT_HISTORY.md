@@ -50,6 +50,16 @@ Entries are listed roughly in completion order within each section.
 
 ---
 
+## Branding & narrative (BR)
+
+| ID   | Decision                                     | Output                                                                                                                                                                                                                                                                                                                                                                | Closed     |
+| ---- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| BR-1 | Sequoyah heritage in brand narrative         | Lean-in / layered approach accepted. Decision and Touchstone connection captured in `docs/decisions/0003-sequoyah-brand-narrative.md`; full research case in `BRAND_STRATEGY_RESEARCH.md` §1, §3, §4, §7. SEQTEK stays the surface mark; homepage carries one depth sentence; `/about/our-story` carries the full narrative + cultural-acknowledgement line.          | 2026-05-20 |
+| BR-2 | Body font — Avenir (paid) vs free substitute | **Nunito Sans** selected as the open-source Avenir analogue (humanist warmth, similar terminals, SIL OFL licensed, self-hostable). Applied to `docs/DESIGN_SYSTEM.md` §3 and §14 token reference. Avenir Book retained for print materials per the brand kit.                                                                                                         | 2026-05-20 |
+| BR-3 | Canonical physical address                   | **12 N Cheyenne Ave., Tulsa, OK 74103** (phone 918-493-7200). Current footer / contact / `/our-services` / `/workshops` address is canonical; the privacy policy's "201 E Hobson Ave, Sapulpa, OK 74066" body text is stale and must be corrected when the privacy policy is migrated into Payload. Flag for editor follow-up at import time per `CONTENT_MIGRATION`. | 2026-05-20 |
+
+---
+
 ## Notes on what is NOT here
 
 - **Implementation phase progress** (Phase 1 checklist line items like the gitleaks hook, CI workflow) lives in `ROADMAP.md` until the phase fully closes, then moves here as one phase-level entry. Per-task churn inside an active phase stays in the roadmap so it's visible.
