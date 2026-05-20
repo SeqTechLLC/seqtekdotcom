@@ -558,7 +558,7 @@ The authoritative CSP policy lives in [ARCHITECTURE.md §6](ARCHITECTURE.md#cont
 ### Implementation Notes
 
 - **Consent default init** runs as a small inline `<head>` script carrying the request nonce — it must execute before any third-party script. See §2.2 for the snippet.
-- **`style-src` is path-scoped** in the middleware: public routes get `'self'`; `/admin/*` gets `'self' 'unsafe-inline'` to accommodate the Payload admin's Lexical editor.
+- **`style-src` is path-scoped** in the proxy (Next.js 16 renamed `middleware.ts` → `proxy.ts`): public routes get `'self'`; `/admin/*` gets `'self' 'unsafe-inline'` to accommodate the Payload admin's Lexical editor.
 - **Rollout**: start in staging with `Content-Security-Policy-Report-Only` to surface violations without breaking the page. Promote to enforcing once the report endpoint is clean. See _Rollout mechanism_ below for the operational pieces.
 
 ### Rollout mechanism

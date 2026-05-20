@@ -207,10 +207,10 @@ curl -X POST http://localhost:3000/api/revalidate \
 | **CDN**              | None                                     | CloudFront                                    |
 | **SSL**              | None (HTTP on port 3000)                 | ACM cert on CloudFront                        |
 | **ISR**              | Dev mode — pages render on every request | Static generation + on-demand revalidation    |
-| **CSP**              | Enforced (same middleware)               | Enforced (same middleware)                    |
+| **CSP**              | Enforced (same proxy)                    | Enforced (same proxy)                         |
 | **Secret detection** | Pre-commit hook (gitleaks)               | Pre-commit hook + CI check                    |
 
-The CSP middleware runs in both environments, so you'll catch CSP violations during development. If a third-party script or resource is blocked in dev, it will also be blocked in production.
+The CSP proxy (Next 16's rename of middleware) runs in both environments, so you'll catch CSP violations during development. If a third-party script or resource is blocked in dev, it will also be blocked in production.
 
 ---
 
