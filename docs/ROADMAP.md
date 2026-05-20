@@ -1,6 +1,6 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-20 (BR-1, BR-2, BR-3 resolved; BR-4 drafted; BR-5/BR-6/BR-7 updated)
+**Last updated:** 2026-05-20 (Phase 1 completed items archived to PROJECT_HISTORY.md § P1)
 **Status:** Phase 1 — implementation
 
 Single source of truth for what's open, what's blocked, what's next on the website rebuild. Keep current. When something moves status, edit this file in the same commit. Completed items are archived in [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) so this file stays focused on active work.
@@ -67,19 +67,15 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 
 ### Phase 1 — Foundation (1-2 weeks)
 
-- [x] **Task 1.0 (gates everything):** Stack spike. Scaffolded Next 16.2.3 + Payload 3.84 + Postgres 16 + Tailwind v3.4 + Lexical, with admin login, Lexical authoring, and public render verified by Playwright against both dev and a Docker container. Versions pinned in `package.json`. → D-13 ✅, S3 fallback deferred to Task 1.x
-- [ ] Next.js + Payload + Tailwind scaffold from spike
+Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./PROJECT_HISTORY.md). Open items only below.
+
 - [ ] CDK app: VPC, ALB, ASG, RDS, S3, ECR, CloudFront, ACM, Parameter Store, IAM, CloudWatch alarms
-- [ ] Dockerfile multi-stage + ECR repository
+- [ ] Dockerfile multi-stage + ECR repository (Dockerfile exists at repo root from D-13; ECR repo creation + push pipeline still open)
 - [ ] GitHub Actions CI/CD with blue-green deploys via `cdk diff` on PR and `cdk deploy` on merge
-- [ ] Base layout components (Header, Footer, Navigation, MobileNav)
 - [ ] CSP middleware in report-only mode + report endpoint
 - [ ] HubSpot + GTM in root layout with nonce-aware loading
 - [ ] Health endpoint + CloudWatch alarms wired up
-- [ ] Testing scaffold: Vitest, Playwright, axe-core, Lighthouse CI in GitHub Actions
-- [x] gitleaks pre-commit hook + GitHub Actions secret scan job (`gitleaks/gitleaks-action@v2`) on push/PR
-- [x] Quality CI workflow (`.github/workflows/ci.yml`): typecheck + lint + format:check on push to any branch + PR to main; lint-staged on pre-commit. Test pipeline (Vitest + Playwright + axe + Lighthouse) still pending — separate workflow tracked at line above
-- [ ] Apply design tokens from D-1 to Tailwind config
+- [ ] Test pipeline workflow: Vitest + Playwright + axe-core + Lighthouse CI on GitHub Actions (the typecheck/lint workflow already runs — see P1-2)
 
 ### Phase 2 — Content models (1 week)
 

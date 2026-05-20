@@ -60,7 +60,21 @@ Entries are listed roughly in completion order within each section.
 
 ---
 
+## Phase 1 implementation (P1)
+
+Implementation work inside the active Phase 1 — moved out of `ROADMAP.md` as each item ships so the roadmap stays a short list of what's open. IDs `P1-*`.
+
+| ID   | Task                                                                        | Output                                                                                                                                                                                                                                                                                                                             | Closed     |
+| ---- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| P1-1 | gitleaks pre-commit hook + GitHub Actions secret scan job                   | `.husky/pre-commit` runs gitleaks against staged files; `.github/workflows/security.yml` runs the gitleaks CLI on push/PR. Replaced the paid `gitleaks/gitleaks-action@v2` with the direct CLI (commit `fa2eaa5`).                                                                                                                 | 2026-05    |
+| P1-2 | Quality CI workflow (typecheck / lint / format:check)                       | `.github/workflows/ci.yml` — typecheck + lint + format:check on push to any branch and PR to main. Pre-commit runs lint-staged. Test pipeline (Vitest + Playwright + axe + Lighthouse) is still a separate open item.                                                                                                              | 2026-05    |
+| P1-3 | Next.js + Payload + Tailwind scaffold from spike                            | Landed at repo root via the `spike/stack-validation` merge (D-13). Next 16.2.6 + Payload 3.84 + Postgres 16 + Tailwind v3.4 + Lexical, Husky/lint-staged, Playwright + Vitest configs all present in the working tree. Versions pinned in `package.json`. S3 fallback deferred to Task 1.x.                                        | 2026-05-15 |
+| P1-4 | Apply D-1 design tokens to Tailwind v3 config + `:root` CSS vars            | DESIGN_SYSTEM.md §14 translated into `tailwind.config.mjs` (ramps + state colors as hex; semantic colors via `var(--color-…)`; type scale tuples with bundled line-height + tracking; radius / shadow / motion / z-index / containers) and `:root` custom properties in `src/app/(frontend)/styles.css` (the swap layer).          | 2026-05-20 |
+| P1-5 | Base layout components: SkipToContent + SiteHeader + SiteFooter + MobileNav | Layout in `src/components/layout/` with native `<dialog>` MobileNav (free focus-trap + Escape) and supporting primitives Container / Button / SmartLink in `src/components/ui/`. Placeholder `src/lib/site-content.ts` typed like the future `navigation` + `siteSettings` globals (Phase 2 swap point). Logos at `public/brand/`. | 2026-05-20 |
+
+---
+
 ## Notes on what is NOT here
 
-- **Implementation phase progress** (Phase 1 checklist line items like the gitleaks hook, CI workflow) lives in `ROADMAP.md` until the phase fully closes, then moves here as one phase-level entry. Per-task churn inside an active phase stays in the roadmap so it's visible.
+- **In-flight items inside an active phase** (e.g., CDK, CSP, HubSpot/GTM) stay in `ROADMAP.md` until they ship, then move here as a `P1-*` row. Completed Phase 1 implementation items move out as soon as they're done — keeps the roadmap a punch list of open work.
 - **ADRs** (`docs/decisions/`) are their own append-only log — they don't need a copy here. Reference them by number when relevant.
