@@ -41,3 +41,10 @@ Phase 1 — implementation begins. The stack-validation spike (`spike/stack-vali
 - **TypeScript strict mode**, no `any`. ESLint + Prettier enforced in CI.
 - **Tooling and scripts** live in subdirectories, not the repo root.
 - **Private SEQTEK assets** (brand kit PDF, trademarked logos, Wix content audit) are kept outside this repo. By convention they live at `~/projects/seqtek-internal/brandkit/` and `~/projects/seqtek-internal/audit/` (sibling directories). The seed script reads `AUDIT_DIR` env var; design-system docs reference brand assets by name without committing them.
+
+<!-- SPECKIT START -->
+
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+
+<!-- SPECKIT END -->

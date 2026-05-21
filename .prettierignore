@@ -16,6 +16,9 @@ src/payload-generated-schema.ts
 src/app/(payload)/admin/importMap.js
 package-lock.json
 
+# Agent-managed (spec-kit installs / regenerates skill files; not ours to format)
+.claude/skills/
+
 # Lockfiles + binary
 *.tsbuildinfo
 *.pem
