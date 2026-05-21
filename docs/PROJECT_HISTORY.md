@@ -88,5 +88,5 @@ The roadmap is the punch list. This table is the audit trail.
 
 ## Notes on what is NOT here
 
-- **In-flight items inside an active phase** (e.g., CDK, the test pipeline workflow) stay in `ROADMAP.md` until they ship, then move here as a `P1-*` row per the convention above. Completed Phase 1 implementation items leave the roadmap immediately — that's what keeps the roadmap a punch list of open work.
+- **In-flight items inside an active phase** (e.g., the CDK app, Dockerfile/ECR push, blue-green CI/CD) stay in `ROADMAP.md` until they ship, then move here as a `P1-*` row per the convention above. Completed Phase 1 implementation items leave the roadmap immediately — that's what keeps the roadmap a punch list of open work.
 - **ADRs** (`docs/decisions/`) are their own append-only log — they don't need a copy here. Reference them by number when relevant.
