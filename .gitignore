@@ -65,5 +65,9 @@ src/payload-types.ts
 /playwright/.cache/
 /tests/e2e/screenshots/
 
+# spec-kit local cache (extension catalog cache + install registry)
+.specify/extensions/.cache/
+.specify/extensions/.registry
+
 # Misc
 *.pem
