@@ -333,7 +333,7 @@ Applied in `globals.css`. Component code does not need to check the media query 
 
 ## 8. Breakpoints
 
-Tailwind defaults. No customization. Matching the framework reduces friction with every third-party block library (BLOCK_LIBRARY.md §15 reference).
+Tailwind defaults. No customization. Matching the framework reduces friction with every third-party block library.
 
 | Token     | Min-width | Notional device             |
 | --------- | --------- | --------------------------- |
