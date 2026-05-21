@@ -1,6 +1,6 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-20 (Phase 1 progress — D-1 tokens, base layout, CSP, health endpoint, HubSpot+GTM bootstrap all archived to PROJECT_HISTORY § P1)
+**Last updated:** 2026-05-21 (Phase 1 progress — test pipeline workflow archived to PROJECT_HISTORY § P1-9; open list is now CDK + Dockerfile/ECR + blue-green CI/CD)
 
 > **Convention:** When a Phase 1 implementation item ships, _move_ it out of this file (don't just check it off) and add a `P1-*` row to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md). The roadmap stays a short punch list of what's _open_; history carries the audit trail.
 
@@ -75,7 +75,6 @@ Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./
 - [ ] CDK app: VPC, ALB, ASG, RDS, S3, ECR, CloudFront, ACM, Parameter Store, IAM, CloudWatch alarms
 - [ ] Dockerfile multi-stage + ECR repository (Dockerfile exists at repo root from D-13; ECR repo creation + push pipeline still open)
 - [ ] GitHub Actions CI/CD with blue-green deploys via `cdk diff` on PR and `cdk deploy` on merge
-- [ ] Test pipeline workflow: Vitest + Playwright + axe-core + Lighthouse CI on GitHub Actions (the typecheck/lint workflow already runs — see P1-2)
 
 ### Phase 2 — Content models (1 week)
 

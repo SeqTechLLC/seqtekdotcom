@@ -1,4 +1,7 @@
-// Any setup scripts you might need go here
+// Load env vars in Next.js convention: .env.local takes precedence over .env.
+// dotenv-style {override:false} on the second pass means values already loaded
+// from .env.local are not clobbered by .env defaults.
+import { config as loadEnv } from 'dotenv'
 
-// Load .env files
-import 'dotenv/config'
+loadEnv({ path: '.env.local' })
+loadEnv({ path: '.env' })

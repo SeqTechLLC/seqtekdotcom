@@ -45,7 +45,7 @@ media/
 *.tsbuildinfo
 next-env.d.ts
 
-# Lighthouse reports
+# Lighthouse reports (lhci autorun output)
 .lighthouseci/
 
 # CDK
