@@ -69,16 +69,16 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 ### Tests for User Story 1 (write first; verify failing before implementation)
 
-- [ ] T015 [P] [US1] Add a `seedOauthUser({ email, role, sub })` helper to `tests/helpers/seedUser.ts` that inserts a `users` row + matching `accounts` row in one transaction and returns a Payload-issued session cookie (via `payload.login()`). Reuses the existing `getPayload({ config })` pattern.
-- [ ] T016 [P] [US1] Write `tests/e2e/auth-sso-returning.e2e.spec.ts` covering acceptance scenarios 1 and 2 from `spec.md` US1 via cookie-seeded navigation (FR-012 note): (a) call `seedOauthUser` to mint a session cookie for an Editor, set it on Playwright's context, navigate to `/admin`, assert dashboard, assert Pages link, screenshot; (b) repeat — assert still exactly one users row and role unchanged.
-- [ ] T017 [P] [US1] Write `tests/e2e/auth-session-expiry.e2e.spec.ts` for acceptance scenario 3: cookie-seed an editor session, navigate to `/admin` (assert success), delete the session cookie, navigate again, assert redirect to `/admin/login` (not a generic 401).
+- [x] T015 [P] [US1] Add a `seedOauthUser({ email, role, sub })` helper to `tests/helpers/seedUser.ts` that inserts a `users` row + matching `accounts` row in one transaction and returns a Payload-issued session cookie (via `payload.login()`). Reuses the existing `getPayload({ config })` pattern.
+- [x] T016 [P] [US1] Write `tests/e2e/auth-sso-returning.e2e.spec.ts` covering acceptance scenarios 1 and 2 from `spec.md` US1 via cookie-seeded navigation (FR-012 note): (a) call `seedOauthUser` to mint a session cookie for an Editor, set it on Playwright's context, navigate to `/admin`, assert dashboard, assert Pages link, screenshot; (b) repeat — assert still exactly one users row and role unchanged.
+- [x] T017 [P] [US1] Write `tests/e2e/auth-session-expiry.e2e.spec.ts` for acceptance scenario 3: cookie-seed an editor session, navigate to `/admin` (assert success), delete the session cookie, navigate again, assert redirect to `/admin/login` (not a generic 401).
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Create `src/components/admin/LoginError.tsx` — a server component that reads `searchParams.error` and renders the user-facing strings from `contracts/oauth-routes.md` § 3. Returns `null` when the param is absent. Imported and composed by `AdminLogin` (T010a).
-- [ ] T019 [US1] Style `BeforeLoginGoogle.tsx` (T010) and `AdminLogin.tsx` (T010a) so the CTA is the visually-dominant primary action and the page chrome matches the SEQTEK accent color and type ramp from `docs/DESIGN_SYSTEM.md` § 14. No JS added.
+- [x] T018 [US1] Create `src/components/admin/LoginError.tsx` — a server component that reads `searchParams.error` and renders the user-facing strings from `contracts/oauth-routes.md` § 3. Returns `null` when the param is absent. Imported and composed by `AdminLogin` (T010a).
+- [x] T019 [US1] Style `BeforeLoginGoogle.tsx` (T010) and `AdminLogin.tsx` (T010a) so the CTA is the visually-dominant primary action and the page chrome matches the SEQTEK accent color and type ramp from `docs/DESIGN_SYSTEM.md` § 14. No JS added.
 - [ ] T020 [US1] Verify `/admin` redirect post-callback by running `auth-sso-returning.e2e.spec.ts` locally with `OAUTH_STUB_ENABLED=1` and the dev DB; iterate until both T016 scenarios pass.
-- [ ] T020a [US1] Write `tests/e2e/auth-login-errors.e2e.spec.ts` driving Playwright to `/admin/login?error=<code>` for each code in `contracts/oauth-routes.md` § 3 (`state_mismatch`, `domain_rejected`, `provider_error`, `network`, `internal`) and assert the user-facing message text matches the contract for each. Verifies our `LoginError.tsx` (T018) renders correctly; does **not** test the OAuth round-trip (per FR-012 note).
+- [x] T020a [US1] Write `tests/e2e/auth-login-errors.e2e.spec.ts` driving Playwright to `/admin/login?error=<code>` for each code in `contracts/oauth-routes.md` § 3 (`state_mismatch`, `domain_rejected`, `provider_error`, `network`, `internal`) and assert the user-facing message text matches the contract for each. Verifies our `LoginError.tsx` (T018) renders correctly; does **not** test the OAuth round-trip (per FR-012 note).
 - [ ] T021 [US1] Capture a Playwright screenshot of the post-cutover login screen at `tests/e2e/screenshots/admin-login-google-sso.png` (replaces the spike-era login screenshot deleted in T013a).
 
 **Checkpoint**: an already-provisioned editor can sign in. Auto-provisioning of new users and domain-rejection of intruders are still inert — those land in US2 and US3.
@@ -93,13 +93,13 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 ### Tests for User Story 2 (write first; verify failing before implementation)
 
-- [ ] T022 [P] [US2] Write `tests/int/auth-provisioning.int.spec.ts` (Vitest, real Payload+Postgres via `getPayload`) with three cases: (a) empty users table + simulated OAuth-callback `payload.create({ collection: 'users', data, req: { user: null } })` → role `admin` (bootstrap); (b) table with one admin → second create gets role `editor`; (c) two creates with the same `sub` via the plugin's account-linking path → exactly one users row exists at the end (matches `data-model.md` § 4a/4b).
-- [ ] T023 [P] [US2] Write `tests/int/auth-role-update-guard.int.spec.ts` confirming that a `users` update with `req.user === null` and a changed `roles` field is rejected — defending FR-007 against a forged unauthenticated PATCH.
+- [x] T022 [P] [US2] Write `tests/int/auth-provisioning.int.spec.ts` (Vitest, real Payload+Postgres via `getPayload`) with three cases: (a) empty users table + simulated OAuth-callback `payload.create({ collection: 'users', data, req: { user: null } })` → role `admin` (bootstrap); (b) table with one admin → second create gets role `editor`; (c) two creates with the same `sub` via the plugin's account-linking path → exactly one users row exists at the end (matches `data-model.md` § 4a/4b).
+- [x] T023 [P] [US2] Write `tests/int/auth-role-update-guard.int.spec.ts` confirming that a `users` update with `req.user === null` and a changed `roles` field is rejected — defending FR-007 against a forged unauthenticated PATCH.
 
 ### Implementation for User Story 2
 
-- [ ] T024 [US2] Implement the real body of `src/lib/auth/apply-bootstrap-role.ts` per `research.md` R-4: on `operation === 'create'` with `req.user == null`, count admins via `payload.find({ collection: 'users', where: { roles: { in: ['admin'] } }, limit: 1 })`, set `data.roles = ['admin']` when count is 0 else `['editor']`, then call `logSignIn({ outcome: 'success', userId: <pending>, … })`. Replaces the T007 no-op.
-- [ ] T025 [US2] Extend the `Users.ts` `beforeChange` (T006) `operation === 'update'` branch to forbid `data.roles` changes when `req.user == null`. Throw `ValidationError('Role changes require an authenticated admin.')`.
+- [x] T024 [US2] Implement the real body of `src/lib/auth/apply-bootstrap-role.ts` per `research.md` R-4: on `operation === 'create'` with `req.user == null`, count admins via `payload.find({ collection: 'users', where: { roles: { in: ['admin'] } }, limit: 1 })`, set `data.roles = ['admin']` when count is 0 else `['editor']`, then call `logSignIn({ outcome: 'success', userId: <pending>, … })`. Replaces the T007 no-op.
+- [x] T025 [US2] Extend the `Users.ts` `beforeChange` (T006) `operation === 'update'` branch to forbid `data.roles` changes when `req.user == null`. Throw `ValidationError('Role changes require an authenticated admin.')`.
 - [ ] T026 [US2] Run `tests/int/auth-provisioning.int.spec.ts` + `tests/int/auth-role-update-guard.int.spec.ts` against a clean Docker Postgres; iterate until green.
 
 **Checkpoint**: first-time `@seqtechllc.com` sign-in works; the first signer becomes Admin; subsequent signers become Editor; second sign-in is idempotent. Non-Workspace identities still slip through — US3 closes that.
@@ -114,13 +114,13 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 ### Tests for User Story 3 (write first; verify failing before implementation)
 
-- [ ] T027 [P] [US3] Write `tests/int/auth-domain-allowlist.int.spec.ts` covering the pure function `isWorkspaceEmail` from `src/lib/auth/enforce-domain.ts`: cases for `'foo@seqtechllc.com'`, `'foo@SEQTECHLLC.COM'`, `'foo@bar.seqtechllc.com'` (must reject — exact match per FR-002), `'foo@gmail.com'`, `''`, `null`. And a Payload-loaded case: `payload.create({ collection: 'users', data: { email: 'intruder@gmail.com' }, req: { user: null } })` rejects with a `ValidationError` and no row exists after.
-- [ ] T028 [P] [US3] Extend `tests/int/auth-domain-allowlist.int.spec.ts` (T027) with assertions that on a rejected `payload.create()`, the audit log emits exactly one `outcome: 'domain-rejected'` line. (Was originally a stub-provider E2E; folded into the int test per FR-012 note.)
+- [x] T027 [P] [US3] Write `tests/int/auth-domain-allowlist.int.spec.ts` covering the pure function `isWorkspaceEmail` from `src/lib/auth/enforce-domain.ts`: cases for `'foo@seqtechllc.com'`, `'foo@SEQTECHLLC.COM'`, `'foo@bar.seqtechllc.com'` (must reject — exact match per FR-002), `'foo@gmail.com'`, `''`, `null`. And a Payload-loaded case: `payload.create({ collection: 'users', data: { email: 'intruder@gmail.com' }, req: { user: null } })` rejects with a `ValidationError` and no row exists after.
+- [x] T028 [P] [US3] Extend `tests/int/auth-domain-allowlist.int.spec.ts` (T027) with assertions that on a rejected `payload.create()`, the audit log emits exactly one `outcome: 'domain-rejected'` line. (Was originally a stub-provider E2E; folded into the int test per FR-012 note.)
 
 ### Implementation for User Story 3
 
-- [ ] T029 [US3] Implement the real body of `src/lib/auth/enforce-domain.ts`: export `isWorkspaceEmail(email: string | null | undefined): boolean` doing a lowercase `endsWith('@seqtechllc.com')` exact-match per `research.md` R-5; export `enforceDomainAllowlist({ req, data })` for the hook that throws `ValidationError('Only SEQTEK Workspace accounts may sign in.')` when the check fails, and calls `logSignIn({ outcome: 'domain-rejected', email: data.email, provider: 'google' })` before throwing.
-- [ ] T030 [US3] Wire the real `enforceDomainAllowlist` into the Users `beforeChange` hook from T006 — call it before `applyAutoProvisionRole` so a rejection short-circuits before any role decision. No new imports beyond T029.
+- [x] T029 [US3] Implement the real body of `src/lib/auth/enforce-domain.ts`: export `isWorkspaceEmail(email: string | null | undefined): boolean` doing a lowercase `endsWith('@seqtechllc.com')` exact-match per `research.md` R-5; export `enforceDomainAllowlist({ req, data })` for the hook that throws `ValidationError('Only SEQTEK Workspace accounts may sign in.')` when the check fails, and calls `logSignIn({ outcome: 'domain-rejected', email: data.email, provider: 'google' })` before throwing.
+- [x] T030 [US3] Wire the real `enforceDomainAllowlist` into the Users `beforeChange` hook from T006 — call it before `applyAutoProvisionRole` so a rejection short-circuits before any role decision. No new imports beyond T029.
 - [ ] T031 [US3] Run `tests/int/auth-domain-allowlist.int.spec.ts` + `tests/e2e/auth-sso-rejected.e2e.spec.ts` against a fresh DB; iterate until green and confirm the rejected attempts also appear in the test log output as `outcome: 'domain-rejected'` lines.
 
 **Checkpoint**: all three stories pass independently and together. The system meets FR-001 through FR-013.
@@ -131,11 +131,11 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 **Purpose**: doc reconciliation (Principle III), ADR status, ROADMAP/PROJECT_HISTORY move, Lighthouse, gitleaks confirmation, quickstart validation.
 
-- [ ] T032 [P] Move D-14 from `docs/ROADMAP.md` § 2 (open list) to `docs/PROJECT_HISTORY.md` § Phase 1 implementation, preserving the `D-14` ID exactly per Principle III. Remove or rescope D-5 (SES) per SC-007 — drop the auth-related justification, keep the entry only if it has a non-auth purpose.
-- [ ] T033 [P] Append a "Status" note to `docs/decisions/0002-auth-strategy.md` recording that it was implemented in spec 001, with a one-line correction of the import string (`payload-auth-plugin` not `@authsmith/payload-auth-plugin` — see `research.md` R-1 "Naming note").
-- [ ] T034 [P] Verify no docs or tests still reference the spike-era screenshots deleted in T013a; update stragglers to point at `admin-login-google-sso.png` from T021.
+- [x] T032 [P] Move D-14 from `docs/ROADMAP.md` § 2 (open list) to `docs/PROJECT_HISTORY.md` § Phase 1 implementation, preserving the `D-14` ID exactly per Principle III. Remove or rescope D-5 (SES) per SC-007 — drop the auth-related justification, keep the entry only if it has a non-auth purpose.
+- [x] T033 [P] Append a "Status" note to `docs/decisions/0002-auth-strategy.md` recording that it was implemented in spec 001, with a one-line correction of the import string (`payload-auth-plugin` not `@authsmith/payload-auth-plugin` — see `research.md` R-1 "Naming note").
+- [x] T034 [P] Verify no docs or tests still reference the spike-era screenshots deleted in T013a; update stragglers to point at `admin-login-google-sso.png` from T021.
 - [ ] T035 [P] Run `npm run test:lhci` against `/admin/login` and confirm a11y / best-practices / SEO ≥ 0.95 per Constitution II. Investigate any regression before continuing.
-- [ ] T036 Run `gitleaks` locally on the full diff for the branch and confirm clean — verifies SC-004 ahead of CI re-scan.
+- [x] T036 Run `gitleaks` locally on the full diff for the branch and confirm clean — verifies SC-004 ahead of CI re-scan.
 - [ ] T037 Execute the steps in `quickstart.md` § 1–6 end-to-end against the dev DB; capture any drift between the doc and the shipped code and reconcile in `quickstart.md` in the same commit (Principle III).
 - [ ] T038 Run the full CI matrix locally (`npm run typecheck && npm run lint && npm run format:check && npm run test:int && npm run test:e2e`) and confirm green. This is the last gate before opening the PR.
 

@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { withUsersCollection } from 'payload-auth-plugin/collection'
-import { applyAutoProvisionRole } from '../lib/auth/apply-bootstrap-role'
+import { applyAutoProvisionRole, guardRoleUpdates } from '../lib/auth/apply-bootstrap-role'
 import { enforceDomainAllowlist } from '../lib/auth/enforce-domain'
 
 export const Users: CollectionConfig = withUsersCollection({
@@ -20,7 +20,7 @@ export const Users: CollectionConfig = withUsersCollection({
     delete: ({ req: { user } }) => Boolean(user?.roles?.includes('admin')),
   },
   hooks: {
-    beforeChange: [enforceDomainAllowlist, applyAutoProvisionRole],
+    beforeChange: [enforceDomainAllowlist, applyAutoProvisionRole, guardRoleUpdates],
   },
   fields: [
     {

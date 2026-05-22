@@ -1,7 +1,9 @@
 # 0002. Payload local auth in spike, Google OAuth in Phase 1
 
-**Status:** Accepted
+**Status:** Accepted (implemented in spec 001 / D-14, shipped 2026-05-22)
 **Date:** 2026-05-14
+
+**Implementation note (2026-05-22):** The npm package is published as `payload-auth-plugin` (unscoped) — `@authsmith` is the GitHub org, not the npm scope. The plugin's `GoogleAuthProvider` does not expose endpoint overrides, so the spec's planned OAuth stub for headless tests was dropped; we test the integration surface only (Users `beforeChange` hook + `LoginError` contract). See `specs/001-google-oauth-sso/tasks.md` for the FR-012 note.
 
 ## Context
 

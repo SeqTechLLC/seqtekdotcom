@@ -456,7 +456,7 @@ A configuration set is attached to every send, with event publishing to an SNS t
 
 ### Failure Mode
 
-If SES is unreachable (network, throttle, regional outage), Payload's mailer logs the error and the request continues. **The password-reset endpoint returns the same generic response — "If an account exists, we'll send a reset link" — regardless of whether the send actually succeeded.** This is the standard security posture: response copy must not vary on account existence or on send success, or it becomes an account-enumeration oracle. Reset link delivery is best-effort from the user's perspective; operationally, the bounce/complaint pipeline (above) is what surfaces real send failures.
+If SES is unreachable (network, throttle, regional outage), Payload's mailer logs the error and the request continues. (Admin password reset is **not** an SES use case in this stack — `/admin` uses Google Workspace SSO per spec 001, so there is no password-reset endpoint. SES remains here for future transactional email needs.)
 
 ### Addresses
 
