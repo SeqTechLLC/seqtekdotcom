@@ -8,6 +8,13 @@
 
 **Input**: User description: "D-14 Google OAuth SSO for /admin via @authsmith/payload-auth-plugin, restricted to the @seqtechllc.com Google Workspace domain. Replaces email/password as the primary admin auth. See ROADMAP §2 D-14, ADR 0002 (docs/decisions/0002-auth-strategy.md), and ARCHITECTURE.md §6 for context"
 
+## Clarifications
+
+### Session 2026-05-21
+
+- Q: Session/token TTL for admin sign-ins → A: Keep Payload defaults (2h JWT TTL, matching cookie). Workspace deprovisioning lag of up to 2h is acceptable for a 5–10-person staff; tighten only if a real incident demands it.
+- Q: How does the spike-era admin record migrate to OAuth? → A: No migration. Cutover happens against a fresh `users` table — the spike-era `kenn` row is discarded along with any spike-era authored content. Bootstrap of the first Admin is a one-time deploy concern, deferred to /speckit-plan.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Workspace editor signs in via Google SSO (Priority: P1)
@@ -21,7 +28,7 @@ A SEQTEK content editor opens `/admin` to publish or edit content. They are not 
 **Acceptance Scenarios**:
 
 1. **Given** an editor with a `@seqtechllc.com` Workspace account and no active Payload session, **When** they visit `/admin` and click "Sign in with Google", **Then** Google's consent screen is shown, and after consent they are redirected to the admin dashboard with an Editor role active.
-2. **Given** a returning editor who already has an admin user record, **When** they sign in via Google, **Then** the existing user record is reused (no duplicate created) and their role assignment is preserved.
+2. **Given** a returning editor whose admin user record was created on a prior OAuth sign-in, **When** they sign in via Google again, **Then** the existing user record is reused (no duplicate created) and their role assignment is preserved.
 3. **Given** an editor signs in successfully, **When** their session token expires, **Then** they are returned to the SSO entry screen rather than a generic 401 dead-end.
 
 ---
@@ -63,7 +70,6 @@ A non-SEQTEK person (`gmail.com`, a different Google Workspace domain, or a pers
 - An `@seqtechllc.com` user's Google account is disabled mid-session — current session continues until token expiry, then re-auth fails (acceptable; documented).
 - The OAuth callback URL is hit with a tampered or missing `state` parameter — request is rejected and the user is returned to the entry screen with a generic error.
 - An admin attempts the `/admin` email/password endpoint directly (e.g., by URL guessing) — the endpoint either does not exist or returns the SSO entry screen; no password is ever accepted.
-- The spike-era local admin user (`kenn`) signs in for the first time post-cutover — their existing user record is matched and linked to their Google identity rather than a duplicate being created.
 - The plugin's network call to Google's token endpoint times out — the user sees a retry-friendly error, no partial state is persisted.
 - Multiple users sign in concurrently for the first time — each lands on its own user record, no race-condition collision.
 - An Admin demotes themselves to Editor accidentally — they lose user-management access on next sign-in but retain Editor access (acceptable; recovery is a DB-level fix or another Admin promoting them back).
@@ -80,12 +86,11 @@ A non-SEQTEK person (`gmail.com`, a different Google Workspace domain, or a pers
 - **FR-006**: The system MUST match returning users by a stable Google identity claim (subject ID), not by email alone, so an email-change in Workspace does not create a duplicate.
 - **FR-007**: The system MUST preserve role assignments across sign-ins — re-auth does not reset a previously promoted Admin back to Editor.
 - **FR-008**: An existing Admin MUST be able to promote a user from Editor to Admin (and vice versa) through the standard admin UI.
-- **FR-009**: The system MUST migrate the spike-era local admin user record to OAuth without data loss — at cutover, the user signs in via Google and the existing record is linked rather than replaced.
-- **FR-010**: OAuth client credentials (client ID and client secret) MUST be sourced from AWS Parameter Store in staging and production, and from `.env.local` in development. They MUST NOT be committed to the repository.
-- **FR-011**: The system MUST treat OAuth callback errors (state mismatch, network failure, user-cancelled consent) as recoverable — the user is returned to the entry screen with a non-disclosive error message and may retry.
-- **FR-012**: The system MUST log every sign-in attempt with email, timestamp, outcome (success / domain-rejected / OAuth-error), and provider, so unexpected access patterns are observable in CloudWatch.
-- **FR-013**: The system MUST behave correctly in headless test environments — Playwright E2E tests can drive the SSO flow against a stub or mock that does not require a real Google account.
-- **FR-014**: The system MUST keep the role-based access matrix from ARCHITECTURE.md §6 ("Access Control") intact — Editor and Admin retain the same capability boundaries regardless of how they authenticated.
+- **FR-009**: OAuth client credentials (client ID and client secret) MUST be sourced from AWS Parameter Store in staging and production, and from `.env.local` in development. They MUST NOT be committed to the repository.
+- **FR-010**: The system MUST treat OAuth callback errors (state mismatch, network failure, user-cancelled consent) as recoverable — the user is returned to the entry screen with a non-disclosive error message and may retry.
+- **FR-011**: The system MUST log every sign-in attempt with email, timestamp, outcome (success / domain-rejected / OAuth-error), and provider, so unexpected access patterns are observable in CloudWatch.
+- **FR-012**: The system MUST behave correctly in headless test environments — Playwright E2E tests can drive the SSO flow against a stub or mock that does not require a real Google account.
+- **FR-013**: The system MUST keep the role-based access matrix from ARCHITECTURE.md §6 ("Access Control") intact — Editor and Admin retain the same capability boundaries regardless of how they authenticated.
 
 ### Key Entities
 
@@ -101,10 +106,9 @@ A non-SEQTEK person (`gmail.com`, a different Google Workspace domain, or a pers
 - **SC-002**: An editor with a clean browser session can reach the admin dashboard via SSO in under 10 seconds from clicking "Sign in with Google" on a typical broadband connection.
 - **SC-003**: 100% of sign-in attempts from non-`@seqtechllc.com` accounts are rejected at the OAuth boundary, verified in CI by an automated test that simulates the rejection path.
 - **SC-004**: No OAuth client credentials appear in any git commit, verified by gitleaks (pre-commit hook and CI scan both clean) across the implementation PR.
-- **SC-005**: The existing spike-era admin user signs in via SSO post-cutover and retains all prior role assignments and authored content (zero data loss).
-- **SC-006**: A new `@seqtechllc.com` user signing in for the first time reaches the admin dashboard without an admin needing to pre-create their record.
-- **SC-007**: Removing a user from the SEQTEK Google Workspace revokes their `/admin` access at the next token validation (within one token TTL), with no manual Payload-side action required.
-- **SC-008**: Zero references to AWS SES for admin password reset remain in the docs after this feature ships — ROADMAP D-5 is closed or rescoped to non-auth uses.
+- **SC-005**: A new `@seqtechllc.com` user signing in for the first time reaches the admin dashboard without an admin needing to pre-create their record.
+- **SC-006**: Removing a user from the SEQTEK Google Workspace revokes their `/admin` access at the next token validation (within one token TTL — up to 2 hours given the Payload-default TTL locked in by Clarifications 2026-05-21 Q1), with no manual Payload-side action required.
+- **SC-007**: Zero references to AWS SES for admin password reset remain in the docs after this feature ships — ROADMAP D-5 is closed or rescoped to non-auth uses.
 
 ## Assumptions
 
@@ -112,11 +116,12 @@ A non-SEQTEK person (`gmail.com`, a different Google Workspace domain, or a pers
 - A Google Cloud project belonging to SEQTEK is available for the OAuth client; redirect URIs for `localhost`, the staging hostname, and `seqtek.com` will be registered there.
 - The Google Workspace tenant exposes domain-level restriction sufficient to enforce `hd=seqtechllc.com` on the OAuth flow. If a future requirement extends access to multiple domains, that becomes a separate feature.
 - `@authsmith/payload-auth-plugin` is the chosen plugin (ADR 0002). If during planning the plugin is found to be unmaintained or insufficient, the chosen alternative (`payload-oauth2` or a custom `auth.strategies` implementation) still satisfies these requirements — the spec is plugin-neutral.
-- Bootstrap behavior: at cutover the existing spike admin user (`kenn`) is the seed Admin via the migration in FR-009; no "first login becomes admin" escalation rule is needed in production.
+- Cutover starts from a fresh `users` table — no spike-era records or content are preserved (Clarifications 2026-05-21 Q2).
+- Bootstrap Admin: with a fresh table and FR-005's default-to-Editor rule, no Admin exists immediately after cutover. The mechanism for seeding the first Admin (one-shot env var, manual DB update, "first user is Admin if no Admin exists" rule, etc.) is a one-time deploy concern deferred to `/speckit-plan`.
 - Local development still uses a real Google OAuth client (dev redirect URI) by default. CI and Playwright suites use a mock or recorded flow so tests do not hit Google on every run.
 - Break-glass access (plugin outage, IdP outage, lockout): out of scope for this feature. Recovery path is documented as a database-level admin operation, not a parallel application-level credential. This matches ADR 0002 §Costs.
 - The decision to drop SES password-reset dependency (ADR 0002 §Consequences) is honored — this feature does not introduce any transactional email path.
-- Session lifetime / token TTL settings match Payload defaults unless planning finds a security reason to tighten them.
+- Session lifetime / token TTL is Payload-default (2-hour JWT TTL with a matching cookie) per Clarifications 2026-05-21 Q1. This is the upper bound on the SC-006 revocation lag.
 
 ## Dependencies
 
