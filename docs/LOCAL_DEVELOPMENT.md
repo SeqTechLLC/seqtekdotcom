@@ -36,7 +36,7 @@ docker compose up -d
 npm run dev
 ```
 
-The site is at `http://localhost:3000`. The Payload admin panel is at `http://localhost:3000/admin`.
+The site is at `http://localhost:3100`. The Payload admin panel is at `http://localhost:3100/admin`.
 
 `/admin` is gated by Google Workspace SSO (`@seqtechllc.com` only). Before the first sign-in works locally you need a Google OAuth client — see [Google OAuth Client (D-14)](#google-oauth-client-d-14) below. On a fresh database the first signer is bootstrapped to the Admin role; later signers default to Editor.
 
@@ -50,7 +50,7 @@ Copy `.env.example` to `.env.local` and fill in the values below. Only two are r
 
 | Variable               | Local Value                                            | Notes                                                                     |
 | ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `DATABASE_URL`         | `postgresql://seqtek:seqtek@localhost:5432/seqtek_dev` | Matches the Docker Compose Postgres config                                |
+| `DATABASE_URL`         | `postgresql://seqtek:seqtek@localhost:5433/seqtek_dev` | Matches the Docker Compose Postgres config                                |
 | `PAYLOAD_SECRET`       | Any random string (32+ chars)                          | Used for JWT signing. Generate with `openssl rand -hex 32`                |
 | `GOOGLE_CLIENT_ID`     | From Google Cloud Console                              | OAuth 2.0 client ID. See [Google OAuth Client](#google-oauth-client-d-14) |
 | `GOOGLE_CLIENT_SECRET` | From Google Cloud Console                              | OAuth 2.0 client secret. Same source as above                             |
@@ -63,7 +63,7 @@ Copy `.env.example` to `.env.local` and fill in the values below. Only two are r
 | `S3_REGION`                     | _(empty)_               |                                                                    |
 | `S3_BUCKET_HOSTNAME`            | _(empty)_               |                                                                    |
 | `REVALIDATION_SECRET`           | Any string              | Only needed if testing the `/api/revalidate` webhook endpoint      |
-| `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3000` | Used for canonical URLs and OG meta tags                           |
+| `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3100` | Used for canonical URLs and OG meta tags                           |
 | `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | _(empty)_               | HubSpot forms won't render without this, which is fine for dev     |
 | `NEXT_PUBLIC_GTM_ID`            | _(empty)_               | GTM won't load without this, which is fine for dev                 |
 | `NEXT_PUBLIC_SCOREAPP_URL`      | _(empty)_               | Assessment link won't work, which is fine for dev                  |
@@ -97,7 +97,7 @@ docker compose down -v
 
 The Postgres container:
 
-- Runs on `localhost:5432`
+- Runs on `localhost:5433` (host port; container is `5432` internally — see `docker-compose.yml`)
 - Creates a database `seqtek_dev` with user `seqtek` / password `seqtek`
 - Data persists in a Docker volume between restarts
 - Matches the same Postgres major version as production RDS
@@ -117,7 +117,7 @@ Payload runs database migrations automatically on startup. When you run `npm run
 3. **Create Credentials → OAuth client ID** → application type **Web application**.
 4. Name: `seqtek-website-local-dev`.
 5. Authorized JavaScript origins: `http://localhost:3100`.
-6. Authorized redirect URIs: `http://localhost:3100/api/seqtek/oauth/callback/google` (Next dev actually listens on `:3100` per `package.json` `dev` script, even though the rest of this guide references `:3000`).
+6. Authorized redirect URIs: `http://localhost:3100/api/seqtek/oauth/callback/google`.
 7. **Create** — copy the Client ID and Client Secret.
 
 ### Put the values in `.env.local`
@@ -222,7 +222,7 @@ Edit the collection config in `src/payload/collections/`. Payload auto-generates
 ### Test the Health Endpoint
 
 ```bash
-curl http://localhost:3000/api/health
+curl http://localhost:3100/api/health
 ```
 
 Returns JSON with status, uptime, and database connectivity. Same endpoint the ALB uses in production.
@@ -230,7 +230,7 @@ Returns JSON with status, uptime, and database connectivity. Same endpoint the A
 ### Test On-Demand Revalidation
 
 ```bash
-curl -X POST http://localhost:3000/api/revalidate \
+curl -X POST http://localhost:3100/api/revalidate \
   -H "Content-Type: application/json" \
   -d '{"secret": "<your REVALIDATION_SECRET>", "paths": ["/case-studies"]}'
 ```
@@ -246,7 +246,7 @@ curl -X POST http://localhost:3000/api/revalidate \
 | **Media storage**    | Local filesystem (gitignored)            | S3 bucket via IAM role                        |
 | **AWS credentials**  | None needed                              | IAM instance profile via IMDS                 |
 | **CDN**              | None                                     | CloudFront                                    |
-| **SSL**              | None (HTTP on port 3000)                 | ACM cert on CloudFront                        |
+| **SSL**              | None (HTTP on port 3100)                 | ACM cert on CloudFront                        |
 | **ISR**              | Dev mode — pages render on every request | Static generation + on-demand revalidation    |
 | **CSP**              | Enforced (same proxy)                    | Enforced (same proxy)                         |
 | **Secret detection** | Pre-commit hook (gitleaks)               | Pre-commit hook + CI check                    |
@@ -278,12 +278,12 @@ npm run dev
 
 Payload runs migrations on startup. If the database existed but the schema is stale, Payload will generate and apply the missing migrations.
 
-### Port 3000 already in use
+### Port 3100 already in use
 
 Another process is using the port. Find and kill it:
 
 ```bash
-lsof -ti:3000 | xargs kill
+lsof -ti:3100 | xargs kill
 ```
 
 Or start on a different port:
