@@ -2,20 +2,20 @@
 
 **Feature**: 001-google-oauth-sso · **Date**: 2026-05-21
 
-The plugin instance is named `seqtek` (configured via `authPlugin({ name: 'seqtek',
-... })`), so every route below is prefixed with `/api/seqtek/`. URLs are stable for
+The plugin instance is named `auth` (configured via `authPlugin({ name: 'auth',
+... })`), so every route below is prefixed with `/api/auth/`. URLs are stable for
 the lifetime of this feature — Google's redirect-URI allowlist in the Cloud Console
 references them verbatim per environment.
 
 ## 1. Routes registered by the plugin
 
-| #   | Method | Path                                 | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                             | Status codes |
-| --- | ------ | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| 1   | GET    | `/api/seqtek/oauth/authorize/google` | Browser entry. Redirects to Google's authorize endpoint with `client_id`, `redirect_uri`, `scope=openid email profile`, `state=<csrf>`, `hd=seqtechllc.com`, `prompt=select_account`.                                                                                                                                                                                                                                                               | 302          |
-| 2   | GET    | `/api/seqtek/oauth/callback/google`  | Google → us. Validates `state`, exchanges `code` for tokens at Google's token endpoint, fetches userinfo, runs the Users `beforeChange` hook (domain check + provisioning + bootstrap-admin), creates/updates the `accounts` row, sets the Payload session cookie, redirects to `successRedirectPath`. On any failure (state mismatch, network timeout, domain rejection, Google-side error) redirects to `errorRedirectPath` with `?error=<code>`. | 302          |
-| 3   | GET    | `/api/seqtek/session/user`           | Returns the current session user. Used by client components if/when needed.                                                                                                                                                                                                                                                                                                                                                                         | 200 / 401    |
-| 4   | GET    | `/api/seqtek/session/signout`        | Clears cookie, redirects to `returnTo` (defaults to `/admin/login`).                                                                                                                                                                                                                                                                                                                                                                                | 302          |
-| 5   | GET    | `/api/seqtek/session/refresh`        | Re-issues the JWT if the current cookie is within its refresh window.                                                                                                                                                                                                                                                                                                                                                                               | 200 / 401    |
+| #   | Method | Path                               | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                             | Status codes |
+| --- | ------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| 1   | GET    | `/api/auth/oauth/authorize/google` | Browser entry. Redirects to Google's authorize endpoint with `client_id`, `redirect_uri`, `scope=openid email profile`, `state=<csrf>`, `hd=seqtechllc.com`, `prompt=select_account`.                                                                                                                                                                                                                                                               | 302          |
+| 2   | GET    | `/api/auth/oauth/callback/google`  | Google → us. Validates `state`, exchanges `code` for tokens at Google's token endpoint, fetches userinfo, runs the Users `beforeChange` hook (domain check + provisioning + bootstrap-admin), creates/updates the `accounts` row, sets the Payload session cookie, redirects to `successRedirectPath`. On any failure (state mismatch, network timeout, domain rejection, Google-side error) redirects to `errorRedirectPath` with `?error=<code>`. | 302          |
+| 3   | GET    | `/api/auth/session/user`           | Returns the current session user. Used by client components if/when needed.                                                                                                                                                                                                                                                                                                                                                                         | 200 / 401    |
+| 4   | GET    | `/api/auth/session/signout`        | Clears cookie, redirects to `returnTo` (defaults to `/admin/login`).                                                                                                                                                                                                                                                                                                                                                                                | 302          |
+| 5   | GET    | `/api/auth/session/refresh`        | Re-issues the JWT if the current cookie is within its refresh window.                                                                                                                                                                                                                                                                                                                                                                               | 200 / 401    |
 
 Other plugin routes (`/auth/signin`, `/auth/signup`, `/auth/forgot-password`,
 `/auth/reset-password`, `/passkey/*`) are registered by the plugin but unused —
@@ -26,7 +26,7 @@ plugin-default 404/501 responses; they are not part of this feature's contract.
 
 ```ts
 authPlugin({
-  name: 'seqtek', // → /api/seqtek/*
+  name: 'auth', // → /api/auth/*
   usersCollectionSlug: 'users',
   accountsCollectionSlug: 'accounts',
   allowOAuthAutoSignUp: true, // first Workspace sign-in creates the user row
@@ -73,12 +73,12 @@ CloudWatch under the audit-event payload.
 Registered exactly as below in the SEQTEK Google Cloud project's OAuth 2.0 Client
 Credential ("Web application" type) under "Authorized redirect URIs":
 
-| Env        | Redirect URI                                                  |
-| ---------- | ------------------------------------------------------------- |
-| Local dev  | `http://localhost:3100/api/seqtek/oauth/callback/google`      |
-| Staging    | `https://staging.seqtek.com/api/seqtek/oauth/callback/google` |
-| Prod       | `https://seqtek.com/api/seqtek/oauth/callback/google`         |
-| Prod (www) | `https://www.seqtek.com/api/seqtek/oauth/callback/google`     |
+| Env        | Redirect URI                                                |
+| ---------- | ----------------------------------------------------------- |
+| Local dev  | `http://localhost:3100/api/auth/oauth/callback/google`      |
+| Staging    | `https://staging.seqtek.com/api/auth/oauth/callback/google` |
+| Prod       | `https://seqtek.com/api/auth/oauth/callback/google`         |
+| Prod (www) | `https://www.seqtek.com/api/auth/oauth/callback/google`     |
 
 Both `seqtek.com` and `www.seqtek.com` are registered so the OAuth flow works
 regardless of which canonical host the user enters; the application redirects to

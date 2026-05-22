@@ -45,7 +45,7 @@ export default buildConfig({
   sharp,
   plugins: [
     authPlugin({
-      name: 'seqtek',
+      name: 'auth',
       usersCollectionSlug: 'users',
       accountsCollectionSlug: 'accounts',
       allowOAuthAutoSignUp: true,

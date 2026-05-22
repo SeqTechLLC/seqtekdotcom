@@ -60,7 +60,7 @@ anyway, and Google's email is the human-readable identifier in the admin UI).
 removes the email/password endpoint from `/api/users/login` entirely. With the
 strategy off, FR-004 is satisfied at the framework level: no password is _ever_
 accepted, even if a user URL-guesses the local-login endpoint. The plugin still
-authenticates via its own `/api/seqtek/session/*` cookie path.
+authenticates via its own `/api/auth/session/*` cookie path.
 
 **Edge**: The default Payload admin login UI at `/admin/login` will still try to
 POST to `/api/users/login` if a user types into the form. With `disableLocalStrategy`
@@ -188,7 +188,7 @@ route enabled only when `OAUTH_STUB_ENABLED=1` (set by `playwright.config.ts`).
 Route shape:
 
 ```text
-GET  /api/test/oauth/google/authorize?...  → 302 → /api/seqtek/oauth/callback/google?code=...
+GET  /api/test/oauth/google/authorize?...  → 302 → /api/auth/oauth/callback/google?code=...
 GET  /api/test/oauth/google/token          → JSON id_token + access_token (fixture-signed JWT)
 GET  /api/test/oauth/google/userinfo       → JSON { sub, email, hd, name, ... }
 ```
@@ -229,7 +229,7 @@ the env flag leaks the route is absent from the build.
 2. ARCHITECTURE.md §6 env-var table (two new rows; both Server scope; one Config,
    one **Secret**).
 3. `docs/LOCAL_DEVELOPMENT.md` (new section: "Setting up a Google OAuth client for
-   local dev" with redirect URI `http://localhost:3100/api/seqtek/oauth/callback/google`).
+   local dev" with redirect URI `http://localhost:3100/api/auth/oauth/callback/google`).
 
 In staging and production the values are sourced from AWS Systems Manager Parameter
 Store via the EC2 instance profile (ARCHITECTURE.md §6 already documents this chain
@@ -250,7 +250,7 @@ in prod/staging, .env.local in dev`.
 
 **Decision**: Inject `<BeforeLoginGoogle />` via `admin.components.beforeLogin`,
 which renders a single primary button above the (now-non-functional) email/password
-form. The button is a plain `<a href="/api/seqtek/oauth/authorize/google">` — no
+form. The button is a plain `<a href="/api/auth/oauth/authorize/google">` — no
 client JS needed; the plugin handles the rest.
 
 **Rationale**: FR-001 requires SSO as the _primary_ action. An anchor link with a
@@ -262,8 +262,8 @@ anchor, no JS).
 
 ## Open items deferred to `/speckit-tasks`
 
-- Concrete naming of the plugin instance — currently planned as `name: 'seqtek'`,
-  which yields URLs like `/api/seqtek/oauth/callback/google`. Final spelling is a
+- Concrete naming of the plugin instance — currently planned as `name: 'auth'`,
+  which yields URLs like `/api/auth/oauth/callback/google`. Final spelling is a
   task-time micro-decision.
 - Exact wording of the user-facing error message on `/admin/login?error=...` — needs
   a one-line review against `docs/BRAND_STRATEGY_RESEARCH.md` voice (no em-dashes per

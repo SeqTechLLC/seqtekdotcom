@@ -117,7 +117,7 @@ Payload runs database migrations automatically on startup. When you run `npm run
 3. **Create Credentials → OAuth client ID** → application type **Web application**.
 4. Name: `seqtek-website-local-dev`.
 5. Authorized JavaScript origins: `http://localhost:3100`.
-6. Authorized redirect URIs: `http://localhost:3100/api/seqtek/oauth/callback/google`.
+6. Authorized redirect URIs: `http://localhost:3100/api/auth/oauth/callback/google`.
 7. **Create** — copy the Client ID and Client Secret.
 
 ### Put the values in `.env.local`

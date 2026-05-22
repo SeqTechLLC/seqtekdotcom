@@ -48,7 +48,7 @@ test.describe('US1: returning editor signs in', () => {
     // If local strategy is disabled this returns 4xx; the test then
     // documents the expected behavior. Cookie is set via accounts→user
     // join in production. For local dev with a real Google client the
-    // cookie path is the plugin's /api/seqtek/session — left as TODO.
+    // cookie path is the plugin's /api/auth/session — left as TODO.
     test.skip(
       !login.ok(),
       'TODO: minted-cookie path needs the plugin session endpoint; revisit once a usable cookie source is wired in test setup',

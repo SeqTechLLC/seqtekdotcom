@@ -116,7 +116,7 @@ src/
 │   └── auth/
 │       ├── domain-allowlist.ts            # NEW: pure fn — isWorkspaceEmail(email): boolean
 │       └── sign-in-audit.ts               # NEW: structured log helper → CloudWatch (FR-011)
-├── payload.config.ts                      # +authPlugin({ name: 'seqtek', providers: [GoogleAuthProvider(...)], allowOAuthAutoSignUp: true, successRedirectPath: '/admin', errorRedirectPath: '/admin/login?error=...' })
+├── payload.config.ts                      # +authPlugin({ name: 'auth', providers: [GoogleAuthProvider(...)], allowOAuthAutoSignUp: true, successRedirectPath: '/admin', errorRedirectPath: '/admin/login?error=...' })
 └── proxy.ts                               # untouched
 
 tests/

@@ -17,7 +17,7 @@ Anyone with `@seqtechllc.com` access to the `seqtek-website` Google Cloud projec
 3. **Create Credentials → OAuth client ID** → application type **Web application**.
 4. Name: `seqtek-website-local-dev` (or `…-staging`, `…-prod` for those envs).
 5. Authorized JavaScript origins: `http://localhost:3100`.
-6. Authorized redirect URIs: `http://localhost:3100/api/seqtek/oauth/callback/google`.
+6. Authorized redirect URIs: `http://localhost:3100/api/auth/oauth/callback/google`.
 7. Click **Create** — copy the **Client ID** and **Client secret** from the popup.
 
 The contract in [`contracts/oauth-routes.md`](./contracts/oauth-routes.md) §4 lists the
@@ -89,7 +89,7 @@ stub contract.
 
 | Symptom                                                          | Likely cause                                                              | Fix                                                                                                           |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Click "Sign in with Google" → "Error 400: redirect_uri_mismatch" | Redirect URI in `.env.local` doesn't match the Google Cloud Console entry | Match exactly: `http://localhost:3100/api/seqtek/oauth/callback/google` (no trailing slash)                   |
+| Click "Sign in with Google" → "Error 400: redirect_uri_mismatch" | Redirect URI in `.env.local` doesn't match the Google Cloud Console entry | Match exactly: `http://localhost:3100/api/auth/oauth/callback/google` (no trailing slash)                     |
 | Click "Sign in with Google" → endless redirect loop              | `serverURL` in `payload.config.ts` doesn't match the host you're visiting | Use either `localhost:3100` or `127.0.0.1:3100` consistently; cookie domain matters                           |
 | First sign-in lands as Editor, not Admin                         | `users` table wasn't empty when you signed in                             | Drop the volume (`docker compose down -v`), re-migrate, sign in again. Bootstrap only runs on an empty table. |
 | Tests fail with "OAUTH_STUB_ENABLED not set"                     | Playwright is starting a `next dev` without the env flag                  | Check `playwright.config.ts` `webServer.env` — should set `OAUTH_STUB_ENABLED=1`                              |
