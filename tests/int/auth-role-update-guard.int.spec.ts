@@ -24,7 +24,20 @@ beforeEach(async () => {
 
 describe('guardRoleUpdates (FR-007, US2)', () => {
   it('forbids role escalation when req.user is null (forged PATCH)', async () => {
-    const user = await payload.create({
+    // Seed an admin first so the bootstrap-admin rule doesn't fire on the next create.
+    await payload.create({
+      collection: 'users',
+      data: {
+        email: 'bootstrap-admin@seqtechllc.com',
+        name: 'Bootstrap',
+        roles: ['editor'],
+      },
+      overrideAccess: true,
+      req: { user: null } as Parameters<typeof payload.create>[0]['req'],
+    })
+
+    // Now create a real editor (bootstrap is exhausted, so the hook keeps role=editor).
+    const editor = await payload.create({
       collection: 'users',
       data: {
         email: 'editor@seqtechllc.com',
@@ -34,11 +47,12 @@ describe('guardRoleUpdates (FR-007, US2)', () => {
       overrideAccess: true,
       req: { user: null } as Parameters<typeof payload.create>[0]['req'],
     })
+    expect(editor.roles).toEqual(['editor'])
 
     await expect(
       payload.update({
         collection: 'users',
-        id: user.id,
+        id: editor.id,
         data: { roles: ['admin'] },
         overrideAccess: true,
         req: { user: null } as Parameters<typeof payload.update>[0]['req'],
@@ -47,12 +61,10 @@ describe('guardRoleUpdates (FR-007, US2)', () => {
 
     const refreshed = await payload.findByID({
       collection: 'users',
-      id: user.id,
+      id: editor.id,
       overrideAccess: true,
     })
-    // Bootstrap rule made the first signer admin already; the point is the
-    // role wasn't *re-changed* by the forged update.
-    expect(refreshed.roles).not.toEqual(['admin', 'editor'])
+    expect(refreshed.roles).toEqual(['editor'])
   })
 
   it('allows role change when req.user is an Admin', async () => {

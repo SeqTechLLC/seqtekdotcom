@@ -100,7 +100,7 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 - [x] T024 [US2] Implement the real body of `src/lib/auth/apply-bootstrap-role.ts` per `research.md` R-4: on `operation === 'create'` with `req.user == null`, count admins via `payload.find({ collection: 'users', where: { roles: { in: ['admin'] } }, limit: 1 })`, set `data.roles = ['admin']` when count is 0 else `['editor']`, then call `logSignIn({ outcome: 'success', userId: <pending>, … })`. Replaces the T007 no-op.
 - [x] T025 [US2] Extend the `Users.ts` `beforeChange` (T006) `operation === 'update'` branch to forbid `data.roles` changes when `req.user == null`. Throw `ValidationError('Role changes require an authenticated admin.')`.
-- [ ] T026 [US2] Run `tests/int/auth-provisioning.int.spec.ts` + `tests/int/auth-role-update-guard.int.spec.ts` against a clean Docker Postgres; iterate until green.
+- [x] T026 [US2] Run `tests/int/auth-provisioning.int.spec.ts` + `tests/int/auth-role-update-guard.int.spec.ts` against a clean Docker Postgres; iterate until green.
 
 **Checkpoint**: first-time `@seqtechllc.com` sign-in works; the first signer becomes Admin; subsequent signers become Editor; second sign-in is idempotent. Non-Workspace identities still slip through — US3 closes that.
 
@@ -121,7 +121,7 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 - [x] T029 [US3] Implement the real body of `src/lib/auth/enforce-domain.ts`: export `isWorkspaceEmail(email: string | null | undefined): boolean` doing a lowercase `endsWith('@seqtechllc.com')` exact-match per `research.md` R-5; export `enforceDomainAllowlist({ req, data })` for the hook that throws `ValidationError('Only SEQTEK Workspace accounts may sign in.')` when the check fails, and calls `logSignIn({ outcome: 'domain-rejected', email: data.email, provider: 'google' })` before throwing.
 - [x] T030 [US3] Wire the real `enforceDomainAllowlist` into the Users `beforeChange` hook from T006 — call it before `applyAutoProvisionRole` so a rejection short-circuits before any role decision. No new imports beyond T029.
-- [ ] T031 [US3] Run `tests/int/auth-domain-allowlist.int.spec.ts` + `tests/e2e/auth-sso-rejected.e2e.spec.ts` against a fresh DB; iterate until green and confirm the rejected attempts also appear in the test log output as `outcome: 'domain-rejected'` lines.
+- [x] T031 [US3] Run `tests/int/auth-domain-allowlist.int.spec.ts` + `tests/e2e/auth-sso-rejected.e2e.spec.ts` against a fresh DB; iterate until green and confirm the rejected attempts also appear in the test log output as `outcome: 'domain-rejected'` lines.
 
 **Checkpoint**: all three stories pass independently and together. The system meets FR-001 through FR-013.
 
