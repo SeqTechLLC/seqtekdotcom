@@ -670,18 +670,20 @@ The repo is public on GitHub. This is standard for marketing sites and consisten
 
 All secrets and configuration are managed via environment variables, never committed to the repo.
 
-| Variable                        | Scope  | Classification | Purpose                                           |
-| ------------------------------- | ------ | -------------- | ------------------------------------------------- |
-| `DATABASE_URL`                  | Server | **Secret**     | Postgres connection string (includes credentials) |
-| `PAYLOAD_SECRET`                | Server | **Secret**     | Payload encryption key for auth tokens            |
-| `S3_BUCKET`                     | Server | Config         | S3 bucket name                                    |
-| `S3_REGION`                     | Server | Config         | AWS region                                        |
-| `S3_BUCKET_HOSTNAME`            | Server | Config         | For next/image remotePatterns                     |
-| `REVALIDATION_SECRET`           | Server | **Secret**     | Validates webhook requests                        |
-| `NEXT_PUBLIC_SITE_URL`          | Client | Public         | Canonical URL (`https://seqtek.com`)              |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | Client | Public         | HubSpot portal (8504846)                          |
-| `NEXT_PUBLIC_GTM_ID`            | Client | Public         | GTM container ID                                  |
-| `NEXT_PUBLIC_SCOREAPP_URL`      | Client | Public         | ScoreApp assessment URL                           |
+| Variable                        | Scope  | Classification | Purpose                                                                 |
+| ------------------------------- | ------ | -------------- | ----------------------------------------------------------------------- |
+| `DATABASE_URL`                  | Server | **Secret**     | Postgres connection string (includes credentials)                       |
+| `PAYLOAD_SECRET`                | Server | **Secret**     | Payload encryption key for auth tokens                                  |
+| `GOOGLE_CLIENT_ID`              | Server | Config         | OAuth 2.0 client ID for `/admin` Google Workspace SSO (D-14)            |
+| `GOOGLE_CLIENT_SECRET`          | Server | **Secret**     | OAuth 2.0 client secret. Parameter Store `SecureString` in prod/staging |
+| `S3_BUCKET`                     | Server | Config         | S3 bucket name                                                          |
+| `S3_REGION`                     | Server | Config         | AWS region                                                              |
+| `S3_BUCKET_HOSTNAME`            | Server | Config         | For next/image remotePatterns                                           |
+| `REVALIDATION_SECRET`           | Server | **Secret**     | Validates webhook requests                                              |
+| `NEXT_PUBLIC_SITE_URL`          | Client | Public         | Canonical URL (`https://seqtek.com`)                                    |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | Client | Public         | HubSpot portal (8504846)                                                |
+| `NEXT_PUBLIC_GTM_ID`            | Client | Public         | GTM container ID                                                        |
+| `NEXT_PUBLIC_SCOREAPP_URL`      | Client | Public         | ScoreApp assessment URL                                                 |
 
 **S3 authentication:** No static AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`). The EC2 instance profile provides S3 access via IAM role. The container reaches the instance metadata service (IMDSv2, hop limit 2) to auto-discover and auto-rotate credentials. Payload's S3 storage adapter uses the default AWS credential chain — no configuration needed beyond the bucket name and region.
 
@@ -694,12 +696,17 @@ All secrets and configuration are managed via environment variables, never commi
 
 ### Payload Admin Authentication
 
-Payload's admin panel at `/admin` is protected by its own authentication system:
+Payload's admin panel at `/admin` is protected by Google Workspace SSO (ROADMAP D-14, ADR 0002, spec 001) restricted to the `@seqtechllc.com` Google Workspace domain. Implementation lives on top of `payload-auth-plugin` (Google OAuth/OIDC provider) with Payload's local email/password strategy disabled on the `users` collection.
 
-- Email/password login with configurable token expiration
-- Max login attempts with lockout (5 attempts, 10-minute lockout)
-- JWT-based sessions with role claims
-- No public registration endpoint — admin creates accounts
+- Google OAuth (OIDC) — only sign-in path; the email/password form is removed from the login view entirely
+- Domain restriction enforced server-side in a `users` `beforeChange` hook (the Google `hd` parameter is a hint; the hook is the load-bearing check)
+- First-sign-in auto-provisions a user row at role `editor`; if no admins exist yet (fresh table), the first signer becomes `admin`
+- Returning users matched by stable Google subject ID (`sub`), not by email, so a Workspace email change does not duplicate the record
+- JWT-based sessions with role claims, Payload default 2-hour TTL — Workspace deprovisioning lag is bounded by this TTL
+- No public registration; no password flows; no SMTP dependency (D-5 dropped per SC-007)
+- Every sign-in attempt (success / domain-rejected / oauth-error) is logged as a structured JSON line on stdout → CloudWatch for audit
+
+OAuth client credentials are sourced from `.env.local` in dev and from AWS Parameter Store at `/seqtek/website/{env}/google_client_{id,secret}` in staging and prod via the existing EC2 instance profile (`ssm:GetParameters` on `/seqtek/website/*`).
 
 ### Access Control
 

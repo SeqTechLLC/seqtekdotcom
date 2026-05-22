@@ -1,46 +1,72 @@
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 import config from '../../src/payload.config.js'
 
-export const testUser = {
-  email: 'dev@payloadcms.com',
-  password: 'test',
+let cachedPayload: Payload | null = null
+
+async function payloadInstance(): Promise<Payload> {
+  if (!cachedPayload) {
+    cachedPayload = await getPayload({ config: await config })
+  }
+  return cachedPayload
+}
+
+export interface SeedOauthUserInput {
+  email: string
+  name: string
+  role: 'admin' | 'editor'
+  sub: string
+}
+
+export interface SeededOauthUser {
+  userId: string
+  accountId: string
 }
 
 /**
- * Seeds a test user for e2e admin tests.
+ * Insert a users row and a matching accounts row simulating a completed
+ * Google sign-in. Returns the new IDs. The session cookie is minted by the
+ * caller via payload.login() — see tests/e2e helpers.
  */
-export async function seedTestUser(): Promise<void> {
-  const payload = await getPayload({ config })
+export async function seedOauthUser(input: SeedOauthUserInput): Promise<SeededOauthUser> {
+  const payload = await payloadInstance()
 
-  // Delete existing test user if any
-  await payload.delete({
+  const user = await payload.create({
     collection: 'users',
-    where: {
-      email: {
-        equals: testUser.email,
-      },
+    data: {
+      email: input.email,
+      name: input.name,
+      roles: [input.role],
     },
+    overrideAccess: true,
   })
 
-  // Create fresh test user
-  await payload.create({
-    collection: 'users',
-    data: testUser,
+  const account = await payload.create({
+    collection: 'accounts',
+    data: {
+      user: user.id,
+      issuerName: 'google',
+      sub: input.sub,
+      name: input.name,
+    },
+    overrideAccess: true,
   })
+
+  return {
+    userId: String(user.id),
+    accountId: String(account.id),
+  }
 }
 
-/**
- * Cleans up test user after tests
- */
-export async function cleanupTestUser(): Promise<void> {
-  const payload = await getPayload({ config })
-
+export async function cleanupOauthUser(email: string): Promise<void> {
+  const payload = await payloadInstance()
+  await payload.delete({
+    collection: 'accounts',
+    where: { 'user.email': { equals: email } },
+    overrideAccess: true,
+  })
   await payload.delete({
     collection: 'users',
-    where: {
-      email: {
-        equals: testUser.email,
-      },
-    },
+    where: { email: { equals: email } },
+    overrideAccess: true,
   })
 }

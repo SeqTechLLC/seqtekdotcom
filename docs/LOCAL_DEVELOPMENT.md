@@ -38,7 +38,7 @@ npm run dev
 
 The site is at `http://localhost:3000`. The Payload admin panel is at `http://localhost:3000/admin`.
 
-On first visit to `/admin`, Payload will prompt you to create the initial admin user. No accounts are pre-seeded.
+`/admin` is gated by Google Workspace SSO (`@seqtechllc.com` only). Before the first sign-in works locally you need a Google OAuth client — see [Google OAuth Client (D-14)](#google-oauth-client-d-14) below. On a fresh database the first signer is bootstrapped to the Admin role; later signers default to Editor.
 
 ---
 
@@ -48,10 +48,12 @@ Copy `.env.example` to `.env.local` and fill in the values below. Only two are r
 
 ### Required
 
-| Variable         | Local Value                                            | Notes                                                      |
-| ---------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
-| `DATABASE_URL`   | `postgresql://seqtek:seqtek@localhost:5432/seqtek_dev` | Matches the Docker Compose Postgres config                 |
-| `PAYLOAD_SECRET` | Any random string (32+ chars)                          | Used for JWT signing. Generate with `openssl rand -hex 32` |
+| Variable               | Local Value                                            | Notes                                                                     |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `DATABASE_URL`         | `postgresql://seqtek:seqtek@localhost:5432/seqtek_dev` | Matches the Docker Compose Postgres config                                |
+| `PAYLOAD_SECRET`       | Any random string (32+ chars)                          | Used for JWT signing. Generate with `openssl rand -hex 32`                |
+| `GOOGLE_CLIENT_ID`     | From Google Cloud Console                              | OAuth 2.0 client ID. See [Google OAuth Client](#google-oauth-client-d-14) |
+| `GOOGLE_CLIENT_SECRET` | From Google Cloud Console                              | OAuth 2.0 client secret. Same source as above                             |
 
 ### Optional (leave blank for local dev)
 
@@ -101,6 +103,45 @@ The Postgres container:
 - Matches the same Postgres major version as production RDS
 
 Payload runs database migrations automatically on startup. When you run `npm run dev`, Payload connects to Postgres and creates/migrates all tables based on the collection configs. No manual migration step needed.
+
+---
+
+## Google OAuth Client (D-14)
+
+`/admin` uses Google Workspace SSO restricted to `@seqtechllc.com` accounts (ROADMAP D-14, ADR 0002, spec 001). You need an OAuth client to sign in locally.
+
+### One-time setup
+
+1. Open [Google Cloud Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
+2. Confirm you're in the **seqtek-website** project.
+3. **Create Credentials → OAuth client ID** → application type **Web application**.
+4. Name: `seqtek-website-local-dev`.
+5. Authorized JavaScript origins: `http://localhost:3100`.
+6. Authorized redirect URIs: `http://localhost:3100/api/seqtek/oauth/callback/google` (Next dev actually listens on `:3100` per `package.json` `dev` script, even though the rest of this guide references `:3000`).
+7. **Create** — copy the Client ID and Client Secret.
+
+### Put the values in `.env.local`
+
+```bash
+GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxx
+```
+
+Never commit `.env.local`. `.env.example` lists the names with empty values.
+
+### First sign-in
+
+Drop the Postgres volume if you want a clean cutover (`docker compose down -v`), restart, then visit `/admin` and click **Sign in with Google**. The first `@seqtechllc.com` signer becomes Admin; subsequent signers default to Editor. Promote them in `/admin/collections/users/<id>`.
+
+Non-`@seqtechllc.com` accounts are rejected at the OAuth callback — no row is created.
+
+### Tests (no real Google needed)
+
+Vitest integration tests cover the Users `beforeChange` hook directly (`payload.create({ collection: 'users', ... })`) — same code path the plugin's OAuth callback invokes, no Google round-trip. Playwright E2E tests for the post-auth experience mint a session cookie via `payload.login()` and navigate `/admin` with that cookie set — no OAuth round-trip either. See spec 001 `tasks.md` for the FR-012 note on why we test the integration surface only.
+
+### Staging and prod
+
+Production and staging read `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from AWS Parameter Store at `/seqtek/website/{env}/google_client_{id,secret}` via the EC2 instance profile. See `specs/001-google-oauth-sso/contracts/env-vars.md` for the exact path map.
 
 ---
 
