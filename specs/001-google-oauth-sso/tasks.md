@@ -46,11 +46,14 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 - [ ] T007 [P] Create stub files `src/lib/auth/enforce-domain.ts` and `src/lib/auth/apply-bootstrap-role.ts` that export the two helpers as no-ops with the correct signatures so T006 type-checks. The real bodies are written under US3 (T029) and US2 (T024) respectively.
 - [ ] T008 [P] Implement `src/lib/auth/sign-in-audit.ts` exporting `logSignIn({ email, outcome, provider, ip?, userId?, errorCode? })` per `data-model.md` § 3 — a single `console.log` of the JSON line. No Payload dependency, no I/O beyond stdout.
 - [ ] T009 Wire the plugin in `src/payload.config.ts`: register `Accounts` in the collections array, add `authPlugin({ name: 'seqtek', usersCollectionSlug: 'users', accountsCollectionSlug: 'accounts', allowOAuthAutoSignUp: true, successRedirectPath: '/admin', errorRedirectPath: '/admin/login', providers: [GoogleAuthProvider({ … })] })` exactly per `contracts/oauth-routes.md` § 2 including the `OAUTH_STUB_ENABLED` ternaries on the three endpoint overrides.
-- [ ] T010 [P] Create `src/components/admin/BeforeLoginGoogle.tsx` — a server component rendering a single primary anchor `<a href="/api/seqtek/oauth/authorize/google">Sign in with Google</a>` plus a brief explanatory paragraph. No client JS. Add `admin.components.beforeLogin: ['/components/admin/BeforeLoginGoogle']` to the Payload admin config in `src/payload.config.ts`.
-- [ ] T011 [P] Create the test-only OAuth stub provider at `src/app/(payload)/admin/api/test/oauth/google/[...slug]/route.ts` (or a sibling path under `/api/test/oauth/google/`) implementing the three handlers (`authorize`, `token`, `userinfo`) per `contracts/oauth-routes.md` § 5. Routes throw at module load unless `process.env.OAUTH_STUB_ENABLED === '1'` so prod/staging builds tree-shake them away.
+- [ ] T010 [P] Create `src/components/admin/BeforeLoginGoogle.tsx` — a server component rendering a single primary anchor `<a href="/api/seqtek/oauth/authorize/google">Sign in with Google</a>` plus a brief explanatory paragraph. No client JS. Consumed as a child by `AdminLogin.tsx` (T010a); **not** wired via `admin.components.beforeLogin` since the entire login view is replaced.
+- [ ] T010a Create `src/components/admin/AdminLogin.tsx` — a server component that renders the post-cutover login view: SEQTEK header, the `BeforeLoginGoogle` CTA from T010, and the error display from T018. Renders **no** email/password form, no password-reset link, no signup link. Wire it in `src/payload.config.ts` via `admin.components.views.login: { Component: '/components/admin/AdminLogin' }`. Honors FR-001's "primary (and only user-visible) sign-in action" wording — supersedes `research.md` R-2's earlier "primary not necessarily only" compromise.
+- [ ] T011 [P] Create the test-only OAuth stub provider at `src/app/(payload)/admin/api/test/oauth/google/[...slug]/route.ts` (or a sibling path under `/api/test/oauth/google/`) implementing the three handlers (`authorize`, `token`, `userinfo`) per `contracts/oauth-routes.md` § 5. Routes throw at module load unless `process.env.OAUTH_STUB_ENABLED === '1'` so prod/staging builds tree-shake them away. Supports fault-injection query params consumed by T020a: `?fault=token-504`, `?fault=userinfo-401`, `?fault=userinfo-missing-sub`, `?fault=state-mismatch`.
 - [ ] T012 [P] Add `tests/e2e/helpers/oauthFixtures.ts` with the four fixture identities from `contracts/oauth-routes.md` § 5 (`bootstrap-admin`, `editor`, `intruder`, `wrong-workspace`). Pure data export; consumed by the stub route and by E2E tests.
 - [ ] T013 Update `playwright.config.ts` `webServer.env` to set `OAUTH_STUB_ENABLED=1` so the stub routes are live for the E2E run. No other Playwright config changes.
-- [ ] T014 Run `npm run generate:importMap` and `npm run generate:types`, then commit the regenerated `src/app/(payload)/admin/importMap.js` and `src/payload-types.ts`. (Required after T006 + T010 add a client-component path and a new collection.)
+- [ ] T013a Delete spike-era test fixtures that the cutover obsoletes: remove `tests/e2e/spike.e2e.spec.ts` entirely (the D-13 spike is closed; the post-cutover replacements are T015 + T016 + T028), strip the `seedTestUser` / `cleanupTestUser` / `testUser` exports from `tests/helpers/seedUser.ts` (T015 adds the OAuth seed helper alongside), and delete the `tests/e2e/screenshots/spike-admin-*.png` artifacts. Without this task the spike E2E breaks the moment `disableLocalStrategy: true` lands in T006, blocking Constitution Principle II (CI must be green).
+- [ ] T013b [P] Create `tests/int/env.int.spec.ts` per `contracts/env-vars.md` § Validation: assert the prod env-profile reference (the Parameter Store path map under `/seqtek/website/prod/`) lists `google_client_id` and `google_client_secret`, and that no production manifest enables `OAUTH_STUB_ENABLED`. Implementation reads a small in-repo fixture (e.g., `infra/env-profile.prod.json` or a const array in the test) and asserts membership / non-membership.
+- [ ] T014 Run `npm run generate:importMap` and `npm run generate:types`, then commit the regenerated `src/app/(payload)/admin/importMap.js` and `src/payload-types.ts`. (Required after T006 + T010 + T010a add client-component paths and a new collection.)
 
 **Checkpoint**: collections, plugin, stub, audit helper, and CTA all in place. The hook is inert — any `@seqtechllc.com` OAuth flow would currently produce a row with the wrong role, and any non-Workspace flow would also produce a row. US3 and US2 fix that.
 
@@ -70,10 +73,11 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Create `src/app/(payload)/admin/login/page.tsx` (or extend whatever Payload renders at `/admin/login` via an `error` server component) to read `searchParams.error` and render the user-facing strings from `contracts/oauth-routes.md` § 3. Renders nothing when no error is present so the default login chrome (with the `beforeLogin` CTA) remains the primary view.
-- [ ] T019 [US1] Confirm `BeforeLoginGoogle.tsx` (from T010) styles the CTA as the visually-dominant primary action — Tailwind classes for size, weight, and the SEQTEK accent color from `docs/DESIGN_SYSTEM.md` § 14. No JS added.
+- [ ] T018 [US1] Create `src/components/admin/LoginError.tsx` — a server component that reads `searchParams.error` and renders the user-facing strings from `contracts/oauth-routes.md` § 3. Returns `null` when the param is absent. Imported and composed by `AdminLogin` (T010a).
+- [ ] T019 [US1] Style `BeforeLoginGoogle.tsx` (T010) and `AdminLogin.tsx` (T010a) so the CTA is the visually-dominant primary action and the page chrome matches the SEQTEK accent color and type ramp from `docs/DESIGN_SYSTEM.md` § 14. No JS added.
 - [ ] T020 [US1] Verify `/admin` redirect post-callback by running `auth-sso-returning.e2e.spec.ts` locally with `OAUTH_STUB_ENABLED=1` and the dev DB; iterate until both T016 scenarios pass.
-- [ ] T021 [US1] Capture a Playwright screenshot of the post-cutover login screen at `tests/e2e/screenshots/admin-login-google-sso.png` (replaces the spike-era `spike-admin-login.png` in the next polish task).
+- [ ] T020a [US1] Write `tests/e2e/auth-sso-provider-failures.e2e.spec.ts` covering our integration's contract enforcement against the OAuth provider (not the provider's own behavior). Exercise the four stub fault modes added in T011: (a) `?fault=token-504` → redirect to `/admin/login?error=network`, (b) `?fault=userinfo-401` → `?error=provider_error`, (c) `?fault=userinfo-missing-sub` → `?error=internal`, (d) `?fault=state-mismatch` → `?error=state_mismatch`. For each: assert the redirect target, the user-facing message text from `contracts/oauth-routes.md` § 3, and that **no** `users` or `accounts` row was created. Verifies that when the provider violates the OIDC contract we fail closed and audit, rather than blindly trusting the response.
+- [ ] T021 [US1] Capture a Playwright screenshot of the post-cutover login screen at `tests/e2e/screenshots/admin-login-google-sso.png` (replaces the spike-era login screenshot deleted in T013a).
 
 **Checkpoint**: an already-provisioned editor can sign in. Auto-provisioning of new users and domain-rejection of intruders are still inert — those land in US2 and US3.
 
@@ -127,7 +131,7 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 - [ ] T032 [P] Move D-14 from `docs/ROADMAP.md` § 2 (open list) to `docs/PROJECT_HISTORY.md` § Phase 1 implementation, preserving the `D-14` ID exactly per Principle III. Remove or rescope D-5 (SES) per SC-007 — drop the auth-related justification, keep the entry only if it has a non-auth purpose.
 - [ ] T033 [P] Append a "Status" note to `docs/decisions/0002-auth-strategy.md` recording that it was implemented in spec 001, with a one-line correction of the import string (`payload-auth-plugin` not `@authsmith/payload-auth-plugin` — see `research.md` R-1 "Naming note").
-- [ ] T034 [P] Delete the spike-era login screenshot `tests/e2e/screenshots/spike-admin-login.png` and update any test or doc reference to point at the new `admin-login-google-sso.png` from T021.
+- [ ] T034 [P] Verify no docs or tests still reference the spike-era screenshots deleted in T013a; update stragglers to point at `admin-login-google-sso.png` from T021.
 - [ ] T035 [P] Run `npm run test:lhci` against `/admin/login` and confirm a11y / best-practices / SEO ≥ 0.95 per Constitution II. Investigate any regression before continuing.
 - [ ] T036 Run `gitleaks` locally on the full diff for the branch and confirm clean — verifies SC-004 ahead of CI re-scan.
 - [ ] T037 Execute the steps in `quickstart.md` § 1–6 end-to-end against the dev DB; capture any drift between the doc and the shipped code and reconcile in `quickstart.md` in the same commit (Principle III).
@@ -162,8 +166,8 @@ The three stories are deliberately decomposed by file under `src/lib/auth/` so t
 ### Parallel opportunities
 
 - **Setup**: T002, T003, T004 are all `[P]`.
-- **Foundational**: T007, T008, T010, T011, T012 are `[P]`. T005 and T006 are sequential at the start (they unblock T014's regen). T009 depends on T005/T006/T010/T011 (it imports all of them).
-- **US1**: T015, T016, T017 are `[P]` (different files). T018 → T019 → T020 → T021 sequential within US1's implementation.
+- **Foundational**: T007, T008, T010, T011, T012, T013a, T013b are `[P]`. T005 and T006 are sequential at the start. T009 depends on T005/T006/T010/T011. T010a is sequential after T010 (composes its component). T014 depends on T006 + T010 + T010a (regen catches all client-component additions).
+- **US1**: T015, T016, T017 are `[P]` (different files). T018 → T019 → T020 → T020a → T021 sequential within US1's implementation. T020a additionally depends on T011's stub having the fault-injection params from the Foundational checkpoint.
 - **US2**: T022, T023 are `[P]`. T024 → T025 → T026 sequential.
 - **US3**: T027, T028 are `[P]`. T029 → T030 → T031 sequential.
 - **Polish**: T032, T033, T034, T035 are `[P]`.
@@ -174,7 +178,7 @@ After T014 ships, two developers can split as follows:
 
 | Developer | Tasks                                                                                                       |
 | --------- | ----------------------------------------------------------------------------------------------------------- |
-| A         | T015 → T016 → T017 → T018 → T019 → T020 → T021 (US1)                                                        |
+| A         | T015 → T016 → T017 → T018 → T019 → T020 → T020a → T021 (US1)                                                |
 | B         | T022, T023 in parallel → T024 → T025 → T026 (US2) **and** T027, T028 in parallel → T029 → T030 → T031 (US3) |
 
 For a solo run: US3 → US2 → US1 → Polish is the recommended order (close the invariant first, then provision, then the daily flow).
@@ -187,12 +191,14 @@ For a solo run: US3 → US2 → US1 → Polish is the recommended order (close t
 # After T005, T006 land:
 Task: "T007 stub enforce-domain.ts + apply-bootstrap-role.ts"
 Task: "T008 implement sign-in-audit.ts"
-Task: "T010 BeforeLoginGoogle.tsx + admin.components.beforeLogin wiring"
-Task: "T011 OAuth stub provider routes"
+Task: "T010 BeforeLoginGoogle.tsx CTA component"
+Task: "T011 OAuth stub provider routes (incl. fault-injection)"
 Task: "T012 oauthFixtures.ts"
+Task: "T013a delete spike E2E + helpers + screenshots"
+Task: "T013b tests/int/env.int.spec.ts"
 ```
 
-These five tasks touch five different files and can be worked simultaneously.
+These touch seven different files and can be worked simultaneously. T010a (custom Login view) waits on T010 because it imports the CTA component.
 
 ---
 
@@ -228,5 +234,5 @@ Two developers can split as in "Cross-story parallel windows" above. A reviewer 
 - `[P]` strictly means "different file and no in-phase predecessor." Cross-phase parallelism is governed by the Dependencies section.
 - The bootstrap-Admin race (two near-simultaneous first-sign-ins both seeing zero admins) is intentionally untested — `research.md` R-4 accepts the failure mode for the 5–10 user population.
 - No SES, no transactional email, no password flows anywhere in this task list — `PasswordProvider` is not registered and the `nodemailer` adapter is not installed (per ADR 0002 + SC-007).
-- Conventional Commits per CLAUDE.md: a tidy series would be `feat(auth): foundational plugin wiring (T001–T014)`, `feat(auth): domain rejection (T027–T031)`, `feat(auth): auto-provision + bootstrap admin (T022–T026)`, `feat(auth): SSO login flow (T015–T021)`, `docs(auth): reconcile ADR/ROADMAP/quickstart (T032–T038)`.
+- Conventional Commits per CLAUDE.md: a tidy series would be `feat(auth): foundational plugin wiring (T001–T014)`, `chore(tests): drop spike-era auth fixtures (T013a)`, `feat(auth): domain rejection (T027–T031)`, `feat(auth): auto-provision + bootstrap admin (T022–T026)`, `feat(auth): SSO login flow + provider-failure tests (T015–T021, T020a)`, `docs(auth): reconcile ADR/ROADMAP/quickstart (T032–T038)`.
 - Verify with `Read`/Playwright after each task; don't trust "should work."
