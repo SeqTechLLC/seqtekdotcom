@@ -12,8 +12,14 @@
 module.exports = {
   ci: {
     collect: {
-      url: ['http://localhost:3000/'],
-      startServerCommand: 'npm run start',
+      url: ['http://localhost:3200/'],
+      // :3200 keeps this clear of the other localhost projects (the Nuxt
+      // dev container that auto-binds :3000, and the Next dev script that
+      // uses :3100). next start respects $PORT.
+      //
+      // /admin/* is intentionally noindex and not subject to these gates —
+      // matches the a11y test's scope exclusion in tests/e2e/a11y.e2e.spec.ts.
+      startServerCommand: 'PORT=3200 npm run start',
       startServerReadyPattern: 'Ready in',
       startServerReadyTimeout: 90_000,
       numberOfRuns: 1,

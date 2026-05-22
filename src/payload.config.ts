@@ -23,12 +23,14 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
     components: {
-      views: {
-        login: {
-          Component: '/components/admin/AdminLogin#default',
-          path: '/login',
-        },
-      },
+      // The default Payload LoginView auto-hides the email/password form when
+      // `auth.disableLocalStrategy: true` is set on the users collection
+      // (which we do — see Users.ts). All we need is the SSO CTA + an error
+      // display injected above the (now empty) form area.
+      beforeLogin: [
+        '/components/admin/LoginError#default',
+        '/components/admin/BeforeLoginGoogle#default',
+      ],
     },
   },
   collections: [Users, Accounts, Media, Pages],

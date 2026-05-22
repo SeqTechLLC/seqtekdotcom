@@ -1,4 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { mkdir } from 'node:fs/promises'
+import path from 'node:path'
+
+const SCREENSHOTS_DIR = path.resolve('tests/e2e/screenshots')
 
 /**
  * T020a (redirected) — verifies our LoginError component renders the right
@@ -24,7 +28,18 @@ test.describe('US1: LoginError contract (T020a)', () => {
   }
 
   test('/admin/login with no error param renders no alert', async ({ page }) => {
+    await mkdir(SCREENSHOTS_DIR, { recursive: true })
     await page.goto('/admin/login')
+    // Wait for Payload's admin to hydrate and render the SSO CTA — the
+    // "no [data-error-code]" assertion below succeeds instantly because the
+    // null-rendered component leaves no DOM, so without this wait the
+    // screenshot captures an empty pre-hydration page.
+    await page.waitForSelector('.admin-login-google__cta', { state: 'visible' })
     await expect(page.locator('[data-error-code]')).toHaveCount(0)
+    // T021: capture the post-cutover login screen.
+    await page.screenshot({
+      path: path.join(SCREENSHOTS_DIR, 'admin-login-google-sso.png'),
+      fullPage: true,
+    })
   })
 })

@@ -16,11 +16,7 @@ export default function LoginError({ searchParams }: LoginErrorProps) {
   if (!code) return null
   const message = ERROR_MESSAGES[code] ?? ERROR_MESSAGES.internal
   return (
-    <div
-      role="alert"
-      data-error-code={code}
-      className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
-    >
+    <div role="alert" data-error-code={code} className="admin-login-error">
       {message}
     </div>
   )

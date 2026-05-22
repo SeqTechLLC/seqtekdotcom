@@ -20,6 +20,7 @@ export function proxy(request: NextRequest) {
     pathname: request.nextUrl.pathname,
     mediaHost: process.env.S3_BUCKET_HOSTNAME,
     reportUri: CSP_REPORT_PATH,
+    mode,
   })
 
   const response = NextResponse.next({ request: { headers: requestHeaders } })

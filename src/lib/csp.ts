@@ -56,10 +56,19 @@ type BuildOptions = {
   mediaHost?: string
   /** Report endpoint URI; when set, appended as report-uri (legacy) + report-to. */
   reportUri?: string
+  /** Current CSP mode; affects directives that browsers ignore in report-only. */
+  mode?: CspMode
 }
 
-export function buildCspPolicy({ nonce, pathname, mediaHost, reportUri }: BuildOptions): string {
+export function buildCspPolicy({
+  nonce,
+  pathname,
+  mediaHost,
+  reportUri,
+  mode = 'enforce',
+}: BuildOptions): string {
   const isAdmin = pathname.startsWith('/admin')
+  const isEnforced = mode === 'enforce'
 
   const imgSrc = ["'self'", 'data:', ...HUBSPOT_IMG]
   if (mediaHost) imgSrc.push(mediaHost)
@@ -81,7 +90,13 @@ export function buildCspPolicy({ nonce, pathname, mediaHost, reportUri }: BuildO
     'base-uri': ["'self'"],
     'form-action': ["'self'", '*.hsforms.net'],
     'object-src': ["'none'"],
-    'upgrade-insecure-requests': [],
+  }
+
+  // Browsers ignore `upgrade-insecure-requests` in report-only mode (which
+  // also surfaces as a Chrome DevTools Issue / Lighthouse best-practices
+  // ding). Only include it when we are actually enforcing.
+  if (isEnforced) {
+    directives['upgrade-insecure-requests'] = []
   }
 
   if (reportUri) {
