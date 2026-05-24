@@ -1,6 +1,6 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-21 (Phase 1 progress — test pipeline workflow archived to PROJECT_HISTORY § P1-9; open list is now CDK + Dockerfile/ECR + blue-green CI/CD)
+**Last updated:** 2026-05-24 (Phase 1 progress — Google OAuth SSO shipped (D-14, spec 001); constitution amended to v1.1.0; open list is now CDK + Dockerfile/ECR + blue-green CI/CD)
 
 > **Convention:** When a Phase 1 implementation item ships, _move_ it out of this file (don't just check it off) and add a `P1-*` row to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md). The roadmap stays a short punch list of what's _open_; history carries the audit trail.
 
