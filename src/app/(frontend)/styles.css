@@ -2,21 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Semantic design tokens — the swap layer (D-1 §1.5).
+ * Component code reads these via Tailwind utilities (text-text-primary, bg-surface,
+ * border-border-focus). Dark mode and high-contrast mode will reassign these vars;
+ * primitive ramps stay fixed.
+ *
+ * Values resolved from docs/DESIGN_SYSTEM.md §2.4. When this file and the doc
+ * disagree, the doc wins.
+ */
 @layer base {
   :root {
-    --color-bg: 255 255 255;
-    --color-fg: 17 17 17;
-    --color-accent: 26 95 122;
+    /* Text */
+    --color-text-primary: #1c1c31; /* neutral-900 */
+    --color-text-secondary: #3e3e47; /* neutral-700 */
+    --color-text-muted: #6e6e7a; /* neutral-500 */
+    --color-text-inverse: #ffffff; /* neutral-0 */
+    --color-text-accent: #46792f; /* brand-green-700 */
+
+    /* Link */
+    --color-link: #46792f; /* brand-green-700 */
+    --color-link-hover: #355b24; /* brand-green-800 */
+
+    /* Surface */
+    --color-surface: #ffffff; /* neutral-0 */
+    --color-surface-subtle: #f7f7f8; /* neutral-50 */
+    --color-surface-elevated: #ffffff; /* neutral-0 */
+    --color-surface-inverse: #1c1c31; /* neutral-900 */
+    --color-surface-accent: #f3f9ec; /* brand-green-50 */
+
+    /* Border */
+    --color-border-subtle: #ededf0; /* neutral-100 */
+    --color-border-strong: #d9d9df; /* neutral-200 */
+    --color-border-focus: #5a9c3b; /* brand-green-600 */
+
+    /* Accent */
+    --color-accent: #72b94d; /* brand-green-500 */
+    --color-accent-strong: #46792f; /* brand-green-700 */
+    --color-accent-hover: #355b24; /* brand-green-800 */
+    --color-accent-pressed: #243f19; /* brand-green-900 */
+
+    /* Type families. Nunito Sans @font-face is loaded by a later Phase 1 task;
+     * fallback stack covers the gap until the woff2 lands in /public/fonts/. */
+    --font-display: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-body: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', monospace;
   }
 
   body {
-    color: rgb(var(--color-fg));
-    background: rgb(var(--color-bg));
-    font-family:
-      system-ui,
-      -apple-system,
-      'Segoe UI',
-      sans-serif;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* WCAG 2.2 §2.4.11 — universal focus indicator */
+:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Reduced motion override (D-1 §7.3) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
   }
 }

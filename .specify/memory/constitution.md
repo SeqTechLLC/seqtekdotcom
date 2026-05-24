@@ -1,0 +1,207 @@
+<!--
+SYNC IMPACT REPORT — v1.0.0 (initial ratification, 2026-05-21)
+
+Version change: (uninitialized template) → 1.0.0
+Bump rationale: First ratification — defines the canonical principles, constraints, and
+workflow that subsequent spec-kit specs/plans/tasks must respect.
+
+Modified principles: all 5 newly defined.
+  I.   Spec Before Code (for non-trivial work)
+  II.  Tests Gate Merge; Coverage Doesn't
+  III. Docs Are Code; Reconcile in the Same Commit
+  IV.  Security Baseline Is Non-Negotiable
+  V.   Bleeding-Edge Stack, Pinned and Defensive
+
+Added sections: "Additional Constraints", "Development Workflow", "Governance"
+Removed sections: none
+
+Templates requiring updates:
+  ✅ .specify/templates/tasks-template.md — "Tests are OPTIONAL" default flipped to
+     "Tests are MANDATORY" per Principle II (every user story ships with at least one
+     Vitest integration or Playwright E2E test exercising the load-bearing path).
+  ✅ .specify/templates/plan-template.md — Constitution Check placeholder is intentionally
+     generic; gates are derived per-feature by /speckit-plan against this constitution.
+     No structural change needed.
+  ✅ .specify/templates/spec-template.md — user-story + requirements shape is compatible;
+     no structural change needed.
+
+Follow-up TODOs: none. All placeholders concretely filled.
+-->
+
+# SEQTEK Company Website — Project Constitution
+
+## Core Principles
+
+### I. Spec Before Code (for non-trivial work)
+
+Every non-trivial feature begins with a written spec under `specs/` produced via spec-kit
+(`/speckit-specify` → optional `/speckit-clarify` → `/speckit-plan` → `/speckit-tasks` →
+`/speckit-implement`). "Non-trivial" means: touches multiple files, introduces a new
+integration, or changes public-facing behavior. Pure bug fixes and one-file refactors do
+not require a spec.
+
+Specs MUST cite existing canonical docs (ARCHITECTURE.md, INTEGRATIONS.md,
+DESIGN_SYSTEM.md, BLOCK_LIBRARY.md, CONTENT-REQUIREMENTS.md) by section number rather than
+re-deriving what is already documented. When a spec discovers a gap in those docs, it
+fixes the doc in the same change.
+
+**Rationale**: The project has a deep doc layer. Specs that compose against those docs
+stay short, reviewable, and consistent. Specs that re-derive from scratch drift.
+
+### II. Tests Gate Merge; Coverage Does Not
+
+CI MUST be green before merge: typecheck + lint + format:check + Vitest (integration) +
+Playwright (E2E) + axe-core (a11y) + Lighthouse (a11y / best-practices / SEO ≥ 0.95) +
+gitleaks. Every user story in every spec ships with at least one Vitest integration or
+Playwright E2E test that exercises the load-bearing path. UI work is verified via
+Playwright with screenshots, not manual clicking.
+
+There is no coverage-percentage gate. Test what matters (access control functions,
+Payload hooks, integrations, public render, revalidation, security-relevant code paths);
+do not pad coverage on view components.
+
+Performance budgets (Performance / LCP / TBT / CLS) are staged as warnings during Phase 1
+and flip to errors in Phase 5 "Polish" per ARCHITECTURE.md §7. Accessibility,
+best-practices, and SEO budgets gate from day one.
+
+**Rationale**: A marketing site does not need 90% line coverage on view components — it
+needs absolute confidence in load-bearing paths under every deploy. ARCHITECTURE.md §12.
+
+### III. Docs Are Code; Reconcile in the Same Commit
+
+When code and a spec doc disagree, fix one or the other in the same commit. Touching a
+shared spec doc (ARCHITECTURE.md, INTEGRATIONS.md, DESIGN_SYSTEM.md, BLOCK_LIBRARY.md,
+ERROR_PAGES.md, LOCAL_DEVELOPMENT.md, CONTENT-REQUIREMENTS.md) requires reconciling all
+references that depend on the changed section.
+
+ROADMAP open items MUST be **moved** to PROJECT_HISTORY § Phase 1 implementation (P1)
+when shipped — never just checkbox-flipped. The convention is documented at the top of
+PROJECT_HISTORY.md; the roadmap is the open punch list, history is the audit trail.
+
+Non-obvious technical decisions are captured as numbered ADRs under `docs/decisions/` and
+referenced by number, not re-litigated inline.
+
+**Rationale**: The project cross-references heavily. Drift kills trust in the docs, and
+docs without trust are not load-bearing.
+
+### IV. Security Baseline Is Non-Negotiable
+
+This is a public repository. Secrets MUST NOT enter git history under any circumstance.
+Pre-commit gitleaks + CI re-scan enforce this; `--no-verify` on a commit is forbidden.
+
+CSP is nonce-based, generated per-request in `src/proxy.ts` with `'strict-dynamic'` so
+trust propagates to third-party scripts the proxy explicitly nonced. The proxy MUST stay
+in report-only mode until the staging soak passes the promote-to-enforce checklist
+documented in INTEGRATIONS.md §8 "Rollout mechanism".
+
+Runtime secrets: in production and staging, AWS Parameter Store + IAM instance profile
+(IMDSv2). Locally, `.env.local` only — never `.env`, never committed. Static AWS
+credential variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) are not used anywhere
+in this codebase.
+
+Third-party scripts (HubSpot, GTM, and any future additions) MUST consume the
+per-request nonce and respect the consent default in `src/components/integrations/`. The
+two non-third-party env-driven loaders (`NEXT_PUBLIC_GTM_ID`,
+`NEXT_PUBLIC_HUBSPOT_PORTAL_ID`) MUST stay env-gated so unset local-dev / CI does not hit
+real third-party endpoints.
+
+**Rationale**: ARCHITECTURE.md §6. One accidental commit equals a permanent leak. Every
+hardening layer here exists because the next layer cannot recover the loss.
+
+### V. Bleeding-Edge Stack, Pinned and Defensive
+
+Next.js 16 + React 19 + Payload 3.84+ + Tailwind v3 + Lexical is the validated stack
+(spike D-13). Versions in `package.json` are load-bearing — they are not aspirational.
+
+If a future minor bump breaks the combo, downgrade **Next** first, never Payload —
+Payload is the constraint. Tailwind v4 was evaluated and rejected (ADR 0001); re-evaluate
+only when Payload v4 supports it.
+
+Deprecation warnings MUST be addressed as they surface, not accumulated. Recent precedent:
+Next 16's `middleware.ts` → `proxy.ts` rename was migrated the same day it appeared; the
+`@next/next/no-before-interactive-script-outside-document` Pages-Router-era lint rule was
+disabled the same day. Migrate or document the deferral; do not leave warnings in the
+build output.
+
+**Rationale**: ROADMAP Risk #2. Bleeding edge is a feature, not a liability, only if the
+team treats every deprecation as a signal to act.
+
+## Additional Constraints
+
+- **Conventional Commits**: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`,
+  `style:`, `perf:`, `ci:`, `build:`. Scope optional (`feat(layout):`). Subject line
+  under ~70 characters; details go in the body. Co-author trailers preserved.
+- **Branch naming**: `spike/*` for spikes, `feat/*` for features, `fix/*` for fixes.
+  `main` is always deployable.
+- **No force-push to `main`**. No `--no-verify` on commits. No amending commits already
+  pushed to a shared branch.
+- **TypeScript strict mode**; no `any` (use `unknown` and narrow). ESLint + Prettier
+  enforced in CI; lint-staged on pre-commit.
+- **Tooling and scripts** live in subdirectories, not the repo root. The root stays
+  clean: config dotfiles + canonical app structure (`src/`, `tests/`, `public/`,
+  `docs/`, `.github/`, `.specify/`, `infra/` when added).
+- **Private SEQTEK assets** (brand kit PDF, Logos zip, Wix content audit) live outside
+  this repo at `~/projects/seqtek-internal/brandkit/` and
+  `~/projects/seqtek-internal/audit/`. Never committed.
+- **Design tokens** live in DESIGN_SYSTEM.md §14. They translate into
+  `tailwind.config.mjs` (ramps + state colors hard-coded; semantic colors via
+  `var(--color-…)`) plus `:root` CSS custom properties in
+  `src/app/(frontend)/styles.css`. The doc wins on values; the config is the published
+  API.
+- **Phase boundaries**: Phase N items do not ship before Phase N-1 prerequisites; see
+  ROADMAP.md §4. Cross-phase dependencies are explicit (e.g., Payload globals in Phase 2
+  unblock the placeholder shape in `src/lib/site-content.ts`).
+- **D-1 / D-13 / P1-\* IDs are stable references**. When closing an item, preserve the ID
+  in the PROJECT_HISTORY entry so old commits and tickets resolve.
+
+## Development Workflow
+
+- **Spec-kit for non-trivial features**: `/speckit-specify <description>` →
+  `/speckit-clarify` (optional, recommended for ambiguous features) → `/speckit-plan` →
+  `/speckit-tasks` → `/speckit-implement`. Branch numbering is sequential per
+  `.specify/integration.json` (`001-foo`, `002-bar`, …).
+- **Each P1-\* ROADMAP item** ships as a single commit (or a tight series) with a
+  conventional-commit message, tests, and any doc reconciliation in the same change.
+- **PR review** (when a PR exists): all CI jobs green; reviewer confirms doc/code parity
+  on any touched shared spec.
+- **Lighthouse budgets**: a11y / best-practices / SEO must hit ≥ 0.95 from day one.
+  Performance / LCP / TBT / CLS are staged as warnings; ROADMAP Phase 5 "Polish" flips
+  them to errors once the real archetype pages are tuned.
+- **CSP rollout**: dev = report-only (`CSP_MODE` default). Staging soak follows the
+  promote-to-enforce checklist in INTEGRATIONS.md §8. Production flips to enforcing in
+  Phase 5; the checklist sign-off is recorded in the cutover ticket.
+- **Maintenance mode**: when shipped, the proxy MUST allow `/api/health` through so the
+  ALB does not begin replacing instances during a planned outage (ERROR_PAGES.md §4).
+- **Memory and skills**: project-scoped Claude session memory lives outside this repo
+  (`~/.claude/projects/-home-kenn-…/memory/`); CLAUDE.md is the in-repo standing
+  guidance. The constitution is the standing rules; CLAUDE.md is the current-state
+  pointer.
+
+## Governance
+
+This constitution supersedes ad-hoc conventions. When in doubt, defer first to its
+principles, then to ARCHITECTURE.md (for technical decisions) or ROADMAP.md (for
+sequencing and status).
+
+**Amendments**: any PR may propose a constitution change. The amendment PR MUST (a)
+update this file, (b) propagate to `.specify/templates/*` if the change affects
+spec/plan/tasks structure, (c) note the version bump and rationale below, and (d) update
+the Sync Impact Report at the top of this file.
+
+**Versioning**: semantic.
+
+- **MAJOR** — backward-incompatible principle removal or redefinition.
+- **MINOR** — new principle or materially expanded guidance.
+- **PATCH** — clarifications, wording, typo fixes, non-semantic refinements.
+
+**Compliance review**: spec-kit's `/speckit-plan` runs a Constitution Check gate against
+this file before Phase 0 research. `/speckit-analyze` performs the cross-artifact
+consistency check after `/speckit-tasks`. Both are advisory but recommended for any
+multi-day feature.
+
+**Runtime guidance**: `CLAUDE.md` carries the current-state pointer (active phase,
+recent decisions, in-flight conventions). This constitution carries the standing rules.
+When the two disagree about a rule, this constitution wins; CLAUDE.md is updated in the
+same commit.
+
+**Version**: 1.0.0 | **Ratified**: 2026-05-21 | **Last Amended**: 2026-05-21

@@ -45,15 +45,17 @@ media/
 *.tsbuildinfo
 next-env.d.ts
 
-# Lighthouse reports
+# Lighthouse reports (lhci autorun output)
 .lighthouseci/
 
 # CDK
 infra/cdk.out/
 infra/.cdk.staging/
 
-# Payload generated types (committed only if we decide to — typically gitignored)
-src/payload-types.ts
+# Payload generated types — committed so CI typecheck (which has no Postgres
+# and can't run `payload generate:types`) can resolve them. Regenerate
+# locally with `npm run generate:types` after any collection schema change
+# and commit the diff alongside the schema change.
 
 # Scratch workspace (template scaffolds, throwaway experiments)
 .scratch/
@@ -64,6 +66,10 @@ src/payload-types.ts
 /blob-report/
 /playwright/.cache/
 /tests/e2e/screenshots/
+
+# spec-kit local cache (extension catalog cache + install registry)
+.specify/extensions/.cache/
+.specify/extensions/.registry
 
 # Misc
 *.pem

@@ -410,7 +410,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   ├── robots.ts                      # Dynamic robots.txt
 │   │   └── not-found.tsx
 │   │
-│   ├── middleware.ts                       # CSP nonce generation
+│   ├── proxy.ts                            # CSP nonce generation (Next 16 — renamed from middleware.ts)
 │   │
 │   ├── components/
 │   │   ├── ui/                            # Primitives: Button, Card, Badge, Container, Section
@@ -653,7 +653,7 @@ EC2 and RDS both live in the same VPC. The Node process maintains a persistent c
 
 - **Output mode:** `output: 'standalone'` — produces a self-contained build with only the required `node_modules` files. Required for the Docker deployment strategy.
 - **Image optimization:** `remotePatterns` allowlists the S3 bucket hostname (from `S3_BUCKET_HOSTNAME` env var). The env var is validated at runtime in the image loader, not at config load time, so local dev works without S3 credentials.
-- **Security headers:** Applied to all routes — `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` disabling camera/microphone/geolocation. CSP is handled via middleware (see Section 6).
+- **Security headers:** Applied to all routes — `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` disabling camera/microphone/geolocation. CSP is handled via the Next.js Proxy (see Section 6).
 - **301 redirects:** Old Wix URLs mapped to new routes (`/about-us-1` → `/about`, `/our-services` → `/services`, `/blog-old` → `/insights`, `/workshops` → `/touchstone-workshops`). Full redirect map maintained in INTEGRATIONS.md.
 
 ### Scaling Path
@@ -670,18 +670,20 @@ The repo is public on GitHub. This is standard for marketing sites and consisten
 
 All secrets and configuration are managed via environment variables, never committed to the repo.
 
-| Variable                        | Scope  | Classification | Purpose                                           |
-| ------------------------------- | ------ | -------------- | ------------------------------------------------- |
-| `DATABASE_URL`                  | Server | **Secret**     | Postgres connection string (includes credentials) |
-| `PAYLOAD_SECRET`                | Server | **Secret**     | Payload encryption key for auth tokens            |
-| `S3_BUCKET`                     | Server | Config         | S3 bucket name                                    |
-| `S3_REGION`                     | Server | Config         | AWS region                                        |
-| `S3_BUCKET_HOSTNAME`            | Server | Config         | For next/image remotePatterns                     |
-| `REVALIDATION_SECRET`           | Server | **Secret**     | Validates webhook requests                        |
-| `NEXT_PUBLIC_SITE_URL`          | Client | Public         | Canonical URL (`https://seqtek.com`)              |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | Client | Public         | HubSpot portal (8504846)                          |
-| `NEXT_PUBLIC_GTM_ID`            | Client | Public         | GTM container ID                                  |
-| `NEXT_PUBLIC_SCOREAPP_URL`      | Client | Public         | ScoreApp assessment URL                           |
+| Variable                        | Scope  | Classification | Purpose                                                                 |
+| ------------------------------- | ------ | -------------- | ----------------------------------------------------------------------- |
+| `DATABASE_URL`                  | Server | **Secret**     | Postgres connection string (includes credentials)                       |
+| `PAYLOAD_SECRET`                | Server | **Secret**     | Payload encryption key for auth tokens                                  |
+| `GOOGLE_CLIENT_ID`              | Server | Config         | OAuth 2.0 client ID for `/admin` Google Workspace SSO (D-14)            |
+| `GOOGLE_CLIENT_SECRET`          | Server | **Secret**     | OAuth 2.0 client secret. Parameter Store `SecureString` in prod/staging |
+| `S3_BUCKET`                     | Server | Config         | S3 bucket name                                                          |
+| `S3_REGION`                     | Server | Config         | AWS region                                                              |
+| `S3_BUCKET_HOSTNAME`            | Server | Config         | For next/image remotePatterns                                           |
+| `REVALIDATION_SECRET`           | Server | **Secret**     | Validates webhook requests                                              |
+| `NEXT_PUBLIC_SITE_URL`          | Client | Public         | Canonical URL (`https://seqtek.com`)                                    |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | Client | Public         | HubSpot portal (8504846)                                                |
+| `NEXT_PUBLIC_GTM_ID`            | Client | Public         | GTM container ID                                                        |
+| `NEXT_PUBLIC_SCOREAPP_URL`      | Client | Public         | ScoreApp assessment URL                                                 |
 
 **S3 authentication:** No static AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`). The EC2 instance profile provides S3 access via IAM role. The container reaches the instance metadata service (IMDSv2, hop limit 2) to auto-discover and auto-rotate credentials. Payload's S3 storage adapter uses the default AWS credential chain — no configuration needed beyond the bucket name and region.
 
@@ -694,12 +696,17 @@ All secrets and configuration are managed via environment variables, never commi
 
 ### Payload Admin Authentication
 
-Payload's admin panel at `/admin` is protected by its own authentication system:
+Payload's admin panel at `/admin` is protected by Google Workspace SSO (ROADMAP D-14, ADR 0002, spec 001) restricted to the `@seqtechllc.com` Google Workspace domain. Implementation is a **custom OAuth integration** in `src/app/(payload)/api/auth/oauth/{authorization,callback}/google/route.ts` plus helpers under `src/lib/auth/` (PKCE, state CSRF, `jose`-based ID-token verification against Google's JWKS, Payload session-cookie issuance via Payload's own `getFieldsToSign`/`jwtSign`/`generatePayloadCookie`). Payload's local email/password strategy is disabled on the `users` collection (`auth.disableLocalStrategy: true`). The 305-star community plugin originally chosen in ADR 0002 was dropped during implementation in favour of ~250 LOC we own — see ADR 0002 post-implementation note for reasoning.
 
-- Email/password login with configurable token expiration
-- Max login attempts with lockout (5 attempts, 10-minute lockout)
-- JWT-based sessions with role claims
-- No public registration endpoint — admin creates accounts
+- Google OAuth (OIDC) — only sign-in path; the email/password form is removed from the login view entirely
+- Domain restriction enforced server-side in a `users` `beforeChange` hook (the Google `hd` parameter is a hint; the hook is the load-bearing check)
+- First-sign-in auto-provisions a user row at role `editor`; if no admins exist yet (fresh table), the first signer becomes `admin`
+- Returning users matched by stable Google subject ID (`sub`), not by email, so a Workspace email change does not duplicate the record
+- JWT-based sessions with role claims, Payload default 2-hour TTL — Workspace deprovisioning lag is bounded by this TTL
+- No public registration; no password flows; no SMTP dependency (D-5 dropped per SC-007)
+- Every sign-in attempt (success / domain-rejected / oauth-error) is logged as a structured JSON line on stdout → CloudWatch for audit
+
+OAuth client credentials are sourced from `.env.local` in dev and from AWS Parameter Store at `/seqtek/website/{env}/google_client_{id,secret}` in staging and prod via the existing EC2 instance profile (`ssm:GetParameters` on `/seqtek/website/*`).
 
 ### Access Control
 
@@ -730,21 +737,21 @@ Draft content is never exposed to the public API or rendered on the public site 
 
 ### Content Security Policy
 
-CSP is enforced via nonce-based policy generated per-request in Next.js middleware (`src/middleware.ts`). This approach provides real XSS protection — unlike `unsafe-inline`, a nonce-based policy ensures only scripts explicitly trusted by the server can execute.
+CSP is enforced via nonce-based policy generated per-request in the Next.js Proxy (`src/proxy.ts` — renamed from `middleware.ts` in Next 16). This approach provides real XSS protection — unlike `unsafe-inline`, a nonce-based policy ensures only scripts explicitly trusted by the server can execute.
 
-**How it works:** The middleware generates a unique nonce for each request, injects it into the CSP header, and passes it to the root layout via a request header. The layout applies the nonce to all first-party `<script>` tags — including the inline `<head>` script that initializes GTM consent defaults (see INTEGRATIONS.md §2.2) — to the GTM loader (using GTM's nonce-aware script variant), and to HubSpot's tracking script (which also supports nonces). The `strict-dynamic` directive allows scripts loaded by trusted scripts to execute without additional allowlisting. The middleware also branches `style-src` by path: `/admin/*` receives the looser policy required by the Payload admin's Lexical editor; all other routes get the stricter `'self'`-only policy.
+**How it works:** The proxy generates a unique nonce for each request, injects it into the CSP header, and passes it to the root layout via a request header. The layout applies the nonce to all first-party `<script>` tags — including the inline `<head>` script that initializes GTM consent defaults (see INTEGRATIONS.md §2.2) — to the GTM loader (using GTM's nonce-aware script variant), and to HubSpot's tracking script (which also supports nonces). The `strict-dynamic` directive allows scripts loaded by trusted scripts to execute without additional allowlisting. The proxy also branches `style-src` by path: `/admin/*` receives the looser policy required by the Payload admin's Lexical editor; all other routes get the stricter `'self'`-only policy.
 
 **Allowlisted origins:**
 
-| Directive     | Allowed Sources                                                                                                              | Reason                                                                                                                                                                                                                                  |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `default-src` | `'self'`                                                                                                                     | Baseline restriction                                                                                                                                                                                                                    |
-| `script-src`  | `'nonce-{random}'` `'strict-dynamic'`                                                                                        | Nonce-based trust propagation                                                                                                                                                                                                           |
-| `style-src`   | `'self'` on public routes; `'self' 'unsafe-inline'` on `/admin/*`                                                            | Tailwind compiles to static CSS — public pages don't need inline styles. The Payload admin's Lexical editor does need `'unsafe-inline'`, so the middleware applies the broader policy only when the request path begins with `/admin/`. |
-| `img-src`     | `'self'` `data:` `*.hubspot.com` `*.hsforms.net` S3 hostname                                                                 | CMS media + HubSpot form images                                                                                                                                                                                                         |
-| `font-src`    | `'self'`                                                                                                                     | Self-hosted fonts only                                                                                                                                                                                                                  |
-| `connect-src` | `'self'` `*.hubspot.com` `*.hs-analytics.net` `*.hsforms.net` `*.hs-banner.com` `*.usemessages.com` `*.googletagmanager.com` | Analytics + form submissions                                                                                                                                                                                                            |
-| `frame-src`   | `'self'` `*.hubspot.com` `*.hsforms.net` `meetings.hubspot.com` `*.hubspotusercontent.com`                                   | HubSpot form + Meetings iframe embeds; Meetings static assets                                                                                                                                                                           |
+| Directive     | Allowed Sources                                                                                                              | Reason                                                                                                                                                                                                                             |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `default-src` | `'self'`                                                                                                                     | Baseline restriction                                                                                                                                                                                                               |
+| `script-src`  | `'nonce-{random}'` `'strict-dynamic'`                                                                                        | Nonce-based trust propagation                                                                                                                                                                                                      |
+| `style-src`   | `'self'` on public routes; `'self' 'unsafe-inline'` on `/admin/*`                                                            | Tailwind compiles to static CSS — public pages don't need inline styles. The Payload admin's Lexical editor does need `'unsafe-inline'`, so the proxy applies the broader policy only when the request path begins with `/admin/`. |
+| `img-src`     | `'self'` `data:` `*.hubspot.com` `*.hsforms.net` S3 hostname                                                                 | CMS media + HubSpot form images                                                                                                                                                                                                    |
+| `font-src`    | `'self'`                                                                                                                     | Self-hosted fonts only                                                                                                                                                                                                             |
+| `connect-src` | `'self'` `*.hubspot.com` `*.hs-analytics.net` `*.hsforms.net` `*.hs-banner.com` `*.usemessages.com` `*.googletagmanager.com` | Analytics + form submissions                                                                                                                                                                                                       |
+| `frame-src`   | `'self'` `*.hubspot.com` `*.hsforms.net` `meetings.hubspot.com` `*.hubspotusercontent.com`                                   | HubSpot form + Meetings iframe embeds; Meetings static assets                                                                                                                                                                      |
 
 ### HTTP Security Headers
 
@@ -938,14 +945,14 @@ Since this is an open-source portfolio piece, code quality must be exemplary.
 
 ## 11. Implementation Phases
 
-| Phase                 | Scope                                                                                                                                                                                                                                                                                                            | Estimated Duration |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **1. Foundation**     | Next.js + Payload + Tailwind scaffold. Dockerfile + ECR repository. EC2 + ALB + CloudFront infrastructure. RDS + S3 provisioning. GitHub Actions CI/CD with blue-green deploys. Base layout components (Header, Footer, Nav). CSP middleware. HubSpot + GTM in root layout. CloudWatch alarms + health endpoint. | 1-2 weeks          |
-| **2. Content Models** | All Payload collections and globals defined. Admin panel functional. Seed script imports audit data into Payload.                                                                                                                                                                                                | 1 week             |
-| **3. Core Pages**     | Homepage, About section (4 pages), Services (overview + 3 pillars + 15 services), Case Studies (listing + 8 pages), Contact + booking.                                                                                                                                                                           | 2-3 weeks          |
-| **4. Content & Blog** | Blog (listing + posts + categories), Touchstone Workshops (landing + 3 pages), Assessment landing page, Industry pages, Market landing pages.                                                                                                                                                                    | 1-2 weeks          |
-| **5. Polish**         | SEO (structured data, sitemap, meta tags). Accessibility audit. Performance optimization. 301 redirects from old Wix URLs. Cookie consent flow. Cross-browser/device QA.                                                                                                                                         | 1-2 weeks          |
-| **6. Launch**         | DNS cutover. Monitor errors/performance. Google Search Console submission. Redirect verification. CloudFront cache behavior validation.                                                                                                                                                                          | 1 week             |
+| Phase                 | Scope                                                                                                                                                                                                                                                                                                       | Estimated Duration |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **1. Foundation**     | Next.js + Payload + Tailwind scaffold. Dockerfile + ECR repository. EC2 + ALB + CloudFront infrastructure. RDS + S3 provisioning. GitHub Actions CI/CD with blue-green deploys. Base layout components (Header, Footer, Nav). CSP proxy. HubSpot + GTM in root layout. CloudWatch alarms + health endpoint. | 1-2 weeks          |
+| **2. Content Models** | All Payload collections and globals defined. Admin panel functional. Seed script imports audit data into Payload.                                                                                                                                                                                           | 1 week             |
+| **3. Core Pages**     | Homepage, About section (4 pages), Services (overview + 3 pillars + 15 services), Case Studies (listing + 8 pages), Contact + booking.                                                                                                                                                                      | 2-3 weeks          |
+| **4. Content & Blog** | Blog (listing + posts + categories), Touchstone Workshops (landing + 3 pages), Assessment landing page, Industry pages, Market landing pages.                                                                                                                                                               | 1-2 weeks          |
+| **5. Polish**         | SEO (structured data, sitemap, meta tags). Accessibility audit. Performance optimization. 301 redirects from old Wix URLs. Cookie consent flow. Cross-browser/device QA.                                                                                                                                    | 1-2 weeks          |
+| **6. Launch**         | DNS cutover. Monitor errors/performance. Google Search Console submission. Redirect verification. CloudFront cache behavior validation.                                                                                                                                                                     | 1 week             |
 
 **Total engineering estimate: 7-11 weeks** (code only — content production runs in parallel and is the likely bottleneck).
 

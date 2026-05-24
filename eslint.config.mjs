@@ -21,6 +21,11 @@ const eslintConfig = [
           caughtErrorsIgnorePattern: '^(_|ignore)',
         },
       ],
+      // Pages-Router-era rule: warns about beforeInteractive scripts outside
+      // pages/_document.js. This project is App Router only, where root
+      // layout (app/layout.tsx) is the documented placement for
+      // beforeInteractive scripts. Off.
+      '@next/next/no-before-interactive-script-outside-document': 'off',
     },
   },
   {

@@ -1,0 +1,53 @@
+/* Admin login screen — Google SSO CTA + error display.
+ * Sits between Payload's logo and the (form-less, since disableLocalStrategy=true)
+ * body, injected via admin.components.beforeLogin in payload.config.ts. */
+
+.admin-login-google {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.admin-login-google__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  border-radius: 6px;
+  background-color: #6faa22; /* brand-green-500 */
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.admin-login-google__cta:hover,
+.admin-login-google__cta:focus-visible {
+  background-color: #588e1a; /* brand-green-600 */
+  color: #ffffff;
+}
+
+.admin-login-google__cta:focus-visible {
+  outline: 2px solid #486f1a; /* brand-green-700 */
+  outline-offset: 2px;
+}
+
+.admin-login-google__hint {
+  margin: 0;
+  font-size: 0.875rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.admin-login-error {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #fca5a5; /* red-300 */
+  border-radius: 6px;
+  background-color: #fef2f2; /* red-50 */
+  color: #991b1b; /* red-800 */
+  font-size: 0.875rem;
+}

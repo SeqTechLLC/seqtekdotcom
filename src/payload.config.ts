@@ -5,18 +5,30 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
-import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
+import { Users } from './collections/Users'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  serverURL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3100',
   admin: {
     user: Users.slug,
     importMap: {
       baseDir: path.resolve(dirname),
+    },
+    components: {
+      // Payload's default LoginView short-circuits <LoginForm /> when
+      // auth.disableLocalStrategy === true on the users collection
+      // (see @payloadcms/next/dist/views/Login/index.js). We only need
+      // to inject the SSO CTA + error display ahead of the (now empty)
+      // form body — no custom view component required.
+      beforeLogin: [
+        '/components/admin/LoginError#default',
+        '/components/admin/BeforeLoginGoogle#default',
+      ],
     },
   },
   collections: [Users, Media, Pages],

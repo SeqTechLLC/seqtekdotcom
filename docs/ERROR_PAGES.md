@@ -28,7 +28,7 @@ Four failure states need explicit design: a missing page (404), a server-side ex
 - **Triggered when:** An uncaught exception in a server component, layout, or route handler.
 - **Layout:** Minimal. Logo at top, no global nav — the nav may itself be the thing that broke. Don't risk a cascading render error inside the error page.
 - **Content:** Short apology, "Try again" button that calls `reset()`, email fallback `support@seqtek.com`, and a visible request ID for support correlation.
-- **Request ID:** Generated in `src/middleware.ts` as a UUID v4, attached to every request via the `x-request-id` response header, and exposed to error pages via a context provider (or cookie fallback for `global-error.tsx`, which sits outside the root layout). Logged in CloudWatch Logs alongside the stack trace.
+- **Request ID:** Generated in `src/proxy.ts` (Next 16 rename of `middleware.ts`) as a UUID v4, attached to every request via the `x-request-id` response header, and exposed to error pages via a context provider (or cookie fallback for `global-error.tsx`, which sits outside the root layout). Logged in CloudWatch Logs alongside the stack trace.
 - **Tracking:** Error and full stack written to stdout — the CloudWatch Logs agent picks them up. A Sentry integration is deferred per ARCHITECTURE.md §8 Future Consideration; do not add a third-party error aggregator at launch.
 
 ---
@@ -36,7 +36,7 @@ Four failure states need explicit design: a missing page (404), a server-side ex
 ## 4. Maintenance Mode
 
 - **Trigger:** `MAINTENANCE_MODE=true` env var, sourced from AWS Parameter Store at instance boot.
-- **Mechanism:** `src/middleware.ts` short-circuits all incoming requests with a static maintenance HTML response — EXCEPT `/api/health`, which must still return 200. If the health endpoint flips, the ALB will mark instances unhealthy and start a replacement loop, which is exactly the wrong behavior during a planned outage.
+- **Mechanism:** `src/proxy.ts` short-circuits all incoming requests with a static maintenance HTML response — EXCEPT `/api/health`, which must still return 200. If the health endpoint flips, the ALB will mark instances unhealthy and start a replacement loop, which is exactly the wrong behavior during a planned outage.
 - **Page content:** Brand-consistent layout (logo, neutral background), brief message, expected return time if known. Status page link is a future option if SEQTEK adopts one — not at launch.
 - **Use case:** Emergency Postgres migration that can't be done blue-green. Should be rare; default off.
 
