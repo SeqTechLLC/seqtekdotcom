@@ -77,7 +77,7 @@ Single project — Next.js + Payload at repo root. Code under `src/`, tests unde
 
 - [x] T018 [US1] Create `src/components/admin/LoginError.tsx` — a server component that reads `searchParams.error` (passed in by Payload as a `beforeLogin` server prop) and renders the user-facing strings from `contracts/oauth-routes.md` § 3. Returns `null` when the param is absent. Registered in `admin.components.beforeLogin` ahead of `BeforeLoginGoogle`.
 - [x] T019 [US1] Style `BeforeLoginGoogle.tsx` and `LoginError.tsx` via BEM classes in `src/app/(payload)/custom.scss` — brand-green-500/600 ramp from `docs/DESIGN_SYSTEM.md` § 14 for the CTA. No JS added.
-- [ ] T020 [US1] Verify `/admin` redirect post-callback by running `auth-sso-returning.e2e.spec.ts` locally with `OAUTH_STUB_ENABLED=1` and the dev DB; iterate until both T016 scenarios pass.
+- [x] T020 [US1] Verify `/admin` redirect post-callback by running `auth-sso-returning.e2e.spec.ts` locally with `OAUTH_STUB_ENABLED=1` and the dev DB; iterate until both T016 scenarios pass.
 - [x] T020a [US1] Write `tests/e2e/auth-login-errors.e2e.spec.ts` driving Playwright to `/admin/login?error=<code>` for each code in `contracts/oauth-routes.md` § 3 (`state_mismatch`, `domain_rejected`, `provider_error`, `network`, `internal`) and assert the user-facing message text matches the contract for each. Verifies our `LoginError.tsx` (T018) renders correctly; does **not** test the OAuth round-trip (per FR-012 note).
 - [x] T021 [US1] Capture a Playwright screenshot of the post-cutover login screen at `tests/e2e/screenshots/admin-login-google-sso.png` (replaces the spike-era login screenshot deleted in T013a).
 
