@@ -130,7 +130,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     userId: String(user.id),
   })
 
-  const response = NextResponse.redirect(new URL('/admin', req.url))
+  // Return an HTML "bounce" page that JS-redirects to /admin rather than a
+  // 307. The 307 path inherits Sec-Fetch-Site: cross-site from the Google
+  // hop in the redirect chain, which makes Payload's CSRF check in
+  // extractJWT reject the session cookie on the very next request. A
+  // client-initiated navigation from this same-origin page resets
+  // Sec-Fetch-Site to same-origin and the cookie validates normally.
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Signing you in&hellip;</title><meta name="robots" content="noindex,nofollow"><meta http-equiv="refresh" content="0;url=/admin"></head><body><p>Signing you in&hellip;</p><script>window.location.replace('/admin')</script></body></html>`
+
+  const response = new NextResponse(html, {
+    status: 200,
+    headers: { 'content-type': 'text/html; charset=utf-8' },
+  })
   response.cookies.delete(STATE_COOKIE)
   response.cookies.delete(VERIFIER_COOKIE)
   response.headers.append('Set-Cookie', cookie)
