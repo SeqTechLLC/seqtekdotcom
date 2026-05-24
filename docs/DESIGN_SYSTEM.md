@@ -1,10 +1,10 @@
 # SEQTEK Website — Design System
 
-**Date:** 2026-05-14 (updated 2026-05-20: BR-2 resolved — Nunito Sans selected)
-**Status:** Reference — Phase 1 (token translation to v3 config pending)
+**Date:** 2026-05-14 (updated 2026-05-20: BR-2 resolved — Nunito Sans selected; D-1 tokens translated to Tailwind v3 config)
+**Status:** Reference — applied
 **Depends on:** SEQTEK brand kit (private — kept outside this repo, see CLAUDE.md for local convention), `BRAND_STRATEGY_RESEARCH.md`, ADR `docs/decisions/0001-tailwind-v3.md`
 
-The foundation tokens for the SEQTEK website. The token reference in §14 is written in Tailwind v4 `@theme` syntax for clarity — the actual implementation uses Tailwind v3 per ADR 0001 and translates these tokens into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, etc.) plus `:root` CSS custom properties in `src/app/(frontend)/styles.css`. Translation is a Phase 1 task; this doc remains the source of truth for token _values_ — when this doc and the Tailwind config disagree, this doc wins.
+The foundation tokens for the SEQTEK website. The token reference in §14 is written in Tailwind v4 `@theme` syntax for clarity — the actual implementation uses Tailwind v3 per ADR 0001. Ramps and state colors are baked as hex into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, etc.); the semantic-token swap layer lives as `:root` CSS custom properties in `src/app/(frontend)/styles.css` and is referenced from the Tailwind config via `var(--color-…)`. This doc remains the source of truth for token _values_ — when this doc and the Tailwind config disagree, this doc wins.
 
 ---
 
@@ -333,7 +333,7 @@ Applied in `globals.css`. Component code does not need to check the media query 
 
 ## 8. Breakpoints
 
-Tailwind defaults. No customization. Matching the framework reduces friction with every third-party block library (BLOCK_LIBRARY.md §15 reference).
+Tailwind defaults. No customization. Matching the framework reduces friction with every third-party block library.
 
 | Token     | Min-width | Notional device             |
 | --------- | --------- | --------------------------- |
@@ -588,7 +588,7 @@ The wordmark only ships in two colors — black and white. Pair to background co
 
 ## 14. Tailwind theme tokens (reference)
 
-The token reference. Per ADR 0001 the implementation uses Tailwind v3 — these `@theme` declarations translate to `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, `.boxShadow`, etc.) and `:root` CSS custom properties in `src/app/(frontend)/styles.css`. The v4 `@theme` syntax is preserved here because it documents intent compactly; the v3 translation is a Phase 1 task and lives in code, not this doc. When values diverge, this doc wins for _values_ and the config file wins for _naming/utility shape_.
+The token reference. Per ADR 0001 the implementation uses Tailwind v3 — these `@theme` declarations are translated into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.borderRadius`, `.boxShadow`, `.transitionDuration`, `.transitionTimingFunction`, `.zIndex`, `.maxWidth`, etc.) and `:root` CSS custom properties in `src/app/(frontend)/styles.css`. The v4 `@theme` syntax is preserved here because it documents intent compactly. When values diverge, this doc wins for _values_ and the config file wins for _naming/utility shape_.
 
 ```css
 @import 'tailwindcss';

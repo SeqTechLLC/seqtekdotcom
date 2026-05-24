@@ -19,10 +19,10 @@ export default async function HomePage() {
   const page = docs[0]
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
+    <div className="mx-auto max-w-container-md px-4 py-16 md:px-6 lg:px-8">
       {page ? (
         <>
-          <h1 className="text-4xl font-bold tracking-tight" data-testid="page-title">
+          <h1 className="text-h1 font-bold" data-testid="page-title">
             {page.title}
           </h1>
           <div className="prose mt-8" data-testid="page-content">
@@ -31,17 +31,20 @@ export default async function HomePage() {
         </>
       ) : (
         <section data-testid="empty-state">
-          <h1 className="text-4xl font-bold tracking-tight">No page yet</h1>
-          <p className="mt-4 text-lg">
-            Create a page with slug <code className="rounded bg-gray-100 px-1.5 py-0.5">home</code>{' '}
+          <h1 className="text-h1 font-bold">No page yet</h1>
+          <p className="mt-4 text-body-lg text-text-secondary">
+            Create a page with slug{' '}
+            <code className="rounded-sm bg-surface-subtle px-1.5 py-0.5 font-mono text-small">
+              home
+            </code>{' '}
             in{' '}
-            <Link className="text-blue-700 underline" href="/admin">
+            <Link className="text-link underline hover:text-link-hover" href="/admin">
               /admin
             </Link>{' '}
             to see content rendered here.
           </p>
         </section>
       )}
-    </main>
+    </div>
   )
 }
