@@ -6,7 +6,12 @@ import { enforceDomainAllowlist } from '../lib/auth/enforce-domain'
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
-    disableLocalStrategy: true,
+    // `{ enableFields: true }` rather than the bare `true` so Payload still
+    // materializes its base auth fields — most importantly the `sessions`
+    // array Payload's JWT strategy checks against the cookie's `sid` claim
+    // on every admin request (without it, /admin silently bounces to
+    // /admin/login). The email/password strategy itself remains disabled.
+    disableLocalStrategy: { enableFields: true },
   },
   admin: {
     useAsTitle: 'name',
@@ -23,13 +28,9 @@ export const Users: CollectionConfig = {
     beforeChange: [enforceDomainAllowlist, applyAutoProvisionRole, guardRoleUpdates],
   },
   fields: [
-    {
-      name: 'email',
-      type: 'email',
-      required: true,
-      unique: true,
-      index: true,
-    },
+    // `email` is injected by Payload's base auth fields (via
+    // disableLocalStrategy.enableFields above); declaring it here would
+    // duplicate the column.
     {
       name: 'name',
       type: 'text',

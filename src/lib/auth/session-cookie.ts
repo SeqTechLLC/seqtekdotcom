@@ -4,13 +4,7 @@ import { generatePayloadCookie } from 'payload/shared'
 
 import type { User } from '../../payload-types'
 
-interface UserSession {
-  id: string
-  createdAt: Date
-  expiresAt: Date
-}
-
-type UserWithSessions = User & { sessions?: UserSession[] }
+type UserSession = NonNullable<User['sessions']>[number]
 
 /**
  * Add a fresh session record to the user document when the collection has
@@ -26,7 +20,7 @@ type UserWithSessions = User & { sessions?: UserSession[] }
 async function addSessionToUser(args: {
   payload: Payload
   collectionConfig: SanitizedCollectionConfig
-  user: UserWithSessions
+  user: User
 }): Promise<string | undefined> {
   const { payload, collectionConfig, user } = args
   if (!collectionConfig.auth.useSessions) return undefined
@@ -34,9 +28,14 @@ async function addSessionToUser(args: {
   const sid = crypto.randomUUID()
   const now = new Date()
   const expiresAt = new Date(now.getTime() + collectionConfig.auth.tokenExpiration * 1000)
-  const session: UserSession = { id: sid, createdAt: now, expiresAt }
+  const session: UserSession = {
+    id: sid,
+    createdAt: now.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+  }
 
-  const filtered = (user.sessions ?? []).filter((s) => new Date(s.expiresAt) > now)
+  const existing = user.sessions ?? []
+  const filtered = existing.filter((s) => new Date(s.expiresAt) > now)
   user.sessions = [...filtered, session]
   // Prevent updatedAt churn — matches Payload's own pattern in sessions.js.
   ;(user as { updatedAt: string | null }).updatedAt = null
