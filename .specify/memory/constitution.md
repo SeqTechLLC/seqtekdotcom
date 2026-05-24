@@ -1,31 +1,58 @@
 <!--
-SYNC IMPACT REPORT — v1.0.0 (initial ratification, 2026-05-21)
+SYNC IMPACT REPORT — v1.1.0 (amended 2026-05-24)
 
-Version change: (uninitialized template) → 1.0.0
-Bump rationale: First ratification — defines the canonical principles, constraints, and
-workflow that subsequent spec-kit specs/plans/tasks must respect.
+Version change: 1.0.0 → 1.1.0
+Bump rationale: MINOR — adds new material guidance under Principle IV (dependency-trust
+review for load-bearing security-path deps + CI audit gate) and under Principle I
+(read-the-source requirement for plans implementing against framework internals). No
+existing principle removed or redefined.
 
-Modified principles: all 5 newly defined.
-  I.   Spec Before Code (for non-trivial work)
-  II.  Tests Gate Merge; Coverage Doesn't
-  III. Docs Are Code; Reconcile in the Same Commit
-  IV.  Security Baseline Is Non-Negotiable
-  V.   Bleeding-Edge Stack, Pinned and Defensive
+Driver: spec 001 / D-14 lessons.
+  1. `payload-auth-plugin@0.7.13` was adopted in ADR 0002 + the spec 001 plan without a
+     trust-surface review. Mid-implementation the plugin's exact-pinned `js-cookie 3.0.5`
+     (HIGH CVE) and `uuid 11.1.0` (MODERATE) surfaced via npm audit, and a route-naming
+     docs error + a 305-star / single-maintainer bus factor triggered a mid-spec pivot to
+     a custom integration. ADR 0002 listed that fallback. A trust review at planning time
+     would have picked the custom path on day one and saved the pivot churn.
+  2. The custom integration then bounced through three additional "read the Payload source
+     to find what's actually required" rounds (sessions table conditional on
+     `disableLocalStrategy.enableFields`, JWT strategy auto-registration skipped when
+     local strategy is disabled, Sec-Fetch-Site CSRF check in extractJWT). ADR 0002's
+     "~50 LOC custom strategy" estimate was wrong by 5x — would have been correct if the
+     plan had read `node_modules/payload/dist/auth/{getAuthFields,sessions,strategies/jwt,
+     extractJWT}.js` before estimating.
 
-Added sections: "Additional Constraints", "Development Workflow", "Governance"
-Removed sections: none
+Modified principles:
+  I. Spec Before Code → adds "read the source" requirement for plans implementing
+     against framework internals (new third paragraph).
+  IV. Security Baseline → adds dependency-trust review for load-bearing runtime deps,
+     ratifies the CI npm-audit gate at `--audit-level=high` against the prod tree (new
+     paragraphs at end of the principle's body).
+
+Modified sections:
+  Development Workflow → adds a bullet ratifying the CI dep-audit gate.
+
+Added sections: none.
+Removed sections: none.
 
 Templates requiring updates:
-  ✅ .specify/templates/tasks-template.md — "Tests are OPTIONAL" default flipped to
-     "Tests are MANDATORY" per Principle II (every user story ships with at least one
-     Vitest integration or Playwright E2E test exercising the load-bearing path).
-  ✅ .specify/templates/plan-template.md — Constitution Check placeholder is intentionally
-     generic; gates are derived per-feature by /speckit-plan against this constitution.
-     No structural change needed.
-  ✅ .specify/templates/spec-template.md — user-story + requirements shape is compatible;
-     no structural change needed.
+  ✅ .specify/templates/tasks-template.md — no structural change; gates are derived
+     per-feature.
+  ✅ .specify/templates/plan-template.md — no structural change; the existing Constitution
+     Check section picks up the new guidance via plan-time evaluation. Plans that touch
+     framework internals are expected to list the source files read in their Technical
+     Context, but that's a content addition the planner makes, not a template field.
+  ✅ .specify/templates/spec-template.md — no structural change.
 
-Follow-up TODOs: none. All placeholders concretely filled.
+Follow-up TODOs: none. The CI dep-audit gate ratified here was already implemented in
+spec 001 PR #1 (commit 7af0ce8); the constitution now reflects the as-built state.
+
+------------------------------------------------------------------------------
+PRIOR ENTRIES
+
+v1.0.0 (initial ratification, 2026-05-21) — first ratification; defined the five core
+principles, Additional Constraints, Development Workflow, and Governance. All templates
+synced at that point.
 -->
 
 # SEQTEK Company Website — Project Constitution
@@ -47,6 +74,22 @@ fixes the doc in the same change.
 
 **Rationale**: The project has a deep doc layer. Specs that compose against those docs
 stay short, reviewable, and consistent. Specs that re-derive from scratch drift.
+
+**Plans against framework internals MUST enumerate the source files read.** When a
+plan estimates LOC or design against undocumented or partially-documented framework
+behavior (Payload, Next.js, Drizzle, etc.), the Technical Context section MUST list the
+`node_modules/...` files the planner read before settling on the approach. The custom
+auth integration in spec 001 was originally estimated at "~50 LOC against
+`google-auth-library`" in ADR 0002; the real cost was ~250 LOC across two routes plus
+two helper files, and the gap was entirely undocumented Payload internals
+(`getAuthFields.js`'s conditional sessions field, `index.js`'s conditional JWT strategy
+registration, `extractJWT.js`'s Sec-Fetch-Site CSRF check). Reading those files at plan
+time would have closed the estimate gap and avoided four mid-implementation pivots.
+
+**Rationale**: "I'll figure out the framework's contract during implementation" is how
+LOC estimates triple. The cost of reading three or four files at plan time is hours; the
+cost of discovering each gotcha mid-implementation is days plus a series of forced
+mid-spec design changes.
 
 ### II. Tests Gate Merge; Coverage Does Not
 
@@ -105,8 +148,37 @@ two non-third-party env-driven loaders (`NEXT_PUBLIC_GTM_ID`,
 `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`) MUST stay env-gated so unset local-dev / CI does not hit
 real third-party endpoints.
 
+**Dependency trust on the load-bearing security path.** New runtime dependencies on the
+auth / session / secret-handling / public-render path require a brief trust review in the
+ADR or implementation PR that introduces them. The review notes:
+
+- **Maintainer surface**: stars (rough trust proxy), maintainer count (bus factor),
+  last-push recency, repo archived/disabled state.
+- **Pinning style**: caret ranges on transitive deps OK; exact-pinned vulnerable versions
+  (especially of common targets like `js-cookie`, `uuid`, `node-fetch`, `axios`) are a
+  smell — they block npm's normal patch flow.
+- **`npm audit --omit=dev` at install**: must be clean of **high or critical** findings.
+  Moderate findings inside the framework's own tree (`payload`, `next`) are accepted
+  with a note when no upgrade path exists.
+
+A dependency below roughly 1k stars **or** with a single named maintainer on the
+load-bearing path SHOULD prefer a custom integration against well-known primitives
+(`jose`, `oauth4webapi`, Node `crypto`, `@aws-sdk/*`) over adopting the dep. Spec 001 /
+ADR 0002 walked this path in reverse: it adopted `payload-auth-plugin@0.7.13` (305 stars,
+one maintainer, exact-pinned `js-cookie 3.0.5` HIGH CVE + `uuid 11.1.0` MODERATE) then
+pivoted to a custom integration mid-implementation. A trust review at plan time would
+have picked custom on day one.
+
+**CI dep-audit gate (ratified 2026-05-24)**: `npm audit --omit=dev --audit-level=high`
+MUST be a step in CI's `quality` job (currently `.github/workflows/ci.yml`). Fails CI
+on any new high or critical vulnerability against the production dep tree. Devs override
+only with an inline ADR-style note explaining why the finding is acceptable AND a
+follow-up issue tracking the upstream fix.
+
 **Rationale**: ARCHITECTURE.md §6. One accidental commit equals a permanent leak. Every
-hardening layer here exists because the next layer cannot recover the loss.
+hardening layer here exists because the next layer cannot recover the loss. The dep
+review is the same idea: an unreviewed dep on the auth path is a single supply-chain
+event away from a permanent compromise, with no second line of defence.
 
 ### V. Bleeding-Edge Stack, Pinned and Defensive
 
@@ -153,6 +225,10 @@ team treats every deprecation as a signal to act.
   unblock the placeholder shape in `src/lib/site-content.ts`).
 - **D-1 / D-13 / P1-\* IDs are stable references**. When closing an item, preserve the ID
   in the PROJECT_HISTORY entry so old commits and tickets resolve.
+- **CI dep-audit gate** (ratified in v1.1.0 per Principle IV): the `quality` job runs
+  `npm audit --omit=dev --audit-level=high` against the prod tree. Fails CI on any new
+  high or critical vulnerability. Suppress only with an inline justification + tracking
+  issue.
 
 ## Development Workflow
 
@@ -204,4 +280,4 @@ recent decisions, in-flight conventions). This constitution carries the standing
 When the two disagree about a rule, this constitution wins; CLAUDE.md is updated in the
 same commit.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-21 | **Last Amended**: 2026-05-21
+**Version**: 1.1.0 | **Ratified**: 2026-05-21 | **Last Amended**: 2026-05-24
