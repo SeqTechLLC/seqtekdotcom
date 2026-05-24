@@ -1,9 +1,15 @@
 # 0002. Payload local auth in spike, Google OAuth in Phase 1
 
-**Status:** Accepted (implemented in spec 001 / D-14, shipped 2026-05-22)
-**Date:** 2026-05-14
+**Status:** Superseded by implementation. The Decision section's "Phase 1 (post-spike)" choice to adopt `@authsmith/payload-auth-plugin` was reverted during /speckit-implement on 2026-05-24; the **custom `auth.strategies` alternative listed in this ADR's Options section was taken instead**. The shape of the high-level outcome — Google OAuth, `@seqtechllc.com` domain restriction, no SMTP, ~5-10 admin users — is unchanged.
 
-**Implementation note (2026-05-22):** The npm package is published as `payload-auth-plugin` (unscoped) — `@authsmith` is the GitHub org, not the npm scope. The plugin's `GoogleAuthProvider` does not expose endpoint overrides, so the spec's planned OAuth stub for headless tests was dropped; we test the integration surface only (Users `beforeChange` hook + `LoginError` contract). See `specs/001-google-oauth-sso/tasks.md` for the FR-012 note.
+**Date:** 2026-05-14 · **Revised:** 2026-05-24
+
+**Implementation note (2026-05-24):**
+
+- The npm package is published as `payload-auth-plugin` (unscoped) — `@authsmith` is the GitHub org, not the npm scope. We _briefly_ installed it (pinned 0.7.13) before reversing the choice.
+- The reversal was driven by trust-surface review: 305 stars, one named maintainer, exact-pinned vulnerable transitive deps (`js-cookie 3.0.5` HIGH, `uuid 11.1.0` MODERATE), and an inconvenient route-naming docs error that masked itself behind a generic 500. None individually disqualifying; in aggregate enough to take the listed fallback.
+- Custom implementation is **~250 LOC** across `src/app/(payload)/api/auth/oauth/{authorization,callback}/google/route.ts` and `src/lib/auth/{google-oauth,session-cookie}.ts`. Uses Google's OIDC discovery + JWKS via `jose` (mature, widely used by NextAuth/Auth0/etc.) and Payload's own session-cookie helpers (`getFieldsToSign`, `jwtSign`, `generatePayloadCookie`). No new runtime dependency beyond what Payload + Next already ship.
+- `npm audit --omit=dev --audit-level=high` added to CI `quality` job as a defence-in-depth check for future dep introductions.
 
 ## Context
 

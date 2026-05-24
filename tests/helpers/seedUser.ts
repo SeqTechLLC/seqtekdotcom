@@ -19,13 +19,13 @@ export interface SeedOauthUserInput {
 
 export interface SeededOauthUser {
   userId: string
-  accountId: string
 }
 
 /**
- * Insert a users row and a matching accounts row simulating a completed
- * Google sign-in. Returns the new IDs. The session cookie is minted by the
- * caller via payload.login() — see tests/e2e helpers.
+ * Insert a users row simulating a completed Google sign-in. The `googleSub`
+ * field carries the stable identity Google provided. Tests that need a
+ * minted session cookie should additionally call `issueSessionCookie` from
+ * src/lib/auth/session-cookie.ts with the returned user.
  */
 export async function seedOauthUser(input: SeedOauthUserInput): Promise<SeededOauthUser> {
   const payload = await payloadInstance()
@@ -36,34 +36,16 @@ export async function seedOauthUser(input: SeedOauthUserInput): Promise<SeededOa
       email: input.email,
       name: input.name,
       roles: [input.role],
+      googleSub: input.sub,
     },
     overrideAccess: true,
   })
 
-  const account = await payload.create({
-    collection: 'accounts',
-    data: {
-      user: user.id,
-      issuerName: 'google',
-      sub: input.sub,
-      name: input.name,
-    },
-    overrideAccess: true,
-  })
-
-  return {
-    userId: String(user.id),
-    accountId: String(account.id),
-  }
+  return { userId: String(user.id) }
 }
 
 export async function cleanupOauthUser(email: string): Promise<void> {
   const payload = await payloadInstance()
-  await payload.delete({
-    collection: 'accounts',
-    where: { 'user.email': { equals: email } },
-    overrideAccess: true,
-  })
   await payload.delete({
     collection: 'users',
     where: { email: { equals: email } },

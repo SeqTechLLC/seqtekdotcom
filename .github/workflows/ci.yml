@@ -44,6 +44,9 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      - name: Audit production dependencies (high+ severity)
+        run: npm audit --omit=dev --audit-level=high
+
   secrets:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest

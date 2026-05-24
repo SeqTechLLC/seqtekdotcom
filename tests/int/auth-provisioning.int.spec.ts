@@ -12,11 +12,6 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await payload.delete({
-    collection: 'accounts',
-    where: { id: { exists: true } },
-    overrideAccess: true,
-  })
-  await payload.delete({
     collection: 'users',
     where: { id: { exists: true } },
     overrideAccess: true,
@@ -25,28 +20,30 @@ beforeEach(async () => {
 
 describe('Auto-provision + bootstrap-admin (FR-005, US2, R-4)', () => {
   it('first OAuth-provisioning create on an empty table → role=admin', async () => {
-    const fixture = FIXTURES.editor // role=editor in the fixture, hook overrides on empty table
+    const fixture = FIXTURES.editor
     const created = await payload.create({
       collection: 'users',
       data: {
         email: fixture.email,
         name: fixture.name,
         roles: ['editor'],
+        googleSub: fixture.sub,
       },
       overrideAccess: true,
       req: { user: null } as Parameters<typeof payload.create>[0]['req'],
     })
     expect(created.roles).toEqual(['admin'])
+    expect(created.googleSub).toBe(fixture.sub)
   })
 
   it('subsequent OAuth-provisioning creates default to role=editor', async () => {
-    // bootstrap an admin first
     await payload.create({
       collection: 'users',
       data: {
         email: FIXTURES['bootstrap-admin'].email,
         name: FIXTURES['bootstrap-admin'].name,
         roles: ['editor'],
+        googleSub: FIXTURES['bootstrap-admin'].sub,
       },
       overrideAccess: true,
       req: { user: null } as Parameters<typeof payload.create>[0]['req'],
@@ -58,6 +55,7 @@ describe('Auto-provision + bootstrap-admin (FR-005, US2, R-4)', () => {
         email: FIXTURES.editor.email,
         name: FIXTURES.editor.name,
         roles: ['editor'],
+        googleSub: FIXTURES.editor.sub,
       },
       overrideAccess: true,
       req: { user: null } as Parameters<typeof payload.create>[0]['req'],
@@ -66,41 +64,60 @@ describe('Auto-provision + bootstrap-admin (FR-005, US2, R-4)', () => {
     expect(second.roles).toEqual(['editor'])
   })
 
-  it('matches returning user by Google sub — no duplicate users row (FR-006)', async () => {
-    // Provision via OAuth path
-    const user = await payload.create({
+  it('returning user matched by googleSub — no duplicate users row (FR-006)', async () => {
+    const fixture = FIXTURES.editor
+    await payload.create({
       collection: 'users',
       data: {
-        email: FIXTURES.editor.email,
-        name: FIXTURES.editor.name,
+        email: fixture.email,
+        name: fixture.name,
         roles: ['editor'],
+        googleSub: fixture.sub,
       },
       overrideAccess: true,
       req: { user: null } as Parameters<typeof payload.create>[0]['req'],
     })
-    await payload.create({
-      collection: 'accounts',
-      data: {
-        user: user.id,
-        issuerName: 'google',
-        sub: FIXTURES.editor.sub,
-        name: FIXTURES.editor.name,
-      },
-      overrideAccess: true,
-    })
 
-    // Returning sign-in resolves by sub — caller does a find, gets the row, then re-uses.
-    // Simulate that lookup:
+    // Returning sign-in path: callback looks up by googleSub and re-uses.
     const found = await payload.find({
-      collection: 'accounts',
-      where: {
-        and: [{ issuerName: { equals: 'google' } }, { sub: { equals: FIXTURES.editor.sub } }],
-      },
+      collection: 'users',
+      where: { googleSub: { equals: fixture.sub } },
+      limit: 1,
       overrideAccess: true,
     })
     expect(found.docs).toHaveLength(1)
+    expect(found.docs[0].email).toBe(fixture.email)
 
     const allUsers = await payload.find({ collection: 'users', overrideAccess: true })
     expect(allUsers.docs).toHaveLength(1)
+  })
+
+  it('googleSub is unique — Payload rejects a second row with the same sub', async () => {
+    const fixture = FIXTURES.editor
+    await payload.create({
+      collection: 'users',
+      data: {
+        email: fixture.email,
+        name: fixture.name,
+        roles: ['editor'],
+        googleSub: fixture.sub,
+      },
+      overrideAccess: true,
+      req: { user: null } as Parameters<typeof payload.create>[0]['req'],
+    })
+
+    await expect(
+      payload.create({
+        collection: 'users',
+        data: {
+          email: 'other@seqtechllc.com',
+          name: 'Other',
+          roles: ['editor'],
+          googleSub: fixture.sub, // duplicate
+        },
+        overrideAccess: true,
+        req: { user: null } as Parameters<typeof payload.create>[0]['req'],
+      }),
+    ).rejects.toThrow()
   })
 })

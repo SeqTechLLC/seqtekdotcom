@@ -11,11 +11,6 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await payload.delete({
-    collection: 'accounts',
-    where: { id: { exists: true } },
-    overrideAccess: true,
-  })
-  await payload.delete({
     collection: 'users',
     where: { id: { exists: true } },
     overrideAccess: true,

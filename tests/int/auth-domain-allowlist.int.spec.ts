@@ -13,11 +13,6 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await payload.delete({
-    collection: 'accounts',
-    where: { id: { exists: true } },
-    overrideAccess: true,
-  })
-  await payload.delete({
     collection: 'users',
     where: { id: { exists: true } },
     overrideAccess: true,
@@ -60,8 +55,6 @@ describe('Users beforeChange rejects non-Workspace emails (FR-003, US3)', () => 
 
     const users = await payload.find({ collection: 'users', overrideAccess: true })
     expect(users.docs).toHaveLength(0)
-    const accounts = await payload.find({ collection: 'accounts', overrideAccess: true })
-    expect(accounts.docs).toHaveLength(0)
 
     const auditLines = logSpy.mock.calls
       .map((c) => c[0])

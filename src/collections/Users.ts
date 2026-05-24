@@ -1,9 +1,9 @@
 import type { CollectionConfig } from 'payload'
-import { withUsersCollection } from 'payload-auth-plugin/collection'
+
 import { applyAutoProvisionRole, guardRoleUpdates } from '../lib/auth/apply-bootstrap-role'
 import { enforceDomainAllowlist } from '../lib/auth/enforce-domain'
 
-export const Users: CollectionConfig = withUsersCollection({
+export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
     disableLocalStrategy: true,
@@ -24,6 +24,13 @@ export const Users: CollectionConfig = withUsersCollection({
   },
   fields: [
     {
+      name: 'email',
+      type: 'email',
+      required: true,
+      unique: true,
+      index: true,
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,
@@ -39,5 +46,16 @@ export const Users: CollectionConfig = withUsersCollection({
       defaultValue: ['editor'],
       required: true,
     },
+    {
+      name: 'googleSub',
+      label: 'Google subject ID',
+      type: 'text',
+      index: true,
+      unique: true,
+      admin: {
+        readOnly: true,
+        description: 'Stable identifier from Google. Set on first sign-in; never edited.',
+      },
+    },
   ],
-})
+}

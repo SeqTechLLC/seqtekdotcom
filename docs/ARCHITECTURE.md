@@ -696,7 +696,7 @@ All secrets and configuration are managed via environment variables, never commi
 
 ### Payload Admin Authentication
 
-Payload's admin panel at `/admin` is protected by Google Workspace SSO (ROADMAP D-14, ADR 0002, spec 001) restricted to the `@seqtechllc.com` Google Workspace domain. Implementation lives on top of `payload-auth-plugin` (Google OAuth/OIDC provider) with Payload's local email/password strategy disabled on the `users` collection.
+Payload's admin panel at `/admin` is protected by Google Workspace SSO (ROADMAP D-14, ADR 0002, spec 001) restricted to the `@seqtechllc.com` Google Workspace domain. Implementation is a **custom OAuth integration** in `src/app/(payload)/api/auth/oauth/{authorization,callback}/google/route.ts` plus helpers under `src/lib/auth/` (PKCE, state CSRF, `jose`-based ID-token verification against Google's JWKS, Payload session-cookie issuance via Payload's own `getFieldsToSign`/`jwtSign`/`generatePayloadCookie`). Payload's local email/password strategy is disabled on the `users` collection (`auth.disableLocalStrategy: true`). The 305-star community plugin originally chosen in ADR 0002 was dropped during implementation in favour of ~250 LOC we own — see ADR 0002 post-implementation note for reasoning.
 
 - Google OAuth (OIDC) — only sign-in path; the email/password form is removed from the login view entirely
 - Domain restriction enforced server-side in a `users` `beforeChange` hook (the Google `hd` parameter is a hint; the hook is the load-bearing check)
