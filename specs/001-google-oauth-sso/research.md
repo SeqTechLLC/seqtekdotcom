@@ -250,7 +250,7 @@ in prod/staging, .env.local in dev`.
 
 **Decision**: Inject `<BeforeLoginGoogle />` via `admin.components.beforeLogin`,
 which renders a single primary button above the (now-non-functional) email/password
-form. The button is a plain `<a href="/api/auth/oauth/authorize/google">` — no
+form. The button is a plain `<a href="/api/auth/oauth/authorization/google">` — no
 client JS needed; the plugin handles the rest.
 
 **Rationale**: FR-001 requires SSO as the _primary_ action. An anchor link with a
