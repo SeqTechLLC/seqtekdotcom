@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { JWTAuthentication } from 'payload'
 
 import { applyAutoProvisionRole, guardRoleUpdates } from '../lib/auth/apply-bootstrap-role'
 import { enforceDomainAllowlist } from '../lib/auth/enforce-domain'
@@ -9,9 +10,17 @@ export const Users: CollectionConfig = {
     // `{ enableFields: true }` rather than the bare `true` so Payload still
     // materializes its base auth fields — most importantly the `sessions`
     // array Payload's JWT strategy checks against the cookie's `sid` claim
-    // on every admin request (without it, /admin silently bounces to
-    // /admin/login). The email/password strategy itself remains disabled.
+    // on every admin request. The email/password strategy itself remains
+    // disabled.
     disableLocalStrategy: { enableFields: true },
+    // Payload only auto-registers `local-jwt` in `payload.authStrategies`
+    // when `disableLocalStrategy` is falsy (see payload/dist/index.js step
+    // 3-4 in init). With it set, `executeAuthStrategies` would return
+    // user:null and the admin shell would silently redirect /admin →
+    // /admin/login even with a perfectly valid session cookie. We register
+    // the same JWTAuthentication explicitly so the cookie path keeps
+    // working post-OAuth.
+    strategies: [{ name: 'local-jwt', authenticate: JWTAuthentication }],
   },
   admin: {
     useAsTitle: 'name',
