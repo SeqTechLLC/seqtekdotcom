@@ -1,5 +1,5 @@
 #!/usr/bin/env -S npx tsx
-import { App, Tags } from 'aws-cdk-lib'
+import { Annotations, App, Tags } from 'aws-cdk-lib'
 import { ComputeStack } from '../lib/compute-stack'
 import { resolveEnv, stackEnv, stackName } from '../lib/construct-utils'
 import { DataStack } from '../lib/data-stack'
@@ -8,6 +8,17 @@ import { NetworkStack } from '../lib/network-stack'
 import { ObservabilityStack } from '../lib/observability-stack'
 
 const app = new App()
+
+// Acknowledge intentional CDK warnings.
+// - updateImportedBucketPolicyOac: EdgeStack imports the media bucket
+//   by attributes and manages its policy manually to break the
+//   Data ↔ Edge dependency cycle. See lib/edge-stack.ts for full
+//   rationale.
+Annotations.of(app).acknowledgeWarning(
+  '@aws-cdk/aws-cloudfront-origins:updateImportedBucketPolicyOac',
+  'Intentional: bucket policy is managed manually in EdgeStack to break the Data ↔ Edge dependency cycle. See infra/lib/edge-stack.ts.',
+)
+
 const { env: envName, cfg } = resolveEnv(app)
 const awsEnv = stackEnv(cfg)
 

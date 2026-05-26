@@ -52,14 +52,27 @@ export class NetworkStack extends Stack {
       ],
     })
 
-    // ALB — ingress 443 from CloudFront managed prefix list only.
-    // The actual ingress rule is added in compute-stack (where the ALB
-    // lives); here we just create the SG handle.
+    // ALB — ingress only from the CloudFront managed prefix list. 443
+    // is the viewer-facing path (TLS terminates at CloudFront, plaintext
+    // forwarded to the ALB). 80 is the validation-period path while
+    // CloudFront origin uses HTTP; remove at Phase 5.5 when we add
+    // end-to-end TLS between CloudFront and ALB.
     this.albSecurityGroup = new ec2.SecurityGroup(this, 'AlbSg', {
       vpc: this.vpc,
       description: 'ALB ingress: 443 from CloudFront managed prefix list only',
       allowAllOutbound: true,
     })
+    const cloudFrontPrefix = ec2.Peer.prefixList('pl-3b927c52') // CloudFront us-east-1
+    this.albSecurityGroup.addIngressRule(
+      cloudFrontPrefix,
+      ec2.Port.tcp(443),
+      'CloudFront → ALB on 443',
+    )
+    this.albSecurityGroup.addIngressRule(
+      cloudFrontPrefix,
+      ec2.Port.tcp(80),
+      'CloudFront → ALB on 80 (validation-period; remove at Phase 5.5)',
+    )
 
     // App — ingress 3000 from AlbSg only.
     this.appSecurityGroup = new ec2.SecurityGroup(this, 'AppSg', {

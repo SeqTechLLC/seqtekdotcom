@@ -1,33 +1,64 @@
+# Patterns excluded from the Docker build context. Keeps the image
+# small and prevents accidental inclusion of dev-only / secret-bearing
+# files in the published image. Reviewed per spec 002 T019.
+
+# Source control + tooling we never ship
 .git
 .gitignore
+.github
+.husky
+.specify
 .scratch
 .vscode
 .idea
 
+# Build outputs & caches
 node_modules
 .next
 out
 build
 dist
+.turbo
+coverage
+*.tsbuildinfo
 
+# Environment files — runtime env comes from Parameter Store via
+# instance profile (per Constitution IV). Never bake .env into the image.
 .env
 .env.local
 .env*.local
 
+# Tests — never run inside the production image
 tests
 test-results
 playwright-report
 playwright/.cache
+.lighthouseci
 
+# Repo-internal documentation & specs — not needed at runtime
 docs
+specs
 brandkit
+*.md
+LICENSE
 
+# Infrastructure as code — not part of the app image
+infra
+
+# Logs
 *.log
 npm-debug.log*
-.lighthouseci
-coverage
 
+# Docker-specific files (we don't COPY them into the image)
 Dockerfile
 .dockerignore
 docker-compose.yml
-README.md
+
+# Lockfiles for alternative package managers (we use npm only)
+yarn.lock
+pnpm-lock.yaml
+
+# OS noise
+.DS_Store
+Thumbs.db
+*.swp

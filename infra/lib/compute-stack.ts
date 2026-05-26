@@ -1,4 +1,10 @@
-import { Stack, type StackProps } from 'aws-cdk-lib'
+import { CfnOutput, Duration, Stack, type StackProps } from 'aws-cdk-lib'
+import * as autoscaling from 'aws-cdk-lib/aws-autoscaling'
+import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as ecr from 'aws-cdk-lib/aws-ecr'
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2'
+import * as iam from 'aws-cdk-lib/aws-iam'
+import * as logs from 'aws-cdk-lib/aws-logs'
 import type { Construct } from 'constructs'
 import type { EnvConfig, EnvName } from './construct-utils'
 import type { DataStack } from './data-stack'
@@ -11,15 +17,345 @@ export interface ComputeStackProps extends StackProps {
   data: DataStack
 }
 
+const ECR_REPO_NAME = 'seqtek-website'
+const APP_PORT = 3000
+
 /**
- * Compute plane — ECR repo, ALB + target group + listeners, ASG + launch
- * template, EC2 instance profile. Implemented in spec 002 Phase 3 User
- * Story 1 (T021). Stub for now.
+ * Compute plane — ECR repo (created in staging, imported in prod), ALB
+ * with port-80 listener, Application Target Group on port 3000, ASG
+ * with launch template that pulls the ECR image and reads Parameter
+ * Store via the instance profile.
+ *
+ * **Validation-period topology** (Clarifications Session 2026-05-26):
+ * ASG runs in PUBLIC subnets with `associatePublicIpAddress: true` and
+ * SG `AppSg` ingress restricted to AlbSg only. NAT Gateway is absent;
+ * outbound goes via the public IP route to the Internet Gateway. ALB
+ * has only port 80 — CloudFront in front terminates TLS for viewers
+ * (FR-004 satisfied at the CloudFront layer). Phase 5.5 launch
+ * readiness adds: ASG → private subnets + NAT, ALB 443 listener +
+ * ACM cert (defense in depth between CloudFront and ALB).
  */
 export class ComputeStack extends Stack {
+  public readonly ecrRepository: ecr.IRepository
+  public readonly loadBalancer: elbv2.ApplicationLoadBalancer
+  public readonly targetGroup: elbv2.ApplicationTargetGroup
+  public readonly autoScalingGroup: autoscaling.AutoScalingGroup
+  public readonly httpListener: elbv2.ApplicationListener
+  public readonly appLogGroup: logs.ILogGroup
+
   constructor(scope: Construct, id: string, props: ComputeStackProps) {
     super(scope, id, props)
-    // TODO(T021): ECR repo, ALB, ASG, launch template, IAM instance profile.
-    void props
+    const { envName, cfg, network, data } = props
+
+    // ----- ECR repository (created by staging; imported by prod) -----
+    if (envName === 'staging') {
+      this.ecrRepository = new ecr.Repository(this, 'EcrRepo', {
+        repositoryName: ECR_REPO_NAME,
+        imageScanOnPush: true,
+        lifecycleRules: [
+          {
+            description: 'Expire untagged images after 7 days',
+            tagStatus: ecr.TagStatus.UNTAGGED,
+            maxImageAge: Duration.days(7),
+          },
+          {
+            description: 'Keep at most ecrRetainCount tagged images',
+            tagStatus: ecr.TagStatus.ANY,
+            maxImageCount: cfg.ecrRetainCount,
+          },
+        ],
+      })
+    } else {
+      this.ecrRepository = ecr.Repository.fromRepositoryName(this, 'EcrRepo', ECR_REPO_NAME)
+    }
+
+    // ----- Application log group (CloudWatch Logs) -----
+    this.appLogGroup = new logs.LogGroup(this, 'AppLogGroup', {
+      logGroupName: `/seqtek/website/${envName}/app`,
+      retention: mapRetentionDays(cfg.logRetentionDays),
+    })
+
+    // Note: CloudFront managed prefix list ingress rules for AlbSg are
+    // defined in NetworkStack (where AlbSg lives) so CDK keeps the
+    // SG and its ingress rules in one stack.
+
+    // ----- ALB + HTTP listener (target group attached after ASG below) -----
+    this.loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
+      vpc: network.vpc,
+      internetFacing: true,
+      securityGroup: network.albSecurityGroup,
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      deletionProtection: envName === 'prod',
+    })
+
+    this.httpListener = this.loadBalancer.addListener('HttpListener', {
+      port: 80,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      open: false, // SG ingress managed manually above
+    })
+
+    // ----- IAM: EC2 instance profile -----
+    const stackPrefix = envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
+    const appInstanceRole = new iam.Role(this, 'AppInstanceRole', {
+      assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+      description: `EC2 instance profile role for the ${envName} application instances.`,
+    })
+
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'SsmParameterReadEnvScoped',
+        actions: ['ssm:GetParameter', 'ssm:GetParameters', 'ssm:GetParametersByPath'],
+        resources: [
+          `arn:aws:ssm:${this.region}:${this.account}:parameter${data.parameterPathPrefix}/*`,
+          `arn:aws:ssm:${this.region}:${this.account}:parameter${data.parameterPathPrefix}`,
+        ],
+      }),
+    )
+
+    // ssm:DescribeParameters can't be ARN-scoped per AWS IAM spec; allow on *
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'SsmDescribeParameters',
+        actions: ['ssm:DescribeParameters'],
+        resources: ['*'],
+      }),
+    )
+
+    // KMS for decrypting SecureString — only the AWS-managed SSM key
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'KmsDecryptSsmManaged',
+        actions: ['kms:Decrypt'],
+        resources: [`arn:aws:kms:${this.region}:${this.account}:alias/aws/ssm`],
+      }),
+    )
+
+    // S3 — media bucket only, env-scoped
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'S3MediaBucketRw',
+        actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+        resources: [`${data.mediaBucket.bucketArn}/*`],
+      }),
+    )
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'S3MediaBucketList',
+        actions: ['s3:ListBucket', 's3:GetBucketLocation'],
+        resources: [data.mediaBucket.bucketArn],
+      }),
+    )
+
+    // ECR — pull-only (deploy pipeline pushes via separate role)
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'EcrPull',
+        actions: [
+          'ecr:BatchCheckLayerAvailability',
+          'ecr:BatchGetImage',
+          'ecr:GetDownloadUrlForLayer',
+        ],
+        resources: [this.ecrRepository.repositoryArn],
+      }),
+    )
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'EcrAuthToken',
+        actions: ['ecr:GetAuthorizationToken'],
+        resources: ['*'],
+      }),
+    )
+
+    // CloudWatch Logs — write to the app log group only
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'CloudWatchLogsAppGroup',
+        actions: ['logs:CreateLogStream', 'logs:PutLogEvents', 'logs:DescribeLogStreams'],
+        resources: [this.appLogGroup.logGroupArn, `${this.appLogGroup.logGroupArn}:*`],
+      }),
+    )
+
+    // CloudWatch metrics — service-level, can't ARN-scope
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'CloudWatchPutMetrics',
+        actions: ['cloudwatch:PutMetricData'],
+        resources: ['*'],
+      }),
+    )
+
+    // ----- Launch template + ASG -----
+    const userData = ec2.UserData.forLinux()
+    userData.addCommands(
+      'set -euo pipefail',
+      'dnf update -y',
+      'dnf install -y docker amazon-cloudwatch-agent',
+      'systemctl enable --now docker',
+      'usermod -a -G docker ec2-user',
+      // Fetch env vars from Parameter Store and write to /etc/seqtek-website.env
+      `PARAM_PREFIX="${data.parameterPathPrefix}"`,
+      `REGION="${this.region}"`,
+      `AWS_DEFAULT_REGION="${this.region}"`,
+      'export AWS_DEFAULT_REGION',
+      // Use the AWS CLI bundled in Amazon Linux 2023 to fetch parameters
+      `aws ssm get-parameters-by-path --path "$PARAM_PREFIX" --recursive --with-decryption --region "$REGION" --query 'Parameters[*].[Name,Value]' --output text | while IFS=$'\\t' read -r name value; do`,
+      `  key=$(basename "$name" | tr '[:lower:]' '[:upper:]')`,
+      `  echo "$key=$value" >> /etc/seqtek-website.env`,
+      'done',
+      // Pull and run the container image
+      `aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${this.ecrRepository.repositoryUri}"`,
+      `docker pull "${this.ecrRepository.repositoryUri}:latest"`,
+      `docker run -d --name seqtek-website --restart=unless-stopped -p ${APP_PORT}:${APP_PORT} --env-file /etc/seqtek-website.env --log-driver=awslogs --log-opt awslogs-group="${this.appLogGroup.logGroupName}" --log-opt awslogs-region="${this.region}" "${this.ecrRepository.repositoryUri}:latest"`,
+    )
+
+    // ----- Explicit LaunchTemplate -----
+    // Why explicit (not inline ASG props): ASG with inline instance
+    // props + associatePublicIpAddress falls back to the legacy
+    // `AWS::AutoScaling::LaunchConfiguration` resource (deprecated by
+    // AWS in 2023). Modern infrastructure must use `AWS::EC2::LaunchTemplate`.
+    // The L2 LaunchTemplate construct doesn't expose
+    // associatePublicIpAddress as a top-level prop; we set it via an
+    // L1 escape hatch on NetworkInterfaces below. Security group is
+    // also set in NetworkInterfaces.Groups (not at the LT top level)
+    // because CFN forbids both `SecurityGroupIds` and `NetworkInterfaces`
+    // on the same launch template.
+    const launchTemplate = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
+      machineImage: ec2.MachineImage.latestAmazonLinux2023(),
+      instanceType: parseInstanceType(`${cfg.instanceClass}.${cfg.instanceSize}`),
+      securityGroup: network.appSecurityGroup,
+      role: appInstanceRole,
+      userData,
+      requireImdsv2: true,
+      httpPutResponseHopLimit: 2,
+    })
+
+    // L1 escape: add NetworkInterfaces with associatePublicIpAddress.
+    // CFN forbids `SecurityGroupIds` and `NetworkInterfaces` together,
+    // so null out the top-level SGs (CDK populated them via the
+    // `securityGroup` prop above, which we keep for the L2
+    // IConnectable contract).
+    const cfnLaunchTemplate = launchTemplate.node.defaultChild as ec2.CfnLaunchTemplate
+    cfnLaunchTemplate.addPropertyOverride('LaunchTemplateData.NetworkInterfaces', [
+      {
+        DeviceIndex: 0,
+        AssociatePublicIpAddress: true,
+        Groups: [network.appSecurityGroup.securityGroupId],
+        DeleteOnTermination: true,
+      },
+    ])
+    cfnLaunchTemplate.addPropertyDeletionOverride('LaunchTemplateData.SecurityGroupIds')
+
+    this.autoScalingGroup = new autoscaling.AutoScalingGroup(this, 'AppAsg', {
+      vpc: network.vpc,
+      // Validation-period topology: public subnets. Flips to
+      // PRIVATE_WITH_EGRESS at Phase 5.5 per ROADMAP §4.
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      launchTemplate,
+      minCapacity: cfg.asgMinCapacity,
+      desiredCapacity: cfg.asgDesiredCapacity,
+      maxCapacity: cfg.asgMaxCapacity,
+      healthChecks: autoscaling.HealthChecks.withAdditionalChecks({
+        additionalTypes: [autoscaling.AdditionalHealthCheckType.ELB],
+        gracePeriod: Duration.minutes(3),
+      }),
+      updatePolicy: autoscaling.UpdatePolicy.rollingUpdate({
+        minInstancesInService: cfg.asgMinCapacity,
+        maxBatchSize: 1,
+        pauseTime: Duration.minutes(5),
+        waitOnResourceSignals: false,
+      }),
+    })
+
+    // Attach the ASG as the target for the HTTP listener; CDK creates
+    // the target group inline with the per-target settings.
+    this.targetGroup = this.httpListener.addTargets('AppTarget', {
+      port: APP_PORT,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      targets: [this.autoScalingGroup],
+      deregistrationDelay: Duration.seconds(120),
+      healthCheck: {
+        path: '/api/health',
+        protocol: elbv2.Protocol.HTTP,
+        interval: Duration.seconds(30),
+        timeout: Duration.seconds(10),
+        healthyThresholdCount: 3,
+        unhealthyThresholdCount: 2,
+        healthyHttpCodes: '200',
+      },
+    })
+
+    // ----- Outputs -----
+    new CfnOutput(this, 'EcrRepositoryUri', {
+      value: this.ecrRepository.repositoryUri,
+      exportName: `${this.stackName}-EcrRepositoryUri`,
+    })
+    new CfnOutput(this, 'AlbDnsName', {
+      value: this.loadBalancer.loadBalancerDnsName,
+      exportName: `${this.stackName}-AlbDnsName`,
+    })
+    new CfnOutput(this, 'AlbCanonicalHostedZoneId', {
+      value: this.loadBalancer.loadBalancerCanonicalHostedZoneId,
+      exportName: `${this.stackName}-AlbCanonicalHostedZoneId`,
+    })
+    new CfnOutput(this, 'AsgName', {
+      value: this.autoScalingGroup.autoScalingGroupName,
+      exportName: `${this.stackName}-AsgName`,
+    })
+    new CfnOutput(this, 'AppLogGroupName', {
+      value: this.appLogGroup.logGroupName,
+      exportName: `${this.stackName}-AppLogGroupName`,
+    })
+
+    // Suppress unused warning
+    void stackPrefix
   }
+}
+
+function parseInstanceType(s: string): ec2.InstanceType {
+  const [className, sizeName] = s.split('.')
+  if (!className || !sizeName) {
+    throw new Error(`Invalid instance type '${s}'. Expected '<class>.<size>' (e.g., t3.small).`)
+  }
+  const classKey = className.toUpperCase() as keyof typeof ec2.InstanceClass
+  const sizeKey = sizeName.toUpperCase() as keyof typeof ec2.InstanceSize
+  if (!(classKey in ec2.InstanceClass)) {
+    throw new Error(`Unknown ec2.InstanceClass: '${className}'`)
+  }
+  if (!(sizeKey in ec2.InstanceSize)) {
+    throw new Error(`Unknown ec2.InstanceSize: '${sizeName}'`)
+  }
+  return ec2.InstanceType.of(ec2.InstanceClass[classKey], ec2.InstanceSize[sizeKey])
+}
+
+/**
+ * Maps a numeric day count from EnvConfig to the closest `logs.RetentionDays`
+ * enum member. CloudWatch Logs accepts only a fixed set of retention durations.
+ */
+function mapRetentionDays(days: number): logs.RetentionDays {
+  const known: Array<[number, logs.RetentionDays]> = [
+    [1, logs.RetentionDays.ONE_DAY],
+    [3, logs.RetentionDays.THREE_DAYS],
+    [5, logs.RetentionDays.FIVE_DAYS],
+    [7, logs.RetentionDays.ONE_WEEK],
+    [14, logs.RetentionDays.TWO_WEEKS],
+    [30, logs.RetentionDays.ONE_MONTH],
+    [60, logs.RetentionDays.TWO_MONTHS],
+    [90, logs.RetentionDays.THREE_MONTHS],
+    [120, logs.RetentionDays.FOUR_MONTHS],
+    [150, logs.RetentionDays.FIVE_MONTHS],
+    [180, logs.RetentionDays.SIX_MONTHS],
+    [365, logs.RetentionDays.ONE_YEAR],
+    [400, logs.RetentionDays.THIRTEEN_MONTHS],
+    [545, logs.RetentionDays.EIGHTEEN_MONTHS],
+    [731, logs.RetentionDays.TWO_YEARS],
+    [1827, logs.RetentionDays.FIVE_YEARS],
+    [3653, logs.RetentionDays.TEN_YEARS],
+  ]
+  const match = known.find(([d]) => d === days)
+  if (!match) {
+    throw new Error(
+      `logRetentionDays must be one of ${known.map(([d]) => d).join(', ')}; got ${days}.`,
+    )
+  }
+  return match[1]
 }

@@ -102,6 +102,21 @@ describe('NetworkStack', () => {
     })
   })
 
+  it('ALB SG ingress: CloudFront managed prefix list only, on 443 + 80', () => {
+    const t = synthProd()
+    const ingresses = t.findResources('AWS::EC2::SecurityGroupIngress')
+    const fromCloudFront443 = Object.values(ingresses).filter((r) => {
+      const props = r.Properties as { SourcePrefixListId?: string; FromPort?: number }
+      return props.SourcePrefixListId === 'pl-3b927c52' && props.FromPort === 443
+    })
+    const fromCloudFront80 = Object.values(ingresses).filter((r) => {
+      const props = r.Properties as { SourcePrefixListId?: string; FromPort?: number }
+      return props.SourcePrefixListId === 'pl-3b927c52' && props.FromPort === 80
+    })
+    expect(fromCloudFront443.length).toBeGreaterThanOrEqual(1)
+    expect(fromCloudFront80.length).toBeGreaterThanOrEqual(1)
+  })
+
   it('app SG accepts ingress on 3000 only from ALB SG', () => {
     const t = synthProd()
     t.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
