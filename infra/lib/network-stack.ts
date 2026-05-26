@@ -1,0 +1,125 @@
+import { CfnOutput, Stack, type StackProps } from 'aws-cdk-lib'
+import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import type { Construct } from 'constructs'
+import type { EnvConfig, EnvName } from './construct-utils'
+import { DeployRoles } from './deploy-role'
+
+export interface NetworkStackProps extends StackProps {
+  envName: EnvName
+  cfg: EnvConfig
+}
+
+/**
+ * VPC, subnets, NAT gateway, security groups, and the GitHub OIDC deploy
+ * role. Lives in the rare-change-rate stack per ARCHITECTURE.md §13.
+ *
+ * Outputs are consumed by Data (for RDS subnet placement + RDS SG),
+ * Compute (for ALB/ASG subnets + their SGs), and Observability (for
+ * Lambda VPC + LambdaSg).
+ */
+export class NetworkStack extends Stack {
+  public readonly vpc: ec2.IVpc
+  public readonly albSecurityGroup: ec2.ISecurityGroup
+  public readonly appSecurityGroup: ec2.ISecurityGroup
+  public readonly rdsSecurityGroup: ec2.ISecurityGroup
+  public readonly lambdaSecurityGroup: ec2.ISecurityGroup
+
+  constructor(scope: Construct, id: string, props: NetworkStackProps) {
+    super(scope, id, props)
+
+    // 10.0.0.0/16 per env, 2 AZs, public + private + isolated tiers.
+    // Single NAT gateway (single-AZ tradeoff; revisit at multi-AZ-RDS flip).
+    this.vpc = new ec2.Vpc(this, 'Vpc', {
+      ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
+      maxAzs: 2,
+      natGateways: 1,
+      restrictDefaultSecurityGroup: true,
+      subnetConfiguration: [
+        {
+          name: 'public',
+          subnetType: ec2.SubnetType.PUBLIC,
+          cidrMask: 24,
+        },
+        {
+          name: 'private',
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+          cidrMask: 24,
+        },
+        {
+          name: 'isolated',
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          cidrMask: 24,
+        },
+      ],
+    })
+
+    // ALB — ingress 443 from CloudFront managed prefix list only.
+    // The actual ingress rule is added in compute-stack (where the ALB
+    // lives); here we just create the SG handle.
+    this.albSecurityGroup = new ec2.SecurityGroup(this, 'AlbSg', {
+      vpc: this.vpc,
+      description: 'ALB ingress: 443 from CloudFront managed prefix list only',
+      allowAllOutbound: true,
+    })
+
+    // App — ingress 3000 from AlbSg only.
+    this.appSecurityGroup = new ec2.SecurityGroup(this, 'AppSg', {
+      vpc: this.vpc,
+      description: 'EC2 app instances ingress: 3000 from AlbSg only',
+      allowAllOutbound: true,
+    })
+    this.appSecurityGroup.addIngressRule(
+      this.albSecurityGroup,
+      ec2.Port.tcp(3000),
+      'ALB -> app on port 3000',
+    )
+
+    // RDS — ingress 5432 from AppSg only.
+    this.rdsSecurityGroup = new ec2.SecurityGroup(this, 'RdsSg', {
+      vpc: this.vpc,
+      description: 'RDS ingress: 5432 from AppSg only',
+      allowAllOutbound: false,
+    })
+    this.rdsSecurityGroup.addIngressRule(
+      this.appSecurityGroup,
+      ec2.Port.tcp(5432),
+      'App -> RDS on Postgres port',
+    )
+
+    // Slack notifier Lambda — no ingress, egress to internet via NAT for
+    // the webhook POST.
+    this.lambdaSecurityGroup = new ec2.SecurityGroup(this, 'LambdaSg', {
+      vpc: this.vpc,
+      description: 'Slack notifier Lambda — no ingress; egress to NAT for webhook POST',
+      allowAllOutbound: true,
+    })
+
+    // GitHub OIDC + per-env deploy role (account-wide; lives in the
+    // rare-change-rate stack so deploy-role rotations don't pull the
+    // VPC through a CloudFormation change-set diff).
+    new DeployRoles(this, 'Deploy', { envName: props.envName })
+
+    // Outputs for cross-stack consumption + human convenience
+    new CfnOutput(this, 'VpcId', {
+      value: this.vpc.vpcId,
+      description: 'VPC ID for this environment',
+      exportName: `${this.stackName}-VpcId`,
+    })
+    new CfnOutput(this, 'AlbSgId', {
+      value: this.albSecurityGroup.securityGroupId,
+      exportName: `${this.stackName}-AlbSgId`,
+    })
+    new CfnOutput(this, 'AppSgId', {
+      value: this.appSecurityGroup.securityGroupId,
+      exportName: `${this.stackName}-AppSgId`,
+    })
+    new CfnOutput(this, 'RdsSgId', {
+      value: this.rdsSecurityGroup.securityGroupId,
+      exportName: `${this.stackName}-RdsSgId`,
+    })
+    new CfnOutput(this, 'LambdaSgId', {
+      value: this.lambdaSecurityGroup.securityGroupId,
+      exportName: `${this.stackName}-LambdaSgId`,
+    })
+  }
+}
