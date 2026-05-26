@@ -54,27 +54,34 @@ describe('NetworkStack', () => {
   it('provisions a VPC with exactly 2 AZs', () => {
     const t = synthProd()
     t.resourceCountIs('AWS::EC2::VPC', 1)
-    // 2 AZs × 3 tiers (public/private/isolated) = 6 subnets
-    t.resourceCountIs('AWS::EC2::Subnet', 6)
+    // 2 AZs × 2 tiers (public + isolated) = 4 subnets during the
+    // validation-period topology per Clarifications Session 2026-05-26.
+    // At Phase 5.5 the private-with-egress tier is added (back to 6).
+    t.resourceCountIs('AWS::EC2::Subnet', 4)
   })
 
   it('places isolated subnets with no internet route', () => {
     const t = synthProd()
-    // Isolated subnets should not be associated with a route table that
-    // has a 0.0.0.0/0 route. The simplest assertion: no NAT route in
-    // the isolated route table. CDK creates separate route tables per
-    // subnet tier; the isolated tier's RouteTable has no NAT route.
+    // Isolated subnets must not be associated with a route table that
+    // has a 0.0.0.0/0 route. CDK creates separate route tables per
+    // subnet tier; the isolated tier's RouteTable has no internet route.
     const routes = t.findResources('AWS::EC2::Route')
     const isolatedRoutes = Object.entries(routes).filter(([id]) => id.includes('isolated'))
     for (const [, route] of isolatedRoutes) {
       const props = route.Properties as { DestinationCidrBlock?: string }
       expect(props.DestinationCidrBlock).not.toBe('0.0.0.0/0')
     }
+    // And there should be no NAT route from the isolated route table.
+    for (const [, route] of isolatedRoutes) {
+      const props = route.Properties as { NatGatewayId?: unknown }
+      expect(props.NatGatewayId).toBeUndefined()
+    }
   })
 
-  it('creates exactly one NAT gateway per env', () => {
+  it('creates zero NAT gateways during the validation-period topology', () => {
+    // Phase 5.5 flips this to 1 alongside the multi-AZ RDS flip.
     const t = synthProd()
-    t.resourceCountIs('AWS::EC2::NatGateway', 1)
+    t.resourceCountIs('AWS::EC2::NatGateway', 0)
   })
 
   it('creates 4 security groups (ALB, App, RDS, Lambda)', () => {

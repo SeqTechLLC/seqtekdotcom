@@ -27,22 +27,21 @@ export class NetworkStack extends Stack {
   constructor(scope: Construct, id: string, props: NetworkStackProps) {
     super(scope, id, props)
 
-    // 10.0.0.0/16 per env, 2 AZs, public + private + isolated tiers.
-    // Single NAT gateway (single-AZ tradeoff; revisit at multi-AZ-RDS flip).
+    // 10.0.0.0/16 per env, 2 AZs, public + isolated tiers only.
+    // No NAT gateway during the validation period (Clarifications Session
+    // 2026-05-26): ASG runs in public subnets with strictly-scoped SGs.
+    // At Phase 5.5 launch readiness, add a PRIVATE_WITH_EGRESS tier + NAT
+    // (or VPC endpoints) and flip the ASG subnet placement — see
+    // ROADMAP §4 Phase 5.5.
     this.vpc = new ec2.Vpc(this, 'Vpc', {
       ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
       maxAzs: 2,
-      natGateways: 1,
+      natGateways: 0,
       restrictDefaultSecurityGroup: true,
       subnetConfiguration: [
         {
           name: 'public',
           subnetType: ec2.SubnetType.PUBLIC,
-          cidrMask: 24,
-        },
-        {
-          name: 'private',
-          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
         },
         {
@@ -86,11 +85,14 @@ export class NetworkStack extends Stack {
       'App -> RDS on Postgres port',
     )
 
-    // Slack notifier Lambda — no ingress, egress to internet via NAT for
-    // the webhook POST.
+    // Slack notifier Lambda SG — defined for completeness. Phase 5 (T042)
+    // will likely run the Lambda outside the VPC since there's no NAT in
+    // the validation-period topology and Slack's webhook lives on the
+    // public internet. If the Lambda ever needs VPC placement (e.g., to
+    // reach a VPC-private resource), this SG is here.
     this.lambdaSecurityGroup = new ec2.SecurityGroup(this, 'LambdaSg', {
       vpc: this.vpc,
-      description: 'Slack notifier Lambda — no ingress; egress to NAT for webhook POST',
+      description: 'Slack notifier Lambda SG (unused in validation-period topology)',
       allowAllOutbound: true,
     })
 

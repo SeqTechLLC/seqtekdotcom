@@ -14,7 +14,7 @@ export interface EnvConfig {
   certificateArn: string | null
 
   instanceClass: 't3' | 't4g' | 'm5'
-  instanceSize: 'small' | 'medium' | 'large'
+  instanceSize: 'micro' | 'small' | 'medium' | 'large'
   asgMinCapacity: number
   asgDesiredCapacity: number
   asgMaxCapacity: number
