@@ -66,14 +66,14 @@ describe('DataStack', () => {
       })
     })
 
-    it('places RDS in PRIVATE_ISOLATED subnets', () => {
+    it('places RDS in PRIVATE_ISOLATED subnets via a DB subnet group', () => {
       t.hasResource('AWS::RDS::DBSubnetGroup', Match.anyValue())
     })
 
-    it('staging RDS has SNAPSHOT removal policy (not RETAIN)', () => {
+    it('staging RDS uses DESTROY removal policy (no final snapshot — fast iteration)', () => {
       t.hasResource('AWS::RDS::DBInstance', {
-        DeletionPolicy: 'Snapshot',
-        UpdateReplacePolicy: 'Snapshot',
+        DeletionPolicy: 'Delete',
+        UpdateReplacePolicy: 'Delete',
       })
     })
 
@@ -125,7 +125,7 @@ describe('DataStack', () => {
       })
     })
 
-    it('creates two non-sensitive Parameter Store entries', () => {
+    it('creates two non-sensitive Parameter Store entries (no sensitive values in SSM)', () => {
       t.hasResourceProperties('AWS::SSM::Parameter', {
         Name: '/seqtek/website/staging/s3_bucket',
         Type: 'String',
@@ -134,9 +134,16 @@ describe('DataStack', () => {
         Name: '/seqtek/website/staging/s3_bucket_hostname',
         Type: 'String',
       })
+      // Total SSM params for staging-data = 2. Anything else means a
+      // regression to the SSM-SecureString-mirror pattern that we
+      // explicitly dropped after the failed first deploy.
+      const params = t.findResources('AWS::SSM::Parameter')
+      expect(Object.keys(params)).toHaveLength(2)
     })
 
     it('creates Secrets Manager secrets for sensitive values', () => {
+      // db-master is auto-created by RDS.Credentials.fromGeneratedSecret;
+      // payload-secret + revalidation-secret are explicit Secret constructs.
       t.hasResourceProperties('AWS::SecretsManager::Secret', {
         Name: 'seqtek-website/staging/db-master',
       })
@@ -148,41 +155,30 @@ describe('DataStack', () => {
       })
     })
 
-    it('mirrors sensitive values to SSM SecureString via custom resources', () => {
-      // Three Custom::SsmSecureStringMirror resources: database_url,
-      // payload_secret, revalidation_secret.
-      t.resourceCountIs('Custom::SsmSecureStringMirror', 3)
+    it('does NOT use the AwsCustomResource SecureString mirror pattern (dropped after deploy failure)', () => {
+      // The Custom::SsmSecureStringMirror approach hit two AWS limits:
+      // (a) SSM rejects values containing `{{` or `}}`, and
+      // (b) AwsCustomResource doesn't resolve CFN dynamic refs in its parameters.
+      // Sensitive values now live in Secrets Manager only; user-data fetches them at boot.
+      t.resourceCountIs('Custom::SsmSecureStringMirror', 0)
     })
 
-    it('does NOT materialize sensitive values in the synthesized template', () => {
-      // Each Custom::SsmSecureStringMirror's Create field is a string
-      // template that CDK joined together; it includes CFN intrinsics
-      // ({"Fn::GetAtt": [...]} / {"Fn::Join": [...]}) for any Token
-      // values (the secret references). At synth time the whole
-      // structure is an object tree; serialize it and assert there's
-      // no plaintext-looking secret value.
-      const customResources = t.findResources('Custom::SsmSecureStringMirror')
-      expect(Object.keys(customResources)).toHaveLength(3)
-      for (const [logicalId, resource] of Object.entries(customResources)) {
-        const props = resource.Properties as Record<string, unknown>
-        const create = props.Create
-        expect(create, `${logicalId} must have a Create payload`).toBeDefined()
-        const serialized = JSON.stringify(create)
-        expect(serialized).toContain('SecureString')
-        // The Create payload must reference the secret via CFN
-        // intrinsic OR via the CFN dynamic-reference resolver syntax
-        // (`{{resolve:secretsmanager:...}}`) — never as a literal
-        // plaintext string. A pure-literal value field would mean
-        // we leaked the secret into the synthesized template.
-        const hasIntrinsic =
-          serialized.includes('Fn::Join') ||
-          serialized.includes('Fn::GetAtt') ||
-          serialized.includes('Fn::Sub') ||
-          serialized.includes('{{resolve:secretsmanager:')
+    it('does NOT materialize sensitive secret values in the synthesized template', () => {
+      // Secrets Manager secrets are CDK-native and never leak the plaintext
+      // into the synthesized template. Spot-check by confirming the
+      // GenerateSecretString blocks ask for random generation (not a literal value).
+      const secrets = t.findResources('AWS::SecretsManager::Secret')
+      for (const [id, r] of Object.entries(secrets)) {
+        const props = r.Properties as {
+          GenerateSecretString?: { GenerateStringKey?: string; PasswordLength?: number }
+          SecretString?: string
+        }
+        // Either CDK is generating a random secret (GenerateSecretString set)
+        // or no SecretString literal is present.
         expect(
-          hasIntrinsic,
-          `${logicalId} Create payload appears to have no CFN intrinsic — possible plaintext leak`,
-        ).toBe(true)
+          props.SecretString,
+          `${id} must not embed a literal SecretString in the template`,
+        ).toBeUndefined()
       }
     })
   })

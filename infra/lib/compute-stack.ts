@@ -126,7 +126,29 @@ export class ComputeStack extends Stack {
       new iam.PolicyStatement({
         sid: 'KmsDecryptSsmManaged',
         actions: ['kms:Decrypt'],
-        resources: [`arn:aws:kms:${this.region}:${this.account}:alias/aws/ssm`],
+        resources: [
+          `arn:aws:kms:${this.region}:${this.account}:alias/aws/ssm`,
+          `arn:aws:kms:${this.region}:${this.account}:alias/aws/secretsmanager`,
+        ],
+      }),
+    )
+
+    // Secrets Manager — read the three CDK-managed secrets (db-master,
+    // payload-secret, revalidation-secret) at boot.
+    appInstanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'SecretsManagerReadAppSecrets',
+        actions: ['secretsmanager:GetSecretValue', 'secretsmanager:DescribeSecret'],
+        resources: [
+          data.databaseSecret.secretArn,
+          data.payloadSecret.secretArn,
+          data.revalidationSecret.secretArn,
+          // Secrets Manager appends a -<random6> suffix to ARNs internally;
+          // wildcard the suffix so `GetSecretValue` works against the canonical ARN.
+          `${data.databaseSecret.secretArn}-*`,
+          `${data.payloadSecret.secretArn}-*`,
+          `${data.revalidationSecret.secretArn}-*`,
+        ],
       }),
     )
 
@@ -189,20 +211,37 @@ export class ComputeStack extends Stack {
     userData.addCommands(
       'set -euo pipefail',
       'dnf update -y',
-      'dnf install -y docker amazon-cloudwatch-agent',
+      'dnf install -y docker amazon-cloudwatch-agent jq',
       'systemctl enable --now docker',
       'usermod -a -G docker ec2-user',
-      // Fetch env vars from Parameter Store and write to /etc/seqtek-website.env
       `PARAM_PREFIX="${data.parameterPathPrefix}"`,
       `REGION="${this.region}"`,
       `AWS_DEFAULT_REGION="${this.region}"`,
       'export AWS_DEFAULT_REGION',
-      // Use the AWS CLI bundled in Amazon Linux 2023 to fetch parameters
+      // ----- Assemble /etc/seqtek-website.env from SSM (config) + Secrets Manager (secrets) -----
+      'touch /etc/seqtek-website.env',
+      'chmod 600 /etc/seqtek-website.env',
+      // SSM Parameter Store: non-sensitive config (s3_bucket, s3_bucket_hostname,
+      // google_client_id, etc.). Each parameter becomes UPPER_NAME=value in the env file.
       `aws ssm get-parameters-by-path --path "$PARAM_PREFIX" --recursive --with-decryption --region "$REGION" --query 'Parameters[*].[Name,Value]' --output text | while IFS=$'\\t' read -r name value; do`,
       `  key=$(basename "$name" | tr '[:lower:]' '[:upper:]')`,
       `  echo "$key=$value" >> /etc/seqtek-website.env`,
       'done',
-      // Pull and run the container image
+      // Secrets Manager: db-master JSON contains username/password/host/port/dbname
+      // (auto-attached by RDS). Assemble DATABASE_URL.
+      `DB_SECRET=$(aws secretsmanager get-secret-value --secret-id "${data.databaseSecret.secretArn}" --region "$REGION" --query SecretString --output text)`,
+      `DB_USER=$(echo "$DB_SECRET" | jq -r '.username')`,
+      `DB_PASS=$(echo "$DB_SECRET" | jq -r '.password')`,
+      `DB_HOST=$(echo "$DB_SECRET" | jq -r '.host')`,
+      `DB_PORT=$(echo "$DB_SECRET" | jq -r '.port')`,
+      `DB_NAME=$(echo "$DB_SECRET" | jq -r '.dbname')`,
+      `echo "DATABASE_URL=postgresql://$DB_USER:$DB_PASS@$DB_HOST:$DB_PORT/$DB_NAME" >> /etc/seqtek-website.env`,
+      // Payload encryption key + revalidation webhook secret (plain string values).
+      `PAYLOAD_SECRET=$(aws secretsmanager get-secret-value --secret-id "${data.payloadSecret.secretArn}" --region "$REGION" --query SecretString --output text)`,
+      `echo "PAYLOAD_SECRET=$PAYLOAD_SECRET" >> /etc/seqtek-website.env`,
+      `REVALIDATION_SECRET=$(aws secretsmanager get-secret-value --secret-id "${data.revalidationSecret.secretArn}" --region "$REGION" --query SecretString --output text)`,
+      `echo "REVALIDATION_SECRET=$REVALIDATION_SECRET" >> /etc/seqtek-website.env`,
+      // ----- Pull and run the container image -----
       `aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${this.ecrRepository.repositoryUri}"`,
       `docker pull "${this.ecrRepository.repositoryUri}:latest"`,
       `docker run -d --name seqtek-website --restart=unless-stopped -p ${APP_PORT}:${APP_PORT} --env-file /etc/seqtek-website.env --log-driver=awslogs --log-opt awslogs-group="${this.appLogGroup.logGroupName}" --log-opt awslogs-region="${this.region}" "${this.ecrRepository.repositoryUri}:latest"`,

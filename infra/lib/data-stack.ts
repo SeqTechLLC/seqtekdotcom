@@ -4,7 +4,6 @@ import * as rds from 'aws-cdk-lib/aws-rds'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager'
 import * as ssm from 'aws-cdk-lib/aws-ssm'
-import * as cr from 'aws-cdk-lib/custom-resources'
 import type { Construct } from 'constructs'
 import type { EnvConfig, EnvName } from './construct-utils'
 import type { NetworkStack } from './network-stack'
@@ -19,38 +18,37 @@ export interface DataStackProps extends StackProps {
  * Data plane — RDS Postgres in isolated subnets, S3 media bucket, and
  * the Parameter Store namespace (per contracts/parameter-store.md).
  *
- * Sensitive values (DB credentials, Payload secret, revalidation secret)
- * are generated in Secrets Manager (CDK-native, no template leakage)
- * and then mirrored into Parameter Store SecureString via an
- * AwsCustomResource pattern that uses CFN's dynamic-reference resolver
- * at deploy time — so the synthesized template never contains the
- * plaintext values either.
+ * Sensitive values (DB master credentials, Payload secret, revalidation
+ * secret) live in **Secrets Manager** — CDK-native, no template
+ * leakage, supports auto-rotation. The EC2 user-data script in
+ * compute-stack fetches them at boot via the AWS SDK and assembles the
+ * env vars the app reads.
+ *
+ * Why not mirror to SSM SecureString: AwsCustomResource serializes the
+ * `parameters` block as a JSON string, and CFN doesn't resolve
+ * `{{resolve:secretsmanager:...}}` dynamic references nested inside
+ * that string. The unresolved literal gets passed to ssm:PutParameter,
+ * which AWS SSM rejects because parameter values can't contain `{{` or
+ * `}}`. The Secrets-Manager-direct pattern avoids the chain entirely.
  */
 export class DataStack extends Stack {
   public readonly database: rds.DatabaseInstance
+  public readonly databaseSecret: secretsmanager.ISecret
+  public readonly payloadSecret: secretsmanager.ISecret
+  public readonly revalidationSecret: secretsmanager.ISecret
   public readonly mediaBucket: s3.Bucket
   public readonly parameterPathPrefix: string
-  public readonly databaseUrlParameter: ssm.IParameter
-  public readonly payloadSecretParameter: ssm.IParameter
-  public readonly revalidationSecretParameter: ssm.IParameter
 
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props)
     const { envName, cfg, network } = props
     this.parameterPathPrefix = `/seqtek/website/${envName}`
 
-    // ----- RDS -----
-    const dbMasterSecret = new secretsmanager.Secret(this, 'DbMasterSecret', {
-      secretName: `seqtek-website/${envName}/db-master`,
-      description: 'RDS master credentials, used by CDK to bootstrap the DB instance.',
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({ username: 'seqtek' }),
-        generateStringKey: 'password',
-        excludePunctuation: true,
-        passwordLength: 32,
-      },
-    })
-
+    // ----- RDS Postgres + auto-attached master credentials -----
+    // Using fromGeneratedSecret so CDK creates the secret AND wires up
+    // RDS's "auto-attach" behavior — after the DB instance is created,
+    // RDS adds host/port/dbname/engine fields to the secret JSON.
+    // User-data can read the single secret and assemble DATABASE_URL.
     this.database = new rds.DatabaseInstance(this, 'Database', {
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_16_4,
@@ -59,13 +57,17 @@ export class DataStack extends Stack {
       vpc: network.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       securityGroups: [network.rdsSecurityGroup],
-      credentials: rds.Credentials.fromSecret(dbMasterSecret),
+      credentials: rds.Credentials.fromGeneratedSecret('seqtek', {
+        secretName: `seqtek-website/${envName}/db-master`,
+      }),
       allocatedStorage: cfg.rdsAllocatedStorageGb,
       storageType: rds.StorageType.GP3,
       multiAz: cfg.rdsMultiAz,
       backupRetention: Duration.days(7),
       deletionProtection: envName === 'prod',
-      removalPolicy: envName === 'prod' ? RemovalPolicy.RETAIN : RemovalPolicy.SNAPSHOT,
+      // staging: DESTROY (no final snapshot — fast iteration cycle);
+      // prod: RETAIN (data is precious; explicit cleanup post-launch).
+      removalPolicy: envName === 'prod' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
       databaseName: `seqtek_${envName}`,
       publiclyAccessible: false,
       port: 5432,
@@ -73,30 +75,31 @@ export class DataStack extends Stack {
       preferredBackupWindow: '06:00-07:00',
       preferredMaintenanceWindow: 'sun:07:00-sun:08:00',
     })
+    // The DatabaseInstance.secret is auto-attached after creation.
+    this.databaseSecret = this.database.secret!
 
-    // ----- Application secrets -----
-    // CDK-generated in Secrets Manager so the plaintext never appears in
-    // the synth output. The app reads them from Parameter Store
-    // SecureString via the EC2 instance profile.
-    const payloadSecret = new secretsmanager.Secret(this, 'PayloadSecret', {
+    // ----- Application secrets (Secrets Manager) -----
+    this.payloadSecret = new secretsmanager.Secret(this, 'PayloadSecret', {
       secretName: `seqtek-website/${envName}/payload-secret`,
       description: 'Payload encryption key for admin session JWTs.',
       generateSecretString: {
         excludePunctuation: true,
         passwordLength: 64,
       },
+      removalPolicy: envName === 'prod' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     })
 
-    const revalidationSecret = new secretsmanager.Secret(this, 'RevalidationSecret', {
+    this.revalidationSecret = new secretsmanager.Secret(this, 'RevalidationSecret', {
       secretName: `seqtek-website/${envName}/revalidation-secret`,
       description: 'Shared secret validating /api/revalidate webhook callers.',
       generateSecretString: {
         excludePunctuation: true,
         passwordLength: 64,
       },
+      removalPolicy: envName === 'prod' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     })
 
-    // ----- Parameter Store: non-sensitive config (CDK writes plaintext) -----
+    // ----- S3 media bucket -----
     this.mediaBucket = new s3.Bucket(this, 'MediaBucket', {
       bucketName: `seqtek-media-${envName}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -125,6 +128,9 @@ export class DataStack extends Stack {
       ],
     })
 
+    // ----- Parameter Store: non-sensitive config only -----
+    // Sensitive values (db creds, payload secret, revalidation secret)
+    // live in Secrets Manager above. User-data fetches both at boot.
     new ssm.StringParameter(this, 'S3BucketParam', {
       parameterName: `${this.parameterPathPrefix}/s3_bucket`,
       stringValue: this.mediaBucket.bucketName,
@@ -137,52 +143,22 @@ export class DataStack extends Stack {
       description: 'S3 regional hostname for next/image remotePatterns.',
     })
 
-    // ----- Parameter Store: sensitive values via AwsCustomResource -----
-    // The Value: field receives a Token (a CFN dynamic reference); CFN
-    // resolves it at deploy time, NOT at synth time. The synthesized
-    // template only contains the reference (arn + json key), not the
-    // plaintext. Constitution IV: no secrets in synthesized templates.
-    // Build the dynamic-reference expressions. Each `unsafeUnwrap()`
-    // returns the resolved Token string (a CFN `{{resolve:secretsmanager:...}}`
-    // expression). CDK requires the explicit opt-in because the safety
-    // analyzer can't see that the rendered template only contains the
-    // dynamic reference, not the plaintext. The plaintext briefly
-    // transits CFN's resource-provider invocation when the
-    // AwsCustomResource Lambda runs; the durable storage is Parameter
-    // Store SecureString (encrypted). Constitution IV's "no secrets in
-    // git" bar is satisfied — there's no plaintext in the synthesized
-    // CFN template or in the repo.
-    const dbUsername = dbMasterSecret.secretValueFromJson('username').unsafeUnwrap()
-    const dbPassword = dbMasterSecret.secretValueFromJson('password').unsafeUnwrap()
-    const databaseUrlExpr = `postgresql://${dbUsername}:${dbPassword}@${this.database.instanceEndpoint.hostname}:${this.database.instanceEndpoint.port}/seqtek_${envName}`
-
-    this.databaseUrlParameter = mirrorSecretToSsmSecureString(this, 'DatabaseUrlSsm', {
-      parameterName: `${this.parameterPathPrefix}/database_url`,
-      value: databaseUrlExpr,
-      description: 'Postgres connection string (built from RDS endpoint + master secret).',
-    })
-    this.databaseUrlParameter.node.addDependency(this.database)
-
-    this.payloadSecretParameter = mirrorSecretToSsmSecureString(this, 'PayloadSecretSsm', {
-      parameterName: `${this.parameterPathPrefix}/payload_secret`,
-      value: payloadSecret.secretValue.unsafeUnwrap(),
-      description: 'Payload JWT signing secret (mirror of Secrets Manager value).',
-    })
-
-    this.revalidationSecretParameter = mirrorSecretToSsmSecureString(
-      this,
-      'RevalidationSecretSsm',
-      {
-        parameterName: `${this.parameterPathPrefix}/revalidation_secret`,
-        value: revalidationSecret.secretValue.unsafeUnwrap(),
-        description: 'Revalidation webhook shared secret (mirror of Secrets Manager value).',
-      },
-    )
-
-    // ----- Outputs (cross-stack consumption) -----
+    // ----- Outputs -----
     new CfnOutput(this, 'DbEndpointHostname', {
       value: this.database.instanceEndpoint.hostname,
       exportName: `${this.stackName}-DbEndpointHostname`,
+    })
+    new CfnOutput(this, 'DbSecretArn', {
+      value: this.databaseSecret.secretArn,
+      exportName: `${this.stackName}-DbSecretArn`,
+    })
+    new CfnOutput(this, 'PayloadSecretArn', {
+      value: this.payloadSecret.secretArn,
+      exportName: `${this.stackName}-PayloadSecretArn`,
+    })
+    new CfnOutput(this, 'RevalidationSecretArn', {
+      value: this.revalidationSecret.secretArn,
+      exportName: `${this.stackName}-RevalidationSecretArn`,
     })
     new CfnOutput(this, 'MediaBucketName', {
       value: this.mediaBucket.bucketName,
@@ -221,64 +197,4 @@ function parseInstanceType(s: string): ec2.InstanceType {
     throw new Error(`Unknown ec2.InstanceSize: '${sizeName}'`)
   }
   return ec2.InstanceType.of(ec2.InstanceClass[classKey], ec2.InstanceSize[sizeKey])
-}
-
-/**
- * Mirrors a sensitive value into SSM Parameter Store as a SecureString
- * via an AwsCustomResource. The value is passed as a Token so CFN's
- * dynamic-reference resolver materializes it at deploy time, not synth
- * time — keeping the plaintext out of the synthesized template.
- */
-function mirrorSecretToSsmSecureString(
-  scope: Construct,
-  id: string,
-  props: { parameterName: string; value: string; description?: string },
-): ssm.IParameter {
-  const stack = Stack.of(scope)
-  const parameterArn = `arn:aws:ssm:${stack.region}:${stack.account}:parameter${props.parameterName}`
-
-  const physicalId = cr.PhysicalResourceId.of(props.parameterName)
-
-  new cr.AwsCustomResource(scope, `${id}Mirror`, {
-    resourceType: 'Custom::SsmSecureStringMirror',
-    onCreate: {
-      service: 'SSM',
-      action: 'putParameter',
-      parameters: {
-        Name: props.parameterName,
-        Value: props.value,
-        Type: 'SecureString',
-        Overwrite: false,
-        Description: props.description ?? '',
-      },
-      physicalResourceId: physicalId,
-    },
-    onUpdate: {
-      service: 'SSM',
-      action: 'putParameter',
-      parameters: {
-        Name: props.parameterName,
-        Value: props.value,
-        Type: 'SecureString',
-        Overwrite: true,
-        Description: props.description ?? '',
-      },
-      physicalResourceId: physicalId,
-    },
-    onDelete: {
-      service: 'SSM',
-      action: 'deleteParameter',
-      parameters: {
-        Name: props.parameterName,
-      },
-    },
-    policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
-      resources: [parameterArn],
-    }),
-    installLatestAwsSdk: false,
-  })
-
-  return ssm.StringParameter.fromSecureStringParameterAttributes(scope, `${id}Ref`, {
-    parameterName: props.parameterName,
-  })
 }
