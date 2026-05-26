@@ -16,6 +16,11 @@
 - Q: RDS multi-AZ for production → A: Single-AZ for the pre-launch and early-launch period to keep cost down; flip to multi-AZ before public launch (added as a Phase 5.5 launch-readiness item). Flip is a small CDK property change. The 99.9% SLA target (SC-010) is scoped to post-launch and implicitly requires the multi-AZ flip — AWS only SLAs single-AZ RDS at 99.5%.
 - Q: Alarm notification destination → A: SNS topic → Slack incoming webhook. A dedicated `#seqtek-website-alerts` (or similarly named) Slack channel will be created by Kenn; the webhook secret lands in Parameter Store. SNS → Lambda → Slack is ~30 LOC; format includes alarm name, dimension, breached value, link to dashboard.
 
+### Session 2026-05-25
+
+- Q: Should staging get a vanity URL (vs running on the CloudFront-generated default domain) pre-launch? → A: **Yes** — leadership engagement on content production (BR-4 values, BR-5 stats, C-3 bios, etc.) is gated on having a tangible visible-to-them preview site (per `project_internal_dynamics.md`: "leadership historically resistant to internal investment; content is the real bottleneck"). Until they can compare-and-contrast against the current Wix site at a real URL, content won't flow. So staging gets a dedicated leadership-preview URL.
+- Q: Which domain for the staging preview? → A: **`seqtek-preview.com`** (new registration, ~$13/yr). Registered in AWS Route 53 — the registration auto-creates a public hosted zone, which CDK then uses for ACM DNS validation and the A-record alias to CloudFront. Rejected alternatives: `preview.seqtechllc.com` (subdomain on existing Workspace domain) — Kenn does not have Workspace admin access at seqtechllc.com (admin lives at the managing-partner level), so subdomain-delegation required cross-org coordination we can avoid; `seqtek-rebuild.com` / `seqtek-staging.com` — viable but `-preview` is the clearest name for "this is the leadership-preview site, not the public one." Prod (`seqtek.com`) keeps `domainName: null` in CDK until Phase 6 DNS cutover — it serves on its CloudFront default URL pre-cutover and gets its own ACM cert provisioned then.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 — Engineer deploys the app to production for the first time (Priority: P1)
@@ -152,7 +157,16 @@ An engineer needs a staging environment to validate a content migration, a CSP c
 
 **Observability and alarms**
 
-- **FR-020**: The system MUST emit alarms for: load balancer 5xx rate above threshold; load balancer healthy-host count below threshold; ASG instance failures above threshold; RDS CPU above threshold; RDS storage utilization above threshold; RDS connection count above threshold; CloudFront edge error rate above threshold. Thresholds and evaluation windows are set during planning per ARCHITECTURE.md §8.
+- **FR-020**: The system MUST emit the following 9 CloudWatch alarms (thresholds and evaluation windows are set during planning per ARCHITECTURE.md §8 and recorded in `data-model.md` §1):
+  1. Load balancer 5xx rate above threshold (`AlbFiveXx`)
+  2. Load balancer healthy-host count below threshold (`AlbUnhealthyHost`)
+  3. EC2 CPU utilization above threshold sustained (`Ec2CpuHigh`)
+  4. EC2 memory utilization above threshold sustained (`Ec2MemoryHigh`, via CloudWatch Agent)
+  5. EC2 disk utilization above threshold (`Ec2DiskHigh`, via CloudWatch Agent)
+  6. RDS CPU above threshold sustained (`RdsCpuHigh`)
+  7. RDS free storage below threshold (`RdsFreeStorageLow`)
+  8. RDS connection count above threshold (`RdsConnectionsHigh`)
+  9. CloudFront edge error rate above threshold (`CloudFrontErrorRate`)
 - **FR-021**: Every alarm MUST dispatch a notification to the configured Slack channel (via SNS → Lambda → incoming webhook), with alert text that identifies the dimension (ALB / ASG / RDS / CloudFront), the breached threshold, and a link to the relevant dashboard or log group. The webhook URL is sourced from Parameter Store, not hard-coded.
 - **FR-022**: The pipeline MUST include a way to verify the notification path itself is working (a periodic synthetic alarm or documented manual test), so a silent notification failure is detectable.
 - **FR-023**: Container instance logs and application logs MUST flow to CloudWatch Logs with retention configured per environment (longer for prod, shorter for staging).
@@ -191,7 +205,7 @@ An engineer needs a staging environment to validate a content migration, a CSP c
 
 - The target AWS account already exists and is bootstrapped for CDK use (`cdk bootstrap` is treated as a one-time per-account operation, not a per-deploy step).
 - AWS access for engineers is governed by SEQTEK's existing IAM/SSO setup; this feature does not introduce or modify the engineer-side access path.
-- A hosted zone for the production-target domain is either already in Route 53 or can be moved there during this work; staging will use either a sub-zone or the auto-generated CloudFront/ALB DNS until DNS cutover (Phase 6).
+- A hosted zone for the production domain (`seqtek.com`) is **not** required in Route 53 for this feature — prod runs on the CloudFront-generated default URL until Phase 6 DNS cutover. Staging gets its own registered domain (`seqtek-preview.com`, per Clarifications Session 2026-05-25) registered in Route 53, with the auto-created public hosted zone driving ACM DNS validation and the A-record alias to CloudFront.
 - The repository's existing Dockerfile (from D-13 spike) is the starting point. Planning will validate it for production (multi-stage, slim base, no dev tooling, correct entrypoint) and harden it; building a new Dockerfile from scratch is out of scope.
 - ARCHITECTURE.md §5 (Media Storage), §8 (CloudWatch alarms table), and §13 (Infrastructure as Code) are authoritative for the resource topology. Any divergence in this spec is intentional and will be noted; otherwise defer to those docs.
 - The project's CI provider is GitHub Actions (per existing `.github/workflows/`). Switching CI providers is out of scope.
