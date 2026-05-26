@@ -214,6 +214,13 @@ export class ComputeStack extends Stack {
       'dnf install -y docker amazon-cloudwatch-agent jq',
       'systemctl enable --now docker',
       'usermod -a -G docker ec2-user',
+      // AWS RDS issues certs from its own CA which isn't in Node's
+      // default trust bundle. Download the global RDS CA bundle and
+      // mount it into the container via NODE_EXTRA_CA_CERTS so the
+      // Postgres client trusts the RDS endpoint cert chain.
+      'mkdir -p /etc/seqtek/certs',
+      'curl -fsSL -o /etc/seqtek/certs/rds-ca.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem',
+      'chmod 644 /etc/seqtek/certs/rds-ca.pem',
       `PARAM_PREFIX="${data.parameterPathPrefix}"`,
       `REGION="${this.region}"`,
       `AWS_DEFAULT_REGION="${this.region}"`,
@@ -235,7 +242,16 @@ export class ComputeStack extends Stack {
       `DB_HOST=$(echo "$DB_SECRET" | jq -r '.host')`,
       `DB_PORT=$(echo "$DB_SECRET" | jq -r '.port')`,
       `DB_NAME=$(echo "$DB_SECRET" | jq -r '.dbname')`,
-      `echo "DATABASE_URL=postgresql://$DB_USER:$DB_PASS@$DB_HOST:$DB_PORT/$DB_NAME" >> /etc/seqtek-website.env`,
+      // RDS Postgres requires TLS by default; sslmode=require + the
+      // RDS CA bundle (downloaded above + mounted into the container
+      // via NODE_EXTRA_CA_CERTS) gives proper encrypted-and-verified
+      // connections.
+      `echo "DATABASE_URL=postgresql://$DB_USER:$DB_PASS@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=require" >> /etc/seqtek-website.env`,
+      'echo "NODE_EXTRA_CA_CERTS=/etc/seqtek/certs/rds-ca.pem" >> /etc/seqtek-website.env',
+      // Validation period: Payload auto-syncs schema on boot via
+      // drizzle push. Remove this at Phase 5.5 when generated
+      // migrations land.
+      'echo "PAYLOAD_DB_PUSH=true" >> /etc/seqtek-website.env',
       // Payload encryption key + revalidation webhook secret (plain string values).
       `PAYLOAD_SECRET=$(aws secretsmanager get-secret-value --secret-id "${data.payloadSecret.secretArn}" --region "$REGION" --query SecretString --output text)`,
       `echo "PAYLOAD_SECRET=$PAYLOAD_SECRET" >> /etc/seqtek-website.env`,
@@ -244,7 +260,9 @@ export class ComputeStack extends Stack {
       // ----- Pull and run the container image -----
       `aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${this.ecrRepository.repositoryUri}"`,
       `docker pull "${this.ecrRepository.repositoryUri}:latest"`,
-      `docker run -d --name seqtek-website --restart=unless-stopped -p ${APP_PORT}:${APP_PORT} --env-file /etc/seqtek-website.env --log-driver=awslogs --log-opt awslogs-group="${this.appLogGroup.logGroupName}" --log-opt awslogs-region="${this.region}" "${this.ecrRepository.repositoryUri}:latest"`,
+      // Mount the RDS CA bundle read-only at the same path the env var
+      // references. -v /host:/container:ro for read-only.
+      `docker run -d --name seqtek-website --restart=unless-stopped -p ${APP_PORT}:${APP_PORT} --env-file /etc/seqtek-website.env -v /etc/seqtek/certs/rds-ca.pem:/etc/seqtek/certs/rds-ca.pem:ro --log-driver=awslogs --log-opt awslogs-group="${this.appLogGroup.logGroupName}" --log-opt awslogs-region="${this.region}" "${this.ecrRepository.repositoryUri}:latest"`,
     )
 
     // ----- Explicit LaunchTemplate -----
@@ -295,7 +313,11 @@ export class ComputeStack extends Stack {
       maxCapacity: cfg.asgMaxCapacity,
       healthChecks: autoscaling.HealthChecks.withAdditionalChecks({
         additionalTypes: [autoscaling.AdditionalHealthCheckType.ELB],
-        gracePeriod: Duration.minutes(3),
+        // 8-min grace — accommodates docker pull of the ~700MB validation
+        // image + dnf install + migrate run + Next.js start. Phase 5.5
+        // shrinks the image (drop runtime node_modules once we have
+        // committed migrations) and can shorten this back to 3 min.
+        gracePeriod: Duration.minutes(8),
       }),
       updatePolicy: autoscaling.UpdatePolicy.rollingUpdate({
         minInstancesInService: cfg.asgMinCapacity,

@@ -41,6 +41,10 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
+    // TEMPORARY: hardcoded true to bootstrap the fresh staging DB.
+    // Once initial schema is in place + Phase 5.5 introduces real
+    // migrations via `payload migrate:create`, switch back to env-gated.
+    push: true,
   }),
   sharp,
   plugins: [],

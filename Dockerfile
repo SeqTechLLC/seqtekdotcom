@@ -56,14 +56,26 @@ RUN apk add --no-cache tini
 # Create the prerender cache dir with the right ownership.
 RUN mkdir .next && chown nextjs:nodejs .next
 
-# Copy only the standalone server + static assets — Next.js's
-# output: 'standalone' build packs the minimum runtime dep set; we
-# never copy node_modules from the builder stage in full.
+# Copy the standalone server + static assets.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Copy the public directory (Next.js standalone build does NOT bundle public/).
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# VALIDATION PERIOD: include the full node_modules + source + tsconfig
+# + payload-types so `npx payload migrate:fresh` can run as a one-shot
+# DB bootstrap on container start. Without this, the standalone build
+# strips the Payload CLI which is needed to create the initial DB
+# schema. Phase 5.5 polish will:
+#  - Generate migration files via `npx payload migrate:create` at
+#    build time (in the builder stage)
+#  - Drop the runtime node_modules / src copy
+#  - Run `npx payload migrate` (idempotent, no destructive fresh)
+# This adds ~350 MB to the runtime image; acceptable for validation.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/src ./src
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts ./next.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
 USER nextjs
 
@@ -71,15 +83,14 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# Container-level liveness probe. The ALB target group also checks
-# /api/health (see compute-stack.ts) — this HEALTHCHECK is for
-# docker-compose dev parity and as a belt-and-suspenders signal in
-# CloudWatch Container Insights.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# tini as PID 1 → forwards SIGTERM cleanly to node → graceful shutdown.
 ENTRYPOINT ["/sbin/tini", "--"]
 
-# Next.js standalone build emits server.js as the entry point.
-CMD ["node", "server.js"]
+# Run payload migrate (idempotent — only runs new migrations) before
+# the server starts. Migration files live in src/migrations/ and are
+# generated locally via `npx payload migrate:create` against the dev
+# Postgres on :5433. New schema changes during development add new
+# migration files; production deploys apply them in order.
+CMD ["sh", "-c", "npx payload migrate && node server.js"]
