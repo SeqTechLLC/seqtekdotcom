@@ -63,15 +63,23 @@ export class NetworkStack extends Stack {
       allowAllOutbound: true,
     })
     const cloudFrontPrefix = ec2.Peer.prefixList('pl-3b927c52') // CloudFront us-east-1
-    this.albSecurityGroup.addIngressRule(
-      cloudFrontPrefix,
-      ec2.Port.tcp(443),
-      'CloudFront → ALB on 443',
-    )
+    // NB: SG ingress rule descriptions only accept characters from the
+    // set `a-zA-Z0-9. _-:/()#,@[]+=&;{}!$*`. That set excludes `>` and
+    // any non-ASCII character — no `->` arrow, no Unicode `→`. Stick to
+    // plain words like "to" / "from".
+    //
+    // Validation-period topology: only port 80 ingress here. CloudFront
+    // terminates TLS for viewers and uses HTTP_ONLY to the ALB origin
+    // (compute-stack has only a port-80 listener). Each rule with the
+    // CloudFront managed prefix list consumes ~55 of the 60 default
+    // rules-per-SG quota, so we can't keep both 80 and 443 here without
+    // a quota increase. Phase 5.5 swaps this rule for a 443-only rule
+    // when we add the ALB HTTPS listener + ACM cert for defense in
+    // depth between CloudFront and ALB.
     this.albSecurityGroup.addIngressRule(
       cloudFrontPrefix,
       ec2.Port.tcp(80),
-      'CloudFront → ALB on 80 (validation-period; remove at Phase 5.5)',
+      'CloudFront to ALB on 80 (validation-period; flips to 443 at Phase 5.5)',
     )
 
     // App — ingress 3000 from AlbSg only.
@@ -83,7 +91,7 @@ export class NetworkStack extends Stack {
     this.appSecurityGroup.addIngressRule(
       this.albSecurityGroup,
       ec2.Port.tcp(3000),
-      'ALB -> app on port 3000',
+      'ALB to app on port 3000',
     )
 
     // RDS — ingress 5432 from AppSg only.
@@ -95,7 +103,7 @@ export class NetworkStack extends Stack {
     this.rdsSecurityGroup.addIngressRule(
       this.appSecurityGroup,
       ec2.Port.tcp(5432),
-      'App -> RDS on Postgres port',
+      'App to RDS on Postgres port',
     )
 
     // Slack notifier Lambda SG — defined for completeness. Phase 5 (T042)

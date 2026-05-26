@@ -102,19 +102,23 @@ describe('NetworkStack', () => {
     })
   })
 
-  it('ALB SG ingress: CloudFront managed prefix list only, on 443 + 80', () => {
+  it('ALB SG ingress: CloudFront managed prefix list only, on port 80 (validation-period)', () => {
+    // Validation-period topology: only port 80 ingress. Phase 5.5
+    // swaps to port 443 when ALB HTTPS listener lands. AWS SG quota
+    // (default 60 rules) prevents holding both rules simultaneously
+    // since the CloudFront prefix list consumes ~55 rules per use.
     const t = synthProd()
     const ingresses = t.findResources('AWS::EC2::SecurityGroupIngress')
-    const fromCloudFront443 = Object.values(ingresses).filter((r) => {
-      const props = r.Properties as { SourcePrefixListId?: string; FromPort?: number }
-      return props.SourcePrefixListId === 'pl-3b927c52' && props.FromPort === 443
-    })
     const fromCloudFront80 = Object.values(ingresses).filter((r) => {
       const props = r.Properties as { SourcePrefixListId?: string; FromPort?: number }
       return props.SourcePrefixListId === 'pl-3b927c52' && props.FromPort === 80
     })
-    expect(fromCloudFront443.length).toBeGreaterThanOrEqual(1)
-    expect(fromCloudFront80.length).toBeGreaterThanOrEqual(1)
+    const fromCloudFront443 = Object.values(ingresses).filter((r) => {
+      const props = r.Properties as { SourcePrefixListId?: string; FromPort?: number }
+      return props.SourcePrefixListId === 'pl-3b927c52' && props.FromPort === 443
+    })
+    expect(fromCloudFront80.length, 'port 80 ingress present').toBeGreaterThanOrEqual(1)
+    expect(fromCloudFront443.length, 'port 443 ingress absent during validation period').toBe(0)
   })
 
   it('app SG accepts ingress on 3000 only from ALB SG', () => {
@@ -135,6 +139,40 @@ describe('NetworkStack', () => {
       IpProtocol: 'tcp',
       SourceSecurityGroupId: Match.anyValue(),
     })
+  })
+
+  it('all SG ingress descriptions match AWS allowed charset (no >, no Unicode)', () => {
+    // AWS EC2 only accepts SG rule descriptions from the character set
+    // `a-zA-Z0-9. _-:/()#,@[]+=&;{}!$*`. `>` and Unicode characters are
+    // rejected at deploy time with a 400 ServiceError. CDK assertion
+    // tests check shape, not value — so this regex check exists to
+    // catch the regression class that bit us twice on first deploy.
+    const ALLOWED = /^[a-zA-Z0-9. _\-:/()#,@[\]+=&;{}!$*]*$/
+    const t = synthProd()
+    const standalone = t.findResources('AWS::EC2::SecurityGroupIngress')
+    for (const [id, r] of Object.entries(standalone)) {
+      const d = (r.Properties as { Description?: string }).Description
+      if (d !== undefined) {
+        expect(
+          d,
+          `${id} description must match AWS allowed charset, got: ${JSON.stringify(d)}`,
+        ).toMatch(ALLOWED)
+      }
+    }
+    const sgs = t.findResources('AWS::EC2::SecurityGroup')
+    for (const [id, r] of Object.entries(sgs)) {
+      const inline =
+        (r.Properties as { SecurityGroupIngress?: Array<{ Description?: string }> })
+          .SecurityGroupIngress ?? []
+      for (const rule of inline) {
+        if (rule.Description !== undefined) {
+          expect(
+            rule.Description,
+            `${id} inline ingress description must match AWS allowed charset, got: ${JSON.stringify(rule.Description)}`,
+          ).toMatch(ALLOWED)
+        }
+      }
+    }
   })
 
   it('no security group allows ingress from 0.0.0.0/0 on any port', () => {
