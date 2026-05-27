@@ -12,10 +12,15 @@ const ALLOWED_DOMAIN = 'seqtechllc.com'
 const MAX_AGE_SECONDS = 600 // 10 minutes — long enough to complete consent
 
 function callbackUri(req: NextRequest): string {
-  const url = new URL(req.url)
-  url.pathname = '/api/auth/oauth/callback/google'
-  url.search = ''
-  return url.toString()
+  // Behind ALB/CloudFront, `req.url` shows the container's internal
+  // bind address (http://0.0.0.0:3000/...), not the viewer-facing URL.
+  // The ALB injects `x-forwarded-host` and `x-forwarded-proto` per
+  // RFC 7239 conventions; use those to reconstruct the public URL.
+  // Fallback chain handles local dev and direct-to-Next.js connections.
+  const proto = req.headers.get('x-forwarded-proto') ?? new URL(req.url).protocol.replace(':', '')
+  const host =
+    req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? new URL(req.url).host
+  return `${proto}://${host}/api/auth/oauth/callback/google`
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
