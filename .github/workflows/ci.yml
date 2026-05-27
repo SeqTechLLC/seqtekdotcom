@@ -47,6 +47,43 @@ jobs:
       - name: Audit production dependencies (high+ severity)
         run: npm audit --omit=dev --audit-level=high
 
+  lint-workflows:
+    name: Workflows lint (actionlint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install actionlint
+        run: bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+
+      - name: Lint .github/workflows/*.yml
+        run: ./actionlint -color
+
+  infra-synth:
+    name: CDK synth + assertion tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: infra/package-lock.json
+
+      - name: Install infra dependencies
+        run: npm --prefix infra ci
+
+      - name: CDK synth (staging)
+        run: npm --prefix infra run synth -- -c env=staging --quiet
+
+      - name: CDK synth (prod)
+        run: npm --prefix infra run synth -- -c env=prod --quiet
+
+      - name: Vitest (CDK assertions)
+        run: npm --prefix infra run test
+
   secrets:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
