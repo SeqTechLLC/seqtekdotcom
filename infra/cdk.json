@@ -31,11 +31,11 @@
         "logRetentionDays": 90
       },
       "staging": {
-        "_comment_domain": "Set domainName + hostedZoneId together after T029a registers seqtek-preview.com in Route 53. Until then, staging serves on its CloudFront-default URL.",
+        "_comment_domain": "seqtek-preview.com registered 2026-05-27 (T029a). Hosted zone auto-created by Route 53; CDK provisions ACM cert via DNS validation + A records on next SeqtekStagingEdge deploy.",
         "_comment_sizing": "Validation-period free-tier-eligible sizes per Clarifications Session 2026-05-26. Flip to t3.small / db.t3.small / 50GB at Phase 5.5 launch-readiness review.",
         "region": "us-east-1",
-        "domainName": null,
-        "hostedZoneId": null,
+        "domainName": "seqtek-preview.com",
+        "hostedZoneId": "Z00293712Y3ITLM3J388K",
         "certificateArn": null,
         "instanceClass": "t3",
         "instanceSize": "micro",
