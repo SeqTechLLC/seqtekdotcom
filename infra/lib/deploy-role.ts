@@ -115,11 +115,23 @@ export class DeployRoles extends Construct {
       }),
     )
 
-    // CDK toolkit roles (bootstrap-created — file asset publishing, image asset publishing, etc.)
+    // CDK toolkit roles (bootstrap-created — file asset publishing, image
+    // asset publishing, etc.). `iam:PassRole` lets CFN pass them when
+    // resources reference them; `sts:AssumeRole` lets `cdk synth/diff/deploy`
+    // hop to them at the CLI level (lookup-role for context queries,
+    // deploy-role / cfn-exec-role / file-publishing-role / image-publishing-role
+    // for the actual deploy).
     role.addToPolicy(
       new iam.PolicyStatement({
         sid: 'PassCdkExecRoles',
         actions: ['iam:PassRole'],
+        resources: [`arn:aws:iam::${account}:role/cdk-*`],
+      }),
+    )
+    role.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'AssumeCdkBootstrapRoles',
+        actions: ['sts:AssumeRole'],
         resources: [`arn:aws:iam::${account}:role/cdk-*`],
       }),
     )
