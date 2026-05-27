@@ -144,17 +144,18 @@ describe('EdgeStack', () => {
       })
     })
 
-    it('error response 403 → 404 for missing media objects', () => {
-      t.hasResourceProperties('AWS::CloudFront::Distribution', {
-        DistributionConfig: Match.objectLike({
-          CustomErrorResponses: Match.arrayWith([
-            Match.objectLike({
-              ErrorCode: 403,
-              ResponseCode: 404,
-            }),
-          ]),
-        }),
-      })
+    it('does NOT include broken 403→404 remap (deferred to Phase 5.5)', () => {
+      // CloudFront rejects responseHttpStatus without responsePagePath.
+      // Phase 5.5 will add a /404.html to the S3 bucket and wire up the
+      // remap. For now, S3's 403 surfaces to viewers unchanged.
+      const dists = t.findResources('AWS::CloudFront::Distribution')
+      const [, dist] = Object.entries(dists)[0]!
+      const errorResponses = (
+        dist.Properties as {
+          DistributionConfig: { CustomErrorResponses?: Array<unknown> }
+        }
+      ).DistributionConfig.CustomErrorResponses
+      expect(errorResponses).toBeUndefined()
     })
 
     it('does NOT create an ACM certificate when domainName is null', () => {

@@ -191,7 +191,12 @@ describe('IAM invariants — every stack', () => {
         }
       })
 
-      it('EC2 instance profile roles do NOT include AmazonSSMManagedInstanceCore', () => {
+      it('EC2 instance profile roles attach ONLY allowlisted managed policies', () => {
+        // Validation-period carve-out: AmazonSSMManagedInstanceCore is
+        // accepted for SSM Session Manager debug access. Phase 5.5 polish
+        // removes that attachment from compute-stack.ts and tightens this
+        // allowlist back to an empty set.
+        const ALLOWED_MANAGED_POLICIES = new Set(['AmazonSSMManagedInstanceCore'])
         const t = synth()
         const roles = t.findResources('AWS::IAM::Role')
         for (const [logicalId, res] of Object.entries(roles)) {
@@ -211,10 +216,12 @@ describe('IAM invariants — every stack', () => {
           const managed = props.ManagedPolicyArns ?? []
           for (const arn of managed) {
             const serialized = typeof arn === 'string' ? arn : JSON.stringify(arn)
+            const match = serialized.match(/policy\/([\w-]+)/)
+            const policyName = match?.[1] ?? ''
             expect(
-              serialized,
-              `EC2 role ${logicalId} in ${name} must not attach AmazonSSMManagedInstanceCore`,
-            ).not.toContain('AmazonSSMManagedInstanceCore')
+              ALLOWED_MANAGED_POLICIES.has(policyName),
+              `EC2 role ${logicalId} in ${name} attaches non-allowlisted managed policy: ${serialized}`,
+            ).toBe(true)
           }
         }
       })

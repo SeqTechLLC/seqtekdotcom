@@ -152,14 +152,11 @@ export class EdgeStack extends Stack {
           compress: true,
         },
       },
-      errorResponses: [
-        // S3 returns 403 for missing objects (per OAC + BlockPublicAccess); rewrite to 404.
-        {
-          httpStatus: 403,
-          responseHttpStatus: 404,
-          ttl: Duration.seconds(0),
-        },
-      ],
+      // S3 returns 403 for missing objects (per OAC + BlockPublicAccess);
+      // we'd like to remap to 404 but CloudFront requires both
+      // `responseHttpStatus` AND `responsePagePath` together (or neither).
+      // Phase 5.5 polish: add a static `/404.html` to the S3 bucket and
+      // wire up the remap.
     })
 
     // ----- S3 media bucket policy -----

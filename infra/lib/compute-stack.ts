@@ -99,6 +99,13 @@ export class ComputeStack extends Stack {
     const appInstanceRole = new iam.Role(this, 'AppInstanceRole', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
       description: `EC2 instance profile role for the ${envName} application instances.`,
+      managedPolicies: [
+        // Validation-period addition: allows SSM Session Manager
+        // shell access for debugging boot issues. Phase 5.5 polish
+        // removes this once the boot path is reliable. The iam-invariants
+        // assertion test has a matching validation-period carve-out.
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
+      ],
     })
 
     appInstanceRole.addToPolicy(
