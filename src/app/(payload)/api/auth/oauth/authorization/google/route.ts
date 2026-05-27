@@ -12,12 +12,23 @@ const ALLOWED_DOMAIN = 'seqtechllc.com'
 const MAX_AGE_SECONDS = 600 // 10 minutes — long enough to complete consent
 
 function callbackUri(req: NextRequest): string {
-  // Behind ALB/CloudFront, `req.url` shows the container's internal
-  // bind address (http://0.0.0.0:3000/...), not the viewer-facing URL.
-  // The ALB injects `x-forwarded-host` and `x-forwarded-proto` per
-  // RFC 7239 conventions; use those to reconstruct the public URL.
-  // Fallback chain handles local dev and direct-to-Next.js connections.
-  const proto = req.headers.get('x-forwarded-proto') ?? new URL(req.url).protocol.replace(':', '')
+  // Behind CloudFront -> ALB -> EC2 -> Docker -> Next.js, `req.url` shows
+  // the container's internal bind address (http://0.0.0.0:3000/...).
+  // Reconstruct the viewer-facing URL from forwarded headers.
+  //
+  // Protocol: prefer CloudFront's own `cloudfront-forwarded-proto` header
+  // which always reflects the actual VIEWER protocol. Our CloudFront
+  // distribution uses HTTP_ONLY to the ALB origin (validation-period
+  // topology), so `x-forwarded-proto` arrives at Next.js as 'http' —
+  // wrong for OAuth redirect_uri which must match the registered
+  // viewer-facing HTTPS URL. Fall back to x-forwarded-proto for non-CF
+  // proxy setups, then req.url's protocol for local dev.
+  //
+  // Host: prefer x-forwarded-host (set by ALB), then standard Host header.
+  const proto =
+    req.headers.get('cloudfront-forwarded-proto') ??
+    req.headers.get('x-forwarded-proto') ??
+    new URL(req.url).protocol.replace(':', '')
   const host =
     req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? new URL(req.url).host
   return `${proto}://${host}/api/auth/oauth/callback/google`

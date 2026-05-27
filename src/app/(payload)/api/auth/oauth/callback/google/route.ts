@@ -26,7 +26,10 @@ function callbackUri(req: NextRequest): string {
   // Mirror the authorization route's helper — must produce the same
   // URI value or Google's token exchange fails the redirect_uri match.
   // See the authorization route for the proxy-header rationale.
-  const proto = req.headers.get('x-forwarded-proto') ?? new URL(req.url).protocol.replace(':', '')
+  const proto =
+    req.headers.get('cloudfront-forwarded-proto') ??
+    req.headers.get('x-forwarded-proto') ??
+    new URL(req.url).protocol.replace(':', '')
   const host =
     req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? new URL(req.url).host
   return `${proto}://${host}/api/auth/oauth/callback/google`
