@@ -200,7 +200,14 @@ jobs:
 
       - name: Post-deploy smoke
         env:
+          # POST_DEPLOY_URL drives the spec under test.
+          # PLAYWRIGHT_BASE_URL is what playwright.config.ts checks to skip
+          # spinning up the local `npm run dev` webServer — that webServer
+          # path needs PAYLOAD_SECRET / DATABASE_URL and is only meant for
+          # the PR-time tests job. Setting PLAYWRIGHT_BASE_URL switches us
+          # into the external-server branch of the config.
           POST_DEPLOY_URL: ${{ needs.deploy.outputs.site-url }}
+          PLAYWRIGHT_BASE_URL: ${{ needs.deploy.outputs.site-url }}
         run: npx playwright test tests/e2e/post-deploy-smoke.e2e.spec.ts
 
       - name: Upload Playwright report
