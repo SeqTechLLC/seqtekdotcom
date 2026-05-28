@@ -9,6 +9,18 @@ on:
   push:
     branches:
       - main
+    # Skip staging redeploy for changes that can't affect the running
+    # image. Release-Please's PR-merges and docs-only PRs both fall into
+    # this bucket. `paths-ignore` skips the workflow entirely if EVERY
+    # changed path matches — mixed code+docs commits still trigger.
+    paths-ignore:
+      - CHANGELOG.md
+      - .release-please-manifest.json
+      - docs/**
+      - specs/**
+      - README.md
+      - CLAUDE.md
+      - LICENSE
   workflow_dispatch:
     inputs:
       stack-filter:
