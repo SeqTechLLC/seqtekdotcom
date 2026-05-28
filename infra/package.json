@@ -1,0 +1,29 @@
+{
+  "name": "@seqtek/infra",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AWS CDK infrastructure for the SEQTEK website (spec 002).",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.257.0",
+    "constructs": "10.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.9",
+    "aws-cdk": "2.1124.1",
+    "tsx": "4.21.0",
+    "typescript": "5.7.3",
+    "vitest": "4.0.18"
+  }
+}

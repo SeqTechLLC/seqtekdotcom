@@ -29,7 +29,29 @@ const eslintConfig = [
     },
   },
   {
-    ignores: ['.next/', 'src/payload-types.ts', 'src/payload-generated-schema.ts'],
+    ignores: [
+      '.next/',
+      'src/payload-types.ts',
+      'src/payload-generated-schema.ts',
+      'infra/cdk.out/',
+      'infra/node_modules/',
+    ],
+  },
+  {
+    // CDK infrastructure code — plain Node TypeScript, not React/Next.
+    // The Next preset's JSX/TSX-targeted rules are filename-filtered so
+    // they don't fire here; this block exists to make inclusion explicit
+    // and to override anything Next-specific that surfaces incorrectly.
+    files: ['infra/**/*.ts'],
+    rules: {
+      // CDK constructs commonly use `new Construct(this, 'Id')` where the
+      // construct is intentionally unreferenced after instantiation
+      // (side-effect registration with the parent scope).
+      '@typescript-eslint/no-unused-expressions': 'off',
+      // CDK aspects often have `any` in their visitor signatures
+      // (cdk-lib's own IAspect.visit returns `void` against `IConstruct`).
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
   },
 ]
 

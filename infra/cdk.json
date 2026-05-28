@@ -1,0 +1,53 @@
+{
+  "app": "npx tsx bin/app.ts",
+  "watch": {
+    "include": ["bin/**", "lib/**", "lambda/**"],
+    "exclude": ["node_modules", "cdk.out", "test"]
+  },
+  "context": {
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/core:target-partitions": ["aws"],
+    "@aws-cdk/aws-ec2:launchTemplateDefaultUserData": true,
+    "@aws-cdk/aws-rds:databaseProxyUniqueResourceName": true,
+    "@aws-cdk/core:enablePartitionLiterals": true,
+    "@aws-cdk/aws-s3:keepNotificationInImportedBucket": false,
+    "envs": {
+      "prod": {
+        "_comment_domain": "seqtek.com cutover deferred to Phase 6 — prod stays on CloudFront-default URL pre-cutover. Flip domainName + hostedZoneId together at Phase 6.",
+        "region": "us-east-1",
+        "domainName": null,
+        "hostedZoneId": null,
+        "certificateArn": null,
+        "instanceClass": "t3",
+        "instanceSize": "small",
+        "rdsInstanceClass": "t3.small",
+        "rdsAllocatedStorageGb": 50,
+        "rdsMultiAz": false,
+        "asgMinCapacity": 2,
+        "asgDesiredCapacity": 2,
+        "asgMaxCapacity": 3,
+        "ecrRetainCount": 10,
+        "logRetentionDays": 90
+      },
+      "staging": {
+        "_comment_domain": "seqtek-preview.com registered 2026-05-27 (T029a). Hosted zone auto-created by Route 53; CDK provisions ACM cert via DNS validation + A records on next SeqtekStagingEdge deploy.",
+        "_comment_sizing": "Validation-period free-tier-eligible sizes per Clarifications Session 2026-05-26. Flip to t3.small / db.t3.small / 50GB at Phase 5.5 launch-readiness review.",
+        "region": "us-east-1",
+        "domainName": "seqtek-preview.com",
+        "hostedZoneId": "Z00293712Y3ITLM3J388K",
+        "certificateArn": null,
+        "instanceClass": "t3",
+        "instanceSize": "micro",
+        "rdsInstanceClass": "t3.micro",
+        "rdsAllocatedStorageGb": 20,
+        "rdsMultiAz": false,
+        "asgMinCapacity": 1,
+        "asgDesiredCapacity": 1,
+        "asgMaxCapacity": 2,
+        "ecrRetainCount": 10,
+        "logRetentionDays": 14
+      }
+    }
+  }
+}

@@ -46,6 +46,6 @@ Phase 1 — implementation begins. The stack-validation spike (`spike/stack-vali
 
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/001-google-oauth-sso/plan.md`.
+`specs/002-aws-cdk-infrastructure/plan.md`.
 
 <!-- SPECKIT END -->
