@@ -1,0 +1,14 @@
+{
+  "name": "@seqtek/slack-notifier",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SNS -> Slack incoming-webhook notifier for SEQTEK website CloudWatch alarms.",
+  "main": "index.ts",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-ssm": "3.703.0",
+    "@types/aws-lambda": "8.10.149"
+  }
+}

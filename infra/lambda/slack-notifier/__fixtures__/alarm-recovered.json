@@ -1,0 +1,26 @@
+{
+  "AlarmName": "SeqtekStagingObservability-AlbFiveXx",
+  "AlarmDescription": "ALB 5xx error rate above 5 in 5 minutes",
+  "AWSAccountId": "600881993295",
+  "AlarmConfigurationUpdatedTimestamp": "2026-05-28T17:00:00.000+0000",
+  "NewStateValue": "OK",
+  "NewStateReason": "Threshold Crossed: 1 datapoint [0.0 (28/05/26 18:10:00)] was not greater than the threshold (5.0).",
+  "StateChangeTime": "2026-05-28T18:15:34.567+0000",
+  "Region": "us-east-1",
+  "AlarmArn": "arn:aws:cloudwatch:us-east-1:600881993295:alarm:SeqtekStagingObservability-AlbFiveXx",
+  "OldStateValue": "ALARM",
+  "OKActions": ["arn:aws:sns:us-east-1:600881993295:SeqtekStagingObservability-AlarmTopic"],
+  "AlarmActions": ["arn:aws:sns:us-east-1:600881993295:SeqtekStagingObservability-AlarmTopic"],
+  "InsufficientDataActions": [],
+  "Trigger": {
+    "MetricName": "HTTPCode_Target_5XX_Count",
+    "Namespace": "AWS/ApplicationELB",
+    "Statistic": "SUM",
+    "Dimensions": [{ "name": "LoadBalancer", "value": "app/SeqtekStagingComp-Alb-XXXX/YYYY" }],
+    "Period": 300,
+    "EvaluationPeriods": 1,
+    "ComparisonOperator": "GreaterThanThreshold",
+    "Threshold": 5.0,
+    "TreatMissingData": "notBreaching"
+  }
+}

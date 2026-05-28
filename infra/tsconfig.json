@@ -23,6 +23,6 @@
     "isolatedModules": true,
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "lambda/**/*.ts"],
-  "exclude": ["node_modules", "cdk.out"]
+  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "cdk.out", "lambda"]
 }

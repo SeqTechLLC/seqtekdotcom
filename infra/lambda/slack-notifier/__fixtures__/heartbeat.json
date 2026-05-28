@@ -1,0 +1,9 @@
+{
+  "AlarmName": "Heartbeat",
+  "AlarmDescription": "EventBridge synthetic heartbeat — exercises the alert pipeline",
+  "AWSAccountId": "600881993295",
+  "NewStateValue": "HEARTBEAT",
+  "StateChangeTime": "2026-05-28T18:00:00.000+0000",
+  "Region": "us-east-1",
+  "AlarmArn": "arn:aws:events:us-east-1:600881993295:rule/SeqtekStagingObservability-Heartbeat"
+}
