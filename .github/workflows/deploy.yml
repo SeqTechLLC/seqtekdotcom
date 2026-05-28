@@ -96,13 +96,34 @@ jobs:
         run: npm --prefix infra ci
 
       - name: cdk deploy (${{ env.STACK_FILTER }})
-        # LaunchTemplate UserData references `:latest` indirectly; the
-        # LaunchTemplate version bump from `cdk deploy` triggers the ASG
-        # rolling instance refresh.
         run: |
           npm --prefix infra run cdk -- deploy -c env=staging "$STACK_FILTER" \
             --require-approval never \
             --outputs-file cdk-outputs.json
+
+      - name: Trigger ASG instance refresh
+        # cdk deploy of *Compute does NOT change the LaunchTemplate when the
+        # only effective change is the upstream `:latest` image content
+        # (the UserData is byte-identical from CDK's POV), so the ASG
+        # doesn't auto-refresh. Trigger explicitly so running instances
+        # re-pull the just-pushed image.
+        run: |
+          set -euo pipefail
+          ASG_NAME=$(aws cloudformation describe-stack-resources \
+            --stack-name SeqtekStagingCompute \
+            --query "StackResources[?ResourceType=='AWS::AutoScaling::AutoScalingGroup'].PhysicalResourceId | [0]" \
+            --output text 2>/dev/null || echo None)
+          if [ -z "$ASG_NAME" ] || [ "$ASG_NAME" = "None" ]; then
+            echo "No ASG resource found in SeqtekStagingCompute — skipping refresh trigger."
+            exit 0
+          fi
+          REFRESH_ID=$(aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name "$ASG_NAME" \
+            --strategy Rolling \
+            --preferences '{"MinHealthyPercentage":100,"InstanceWarmup":180,"SkipMatching":false}' \
+            --query 'InstanceRefreshId' \
+            --output text)
+          echo "Started instance refresh $REFRESH_ID on $ASG_NAME"
 
       - name: Wait for ASG instance refresh
         # Poll up to 15 min. Pass-through if the stack filter didn't touch
