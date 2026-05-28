@@ -23,10 +23,16 @@ function loginErrorRedirect(req: NextRequest, code: string): NextResponse {
 }
 
 function callbackUri(req: NextRequest): string {
-  const url = new URL(req.url)
-  url.pathname = '/api/auth/oauth/callback/google'
-  url.search = ''
-  return url.toString()
+  // Mirror the authorization route's helper — must produce the same
+  // URI value or Google's token exchange fails the redirect_uri match.
+  // See the authorization route for the proxy-header rationale.
+  const proto =
+    req.headers.get('cloudfront-forwarded-proto') ??
+    req.headers.get('x-forwarded-proto') ??
+    new URL(req.url).protocol.replace(':', '')
+  const host =
+    req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? new URL(req.url).host
+  return `${proto}://${host}/api/auth/oauth/callback/google`
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {

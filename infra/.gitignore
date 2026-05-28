@@ -1,0 +1,26 @@
+# CDK output
+cdk.out/
+cdk.context.json
+
+# Dependencies
+node_modules/
+
+# Local-only build artifacts (we use tsx; no committed JS)
+*.d.ts
+*.js
+!.eslintrc.js
+lambda/**/*.js
+lambda/**/*.d.ts
+
+# Test output
+coverage/
+*.lcov
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

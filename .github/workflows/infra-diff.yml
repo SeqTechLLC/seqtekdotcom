@@ -1,0 +1,106 @@
+name: Infra Diff
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.github/workflows/deploy.yml'
+      - '.github/workflows/infra-diff.yml'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diff:
+    name: cdk diff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: infra/package-lock.json
+
+      - name: Install infra dependencies
+        run: npm --prefix infra ci
+
+      - name: Configure AWS credentials (staging OIDC role, read-only diff)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/SeqtekStagingDeploy
+          aws-region: us-east-1
+          role-session-name: github-infra-diff-${{ github.run_id }}
+
+      - name: cdk diff (staging)
+        # `cdk diff` exits non-zero when there are pending changes — that's
+        # the expected state on an infra PR. We still want to capture the
+        # output and post the comment, so don't fail the step.
+        run: |
+          npm --prefix infra run cdk -- diff -c env=staging 'SeqtekStaging*' \
+            > diff-staging.txt 2>&1 || true
+
+      - name: cdk diff (prod)
+        run: |
+          npm --prefix infra run cdk -- diff -c env=prod 'SeqtekProd*' \
+            > diff-prod.txt 2>&1 || true
+
+      - name: Post or update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const MAX = 30000; // per env; combined ~60k stays inside GitHub's 65k comment limit
+            const truncate = (label, body) => {
+              if (body.length <= MAX) return body;
+              return body.slice(0, MAX) + `\n\n[${label} truncated — see workflow run for full output]`;
+            };
+            const stagingDiff = truncate('staging diff', fs.readFileSync('diff-staging.txt', 'utf8'));
+            const prodDiff = truncate('prod diff', fs.readFileSync('diff-prod.txt', 'utf8'));
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const marker = '<!-- speckit-infra-diff -->';
+            const body = [
+              marker,
+              '### CDK Diff',
+              `Workflow run: ${runUrl}`,
+              `Commit: \`${context.payload.pull_request.head.sha.slice(0, 7)}\``,
+              '',
+              '<details><summary><strong>Staging</strong> (<code>SeqtekStaging*</code>)</summary>',
+              '',
+              '```diff',
+              stagingDiff.trim() || '(no output)',
+              '```',
+              '',
+              '</details>',
+              '',
+              '<details><summary><strong>Production</strong> (<code>SeqtekProd*</code>)</summary>',
+              '',
+              '```diff',
+              prodDiff.trim() || '(no output)',
+              '```',
+              '',
+              '</details>',
+            ].join('\n');
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.find((c) => c.body && c.body.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
