@@ -130,26 +130,33 @@ jobs:
     name: Playwright + axe + Lighthouse
     runs-on: ubuntu-latest
     needs: quality
+    # Job runs inside Microsoft's official Playwright image: Chromium +
+    # all required Linux libs are preinstalled. Eliminates the recurring
+    # `npx playwright install --with-deps chromium` apt-get hang on
+    # GH-hosted runners. Bump the tag in lockstep with @playwright/test
+    # in package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-jammy
+      # --ipc=host prevents Chromium shared-memory crashes inside Docker.
+      options: --ipc=host
     services:
-      # Required for `next build` (Payload reads DATABASE_URL at build time
-      # for prerender) and for the dev server Playwright spawns via
-      # `webServer.command`. The int suites use testcontainers in a separate
-      # job above and do not need this service.
+      # Reachable as `postgres:5432` inside the container job (not as
+      # `localhost:5433` — host-port mapping doesn't apply when the job
+      # itself is containerized; we talk to the service via the docker
+      # network using its service name).
       postgres:
         image: postgres:16
         env:
           POSTGRES_USER: seqtek
           POSTGRES_PASSWORD: seqtek
           POSTGRES_DB: seqtek_dev
-        ports:
-          - 5433:5432
         options: >-
           --health-cmd "pg_isready -U seqtek -d seqtek_dev"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://seqtek:seqtek@localhost:5433/seqtek_dev
+      DATABASE_URL: postgresql://seqtek:seqtek@postgres:5432/seqtek_dev
       # Synthetic per-run secret — never reused, never represents a real env.
       PAYLOAD_SECRET: ci-${{ github.run_id }}-${{ github.run_attempt }}
       # CSP defaults to report-only — matches local dev and the tests that
@@ -166,16 +173,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers (Chromium + system deps)
-        run: npx playwright install --with-deps chromium
-
       - name: Build (production)
         run: npm run build
 
       - name: Playwright E2E + axe a11y
         run: npm run test:e2e
 
+      - name: Resolve Playwright Chromium binary for Lighthouse
+        id: chrome
+        # @lhci/cli uses chrome-launcher under the hood, which doesn't know
+        # about Microsoft's /ms-playwright path. Resolve the actual binary
+        # so lhci's chrome-launcher picks it up via CHROME_PATH.
+        run: |
+          CHROME_PATH=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          echo "path=${CHROME_PATH}" >> "$GITHUB_OUTPUT"
+
       - name: Lighthouse CI (a11y/best-practices/SEO gate; perf as warnings)
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.path }}
         run: npm run test:lhci
 
       - name: Upload Playwright report
