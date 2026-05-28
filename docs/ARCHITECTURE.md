@@ -505,10 +505,13 @@ ALB (Application Load Balancer)
     │  - Routes traffic to healthy EC2 targets
     │
     ▼
-Auto Scaling Group (min=1, max=2, desired=1)
-    │  - Blue-green deploys: temporarily scales to 2 during Instance Refresh
-    │  - New instance must pass health check before old is terminated
-    │  - Zero-downtime guaranteed
+Auto Scaling Group
+    │  - Production: min=2, max=3, desired=2 across 2 AZs
+    │    (AZ fault-tolerance + SC-010 99.9% post-launch SLA)
+    │  - Staging: min=1, max=2, desired=1 (single instance is enough for smoke)
+    │  - Blue-green via Instance Refresh: temporarily scales beyond desired
+    │    capacity, MinHealthyPercentage=100 so the old instance stays in
+    │    service until the new one passes /api/health
     │
     └── EC2 (t3.small, private subnet)
         │  - Docker container running Next.js + Payload (`next start`)
@@ -827,16 +830,19 @@ The repo is public — a single accidental commit of credentials means they are 
 
 ### CloudWatch Alarms
 
-| Alarm                  | Metric                  | Threshold             | Action                                 |
-| ---------------------- | ----------------------- | --------------------- | -------------------------------------- |
-| **5xx Error Rate**     | ALB HTTPCode_Target_5XX | >5 in 5 minutes       | SNS → email notification               |
-| **Unhealthy Host**     | ALB UnHealthyHostCount  | >0 for 2 minutes      | SNS → email notification               |
-| **CPU Utilization**    | EC2 CPUUtilization      | >80% sustained 10 min | SNS → evaluate scaling                 |
-| **Memory Utilization** | EC2 (CloudWatch Agent)  | >85% sustained 10 min | SNS → evaluate instance size           |
-| **Disk Usage**         | EC2 (CloudWatch Agent)  | >80%                  | SNS → clean ISR cache or resize volume |
-| **RDS CPU**            | RDS CPUUtilization      | >80% sustained 10 min | SNS → evaluate instance class          |
-| **RDS Free Storage**   | RDS FreeStorageSpace    | <2 GB                 | SNS → increase storage                 |
-| **RDS Connections**    | RDS DatabaseConnections | >80% of max           | SNS → investigate connection leaks     |
+Every alarm publishes to a single SNS topic (`Seqtek{Env}Observability-AlarmTopic`). An inline Node Lambda subscribed to the topic formats the message as Slack Block Kit and POSTs it to the incoming webhook for `#seqtek-website-alerts`. Both `ALARM` and `OK` transitions fire so the channel sees recovery. An EventBridge rule fires a synthetic heartbeat every 6 hours through the same path — if the heartbeats stop appearing, the path is broken even if no real alarms are firing (FR-022).
+
+| Alarm                  | Metric                             | Threshold             | Action                                        |
+| ---------------------- | ---------------------------------- | --------------------- | --------------------------------------------- |
+| **ALB 5xx Error Rate** | ALB HTTPCode_Target_5XX            | >5 in 5 minutes       | SNS → Lambda → Slack `#seqtek-website-alerts` |
+| **ALB Unhealthy Host** | ALB UnHealthyHostCount             | >0 for 2 minutes      | SNS → Lambda → Slack `#seqtek-website-alerts` |
+| **EC2 CPU**            | EC2 CPUUtilization (ASG-aggregate) | >80% sustained 10 min | SNS → Lambda → Slack `#seqtek-website-alerts` |
+| **EC2 Memory**         | CWAgent mem_used_percent           | >85% sustained 10 min | SNS → Lambda → Slack `#seqtek-website-alerts` |
+| **EC2 Disk**           | CWAgent disk_used_percent          | >80%                  | SNS → Lambda → Slack `#seqtek-website-alerts` |
+| **RDS CPU**            | RDS CPUUtilization                 | >80% sustained 10 min | SNS → Lambda → Slack `#seqtek-website-alerts` |
+| **RDS Free Storage**   | RDS FreeStorageSpace               | <2 GB                 | SNS → Lambda → Slack `#seqtek-website-alerts` |
+| **RDS Connections**    | RDS DatabaseConnections            | >60 (db.t3.micro 80%) | SNS → Lambda → Slack `#seqtek-website-alerts` |
+| **CloudFront 5xx**     | CloudFront 5xxErrorRate            | >1% in 5 minutes      | SNS → Lambda → Slack `#seqtek-website-alerts` |
 
 ### Application Logging
 
@@ -874,7 +880,7 @@ RDS automated backups are enabled at instance creation. The backup window should
 
 ### Availability Architecture
 
-The EC2 instance runs inside an Auto Scaling Group (ASG) with `min=1, max=2, desired=1`. During normal operation, a single instance serves all traffic. The `max=2` allows the ASG to temporarily run two instances during blue-green deploys (Instance Refresh) and during self-healing replacements.
+The EC2 instances run inside an Auto Scaling Group (ASG). **Production** runs `min=2, max=3, desired=2 across 2 AZs` — losing one AZ leaves one instance still serving, which is the load-bearing assumption behind the SC-010 99.9% post-launch SLA. **Staging** runs `min=1, max=2, desired=1` — single instance is enough for smoke and keeps the cost ratio under the SC-006 ≤ 25% target. The `max` headroom on each accommodates Instance Refresh's temporary over-provisioning and self-healing replacements.
 
 ```
 CloudFront
@@ -883,7 +889,9 @@ CloudFront
 ALB (health check: /api/health, interval: 30s, threshold: 3)
     │
     ▼
-Auto Scaling Group (min=1, max=2, desired=1)
+Auto Scaling Group
+    │  - Production: min=2, max=3, desired=2 across 2 AZs
+    │  - Staging:    min=1, max=2, desired=1
     │
     └── EC2 (launch template)
         ├── Amazon Linux 2023 with Docker + CloudWatch Agent
@@ -892,19 +900,20 @@ Auto Scaling Group (min=1, max=2, desired=1)
         └── Healthy in ~2-3 minutes after launch
 ```
 
-If the instance fails — hardware issue, OS crash, failed health check — the ASG automatically terminates it and launches a replacement from the launch template. This costs nothing beyond the single EC2 instance — the ASG itself is free.
+If an instance fails — hardware issue, OS crash, failed health check — the ASG automatically terminates it and launches a replacement from the launch template. On prod, the second instance in the other AZ keeps serving throughout. This costs nothing beyond the EC2 instances themselves — the ASG itself is free.
 
 ### Failure Scenarios
 
-| Scenario                    | Impact                                            | Recovery                                                | Time                                           |
-| --------------------------- | ------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------- |
-| **EC2 hardware failure**    | Site down (CloudFront serves stale cache briefly) | ASG replaces instance automatically                     | ~3 minutes                                     |
-| **Application crash**       | Docker restart policy relaunches the container    | Automatic (Docker `--restart=unless-stopped`)           | ~10 seconds                                    |
-| **Bad deploy**              | New instance fails health check                   | ASG Instance Refresh aborts, old instance stays running | Zero impact — blue-green protects against this |
-| **RDS failure (single-AZ)** | Site errors on all DB-dependent pages             | RDS restores from automated backup                      | ~15-30 minutes                                 |
-| **RDS failure (multi-AZ)**  | Brief interruption                                | Automatic failover to standby                           | ~1-2 minutes                                   |
-| **S3 outage**               | Media images broken, uploads fail                 | Wait for AWS resolution (99.999999999% durability)      | Extremely rare                                 |
-| **CloudFront outage**       | Site unreachable                                  | Wait for AWS resolution                                 | Extremely rare                                 |
+| Scenario                    | Impact                                         | Recovery                                                                                                                       | Time                                                      |
+| --------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| **AZ / EC2 failure (prod)** | One instance lost; the other AZ keeps serving  | ASG replaces the lost instance automatically; the surviving AZ instance keeps serving throughout                               | ~3 min to restore full capacity; **zero downtime**        |
+| **EC2 failure (staging)**   | Site down briefly (single instance)            | ASG replaces instance automatically                                                                                            | ~3 minutes                                                |
+| **Application crash**       | Docker restart policy relaunches the container | Automatic (Docker `--restart=unless-stopped`)                                                                                  | ~10 seconds                                               |
+| **Bad deploy**              | New instance fails health check                | ASG Instance Refresh aborts (MinHealthyPercentage=100); old instance stays running                                             | Zero impact — blue-green protects against this            |
+| **RDS failure (single-AZ)** | Site errors on all DB-dependent pages          | RDS restores from automated backup. **Phase 5.5 launch-readiness review flips RDS to multi-AZ** per spec 002 Clarifications Q2 | ~15-30 minutes (single-AZ); ~1-2 min (post-multi-AZ flip) |
+| **RDS failure (multi-AZ)**  | Brief interruption                             | Automatic failover to standby                                                                                                  | ~1-2 minutes                                              |
+| **S3 outage**               | Media images broken, uploads fail              | Wait for AWS resolution (99.999999999% durability)                                                                             | Extremely rare                                            |
+| **CloudFront outage**       | Site unreachable                               | Wait for AWS resolution                                                                                                        | Extremely rare                                            |
 
 ### RDS Multi-AZ Decision
 
