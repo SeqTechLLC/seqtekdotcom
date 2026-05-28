@@ -1,0 +1,28 @@
+{
+  "AlarmName": "SeqtekStagingObservability-RdsCpuHigh",
+  "AlarmDescription": "RDS CPU above 80% sustained 10 min",
+  "AWSAccountId": "600881993295",
+  "AlarmConfigurationUpdatedTimestamp": "2026-05-28T17:00:00.000+0000",
+  "NewStateValue": "INSUFFICIENT_DATA",
+  "NewStateReason": "Insufficient Data: 2 datapoints were unknown.",
+  "StateChangeTime": "2026-05-28T18:20:00.000+0000",
+  "Region": "us-east-1",
+  "AlarmArn": "arn:aws:cloudwatch:us-east-1:600881993295:alarm:SeqtekStagingObservability-RdsCpuHigh",
+  "OldStateValue": "OK",
+  "OKActions": [],
+  "AlarmActions": ["arn:aws:sns:us-east-1:600881993295:SeqtekStagingObservability-AlarmTopic"],
+  "InsufficientDataActions": [
+    "arn:aws:sns:us-east-1:600881993295:SeqtekStagingObservability-AlarmTopic"
+  ],
+  "Trigger": {
+    "MetricName": "CPUUtilization",
+    "Namespace": "AWS/RDS",
+    "Statistic": "AVERAGE",
+    "Dimensions": [{ "name": "DBInstanceIdentifier", "value": "seqtek-website-staging" }],
+    "Period": 300,
+    "EvaluationPeriods": 2,
+    "ComparisonOperator": "GreaterThanThreshold",
+    "Threshold": 80.0,
+    "TreatMissingData": "breaching"
+  }
+}
