@@ -38,6 +38,8 @@ jobs:
     name: Build, push, deploy
     runs-on: ubuntu-latest
     environment: staging
+    outputs:
+      site-url: ${{ steps.site.outputs.url }}
     env:
       STACK_FILTER: ${{ github.event.inputs.stack-filter || 'SeqtekStaging*Compute' }}
     steps:
@@ -174,15 +176,31 @@ jobs:
           fi
           echo "url=${URL}" >> "$GITHUB_OUTPUT"
 
-      - name: Install root dependencies (Playwright)
-        run: npm ci
+  smoke:
+    name: Post-deploy smoke
+    needs: deploy
+    runs-on: ubuntu-latest
+    # Runs inside the official Playwright image — browsers + system libs
+    # preinstalled. The `npx playwright install --with-deps chromium` apt-get
+    # hang on bare GH-hosted runners is the reason this job is split out.
+    # Bump the tag in lockstep with @playwright/test in package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-jammy
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Install Playwright (Chromium only)
-        run: npx playwright install --with-deps chromium
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
 
       - name: Post-deploy smoke
         env:
-          POST_DEPLOY_URL: ${{ steps.site.outputs.url }}
+          POST_DEPLOY_URL: ${{ needs.deploy.outputs.site-url }}
         run: npx playwright test tests/e2e/post-deploy-smoke.e2e.spec.ts
 
       - name: Upload Playwright report
