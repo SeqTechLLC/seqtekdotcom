@@ -1,6 +1,6 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-26 (Phase 1 progress — Google OAuth SSO shipped (D-14, spec 001); constitution amended to v1.1.0; spec 002 (AWS CDK + blue-green CI/CD) implementing on `002-aws-cdk-infrastructure` Phase 1+2 landed; multi-AZ RDS + ASG-to-private-subnet flips both deferred to Phase 5.5)
+**Last updated:** 2026-05-28 (Phase 1 closed — spec 002 (AWS CDK + blue-green CI/CD) shipped as P1-10/P1-11/P1-12; staging live on `seqtek-preview.com`; SC-002 measured at 7m45s; Slack alarms verified end-to-end. Production CD auto-deploy + DNS cutover to `seqtek.com` deferred until leadership approval. Multi-AZ RDS + private-subnet ASG flips both still scheduled for Phase 5.5. Phase 2 (Content models) is now unblocked.)
 
 > **Convention:** When a Phase 1 implementation item ships, _move_ it out of this file (don't just check it off) and add a `P1-*` row to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md). The roadmap stays a short punch list of what's _open_; history carries the audit trail.
 
@@ -69,11 +69,7 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 
 ### Phase 1 — Foundation (1-2 weeks)
 
-Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./PROJECT_HISTORY.md). Open items only below.
-
-- [ ] CDK app: VPC, ALB, ASG, RDS, S3, ECR, CloudFront, ACM, Parameter Store, IAM, CloudWatch alarms
-- [ ] Dockerfile multi-stage + ECR repository (Dockerfile exists at repo root from D-13; ECR repo creation + push pipeline still open)
-- [ ] GitHub Actions CI/CD with blue-green deploys via `cdk diff` on PR and `cdk deploy` on merge
+Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./PROJECT_HISTORY.md). Phase 1 is now closed — every roadmap-level Phase 1 item has shipped. Production cutover to `seqtek.com` (Phase 6) plus the multi-AZ RDS + private-subnet ASG flips (Phase 5.5) carry the remaining infra polish.
 
 ### Phase 2 — Content models (1 week)
 
