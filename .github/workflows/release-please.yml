@@ -1,0 +1,43 @@
+name: Release Please
+
+# Watches the Conventional Commits on `main`, maintains a release PR
+# that bumps `package.json` + `CHANGELOG.md` + `.release-please-manifest.json`,
+# and cuts a tag + GitHub Release when the release PR merges. The release
+# event is what the future Phase 6 `deploy-prod.yml` listens to.
+#
+# Versioning policy:
+# - Starts at `0.1.0`. Bumps to `1.0.0` at seqtek.com cutover via an
+#   explicit `release-as: 1.0.0` commit footer.
+# - `bump-minor-pre-major: true` keeps `feat:` -> minor in the 0.x range
+#   so feature commits don't get lost in patch noise.
+# - No major bumps past 1.0 until we ship a public API (e.g., client
+#   portal / AI portal). Avoid `feat!:` / `BREAKING CHANGE:` footers.
+#
+# CHANGELOG scope: `feat`, `fix`, `perf`, `revert` only. `ci` / `docs` /
+# `chore` / `test` / `style` / `refactor` / `build` are dropped so the
+# CHANGELOG reads as a user-facing release log.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          # Bootstrap from the spec-002 closing commit so the first
+          # CHANGELOG starts fresh with the next `feat:` / `fix:`. Spec
+          # 002 itself is already documented in PROJECT_HISTORY.md.
+          # This input is a no-op once the first release tag exists.
+          bootstrap-sha: f311262f6f3b4684df5f771d9729e37b66beece1
