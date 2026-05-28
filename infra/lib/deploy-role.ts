@@ -177,19 +177,24 @@ export class DeployRoles extends Construct {
       }),
     )
 
-    // ASG instance refresh on this env's ASG only
+    // ASG instance refresh — split into two statements because the
+    // autoscaling:Describe* actions do NOT support resource-level
+    // permissions per AWS docs (must be Resource: "*"), whereas the
+    // mutating Start/Cancel actions CAN be scoped to a specific ASG.
     role.addToPolicy(
       new iam.PolicyStatement({
-        sid: 'AsgInstanceRefresh',
-        actions: [
-          'autoscaling:StartInstanceRefresh',
-          'autoscaling:DescribeInstanceRefreshes',
-          'autoscaling:CancelInstanceRefresh',
-          'autoscaling:DescribeAutoScalingGroups',
-        ],
+        sid: 'AsgInstanceRefreshMutate',
+        actions: ['autoscaling:StartInstanceRefresh', 'autoscaling:CancelInstanceRefresh'],
         resources: [
           `arn:aws:autoscaling:${region}:${account}:autoScalingGroup:*:autoScalingGroupName/${stackPrefix}*`,
         ],
+      }),
+    )
+    role.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'AsgInstanceRefreshDescribe',
+        actions: ['autoscaling:DescribeInstanceRefreshes', 'autoscaling:DescribeAutoScalingGroups'],
+        resources: ['*'],
       }),
     )
 
