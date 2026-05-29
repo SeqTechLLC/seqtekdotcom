@@ -8,7 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     globalSetup: ['./vitest.globalSetup.ts'],
-    include: ['tests/int/**/*.int.spec.ts'],
+    include: ['tests/int/**/*.int.spec.{ts,tsx}'],
     testTimeout: 60_000,
     hookTimeout: 60_000,
     // The Payload+Postgres int suites all push schema to the same testcontainer

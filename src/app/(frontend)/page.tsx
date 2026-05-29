@@ -1,11 +1,10 @@
 import Link from 'next/link'
 import { getPayload } from 'payload'
-import { RichText } from '@payloadcms/richtext-lexical/react'
 import config from '@/payload.config'
 import './styles.css'
 
 // Spike: force runtime rendering so `docker build` doesn't need PAYLOAD_SECRET / a DB.
-// Phase 1 will switch to ISR with build-time secrets injected via CI (see ARCHITECTURE.md §3).
+// Phase 3 (Spec 004) will switch to ISR with the homepage global driving render.
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
@@ -21,14 +20,9 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-container-md px-4 py-16 md:px-6 lg:px-8">
       {page ? (
-        <>
-          <h1 className="text-h1 font-bold" data-testid="page-title">
-            {page.title}
-          </h1>
-          <div className="prose mt-8" data-testid="page-content">
-            {page.content ? <RichText data={page.content} /> : null}
-          </div>
-        </>
+        <h1 className="text-h1 font-bold" data-testid="page-title">
+          {page.title}
+        </h1>
       ) : (
         <section data-testid="empty-state">
           <h1 className="text-h1 font-bold">No page yet</h1>
@@ -41,7 +35,8 @@ export default async function HomePage() {
             <Link className="text-link underline hover:text-link-hover" href="/admin">
               /admin
             </Link>{' '}
-            to see content rendered here.
+            to see content rendered here. The Phase 3 templates will render the homepage global with
+            the full block library.
           </p>
         </section>
       )}
