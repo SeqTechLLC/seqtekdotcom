@@ -23,12 +23,12 @@ const SITE_URL = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:310
 export const buildPreviewUrl = (collection: string, doc: DocLike): string | null => {
   const builder = COLLECTION_PATHS[collection]
   if (!builder) return null
-  const _publicPath = builder(doc)
-  if (!_publicPath) return null
-  const slug = doc.slug ?? ''
+  const publicPath = builder(doc)
+  if (!publicPath) return null
   const secret = PREVIEW_SECRET()
-  const qs = secret ? `?secret=${encodeURIComponent(secret)}` : ''
-  return `${SITE_URL()}/preview/${collection}/${slug}${qs}`
+  const params = new URLSearchParams({ collection, path: publicPath })
+  if (secret) params.set('secret', secret)
+  return `${SITE_URL()}/preview?${params.toString()}`
 }
 
 export const previewBreakpoints: NonNullable<LivePreviewConfig['breakpoints']> = [

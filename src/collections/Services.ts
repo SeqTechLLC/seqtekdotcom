@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { editorConfig } from '../payload/editor/editorConfig'
+import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 
@@ -21,7 +22,7 @@ export const Services: CollectionConfig = {
   },
   versions: { drafts: true, maxPerDoc: 50 },
   hooks: {
-    beforeChange: [slugFromTitle('title')],
+    beforeChange: [slugFromTitle('title'), enforceDraftWhenScheduled],
     afterChange: [revalidateOnChange('services')],
   },
   fields: [
@@ -67,16 +68,6 @@ export const Services: CollectionConfig = {
       ],
     },
     { name: 'order', type: 'number' },
-    {
-      name: 'status',
-      type: 'select',
-      required: true,
-      defaultValue: 'draft',
-      options: [
-        { label: 'Draft', value: 'draft' },
-        { label: 'Published', value: 'published' },
-      ],
-      admin: { position: 'sidebar' },
-    },
+    { name: 'publishedAt', type: 'date', admin: { position: 'sidebar' } },
   ],
 }

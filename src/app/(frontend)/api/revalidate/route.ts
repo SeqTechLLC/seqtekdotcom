@@ -1,7 +1,7 @@
 import { revalidateTag } from 'next/cache'
 import { NextResponse, type NextRequest } from 'next/server'
 
-import { invalidateCloudFrontPaths } from '../../../../lib/cloudfront/invalidate'
+import { invalidateCloudFrontPaths } from '@/lib/cloudfront/invalidate'
 
 interface RevalidateBody {
   tags?: unknown

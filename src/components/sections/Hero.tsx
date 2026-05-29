@@ -22,6 +22,26 @@ interface HeroProps {
 const isFullMedia = (value: unknown): value is MediaLike =>
   typeof value === 'object' && value !== null && 'url' in (value as object)
 
+const ALLOWED_VIDEO_HOSTS = [
+  'www.youtube.com',
+  'youtube.com',
+  'www.youtube-nocookie.com',
+  'youtube-nocookie.com',
+  'player.vimeo.com',
+  'fast.wistia.net',
+]
+
+const isAllowedVideoUrl = (value: string | null | undefined): value is string => {
+  if (!value) return false
+  try {
+    const parsed = new URL(value)
+    if (parsed.protocol !== 'https:') return false
+    return ALLOWED_VIDEO_HOSTS.includes(parsed.hostname.toLowerCase())
+  } catch {
+    return false
+  }
+}
+
 export function Hero({
   variant = 'text-only',
   eyebrow,
@@ -48,7 +68,7 @@ export function Hero({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={media.url} alt={media.alt ?? ''} className="mt-8 w-full rounded-md" />
         ) : null}
-        {variant === 'with-video' && videoUrl ? (
+        {variant === 'with-video' && isAllowedVideoUrl(videoUrl) ? (
           <div className="mt-8 aspect-video">
             <iframe
               src={videoUrl}

@@ -29,16 +29,22 @@ export const buildRevalidatePlan = (
   doc: DocLike,
   previousDoc?: PreviousDocLike,
 ): RevalidatePlan => {
-  const isPublished = doc._status === 'published'
-  const wasPublished = previousDoc?._status === 'published'
-  if (!isPublished && !wasPublished) return { tags: [], paths: [] }
+  // Non-draftable collections (categories, teamMembers, testimonials) and
+  // un-versioned globals have no `_status` — every save is a publish, so the
+  // draft-skip guard only applies when `_status` is actually present.
+  const hasStatus = doc._status !== undefined || previousDoc?._status !== undefined
+  if (hasStatus) {
+    const isPublished = doc._status === 'published'
+    const wasPublished = previousDoc?._status === 'published'
+    if (!isPublished && !wasPublished) return { tags: [], paths: [] }
+  }
 
   const slug = typeof doc.slug === 'string' ? doc.slug : undefined
   const oldSlug = previousDoc && typeof previousDoc.slug === 'string' ? previousDoc.slug : undefined
   const slugs = Array.from(new Set([slug, oldSlug].filter((s): s is string => Boolean(s))))
 
   const detailPaths: string[] = []
-  const tags: string[] = [`${collection}_list`, '/sitemap.xml']
+  const tags: string[] = [`${collection}_list`]
 
   for (const s of slugs) {
     switch (collection) {

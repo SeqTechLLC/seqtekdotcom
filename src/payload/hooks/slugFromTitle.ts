@@ -26,5 +26,7 @@ export const slugFromTitle =
     if (operation !== 'create') return data
     const source = data[sourceField]
     if (typeof source !== 'string' || source.length === 0) return data
-    return { ...data, slug: slugify(source) }
+    const candidate = slugify(source)
+    if (candidate.length === 0) return data
+    return { ...data, slug: candidate }
   }

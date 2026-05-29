@@ -88,17 +88,6 @@ export const CaseStudies: CollectionConfig = {
         { name: 'ogImage', type: 'upload', relationTo: 'media' },
       ],
     },
-    {
-      name: 'status',
-      type: 'select',
-      required: true,
-      defaultValue: 'draft',
-      options: [
-        { label: 'Draft', value: 'draft' },
-        { label: 'Published', value: 'published' },
-      ],
-      admin: { position: 'sidebar' },
-    },
     { name: 'publishedAt', type: 'date', admin: { position: 'sidebar' } },
   ],
 }

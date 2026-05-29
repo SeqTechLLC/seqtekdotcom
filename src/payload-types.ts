@@ -206,7 +206,6 @@ export interface Page {
   id: number;
   title: string;
   slug: string;
-  status: 'draft' | 'published';
   publishedAt?: string | null;
   hero?: {
     headline?: string | null;
@@ -334,7 +333,6 @@ export interface Post {
     metaDescription?: string | null;
     ogImage?: (number | null) | Media;
   };
-  status: 'draft' | 'published';
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -484,7 +482,7 @@ export interface Service {
     ogImage?: (number | null) | Media;
   };
   order?: number | null;
-  status: 'draft' | 'published';
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -606,7 +604,6 @@ export interface CaseStudy {
     metaDescription?: string | null;
     ogImage?: (number | null) | Media;
   };
-  status: 'draft' | 'published';
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -734,7 +731,6 @@ export interface Workshop {
     metaDescription?: string | null;
     ogImage?: (number | null) | Media;
   };
-  status: 'draft' | 'published';
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -948,7 +944,6 @@ export interface MediaSelect<T extends boolean = true> {
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
-  status?: T;
   publishedAt?: T;
   hero?:
     | T
@@ -1066,7 +1061,6 @@ export interface PostsSelect<T extends boolean = true> {
         metaDescription?: T;
         ogImage?: T;
       };
-  status?: T;
   publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1116,7 +1110,6 @@ export interface CaseStudiesSelect<T extends boolean = true> {
         metaDescription?: T;
         ogImage?: T;
       };
-  status?: T;
   publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1155,7 +1148,7 @@ export interface ServicesSelect<T extends boolean = true> {
         ogImage?: T;
       };
   order?: T;
-  status?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1266,7 +1259,6 @@ export interface WorkshopsSelect<T extends boolean = true> {
         metaDescription?: T;
         ogImage?: T;
       };
-  status?: T;
   publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
