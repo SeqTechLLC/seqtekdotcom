@@ -8,16 +8,18 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     globalSetup: ['./vitest.globalSetup.ts'],
-    include: ['tests/int/**/*.int.spec.ts'],
+    include: ['tests/int/**/*.int.spec.{ts,tsx}'],
     testTimeout: 60_000,
     hookTimeout: 60_000,
     // The Payload+Postgres int suites all push schema to the same testcontainer
     // DB. Run them sequentially in one worker so getPayload's module-level
     // cache wins on schema setup and they don't race on enum/table creates.
+    // Vitest 4 replaced `poolOptions.forks.singleFork` with the pair
+    // `maxWorkers: 1` + `isolate: false`; the latter is exactly what keeps
+    // the module cache alive across test files.
     pool: 'forks',
-    poolOptions: {
-      forks: { singleFork: true },
-    },
+    maxWorkers: 1,
+    isolate: false,
     fileParallelism: false,
   },
 })

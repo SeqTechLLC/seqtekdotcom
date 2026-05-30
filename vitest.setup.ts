@@ -5,6 +5,16 @@ import { config as loadEnv } from 'dotenv'
 import { existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
+import { afterEach } from 'vitest'
+import { cleanup } from '@testing-library/react'
+
+// With `isolate: false` in vitest.config.mts the jsdom DOM is reused across
+// test files in the same worker, so testing-library's mounted containers
+// accumulate in `<body>` and `getByText` starts returning matches from
+// prior tests. Run cleanup after every test to scope the DOM to one `it`.
+afterEach(() => {
+  cleanup()
+})
 
 const TEST_ENV_FILE = resolve(tmpdir(), 'seqtek-vitest-env.json')
 
