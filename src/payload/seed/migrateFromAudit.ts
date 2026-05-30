@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import { getPayload, type Payload } from 'payload'
 
 import config from '../../payload.config'
+import type { Homepage, SiteSetting } from '../../payload-types'
 
 import { createMigrationLogger, type MigrationLogger } from './log'
 import { parseCaseStudies } from './parsers/caseStudies'
@@ -108,8 +109,11 @@ export interface RunSeedOptions {
 }
 
 function defaultAuditDir(env: Record<string, string | undefined>): string {
-  if (env.AUDIT_DIR) return resolve(env.AUDIT_DIR.replace('~', homedir()))
-  return resolve(homedir(), 'projects/seqtek-internal/audit')
+  const raw = env.AUDIT_DIR
+  if (!raw) return resolve(homedir(), 'projects/seqtek-internal/audit')
+  if (raw === '~') return homedir()
+  if (raw.startsWith('~/')) return resolve(homedir(), raw.slice(2))
+  return resolve(raw)
 }
 
 function readJson<T>(path: string): T {
@@ -242,8 +246,10 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
   if (!filter || filter === 'pages') {
     const pagesPath = resolve(auditDir, 'case-studies.json')
     const retryPath = resolve(auditDir, 'retry-content.json')
+    let activePath = pagesPath
     try {
       const pagesAudit = readJson<Record<string, string>>(pagesPath)
+      activePath = retryPath
       const retryAudit = existsSync(retryPath) ? readJson<Record<string, string>>(retryPath) : {}
       const parsed = parsePages({ pagesAudit, retryAudit, logger, now: options.now })
       collectionsProcessed.push('pages')
@@ -273,7 +279,7 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
         `pages: ${parsed.length} processed, ${created} created, ${updated} updated, ${parsed.length - created - updated} skipped`,
       )
     } catch (err) {
-      stderr(`pages parse failed at ${pagesPath}: ${(err as Error).message}`)
+      stderr(`pages parse failed at ${activePath}: ${(err as Error).message}`)
       return { exitCode: 3, results, logger, collectionsProcessed }
     }
   }
@@ -292,7 +298,7 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
       } else {
         await payload.updateGlobal({
           slug: 'homepage',
-          data: data as never,
+          data: data as Partial<Homepage>,
           overrideAccess: true,
           draft: true,
         })
@@ -310,7 +316,7 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
     try {
       const all = readJson<Record<string, string>>(path)
       const blogBody = all['/blog-old'] ?? ''
-      const parsed = parsePosts({ blogPageContent: blogBody, logger })
+      const parsed = parsePosts({ blogPageContent: blogBody, logger, now: options.now })
       collectionsProcessed.push('posts')
       let created = 0
       let updated = 0
@@ -353,7 +359,7 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
       } else {
         await payload.updateGlobal({
           slug: 'siteSettings',
-          data: data as never,
+          data: data as Partial<SiteSetting>,
           overrideAccess: true,
           draft: true,
         })

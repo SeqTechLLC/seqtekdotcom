@@ -196,3 +196,13 @@ export const FIXTURE_EXPECTED_POST_SLUG_PREFIXES = [
   'digital-transformation-consulting-oklahoma',
   'why-people-resist-change',
 ] as const
+
+/**
+ * Full post slugs produced by the seed against the BLOG_PAGE fixture. The
+ * post parser's slugify caps titles at 80 chars; if BLOG_PAGE titles change,
+ * regenerate these by running the seed and reading the resulting docs.
+ */
+export const FIXTURE_EXPECTED_POST_SLUGS = [
+  'digital-transformation-consulting-oklahoma-integrating-cloud-ai-and-automation',
+  'why-people-resist-change-and-how-change-management-adds-velocity-to-every-projec',
+] as const

@@ -61,7 +61,7 @@ function stripBoilerplate(raw: string): string {
     .trim()
 }
 
-function parseDate(line: string, anchorYear: number): string | undefined {
+function parseDate(line: string, anchorYear: number, now: Date): string | undefined {
   // Forms: "Jan 20", "Dec 2, 2025"
   const withYear = line.match(/^([A-Z][a-z]{2})\s+(\d{1,2}),\s+(\d{4})$/)
   if (withYear) {
@@ -73,7 +73,16 @@ function parseDate(line: string, anchorYear: number): string | undefined {
   if (bare) {
     const month = MONTH_BY_NAME[bare[1]]
     if (month === undefined) return undefined
-    return toIsoCentral(anchorYear, month, Number(bare[2]))
+    const day = Number(bare[2])
+    // Bare `MMM d` dates have no year — default to anchorYear, then walk back
+    // one year if that would land in the future (audit captures past posts).
+    let year = anchorYear
+    let iso = toIsoCentral(year, month, day)
+    if (new Date(iso).getTime() > now.getTime()) {
+      year -= 1
+      iso = toIsoCentral(year, month, day)
+    }
+    return iso
   }
   return undefined
 }
@@ -97,11 +106,14 @@ export interface ParsePostsOptions {
   logger: MigrationLogger
   /** Used when the audit gives a bare `MMM d` date with no year. */
   anchorYear?: number
+  /** Stable "now" so parseDate's future-year guard is deterministic in tests. */
+  now?: Date
 }
 
 export function parsePosts(options: ParsePostsOptions): ParsedPost[] {
   const { logger } = options
   const anchorYear = options.anchorYear ?? DEFAULT_YEAR
+  const now = options.now ?? new Date()
   const body = stripBoilerplate(options.blogPageContent)
   if (!body) {
     logger.log({
@@ -133,7 +145,7 @@ export function parsePosts(options: ParsePostsOptions): ParsedPost[] {
     let scan = cursor + 1
     let publishedAt: string | undefined
     while (scan < lines.length) {
-      const maybeDate = parseDate(lines[scan], anchorYear)
+      const maybeDate = parseDate(lines[scan], anchorYear, now)
       if (maybeDate) {
         publishedAt = maybeDate
         break

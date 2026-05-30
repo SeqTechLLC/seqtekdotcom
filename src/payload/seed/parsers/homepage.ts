@@ -51,7 +51,9 @@ export function parseHomepage(options: ParseHomepageOptions): ParsedHomepage {
     .filter((line) => line.length > 0)
 
   const headline = lines.includes(KNOWN_HEADLINE) ? KNOWN_HEADLINE : (lines[0] ?? KNOWN_HEADLINE)
-  const subheadline = lines.includes(KNOWN_SUB) ? KNOWN_SUB : KNOWN_SUB
+  // Subheadline isn't structurally recoverable from the audit (no markup,
+  // no consistent position); keep the known canonical sub from the prior site.
+  const subheadline = KNOWN_SUB
 
   // Extract stats: pattern is `N +` on one line, label on the next line.
   const stats: { number: string; suffix?: string; label: string }[] = []

@@ -8,6 +8,7 @@ import { runSeed } from '../../../src/payload/seed/migrateFromAudit'
 import {
   FIXTURE_EXPECTED_CASE_SLUGS,
   FIXTURE_EXPECTED_PAGE_SLUGS,
+  FIXTURE_EXPECTED_POST_SLUGS,
   writeAuditFixture,
 } from '../../helpers/seedFixtures'
 
@@ -40,7 +41,11 @@ afterAll(async () => {
       overrideAccess: true,
     })
   }
-  await payload.delete({ collection: 'posts', where: {}, overrideAccess: true })
+  await payload.delete({
+    collection: 'posts',
+    where: { slug: { in: [...FIXTURE_EXPECTED_POST_SLUGS] } },
+    overrideAccess: true,
+  })
   fixture.cleanup()
 })
 

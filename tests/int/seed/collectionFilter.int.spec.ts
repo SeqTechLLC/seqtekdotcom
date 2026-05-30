@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import config from '../../../src/payload.config'
 import { runSeed } from '../../../src/payload/seed/migrateFromAudit'
-import { writeAuditFixture } from '../../helpers/seedFixtures'
+import { FIXTURE_EXPECTED_POST_SLUGS, writeAuditFixture } from '../../helpers/seedFixtures'
 
 /**
  * T095 / FR-033: `--collection=<name>` narrows the seed to a single
@@ -19,7 +19,11 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await payload.delete({ collection: 'posts', where: {}, overrideAccess: true })
+  await payload.delete({
+    collection: 'posts',
+    where: { slug: { in: [...FIXTURE_EXPECTED_POST_SLUGS] } },
+    overrideAccess: true,
+  })
   fixture.cleanup()
 })
 

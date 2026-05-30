@@ -307,6 +307,19 @@ export function parseCaseStudies(
       detail:
         'no testimonial captured in audit; collect with full attribution per CONTENT-REQUIREMENTS §6',
     })
+    // industry is a required relationship — the seed can't resolve a numeric
+    // ID, so the editor links it from /admin. Surface the audit-suggested
+    // slug per record so editors aren't guessing.
+    const industryRequested = INDUSTRY_BY_SLUG[slug] ?? null
+    logger.log({
+      level: 'WARN',
+      kind: 'AUDIT_GAP',
+      collection: 'caseStudies',
+      slug,
+      detail: industryRequested
+        ? `industry: link to industries/${industryRequested}`
+        : 'industry: no audit-derivable match; editor selects manually',
+    })
 
     results.push({
       slug,
@@ -322,7 +335,7 @@ export function parseCaseStudies(
       technologies,
       metrics: [],
       publishedAt: now,
-      industryRequested: INDUSTRY_BY_SLUG[slug] ?? null,
+      industryRequested,
     })
   }
 
