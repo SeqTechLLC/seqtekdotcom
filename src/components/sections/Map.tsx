@@ -5,19 +5,19 @@ interface MapProps {
   height?: number | null
 }
 
-const ALLOWED_MAP_HOSTS = [
-  'www.openstreetmap.org',
-  'openstreetmap.org',
-  'www.google.com',
-  'google.com',
-  'maps.google.com',
-]
+const OSM_HOSTS = new Set(['www.openstreetmap.org', 'openstreetmap.org'])
+const GOOGLE_HOSTS = new Set(['www.google.com', 'google.com', 'maps.google.com'])
 
 const isAllowed = (url: string): boolean => {
   try {
     const parsed = new URL(url)
     if (parsed.protocol !== 'https:') return false
-    return ALLOWED_MAP_HOSTS.includes(parsed.hostname.toLowerCase())
+    const host = parsed.hostname.toLowerCase()
+    if (OSM_HOSTS.has(host)) return true
+    // For google.com, only allow the embed endpoint. Bare `google.com/...`
+    // would otherwise put arbitrary Google pages in the iframe.
+    if (GOOGLE_HOSTS.has(host) && parsed.pathname.startsWith('/maps/embed')) return true
+    return false
   } catch {
     return false
   }

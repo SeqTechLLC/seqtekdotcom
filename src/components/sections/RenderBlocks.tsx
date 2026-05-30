@@ -12,15 +12,6 @@ interface RenderBlocksProps {
   blocks: BlockLike[] | null | undefined
 }
 
-const warnedTypes = new Set<string>()
-
-const warnUnknown = (blockType: string): void => {
-  if (process.env.NODE_ENV === 'production') return
-  if (warnedTypes.has(blockType)) return
-  warnedTypes.add(blockType)
-  console.warn(`Unknown blockType: ${blockType}`)
-}
-
 /**
  * Dispatches an array of saved Payload blocks to their registered React
  * renderer. Contract:
@@ -31,7 +22,16 @@ const warnUnknown = (blockType: string): void => {
  */
 export function RenderBlocks({ blocks }: RenderBlocksProps): ReactElement {
   if (!blocks || blocks.length === 0) return <></>
-  warnedTypes.clear()
+  // Dedup warnings within this render only. Keeping the set in module scope
+  // would interleave under React 19 concurrent rendering when two trees run
+  // in parallel.
+  const warned = new Set<string>()
+  const warnUnknown = (blockType: string): void => {
+    if (process.env.NODE_ENV === 'production') return
+    if (warned.has(blockType)) return
+    warned.add(blockType)
+    console.warn(`Unknown blockType: ${blockType}`)
+  }
   return (
     <>
       {blocks.map((block, index) => {

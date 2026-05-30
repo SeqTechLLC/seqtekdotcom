@@ -6,6 +6,7 @@ import { editorConfig } from '../payload/editor/editorConfig'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { livePreviewFor } from '../payload/livePreview/url'
 
 export const CaseStudies: CollectionConfig = {
   slug: 'caseStudies',
@@ -13,6 +14,7 @@ export const CaseStudies: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'industry', 'updatedAt'],
+    livePreview: livePreviewFor('caseStudies'),
   },
   access: {
     read: publishedOrAuthed,

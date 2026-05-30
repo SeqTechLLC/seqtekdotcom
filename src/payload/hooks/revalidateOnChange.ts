@@ -95,16 +95,12 @@ export const buildRevalidatePlan = (
 
 const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {
   if (plan.tags.length === 0 && plan.paths.length === 0) return
-  try {
-    for (const tag of plan.tags) {
-      try {
-        revalidateTag(tag, { expire: 0 })
-      } catch {
-        // revalidateTag throws when called outside a request scope in dev — swallow per R-03
-      }
+  for (const tag of plan.tags) {
+    try {
+      revalidateTag(tag, { expire: 0 })
+    } catch {
+      // revalidateTag throws when called outside a request scope in dev — swallow per R-03
     }
-  } catch {
-    // Defensive: hook never throws back to the editor.
   }
   try {
     await invalidateCloudFrontPaths(plan.paths)

@@ -1,7 +1,8 @@
 import type { ComponentType, ReactElement } from 'react'
-import { RichText as PayloadRichText } from '@payloadcms/richtext-lexical/react'
+import { LinkJSXConverter, RichText as PayloadRichText } from '@payloadcms/richtext-lexical/react'
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
+import { isPreviewCollection, publicPathFor } from '@/payload/livePreview/url'
 import { Prose } from '../ui/Prose'
 import { defaultInlineRegistry } from './inline/registry'
 
@@ -29,6 +30,25 @@ const buildBlockMap = (
     map[slug] = ({ node }) => <Comp {...node.fields} />
   }
   return map
+}
+
+// Resolve internal links (LinkFeature with linkType=internal) to public URLs.
+// The default LinkJSXConverter from Payload renders these as href="#" plus a
+// console.error when no resolver is provided, so without this every editor-
+// inserted internal link would be broken.
+const internalDocToHref: Parameters<typeof LinkJSXConverter>[0]['internalDocToHref'] = ({
+  linkNode,
+}) => {
+  const doc = linkNode.fields.doc
+  const relationTo = doc?.relationTo
+  if (!relationTo || !isPreviewCollection(relationTo)) return '#'
+  const value = doc.value
+  const docShape =
+    value && typeof value === 'object'
+      ? (value as { slug?: string; pillar?: { slug?: string } | string | null })
+      : null
+  if (!docShape?.slug) return '#'
+  return publicPathFor(relationTo, docShape) ?? '#'
 }
 
 /**
@@ -60,6 +80,7 @@ export function RichText({
       data={data}
       converters={({ defaultConverters }) => ({
         ...defaultConverters,
+        ...LinkJSXConverter({ internalDocToHref }),
         blocks: { ...defaultConverters.blocks, ...blockMap },
         inlineBlocks: { ...defaultConverters.inlineBlocks, ...blockMap },
       })}

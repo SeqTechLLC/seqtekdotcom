@@ -1,12 +1,14 @@
 import type { GlobalConfig } from 'payload'
 
 import { isAdminOrEditor } from '../payload/access/byRole'
+import { publishedOrAuthedGlobal } from '../payload/access/publishedOrAuthed'
+import { safeUrlValidate } from '../payload/fields/url'
 import { revalidateGlobalOnChange } from '../payload/hooks/revalidateOnChange'
 
 export const Navigation: GlobalConfig = {
   slug: 'navigation',
   access: {
-    read: () => true,
+    read: publishedOrAuthedGlobal,
     update: isAdminOrEditor,
   },
   versions: { drafts: true, max: 50 },
@@ -19,13 +21,13 @@ export const Navigation: GlobalConfig = {
       type: 'array',
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
+        { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
         {
           name: 'children',
           type: 'array',
           fields: [
             { name: 'label', type: 'text', required: true },
-            { name: 'url', type: 'text', required: true },
+            { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
           ],
         },
       ],
@@ -35,13 +37,13 @@ export const Navigation: GlobalConfig = {
       type: 'array',
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
+        { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
         {
           name: 'children',
           type: 'array',
           fields: [
             { name: 'label', type: 'text', required: true },
-            { name: 'url', type: 'text', required: true },
+            { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
           ],
         },
       ],
@@ -51,7 +53,7 @@ export const Navigation: GlobalConfig = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text' },
-        { name: 'url', type: 'text' },
+        { name: 'url', type: 'text', validate: safeUrlValidate },
       ],
     },
   ],

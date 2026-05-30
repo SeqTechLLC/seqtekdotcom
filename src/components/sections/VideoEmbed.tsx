@@ -40,6 +40,8 @@ export function VideoEmbed({ provider, videoId, title, thumbnail }: VideoEmbedPr
                 className="h-full w-full"
                 allow="autoplay; encrypted-media; picture-in-picture"
                 allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer"
               />
             )}
           </div>

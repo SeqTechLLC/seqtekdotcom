@@ -1,5 +1,9 @@
 import type { Block } from 'payload'
 
+import { requiredWhen } from '../conditional'
+
+type LogoBarSibling = { source?: string }
+
 // Per BLOCK_LIBRARY.md §5.3.
 export const LogoBar: Block = {
   slug: 'logo-bar',
@@ -20,7 +24,7 @@ export const LogoBar: Block = {
     {
       name: 'logos',
       type: 'array',
-      admin: { condition: (_, siblingData) => siblingData?.source === 'inline' },
+      ...requiredWhen<LogoBarSibling>((d) => d?.source === 'inline'),
       fields: [{ name: 'logo', type: 'upload', relationTo: 'media', required: true }],
     },
     {

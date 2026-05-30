@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { safeUrlValidate } from '../../fields/url'
+
 // Per BLOCK_LIBRARY.md §5.1: pillar landings reuse the hero shape with a
 // required pillar-name eyebrow and required image. Modeled as a distinct
 // block so the pillar landing template can rely on the structured fields
@@ -18,7 +20,7 @@ export const ServicePillarHero: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text' },
-        { name: 'url', type: 'text' },
+        { name: 'url', type: 'text', validate: safeUrlValidate },
       ],
     },
   ],

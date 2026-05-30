@@ -1,12 +1,14 @@
 import type { GlobalConfig } from 'payload'
 
 import { isAdminOrEditor } from '../payload/access/byRole'
+import { publishedOrAuthedGlobal } from '../payload/access/publishedOrAuthed'
+import { httpsUrlValidate } from '../payload/fields/url'
 import { revalidateGlobalOnChange } from '../payload/hooks/revalidateOnChange'
 
 export const SiteSettings: GlobalConfig = {
   slug: 'siteSettings',
   access: {
-    read: () => true,
+    read: publishedOrAuthedGlobal,
     update: isAdminOrEditor,
   },
   versions: { drafts: true, max: 50 },
@@ -32,9 +34,9 @@ export const SiteSettings: GlobalConfig = {
       name: 'socialLinks',
       type: 'group',
       fields: [
-        { name: 'linkedinUrl', type: 'text' },
-        { name: 'twitterUrl', type: 'text' },
-        { name: 'facebookUrl', type: 'text' },
+        { name: 'linkedinUrl', type: 'text', validate: httpsUrlValidate },
+        { name: 'twitterUrl', type: 'text', validate: httpsUrlValidate },
+        { name: 'facebookUrl', type: 'text', validate: httpsUrlValidate },
       ],
     },
     { name: 'footerText', type: 'text' },

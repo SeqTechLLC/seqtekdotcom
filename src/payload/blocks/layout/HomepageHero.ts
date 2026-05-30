@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { safeUrlValidate } from '../../fields/url'
+
 // Per BLOCK_LIBRARY.md §6 (Homepage composition row 1): hero block above the
 // fold with required primary + secondary CTAs. Modeled as a distinct block
 // (rather than reusing `hero`) because the homepage requires both CTAs
@@ -18,7 +20,7 @@ export const HomepageHero: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
+        { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
       ],
     },
     {
@@ -26,7 +28,7 @@ export const HomepageHero: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
+        { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
       ],
     },
   ],

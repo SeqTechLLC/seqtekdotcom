@@ -1,5 +1,9 @@
 import type { Block } from 'payload'
 
+import { requiredWhen } from '../conditional'
+
+type StatsSibling = { source?: string }
+
 // Per BLOCK_LIBRARY.md §5.3. `items` is conditionally required when
 // source = 'inline'; the from-site-settings path renders the canonical set
 // at template time and ignores the inline array.
@@ -24,7 +28,7 @@ export const StatsBar: Block = {
       type: 'array',
       minRows: 3,
       maxRows: 5,
-      admin: { condition: (_, siblingData) => siblingData?.source === 'inline' },
+      ...requiredWhen<StatsSibling>((d) => d?.source === 'inline'),
       fields: [
         { name: 'number', type: 'text', required: true },
         { name: 'label', type: 'text', required: true },

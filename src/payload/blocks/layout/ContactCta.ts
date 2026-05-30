@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { httpsUrlValidate, safeUrlValidate } from '../../fields/url'
+
 // Tasks.md T053 specialty: a CTA pointing at the contact path (book a call,
 // email, meeting embed). Distinct from cta-section because the variants
 // here are narrower (email + book-a-call) and the rendering is purpose-
@@ -16,7 +18,7 @@ export const ContactCta: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
+        { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
       ],
     },
     {
@@ -24,12 +26,13 @@ export const ContactCta: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text' },
-        { name: 'url', type: 'text' },
+        { name: 'url', type: 'text', validate: safeUrlValidate },
       ],
     },
     {
       name: 'meetingUrl',
       type: 'text',
+      validate: httpsUrlValidate,
       admin: {
         description: 'Optional HubSpot meetings URL — embeds an inline scheduler.',
       },

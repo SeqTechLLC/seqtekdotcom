@@ -86,6 +86,8 @@ export function Hero({
               className="h-full w-full rounded-md"
               allow="autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer"
             />
           </div>
         ) : null}

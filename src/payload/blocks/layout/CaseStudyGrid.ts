@@ -1,5 +1,9 @@
 import type { Block } from 'payload'
 
+import { requiredWhen } from '../conditional'
+
+type CaseStudyGridSibling = { source?: string }
+
 // Per BLOCK_LIBRARY.md §5.5.
 export const CaseStudyGrid: Block = {
   slug: 'case-study-grid',
@@ -24,19 +28,19 @@ export const CaseStudyGrid: Block = {
       type: 'relationship',
       relationTo: 'caseStudies',
       hasMany: true,
-      admin: { condition: (_, sd) => sd?.source === 'manual' },
+      ...requiredWhen<CaseStudyGridSibling>((d) => d?.source === 'manual'),
     },
     {
       name: 'industry',
       type: 'relationship',
       relationTo: 'industries',
-      admin: { condition: (_, sd) => sd?.source === 'by-industry' },
+      ...requiredWhen<CaseStudyGridSibling>((d) => d?.source === 'by-industry'),
     },
     {
       name: 'service',
       type: 'relationship',
       relationTo: 'services',
-      admin: { condition: (_, sd) => sd?.source === 'by-service' },
+      ...requiredWhen<CaseStudyGridSibling>((d) => d?.source === 'by-service'),
     },
     { name: 'limit', type: 'number', defaultValue: 3, min: 1, max: 9 },
   ],

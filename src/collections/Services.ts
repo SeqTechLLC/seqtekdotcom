@@ -6,12 +6,14 @@ import { editorConfig } from '../payload/editor/editorConfig'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { livePreviewFor } from '../payload/livePreview/url'
 
 export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'pillar', 'order'],
+    livePreview: livePreviewFor('services'),
   },
   access: {
     read: publishedOrAuthed,

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { safeUrlValidate } from '../../fields/url'
+
 // Per BLOCK_LIBRARY.md §5.6. Sequoyah story teaser (homepage row 5 of §6).
 export const BrandTeaser: Block = {
   slug: 'brand-teaser',
@@ -14,6 +16,7 @@ export const BrandTeaser: Block = {
       type: 'text',
       required: true,
       defaultValue: '/about/our-story',
+      validate: safeUrlValidate,
     },
     { name: 'image', type: 'upload', relationTo: 'media' },
   ],

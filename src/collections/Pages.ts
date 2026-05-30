@@ -5,13 +5,16 @@ import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { layoutBlocks } from '../payload/blocks/layout'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
+import { safeUrlValidate } from '../payload/fields/url'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { livePreviewFor } from '../payload/livePreview/url'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'updatedAt'],
+    livePreview: livePreviewFor('pages'),
   },
   access: {
     read: publishedOrAuthed,
@@ -56,7 +59,7 @@ export const Pages: CollectionConfig = {
           type: 'group',
           fields: [
             { name: 'label', type: 'text' },
-            { name: 'url', type: 'text' },
+            { name: 'url', type: 'text', validate: safeUrlValidate },
           ],
         },
       ],

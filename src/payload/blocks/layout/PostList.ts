@@ -1,5 +1,9 @@
 import type { Block } from 'payload'
 
+import { requiredWhen } from '../conditional'
+
+type PostListSibling = { source?: string }
+
 // Per BLOCK_LIBRARY.md §5.5 latest-insights variant. Modeled distinctly to
 // distinguish a generic post listing from the homepage "latest insights"
 // composition affordance.
@@ -24,14 +28,14 @@ export const PostList: Block = {
       name: 'category',
       type: 'relationship',
       relationTo: 'categories',
-      admin: { condition: (_, sd) => sd?.source === 'by-category' },
+      ...requiredWhen<PostListSibling>((d) => d?.source === 'by-category'),
     },
     {
       name: 'manualItems',
       type: 'relationship',
       relationTo: 'posts',
       hasMany: true,
-      admin: { condition: (_, sd) => sd?.source === 'manual' },
+      ...requiredWhen<PostListSibling>((d) => d?.source === 'manual'),
     },
     { name: 'limit', type: 'number', defaultValue: 3, min: 1, max: 12 },
   ],

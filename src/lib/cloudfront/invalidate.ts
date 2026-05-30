@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+
 /**
  * CloudFront path invalidation wrapper. Lazily imports the AWS SDK so dev
  * boots and unit tests don't pay the bundle cost when CLOUDFRONT_DISTRIBUTION_ID
@@ -27,7 +29,12 @@ export async function invalidateCloudFrontPaths(paths: string[]): Promise<Invali
     new CreateInvalidationCommand({
       DistributionId: distributionId,
       InvalidationBatch: {
-        CallerReference: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        // randomUUID gives 122 bits of entropy. A previous timestamp + 8-char
+        // Math.random() suffix could collide when multiple revalidate-hook
+        // invocations fired in the same millisecond, and CloudFront rejects
+        // duplicates with InvalidationBatchAlreadyExists — silently dropping
+        // the second invalidation under the catch-block above.
+        CallerReference: randomUUID(),
         Paths: { Quantity: unique.length, Items: unique },
       },
     }),

@@ -1,5 +1,10 @@
 import type { Block } from 'payload'
 
+import { safeUrlValidate } from '../../fields/url'
+import { requiredWhen } from '../conditional'
+
+type CtaSibling = { background?: string }
+
 export const CtaSection: Block = {
   slug: 'cta-section',
   interfaceName: 'CtaSectionBlock',
@@ -23,7 +28,7 @@ export const CtaSection: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
+        { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
       ],
     },
     {
@@ -31,7 +36,7 @@ export const CtaSection: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text' },
-        { name: 'url', type: 'text' },
+        { name: 'url', type: 'text', validate: safeUrlValidate },
       ],
     },
     {
@@ -48,9 +53,7 @@ export const CtaSection: Block = {
       name: 'backgroundImage',
       type: 'upload',
       relationTo: 'media',
-      admin: {
-        condition: (_, siblingData) => siblingData?.background === 'image',
-      },
+      ...requiredWhen<CtaSibling>((d) => d?.background === 'image'),
     },
   ],
 }

@@ -1,5 +1,10 @@
 import type { Block } from 'payload'
 
+import { httpsUrlValidate, safeUrlValidate } from '../../fields/url'
+import { requiredWhen } from '../conditional'
+
+type HeroSibling = { variant?: string }
+
 export const Hero: Block = {
   slug: 'hero',
   interfaceName: 'HeroBlock',
@@ -24,24 +29,27 @@ export const Hero: Block = {
       name: 'media',
       type: 'upload',
       relationTo: 'media',
-      admin: {
-        condition: (_, siblingData) =>
-          siblingData?.variant === 'with-image' || siblingData?.variant === 'split',
-      },
+      ...requiredWhen<HeroSibling>((d) => d?.variant === 'with-image' || d?.variant === 'split'),
     },
-    {
-      name: 'videoUrl',
-      type: 'text',
-      admin: {
-        condition: (_, siblingData) => siblingData?.variant === 'with-video',
-      },
-    },
+    (() => {
+      const { admin, validate } = requiredWhen<HeroSibling>((d) => d?.variant === 'with-video')
+      return {
+        name: 'videoUrl' as const,
+        type: 'text' as const,
+        admin,
+        validate: (value: unknown, args: { data?: unknown; siblingData?: unknown }) => {
+          const requiredCheck = validate(value, args)
+          if (requiredCheck !== true) return requiredCheck
+          return httpsUrlValidate(value)
+        },
+      }
+    })(),
     {
       name: 'primaryCta',
       type: 'group',
       fields: [
         { name: 'label', type: 'text' },
-        { name: 'url', type: 'text' },
+        { name: 'url', type: 'text', validate: safeUrlValidate },
         {
           name: 'variant',
           type: 'select',
@@ -59,7 +67,7 @@ export const Hero: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text' },
-        { name: 'url', type: 'text' },
+        { name: 'url', type: 'text', validate: safeUrlValidate },
       ],
     },
     {

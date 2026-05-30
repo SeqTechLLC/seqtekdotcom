@@ -1,6 +1,7 @@
 import type { Block } from 'payload'
 
 import { editorConfig } from '../../editor/editorConfig'
+import { safeUrlValidate } from '../../fields/url'
 
 // Per BLOCK_LIBRARY.md §5.2.
 export const TwoColumn: Block = {
@@ -25,7 +26,7 @@ export const TwoColumn: Block = {
       type: 'group',
       fields: [
         { name: 'label', type: 'text' },
-        { name: 'url', type: 'text' },
+        { name: 'url', type: 'text', validate: safeUrlValidate },
       ],
     },
   ],

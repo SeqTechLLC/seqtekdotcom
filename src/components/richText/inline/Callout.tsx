@@ -15,7 +15,7 @@ export function Callout({ tone = 'info', body }: CalloutProps) {
   const cls = TONE_CLASSES[tone ?? 'info']
   return (
     <aside className={`my-6 rounded-md border px-4 py-3 ${cls}`} role="note">
-      <p>{body}</p>
+      <p className="whitespace-pre-line">{body}</p>
     </aside>
   )
 }

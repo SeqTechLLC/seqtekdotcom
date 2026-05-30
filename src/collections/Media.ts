@@ -1,6 +1,23 @@
-import type { CollectionConfig, ImageSize } from 'payload'
+import type { CollectionBeforeOperationHook, CollectionConfig, ImageSize } from 'payload'
 
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
+
+// data-model §1.12: 25 MB upload cap. Payload v3 has no collection-level
+// `maxFileSize` field on UploadConfig, so we enforce it in a beforeOperation
+// hook. The global busboy parser is also a defense-in-depth gate, but it's
+// site-wide; this hook keeps the limit scoped to Media.
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
+const enforceMaxFileSize: CollectionBeforeOperationHook = ({ args, operation }) => {
+  if (operation !== 'create' && operation !== 'update') return args
+  const file = args.req?.file
+  if (file && typeof file.size === 'number' && file.size > MAX_UPLOAD_BYTES) {
+    throw new Error(
+      `Upload exceeds 25 MB cap (received ${(file.size / 1024 / 1024).toFixed(1)} MB)`,
+    )
+  }
+  return args
+}
 
 const ALLOWED_MIME = [
   'image/jpeg',
@@ -48,13 +65,13 @@ export const Media: CollectionConfig = {
     admin: isAdminOrEditor,
   },
   upload: {
-    // 25MB cap per data-model §1.12
     mimeTypes: ALLOWED_MIME,
     focalPoint: true,
     filesRequiredOnCreate: true,
     imageSizes,
-    // Payload reads the global `upload.maxFileSize` from request body limit;
-    // collection-level cap is enforced via the validate path below.
+  },
+  hooks: {
+    beforeOperation: [enforceMaxFileSize],
   },
   fields: [
     {

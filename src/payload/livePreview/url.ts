@@ -1,8 +1,17 @@
 import type { LivePreviewConfig } from 'payload'
 
+export type PreviewCollection = 'pages' | 'posts' | 'caseStudies' | 'services'
+
+export const PREVIEW_COLLECTIONS: readonly PreviewCollection[] = [
+  'pages',
+  'posts',
+  'caseStudies',
+  'services',
+] as const
+
 type DocLike = { slug?: string; pillar?: { slug?: string } | string | null }
 
-const COLLECTION_PATHS: Record<string, (doc: DocLike) => string | null> = {
+const PUBLIC_PATH_BUILDERS: Record<PreviewCollection, (doc: DocLike) => string | null> = {
   pages: (doc) => (doc.slug ? `/${doc.slug}` : null),
   posts: (doc) => (doc.slug ? `/insights/${doc.slug}` : null),
   caseStudies: (doc) => (doc.slug ? `/case-studies/${doc.slug}` : null),
@@ -13,22 +22,36 @@ const COLLECTION_PATHS: Record<string, (doc: DocLike) => string | null> = {
   },
 }
 
-const PREVIEW_SECRET = () => process.env.PREVIEW_SECRET ?? ''
 const SITE_URL = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3100'
 
+export const isPreviewCollection = (value: string): value is PreviewCollection =>
+  (PREVIEW_COLLECTIONS as readonly string[]).includes(value)
+
 /**
- * Build the live-preview URL for a draft document. Returns `null` when the
- * document has no slug yet (Payload hides the Preview button in that case).
+ * Resolve the public-route path for a draft document. Returns `null` when
+ * the document has no slug yet. Re-exported so the `/preview` route handler
+ * can compute the redirect target from the same source of truth.
+ */
+export const publicPathFor = (collection: PreviewCollection, doc: DocLike): string | null =>
+  PUBLIC_PATH_BUILDERS[collection](doc)
+
+/**
+ * Build the live-preview URL for a draft document.
+ *
+ * The URL deliberately does NOT carry `PREVIEW_SECRET`. The previous design
+ * embedded it as a query param, which leaked the env secret into (a) the
+ * admin DOM (anyone with admin/editor role can inspect the iframe src),
+ * (b) Referer headers for outbound clicks inside the preview frame, and
+ * (c) CloudFront / ALB access logs. The route handler now gates on the
+ * admin session cookie (`payload-token`) — same-origin so the cookie ships
+ * with the iframe request — which is the real auth boundary anyway.
  */
 export const buildPreviewUrl = (collection: string, doc: DocLike): string | null => {
-  const builder = COLLECTION_PATHS[collection]
-  if (!builder) return null
-  const publicPath = builder(doc)
+  if (!isPreviewCollection(collection)) return null
+  const publicPath = publicPathFor(collection, doc)
   if (!publicPath) return null
-  const secret = PREVIEW_SECRET()
-  const params = new URLSearchParams({ collection, path: publicPath })
-  if (secret) params.set('secret', secret)
-  return `${SITE_URL()}/preview?${params.toString()}`
+  const params = new URLSearchParams({ path: publicPath })
+  return `${SITE_URL()}/preview/${collection}/${encodeURIComponent(doc.slug!)}?${params.toString()}`
 }
 
 export const previewBreakpoints: NonNullable<LivePreviewConfig['breakpoints']> = [
@@ -40,7 +63,7 @@ export const previewBreakpoints: NonNullable<LivePreviewConfig['breakpoints']> =
 /**
  * Convenience factory for `admin.livePreview` per-collection wiring.
  */
-export const livePreviewFor = (collection: string): LivePreviewConfig => ({
+export const livePreviewFor = (collection: PreviewCollection): LivePreviewConfig => ({
   url: ({ data }) => buildPreviewUrl(collection, data as DocLike) ?? '',
   breakpoints: previewBreakpoints,
 })

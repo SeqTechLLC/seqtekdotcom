@@ -1,5 +1,9 @@
 import type { Block } from 'payload'
 
+import { requiredWhen } from '../conditional'
+
+type ServiceCardsSibling = { source?: string }
+
 // Per BLOCK_LIBRARY.md §5.5.
 export const ServiceCards: Block = {
   slug: 'service-cards',
@@ -21,14 +25,14 @@ export const ServiceCards: Block = {
       name: 'pillar',
       type: 'relationship',
       relationTo: 'servicePillars',
-      admin: { condition: (_, sd) => sd?.source === 'by-pillar' },
+      ...requiredWhen<ServiceCardsSibling>((d) => d?.source === 'by-pillar'),
     },
     {
       name: 'manualItems',
       type: 'relationship',
       relationTo: 'services',
       hasMany: true,
-      admin: { condition: (_, sd) => sd?.source === 'manual' },
+      ...requiredWhen<ServiceCardsSibling>((d) => d?.source === 'manual'),
     },
   ],
 }

@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { revalidateTag } from 'next/cache'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -8,11 +9,12 @@ interface RevalidateBody {
   paths?: unknown
 }
 
+// SHA-256 digests of both sides give equal-length Buffers, so timingSafeEqual
+// never short-circuits on length and the comparison is truly constant-time.
 const constantTimeEqual = (a: string, b: string): boolean => {
-  if (a.length !== b.length) return false
-  let result = 0
-  for (let i = 0; i < a.length; i++) result |= a.charCodeAt(i) ^ b.charCodeAt(i)
-  return result === 0
+  const ah = createHash('sha256').update(a).digest()
+  const bh = createHash('sha256').update(b).digest()
+  return timingSafeEqual(ah, bh)
 }
 
 const isStringArray = (value: unknown): value is string[] =>
@@ -36,16 +38,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const tags = body.tags ?? []
   const paths = body.paths ?? []
-  const tagsValid = isStringArray(tags) || (Array.isArray(tags) && tags.length === 0)
-  const pathsValid = isStringArray(paths) || (Array.isArray(paths) && paths.length === 0)
-  if (!tagsValid || !pathsValid) {
+  if (!isStringArray(tags) || !isStringArray(paths)) {
     return NextResponse.json(
       { error: 'tags and paths must be arrays of non-empty strings' },
       { status: 400 },
     )
   }
-  const tagList = tagsValid && Array.isArray(tags) ? (tags as string[]) : []
-  const pathList = pathsValid && Array.isArray(paths) ? (paths as string[]) : []
+  const tagList = tags
+  const pathList = paths
   if (tagList.length === 0 && pathList.length === 0) {
     return NextResponse.json({ error: 'tags or paths required' }, { status: 400 })
   }
