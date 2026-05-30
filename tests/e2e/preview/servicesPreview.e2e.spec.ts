@@ -4,13 +4,13 @@ import {
   cleanupEditorSession,
   seedEditorSession,
   type EditorSession,
-} from '../../helpers/editorSession'
+} from '../../sessions/editorSession'
 import {
   cleanupDraftDoc,
   cleanupServicePillar,
   seedDraftService,
   type SeededService,
-} from '../../helpers/seedDraftDoc'
+} from '../../seeders/seedDraftDoc'
 
 // Contract: specs/003-phase-2-content-models/contracts/live-preview-urls.md
 // T077 — services preview redirect mechanics (FR-019, FR-021, SC-003).
