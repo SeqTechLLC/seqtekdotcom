@@ -105,7 +105,8 @@ Single Next.js project per `plan.md`. `src/`, `tests/`, `docs/` at repo root.
 - **Phase 3 US1**: complete (T042–T073). Shipped **43 layout blocks across 6 categories** (Hero/Content/Social-proof/CTA/Content-collection/Specialty) plus all 7 inline blocks — every block enumerated in BLOCK_LIBRARY.md §5.1–§5.6 is implemented, plus 7 additions tracked in §5.7. T042/T043 admin-UX Playwright specs landed as `test.skip` skeletons by design (the visual showcase harness covers the structural round-trip more thoroughly; flesh-out steps are documented in each file's header). T045–T048 + T071 vitest tests landed in the same PR. Visual showcase harness (`npm run seed:showcase` + `npm run visual:capture`) produces 147 screenshots across desktop/tablet/mobile per block and per category. ADR-0004 logs the planned PG 18 bump at Phase 5.5. `text-eyebrow` Tailwind token added.
 - **Phase 3 deferred (functional, client-side):** Carousel autoplay (`featured-testimonials`), client-side tab switching (`tabs`), video click-to-load facade (`video-embed`), HubSpot live-script integration for `hubspot-form` / `hubspot-meetings` / `download-card` / `newsletter-cta` (Phase 3 per `docs/INTEGRATIONS.md` §1–§3).
 - **Phase 4 US2**: complete (T074–T086). Live-preview URL builder + `livePreviewFor` factory wired into Pages/Posts/CaseStudies/Services. `/preview/[collection]/[slug]` route handler is same-origin (admin session cookie) — the earlier URL-secret design was rejected and the contract updated to match (`contracts/live-preview-urls.md`). `<PreviewBanner />` lives at `src/components/layout/PreviewBanner.tsx` and is wired into the `/showcase/[slug]` dev route so the full preview loop is verifiable today. T074–T077 cover redirect mechanics per collection (302 + Location + `__prerender_bypass` cookie); the visual "renders draft content" assertion is deferred to spec 004 page templates. T079 staging revalidation E2E lands as a `test.skip` skeleton — public page templates from spec 004 are a prerequisite.
-- **Phases 5–10 (US3–US7 + Polish)**: not started.
+- **Phase 5 US3**: complete (T087–T091). Type-level non-nullable assertions on `Page`/`CaseStudy`/`Post`/`Service`/`HeroBlock` ship in `tests/int/render/typesNonNullable.int.spec.ts` (13 cases). Public draft-query invariant covered in `tests/int/render/publicDraftQuery.int.spec.ts` — caseStudies draft hidden from anon `payload.find`, pages published doc surfaced. `LOCAL_DEVELOPMENT.md` "Common Tasks" gains "Regenerating Payload types" + "Regenerating the Payload importMap" subsections; `PAYLOAD_DEVELOPMENT.md` §7 (inline blocks) + §14 (custom components) link to the importMap workflow. 76/76 render-path int tests green; typecheck clean.
+- **Phases 6–10 (US4–US7 + Polish)**: not started.
 
 ---
 
@@ -215,14 +216,14 @@ Single Next.js project per `plan.md`. `src/`, `tests/`, `docs/` at repo root.
 
 ### Tests for User Story 3
 
-- [ ] T087 [P] [US3] Vitest int `tests/int/render/typesNonNullable.test.ts` (type-level): import `Page['layout']` + `CaseStudy` types and assert via `expectTypeOf` that schema-required fields are non-nullable in the generated types (SC-008)
-- [ ] T088 [P] [US3] Vitest int `tests/int/render/publicDraftQuery.test.ts`: query `payload.find({ collection: 'caseStudies', where: { slug } })` without `req.user` against a draft fixture → empty result (US3 acceptance #5, FR-016)
+- [x] T087 [P] [US3] Vitest int `tests/int/render/typesNonNullable.int.spec.ts` (type-level): import `Page['layout']` + `CaseStudy` types and assert via `expectTypeOf` that schema-required fields are non-nullable in the generated types (SC-008)
+- [x] T088 [P] [US3] Vitest int `tests/int/render/publicDraftQuery.int.spec.ts`: query `payload.find({ collection: 'caseStudies', where: { slug } })` without `req.user` against a draft fixture → empty result (US3 acceptance #5, FR-016) — _positive companion switched to `pages` (no required relationships) to avoid dragging a media+industry fixture into a render-path test; same `publishedOrAuthed` helper exercised_
 
 ### Implementation & docs
 
-- [ ] T089 [US3] Update `docs/LOCAL_DEVELOPMENT.md` with a "Payload importMap" subsection documenting `npm run generate:importmap` and a "Regenerating Payload types" subsection documenting `npm run generate:types` (R-08, FR-038, FR-039, Constitution III)
-- [ ] T090 [P] [US3] Update `docs/PAYLOAD_DEVELOPMENT.md` to link to the importMap workflow + add a one-line reminder comment at the top of `src/payload/blocks/inline/index.ts` ("If you add an inline block, run npm run generate:importmap before next dev-start")
-- [ ] T091 [US3] Run T087, T088, T044, T045, T046, T047 together — every render-path invariant green
+- [x] T089 [US3] Update `docs/LOCAL_DEVELOPMENT.md` with a "Payload importMap" subsection documenting `npm run generate:importmap` and a "Regenerating Payload types" subsection documenting `npm run generate:types` (R-08, FR-038, FR-039, Constitution III)
+- [x] T090 [P] [US3] Update `docs/PAYLOAD_DEVELOPMENT.md` to link to the importMap workflow + add a one-line reminder comment at the top of `src/payload/blocks/inline/index.ts` ("If you add an inline block, run npm run generate:importmap before next dev-start") — _reminder comment was already present at the top of the index from Foundational work; left in place and linked from the doc_
+- [x] T091 [US3] Run T087, T088, T044, T045, T046, T047 together — every render-path invariant green — _76/76 vitest int tests pass across the 6 render-path specs_
 
 **Checkpoint**: US3 fully functional. The render path is mechanical; engineers can compose Phase 3 pages without per-page glue.
 

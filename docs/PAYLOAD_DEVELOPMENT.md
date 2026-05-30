@@ -781,6 +781,14 @@ import { lexicalEditor, BlocksFeature } from '@payloadcms/richtext-lexical'
 
 Editors insert these via the slash command menu or toolbar, and they render inline within the rich text flow.
 
+**After adding or removing an inline block**, regenerate the Payload admin importMap or the editor will fail to mount the new block in `/admin`:
+
+```bash
+npm run generate:importmap
+```
+
+Commit the updated `src/app/(payload)/admin/importMap.js` in the same PR. See [LOCAL_DEVELOPMENT.md → Regenerating the Payload importMap](./LOCAL_DEVELOPMENT.md#regenerating-the-payload-importmap) for the full rationale (FR-039, ADR `project_payload_importmap_gotcha`). The inline-blocks index at `src/payload/blocks/inline/index.ts` carries the same reminder at the top of the file.
+
 ---
 
 ## 8. Hooks
@@ -1518,6 +1526,8 @@ Replace the default admin UI for a field with a custom React component:
 ```
 
 Custom components are React Server Components by default. Use `'use client'` if they need interactivity.
+
+**Custom components require an importMap regeneration** — Payload's admin loads them from a static manifest at `src/app/(payload)/admin/importMap.js`. After adding a custom Field, Cell, or any client-bearing admin component, run `npm run generate:importmap` and commit the regenerated file. See [LOCAL_DEVELOPMENT.md → Regenerating the Payload importMap](./LOCAL_DEVELOPMENT.md#regenerating-the-payload-importmap).
 
 ### Admin Sidebar Groups
 

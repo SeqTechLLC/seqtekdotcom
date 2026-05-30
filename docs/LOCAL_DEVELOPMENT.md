@@ -222,6 +222,32 @@ npm run dev
 
 Edit the collection config in `src/payload/collections/`. Payload auto-generates migrations when the schema changes. On the next `npm run dev`, the migration runs and the database schema updates. The admin panel and API reflect the changes immediately.
 
+Two artefacts do **not** regenerate on their own — both need a manual step after any schema change. See the next two subsections.
+
+### Regenerating Payload types
+
+`src/payload-types.ts` is the generated TypeScript surface that every render path consumes. Phase 3 page templates import `Page['layout']`, `CaseStudy`, etc. from this file and pass the result straight to `<RenderBlocks>` with no `as any` casts (FR-038, spec 003 US3).
+
+Regenerate after any field/collection/global add, rename, or required-flag flip:
+
+```bash
+npm run generate:types
+```
+
+Commit the regenerated `src/payload-types.ts` in the same PR as the schema change. CI typechecks against it.
+
+### Regenerating the Payload importMap
+
+`src/app/(payload)/admin/importMap.js` is the static manifest Payload uses to resolve client-side components (richText editors, custom fields, inline blocks). When you add a `richText` field or any client-component-bearing field, the admin panel will fail to load that field's editor until you regenerate the map (FR-039, ADR `project_payload_importmap_gotcha`).
+
+```bash
+npm run generate:importmap
+```
+
+The symptom of a stale importMap is an editor that mounts blank or a `Cannot find module` console error in the admin. If you add an inline block to `src/payload/blocks/inline/`, also run this — the inline-blocks set widens the Lexical config and the admin reloads it from the map.
+
+Commit the regenerated `importMap.js` in the same PR as the schema change.
+
 ### Test the Health Endpoint
 
 ```bash
