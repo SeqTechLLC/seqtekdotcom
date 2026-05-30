@@ -29,7 +29,7 @@ export async function PreviewBanner({ force }: PreviewBannerProps = {}) {
       role="status"
       aria-live="polite"
       data-testid="preview-banner"
-      className="sticky top-0 z-tooltip w-full bg-warning-500 px-4 py-2 text-center text-body-sm font-semibold text-text-primary shadow-md"
+      className="sticky top-0 z-tooltip w-full bg-warning-500 px-4 py-2 text-center text-small font-semibold text-text-primary shadow-md"
     >
       <span aria-hidden="true">⚠</span>
       <span className="ml-2 uppercase tracking-wider">Preview mode</span>
