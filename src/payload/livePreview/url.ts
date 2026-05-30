@@ -48,10 +48,11 @@ export const publicPathFor = (collection: PreviewCollection, doc: DocLike): stri
  */
 export const buildPreviewUrl = (collection: string, doc: DocLike): string | null => {
   if (!isPreviewCollection(collection)) return null
-  const publicPath = publicPathFor(collection, doc)
-  if (!publicPath) return null
-  const params = new URLSearchParams({ path: publicPath })
-  return `${SITE_URL()}/preview/${collection}/${encodeURIComponent(doc.slug!)}?${params.toString()}`
+  if (!doc.slug) return null
+  // publicPath is resolved server-side by the route handler from the doc
+  // record, so we don't ferry it through the URL — the only thing the
+  // route needs is the collection + slug pair.
+  return `${SITE_URL()}/preview/${collection}/${encodeURIComponent(doc.slug)}`
 }
 
 export const previewBreakpoints: NonNullable<LivePreviewConfig['breakpoints']> = [

@@ -3,8 +3,13 @@ import type { Access, CollectionConfig } from 'payload'
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 
+// Editorial sessions see every testimonial (including inactive). Anon and
+// any future non-editorial roles only see active ones. The previous
+// `req.user?.roles?.length` check matched any authenticated user, which
+// would leak inactive testimonials to roles introduced later (e.g. viewer).
+const EDITORIAL_ROLES = new Set(['admin', 'editor'])
 const readActiveOrAuthed: Access = ({ req }) => {
-  if (req.user?.roles?.length) return true
+  if (req.user?.roles?.some((r) => EDITORIAL_ROLES.has(r))) return true
   return { isActive: { equals: true } }
 }
 

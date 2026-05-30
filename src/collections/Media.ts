@@ -1,4 +1,9 @@
-import type { CollectionBeforeOperationHook, CollectionConfig, ImageSize } from 'payload'
+import {
+  APIError,
+  type CollectionBeforeOperationHook,
+  type CollectionConfig,
+  type ImageSize,
+} from 'payload'
 
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 
@@ -12,20 +17,30 @@ const enforceMaxFileSize: CollectionBeforeOperationHook = ({ args, operation }) 
   if (operation !== 'create' && operation !== 'update') return args
   const file = args.req?.file
   if (file && typeof file.size === 'number' && file.size > MAX_UPLOAD_BYTES) {
-    throw new Error(
+    // APIError(message, status, data, isPublic) — isPublic surfaces the
+    // message to the admin UI; a bare `throw new Error` would land as a
+    // generic 500 with no editor-readable reason.
+    throw new APIError(
       `Upload exceeds 25 MB cap (received ${(file.size / 1024 / 1024).toFixed(1)} MB)`,
+      413,
+      null,
+      true,
     )
   }
   return args
 }
 
+// SVG is intentionally excluded: SVG can carry inline <script> / event
+// handlers, and once served through CloudFront on the site origin the raw
+// file URL would execute in the user's session. Re-enable only behind an
+// upload-time sanitizer (svgo with removeScriptElement + removeOnHandlers,
+// or DOMPurify) or a separate cookieless origin with Content-Disposition.
 const ALLOWED_MIME = [
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/avif',
   'image/gif',
-  'image/svg+xml',
   'application/pdf',
 ]
 

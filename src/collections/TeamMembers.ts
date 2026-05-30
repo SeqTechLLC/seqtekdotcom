@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { editorConfig } from '../payload/editor/editorConfig'
+import { httpsUrlValidate } from '../payload/fields/url'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 
@@ -55,7 +56,7 @@ export const TeamMembers: CollectionConfig = {
         { name: 'institution', type: 'text', required: true },
       ],
     },
-    { name: 'linkedinUrl', type: 'text' },
+    { name: 'linkedinUrl', type: 'text', validate: httpsUrlValidate },
     { name: 'email', type: 'text' },
     {
       name: 'personalFacts',
