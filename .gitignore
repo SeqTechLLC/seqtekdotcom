@@ -20,6 +20,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Seed-script gap report (regenerated per run — see src/payload/seed/log.ts, R-16)
+migration-errors.log
+
 # OS
 .DS_Store
 Thumbs.db
@@ -66,6 +69,9 @@ infra/.cdk.staging/
 /blob-report/
 /playwright/.cache/
 /tests/e2e/screenshots/
+# Visual showcase captures — regenerated locally via `npm run visual:capture`.
+# Keep out of the repo to avoid binary churn on every block change.
+/tests/e2e/visual/screenshots/
 
 # spec-kit local cache (extension catalog cache + install registry)
 .specify/extensions/.cache/
@@ -73,3 +79,13 @@ infra/.cdk.staging/
 
 # Misc
 *.pem
+
+# Local symlinks to vercel-agent-skills (point at an absolute local path; not portable)
+/.claude/skills/composition-patterns
+/.claude/skills/deploy-to-vercel
+/.claude/skills/react-best-practices
+/.claude/skills/react-native-skills
+/.claude/skills/react-view-transitions
+/.claude/skills/vercel-cli-with-tokens
+/.claude/skills/vercel-optimize
+/.claude/skills/web-design-guidelines

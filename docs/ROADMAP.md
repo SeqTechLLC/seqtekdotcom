@@ -1,6 +1,6 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-28 (Phase 1 closed — spec 002 (AWS CDK + blue-green CI/CD) shipped as P1-10/P1-11/P1-12; staging live on `seqtek-preview.com`; SC-002 measured at 7m45s; Slack alarms verified end-to-end. Production CD auto-deploy + DNS cutover to `seqtek.com` deferred until leadership approval. Multi-AZ RDS + private-subnet ASG flips both still scheduled for Phase 5.5. Phase 2 (Content models) is now unblocked.)
+**Last updated:** 2026-05-29 (shipped responsive image rendering slice in Phase 2: `imageSizes` (mobile/tablet/desktop/wide × WebP/JPEG) in `Media.ts`, new `ResponsiveImage` component, swapped 4 block callsites. Bundled into Phase 2 because Payload generates size derivatives at upload time — config must land before C-8 bulk ingest or every photo re-uploads. Added C-8 for the bulk ingest itself. Phase 1 closed — spec 002 (AWS CDK + blue-green CI/CD) shipped as P1-10/P1-11/P1-12; staging live on `seqtek-preview.com`; SC-002 measured at 7m45s; Slack alarms verified end-to-end. Production CD auto-deploy + DNS cutover to `seqtek.com` deferred until leadership approval. Multi-AZ RDS + private-subnet ASG flips both still scheduled for Phase 5.5. Phase 2 (Content models) is now unblocked.)
 
 > **Convention:** When a Phase 1 implementation item ships, _move_ it out of this file (don't just check it off) and add a `P1-*` row to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md). The roadmap stays a short punch list of what's _open_; history carries the audit trail.
 
@@ -41,6 +41,7 @@ _BR-1, BR-2, BR-3 resolved on 2026-05-20 — see `PROJECT_HISTORY.md`. Items rem
 | C-5 | Client logo permission verification                                                                                                                                                                | 🟡     | Content lead |
 | C-6 | Blog post bodies — not in audit (only titles + dates + truncated excerpts). Decide: re-crawl current Wix site for full bodies, re-write from scratch, or import as stubs and rewrite during Tier 3 | 🟡     | Content lead |
 | C-7 | Case study hero images, testimonials, and metrics arrays — all missing from audit; every imported case study needs editor follow-up before publish                                                 | 🟡     | Content lead |
+| C-8 | Ingest existing photo library (~915 images, 7.4 GB at `../photos`) into Media collection — HEIC→WebP conversion, downscale of >25 MB originals, batch upload script, cap revisit                   | 🟡     | Kenn         |
 
 ---
 
@@ -80,6 +81,7 @@ Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./
 - [ ] Live preview wired up for `posts`, `case-studies`, `pages`, `services`
 - [ ] Seed script: `audit/` JSON → Payload (per D-8)
 - [ ] Initial admin user creation flow
+- [x] Responsive image rendering — `imageSizes` (mobile/tablet/desktop/wide × WebP/JPEG) in `Media.ts`, `ResponsiveImage` component, swapped 4 block callsites (Hero, CaseStudyHero, TwoColumn, ServicePillarHero). Hard-coupled to Phase 2 because Payload generates size derivatives at upload time — landing this before C-8 avoids re-uploading every photo
 
 ### Phase 3 — Core pages (2-3 weeks)
 

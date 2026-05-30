@@ -1,16 +1,32 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
+import { Categories } from './collections/Categories'
+import { CaseStudies } from './collections/CaseStudies'
+import { Industries } from './collections/Industries'
+import { Locations } from './collections/Locations'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
+import { Posts } from './collections/Posts'
+import { ServicePillars } from './collections/ServicePillars'
+import { Services } from './collections/Services'
+import { TeamMembers } from './collections/TeamMembers'
+import { Testimonials } from './collections/Testimonials'
 import { Users } from './collections/Users'
+import { Workshops } from './collections/Workshops'
+import { Homepage } from './globals/Homepage'
+import { Navigation } from './globals/Navigation'
+import { SiteSettings } from './globals/SiteSettings'
+import { editorConfig } from './payload/editor/editorConfig'
+import { conditionalS3Storage } from './payload/storage/s3'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const s3Plugin = conditionalS3Storage()
 
 export default buildConfig({
   serverURL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3100',
@@ -31,8 +47,23 @@ export default buildConfig({
       ],
     },
   },
-  collections: [Users, Media, Pages],
-  editor: lexicalEditor(),
+  collections: [
+    Users,
+    Media,
+    Pages,
+    Posts,
+    CaseStudies,
+    Services,
+    ServicePillars,
+    TeamMembers,
+    Testimonials,
+    Workshops,
+    Industries,
+    Locations,
+    Categories,
+  ],
+  globals: [SiteSettings, Navigation, Homepage],
+  editor: editorConfig,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
@@ -47,5 +78,5 @@ export default buildConfig({
     push: true,
   }),
   sharp,
-  plugins: [],
+  plugins: s3Plugin ? [s3Plugin] : [],
 })

@@ -105,6 +105,7 @@ const config = {
       },
       fontSize: {
         caption: ['0.75rem', { lineHeight: '1.5' }],
+        eyebrow: ['0.75rem', { lineHeight: '1.4', letterSpacing: '0.08em' }],
         small: ['0.8125rem', { lineHeight: '1.5' }],
         body: ['1rem', { lineHeight: '1.6' }],
         'body-lg': ['1.125rem', { lineHeight: '1.6' }],

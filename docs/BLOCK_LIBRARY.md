@@ -424,6 +424,38 @@ Frontend emits `FAQPage` JSON-LD automatically.
 | `heading` | text                                                      | no       |       |
 | `items`   | relationship (polymorphic → posts, caseStudies, services) | yes      | Max 3 |
 
+### 5.7 Phase 2 implementation status
+
+Spec 003 Phase 2 (T050–T056) shipped 32 layout blocks. The mapping below reconciles the §5.1–§5.6 catalog above with the implementation in `src/payload/blocks/layout/`. Per Constitution III, this section is authoritative until the catalog tables themselves are rewritten in a follow-up doc pass.
+
+**Renames** (catalog name → implemented slug):
+
+| Catalog name           | Implemented slug        | Note                                                                                             |
+| ---------------------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `testimonial-single`   | `testimonial-block`     | Same field shape; `layout` select includes the catalog's three variants                          |
+| `testimonial-carousel` | `featured-testimonials` | Static grid in Phase 2; carousel autoplay deferred                                               |
+| `latest-insights`      | `post-list`             | Adds explicit `source` (latest / by-category / manual)                                           |
+| `markets-map`          | `locations-list`        | Renamed to reflect that the Phase 2 renderer is a card grid, not a map; map is `map` block below |
+| `workshop-progression` | `workshop-list`         | Numbered list rendering; horizontal flow can be added without schema change                      |
+| `newsletter-signup`    | `newsletter-cta`        | CTA naming aligns with sibling `contact-cta`                                                     |
+| `related-content`      | `related-posts`         | Phase 2 ships the post-typed variant; polymorphic variant deferred                               |
+
+**New blocks added in Phase 2** (beyond the §5.1–§5.6 catalog, per spec 003 tasks.md T050/T052/T053/T055):
+
+| Slug               | Category     | Purpose                                                                                  |
+| ------------------ | ------------ | ---------------------------------------------------------------------------------------- |
+| `homepage-hero`    | Hero         | Display-size hero with required dual CTAs (homepage row 1 of §6)                         |
+| `client-logo-grid` | Social proof | Denser captioned-logo grid distinct from the linear `logo-bar`                           |
+| `contact-cta`      | CTA          | CTA with optional HubSpot meetings embed affordance (separate intent from `cta-section`) |
+| `accordion`        | Specialty    | Generic disclosure pattern (vs. FAQ which emits FAQPage JSON-LD)                         |
+| `tabs`             | Specialty    | Tab-strip representation; Phase 2 renderer is static (server-rendered)                   |
+| `map`              | Specialty    | Static map iframe (OpenStreetMap / Google Maps allow-list)                               |
+| `embed`            | Specialty    | Generic sandboxed iframe for third-party widgets                                         |
+
+**Catalog blocks landed in the same PR** (built in the second pass after initial deferral): `deliverables` (§5.2), `metric-display` (§5.3), `service-pillar-cards` (§5.5), `team-grid` (§5.5), `download-card` (§5.6), `hubspot-form` (§5.6), `hubspot-meetings` (§5.6), `brand-teaser` (§5.6), `nav-cards` (§5.6), `key-takeaways` (§5.6), `tech-stack` (§5.6).
+
+**Final Phase 2 layout block count: 43** — every block enumerated in §5.1–§5.6 is implemented, plus the 7 additions beyond the catalog from the table above. HubSpot-driven blocks (`hubspot-form`, `hubspot-meetings`, `download-card`, `newsletter-cta`) ship with static placeholder affordances in the Phase 2 renderer; the live HubSpot script integration lands in Phase 3 per `docs/INTEGRATIONS.md` §1–§3.
+
 ---
 
 ## 6. Page composition matrix

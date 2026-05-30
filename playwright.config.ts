@@ -9,6 +9,7 @@ const externalServer = !!process.env.PLAYWRIGHT_BASE_URL
 
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: ['**/visual/**'],
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,

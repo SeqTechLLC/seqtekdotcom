@@ -57,16 +57,19 @@ Copy `.env.example` to `.env.local` and fill in the values below. Only two are r
 
 ### Optional (leave blank for local dev)
 
-| Variable                        | Local Value             | Notes                                                              |
-| ------------------------------- | ----------------------- | ------------------------------------------------------------------ |
-| `S3_BUCKET`                     | _(empty)_               | Not needed. See [Media Storage](#media-storage-no-s3-needed) below |
-| `S3_REGION`                     | _(empty)_               |                                                                    |
-| `S3_BUCKET_HOSTNAME`            | _(empty)_               |                                                                    |
-| `REVALIDATION_SECRET`           | Any string              | Only needed if testing the `/api/revalidate` webhook endpoint      |
-| `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3100` | Used for canonical URLs and OG meta tags                           |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | _(empty)_               | HubSpot forms won't render without this, which is fine for dev     |
-| `NEXT_PUBLIC_GTM_ID`            | _(empty)_               | GTM won't load without this, which is fine for dev                 |
-| `NEXT_PUBLIC_SCOREAPP_URL`      | _(empty)_               | Assessment link won't work, which is fine for dev                  |
+| Variable                        | Local Value             | Notes                                                                                                              |
+| ------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `PREVIEW_SECRET`                | Any 32+ char string     | Phase 2 (spec 003) — required to mint preview cookies for `pages`/`posts`/`caseStudies`/`services` drafts (FR-019) |
+| `REVALIDATION_SECRET`           | Any 32+ char string     | Phase 2 — Bearer secret for `POST /api/revalidate` (FR-026)                                                        |
+| `CLOUDFRONT_DISTRIBUTION_ID`    | _(empty)_               | Phase 2 — unset locally by design (R-03); set per-environment in staging/prod via Parameter Store (FR-027)         |
+| `S3_BUCKET`                     | _(empty)_               | Not needed. See [Media Storage](#media-storage-no-s3-needed) below                                                 |
+| `S3_REGION`                     | _(empty)_               | Required when `S3_BUCKET` is set                                                                                   |
+| `S3_BUCKET_HOSTNAME`            | _(empty)_               |                                                                                                                    |
+| `AUDIT_DIR`                     | _(empty)_               | Phase 2 — path to the private Wix audit (defaults to `~/projects/seqtek-internal/audit/`). Read by the seed script |
+| `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3100` | Used for canonical URLs and OG meta tags                                                                           |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | _(empty)_               | HubSpot forms won't render without this, which is fine for dev                                                     |
+| `NEXT_PUBLIC_GTM_ID`            | _(empty)_               | GTM won't load without this, which is fine for dev                                                                 |
+| `NEXT_PUBLIC_SCOREAPP_URL`      | _(empty)_               | Assessment link won't work, which is fine for dev                                                                  |
 
 ### What's NOT in .env.local
 

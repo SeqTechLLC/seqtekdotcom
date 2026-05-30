@@ -70,6 +70,16 @@ export interface Config {
     users: User;
     media: Media;
     pages: Page;
+    posts: Post;
+    caseStudies: CaseStudy;
+    services: Service;
+    servicePillars: ServicePillar;
+    teamMembers: TeamMember;
+    testimonials: Testimonial;
+    workshops: Workshop;
+    industries: Industry;
+    locations: Location;
+    categories: Category;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +90,16 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
+    caseStudies: CaseStudiesSelect<false> | CaseStudiesSelect<true>;
+    services: ServicesSelect<false> | ServicesSelect<true>;
+    servicePillars: ServicePillarsSelect<false> | ServicePillarsSelect<true>;
+    teamMembers: TeamMembersSelect<false> | TeamMembersSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    workshops: WorkshopsSelect<false> | WorkshopsSelect<true>;
+    industries: IndustriesSelect<false> | IndustriesSelect<true>;
+    locations: LocationsSelect<false> | LocationsSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -89,8 +109,16 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    siteSettings: SiteSetting;
+    navigation: Navigation;
+    homepage: Homepage;
+  };
+  globalsSelect: {
+    siteSettings: SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    navigation: NavigationSelect<false> | NavigationSelect<true>;
+    homepage: HomepageSelect<false> | HomepageSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -157,6 +185,7 @@ export interface User {
 export interface Media {
   id: number;
   alt: string;
+  caption?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -168,6 +197,72 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  sizes?: {
+    mobile_webp?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    mobile_jpeg?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    tablet_webp?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    tablet_jpeg?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    desktop_webp?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    desktop_jpeg?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    wide_webp?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    wide_jpeg?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -177,6 +272,790 @@ export interface Page {
   id: number;
   title: string;
   slug: string;
+  publishedAt?: string | null;
+  hero?: {
+    headline?: string | null;
+    subheadline?: string | null;
+    backgroundImage?: (number | null) | Media;
+    cta?: {
+      label?: string | null;
+      url?: string | null;
+    };
+  };
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | MissionVisionValuesBlock
+        | TimelineBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | FAQBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
+    | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HeroBlock".
+ */
+export interface HeroBlock {
+  variant: 'text-only' | 'with-image' | 'with-video' | 'split';
+  eyebrow?: string | null;
+  headline: string;
+  subheadline?: string | null;
+  media?: (number | null) | Media;
+  videoUrl?: string | null;
+  primaryCta?: {
+    label?: string | null;
+    url?: string | null;
+    variant?: ('primary' | 'secondary' | 'ghost') | null;
+  };
+  secondaryCta?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  alignment?: ('left' | 'center') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'hero';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CaseStudyHeroBlock".
+ */
+export interface CaseStudyHeroBlock {
+  eyebrow: string;
+  headline: string;
+  metric: {
+    number: string;
+    label: string;
+    context?: string | null;
+  };
+  heroImage: number | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'case-study-hero';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServicePillarHeroBlock".
+ */
+export interface ServicePillarHeroBlock {
+  pillarName: string;
+  headline: string;
+  subheadline?: string | null;
+  heroImage: number | Media;
+  primaryCta?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'service-pillar-hero';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomepageHeroBlock".
+ */
+export interface HomepageHeroBlock {
+  eyebrow?: string | null;
+  headline: string;
+  subheadline?: string | null;
+  backgroundImage?: (number | null) | Media;
+  primaryCta: {
+    label: string;
+    url: string;
+  };
+  secondaryCta: {
+    label: string;
+    url: string;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'homepage-hero';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContentBlock".
+ */
+export interface ContentBlock {
+  width?: ('narrow' | 'standard' | 'wide') | null;
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  background?: ('none' | 'subtle' | 'accent') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'content';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TwoColumnBlock".
+ */
+export interface TwoColumnBlock {
+  mediaPosition: 'left' | 'right';
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  media: number | Media;
+  cta?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'two-column';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProcessStepsBlock".
+ */
+export interface ProcessStepsBlock {
+  heading?: string | null;
+  steps: {
+    title: string;
+    body: string;
+    icon?: string | null;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'process-steps';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DeliverablesBlock".
+ */
+export interface DeliverablesBlock {
+  heading?: string | null;
+  items: {
+    label: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'deliverables';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ComparisonTableBlock".
+ */
+export interface ComparisonTableBlock {
+  heading: string;
+  columns: {
+    label: string;
+    tagline?: string | null;
+    id?: string | null;
+  }[];
+  rows: {
+    dimension: string;
+    cells: {
+      value: string;
+      id?: string | null;
+    }[];
+    id?: string | null;
+  }[];
+  bestForRow?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'comparison-table';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MissionVisionValuesBlock".
+ */
+export interface MissionVisionValuesBlock {
+  mission: string;
+  vision: string;
+  values: {
+    name: string;
+    description: string;
+    id?: string | null;
+  }[];
+  layout?: ('tabs' | 'grid' | 'stacked') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'mission-vision-values';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TimelineBlock".
+ */
+export interface TimelineBlock {
+  heading?: string | null;
+  items: {
+    date: string;
+    title: string;
+    body: string;
+    image?: (number | null) | Media;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'timeline';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StatsBarBlock".
+ */
+export interface StatsBarBlock {
+  heading?: string | null;
+  source: 'inline' | 'from-site-settings';
+  items?:
+    | {
+        number: string;
+        label: string;
+        suffix?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'stats-bar';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MetricDisplayBlock".
+ */
+export interface MetricDisplayBlock {
+  number: string;
+  label: string;
+  context?: string | null;
+  background?: ('accent' | 'inverse') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'metric-display';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LogoBarBlock".
+ */
+export interface LogoBarBlock {
+  heading?: string | null;
+  source: 'inline' | 'from-homepage';
+  logos?:
+    | {
+        logo: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  treatment?: ('grayscale-on-color-hover' | 'color') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'logo-bar';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeaturedTestimonialsBlock".
+ */
+export interface FeaturedTestimonialsBlock {
+  heading?: string | null;
+  testimonials: (number | Testimonial)[];
+  autoplay?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'featured-testimonials';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  quote: string;
+  personName: string;
+  personTitle?: string | null;
+  company?: string | null;
+  photo?: (number | null) | Media;
+  caseStudy?: (number | null) | CaseStudy;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "caseStudies".
+ */
+export interface CaseStudy {
+  id: number;
+  title: string;
+  slug: string;
+  subtitle?: string | null;
+  industry: number | Industry;
+  services?: (number | Service)[] | null;
+  client?: {
+    name?: string | null;
+    logo?: (number | null) | Media;
+    isAnonymized?: boolean | null;
+  };
+  heroImage: number | Media;
+  problem?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  solution?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  impact?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  metrics?:
+    | {
+        number: string;
+        label: string;
+        context?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  technologies?:
+    | {
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  testimonial?: (number | null) | Testimonial;
+  relatedCaseStudies?: (number | CaseStudy)[] | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industries".
+ */
+export interface Industry {
+  id: number;
+  title: string;
+  slug: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  relevantServices?: (number | Service)[] | null;
+  clientLogos?:
+    | {
+        logo: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services".
+ */
+export interface Service {
+  id: number;
+  title: string;
+  slug: string;
+  pillar: number | ServicePillar;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  approach?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  deliverables?:
+    | {
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  icon?: string | null;
+  relatedCaseStudies?: (number | CaseStudy)[] | null;
+  faq?:
+    | {
+        question: string;
+        answer?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        id?: string | null;
+      }[]
+    | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
+  order?: number | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "servicePillars".
+ */
+export interface ServicePillar {
+  id: number;
+  title: string;
+  slug: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  heroImage?: (number | null) | Media;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TestimonialBlock".
+ */
+export interface TestimonialBlock {
+  testimonial: number | Testimonial;
+  layout?: ('centered' | 'with-photo-left' | 'with-photo-right') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'testimonial-block';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ClientLogoGridBlock".
+ */
+export interface ClientLogoGridBlock {
+  heading?: string | null;
+  logos: {
+    logo: number | Media;
+    caption?: string | null;
+    id?: string | null;
+  }[];
+  columns?: ('3' | '4' | '6') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'client-logo-grid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CtaSectionBlock".
+ */
+export interface CtaSectionBlock {
+  variant: 'centered' | 'split' | 'inverse';
+  headline: string;
+  body?: string | null;
+  primaryCta: {
+    label: string;
+    url: string;
+  };
+  secondaryCta?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  background?: ('default' | 'accent' | 'image') | null;
+  backgroundImage?: (number | null) | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'cta-section';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "NewsletterCtaBlock".
+ */
+export interface NewsletterCtaBlock {
+  heading?: string | null;
+  body?: string | null;
+  /**
+   * HubSpot form GUID. Falls back to NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID at render time.
+   */
+  formId?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'newsletter-cta';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContactCtaBlock".
+ */
+export interface ContactCtaBlock {
+  heading: string;
+  body?: string | null;
+  primaryCta: {
+    label: string;
+    url: string;
+  };
+  secondaryCta?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  /**
+   * Optional HubSpot meetings URL — embeds an inline scheduler.
+   */
+  meetingUrl?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'contact-cta';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CaseStudyGridBlock".
+ */
+export interface CaseStudyGridBlock {
+  heading?: string | null;
+  source: 'manual' | 'latest' | 'by-industry' | 'by-service';
+  manualItems?: (number | CaseStudy)[] | null;
+  industry?: (number | null) | Industry;
+  service?: (number | null) | Service;
+  limit?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'case-study-grid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServiceCardsBlock".
+ */
+export interface ServiceCardsBlock {
+  heading?: string | null;
+  source: 'by-pillar' | 'manual';
+  pillar?: (number | null) | ServicePillar;
+  manualItems?: (number | Service)[] | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'service-cards';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServicePillarCardsBlock".
+ */
+export interface ServicePillarCardsBlock {
+  heading?: string | null;
+  pillars: (number | ServicePillar)[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'service-pillar-cards';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeaturedCaseStudyBlock".
+ */
+export interface FeaturedCaseStudyBlock {
+  heading?: string | null;
+  caseStudy: number | CaseStudy;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'featured-case-study';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PostListBlock".
+ */
+export interface PostListBlock {
+  heading?: string | null;
+  source: 'latest' | 'by-category' | 'manual';
+  category?: (number | null) | Category;
+  manualItems?: (number | Post)[] | null;
+  limit?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'post-list';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  title: string;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
   content?: {
     root: {
       type: string;
@@ -192,8 +1071,461 @@ export interface Page {
     };
     [k: string]: unknown;
   } | null;
+  featuredImage: number | Media;
+  author: number | TeamMember;
+  categories?: (number | Category)[] | null;
+  relatedPosts?: (number | Post)[] | null;
+  relatedServices?: (number | Service)[] | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "teamMembers".
+ */
+export interface TeamMember {
+  id: number;
+  name: string;
+  slug: string;
+  title?: string | null;
+  role?: string | null;
+  photo: number | Media;
+  bio?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  expertise?:
+    | {
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  certifications?:
+    | {
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  education?:
+    | {
+        degree: string;
+        institution: string;
+        id?: string | null;
+      }[]
+    | null;
+  linkedinUrl?: string | null;
+  email?: string | null;
+  personalFacts?:
+    | {
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  quote?: string | null;
+  isLeadership?: boolean | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RelatedPostsBlock".
+ */
+export interface RelatedPostsBlock {
+  heading?: string | null;
+  /**
+   * Optional manual override; falls back to category-derived list at render time.
+   */
+  manualItems?: (number | Post)[] | null;
+  limit?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'related-posts';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndustryGridBlock".
+ */
+export interface IndustryGridBlock {
+  heading?: string | null;
+  industries: (number | Industry)[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'industry-grid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LocationsListBlock".
+ */
+export interface LocationsListBlock {
+  heading?: string | null;
+  locations: (number | Location)[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'locations-list';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations".
+ */
+export interface Location {
+  id: number;
+  city: string;
+  slug: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+  };
+  hasOffice?: boolean | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WorkshopListBlock".
+ */
+export interface WorkshopListBlock {
+  heading?: string | null;
+  workshops: (number | Workshop)[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'workshop-list';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workshops".
+ */
+export interface Workshop {
+  id: number;
+  title: string;
+  slug: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  format?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  audience?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  deliverables?:
+    | {
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  facilitator?: (number | null) | TeamMember;
+  testimonial?: (number | null) | Testimonial;
+  order?: number | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TeamGridBlock".
+ */
+export interface TeamGridBlock {
+  heading?: string | null;
+  filter: 'leadership-only' | 'featured' | 'all';
+  layout?: ('cards' | 'compact') | null;
+  /**
+   * Optional manual override — when set, ignores filter and renders these team members in order.
+   */
+  manualItems?: (number | TeamMember)[] | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'team-grid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "VideoEmbedBlock".
+ */
+export interface VideoEmbedBlock {
+  provider: 'youtube' | 'vimeo';
+  videoId: string;
+  title: string;
+  thumbnail?: (number | null) | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'video-embed';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FAQBlock".
+ */
+export interface FAQBlock {
+  heading?: string | null;
+  items: {
+    question: string;
+    answer: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'faq';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "AccordionBlock".
+ */
+export interface AccordionBlock {
+  heading?: string | null;
+  items: {
+    title: string;
+    body: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'accordion';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TabsBlock".
+ */
+export interface TabsBlock {
+  heading?: string | null;
+  tabs: {
+    label: string;
+    body: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tabs';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MapBlock".
+ */
+export interface MapBlock {
+  heading?: string | null;
+  embedUrl: string;
+  caption?: string | null;
+  height?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'map';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "EmbedBlock".
+ */
+export interface EmbedBlock {
+  title: string;
+  url: string;
+  caption?: string | null;
+  height?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'embed';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DownloadCardBlock".
+ */
+export interface DownloadCardBlock {
+  title: string;
+  description: string;
+  coverImage: number | Media;
+  /**
+   * HubSpot form GUID for the gated download.
+   */
+  formId: string;
+  /**
+   * S3 URL to the asset (or other allow-listed host).
+   */
+  fileUrl: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'download-card';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HubspotFormBlock".
+ */
+export interface HubspotFormBlock {
+  heading?: string | null;
+  description?: string | null;
+  formId: string;
+  /**
+   * Optional thank-you page path on successful submit.
+   */
+  submitRedirect?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'hubspot-form';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HubspotMeetingsBlock".
+ */
+export interface HubspotMeetingsBlock {
+  meetingUrl: string;
+  heading?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'hubspot-meetings';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BrandTeaserBlock".
+ */
+export interface BrandTeaserBlock {
+  headline: string;
+  body: string;
+  linkLabel: string;
+  linkUrl: string;
+  image?: (number | null) | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'brand-teaser';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "NavCardsBlock".
+ */
+export interface NavCardsBlock {
+  cards: {
+    title: string;
+    description: string;
+    image?: (number | null) | Media;
+    linkUrl: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'nav-cards';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "KeyTakeawaysBlock".
+ */
+export interface KeyTakeawaysBlock {
+  heading?: string | null;
+  items: {
+    label: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'key-takeaways';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TechStackBlock".
+ */
+export interface TechStackBlock {
+  heading?: string | null;
+  items: {
+    label: string;
+    /**
+     * Optional link to a service page or external reference.
+     */
+    linkUrl?: string | null;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tech-stack';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -230,6 +1562,46 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pages';
         value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'posts';
+        value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'caseStudies';
+        value: number | CaseStudy;
+      } | null)
+    | ({
+        relationTo: 'services';
+        value: number | Service;
+      } | null)
+    | ({
+        relationTo: 'servicePillars';
+        value: number | ServicePillar;
+      } | null)
+    | ({
+        relationTo: 'teamMembers';
+        value: number | TeamMember;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'workshops';
+        value: number | Workshop;
+      } | null)
+    | ({
+        relationTo: 'industries';
+        value: number | Industry;
+      } | null)
+    | ({
+        relationTo: 'locations';
+        value: number | Location;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -304,6 +1676,7 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  caption?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -315,6 +1688,90 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  sizes?:
+    | T
+    | {
+        mobile_webp?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        mobile_jpeg?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        tablet_webp?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        tablet_jpeg?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        desktop_webp?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        desktop_jpeg?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        wide_webp?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        wide_jpeg?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -323,7 +1780,1017 @@ export interface MediaSelect<T extends boolean = true> {
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
+  publishedAt?: T;
+  hero?:
+    | T
+    | {
+        headline?: T;
+        subheadline?: T;
+        backgroundImage?: T;
+        cta?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+            };
+      };
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HeroBlock_select".
+ */
+export interface HeroBlockSelect<T extends boolean = true> {
+  variant?: T;
+  eyebrow?: T;
+  headline?: T;
+  subheadline?: T;
+  media?: T;
+  videoUrl?: T;
+  primaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        variant?: T;
+      };
+  secondaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  alignment?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CaseStudyHeroBlock_select".
+ */
+export interface CaseStudyHeroBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  headline?: T;
+  metric?:
+    | T
+    | {
+        number?: T;
+        label?: T;
+        context?: T;
+      };
+  heroImage?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServicePillarHeroBlock_select".
+ */
+export interface ServicePillarHeroBlockSelect<T extends boolean = true> {
+  pillarName?: T;
+  headline?: T;
+  subheadline?: T;
+  heroImage?: T;
+  primaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomepageHeroBlock_select".
+ */
+export interface HomepageHeroBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  headline?: T;
+  subheadline?: T;
+  backgroundImage?: T;
+  primaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  secondaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContentBlock_select".
+ */
+export interface ContentBlockSelect<T extends boolean = true> {
+  width?: T;
+  body?: T;
+  background?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TwoColumnBlock_select".
+ */
+export interface TwoColumnBlockSelect<T extends boolean = true> {
+  mediaPosition?: T;
+  body?: T;
+  media?: T;
+  cta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProcessStepsBlock_select".
+ */
+export interface ProcessStepsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  steps?:
+    | T
+    | {
+        title?: T;
+        body?: T;
+        icon?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DeliverablesBlock_select".
+ */
+export interface DeliverablesBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ComparisonTableBlock_select".
+ */
+export interface ComparisonTableBlockSelect<T extends boolean = true> {
+  heading?: T;
+  columns?:
+    | T
+    | {
+        label?: T;
+        tagline?: T;
+        id?: T;
+      };
+  rows?:
+    | T
+    | {
+        dimension?: T;
+        cells?:
+          | T
+          | {
+              value?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  bestForRow?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MissionVisionValuesBlock_select".
+ */
+export interface MissionVisionValuesBlockSelect<T extends boolean = true> {
+  mission?: T;
+  vision?: T;
+  values?:
+    | T
+    | {
+        name?: T;
+        description?: T;
+        id?: T;
+      };
+  layout?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TimelineBlock_select".
+ */
+export interface TimelineBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        date?: T;
+        title?: T;
+        body?: T;
+        image?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StatsBarBlock_select".
+ */
+export interface StatsBarBlockSelect<T extends boolean = true> {
+  heading?: T;
+  source?: T;
+  items?:
+    | T
+    | {
+        number?: T;
+        label?: T;
+        suffix?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MetricDisplayBlock_select".
+ */
+export interface MetricDisplayBlockSelect<T extends boolean = true> {
+  number?: T;
+  label?: T;
+  context?: T;
+  background?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LogoBarBlock_select".
+ */
+export interface LogoBarBlockSelect<T extends boolean = true> {
+  heading?: T;
+  source?: T;
+  logos?:
+    | T
+    | {
+        logo?: T;
+        id?: T;
+      };
+  treatment?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeaturedTestimonialsBlock_select".
+ */
+export interface FeaturedTestimonialsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  testimonials?: T;
+  autoplay?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TestimonialBlock_select".
+ */
+export interface TestimonialBlockSelect<T extends boolean = true> {
+  testimonial?: T;
+  layout?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ClientLogoGridBlock_select".
+ */
+export interface ClientLogoGridBlockSelect<T extends boolean = true> {
+  heading?: T;
+  logos?:
+    | T
+    | {
+        logo?: T;
+        caption?: T;
+        id?: T;
+      };
+  columns?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CtaSectionBlock_select".
+ */
+export interface CtaSectionBlockSelect<T extends boolean = true> {
+  variant?: T;
+  headline?: T;
+  body?: T;
+  primaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  secondaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  background?: T;
+  backgroundImage?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "NewsletterCtaBlock_select".
+ */
+export interface NewsletterCtaBlockSelect<T extends boolean = true> {
+  heading?: T;
+  body?: T;
+  formId?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContactCtaBlock_select".
+ */
+export interface ContactCtaBlockSelect<T extends boolean = true> {
+  heading?: T;
+  body?: T;
+  primaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  secondaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  meetingUrl?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CaseStudyGridBlock_select".
+ */
+export interface CaseStudyGridBlockSelect<T extends boolean = true> {
+  heading?: T;
+  source?: T;
+  manualItems?: T;
+  industry?: T;
+  service?: T;
+  limit?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServiceCardsBlock_select".
+ */
+export interface ServiceCardsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  source?: T;
+  pillar?: T;
+  manualItems?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServicePillarCardsBlock_select".
+ */
+export interface ServicePillarCardsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  pillars?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeaturedCaseStudyBlock_select".
+ */
+export interface FeaturedCaseStudyBlockSelect<T extends boolean = true> {
+  heading?: T;
+  caseStudy?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PostListBlock_select".
+ */
+export interface PostListBlockSelect<T extends boolean = true> {
+  heading?: T;
+  source?: T;
+  category?: T;
+  manualItems?: T;
+  limit?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RelatedPostsBlock_select".
+ */
+export interface RelatedPostsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  manualItems?: T;
+  limit?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndustryGridBlock_select".
+ */
+export interface IndustryGridBlockSelect<T extends boolean = true> {
+  heading?: T;
+  industries?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LocationsListBlock_select".
+ */
+export interface LocationsListBlockSelect<T extends boolean = true> {
+  heading?: T;
+  locations?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WorkshopListBlock_select".
+ */
+export interface WorkshopListBlockSelect<T extends boolean = true> {
+  heading?: T;
+  workshops?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TeamGridBlock_select".
+ */
+export interface TeamGridBlockSelect<T extends boolean = true> {
+  heading?: T;
+  filter?: T;
+  layout?: T;
+  manualItems?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "VideoEmbedBlock_select".
+ */
+export interface VideoEmbedBlockSelect<T extends boolean = true> {
+  provider?: T;
+  videoId?: T;
+  title?: T;
+  thumbnail?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FAQBlock_select".
+ */
+export interface FAQBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "AccordionBlock_select".
+ */
+export interface AccordionBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        title?: T;
+        body?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TabsBlock_select".
+ */
+export interface TabsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  tabs?:
+    | T
+    | {
+        label?: T;
+        body?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MapBlock_select".
+ */
+export interface MapBlockSelect<T extends boolean = true> {
+  heading?: T;
+  embedUrl?: T;
+  caption?: T;
+  height?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "EmbedBlock_select".
+ */
+export interface EmbedBlockSelect<T extends boolean = true> {
+  title?: T;
+  url?: T;
+  caption?: T;
+  height?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DownloadCardBlock_select".
+ */
+export interface DownloadCardBlockSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  coverImage?: T;
+  formId?: T;
+  fileUrl?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HubspotFormBlock_select".
+ */
+export interface HubspotFormBlockSelect<T extends boolean = true> {
+  heading?: T;
+  description?: T;
+  formId?: T;
+  submitRedirect?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HubspotMeetingsBlock_select".
+ */
+export interface HubspotMeetingsBlockSelect<T extends boolean = true> {
+  meetingUrl?: T;
+  heading?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BrandTeaserBlock_select".
+ */
+export interface BrandTeaserBlockSelect<T extends boolean = true> {
+  headline?: T;
+  body?: T;
+  linkLabel?: T;
+  linkUrl?: T;
+  image?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "NavCardsBlock_select".
+ */
+export interface NavCardsBlockSelect<T extends boolean = true> {
+  cards?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        linkUrl?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "KeyTakeawaysBlock_select".
+ */
+export interface KeyTakeawaysBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TechStackBlock_select".
+ */
+export interface TechStackBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        label?: T;
+        linkUrl?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  excerpt?: T;
   content?: T;
+  featuredImage?: T;
+  author?: T;
+  categories?: T;
+  relatedPosts?: T;
+  relatedServices?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "caseStudies_select".
+ */
+export interface CaseStudiesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  subtitle?: T;
+  industry?: T;
+  services?: T;
+  client?:
+    | T
+    | {
+        name?: T;
+        logo?: T;
+        isAnonymized?: T;
+      };
+  heroImage?: T;
+  problem?: T;
+  solution?: T;
+  impact?: T;
+  metrics?:
+    | T
+    | {
+        number?: T;
+        label?: T;
+        context?: T;
+        id?: T;
+      };
+  technologies?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  testimonial?: T;
+  relatedCaseStudies?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services_select".
+ */
+export interface ServicesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  pillar?: T;
+  description?: T;
+  approach?: T;
+  deliverables?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  icon?: T;
+  relatedCaseStudies?: T;
+  faq?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  order?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "servicePillars_select".
+ */
+export interface ServicePillarsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  heroImage?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "teamMembers_select".
+ */
+export interface TeamMembersSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  title?: T;
+  role?: T;
+  photo?: T;
+  bio?: T;
+  expertise?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  certifications?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  education?:
+    | T
+    | {
+        degree?: T;
+        institution?: T;
+        id?: T;
+      };
+  linkedinUrl?: T;
+  email?: T;
+  personalFacts?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  quote?: T;
+  isLeadership?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  quote?: T;
+  personName?: T;
+  personTitle?: T;
+  company?: T;
+  photo?: T;
+  caseStudy?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workshops_select".
+ */
+export interface WorkshopsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  format?: T;
+  audience?: T;
+  deliverables?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  facilitator?: T;
+  testimonial?: T;
+  order?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industries_select".
+ */
+export interface IndustriesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  relevantServices?: T;
+  clientLogos?:
+    | T
+    | {
+        logo?: T;
+        id?: T;
+      };
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations_select".
+ */
+export interface LocationsSelect<T extends boolean = true> {
+  city?: T;
+  slug?: T;
+  description?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        state?: T;
+        zip?: T;
+      };
+  hasOffice?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -369,6 +2836,254 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "siteSettings".
+ */
+export interface SiteSetting {
+  id: number;
+  companyName?: string | null;
+  tagline?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+  };
+  socialLinks?: {
+    linkedinUrl?: string | null;
+    twitterUrl?: string | null;
+    facebookUrl?: string | null;
+  };
+  footerText?: string | null;
+  stats?:
+    | {
+        number: string;
+        label: string;
+        suffix?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation".
+ */
+export interface Navigation {
+  id: number;
+  mainNav?:
+    | {
+        label: string;
+        url: string;
+        children?:
+          | {
+              label: string;
+              url: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  footerNav?:
+    | {
+        label: string;
+        url: string;
+        children?:
+          | {
+              label: string;
+              url: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  ctaButton?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage".
+ */
+export interface Homepage {
+  id: number;
+  hero?: {
+    headline?: string | null;
+    subheadline?: string | null;
+    backgroundImage?: (number | null) | Media;
+    cta?: {
+      label?: string | null;
+      url?: string | null;
+    };
+  };
+  stats?:
+    | {
+        number: string;
+        label: string;
+        suffix?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  featuredCaseStudy?: (number | null) | CaseStudy;
+  brandTeaser?: {
+    headline?: string | null;
+    body?: string | null;
+    linkLabel?: string | null;
+    linkUrl?: string | null;
+    image?: (number | null) | Media;
+  };
+  clientLogos?:
+    | {
+        logo: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  featuredTestimonials?: (number | Testimonial)[] | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "siteSettings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  companyName?: T;
+  tagline?: T;
+  phone?: T;
+  email?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        state?: T;
+        zip?: T;
+      };
+  socialLinks?:
+    | T
+    | {
+        linkedinUrl?: T;
+        twitterUrl?: T;
+        facebookUrl?: T;
+      };
+  footerText?: T;
+  stats?:
+    | T
+    | {
+        number?: T;
+        label?: T;
+        suffix?: T;
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation_select".
+ */
+export interface NavigationSelect<T extends boolean = true> {
+  mainNav?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        children?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  footerNav?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        children?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  ctaButton?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage_select".
+ */
+export interface HomepageSelect<T extends boolean = true> {
+  hero?:
+    | T
+    | {
+        headline?: T;
+        subheadline?: T;
+        backgroundImage?: T;
+        cta?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+            };
+      };
+  stats?:
+    | T
+    | {
+        number?: T;
+        label?: T;
+        suffix?: T;
+        id?: T;
+      };
+  featuredCaseStudy?: T;
+  brandTeaser?:
+    | T
+    | {
+        headline?: T;
+        body?: T;
+        linkLabel?: T;
+        linkUrl?: T;
+        image?: T;
+      };
+  clientLogos?:
+    | T
+    | {
+        logo?: T;
+        id?: T;
+      };
+  featuredTestimonials?: T;
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -376,6 +3091,83 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CalloutBlock".
+ */
+export interface CalloutBlock {
+  tone: 'info' | 'tip' | 'warning' | 'note';
+  body: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'callout';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ImageWithCaptionBlock".
+ */
+export interface ImageWithCaptionBlock {
+  image: number | Media;
+  caption?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'image-with-caption';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FigureBlock".
+ */
+export interface FigureBlock {
+  image: number | Media;
+  caption: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'figure';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "QuotePullquoteBlock".
+ */
+export interface QuotePullquoteBlock {
+  quote: string;
+  attribution?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'quote-pullquote';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TestimonialEmbedBlock".
+ */
+export interface TestimonialEmbedBlock {
+  testimonial: number | Testimonial;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'testimonial-embed';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DisclosureBlock".
+ */
+export interface DisclosureBlock {
+  summary: string;
+  body: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'disclosure';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InlineCtaBlock".
+ */
+export interface InlineCtaBlock {
+  label: string;
+  url: string;
+  variant?: ('primary' | 'secondary' | 'ghost' | 'link') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'inline-cta';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
