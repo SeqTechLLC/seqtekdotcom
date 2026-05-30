@@ -106,7 +106,8 @@ Single Next.js project per `plan.md`. `src/`, `tests/`, `docs/` at repo root.
 - **Phase 3 deferred (functional, client-side):** Carousel autoplay (`featured-testimonials`), client-side tab switching (`tabs`), video click-to-load facade (`video-embed`), HubSpot live-script integration for `hubspot-form` / `hubspot-meetings` / `download-card` / `newsletter-cta` (Phase 3 per `docs/INTEGRATIONS.md` §1–§3).
 - **Phase 4 US2**: complete (T074–T086). Live-preview URL builder + `livePreviewFor` factory wired into Pages/Posts/CaseStudies/Services. `/preview/[collection]/[slug]` route handler is same-origin (admin session cookie) — the earlier URL-secret design was rejected and the contract updated to match (`contracts/live-preview-urls.md`). `<PreviewBanner />` lives at `src/components/layout/PreviewBanner.tsx` and is wired into the `/showcase/[slug]` dev route so the full preview loop is verifiable today. T074–T077 cover redirect mechanics per collection (302 + Location + `__prerender_bypass` cookie); the visual "renders draft content" assertion is deferred to spec 004 page templates. T079 staging revalidation E2E lands as a `test.skip` skeleton — public page templates from spec 004 are a prerequisite.
 - **Phase 5 US3**: complete (T087–T091). Type-level non-nullable assertions on `Page`/`CaseStudy`/`Post`/`Service`/`HeroBlock` ship in `tests/int/render/typesNonNullable.int.spec.ts` (13 cases). Public draft-query invariant covered in `tests/int/render/publicDraftQuery.int.spec.ts` — caseStudies draft hidden from anon `payload.find`, pages published doc surfaced. `LOCAL_DEVELOPMENT.md` "Common Tasks" gains "Regenerating Payload types" + "Regenerating the Payload importMap" subsections; `PAYLOAD_DEVELOPMENT.md` §7 (inline blocks) + §14 (custom components) link to the importMap workflow. 76/76 render-path int tests green; typecheck clean.
-- **Phases 6–10 (US4–US7 + Polish)**: not started.
+- **Phase 6 US4**: complete (T092–T107). Audit seed pipeline ships at `src/payload/seed/migrateFromAudit.ts` — idempotent `upsertBySlug` via Payload Local API, slug rewrite map (INTEGRATIONS.md §9), plain-text-to-Lexical transformer per CONTENT_MIGRATION.md §4, five per-source parsers (caseStudies / pages / posts / homepage / siteSettings), and an R-16 `migration-errors.log` writer. CLI supports `--dry-run`, `--collection=<name>`, `--recrawl-images` (wired, post-Phase-2 execution per R-10), `--help`; env validation maps to the exit-code table in `contracts/seed-cli.md`. 7/7 seed int tests pass; 138/138 int suite green; pages layout intentionally lands empty for editor composition per §3.2 (logged as `AUDIT_GAP`).
+- **Phases 7–10 (US5–US7 + Polish)**: not started.
 
 ---
 
@@ -237,25 +238,25 @@ Single Next.js project per `plan.md`. `src/`, `tests/`, `docs/` at repo root.
 
 ### Tests for User Story 4
 
-- [ ] T092 [P] [US4] Vitest int `tests/int/seed/upsertIdempotency.test.ts`: seed twice against testcontainer, assert row counts equal across runs across all seeded collections (SC-004, FR-030)
-- [ ] T093 [P] [US4] Vitest int `tests/int/seed/slugRewrites.test.ts`: audit fixture with `case-study-3` → created doc has slug `mobile-apps-remote-operations` (FR-031)
-- [ ] T094 [P] [US4] Vitest int `tests/int/seed/dryRun.test.ts`: `--dry-run` produces stdout but zero DB writes (FR-033)
-- [ ] T095 [P] [US4] Vitest int `tests/int/seed/collectionFilter.test.ts`: `--collection=posts` processes only `posts` (FR-033)
-- [ ] T096 [P] [US4] Vitest int `tests/int/seed/migrationErrorsLog.test.ts`: fresh seed enumerates every gap in CONTENT_MIGRATION.md §11 (SC-011, FR-032)
+- [x] T092 [P] [US4] Vitest int `tests/int/seed/upsertIdempotency.int.spec.ts`: seed twice against testcontainer, assert row counts equal across runs across all seeded collections (SC-004, FR-030)
+- [x] T093 [P] [US4] Vitest int `tests/int/seed/slugRewrites.int.spec.ts`: audit fixture with `case-study-3` → created doc has slug `mobile-apps-remote-operations` (FR-031)
+- [x] T094 [P] [US4] Vitest int `tests/int/seed/dryRun.int.spec.ts`: `--dry-run` produces stdout but zero DB writes (FR-033)
+- [x] T095 [P] [US4] Vitest int `tests/int/seed/collectionFilter.int.spec.ts`: `--collection=posts` processes only `posts` (FR-033)
+- [x] T096 [P] [US4] Vitest int `tests/int/seed/migrationErrorsLog.int.spec.ts`: fresh seed enumerates every gap in CONTENT_MIGRATION.md §11 (SC-011, FR-032)
 
 ### Implementation
 
-- [ ] T097 [P] [US4] Create migration-errors log writer at `src/payload/seed/log.ts` per R-16 format (timestamp + level + kind + collection/slug + detail)
-- [ ] T098 [P] [US4] Create `upsertBySlug` helper at `src/payload/seed/upsert.ts` going through Payload Local API (R-09, FR-030)
-- [ ] T099 [P] [US4] Create slug rewrite map at `src/payload/seed/slugRewrites.ts` per INTEGRATIONS.md §9 (FR-031)
-- [ ] T100 [P] [US4] Create `htmlToLexical` transformer at `src/payload/seed/htmlToLexical.ts` reusing `editorConfig` so output matches admin's Lexical JSON (R-15, CONTENT_MIGRATION.md §4)
-- [ ] T101 [P] [US4] Create `src/payload/seed/parsers/caseStudies.ts` per CONTENT_MIGRATION.md §3
-- [ ] T102 [P] [US4] Create `src/payload/seed/parsers/pages.ts` per CONTENT_MIGRATION.md §3
-- [ ] T103 [P] [US4] Create `src/payload/seed/parsers/posts.ts` per CONTENT_MIGRATION.md §3
-- [ ] T104 [P] [US4] Create `src/payload/seed/parsers/homepage.ts` per CONTENT_MIGRATION.md §3
-- [ ] T105 [P] [US4] Create `src/payload/seed/parsers/siteSettings.ts` per CONTENT_MIGRATION.md §3
-- [ ] T106 [US4] Create CLI entry `src/payload/seed/migrateFromAudit.ts` per contract `seed-cli.md` (flags, env validation, exit codes, per-collection loop) — depends on T097–T105
-- [ ] T107 [US4] Run T092–T096; verify all green
+- [x] T097 [P] [US4] Create migration-errors log writer at `src/payload/seed/log.ts` per R-16 format (timestamp + level + kind + collection/slug + detail)
+- [x] T098 [P] [US4] Create `upsertBySlug` helper at `src/payload/seed/upsert.ts` going through Payload Local API (R-09, FR-030)
+- [x] T099 [P] [US4] Create slug rewrite map at `src/payload/seed/slugRewrites.ts` per INTEGRATIONS.md §9 (FR-031)
+- [x] T100 [P] [US4] Create `htmlToLexical` transformer at `src/payload/seed/htmlToLexical.ts` reusing `editorConfig` so output matches admin's Lexical JSON (R-15, CONTENT*MIGRATION.md §4) — \_audit JSON is plain text per §4, so the file exports `textToLexical(Nodes)` directly; HTML-conversion wrapper deferred until a re-crawl provides HTML*
+- [x] T101 [P] [US4] Create `src/payload/seed/parsers/caseStudies.ts` per CONTENT_MIGRATION.md §3
+- [x] T102 [P] [US4] Create `src/payload/seed/parsers/pages.ts` per CONTENT*MIGRATION.md §3 — \_layout blocks land empty (`layout: []`) and the editor composes hero/stats-bar/comparison-table/content/cta-section blocks per §3.2; gaps logged as AUDIT_GAP*
+- [x] T103 [P] [US4] Create `src/payload/seed/parsers/posts.ts` per CONTENT_MIGRATION.md §3
+- [x] T104 [P] [US4] Create `src/payload/seed/parsers/homepage.ts` per CONTENT_MIGRATION.md §3
+- [x] T105 [P] [US4] Create `src/payload/seed/parsers/siteSettings.ts` per CONTENT_MIGRATION.md §3
+- [x] T106 [US4] Create CLI entry `src/payload/seed/migrateFromAudit.ts` per contract `seed-cli.md` (flags, env validation, exit codes, per-collection loop) — depends on T097–T105
+- [x] T107 [US4] Run T092–T096; verify all green — _7/7 seed int tests pass; 138/138 int suite green; typecheck + lint + build clean_
 
 **Checkpoint**: US4 fully functional. The seed bridges Wix audit JSON → Payload drafts; the lead has a punch list in `migration-errors.log`.
 
