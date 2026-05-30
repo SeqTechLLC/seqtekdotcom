@@ -69,6 +69,9 @@ infra/.cdk.staging/
 /blob-report/
 /playwright/.cache/
 /tests/e2e/screenshots/
+# Visual showcase captures — regenerated locally via `npm run visual:capture`.
+# Keep out of the repo to avoid binary churn on every block change.
+/tests/e2e/visual/screenshots/
 
 # spec-kit local cache (extension catalog cache + install registry)
 .specify/extensions/.cache/
