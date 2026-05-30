@@ -2,10 +2,14 @@ import Link from 'next/link'
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
 import { RichText } from '../richText/RichText'
+import { ResponsiveImage } from '../ui/ResponsiveImage'
 
 interface MediaLike {
   url?: string | null
   alt?: string | null
+  width?: number | null
+  height?: number | null
+  sizes?: Partial<Record<string, { url?: string | null; width?: number | null } | null>> | null
 }
 
 type Cta = { label?: string | null; url?: string | null } | null
@@ -23,8 +27,11 @@ const isFullMedia = (value: unknown): value is MediaLike =>
 export function TwoColumn({ mediaPosition, body, media, cta }: TwoColumnProps) {
   const mediaEl =
     isFullMedia(media) && media.url ? (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={media.url} alt={media.alt ?? ''} className="w-full rounded-md" />
+      <ResponsiveImage
+        media={media}
+        sizes="(min-width: 1024px) 50vw, 100vw"
+        className="w-full rounded-md"
+      />
     ) : null
   const bodyEl = (
     <div>

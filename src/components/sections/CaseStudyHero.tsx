@@ -1,6 +1,11 @@
+import { ResponsiveImage } from '../ui/ResponsiveImage'
+
 interface MediaLike {
   url?: string | null
   alt?: string | null
+  width?: number | null
+  height?: number | null
+  sizes?: Partial<Record<string, { url?: string | null; width?: number | null } | null>> | null
 }
 
 interface Metric {
@@ -41,8 +46,13 @@ export function CaseStudyHero({ eyebrow, headline, metric, heroImage }: CaseStud
           ) : null}
         </div>
         {isFullMedia(heroImage) && heroImage.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={heroImage.url} alt={heroImage.alt ?? ''} className="w-full rounded-md" />
+          <ResponsiveImage
+            media={heroImage}
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            className="w-full rounded-md"
+            loading="eager"
+            fetchPriority="high"
+          />
         ) : null}
       </div>
     </section>

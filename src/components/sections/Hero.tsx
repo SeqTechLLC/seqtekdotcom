@@ -1,10 +1,15 @@
 import Link from 'next/link'
 
+import { ResponsiveImage } from '../ui/ResponsiveImage'
+
 type Cta = { label?: string | null; url?: string | null; variant?: string | null } | null
 
 interface MediaLike {
   url?: string | null
   alt?: string | null
+  width?: number | null
+  height?: number | null
+  sizes?: Partial<Record<string, { url?: string | null; width?: number | null } | null>> | null
 }
 
 interface HeroProps {
@@ -65,8 +70,13 @@ export function Hero({
           <p className="mt-4 text-body-lg text-text-secondary">{subheadline}</p>
         ) : null}
         {(variant === 'with-image' || variant === 'split') && isFullMedia(media) && media.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={media.url} alt={media.alt ?? ''} className="mt-8 w-full rounded-md" />
+          <ResponsiveImage
+            media={media}
+            sizes="100vw"
+            className="mt-8 w-full rounded-md"
+            loading="eager"
+            fetchPriority="high"
+          />
         ) : null}
         {variant === 'with-video' && isAllowedVideoUrl(videoUrl) ? (
           <div className="mt-8 aspect-video">
