@@ -47,15 +47,15 @@ describe('seed --dry-run (T094 / FR-033)', () => {
     // migration-errors.log is not written on dry-run.
     expect(existsSync(fixture.logPath)).toBe(false)
 
-    // At least one JSON-Lines plan per processed collection.
-    const jsonLines = stdout.filter((line) => line.trim().startsWith('{'))
-    expect(jsonLines.length).toBeGreaterThan(0)
-    for (const line of jsonLines) {
-      expect(() => JSON.parse(line)).not.toThrow()
+    // Dry-run stdout is pure JSON-Lines so it can be piped to `jq`.
+    expect(stdout.length).toBeGreaterThan(0)
+    for (const line of stdout) {
+      expect(() => JSON.parse(line), `non-JSON on dry-run stdout: ${line}`).not.toThrow()
     }
 
-    // A summary line ends the run; "Done." is the marker.
-    expect(stdout.some((line) => line.startsWith('Done.'))).toBe(true)
+    // Per-collection progress summaries and the final "Done." line go to
+    // stderr in dry-run so they don't pollute the JSON-Lines plan stream.
+    expect(stderr.some((line) => line.startsWith('Done.'))).toBe(true)
   })
 })
 

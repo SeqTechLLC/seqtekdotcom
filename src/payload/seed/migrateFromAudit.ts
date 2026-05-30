@@ -196,6 +196,11 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
 
   const payload = options.payload ?? (await getPayload({ config: await config }))
 
+  // In dry-run mode stdout is reserved for JSON-Lines plans so it can be
+  // piped to `jq`; per-collection progress summaries and the final "Done."
+  // line go to stderr instead. In normal mode both go to stdout.
+  const summary = args.dryRun ? stderr : stdout
+
   const filter = args.collection
   const collectionsProcessed: CollectionFilter[] = []
   const results: UpsertResult[] = []
@@ -203,12 +208,18 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
   // Case studies
   if (!filter || filter === 'caseStudies') {
     const path = resolve(auditDir, 'case-studies-content.json')
+    let parsed: ReturnType<typeof parseCaseStudies>
     try {
       const raw = readJson<Record<string, string>>(path)
-      const parsed = parseCaseStudies(raw, { logger, now: options.now })
-      collectionsProcessed.push('caseStudies')
-      let created = 0
-      let updated = 0
+      parsed = parseCaseStudies(raw, { logger, now: options.now })
+    } catch (err) {
+      stderr(`caseStudies parse failed at ${path}: ${(err as Error).message}`)
+      return { exitCode: 3, results, logger, collectionsProcessed }
+    }
+    collectionsProcessed.push('caseStudies')
+    let created = 0
+    let updated = 0
+    try {
       for (const doc of parsed) {
         const result = await upsertBySlug({
           payload,
@@ -234,28 +245,34 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
         if (result.operation === 'update') updated++
         if (args.dryRun) stdout(JSON.stringify({ ...result, collection: 'caseStudies' }))
       }
-      stdout(
-        `caseStudies: ${parsed.length} processed, ${created} created, ${updated} updated, ${parsed.length - created - updated} skipped`,
-      )
     } catch (err) {
-      stderr(`caseStudies parse failed at ${path}: ${(err as Error).message}`)
-      return { exitCode: 3, results, logger, collectionsProcessed }
+      stderr(`caseStudies write failed: ${(err as Error).message}`)
+      return { exitCode: 4, results, logger, collectionsProcessed }
     }
+    summary(
+      `caseStudies: ${parsed.length} processed, ${created} created, ${updated} updated, ${parsed.length - created - updated} skipped`,
+    )
   }
 
   // Pages
   if (!filter || filter === 'pages') {
     const pagesPath = resolve(auditDir, 'case-studies.json')
     const retryPath = resolve(auditDir, 'retry-content.json')
+    let parsed: ReturnType<typeof parsePages>
     let activePath = pagesPath
     try {
       const pagesAudit = readJson<Record<string, string>>(pagesPath)
       activePath = retryPath
       const retryAudit = existsSync(retryPath) ? readJson<Record<string, string>>(retryPath) : {}
-      const parsed = parsePages({ pagesAudit, retryAudit, logger, now: options.now })
-      collectionsProcessed.push('pages')
-      let created = 0
-      let updated = 0
+      parsed = parsePages({ pagesAudit, retryAudit, logger, now: options.now })
+    } catch (err) {
+      stderr(`pages parse failed at ${activePath}: ${(err as Error).message}`)
+      return { exitCode: 3, results, logger, collectionsProcessed }
+    }
+    collectionsProcessed.push('pages')
+    let created = 0
+    let updated = 0
+    try {
       for (const doc of parsed) {
         const result = await upsertBySlug({
           payload,
@@ -276,24 +293,30 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
         if (result.operation === 'update') updated++
         if (args.dryRun) stdout(JSON.stringify({ ...result, collection: 'pages' }))
       }
-      stdout(
-        `pages: ${parsed.length} processed, ${created} created, ${updated} updated, ${parsed.length - created - updated} skipped`,
-      )
     } catch (err) {
-      stderr(`pages parse failed at ${activePath}: ${(err as Error).message}`)
-      return { exitCode: 3, results, logger, collectionsProcessed }
+      stderr(`pages write failed: ${(err as Error).message}`)
+      return { exitCode: 4, results, logger, collectionsProcessed }
     }
+    summary(
+      `pages: ${parsed.length} processed, ${created} created, ${updated} updated, ${parsed.length - created - updated} skipped`,
+    )
   }
 
   // Homepage (global)
   if (!filter || filter === 'homepage') {
     const path = resolve(auditDir, 'page-content.json')
+    let data: ReturnType<typeof parseHomepage>
     try {
       const all = readJson<Record<string, string>>(path)
       const homeBody = all['/']
       if (!homeBody) throw new Error('homepage entry "/" missing from page-content.json')
-      const data = parseHomepage({ homepageContent: homeBody, logger })
-      collectionsProcessed.push('homepage')
+      data = parseHomepage({ homepageContent: homeBody, logger })
+    } catch (err) {
+      stderr(`homepage parse failed at ${path}: ${(err as Error).message}`)
+      return { exitCode: 3, results, logger, collectionsProcessed }
+    }
+    collectionsProcessed.push('homepage')
+    try {
       if (args.dryRun) {
         stdout(JSON.stringify({ collection: 'homepage', operation: 'update', data }))
       } else {
@@ -304,23 +327,29 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
           draft: true,
         })
       }
-      stdout('homepage: 1 processed, 1 updated')
     } catch (err) {
-      stderr(`homepage parse failed at ${path}: ${(err as Error).message}`)
-      return { exitCode: 3, results, logger, collectionsProcessed }
+      stderr(`homepage update failed: ${(err as Error).message}`)
+      return { exitCode: 4, results, logger, collectionsProcessed }
     }
+    summary('homepage: 1 processed, 1 updated')
   }
 
   // Posts (after homepage so dryRun output groups blog stubs near homepage prose)
   if (!filter || filter === 'posts') {
     const path = resolve(auditDir, 'page-content.json')
+    let parsed: ReturnType<typeof parsePosts>
     try {
       const all = readJson<Record<string, string>>(path)
       const blogBody = all['/blog-old'] ?? ''
-      const parsed = parsePosts({ blogPageContent: blogBody, logger, now: options.now })
-      collectionsProcessed.push('posts')
-      let created = 0
-      let updated = 0
+      parsed = parsePosts({ blogPageContent: blogBody, logger, now: options.now })
+    } catch (err) {
+      stderr(`posts parse failed at ${path}: ${(err as Error).message}`)
+      return { exitCode: 3, results, logger, collectionsProcessed }
+    }
+    collectionsProcessed.push('posts')
+    let created = 0
+    let updated = 0
+    try {
       for (const doc of parsed) {
         const result = await upsertBySlug({
           payload,
@@ -341,20 +370,20 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
         if (result.operation === 'update') updated++
         if (args.dryRun) stdout(JSON.stringify({ ...result, collection: 'posts' }))
       }
-      stdout(
-        `posts: ${parsed.length} processed, ${created} created, ${updated} updated, ${parsed.length - created - updated} skipped`,
-      )
     } catch (err) {
-      stderr(`posts parse failed at ${path}: ${(err as Error).message}`)
-      return { exitCode: 3, results, logger, collectionsProcessed }
+      stderr(`posts write failed: ${(err as Error).message}`)
+      return { exitCode: 4, results, logger, collectionsProcessed }
     }
+    summary(
+      `posts: ${parsed.length} processed, ${created} created, ${updated} updated, ${parsed.length - created - updated} skipped`,
+    )
   }
 
-  // SiteSettings (global)
+  // SiteSettings (global) — no audit parse step; values are hardcoded canonical.
   if (!filter || filter === 'siteSettings') {
+    const data = parseSiteSettings({ logger })
+    collectionsProcessed.push('siteSettings')
     try {
-      const data = parseSiteSettings({ logger })
-      collectionsProcessed.push('siteSettings')
       if (args.dryRun) {
         stdout(JSON.stringify({ collection: 'siteSettings', operation: 'update', data }))
       } else {
@@ -365,14 +394,14 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
           draft: true,
         })
       }
-      stdout('siteSettings: 1 processed, 1 updated')
     } catch (err) {
       stderr(`siteSettings update failed: ${(err as Error).message}`)
       return { exitCode: 4, results, logger, collectionsProcessed }
     }
+    summary('siteSettings: 1 processed, 1 updated')
   }
 
-  stdout(
+  summary(
     `Done. ${args.dryRun ? 'No writes performed (--dry-run).' : `Errors logged to ${logger.filePath}`}`,
   )
   return { exitCode: 0, results, logger, collectionsProcessed }

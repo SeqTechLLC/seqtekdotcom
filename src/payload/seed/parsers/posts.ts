@@ -41,10 +41,9 @@ const MONTH_BY_NAME: Record<string, number> = {
   December: 11,
 }
 
-// Anchor year used when audit lists bare `MMM d` dates. Tracks the most
-// recent publish year per audit reference; older entries default to the
-// prior year if their parsed date would otherwise be in the future.
-const DEFAULT_YEAR = 2026
+// Anchor year used when audit lists bare `MMM d` dates. Defaults to the
+// current calendar year; bare-date entries whose parsed date would land
+// in the future walk back one year via parseDate's guard.
 const CHICAGO_OFFSET_HOURS = -5
 
 function slugify(raw: string): string {
@@ -124,8 +123,8 @@ export interface ParsePostsOptions {
 
 export function parsePosts(options: ParsePostsOptions): ParsedPost[] {
   const { logger } = options
-  const anchorYear = options.anchorYear ?? DEFAULT_YEAR
   const now = options.now ?? new Date()
+  const anchorYear = options.anchorYear ?? now.getUTCFullYear()
   const body = stripBoilerplate(options.blogPageContent)
   if (!body) {
     logger.log({

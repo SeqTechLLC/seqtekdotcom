@@ -1,4 +1,3 @@
-import { lexicalFromNodes, textToLexicalNodes } from '../htmlToLexical'
 import type { MigrationLogger } from '../log'
 import { applySlugRewrite } from '../slugRewrites'
 
@@ -127,7 +126,7 @@ export function parsePages(options: ParsePagesOptions): ParsedPage[] {
         .split('\n')
         .map((l) => l.trim())
         .find((l) => l.length > 0) ?? title
-    const hero = { headline: firstLine === title ? title : firstLine }
+    const hero = { headline: firstLine }
 
     logger.log({
       level: 'INFO',
@@ -157,11 +156,9 @@ export function parsePages(options: ParsePagesOptions): ParsedPage[] {
       })
     }
 
-    // The bodyNodes are constructed so a future iteration can attach them
-    // to a `content` block; today we leave layout empty per §3.2.
-    const bodyNodes = textToLexicalNodes(body)
-    void bodyNodes
-
+    // Layout intentionally lands empty per §3.2; the editor composes
+    // blocks (hero / stats-bar / comparison-table / content / cta-section)
+    // from the AUDIT_GAP notes logged above.
     results.push({
       slug: canonicalSlug,
       title,
@@ -171,8 +168,6 @@ export function parsePages(options: ParsePagesOptions): ParsedPage[] {
     })
   }
 
-  // Compose richText "stub" preview line — log once that prose is staged
-  // but not yet blocked.
   logger.log({
     level: 'INFO',
     kind: 'AUDIT_GAP',
@@ -183,8 +178,4 @@ export function parsePages(options: ParsePagesOptions): ParsedPage[] {
   })
 
   return results
-}
-
-export function lexicalFromBody(text: string) {
-  return lexicalFromNodes(textToLexicalNodes(text))
 }
