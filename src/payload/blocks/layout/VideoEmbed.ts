@@ -16,7 +16,19 @@ export const VideoEmbed: Block = {
         { label: 'Vimeo', value: 'vimeo' },
       ],
     },
-    { name: 'videoId', type: 'text', required: true },
+    {
+      name: 'videoId',
+      type: 'text',
+      required: true,
+      // YouTube IDs are 11 chars; Vimeo IDs are numeric up to ~10 digits.
+      // The pattern blocks query-param injection (e.g. "abc?autoplay=1").
+      validate: (value: unknown): true | string => {
+        if (typeof value !== 'string') return 'videoId must be a string'
+        return /^[\w-]{6,32}$/.test(value)
+          ? true
+          : 'videoId must be 6–32 alphanumerics, hyphens, or underscores'
+      },
+    },
     { name: 'title', type: 'text', required: true },
     { name: 'thumbnail', type: 'upload', relationTo: 'media' },
   ],

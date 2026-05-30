@@ -1,10 +1,5 @@
 import type { ComponentType, ReactElement } from 'react'
 import { RichText as PayloadRichText } from '@payloadcms/richtext-lexical/react'
-import type {
-  DefaultNodeTypes,
-  SerializedBlockNode,
-  SerializedInlineBlockNode,
-} from '@payloadcms/richtext-lexical'
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
 import { Prose } from '../ui/Prose'
@@ -19,24 +14,32 @@ interface RichTextProps {
   withProse?: boolean
 }
 
-type NodeWithBlocks =
-  | DefaultNodeTypes
-  | SerializedBlockNode<{ blockType: string; [key: string]: unknown }>
-  | SerializedInlineBlockNode<{ blockType: string; [key: string]: unknown }>
+type BlockNodeLike = { fields: { blockType: string; [key: string]: unknown } }
 
-const warnUnknown = (blockType: string): void => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(`Unknown inline blockType: ${blockType}`)
+// Payload's Lexical JSX converter dispatches block / inlineBlock nodes via
+// nested per-blockType maps (`converters.blocks[slug]`, `converters.inlineBlocks[slug]`).
+// The top-level `block` / `inlineBlock` keys are explicitly excluded from
+// the JSXConverters type, so we MUST build a per-slug map for each side
+// or the registry is silently ignored.
+const buildBlockMap = (
+  registry: Record<string, ComponentType<Record<string, unknown>>>,
+): Record<string, (args: { node: BlockNodeLike }) => ReactElement> => {
+  const map: Record<string, (args: { node: BlockNodeLike }) => ReactElement> = {}
+  for (const [slug, Comp] of Object.entries(registry)) {
+    map[slug] = ({ node }) => <Comp {...node.fields} />
   }
+  return map
 }
 
 /**
- * Lexical → JSX converter with inline-block dispatch (contract:
+ * Lexical → JSX converter with block / inline-block dispatch (contract:
  * specs/003-phase-2-content-models/contracts/inline-block-converter.md).
  *
  * Empty input → null. Plain text → semantic JSX inside `<Prose>`.
- * Block / inlineBlock nodes look up the registry; unknown types emit a single
- * dev warning and skip the node (matches RenderBlocks behaviour).
+ * The same registry serves both `blocks` (paragraph-level) and `inlineBlocks`
+ * (mid-paragraph); editorConfig decides which side a given block lands on.
+ * Unknown blockTypes fall through to Payload's built-in fallback (dev
+ * `console.error` + no DOM), matching the RenderBlocks resilience contract.
  */
 export function RichText({
   data,
@@ -48,35 +51,18 @@ export function RichText({
   const root = (data as { root?: { children?: unknown[] } }).root
   if (!root || !Array.isArray(root.children) || root.children.length === 0) return null
 
-  const converters: Record<string, (args: { node: NodeWithBlocks }) => ReactElement | null> = {
-    block: ({ node }) => {
-      const blockNode = node as SerializedBlockNode<{ blockType: string }>
-      const Comp = inlineRegistry[blockNode.fields.blockType]
-      if (!Comp) {
-        warnUnknown(blockNode.fields.blockType)
-        return null
-      }
-      return <Comp {...(blockNode.fields as unknown as Record<string, unknown>)} />
-    },
-    inlineBlock: ({ node }) => {
-      const blockNode = node as SerializedInlineBlockNode<{ blockType: string }>
-      const Comp = inlineRegistry[blockNode.fields.blockType]
-      if (!Comp) {
-        warnUnknown(blockNode.fields.blockType)
-        return null
-      }
-      return (
-        <span>
-          <Comp {...(blockNode.fields as unknown as Record<string, unknown>)} />
-        </span>
-      )
-    },
-  }
+  const blockMap = buildBlockMap(
+    inlineRegistry as Record<string, ComponentType<Record<string, unknown>>>,
+  )
 
   const body = (
     <PayloadRichText
       data={data}
-      converters={({ defaultConverters }) => ({ ...defaultConverters, ...converters })}
+      converters={({ defaultConverters }) => ({
+        ...defaultConverters,
+        blocks: { ...defaultConverters.blocks, ...blockMap },
+        inlineBlocks: { ...defaultConverters.inlineBlocks, ...blockMap },
+      })}
     />
   )
 

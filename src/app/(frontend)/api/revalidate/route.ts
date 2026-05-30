@@ -61,10 +61,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     await invalidateCloudFrontPaths(pathList)
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'invalidation failed' },
-      { status: 500 },
-    )
+    console.error('[revalidate] CloudFront invalidation failed:', error)
+    return NextResponse.json({ error: 'invalidation failed' }, { status: 500 })
   }
 
   return NextResponse.json({

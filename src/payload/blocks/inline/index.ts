@@ -1,4 +1,4 @@
-// If you add an inline block here, run `npm run generate:importmap` before
+// If you add a block here, run `npm run generate:importmap` before
 // next dev-start (project_payload_importmap_gotcha).
 import { Callout } from './Callout'
 import { Disclosure } from './Disclosure'
@@ -18,12 +18,19 @@ export {
   TestimonialEmbed,
 }
 
-export const inlineBlocks = [
-  InlineCta,
-  TestimonialEmbed,
+// Wired into BlocksFeature.blocks. These render block-level markup
+// (figure, blockquote, aside, details) so they MUST sit at paragraph level
+// — wrapping in <span> via inlineBlocks would produce invalid HTML5 and
+// React hydration mismatches.
+export const richTextBlocks = [
   Callout,
   ImageWithCaption,
   Figure,
   QuotePullquote,
+  TestimonialEmbed,
   Disclosure,
 ] as const
+
+// Wired into BlocksFeature.inlineBlocks. Only truly inline content
+// (an anchor link) belongs here.
+export const richTextInlineBlocks = [InlineCta] as const

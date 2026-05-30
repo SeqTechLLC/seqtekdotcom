@@ -9,7 +9,7 @@ import { defaultInlineRegistry } from '../../../src/components/richText/inline/r
 // inline content.
 describe('inline block registry coverage', () => {
   const inlineBlockExports = Object.entries(inlineExports).filter(
-    ([key]) => key !== 'inlineBlocks',
+    ([key]) => key !== 'richTextBlocks' && key !== 'richTextInlineBlocks',
   ) as Array<[string, { slug: string }]>
 
   it.each(inlineBlockExports)('%s has a defaultInlineRegistry entry', (_name, block) => {

@@ -14,7 +14,13 @@ interface DownloadCardProps {
 const isFullMedia = (v: unknown): v is MediaLike =>
   typeof v === 'object' && v !== null && 'url' in (v as object)
 
-export function DownloadCard({ title, description, coverImage, formId }: DownloadCardProps) {
+export function DownloadCard({
+  title,
+  description,
+  coverImage,
+  formId,
+  fileUrl,
+}: DownloadCardProps) {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto grid max-w-container-lg gap-8 rounded-md border border-border-subtle bg-surface p-6 shadow-sm md:grid-cols-2">
@@ -48,6 +54,7 @@ export function DownloadCard({ title, description, coverImage, formId }: Downloa
           <p className="mt-4 text-caption text-text-muted">
             HubSpot form {formId} loads in production.
           </p>
+          <p className="mt-1 text-caption text-text-muted">Asset: {fileUrl}</p>
         </div>
       </div>
     </section>

@@ -21,7 +21,7 @@ export function LocationsList({ heading, locations }: LocationsListProps) {
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h2 font-bold">{heading ?? 'Where we work'}</h2> : null}
+        <h2 className="text-h2 font-bold">{heading ?? 'Where we work'}</h2>
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {docs.map((d) => (
             <li

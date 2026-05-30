@@ -3094,28 +3094,6 @@ export interface CollectionsWidget {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "InlineCtaBlock".
- */
-export interface InlineCtaBlock {
-  label: string;
-  url: string;
-  variant?: ('primary' | 'secondary' | 'ghost' | 'link') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'inline-cta';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TestimonialEmbedBlock".
- */
-export interface TestimonialEmbedBlock {
-  testimonial: number | Testimonial;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'testimonial-embed';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "CalloutBlock".
  */
 export interface CalloutBlock {
@@ -3160,6 +3138,16 @@ export interface QuotePullquoteBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TestimonialEmbedBlock".
+ */
+export interface TestimonialEmbedBlock {
+  testimonial: number | Testimonial;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'testimonial-embed';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "DisclosureBlock".
  */
 export interface DisclosureBlock {
@@ -3168,6 +3156,18 @@ export interface DisclosureBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'disclosure';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InlineCtaBlock".
+ */
+export interface InlineCtaBlock {
+  label: string;
+  url: string;
+  variant?: ('primary' | 'secondary' | 'ghost' | 'link') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'inline-cta';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

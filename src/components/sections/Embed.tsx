@@ -25,12 +25,16 @@ export function Embed({ title, url, caption, height = 600 }: EmbedProps) {
             style={{ height: `${height ?? 600}px` }}
           >
             {valid ? (
+              // `allow-same-origin` is deliberately omitted: combined with
+              // `allow-scripts` it would let the iframe reach window.parent.
+              // Widgets that require same-origin must be moved into the
+              // Phase 3 per-host allowlist with tightened CSP.
               <iframe
                 src={url}
                 title={title}
                 className="h-full w-full"
                 loading="lazy"
-                sandbox="allow-scripts allow-same-origin allow-forms"
+                sandbox="allow-scripts allow-forms allow-popups"
                 referrerPolicy="no-referrer"
               />
             ) : (

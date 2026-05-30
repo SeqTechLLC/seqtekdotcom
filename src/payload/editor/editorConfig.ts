@@ -14,17 +14,18 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
-import { inlineBlocks } from '../blocks/inline'
+import { richTextBlocks, richTextInlineBlocks } from '../blocks/inline'
 
 /**
- * The shared Lexical editor config used by every `richText` field that needs
- * the canonical block + inline-block set. Wiring the editor at this level
- * keeps the admin and the seed (`src/payload/seed/htmlToLexical.ts`) producing
- * structurally identical JSON.
+ * Shared Lexical editor config used by every `richText` field. Block-level
+ * rich-text components (Callout, Figure, Blockquote, Disclosure, …) are
+ * registered as `blocks` so they render at paragraph level; only truly
+ * inline content (e.g. InlineCta) goes under `inlineBlocks` — wrapping
+ * block-level markup in the inline `<span>` slot produces invalid HTML5
+ * and React hydration mismatches.
  *
- * Layout blocks are not registered here — they live on `pages.layout` as a
- * `blocks` field, not inside the rich-text body. Only inline blocks belong
- * in the editor config (per BLOCK_LIBRARY.md §1).
+ * Layout blocks live on `pages.layout` as a top-level `blocks` field, not
+ * here (per BLOCK_LIBRARY.md §1).
  */
 export const editorConfig = lexicalEditor({
   features: ({ defaultFeatures }) => [
@@ -40,6 +41,9 @@ export const editorConfig = lexicalEditor({
     LinkFeature({ enabledCollections: ['pages', 'posts', 'caseStudies', 'services'] }),
     InlineToolbarFeature(),
     FixedToolbarFeature(),
-    BlocksFeature({ inlineBlocks: [...inlineBlocks] }),
+    BlocksFeature({
+      blocks: [...richTextBlocks],
+      inlineBlocks: [...richTextInlineBlocks],
+    }),
   ],
 })
