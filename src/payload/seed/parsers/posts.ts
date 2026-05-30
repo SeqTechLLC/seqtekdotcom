@@ -16,17 +16,29 @@ const SECTION_HEADER = 'Our Blogs'
 
 const MONTH_BY_NAME: Record<string, number> = {
   Jan: 0,
+  January: 0,
   Feb: 1,
+  February: 1,
   Mar: 2,
+  March: 2,
   Apr: 3,
+  April: 3,
   May: 4,
   Jun: 5,
+  June: 5,
   Jul: 6,
+  July: 6,
   Aug: 7,
+  August: 7,
   Sep: 8,
+  Sept: 8,
+  September: 8,
   Oct: 9,
+  October: 9,
   Nov: 10,
+  November: 10,
   Dec: 11,
+  December: 11,
 }
 
 // Anchor year used when audit lists bare `MMM d` dates. Tracks the most
@@ -62,14 +74,14 @@ function stripBoilerplate(raw: string): string {
 }
 
 function parseDate(line: string, anchorYear: number, now: Date): string | undefined {
-  // Forms: "Jan 20", "Dec 2, 2025"
-  const withYear = line.match(/^([A-Z][a-z]{2})\s+(\d{1,2}),\s+(\d{4})$/)
+  // Forms: "Jan 20", "January 20", "Dec 2, 2025", "December 2, 2025"
+  const withYear = line.match(/^([A-Z][a-z]+)\s+(\d{1,2}),\s+(\d{4})$/)
   if (withYear) {
     const month = MONTH_BY_NAME[withYear[1]]
     if (month === undefined) return undefined
     return toIsoCentral(Number(withYear[3]), month, Number(withYear[2]))
   }
-  const bare = line.match(/^([A-Z][a-z]{2})\s+(\d{1,2})$/)
+  const bare = line.match(/^([A-Z][a-z]+)\s+(\d{1,2})$/)
   if (bare) {
     const month = MONTH_BY_NAME[bare[1]]
     if (month === undefined) return undefined
@@ -154,7 +166,15 @@ export function parsePosts(options: ParsePostsOptions): ParsedPost[] {
       scan++
     }
     if (!publishedAt) {
-      // Reached end without a date line — abandon this block.
+      // Reached end without a date line — abandon this block, but surface it
+      // so editors know an audit entry was skipped rather than silently lost.
+      logger.log({
+        level: 'WARN',
+        kind: 'PARSE_ERROR',
+        collection: 'posts',
+        slug: slugify(titleCandidate) || '<unparsed>',
+        detail: `dropped block "${titleCandidate.slice(0, 60)}" — no recognizable publish date in trailing lines`,
+      })
       cursor++
       continue
     }

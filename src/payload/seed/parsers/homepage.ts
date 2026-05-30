@@ -67,6 +67,15 @@ export function parseHomepage(options: ParseHomepageOptions): ParsedHomepage {
     }
   }
   const finalStats = stats.length === 3 ? stats : STATS_FALLBACK
+  if (stats.length !== 3) {
+    logger.log({
+      level: 'WARN',
+      kind: 'STATS_CONFLICT',
+      collection: 'homepage',
+      slug: '<global>',
+      detail: `audit yielded ${stats.length} stat line(s) instead of 3; substituted canonical fallback (20+/411+/8221+) — editor verifies before publish`,
+    })
+  }
 
   logger.log({
     level: 'WARN',

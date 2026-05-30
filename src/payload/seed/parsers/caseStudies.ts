@@ -84,7 +84,6 @@ export interface ParsedCaseStudy {
   technologies: { label: string }[]
   metrics: never[]
   publishedAt: string
-  industryRequested: string | null
 }
 
 function stripBoilerplate(raw: string): string {
@@ -108,9 +107,12 @@ function findSections(body: string): SectionMatch[] {
       const found = body.indexOf(label, index)
       if (found < 0) break
       const prev = found > 0 ? body[found - 1] : '\n'
-      const after = body[found + label.length] ?? '\n'
-      // Heading-like context: preceded by newline (or start), followed by newline.
-      if ((prev === '\n' || found === 0) && (after === '\n' || after === undefined)) {
+      const after = body[found + label.length]
+      // Heading-like context: preceded by newline (or start), followed by
+      // newline / end-of-string / a heading-trailing character (`:`, ` `, `\t`).
+      // The real audit occasionally trails labels with `:` or stray spaces.
+      const afterOk = after === undefined || after === '\n' || /[:\s]/.test(after)
+      if ((prev === '\n' || found === 0) && afterOk) {
         matches.push({ label, start: found, end: found + label.length })
       }
       index = found + label.length
@@ -335,7 +337,6 @@ export function parseCaseStudies(
       technologies,
       metrics: [],
       publishedAt: now,
-      industryRequested,
     })
   }
 

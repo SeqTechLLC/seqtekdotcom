@@ -78,8 +78,8 @@ Flags:
 
 Environment:
   AUDIT_DIR             Path to Wix audit JSON (default: ~/projects/seqtek-internal/audit).
-  DATABASE_URL          Postgres connection string (required unless --dry-run).
-  PAYLOAD_SECRET        Payload's signing secret (required unless --dry-run).
+  DATABASE_URL          Postgres connection string (required, including --dry-run — the plan reads current rows to label create vs update).
+  PAYLOAD_SECRET        Payload's signing secret (required).
   S3_BUCKET             Optional; falls back to local FS storage when unset.
 `
 
@@ -152,19 +152,20 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
     }
   }
 
-  if (!args.dryRun) {
-    const missing = REQUIRED_ENV_KEYS.filter((key) => !env[key])
-    if (missing.length > 0 && !options.payload) {
-      stderr(`Missing required env var(s): ${missing.join(', ')}`)
-      return {
-        exitCode: 1,
-        results: [],
-        logger: createMigrationLogger(
-          options.logPath ?? resolve(process.cwd(), 'migration-errors.log'),
-          { dryRun: true },
-        ),
-        collectionsProcessed: [],
-      }
+  // Env validation runs for every mode, including --dry-run: the plan still
+  // reads current rows via `payload.find` to label each upsert as create vs
+  // update. `seed-cli.md` lists DATABASE_URL / PAYLOAD_SECRET as required.
+  const missing = REQUIRED_ENV_KEYS.filter((key) => !env[key])
+  if (missing.length > 0 && !options.payload) {
+    stderr(`Missing required env var(s): ${missing.join(', ')}`)
+    return {
+      exitCode: 1,
+      results: [],
+      logger: createMigrationLogger(
+        options.logPath ?? resolve(process.cwd(), 'migration-errors.log'),
+        { dryRun: true },
+      ),
+      collectionsProcessed: [],
     }
   }
 

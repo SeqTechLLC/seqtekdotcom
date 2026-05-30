@@ -20,7 +20,10 @@ export const slugRewrites: Readonly<Record<string, string>> = Object.freeze({
   'our-services': 'services',
   workshops: 'touchstone-workshops',
   'blog-old': 'insights',
-  'organizational-strategy-1-5': 'resources/organizational-maturity-assessment',
+  // Routing prefix (`/resources/`) is applied by the URL builder; the stored
+  // slug must satisfy `validateSlug` (^[a-z0-9]+(?:-[a-z0-9]+)*$). The
+  // INTEGRATIONS.md §9 redirect still points at `/resources/...`.
+  'organizational-strategy-1-5': 'organizational-maturity-assessment',
 })
 
 /** Strip scheme, host, leading/trailing slashes from a URL or path. */

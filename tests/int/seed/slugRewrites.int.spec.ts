@@ -60,6 +60,19 @@ describe('slug rewrites (T093 / FR-031)', () => {
     expect(applySlugRewrite('https://www.seqtek.com/case-study-3')).toBe(
       'mobile-apps-remote-operations',
     )
+    // Every rewrite target must satisfy `validateSlug` (no slashes); URL
+    // prefixes like `/resources/` belong in the routing layer, not the slug.
+    const slugRe = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+    for (const target of [
+      'mobile-apps-remote-operations',
+      'organizational-maturity-assessment',
+      'about',
+      'touchstone-workshops',
+      'insights',
+      applySlugRewrite('organizational-strategy-1-5'),
+    ]) {
+      expect(target, `${target} must match validateSlug`).toMatch(slugRe)
+    }
   })
 
   it('seeded case studies and pages use canonical slugs, not source slugs', async () => {
