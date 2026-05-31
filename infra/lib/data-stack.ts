@@ -51,7 +51,7 @@ export class DataStack extends Stack {
     // User-data can read the single secret and assemble DATABASE_URL.
     this.database = new rds.DatabaseInstance(this, 'Database', {
       engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.VER_16_4,
+        version: rds.PostgresEngineVersion.VER_18_3,
       }),
       instanceType: parseInstanceType(cfg.rdsInstanceClass),
       vpc: network.vpc,
@@ -63,6 +63,9 @@ export class DataStack extends Stack {
       allocatedStorage: cfg.rdsAllocatedStorageGb,
       storageType: rds.StorageType.GP3,
       multiAz: cfg.rdsMultiAz,
+      // Required for CDK-driven major-version upgrades. RDS otherwise refuses
+      // to apply a major engine bump and the cdk deploy fails.
+      allowMajorVersionUpgrade: true,
       backupRetention: Duration.days(7),
       deletionProtection: envName === 'prod',
       // staging: DESTROY (no final snapshot — fast iteration cycle);
