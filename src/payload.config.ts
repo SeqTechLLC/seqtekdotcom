@@ -72,10 +72,13 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
-    // TEMPORARY: hardcoded true to bootstrap the fresh staging DB.
-    // Once initial schema is in place + Phase 5.5 introduces real
-    // migrations via `payload migrate:create`, switch back to env-gated.
-    push: true,
+    // Drizzle push (auto-sync schema on init) only in development. In
+    // production the `payload migrate` step in the container CMD is the
+    // single source of schema truth — push must be off, otherwise schema
+    // drift can sneak into a deployed image without a corresponding
+    // migration file (this is exactly the failure mode that caused PR #17's
+    // migration collapse). Local dev keeps push for fast iteration.
+    push: process.env.NODE_ENV !== 'production',
   }),
   sharp,
   plugins: s3Plugin ? [s3Plugin] : [],

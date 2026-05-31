@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { SmartLink } from '@/components/ui/SmartLink'
 import type { NavItem } from '@/lib/site-content'
@@ -16,25 +16,14 @@ export function MobileNav({ navItems, ctaButton }: MobileNavProps) {
   const open = () => dialogRef.current?.showModal()
   const close = () => dialogRef.current?.close()
 
-  // Close on backdrop (outside the dialog rect) click.
-  useEffect(() => {
-    const dialog = dialogRef.current
-    if (!dialog) return
-
-    const onClick = (event: MouseEvent) => {
-      if (event.target !== dialog) return
-      const rect = dialog.getBoundingClientRect()
-      const inside =
-        event.clientX >= rect.left &&
-        event.clientX <= rect.right &&
-        event.clientY >= rect.top &&
-        event.clientY <= rect.bottom
-      if (!inside) dialog.close()
-    }
-
-    dialog.addEventListener('click', onClick)
-    return () => dialog.removeEventListener('click', onClick)
-  }, [])
+  // T137 / spec 003 Polish. The native `<dialog>` element fires `click`
+  // events where `event.target === dialog` only when the user clicks the
+  // backdrop (the inner panel has its own bounding box and is the event
+  // target there). No need for the prior `getBoundingClientRect` math +
+  // useEffect listener — handle it inline on the dialog itself.
+  const onBackdropClick = (event: React.MouseEvent<HTMLDialogElement>) => {
+    if (event.target === dialogRef.current) dialogRef.current.close()
+  }
 
   return (
     <>
@@ -65,6 +54,7 @@ export function MobileNav({ navItems, ctaButton }: MobileNavProps) {
         ref={dialogRef}
         aria-label="Mobile navigation"
         data-testid="mobile-menu"
+        onClick={onBackdropClick}
         className="m-0 ml-auto h-full max-h-none w-[min(85vw,360px)] max-w-none bg-surface p-0 text-text-primary shadow-xl backdrop:bg-neutral-900/40"
       >
         <div className="flex h-screen flex-col">
