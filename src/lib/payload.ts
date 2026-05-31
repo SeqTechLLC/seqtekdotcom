@@ -20,7 +20,7 @@ let payloadPromise: Promise<Payload> | null = null
  * race. Use this anywhere a server component or server action needs the
  * Local API.
  */
-export const payloadInstance = (): Promise<Payload> => {
+export const getPayloadInstance = (): Promise<Payload> => {
   if (!payloadPromise) {
     payloadPromise = getPayload({ config })
   }
@@ -34,16 +34,16 @@ export const payloadInstance = (): Promise<Payload> => {
  * cache is reset, so this is safe for per-request data.
  */
 export const getSiteSettings = cache(async (): Promise<SiteSetting> => {
-  const payload = await payloadInstance()
+  const payload = await getPayloadInstance()
   return payload.findGlobal({ slug: 'siteSettings', depth: 2 }) as Promise<SiteSetting>
 })
 
 export const getNavigation = cache(async (): Promise<Navigation> => {
-  const payload = await payloadInstance()
+  const payload = await getPayloadInstance()
   return payload.findGlobal({ slug: 'navigation', depth: 2 }) as Promise<Navigation>
 })
 
 export const getHomepage = cache(async (): Promise<Homepage> => {
-  const payload = await payloadInstance()
+  const payload = await getPayloadInstance()
   return payload.findGlobal({ slug: 'homepage', depth: 2 }) as Promise<Homepage>
 })

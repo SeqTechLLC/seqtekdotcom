@@ -37,23 +37,44 @@ module.exports = {
       },
     },
     assert: {
-      assertions: {
-        // A11y / Best Practices / SEO are gating from day one. Current
-        // empty-state baseline already clears all three (0.95 / 0.96 / 1.00).
-        'categories:accessibility': ['error', { minScore: 0.95 }],
-        'categories:best-practices': ['error', { minScore: 0.95 }],
-        'categories:seo': ['error', { minScore: 0.95 }],
+      // assertMatrix so the public routes and the admin login can carry
+      // different gates. LHCI applies the assertions of EVERY matching pattern
+      // to a URL, so the public pattern uses a negative lookahead to exclude
+      // /admin/* — otherwise /admin/login would inherit the public
+      // SEO/best-practices error gates that, per the `collect` note above,
+      // Payload's admin chrome was never meant to meet.
+      assertMatrix: [
+        {
+          // Public site (everything except /admin/*). A11y / Best Practices /
+          // SEO gate from day one; the empty-state baseline already clears all
+          // three (0.95 / 0.96 / 1.00).
+          matchingUrlPattern: '^(?!.*/admin/).*$',
+          assertions: {
+            'categories:accessibility': ['error', { minScore: 0.95 }],
+            'categories:best-practices': ['error', { minScore: 0.95 }],
+            'categories:seo': ['error', { minScore: 0.95 }],
 
-        // Performance budgets stay as warnings during Phase 1 (we're testing
-        // an empty-state placeholder page against mobile 3G throttling on a
-        // single localhost instance — no CDN, no real content). ROADMAP
-        // Phase 5 "Polish" flips these to `error` once Performance ≥ 95
-        // against the actual archetype pages (§7 launch targets).
-        'categories:performance': ['warn', { minScore: 0.95 }],
-        'largest-contentful-paint': ['warn', { maxNumericValue: 2000 }],
-        'total-blocking-time': ['warn', { maxNumericValue: 100 }],
-        'cumulative-layout-shift': ['warn', { maxNumericValue: 0.1 }],
-      },
+            // Performance budgets stay as warnings during Phase 1 (we're testing
+            // an empty-state placeholder page against mobile 3G throttling on a
+            // single localhost instance — no CDN, no real content). ROADMAP
+            // Phase 5 "Polish" flips these to `error` once Performance ≥ 95
+            // against the actual archetype pages (§7 launch targets).
+            'categories:performance': ['warn', { minScore: 0.95 }],
+            'largest-contentful-paint': ['warn', { maxNumericValue: 2000 }],
+            'total-blocking-time': ['warn', { maxNumericValue: 100 }],
+            'cumulative-layout-shift': ['warn', { maxNumericValue: 0.1 }],
+          },
+        },
+        {
+          // Admin login: hold the auth form to the a11y bar, but skip the
+          // SEO/best-practices gates — Payload's noindex admin SPA chrome
+          // isn't a target for those (see the `collect` note above).
+          matchingUrlPattern: '/admin/',
+          assertions: {
+            'categories:accessibility': ['error', { minScore: 0.95 }],
+          },
+        },
+      ],
     },
     upload: {
       target: 'filesystem',
