@@ -10,7 +10,7 @@
 
 ## Background
 
-Spec 003 (Phase 2) shipped a comprehensive content infrastructure: 13 collections + 3 globals, 32 layout blocks + 8 inline blocks with full React renderers in `src/components/sections/`, live preview wiring, audit-seed pipeline, access matrix. What it did **not** ship was the public-facing route layer: `src/app/(frontend)/page.tsx` is still the spike-era "No page yet" placeholder, and there are no Payload-driven templates for `/case-studies/[slug]`, `/insights/[slug]`, `/services/*`, `/team`, `/touchstone-workshops/*`, etc.
+Spec 003 (Phase 2) shipped a comprehensive content infrastructure: 13 collections + 3 globals, the full layout + inline block library with React renderers in `src/components/sections/`, live preview wiring, audit-seed pipeline, access matrix. What it did **not** ship was the public-facing route layer: `src/app/(frontend)/page.tsx` is still the spike-era "No page yet" placeholder, and there are no Payload-driven templates for `/case-studies/[slug]`, `/insights/[slug]`, `/services/*`, `/team`, `/touchstone-workshops/*`, etc.
 
 Spec 004 closes that gap **and** ships the first round of marquee content on top of it. The strategic decision (recorded in ROADMAP §4 and `CLAUDE.md` Current phase) is that the rebuild's value isn't "faster Wix" — it's a site that demonstrates the level of craft SEQTEK sells. That requires high-leverage marquee pages, not pixel-perfect parity with every existing Wix page.
 
@@ -77,7 +77,7 @@ A `/about/localshoring` page that explains the localshoring model in SEQTEK's vo
 
 - **Spec 003 US6 (media S3 plugin)** — must ship before bulk photo ingest C-8 and before any content team upload work. Half-day wrap-up PR.
 - **Brand strategy decisions** (`BR-4`, `BR-5`, `BR-7`) — homepage hero copy depends on Sequoyah brand story decisions; bios depend on photo shoot completion. Kenn confirmed "high political capital right now" 2026-05-31 — content lead can push on these in parallel with engineer-side template work.
-- **Block library + renderers** (P2-1) — already shipped. All 32 layout blocks have React renderers; the dispatcher (`RenderBlocks.tsx` + `registry.ts`) is wired. Spec 004 consumes this, doesn't extend it (unless a marquee-page need surfaces a block gap).
+- **Block library + renderers** (P2-1) — already shipped. Every layout block has a React renderer; the dispatcher (`RenderBlocks.tsx` + `registry.ts`) is wired. Spec 004 consumes this, doesn't extend it (unless a marquee-page need surfaces a block gap).
 
 ## Open questions for `/speckit-specify` / `/speckit-clarify`
 
