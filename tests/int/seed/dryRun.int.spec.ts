@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import config from '../../../src/payload.config'
 import { runSeed } from '../../../src/payload/seed/migrateFromAudit'
-import { writeAuditFixture } from '../../helpers/seedFixtures'
+import { writeAuditFixture } from '../../seeders/seedFixtures'
 
 /**
  * T094 / FR-033: `--dry-run` prints planned upserts to stdout and writes

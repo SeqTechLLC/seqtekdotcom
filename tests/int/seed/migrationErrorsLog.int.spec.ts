@@ -10,7 +10,7 @@ import {
   FIXTURE_EXPECTED_PAGE_SLUGS,
   FIXTURE_EXPECTED_POST_SLUGS,
   writeAuditFixture,
-} from '../../helpers/seedFixtures'
+} from '../../seeders/seedFixtures'
 
 /**
  * T096 / SC-011 / FR-032: a fresh seed run enumerates every known

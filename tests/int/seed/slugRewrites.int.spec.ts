@@ -9,7 +9,7 @@ import {
   FIXTURE_EXPECTED_PAGE_SLUGS,
   FIXTURE_EXPECTED_POST_SLUGS,
   writeAuditFixture,
-} from '../../helpers/seedFixtures'
+} from '../../seeders/seedFixtures'
 
 /**
  * T093 / FR-031: when the audit key is a Wix garbage slug

@@ -734,7 +734,18 @@ Draft content is never exposed to the public API or rendered on the public site 
 | Schedule publish (future `publishedAt`) | —      | ✓      | ✓     |
 | Delete content                          | —      | —      | ✓     |
 | Manage users                            | —      | —      | ✓     |
+| Manage `categories` (taxonomy)          | —      | —      | ✓     |
+| Read `media` / `teamMembers`            | ✓      | ✓      | ✓     |
+| Read `testimonials` where `!isActive`   | —      | ✓      | ✓     |
 | Access `/admin`                         | —      | ✓      | ✓     |
+
+**Per-collection overrides** (the "Create / Update / Delete content" rows above describe the default for the editorial collections — `pages`, `posts`, `caseStudies`, `services`, `servicePillars`, `workshops`, `industries`, `locations`, `media`, `teamMembers`; the overrides below cover the rest):
+
+- `categories` — admin-only `create` / `update` / `delete` (curated taxonomy; editors don't add categories on the fly).
+- `testimonials` — public reads are filtered to `isActive: true`; editors and admins see all rows. Mutations follow the editorial default.
+- `users` — `read` requires any authenticated session; `create` is always denied (auto-provisioning only, via the OAuth hook); `update` / `delete` are admin-only.
+
+The data-driven matrix at `tests/int/collections/access.int.spec.ts` (T108 / SC-005) iterates every cell of this table against the Payload Local API on every CI run, and `tests/int/collections/draftLeak.int.spec.ts` (T109 / SC-006 / contract `public-api-draft-filter.md`) asserts the "drafts never leak" invariant separately for the REST and GraphQL surfaces.
 
 **Scheduled publishing:** Editors set a future `publishedAt` date on any draft. A Payload `beforeChange` hook enforces the invariant — if `publishedAt` is in the future, `status` is forced back to `draft` regardless of what the editor submitted. A scheduled job runs every 5 minutes (AWS EventBridge rule → API route trigger at `/api/cron/publish-scheduled`, secured with a shared secret matching the revalidation pattern) and queries for documents where `status = 'draft'` AND `publishedAt <= now()`. Matching documents are flipped to `published`, and the same `afterChange` revalidation path runs — ISR cache busts, CloudFront paths invalidate, content goes live. Editors get publish-at-a-time without standing up a separate scheduling service, and the invariant holds even if the cron misfires (a manual save will still respect the future date).
 

@@ -11,7 +11,7 @@ import { test } from '@playwright/test'
 // which is a structurally stronger guarantee than the admin UX flow would
 // provide. What this test still needs to add is the admin UX path itself:
 //
-// 1. Sign in via Google SSO mock (use tests/helpers/seedUser.ts + the
+// 1. Sign in via Google SSO mock (use tests/seeders/seedUser.ts + the
 //    issueSessionCookie pattern).
 // 2. Navigate to `/admin/collections/pages/create`.
 // 3. Set title "Test page", verify slug auto-generates.

@@ -10,7 +10,7 @@ import {
   FIXTURE_EXPECTED_PAGE_SLUGS,
   FIXTURE_EXPECTED_POST_SLUGS,
   writeAuditFixture,
-} from '../../helpers/seedFixtures'
+} from '../../seeders/seedFixtures'
 
 /**
  * T092 / SC-004 / FR-030: run the seed twice against the same testcontainer

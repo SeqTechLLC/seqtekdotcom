@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 
 import config from '../../src/payload.config.js'
-import { FIXTURES } from '../helpers/authFixtures'
+import { FIXTURES } from '../fixtures/authFixtures'
 
 let payload: Payload
 

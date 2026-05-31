@@ -4,8 +4,8 @@ import {
   cleanupEditorSession,
   seedEditorSession,
   type EditorSession,
-} from '../../helpers/editorSession'
-import { cleanupDraftDoc, seedDraftPost } from '../../helpers/seedDraftDoc'
+} from '../../sessions/editorSession'
+import { cleanupDraftDoc, seedDraftPost } from '../../seeders/seedDraftDoc'
 
 // Contract: specs/003-phase-2-content-models/contracts/live-preview-urls.md
 // T075 — posts preview redirect mechanics (FR-019, FR-021, SC-003).
