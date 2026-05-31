@@ -1,10 +1,10 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-29 (shipped responsive image rendering slice in Phase 2: `imageSizes` (mobile/tablet/desktop/wide × WebP/JPEG) in `Media.ts`, new `ResponsiveImage` component, swapped 4 block callsites. Bundled into Phase 2 because Payload generates size derivatives at upload time — config must land before C-8 bulk ingest or every photo re-uploads. Added C-8 for the bulk ingest itself. Phase 1 closed — spec 002 (AWS CDK + blue-green CI/CD) shipped as P1-10/P1-11/P1-12; staging live on `seqtek-preview.com`; SC-002 measured at 7m45s; Slack alarms verified end-to-end. Production CD auto-deploy + DNS cutover to `seqtek.com` deferred until leadership approval. Multi-AZ RDS + private-subnet ASG flips both still scheduled for Phase 5.5. Phase 2 (Content models) is now unblocked.)
+**Last updated:** 2026-05-31 (Phase 2 substantially closed — spec 003 US1–US5 shipped (PRs #11/#13/#14/#15/#16), DB migration collapse + Postgres 16 → 18 bump shipped (#17), staging healthy on PG 18.3. US6 — media via S3 plugin — is the only remaining wrap-up item and the prereq for content-team uploads. **Strategic pivot 2026-05-31:** freeze further audit-seed investment; treat the seed pipeline as a one-shot migration tool + 301-redirect-map source, not a publish baseline. Phase 3 retargeted at marquee pages first — homepage wired to Payload, flagship case study, team page, Touchstone AI workshop campaign, localshoring story. Spec 004 opens as the home for the engineering side of that work.)
 
-> **Convention:** When a Phase 1 implementation item ships, _move_ it out of this file (don't just check it off) and add a `P1-*` row to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md). The roadmap stays a short punch list of what's _open_; history carries the audit trail.
+> **Convention:** When a Phase implementation item ships, _move_ it out of this file (don't just check it off) and add a `P{N}-*` row to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md). The roadmap stays a short punch list of what's _open_; history carries the audit trail.
 
-**Status:** Phase 1 — implementation
+**Status:** Phase 2 wrap-up (003 US6) + Phase 3 (spec 004 — marquee pages) starting
 
 Single source of truth for what's open, what's blocked, what's next on the website rebuild. Keep current. When something moves status, edit this file in the same commit. Completed items are archived in [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) so this file stays focused on active work.
 
@@ -70,45 +70,59 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 
 ### Phase 1 — Foundation (1-2 weeks)
 
-Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./PROJECT_HISTORY.md). Phase 1 is now closed — every roadmap-level Phase 1 item has shipped. Production cutover to `seqtek.com` (Phase 6) plus the multi-AZ RDS + private-subnet ASG flips (Phase 5.5) carry the remaining infra polish.
+Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./PROJECT_HISTORY.md). Phase 1 is closed — every roadmap-level Phase 1 item has shipped. Production cutover to `seqtek.com` (Phase 6) plus the multi-AZ RDS + private-subnet ASG flips (Phase 5.5) carry the remaining infra polish.
 
-### Phase 2 — Content models (1 week)
+### Phase 2 — Content models (spec 003) — substantially closed
 
-- [ ] All Payload collections per ARCHITECTURE.md §2
-- [ ] All globals
-- [ ] Block library (`Pages.layout`, inline blocks for richText) per BLOCK_LIBRARY.md
-- [ ] Admin panel functional with role-based access
-- [ ] Live preview wired up for `posts`, `case-studies`, `pages`, `services`
-- [ ] Seed script: `audit/` JSON → Payload (per D-8)
-- [ ] Initial admin user creation flow
-- [x] Responsive image rendering — `imageSizes` (mobile/tablet/desktop/wide × WebP/JPEG) in `Media.ts`, `ResponsiveImage` component, swapped 4 block callsites (Hero, CaseStudyHero, TwoColumn, ServicePillarHero). Hard-coupled to Phase 2 because Payload generates size derivatives at upload time — landing this before C-8 avoids re-uploading every photo
+Completed items live in [`PROJECT_HISTORY.md` § Phase 2 implementation (P2)](./PROJECT_HISTORY.md). US1–US5 shipped (PRs #11/#13/#14/#15/#16); DB migration collapse + PG 18 bump shipped (#17). Open carry-over:
 
-### Phase 3 — Core pages (2-3 weeks)
+- [ ] **US6 — media via S3 plugin** (spec 003 T114–T120). Conditional `@payloadcms/storage-s3` registration in `payload.config.ts` only when `S3_BUCKET` is set; alt-required server-side validation; MIME / 25MB size cap; staging upload smoke against `seqtek-media-staging`. **Prereq for content-team uploads** — without it, admin uploads land on the EC2 instance's local FS and disappear on ASG refresh. Half-day wrap-up PR.
+- [ ] **US7 — scheduled-publish hook** (spec 003 T121–T123). Verify `enforceDraftWhenScheduled` is wired on every draftable collection with `publishedAt`. **Deferred to Phase 5.5 launch readiness** — cron trigger is intentionally out of scope, only the Payload-side invariant matters today.
+- [ ] **Polish carry-over** (spec 003 Phase 10). Vercel react-best-practices audit follow-ups. Defer to Phase 5.
 
-- [ ] Homepage
-- [ ] About section (4 pages)
-- [ ] Services overview + 3 pillars + 15 services
-- [ ] Case studies listing + 8 detail pages
-- [ ] Contact + booking page
+### Phase 3 — Public render foundation + marquee pages (spec 004) (3-4 weeks)
 
-### Phase 4 — Content & blog (1-2 weeks)
+The pivot. Tech-first, content-second per Kenn 2026-05-31. Block library is comprehensive; what's missing is the public-render wiring + the marquee-page content. Reference: `specs/004-*/spec.md` once stubbed.
 
-- [ ] Blog listing + posts + categories + author pages
-- [ ] Touchstone Workshops landing + 3 detail pages
-- [ ] Assessment landing page
-- [ ] Industry pages (6)
-- [ ] Market landing pages (4)
+**Tech (engineer-driven, days):**
+
+- [ ] **Homepage template** — replace the spike `(frontend)/page.tsx` placeholder with a Payload-driven template that fetches the `homepage` global and renders its block array through `RenderBlocks`. Highest-traffic URL — proves the loop end-to-end.
+- [ ] **Generic `/[slug]` page route** for `pages` collection (about-section pages, etc.) via `RenderBlocks` dispatcher
+- [ ] **Collection detail routes** — `/case-studies/[slug]`, `/insights/[slug]`, `/services/[pillar]/[slug]`, `/touchstone-workshops/[slug]`. Same pattern, different fetch.
+- [ ] **Collection listing routes** — `/case-studies`, `/insights`, `/services`, `/team`, `/touchstone-workshops`
+- [ ] **404 / 500 / maintenance pages** per `docs/ERROR_PAGES.md` (D-12 was the spec; render now lands the pages)
+- [ ] **301 redirect map** from old Wix slugs (the seed pipeline produced the source-of-truth mapping; wire it via `next.config.ts` redirects or middleware)
+
+**Marquee content (content-lead-driven, weeks — drives the order):**
+
+- [ ] **Homepage** — hero copy + brand teaser + stats bar + featured case study + workshop CTA. Source: `BRAND_STRATEGY_RESEARCH.md` + `VALUES_REWRITE.md`. Depends on Sequoyah brand story draft (C-3) + hero copy decision (DS-2).
+- [ ] **One flagship case study** — pick the strongest current engagement, rewrite specifically (not generically), get client headshot + named quote (C-1, C-7). One great case study beats 8 generic ones.
+- [ ] **Team page** — upload existing photos (C-8 once US6 ships), draft 3 leadership bios + 5-6 team bios (C-3). This humanizes the firm immediately.
+- [ ] **Localshoring story page** — your differentiator vs. nearshore / offshore. Rewrite from existing.
+- [ ] **Touchstone AI workshop landing** — the active marketing campaign destination. Includes workshop description, agenda, registration CTA, supporting blog post links.
+
+### Phase 4 — Campaign content expansion (2-3 weeks)
+
+The supporting content for the active AI workshop marketing push, plus filling out the case study library in batches.
+
+- [ ] **3-5 supporting blog posts** for the AI workshop campaign (insights / thought-leadership pieces that map to workshop topics)
+- [ ] **Lead magnet** — downloadable resource for the AI campaign (one-pager, assessment, framework brief — TBD with content lead)
+- [ ] **Additional case studies (4-6)** — batched, each one specifically rewritten with real outcomes + testimonials (C-1, C-7)
+- [ ] **Service pillar pages (3)** — rewrite from existing audit content; less marquee than homepage but core to the buyer journey
+- [ ] **Mission/Vision/Values + About landing** — leadership-alignment-dependent (BR-4, BR-5)
+- [ ] **Insights blog listing + categories + author pages** (uses `posts` + `teamMembers` + `categories`)
 
 ### Phase 5 — Polish (1-2 weeks)
 
 - [ ] SEO: structured data (JSON-LD), dynamic sitemap, meta tags
-- [ ] Accessibility audit (axe + manual screen reader pass)
+- [ ] AICO baseline (F-6) — `llms.txt` + `llms-full.txt`, `.md` alternatives, crawler-aware caching
+- [ ] Accessibility audit (axe + manual screen reader pass) on the marquee + campaign pages
 - [ ] Performance optimization until Lighthouse CI passes ARCHITECTURE.md §7 thresholds
-- [ ] 301 redirects from old Wix URLs (per INTEGRATIONS.md §9)
 - [ ] Cookie consent flow end-to-end test (HubSpot ↔ GTM bridge)
 - [ ] CSP promoted from report-only to enforcing
 - [ ] Cross-browser/device QA (Chrome, Safari, Firefox; iOS, Android)
-- [ ] Error pages (404/500/maintenance)
+- [ ] **Spec 003 Polish carry-over** — Vercel react-best-practices audit follow-ups
+- [ ] Long-tail content — industry pages (6) and market landing pages (4) per the original Phase 4 list, if leadership/SEO priorities still call for them at this point
 
 ### Phase 5.5 — Launch readiness review (1 week)
 
@@ -126,6 +140,8 @@ The content-and-copy gate before DNS cutover. Per `project_internal_dynamics.md`
 - [ ] **Legal / privacy** — privacy policy uses canonical Cheyenne address (no Sapulpa references anywhere); terms and cookie banner reviewed
 - [ ] **RDS multi-AZ flip** _(infra, spec 002)_ — flip production RDS from single-AZ to multi-AZ before public launch. Small CDK property change; required for the SC-010 99.9% post-launch SLA to be mathematically achievable (AWS only SLAs single-AZ RDS at 99.5%). Deferred from spec 002 to keep pre-launch cost down.
 - [ ] **ASG flip to private subnets + NAT (or VPC endpoints)** _(infra, spec 002)_ — flip the ASG from public-subnet validation posture to private-subnet production posture. Add NAT Gateway (or VPC endpoints) for outbound. Restore staging sizing from `t3.micro` / `db.t3.micro` / 20GB to spec-shape (`t3.small` / `db.t3.small` / 50GB). Bundle with the multi-AZ RDS flip into a single CFN deploy + change window. Deferred from spec 002 per Clarifications Session 2026-05-26.
+- [ ] **Spec 003 US7 — scheduled-publish hook** — verify `enforceDraftWhenScheduled` is wired on every draftable collection with `publishedAt`; ship the integration test. The hook itself shipped in spec 003 foundational (T008); only the wire-up audit + test remain. Cron trigger (`/api/cron/publish-scheduled`) intentionally stays deferred — only the Payload-side invariant is needed today.
+- [ ] **Schema-drift CI guard** — fail CI if `payload migrate:create --dry-run` would produce a diff vs. what's on disk. Systemic fix so the schema-vs-code desync that caused the P2-6 migration collapse can't recur. One-line process note in `PAYLOAD_DEVELOPMENT.md` to codify "schema change → `migrate:create` before merge to main."
 - [ ] **Sign-off captured in writing** — leadership approvals recorded (Google Doc, signed email, or equivalent) so decisions don't get re-litigated post-launch
 
 ### Phase 6 — Launch (1 week)
@@ -141,7 +157,7 @@ The content-and-copy gate before DNS cutover. Per `project_internal_dynamics.md`
 
 ## 5. Risks to watch
 
-1. **Content production lag.** Engineering can build with placeholder content; launch requires real content. Per CONTENT-REQUIREMENTS §7, this is the bottleneck. Start C-1, C-2, C-3 in week 1.
-2. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+. Tailwind v4 was evaluated and rejected during the spike — see ADR `docs/decisions/0001-tailwind-v3.md`. The combo is now validated end-to-end (D-13 ✅); if a future minor-version bump breaks the combo, downgrade Next first (don't downgrade Payload — that's the constraint).
-3. **CDK learning curve.** If the engineer hasn't shipped CDK before, add 1-2 weeks to Phase 1.
+1. **Content production lag.** Engineering can build with placeholder content; launch requires real content. Per CONTENT-REQUIREMENTS §7, this is the bottleneck. Marquee-first pivot (2026-05-31) front-loads the highest-leverage content (homepage + 1 flagship case study + team page + AI workshop + localshoring) and accepts that long-tail content (industry / market / remaining case studies) lands incrementally — possibly post-launch.
+2. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+. Tailwind v4 was evaluated and rejected during the spike — see ADR `docs/decisions/0001-tailwind-v3.md`. The combo is now validated end-to-end (D-13 ✅); if a future minor-version bump breaks the combo, downgrade Next first (don't downgrade Payload — that's the constraint). Postgres 18.3 confirmed compatible with `@payloadcms/db-postgres ^3.85` (P2-6).
+3. **Schema drift between code and migrations.** Caused the staging 500s on PRs #13/#14/#15 — collections were added to the code without corresponding `payload migrate:create` runs. P2-6 collapsed everything into a single `init`. Phase 5.5 carries a CI guard to prevent recurrence; in the meantime, treat "added a collection or field → ran `migrate:create`" as the merge-to-main checklist line.
 4. **CSP report-only oversight.** Easy to leave running in report-only past launch and never enforce. Calendar a hard date to flip enforce in Phase 5.

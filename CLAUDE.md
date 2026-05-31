@@ -31,7 +31,11 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 
 ## Current phase
 
-Phase 1 — implementation begins. The stack-validation spike (`spike/stack-validation`, ROADMAP D-13) merged to main on 2026-05-15. Working scaffold lives at the repo root: Next 16.2.3 + React 19.2.4 + Payload 3.84 + Postgres 16 + Tailwind v3.4 + Lexical, with admin login, Lexical authoring, and public render verified by Playwright against both dev and a Docker container.
+Phase 2 (content models, spec 003) is wrapping up — US1–US5 shipped across PRs #11/#13/#14/#15/#16, plus PR #17 (DB migration collapse + Postgres 16 → 18 bump). Phase 2 leaves behind: 13 collections + 3 globals, 32 layout blocks + 8 inline blocks with full React renderers, live preview, an audit-seed pipeline (frozen at its current shape — see ROADMAP §4), and a 185-cell access-matrix invariant. Spec 003 US6 (media via S3 plugin) is the only remaining wrap-up item and the prereq for content-team uploads.
+
+Phase 3 (spec 004 — public page templates + marquee pages) is the active pivot. Strategic shift away from "faithful Wix replica" toward "high-craft marquee pages first": homepage wired to Payload, flagship case study, team page, AI workshop campaign, localshoring story. The audit seed stays as a one-shot migration tool + 301-redirect-map source, not a publish baseline. See ROADMAP §4 for the current phase sequence.
+
+Staging runs at `https://seqtek-preview.com` on Postgres 18.3. Production cutover to `seqtek.com` remains deferred to launch readiness.
 
 ## Conventions
 
