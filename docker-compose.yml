@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:18
     restart: unless-stopped
     environment:
       POSTGRES_USER: seqtek
@@ -8,8 +8,11 @@ services:
       POSTGRES_DB: seqtek_dev
     ports:
       - '5433:5432'
+    # PG18 stores data in a version-namespaced subdir (/var/lib/postgresql/18/docker)
+    # so the mount lives one level higher than the PG16 convention. See
+    # https://github.com/docker-library/postgres/pull/1259.
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U seqtek -d seqtek_dev']
       interval: 5s
