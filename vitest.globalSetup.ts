@@ -9,7 +9,7 @@ const TEST_ENV_FILE = resolve(tmpdir(), 'seqtek-vitest-env.json')
 let container: StartedPostgreSqlContainer | undefined
 
 export async function setup(): Promise<void> {
-  container = await new PostgreSqlContainer('postgres:16')
+  container = await new PostgreSqlContainer('postgres:18')
     .withDatabase('seqtek_test')
     .withUsername('seqtek')
     .withPassword('seqtek')

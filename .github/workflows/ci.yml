@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     # No postgres service container — vitest.globalSetup.ts spins up an
-    # ephemeral postgres:16 via @testcontainers/postgresql per ARCHITECTURE.md
+    # ephemeral postgres:18 via @testcontainers/postgresql per ARCHITECTURE.md
     # §12. ubuntu-latest runners ship with a running Docker daemon.
     env:
       PAYLOAD_SECRET: ci-${{ github.run_id }}-${{ github.run_attempt }}
@@ -145,7 +145,7 @@ jobs:
       # itself is containerized; we talk to the service via the docker
       # network using its service name).
       postgres:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_USER: seqtek
           POSTGRES_PASSWORD: seqtek
