@@ -1,24 +1,31 @@
 /**
- * Lighthouse CI — Phase 1 baseline.
+ * Lighthouse CI.
  *
  * Budgets mirror ARCHITECTURE.md §7 exactly. Runs against the production
  * build (`npm run start`) so dev-mode overhead doesn't taint the numbers.
  *
- * Scope today is just `/`. Expand to the 5 archetype pages (Home, About,
- * Service Pillar, Service Detail, Case Study) per §12 Visual Regression
- * once those pages exist.
+ * Coverage (T127 / spec 003 Polish): homepage, one representative public
+ * route, and the admin login (the one auth surface publicly reachable).
+ * Expand to the 5 archetype pages (Home, About, Service Pillar, Service
+ * Detail, Case Study) per §12 Visual Regression once spec 004 ships them.
  */
 
 module.exports = {
   ci: {
     collect: {
-      url: ['http://localhost:3200/'],
+      url: [
+        'http://localhost:3200/',
+        'http://localhost:3200/about',
+        'http://localhost:3200/admin/login',
+      ],
       // :3200 keeps this clear of the other localhost projects (the Nuxt
       // dev container that auto-binds :3000, and the Next dev script that
       // uses :3100). next start respects $PORT.
       //
-      // /admin/* is intentionally noindex and not subject to these gates —
-      // matches the a11y test's scope exclusion in tests/e2e/a11y.e2e.spec.ts.
+      // /admin/* deeper authoring views are not in scope here — they're
+      // behind auth and Payload's admin chrome isn't a SEO/best-practices
+      // target the way the public site is. axe coverage of authoring views
+      // lives in tests/a11y/adminAuthoring.e2e.spec.ts.
       startServerCommand: 'PORT=3200 npm run start',
       startServerReadyPattern: 'Ready in',
       startServerReadyTimeout: 90_000,
