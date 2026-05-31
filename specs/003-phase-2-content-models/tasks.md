@@ -346,7 +346,7 @@ Single Next.js project per `plan.md`. `src/`, `tests/`, `docs/` at repo root.
 
 ### Vercel react-best-practices follow-ups (audit 2026-05-29, plan.md §Performance Goals)
 
-- [x] T134 [P] `src/lib/payload.ts` shipped with module-level `payloadInstance()` singleton + `React.cache()`-wrapped `getSiteSettings()` / `getNavigation()` / `getHomepage()` readers. `import 'server-only'` guard prevents accidental client-bundle leak. Load-bearing primitive for spec 004 page templates.
+- [x] T134 [P] `src/lib/payload.ts` shipped with module-level `getPayloadInstance()` singleton + `React.cache()`-wrapped `getSiteSettings()` / `getNavigation()` / `getHomepage()` readers. `import 'server-only'` guard prevents accidental client-bundle leak. Load-bearing primitive for spec 004 page templates.
 - [x] T135 [P] Preconnect hints landed in `src/app/(frontend)/layout.tsx` — env-gated on `NEXT_PUBLIC_GTM_ID` and `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` so unset dev/CI environments don't preconnect to nothing.
 - [ ] T136 [P] **Deferred to spec 004.** Homepage is getting replaced wholesale by spec 004's Payload-driven template — `force-dynamic` comes off naturally when the new template lands, and the inline `getPayload({ config })` call gets swapped for the `getHomepage()` reader from T134 in the same change.
 - [x] T137 [P] `src/components/layout/MobileNav.tsx` refactored — `useEffect` + `getBoundingClientRect` block replaced with an inline `onClick` on the `<dialog>` (`event.target === dialogRef.current` is the native backdrop-click signal; no rect math needed).
