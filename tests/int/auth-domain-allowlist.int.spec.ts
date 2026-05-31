@@ -3,7 +3,7 @@ import { getPayload, type Payload } from 'payload'
 
 import config from '../../src/payload.config.js'
 import { isWorkspaceEmail } from '../../src/lib/auth/enforce-domain'
-import { FIXTURES } from '../helpers/authFixtures'
+import { FIXTURES } from '../fixtures/authFixtures'
 
 let payload: Payload
 

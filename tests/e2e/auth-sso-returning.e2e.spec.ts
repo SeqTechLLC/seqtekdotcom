@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 
-import { FIXTURES } from '../helpers/authFixtures'
-import { cleanupOauthUser, seedOauthUser } from '../helpers/seedUser'
+import { FIXTURES } from '../fixtures/authFixtures'
+import { cleanupOauthUser, seedOauthUser } from '../seeders/seedUser'
 
 const SCREENSHOTS_DIR = path.resolve('tests/e2e/screenshots')
 

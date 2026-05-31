@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 
 import config from '../../../src/payload.config.js'
-import { cleanupDraftDoc, seedDraftCaseStudy, seedDraftPage } from '../../helpers/seedDraftDoc'
+import { cleanupDraftDoc, seedDraftCaseStudy, seedDraftPage } from '../../seeders/seedDraftDoc'
 
 const DRAFT_SLUG = 'us3-public-draft-query-fixture'
 const PUBLISHED_SLUG = 'us3-public-published-query-fixture'
