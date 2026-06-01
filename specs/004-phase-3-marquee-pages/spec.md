@@ -62,7 +62,7 @@ A SEQTEK editor (or Kenn) takes the strongest current case study, rewrites it sp
 
 ### User Story 5 — Visitor reads the localshoring narrative and understands the differentiator (Priority: P2)
 
-A `/about/localshoring` page that explains the localshoring model in SEQTEK's voice: what it is, why it's different from nearshore / offshore, what the buyer gets. Rewrite of existing audit content, not from scratch.
+A `/localshoring` page (flat top-level slug — research §D5; the original `/about/localshoring` is superseded by the flat `pages` URL contract) that explains the localshoring model in SEQTEK's voice: what it is, why it's different from nearshore / offshore, what the buyer gets. Rewrite of existing audit content, not from scratch.
 
 **Why this priority**: This is SEQTEK's actual positioning differentiator vs. competitors. Doesn't strictly block launch but the homepage hero copy depends on this story landing somewhere coherent.
 

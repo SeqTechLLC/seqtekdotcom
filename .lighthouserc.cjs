@@ -14,9 +14,23 @@ module.exports = {
   ci: {
     collect: {
       url: [
+        // spec 004 T044 — the marquee + in-scope listing surfaces. The public
+        // assertMatrix gate (a11y / best-practices / SEO ≥ 0.95) applies to
+        // all of these; Performance budgets stay `warn` until Phase 5.
         'http://localhost:3200/',
+        'http://localhost:3200/team',
+        'http://localhost:3200/case-studies',
+        'http://localhost:3200/insights',
+        'http://localhost:3200/services',
+        'http://localhost:3200/touchstone-workshops',
+        // Marquee `pages` doc (research §D5). Like /about, this assumes the
+        // page is published in the LHCI target DB.
+        'http://localhost:3200/localshoring',
         'http://localhost:3200/about',
         'http://localhost:3200/admin/login',
+        // Per-slug detail URLs (/case-studies/<slug>, /touchstone-workshops/
+        // <slug>) are added once a canonical published flagship slug exists —
+        // tracked, not silently dropped (spec 004 §Silent-cap note).
       ],
       // :3200 keeps this clear of the other localhost projects (the Nuxt
       // dev container that auto-binds :3000, and the Next dev script that
