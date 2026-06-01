@@ -30,6 +30,13 @@ export interface MetadataFallbacks {
   absoluteTitle?: boolean
 }
 
+// Ultimate description fallback so EVERY page emits a meta description (a
+// missing one fails the Lighthouse SEO gate). Used when neither the doc's
+// `seo.metaDescription`, the per-page fallback, nor `siteSettings.tagline` is
+// set — e.g. the homepage against an unseeded DB. No em dashes (project rule).
+const DEFAULT_DESCRIPTION =
+  'SEQTEK is a Tulsa technology consultancy delivering strategy, software delivery, and localshoring across Oklahoma, Northwest Arkansas, and Kansas City.'
+
 const ogImageUrl = (ogImage: SeoGroup['ogImage']): string | undefined => {
   if (ogImage && typeof ogImage === 'object' && 'url' in ogImage && ogImage.url) {
     return ogImage.url
@@ -56,11 +63,9 @@ export const buildMetadata = (
 ): Metadata => {
   const title = firstNonEmpty(seo?.metaTitle, fallbacks.title) ?? fallbacks.title
 
-  const description = firstNonEmpty(
-    seo?.metaDescription,
-    fallbacks.description,
-    fallbacks.siteSettings?.tagline,
-  )
+  const description =
+    firstNonEmpty(seo?.metaDescription, fallbacks.description, fallbacks.siteSettings?.tagline) ??
+    DEFAULT_DESCRIPTION
 
   const image = ogImageUrl(seo?.ogImage)
 
