@@ -1,4 +1,4 @@
-import type { CollectionAfterChangeHook, GlobalAfterChangeHook } from 'payload'
+import type { CollectionAfterChangeHook, GlobalAfterChangeHook, PayloadRequest } from 'payload'
 import { revalidateTag } from 'next/cache'
 
 import { invalidateCloudFrontPaths } from '../../lib/cloudfront/invalidate'
@@ -7,6 +7,23 @@ interface DocLike {
   _status?: 'draft' | 'published'
   slug?: string
   [key: string]: unknown
+}
+
+/**
+ * Resolve a service's pillar slug from the doc for the nested
+ * `/services/[pillar]/[slug]` path (drift #1 / research §D4). Reads a populated
+ * `pillar` relationship object's `.slug`, or a `pillarSlug` the afterChange
+ * hook injects after fetching the pillar (the hook sees `pillar` as an ID).
+ */
+const resolvePillarSlug = (doc: DocLike): string | undefined => {
+  const pillar = doc.pillar
+  if (pillar && typeof pillar === 'object' && 'slug' in pillar) {
+    const slug = (pillar as { slug?: unknown }).slug
+    if (typeof slug === 'string' && slug.length > 0) return slug
+  }
+  return typeof doc.pillarSlug === 'string' && doc.pillarSlug.length > 0
+    ? doc.pillarSlug
+    : undefined
 }
 
 interface PreviousDocLike {
@@ -57,9 +74,20 @@ export const buildRevalidatePlan = (
       case 'caseStudies':
         detailPaths.push(`/case-studies/${s}`, '/case-studies')
         break
-      case 'services':
-        detailPaths.push(`/services/${s}`)
+      case 'services': {
+        // drift #1 (research §D4): service detail lives at the NESTED path
+        // `/services/[pillar]/[slug]`; the pillar landing at `/services/[pillar]`.
+        // Fall back to the flat path only when the pillar slug can't be
+        // resolved (e.g. a minimal test doc with no pillar) so revalidation
+        // still busts something rather than nothing.
+        const pillarSlug = resolvePillarSlug(doc)
+        if (pillarSlug) {
+          detailPaths.push(`/services/${pillarSlug}/${s}`, `/services/${pillarSlug}`)
+        } else {
+          detailPaths.push(`/services/${s}`)
+        }
         break
+      }
       case 'servicePillars':
         detailPaths.push(`/services/${s}`, '/services')
         break
@@ -110,12 +138,38 @@ const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {
 }
 
 /**
+ * At afterChange depth a service's `pillar` is an ID, not a populated object —
+ * so `buildRevalidatePlan` can't read the pillar slug for the nested path
+ * (drift #1 / research §D4 implementation risk). Resolve it via `req.payload`
+ * (the hook's own Payload instance — no `getPayloadInstance`/`server-only`
+ * import, which would break the hook's pure unit tests) and inject `pillarSlug`.
+ */
+const enrichServiceDoc = async (doc: DocLike, req: PayloadRequest): Promise<DocLike> => {
+  if (resolvePillarSlug(doc)) return doc
+  const pillar = doc.pillar
+  const pillarId = typeof pillar === 'number' || typeof pillar === 'string' ? pillar : undefined
+  if (pillarId === undefined || !req?.payload) return doc
+  try {
+    const fetched = await req.payload.findByID({
+      collection: 'servicePillars',
+      id: pillarId,
+      depth: 0,
+    })
+    return fetched?.slug ? { ...doc, pillarSlug: fetched.slug } : doc
+  } catch {
+    return doc
+  }
+}
+
+/**
  * Returns an afterChange hook bound to a specific collection slug.
  */
 export const revalidateOnChange =
   (collection: string): CollectionAfterChangeHook =>
-  async ({ doc, previousDoc }) => {
-    const plan = buildRevalidatePlan(collection, doc as DocLike, previousDoc as PreviousDocLike)
+  async ({ doc, previousDoc, req }) => {
+    const enriched =
+      collection === 'services' ? await enrichServiceDoc(doc as DocLike, req) : (doc as DocLike)
+    const plan = buildRevalidatePlan(collection, enriched, previousDoc as PreviousDocLike)
     await runRevalidation(plan)
     return doc
   }

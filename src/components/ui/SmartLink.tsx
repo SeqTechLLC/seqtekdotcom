@@ -6,6 +6,14 @@ type SmartLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   children: ReactNode
   /** Force external behavior even if the href looks internal. */
   external?: boolean
+  /**
+   * Next `<Link>` prefetch. Defaults to `false`: this is the site's chrome /
+   * content link wrapper, and during the incomplete-route phase prefetching
+   * links to not-yet-built routes (markets, legal, /contact, …) 404s and logs
+   * console errors that ding the Lighthouse best-practices gate. Opt back in
+   * per-link once the route exists.
+   */
+  prefetch?: boolean
 }
 
 function isExternalHref(href: string): boolean {
@@ -17,7 +25,7 @@ function isExternalHref(href: string): boolean {
   )
 }
 
-export function SmartLink({ href, children, external, ...rest }: SmartLinkProps) {
+export function SmartLink({ href, children, external, prefetch, ...rest }: SmartLinkProps) {
   const treatAsExternal = external ?? isExternalHref(href)
 
   if (treatAsExternal) {
@@ -35,7 +43,7 @@ export function SmartLink({ href, children, external, ...rest }: SmartLinkProps)
   }
 
   return (
-    <Link href={href} {...rest}>
+    <Link href={href} prefetch={prefetch ?? false} {...rest}>
       {children}
     </Link>
   )

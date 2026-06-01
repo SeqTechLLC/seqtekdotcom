@@ -33,7 +33,7 @@ export function DownloadCard({
           />
         ) : null}
         <div className="flex flex-col">
-          <p className="text-caption uppercase tracking-wide text-accent">Free download</p>
+          <p className="text-caption uppercase tracking-wide text-accent-strong">Free download</p>
           <h2 className="mt-2 text-h2 font-bold">{title}</h2>
           <p className="mt-3 text-body text-text-secondary">{description}</p>
           <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row">
@@ -45,7 +45,7 @@ export function DownloadCard({
             />
             <button
               type="button"
-              className="rounded-md bg-accent px-5 py-3 font-medium text-white"
+              className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
               disabled
             >
               Get it

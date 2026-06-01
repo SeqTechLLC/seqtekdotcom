@@ -21,6 +21,13 @@ Spec 004 closes that gap **and** ships the first round of marquee content on top
 - **Audit seed is frozen** (P2-4). The pipeline stays as a one-shot migration tool + 301-redirect-map source. Imported content lands as drafts only; no automated publish from the seed.
 - **Real people, real content.** Team page uses real photos (we have them in `~/projects/seqtek-internal/photos/`, bulk ingest via C-8 once US6 ships the S3 plugin). Case studies get de-genericized — named clients where possible, real outcome numbers, real testimonial quotes.
 
+## Clarifications
+
+### Session 2026-06-01
+
+- Q: Is US2 "done" at the case-study template, or only when a specific flagship case study is fully written/published? → A: Template scope. US2 = the `/case-studies/[slug]` template ships + is verified against one drafted case study; the named flagship (client/testimonial/logo, gated on C-5/C-1) is a separately-tracked content-lead deliverable, published when permissions clear.
+- Q: Keep the spike `/showcase/[slug]` demo route, or retire it once the real generic `/[slug]` route ships? → A: Retire it once `/[slug]` reaches parity, so there is a single `pages` render path (its removal is a spec 004 task).
+
 ## User Scenarios & Testing _(to be expanded)_
 
 ### User Story 1 — Visitor lands on the homepage and sees a credible consulting firm (Priority: P1)
@@ -33,9 +40,11 @@ A prospective client visits `seqtek-preview.com` for the first time. The homepag
 
 ### User Story 2 — Editor publishes one flagship case study with real client content (Priority: P1)
 
-A SEQTEK editor (or Kenn) takes the strongest current case study, rewrites it specifically (named client where contractually possible, real outcome numbers, real testimonial quote, client headshot), and publishes it through the existing `caseStudies` collection. The page renders at `/case-studies/[slug]` via a new template that consumes Payload data through `RenderBlocks`.
+A SEQTEK editor (or Kenn) takes the strongest current case study, rewrites it specifically (named client where contractually possible, real outcome numbers, real testimonial quote, client headshot), and publishes it through the existing `caseStudies` collection. The page renders at `/case-studies/[slug]` via a new template that consumes Payload data from the `caseStudies` collection (render shape detailed in the 2026-06-01 clarification below).
 
 **Why this priority**: One great case study beats eight generic ones. This is the proof-of-craft pattern every subsequent case study will follow.
+
+**Scope (clarified 2026-06-01)**: spec 004 ships and verifies the `/case-studies/[slug]` template (rendered via a bespoke structured template over the collection's fields — `caseStudies` has no `layout` blocks array; see plan.md / data-model.md §2 Shape B). Acceptance is met by one _drafted_ case study rendering correctly. The named, published flagship (real client, confirmed testimonial quote, logo permission per C-5/C-1) is tracked as a content-lead deliverable and is **not** a blocking acceptance criterion for spec 004.
 
 ### User Story 3 — Visitor browses the team page and sees real people (Priority: P1)
 
@@ -53,7 +62,7 @@ A SEQTEK editor (or Kenn) takes the strongest current case study, rewrites it sp
 
 ### User Story 5 — Visitor reads the localshoring narrative and understands the differentiator (Priority: P2)
 
-A `/about/localshoring` page that explains the localshoring model in SEQTEK's voice: what it is, why it's different from nearshore / offshore, what the buyer gets. Rewrite of existing audit content, not from scratch.
+A `/localshoring` page (flat top-level slug — research §D5; the original `/about/localshoring` is superseded by the flat `pages` URL contract) that explains the localshoring model in SEQTEK's voice: what it is, why it's different from nearshore / offshore, what the buyer gets. Rewrite of existing audit content, not from scratch.
 
 **Why this priority**: This is SEQTEK's actual positioning differentiator vs. competitors. Doesn't strictly block launch but the homepage hero copy depends on this story landing somewhere coherent.
 
@@ -64,6 +73,7 @@ A `/about/localshoring` page that explains the localshoring model in SEQTEK's vo
 - 301 redirect map from old Wix slugs (sourced from the spec 003 seed pipeline's `slug-rewrite-map.json`)
 - The marquee-page content above (homepage, one flagship case study, team, AI workshop, localshoring)
 - Open Graph + JSON-LD structured data for the marquee pages (deeper structured-data work is Phase 5)
+- Retire the spike `/showcase/[slug]` demo route once the generic `/[slug]` route reaches parity (clarified 2026-06-01 — single `pages` render path)
 
 ## Out of scope
 
