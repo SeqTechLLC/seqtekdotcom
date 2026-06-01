@@ -328,6 +328,8 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 | `/sitemap.xml`                                  | ISR            | 3600s               | Dynamic from Payload content             |
 | `/robots.txt`                                   | Static         | N/A                 |                                          |
 
+> **"ISR" here means ISR _data_ caching, not static prerender (spec 004 / ADR 0005).** The public render routes are dynamically rendered (`ƒ`) because the shared layout reads the per-request CSP nonce via `headers()`, which forces dynamic rendering. Page DATA still flows through `unstable_cache` readers (`revalidate = 3600` + on-demand tag invalidation), so the 1h fallback + instant-on-publish behavior in the table holds; only the HTML render is per-request (required for the nonce). `generateStaticParams` is intentionally not used on the detail routes.
+
 ### On-Demand Revalidation
 
 Payload's `afterChange` hook calls `revalidateTag()` directly within the same Node process — no external webhook needed. When an editor publishes a case study, the hook revalidates the ISR cache on the origin _and_ issues a targeted CloudFront invalidation for the affected paths (e.g., `/case-studies/the-slug` + `/case-studies`). Content updates propagate to all edge locations immediately.

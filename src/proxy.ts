@@ -99,6 +99,10 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // Next 16 `proxy` always runs on the Node.js runtime, so `process.env`
+  // (MAINTENANCE_MODE, CSP_MODE) is read at RUNTIME — the Parameter-Store-at-boot
+  // maintenance toggle (ERROR_PAGES §4) works without a rebuild. (A `runtime`
+  // segment config is disallowed in a proxy file.)
   // Skip Next internals, the report endpoint (avoids self-loops if it ever 4xx-s), and static files.
   matcher: [
     '/((?!_next/static|_next/image|favicon\\.ico|api/csp-report|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?)).*)',

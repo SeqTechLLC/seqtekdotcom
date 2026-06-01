@@ -1,12 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import {
-  getServicePillarBySlug,
-  getSiteSettings,
-  listServices,
-  publishedSlugsFor,
-} from '@/lib/payload'
+import { getServicePillarBySlug, getSiteSettings, listServices } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { ServiceCards } from '@/components/sections/ServiceCards'
 import type { Service } from '@/payload-types'
@@ -14,17 +9,14 @@ import type { Service } from '@/payload-types'
 // spec 004 Phase 8 (T031). Service pillar landing — the pillar's child
 // services. `services.pillar` is the source of truth (no child array on the
 // pillar — data-model §5), so we filter the published services by pillar slug.
-
+//
+// Dynamically rendered (no generateStaticParams) — layout CSP nonce forces
+// dynamic rendering (Constitution §IV, ADR 0005); data ISR-cached via the
+// unstable_cache readers.
 export const revalidate = 3600
-export const dynamicParams = true
 
 interface Props {
   params: Promise<{ pillar: string }>
-}
-
-export async function generateStaticParams(): Promise<Array<{ pillar: string }>> {
-  const slugs = await publishedSlugsFor('servicePillars')
-  return slugs.map((pillar) => ({ pillar }))
 }
 
 const pillarSlugOf = (service: Service): string | undefined =>

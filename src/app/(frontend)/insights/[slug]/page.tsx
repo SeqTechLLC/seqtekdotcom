@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getPostBySlug, getSiteSettings, publishedSlugsFor } from '@/lib/payload'
+import { getPostBySlug, getSiteSettings } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { articleLd } from '@/lib/structured-data'
@@ -15,25 +15,20 @@ import type { Post } from '@/payload-types'
 // through the existing RichText renderer + the inline-block registry (the
 // renderer defaults to `defaultInlineRegistry`). Article JSON-LD.
 
+// Dynamically rendered (no generateStaticParams) — layout CSP nonce forces
+// dynamic rendering (Constitution §IV, ADR 0005); data ISR-cached via the
+// unstable_cache readers.
 export const revalidate = 3600
-export const dynamicParams = true
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
-export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  const slugs = await publishedSlugsFor('posts')
-  return slugs.map((slug) => ({ slug }))
-}
-
-const readPost = async (slug: string, isDraft: boolean): Promise<Post | null> =>
-  isDraft ? getDraftBySlug<Post>('posts', slug) : getPostBySlug(slug)
-
+// Published-only metadata — no draftMode() before the cached read (avoids the
+// DYNAMIC_SERVER_USAGE bail under ISR; see the page body note).
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const { isEnabled: isDraft } = await draftMode()
-  const [post, siteSettings] = await Promise.all([readPost(slug, isDraft), getSiteSettings()])
+  const [post, siteSettings] = await Promise.all([getPostBySlug(slug), getSiteSettings()])
   if (!post) return {}
   return buildMetadata(post.seo, {
     title: post.title,
@@ -47,8 +42,11 @@ const isRelObject = <T,>(value: T | string | number | null | undefined): value i
 
 export default async function InsightPage({ params }: Props) {
   const { slug } = await params
+  // Cached published read FIRST, then the dynamic draft check (order matters —
+  // draftMode() before unstable_cache throws DYNAMIC_SERVER_USAGE under ISR).
+  const published = await getPostBySlug(slug)
   const { isEnabled: isDraft } = await draftMode()
-  const post = await readPost(slug, isDraft)
+  const post = isDraft ? ((await getDraftBySlug<Post>('posts', slug)) ?? published) : published
   if (!post) notFound()
 
   const author = isRelObject(post.author) ? post.author : null

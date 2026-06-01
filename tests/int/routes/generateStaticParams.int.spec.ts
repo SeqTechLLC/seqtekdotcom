@@ -9,11 +9,13 @@ vi.mock('server-only', () => ({}))
 import { getPayloadInstance, findPublishedSlugs, findPublishedList } from '../../../src/lib/payload'
 
 /**
- * spec 004 T010 — the data-layer half of the generateStaticParams contract
- * (invariant R3). The published-read functions that back `publishedSlugsFor`
- * and the `listX` readers MUST return published rows only, so a draft never
- * leaks into the prebuilt static manifest or a public listing. This holds the
- * spec-003 US5 draft-leak invariant on the public render side.
+ * spec 004 T010 — the published-slug data-layer (invariant R3). The
+ * `findPublished*` reads that back `publishedSlugsFor` / the `listX` readers
+ * MUST return published rows only, so a draft never leaks into the SITEMAP or a
+ * public listing. (Per ADR 0005 the detail routes dropped `generateStaticParams`
+ * — the layout's CSP nonce forces dynamic rendering — so `publishedSlugsFor`
+ * now feeds `/sitemap.xml` rather than a static manifest; the no-draft-leak
+ * guarantee is identical and still the spec-003 US5 invariant on the public side.)
  *
  * We assert against the raw `findPublished*` reads rather than the
  * `unstable_cache`-wrapped public readers: `unstable_cache` throws outside the

@@ -23,11 +23,10 @@ import type { Homepage } from '@/payload-types'
 
 export const revalidate = 3600
 
-async function readHomepage(isDraft: boolean): Promise<Homepage> {
-  if (!isDraft) return getHomepage()
-  // Draft preview (admin live-preview enables draft mode and loads `/`). Read
-  // the latest draft directly; `unstable_cache` is bypassed under draft mode
-  // anyway, but the explicit draft + overrideAccess lift the published filter.
+// Draft preview (admin live-preview enables draft mode and loads `/`). Read the
+// latest draft directly — `unstable_cache` is bypassed under draft mode anyway,
+// but the explicit draft + overrideAccess lift the published filter.
+async function readDraftHomepage(): Promise<Homepage> {
   const payload = await getPayloadInstance()
   return (await payload.findGlobal({
     slug: 'homepage',
@@ -52,12 +51,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const { isEnabled: isDraft } = await draftMode()
-  const [homepage, siteSettings, latestPosts] = await Promise.all([
-    readHomepage(isDraft),
+  // Cached published reads FIRST, then the dynamic draft check — keeps the
+  // unstable_cache reads out of a dynamic scope (DYNAMIC_SERVER_USAGE guard).
+  const [publishedHomepage, siteSettings, latestPosts] = await Promise.all([
+    getHomepage(),
     getSiteSettings(),
     listPosts(),
   ])
+  const { isEnabled: isDraft } = await draftMode()
+  const homepage = isDraft ? await readDraftHomepage() : publishedHomepage
 
   const hero = homepage?.hero
   const brandTeaser = homepage?.brandTeaser

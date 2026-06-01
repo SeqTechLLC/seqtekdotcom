@@ -60,7 +60,7 @@ npm run test:lhci                            # a11y/best-practices/SEO ≥ 0.95 
 
 ## Gotchas
 
-- Don't add `export const dynamic = 'force-dynamic'` — that's the spike pattern this spec retires; it forfeits the §7 LCP budget and disables ISR.
+- Don't add `export const dynamic = 'force-dynamic'` — that's the spike pattern this spec retires. The public routes ARE dynamically rendered (the layout's per-request CSP nonce forces it — ADR 0005), but via the layout nonce, not a forced override; the route DATA stays ISR-cached through the `unstable_cache` readers (`revalidate = 3600` + on-demand tag invalidation). `generateStaticParams` is intentionally absent (it 500s under the nonce layout — ADR 0005).
 - `params`/`searchParams`/`draftMode()` are all async in Next 16 — `await` them.
 - New richText/client-component fields → regenerate `src/app/(payload)/admin/importMap.js` (payload importMap gotcha).
 - After editing the redirect map, restart `next start` — `redirects()` is read at server start, not per-request.

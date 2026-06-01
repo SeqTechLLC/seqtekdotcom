@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getWorkshopBySlug, getSiteSettings, publishedSlugsFor } from '@/lib/payload'
+import { getWorkshopBySlug, getSiteSettings } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
@@ -17,25 +17,20 @@ import type { Workshop } from '@/payload-types'
 // stays the Phase-2 PLACEHOLDER block — the live Forms API integration is
 // deferred (research §D10, confirmed 2026-05-31). Only the placeholder mounts.
 
+// Dynamically rendered (no generateStaticParams) — layout CSP nonce forces
+// dynamic rendering (Constitution §IV, ADR 0005); data ISR-cached via the
+// unstable_cache readers.
 export const revalidate = 3600
-export const dynamicParams = true
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
-export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  const slugs = await publishedSlugsFor('workshops')
-  return slugs.map((slug) => ({ slug }))
-}
-
-const readWorkshop = async (slug: string, isDraft: boolean): Promise<Workshop | null> =>
-  isDraft ? getDraftBySlug<Workshop>('workshops', slug) : getWorkshopBySlug(slug)
-
+// Published-only metadata — no draftMode() before the cached read (avoids the
+// DYNAMIC_SERVER_USAGE bail under ISR; see the page body note).
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const { isEnabled: isDraft } = await draftMode()
-  const [doc, siteSettings] = await Promise.all([readWorkshop(slug, isDraft), getSiteSettings()])
+  const [doc, siteSettings] = await Promise.all([getWorkshopBySlug(slug), getSiteSettings()])
   if (!doc) return {}
   return buildMetadata(doc.seo, { title: doc.title, siteSettings })
 }
@@ -45,8 +40,13 @@ const isRelObject = <T,>(value: T | string | number | null | undefined): value i
 
 export default async function WorkshopPage({ params }: Props) {
   const { slug } = await params
+  // Cached published read FIRST, then the dynamic draft check (order matters —
+  // draftMode() before unstable_cache throws DYNAMIC_SERVER_USAGE under ISR).
+  const published = await getWorkshopBySlug(slug)
   const { isEnabled: isDraft } = await draftMode()
-  const workshop = await readWorkshop(slug, isDraft)
+  const workshop = isDraft
+    ? ((await getDraftBySlug<Workshop>('workshops', slug)) ?? published)
+    : published
   if (!workshop) notFound()
 
   const facilitator = isRelObject(workshop.facilitator) ? workshop.facilitator : null

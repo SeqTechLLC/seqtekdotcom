@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getCaseStudyBySlug, getSiteSettings, publishedSlugsFor } from '@/lib/payload'
+import { getCaseStudyBySlug, getSiteSettings } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
@@ -16,25 +16,20 @@ import type { CaseStudy } from '@/payload-types'
 // `caseStudies` collection — it has no `layout` blocks array, so we compose
 // the discrete fields. route-render.md algorithm + invariants R1–R6.
 
+// Dynamically rendered (no generateStaticParams): the layout's per-request CSP
+// nonce forces dynamic rendering (Constitution §IV, ADR 0005). Data is ISR-
+// cached via the unstable_cache readers (revalidate 3600 + tag invalidation).
 export const revalidate = 3600
-export const dynamicParams = true
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
-export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  const slugs = await publishedSlugsFor('caseStudies')
-  return slugs.map((slug) => ({ slug }))
-}
-
-const readCaseStudy = async (slug: string, isDraft: boolean): Promise<CaseStudy | null> =>
-  isDraft ? getDraftBySlug<CaseStudy>('caseStudies', slug) : getCaseStudyBySlug(slug)
-
+// Published-only metadata — no draftMode() before the cached read (avoids the
+// DYNAMIC_SERVER_USAGE bail under ISR; see the page body note).
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const { isEnabled: isDraft } = await draftMode()
-  const [doc, siteSettings] = await Promise.all([readCaseStudy(slug, isDraft), getSiteSettings()])
+  const [doc, siteSettings] = await Promise.all([getCaseStudyBySlug(slug), getSiteSettings()])
   if (!doc) return {}
   return buildMetadata(doc.seo, {
     title: doc.title,
@@ -48,8 +43,13 @@ const isRelObject = <T,>(value: T | string | number | null | undefined): value i
 
 export default async function CaseStudyPage({ params }: Props) {
   const { slug } = await params
+  // Cached published read FIRST, then the dynamic draft check (order matters —
+  // draftMode() before unstable_cache throws DYNAMIC_SERVER_USAGE under ISR).
+  const published = await getCaseStudyBySlug(slug)
   const { isEnabled: isDraft } = await draftMode()
-  const caseStudy = await readCaseStudy(slug, isDraft)
+  const caseStudy = isDraft
+    ? ((await getDraftBySlug<CaseStudy>('caseStudies', slug)) ?? published)
+    : published
   if (!caseStudy) notFound()
 
   const testimonial = isRelObject(caseStudy.testimonial) ? caseStudy.testimonial : null

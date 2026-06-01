@@ -80,6 +80,8 @@ Plus the workshop-CTA and latest-insights (`post-list`) sections per the BLOCK_L
 
 **Alternatives considered**: Fully dynamic (`force-dynamic`) — rejected; that's the spike pattern the spec is replacing and it forfeits the §7 LCP budget. Build-time-only (`dynamicParams = false`) — rejected; breaks continuous publishing.
 
+**⚠ Superseded at implementation (2026-06-01 — ADR 0005 addendum).** `generateStaticParams` could not be used: the shared `(frontend)` layout reads the per-request CSP nonce via `headers()` (`ConsentDefault`), which **forces dynamic rendering** (Next CSP docs). With `generateStaticParams`, Next attempts static generation and the layout's `headers()` throws `DYNAMIC_SERVER_USAGE` (a 500) on any on-demand / not-found slug. Resolution (Constitution §IV — the nonce wins): the detail routes render **dynamically** (`ƒ`) without `generateStaticParams`, while keeping `revalidate = 3600` + the `unstable_cache` readers — so ISR data caching + on-demand tag invalidation are retained, and published slugs are still enumerated for the sitemap via `publishedSlugsFor`. Not `force-dynamic` (the routes are dynamic by virtue of the layout nonce, not a forced override). See ADR 0005.
+
 ---
 
 ## D7 — Metadata, Open Graph, JSON-LD

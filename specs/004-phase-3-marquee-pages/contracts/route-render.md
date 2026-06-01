@@ -5,16 +5,14 @@ The shape every public render route in spec 004 conforms to. Tests assert this c
 ## Module-level exports (per `page.tsx`)
 
 ```ts
-export const revalidate = 3600 // ARCHITECTURE.md §3 ISR fallback (seconds)
-export const dynamicParams = true // newly-published slugs render on-demand, not 404 (research §D6)
+export const revalidate = 3600 // ISR DATA cache TTL via the unstable_cache readers (ARCH §3)
 
 // detail routes only:
-export async function generateStaticParams(): Promise<Params[]> // published slugs only
 export async function generateMetadata(props): Promise<Metadata> // from doc.seo, siteSettings fallback (§D7)
 export default async function Page(props): Promise<ReactElement>
 ```
 
-Listing routes and `/` omit `generateStaticParams` (no dynamic segment).
+**Implementation note (2026-06-01 — ADR 0005 / research §D6 addendum):** `generateStaticParams` / `dynamicParams` were **dropped**. The shared `(frontend)` layout reads the per-request CSP nonce via `headers()` (`ConsentDefault`), which forces dynamic rendering — incompatible with static prerendering (`generateStaticParams` → `DYNAMIC_SERVER_USAGE` 500 on on-demand / not-found slugs). The routes render dynamically (`ƒ`) with `revalidate = 3600` + the `unstable_cache` readers, so the ISR data cache + tag invalidation hold. Published slugs are enumerated for the sitemap via `publishedSlugsFor`.
 
 ## Detail-route render algorithm
 
@@ -42,14 +40,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
 ## Invariants (testable)
 
-| #   | Invariant                                                                                                    | Test                            |
-| --- | ------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| R1  | Published route returns 200 with expected sections                                                           | E2E + `data-testid` assertions  |
-| R2  | Unknown slug → `notFound()` → HTTP 404                                                                       | integration                     |
-| R3  | `generateStaticParams` returns published slugs only (no draft leak into manifest)                            | integration                     |
-| R4  | Draft route (via `/preview`) shows unpublished edits + `PreviewBanner`; anon public URL shows published only | E2E round-trip                  |
-| R5  | `revalidate === 3600` and route is statically cacheable (not `force-dynamic`)                                | static assertion / build output |
-| R6  | `generateMetadata` emits title/description/OG from `doc.seo` with siteSettings fallback                      | integration                     |
+| #   | Invariant                                                                                                                  | Test                            |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| R1  | Published route returns 200 with expected sections                                                                         | E2E + `data-testid` assertions  |
+| R2  | Unknown slug → `notFound()` → HTTP 404                                                                                     | integration                     |
+| R3  | `publishedSlugsFor` / list readers return published slugs only (no draft leak into the sitemap / listings)                 | integration                     |
+| R4  | Draft route (via `/preview`) shows unpublished edits + `PreviewBanner`; anon public URL shows published only               | E2E round-trip                  |
+| R5  | `revalidate === 3600`; route DATA is ISR-cached via `unstable_cache` (not `force-dynamic`; render is dynamic per ADR 0005) | static assertion / build output |
+| R6  | `generateMetadata` emits title/description/OG from `doc.seo` with siteSettings fallback                                    | integration                     |
 
 ## Notes
 
