@@ -37,7 +37,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  for (const collection of ['pages', 'servicePillars'] as const) {
+  for (const collection of ['pages', 'servicePillars', 'caseStudies'] as const) {
     await payload.delete({
       collection,
       where: { slug: { like: `${PREFIX}-%` } },
@@ -109,6 +109,33 @@ describe('R3 — list readers return published rows only', () => {
     }>
     const slugs = pillars.map((p) => p.slug)
     expect(slugs).toContain(publishedSlug)
+    expect(slugs).not.toContain(draftSlug)
+  })
+})
+
+describe('R3 — case-studies static params exclude drafts (US2 / T015)', () => {
+  // caseStudies requires media/industry to PUBLISH, so we assert the
+  // draft-exclusion half directly (a draft slug must never enter the manifest);
+  // the published-inclusion half is covered generically by the `pages` /
+  // `servicePillars` fixtures above.
+  const draftSlug = `${PREFIX}-case-draft`
+
+  beforeAll(async () => {
+    await payload.delete({
+      collection: 'caseStudies',
+      where: { slug: { like: `${PREFIX}-case-%` } },
+      overrideAccess: true,
+    })
+    await payload.create({
+      collection: 'caseStudies',
+      data: { title: 'Draft Static Params Case', slug: draftSlug },
+      draft: true,
+      overrideAccess: true,
+    })
+  })
+
+  it('findPublishedSlugs(caseStudies) excludes the draft (route generateStaticParams source)', async () => {
+    const slugs = await findPublishedSlugs('caseStudies')
     expect(slugs).not.toContain(draftSlug)
   })
 })

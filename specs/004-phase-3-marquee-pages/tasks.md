@@ -60,12 +60,12 @@ Single Next.js App Router project (per plan.md Structure Decision). Public route
 
 ### Tests for User Story 1 (MANDATORY — per constitution §II) ⚠️
 
-- [ ] T011 [US1] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `GET /` → 200, asserts homepage-global sections present by `data-testid` (hero / stats / featured-case-study / …), asserts the "No page yet" placeholder is **absent**, axe-clean. (`getHomepage` tag parity is already covered by T009.)
+- [x] T011 [US1] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `GET /` → 200, asserts homepage-global sections present by `data-testid` (hero / stats / featured-case-study / …), asserts the "No page yet" placeholder is **absent**, axe-clean. (`getHomepage` tag parity is already covered by T009.)
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Replace `src/app/(frontend)/page.tsx` (retire the spike placeholder): bespoke composition mapping `homepage` global fields → sections per research §D3 (`HomepageHero`←`hero`, `StatsBar`←`stats`, `FeaturedCaseStudy`←`featuredCaseStudy`, `BrandTeaser`←`brandTeaser`, `LogoBar`/`ClientLogoGrid`←`clientLogos`, `FeaturedTestimonials`←`featuredTestimonials`, plus workshop-CTA + `post-list` per BLOCK_LIBRARY §6); `export const revalidate = 3600`; draft branch (`await draftMode()` → direct `getPayloadInstance` read with `draft: true` + `PreviewBanner`, else `getHomepage()`). **Reconcile drift #2**: delete the `pages`-slug-`home` query in the same edit.
-- [ ] T013 [US1] Add `generateMetadata` to `src/app/(frontend)/page.tsx` sourced from `siteSettings` (the `homepage` global has no `seo` group — data-model §5) via `src/lib/metadata.ts`, and emit `Organization` JSON-LD via `src/lib/structured-data.ts`.
+- [x] T012 [US1] Replace `src/app/(frontend)/page.tsx` (retire the spike placeholder): bespoke composition mapping `homepage` global fields → sections per research §D3 (`HomepageHero`←`hero`, `StatsBar`←`stats`, `FeaturedCaseStudy`←`featuredCaseStudy`, `BrandTeaser`←`brandTeaser`, `LogoBar`/`ClientLogoGrid`←`clientLogos`, `FeaturedTestimonials`←`featuredTestimonials`, plus workshop-CTA + `post-list` per BLOCK_LIBRARY §6); `export const revalidate = 3600`; draft branch (`await draftMode()` → direct `getPayloadInstance` read with `draft: true` + `PreviewBanner`, else `getHomepage()`). **Reconcile drift #2**: delete the `pages`-slug-`home` query in the same edit.
+- [x] T013 [US1] Add `generateMetadata` to `src/app/(frontend)/page.tsx` sourced from `siteSettings` (the `homepage` global has no `seo` group — data-model §5) via `src/lib/metadata.ts`, and emit `Organization` JSON-LD via `src/lib/structured-data.ts`.
 
 **Checkpoint**: Homepage fully functional and independently testable — this is the MVP.
 
@@ -79,13 +79,13 @@ Single Next.js App Router project (per plan.md Structure Decision). Public route
 
 ### Tests for User Story 2 (MANDATORY — per constitution §II) ⚠️
 
-- [ ] T014 [US2] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `/case-studies/<slug>` → 200, asserts structured fields render (problem / solution / impact / metrics) + testimonial by `data-testid`, axe-clean (invariant R1).
-- [ ] T015 [P] [US2] Integration test in `tests/int/routes/generateStaticParams.int.spec.ts`: the case-studies route `generateStaticParams()` returns published slugs only — no drafts in the manifest (invariant R3).
+- [x] T014 [US2] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `/case-studies/<slug>` → 200, asserts structured fields render (problem / solution / impact / metrics) + testimonial by `data-testid`, axe-clean (invariant R1).
+- [x] T015 [P] [US2] Integration test in `tests/int/routes/generateStaticParams.int.spec.ts`: the case-studies route `generateStaticParams()` returns published slugs only — no drafts in the manifest (invariant R3).
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Implement detail route `src/app/(frontend)/case-studies/[slug]/page.tsx` (Shape B): compose `problem`/`solution`/`impact` (richText), `metrics` array, `testimonial`, `relatedCaseStudies` (≤3), `industry` from `getCaseStudyBySlug`; `export const revalidate = 3600` + `dynamicParams = true`; `generateStaticParams` (published, via T006); `generateMetadata` (seo → metadata helper); `BreadcrumbList` JSON-LD; draft branch + `PreviewBanner`; `notFound()` on miss (route-render.md algorithm, invariants R1–R6).
-- [ ] T017 [US2] Implement listing route `src/app/(frontend)/case-studies/page.tsx`: `CaseStudyGrid` from `listCaseStudies()`; `revalidate = 3600`; `generateMetadata` from `siteSettings`.
+- [x] T016 [US2] Implement detail route `src/app/(frontend)/case-studies/[slug]/page.tsx` (Shape B): compose `problem`/`solution`/`impact` (richText), `metrics` array, `testimonial`, `relatedCaseStudies` (≤3), `industry` from `getCaseStudyBySlug`; `export const revalidate = 3600` + `dynamicParams = true`; `generateStaticParams` (published, via T006); `generateMetadata` (seo → metadata helper); `BreadcrumbList` JSON-LD; draft branch + `PreviewBanner`; `notFound()` on miss (route-render.md algorithm, invariants R1–R6).
+- [x] T017 [US2] Implement listing route `src/app/(frontend)/case-studies/page.tsx`: `CaseStudyGrid` from `listCaseStudies()`; `revalidate = 3600`; `generateMetadata` from `siteSettings`.
 
 **Checkpoint**: US1 + US2 both work independently.
 

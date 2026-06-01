@@ -1,45 +1,146 @@
-import Link from 'next/link'
-import { getPayload } from 'payload'
-import config from '@/payload.config'
-import './styles.css'
+import type { Metadata } from 'next'
+import { draftMode } from 'next/headers'
 
-// Spike: force runtime rendering so `docker build` doesn't need PAYLOAD_SECRET / a DB.
-// Phase 3 (Spec 004) will switch to ISR with the homepage global driving render.
-export const dynamic = 'force-dynamic'
+import { getHomepage, getPayloadInstance, getSiteSettings, listPosts } from '@/lib/payload'
+import { buildMetadata } from '@/lib/metadata'
+import { organizationLd } from '@/lib/structured-data'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { PreviewBanner } from '@/components/layout/PreviewBanner'
+import { HomepageHero } from '@/components/sections/HomepageHero'
+import { StatsBar } from '@/components/sections/StatsBar'
+import { FeaturedCaseStudy } from '@/components/sections/FeaturedCaseStudy'
+import { BrandTeaser } from '@/components/sections/BrandTeaser'
+import { LogoBar } from '@/components/sections/LogoBar'
+import { FeaturedTestimonials } from '@/components/sections/FeaturedTestimonials'
+import { PostList } from '@/components/sections/PostList'
+import { CtaSection } from '@/components/sections/CtaSection'
+import type { Homepage } from '@/payload-types'
+
+// spec 004 US1 (T012/T013). Drive `/` from the `homepage` GLOBAL — a bespoke
+// composition mapping its structured fields to the existing section components
+// (research §D3). This retires the spike placeholder + the `pages`-slug-`home`
+// query (drift #2). ISR per ARCHITECTURE.md §3 — no `force-dynamic`.
+
+export const revalidate = 3600
+
+async function readHomepage(isDraft: boolean): Promise<Homepage> {
+  if (!isDraft) return getHomepage()
+  // Draft preview (admin live-preview enables draft mode and loads `/`). Read
+  // the latest draft directly; `unstable_cache` is bypassed under draft mode
+  // anyway, but the explicit draft + overrideAccess lift the published filter.
+  const payload = await getPayloadInstance()
+  return (await payload.findGlobal({
+    slug: 'homepage',
+    draft: true,
+    overrideAccess: true,
+    depth: 2,
+  })) as Homepage
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  // The `homepage` global has no `seo` group (data-model §5) — source metadata
+  // from `siteSettings`.
+  const siteSettings = await getSiteSettings()
+  const companyName = siteSettings?.companyName ?? 'SEQTEK'
+  const tagline = siteSettings?.tagline ?? undefined
+  return buildMetadata(null, {
+    title: tagline ? `${companyName}: ${tagline}` : companyName,
+    description: tagline,
+    siteSettings,
+    absoluteTitle: true,
+  })
+}
 
 export default async function HomePage() {
-  const payload = await getPayload({ config: await config })
+  const { isEnabled: isDraft } = await draftMode()
+  const [homepage, siteSettings, latestPosts] = await Promise.all([
+    readHomepage(isDraft),
+    getSiteSettings(),
+    listPosts(),
+  ])
 
-  const { docs } = await payload.find({
-    collection: 'pages',
-    where: { slug: { equals: 'home' } },
-    limit: 1,
-  })
-  const page = docs[0]
+  const hero = homepage?.hero
+  const brandTeaser = homepage?.brandTeaser
 
   return (
-    <div className="mx-auto max-w-container-md px-4 py-16 md:px-6 lg:px-8">
-      {page ? (
-        <h1 className="text-h1 font-bold" data-testid="page-title">
-          {page.title}
-        </h1>
-      ) : (
-        <section data-testid="empty-state">
-          <h1 className="text-h1 font-bold">No page yet</h1>
-          <p className="mt-4 text-body-lg text-text-secondary">
-            Create a page with slug{' '}
-            <code className="rounded-sm bg-surface-subtle px-1.5 py-0.5 font-mono text-small">
-              home
-            </code>{' '}
-            in{' '}
-            <Link className="text-link underline hover:text-link-hover" href="/admin">
-              /admin
-            </Link>{' '}
-            to see content rendered here. The Phase 3 templates will render the homepage global with
-            the full block library.
-          </p>
+    <>
+      <JsonLd data={organizationLd(siteSettings)} />
+      {isDraft && <PreviewBanner />}
+
+      <div data-testid="homepage" data-homepage="true">
+        <section data-testid="hero">
+          <HomepageHero
+            headline={hero?.headline ?? siteSettings?.companyName ?? 'SEQTEK'}
+            subheadline={hero?.subheadline}
+            backgroundImage={hero?.backgroundImage}
+            primaryCta={hero?.cta}
+          />
         </section>
-      )}
-    </div>
+
+        {homepage?.stats?.length ? (
+          <section data-testid="stats">
+            <StatsBar source="inline" items={homepage.stats} />
+          </section>
+        ) : null}
+
+        {homepage?.featuredCaseStudy ? (
+          <section data-testid="featured-case-study">
+            <FeaturedCaseStudy heading="Featured work" caseStudy={homepage.featuredCaseStudy} />
+          </section>
+        ) : null}
+
+        {brandTeaser?.headline ? (
+          <section data-testid="brand-teaser">
+            <BrandTeaser
+              headline={brandTeaser.headline}
+              body={brandTeaser.body ?? ''}
+              linkLabel={brandTeaser.linkLabel ?? 'Read the story'}
+              linkUrl={brandTeaser.linkUrl ?? '/about'}
+              image={brandTeaser.image}
+            />
+          </section>
+        ) : null}
+
+        {homepage?.clientLogos?.length ? (
+          <section data-testid="client-logos">
+            <LogoBar
+              heading="Trusted by teams across the region"
+              source="inline"
+              logos={homepage.clientLogos}
+              treatment="grayscale-on-color-hover"
+            />
+          </section>
+        ) : null}
+
+        {homepage?.featuredTestimonials?.length ? (
+          <section data-testid="featured-testimonials">
+            <FeaturedTestimonials
+              heading="What clients say"
+              testimonials={homepage.featuredTestimonials}
+            />
+          </section>
+        ) : null}
+
+        <section data-testid="workshop-cta">
+          <CtaSection
+            variant="split"
+            headline="Touchstone AI Strategy Workshop"
+            body="A working session that turns AI ambition into a sequenced, fundable plan."
+            primaryCta={{ label: 'Explore the workshop', url: '/touchstone-workshops' }}
+          />
+        </section>
+
+        {latestPosts.length ? (
+          <section data-testid="latest-insights">
+            <PostList
+              heading="Latest insights"
+              source="manual"
+              manualItems={latestPosts.slice(0, 3)}
+              limit={3}
+            />
+          </section>
+        ) : null}
+      </div>
+    </>
   )
 }

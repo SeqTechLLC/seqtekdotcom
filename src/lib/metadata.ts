@@ -22,6 +22,12 @@ export interface MetadataFallbacks {
   description?: string | null
   /** Site settings for company-level fallbacks (name, tagline). */
   siteSettings?: SiteSetting | null
+  /**
+   * Emit the title as `{ absolute }` so the root layout's `%s | SEQTEK`
+   * template is bypassed. Used by the homepage (which is itself the brand
+   * landing — `SEQTEK | SEQTEK` would be silly).
+   */
+  absoluteTitle?: boolean
 }
 
 const ogImageUrl = (ogImage: SeoGroup['ogImage']): string | undefined => {
@@ -59,7 +65,7 @@ export const buildMetadata = (
   const image = ogImageUrl(seo?.ogImage)
 
   return {
-    title,
+    title: fallbacks.absoluteTitle ? { absolute: title } : title,
     description,
     openGraph: {
       title,
