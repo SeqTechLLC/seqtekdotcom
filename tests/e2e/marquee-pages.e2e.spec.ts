@@ -97,6 +97,72 @@ test.describe('US1 — homepage renders the homepage global', () => {
   })
 })
 
+// 1x1 transparent PNG — the smallest valid upload for the required `photo`.
+const PNG_1x1 = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'base64',
+)
+
+// ---------------------------------------------------------------------------
+// US3 — Team page shows real people (T018)
+// ---------------------------------------------------------------------------
+
+const TEAM_SLUG = 'us3-marquee-member'
+const TEAM_NAME = 'US3 Marquee Member'
+
+test.describe('US3 — team page renders members with photos', () => {
+  test.afterAll(async () => {
+    await payload.delete({
+      collection: 'teamMembers',
+      where: { slug: { equals: TEAM_SLUG } },
+      overrideAccess: true,
+    })
+    await payload.delete({
+      collection: 'media',
+      where: { alt: { equals: 'US3 marquee headshot' } },
+      overrideAccess: true,
+    })
+  })
+
+  test('GET /team → 200, TeamGrid renders the member, axe-clean', async ({ page }) => {
+    const media = await payload.create({
+      collection: 'media',
+      data: { alt: 'US3 marquee headshot' },
+      file: { data: PNG_1x1, mimetype: 'image/png', name: 'us3-team.png', size: PNG_1x1.length },
+      overrideAccess: true,
+    })
+    await payload.delete({
+      collection: 'teamMembers',
+      where: { slug: { equals: TEAM_SLUG } },
+      overrideAccess: true,
+    })
+    await payload.create({
+      collection: 'teamMembers',
+      data: {
+        name: TEAM_NAME,
+        slug: TEAM_SLUG,
+        title: 'Principal Consultant',
+        role: 'Engineering',
+        photo: media.id,
+        isLeadership: true,
+        order: 1,
+      },
+      overrideAccess: true,
+    })
+
+    const res = await page.goto('/team')
+    expect(res?.status()).toBe(200)
+    await expect(page.getByTestId('team')).toBeVisible()
+    await expect(page.getByText(TEAM_NAME)).toBeVisible()
+
+    const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+    expect(
+      results.violations,
+      results.violations.map((v) => `[${v.id}] ${v.help}`).join('\n'),
+    ).toEqual([])
+  })
+})
+
 // ---------------------------------------------------------------------------
 // US2 — Flagship case study renders structured content (T014)
 // Verified against one DRAFTED case study via the authenticated preview path
@@ -181,6 +247,113 @@ test.describe('US2 — case study renders structured fields', () => {
     await expect(page.getByTestId('case-study-problem')).toBeVisible()
     await expect(page.getByTestId('case-study-metrics')).toContainText('Faster deploys')
     await expect(page.getByTestId('case-study-testimonial')).toContainText('Dana Client')
+
+    const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+    expect(
+      results.violations,
+      results.violations.map((v) => `[${v.id}] ${v.help}`).join('\n'),
+    ).toEqual([])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// US4 — Touchstone AI workshop campaign landing (T021)
+// Workshops publish with just title+slug, so this exercises the PUBLIC path.
+// The HubSpot form is the Phase-2 PLACEHOLDER (live submission out of scope —
+// research §D10).
+// ---------------------------------------------------------------------------
+
+const WORKSHOP_SLUG = 'us4-marquee-workshop'
+
+test.describe('US4 — workshop detail + placeholder form mounts', () => {
+  test.afterAll(async () => {
+    await payload.delete({
+      collection: 'workshops',
+      where: { slug: { equals: WORKSHOP_SLUG } },
+      overrideAccess: true,
+    })
+  })
+
+  test('GET /touchstone-workshops/<slug> → 200, detail + hubspot-form mount, axe-clean', async ({
+    page,
+  }) => {
+    await payload.delete({
+      collection: 'workshops',
+      where: { slug: { equals: WORKSHOP_SLUG } },
+      overrideAccess: true,
+    })
+    await payload.create({
+      collection: 'workshops',
+      data: {
+        title: 'Touchstone AI Strategy Workshop',
+        slug: WORKSHOP_SLUG,
+        description: lexical('A facilitated working session for leadership teams.'),
+        audience: lexical('For executives accountable for an AI roadmap.'),
+        _status: 'published',
+      },
+      overrideAccess: true,
+    })
+
+    const res = await page.goto(`/touchstone-workshops/${WORKSHOP_SLUG}`)
+    expect(res?.status()).toBe(200)
+    await expect(page.getByTestId('workshop-detail')).toBeVisible()
+    await expect(page.getByTestId('workshop-description')).toBeVisible()
+    // The placeholder block mounts; a live HubSpot submission is NOT asserted.
+    await expect(page.getByTestId('hubspot-form')).toBeVisible()
+
+    const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+    expect(
+      results.violations,
+      results.violations.map((v) => `[${v.id}] ${v.help}`).join('\n'),
+    ).toEqual([])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// US5 — Localshoring narrative via the generic /[slug] pages route (T024)
+// ---------------------------------------------------------------------------
+
+const LOCALSHORING_SLUG = 'localshoring'
+
+test.describe('US5 — localshoring renders via RenderBlocks', () => {
+  test.afterAll(async () => {
+    await payload.delete({
+      collection: 'pages',
+      where: { slug: { equals: LOCALSHORING_SLUG } },
+      overrideAccess: true,
+    })
+  })
+
+  test('GET /localshoring → 200, comparison-table narrative renders, axe-clean', async ({
+    page,
+  }) => {
+    await payload.delete({
+      collection: 'pages',
+      where: { slug: { equals: LOCALSHORING_SLUG } },
+      overrideAccess: true,
+    })
+    await payload.create({
+      collection: 'pages',
+      data: {
+        title: 'Localshoring',
+        slug: LOCALSHORING_SLUG,
+        layout: [
+          {
+            blockType: 'comparison-table',
+            heading: 'Localshoring vs the alternatives',
+            columns: [{ label: 'Localshoring' }, { label: 'Offshore' }],
+            rows: [{ dimension: 'Time zone', cells: [{ value: 'Same' }, { value: 'Opposite' }] }],
+          },
+        ],
+        _status: 'published',
+      },
+      overrideAccess: true,
+    })
+
+    const res = await page.goto(`/${LOCALSHORING_SLUG}`)
+    expect(res?.status()).toBe(200)
+    await expect(page.getByTestId('page')).toBeVisible()
+    await expect(page.getByText('Localshoring vs the alternatives')).toBeVisible()
 
     const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
     expect(

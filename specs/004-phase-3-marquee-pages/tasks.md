@@ -101,12 +101,12 @@ Single Next.js App Router project (per plan.md Structure Decision). Public route
 
 ### Tests for User Story 3 (MANDATORY — per constitution §II) ⚠️
 
-- [ ] T018 [US3] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `/team` → 200, `TeamGrid` renders leadership + members with photos by `data-testid`, axe-clean (invariant R1).
+- [x] T018 [US3] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `/team` → 200, `TeamGrid` renders leadership + members with photos by `data-testid`, axe-clean (invariant R1).
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Implement `src/app/(frontend)/team/page.tsx`: `TeamGrid` from `listTeamMembers()` ordered leadership-first then `order`; `revalidate = 3600`; **static** metadata sourced from `siteSettings` (no `seo` group — invariant R6 N/A, assert static title instead; research §D7 caveat). `teamMembers` is public-read with no drafts, so no draft branch.
-- [ ] T020 [US3] Reconcile drift #4: add the `/team` row to the ARCHITECTURE.md §3 ISR table in the same PR (Constitution §III).
+- [x] T019 [US3] Implement `src/app/(frontend)/team/page.tsx`: `TeamGrid` from `listTeamMembers()` ordered leadership-first then `order`; `revalidate = 3600`; **static** metadata sourced from `siteSettings` (no `seo` group — invariant R6 N/A, assert static title instead; research §D7 caveat). `teamMembers` is public-read with no drafts, so no draft branch.
+- [x] T020 [US3] Reconcile drift #4: add the `/team` row to the ARCHITECTURE.md §3 ISR table in the same PR (Constitution §III).
 
 **Checkpoint**: US1 + US2 + US3 all independently functional.
 
@@ -120,12 +120,12 @@ Single Next.js App Router project (per plan.md Structure Decision). Public route
 
 ### Tests for User Story 4 (MANDATORY — per constitution §II) ⚠️
 
-- [ ] T021 [US4] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `/touchstone-workshops/<slug>` → 200, detail sections render + the placeholder `hubspot-form` block **mounts** by `data-testid` (live submission explicitly out of scope), axe-clean.
+- [x] T021 [US4] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `/touchstone-workshops/<slug>` → 200, detail sections render + the placeholder `hubspot-form` block **mounts** by `data-testid` (live submission explicitly out of scope), axe-clean.
 
 ### Implementation for User Story 4
 
-- [ ] T022 [US4] Implement detail route `src/app/(frontend)/touchstone-workshops/[slug]/page.tsx` (Shape B): compose `description`/`format`/`audience` (richText), `facilitator`, `testimonial` from `getWorkshopBySlug`; mount the placeholder `HubspotForm` + place `DownloadCard` (lead magnet); `revalidate = 3600` + `dynamicParams = true`; `generateStaticParams` (published); `generateMetadata` (seo); draft branch + `PreviewBanner`; `notFound()` on miss.
-- [ ] T023 [US4] Implement listing route `src/app/(frontend)/touchstone-workshops/page.tsx`: `WorkshopList` from `listWorkshops()`; `revalidate = 3600`; `generateMetadata` from `siteSettings`.
+- [x] T022 [US4] Implement detail route `src/app/(frontend)/touchstone-workshops/[slug]/page.tsx` (Shape B): compose `description`/`format`/`audience` (richText), `facilitator`, `testimonial` from `getWorkshopBySlug`; mount the placeholder `HubspotForm` + place `DownloadCard` (lead magnet); `revalidate = 3600` + `dynamicParams = true`; `generateStaticParams` (published); `generateMetadata` (seo); draft branch + `PreviewBanner`; `notFound()` on miss.
+- [x] T023 [US4] Implement listing route `src/app/(frontend)/touchstone-workshops/page.tsx`: `WorkshopList` from `listWorkshops()`; `revalidate = 3600`; `generateMetadata` from `siteSettings`.
 
 **Checkpoint**: US1–US4 (all P1) independently functional.
 
@@ -139,13 +139,13 @@ Single Next.js App Router project (per plan.md Structure Decision). Public route
 
 ### Tests for User Story 5 (MANDATORY — per constitution §II) ⚠️
 
-- [ ] T024 [US5] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `/localshoring` → 200, comparison-table narrative renders via `RenderBlocks` by `data-testid`, axe-clean (invariant R1).
+- [x] T024 [US5] E2E test (write first, expect fail) in `tests/e2e/marquee-pages.e2e.spec.ts`: `/localshoring` → 200, comparison-table narrative renders via `RenderBlocks` by `data-testid`, axe-clean (invariant R1).
 
 ### Implementation for User Story 5
 
-- [ ] T025 [US5] Implement the generic `pages` route `src/app/(frontend)/[slug]/page.tsx` (Shape A): `<RenderBlocks blocks={page.layout} />` from `getPageBySlug`; `revalidate = 3600` + `dynamicParams = true`; `generateStaticParams` (published page slugs, via T006); `generateMetadata` (seo); draft branch + `PreviewBanner`; `notFound()` on miss (the `showcase/[slug]` pattern, generalized).
-- [ ] T026 [US5] Reconcile drift #3 (retire spike placeholders): delete `src/app/(frontend)/about/[slug]/page.tsx` and `src/app/(frontend)/about/page.tsx` — `/about` is now a `pages` doc served by `/[slug]` (research §D5). Confirm `/[slug]` resolves `/about` and there is no route shadowing.
-- [ ] T027 [US5] Retire the spike demo route `src/app/(frontend)/showcase/[slug]/page.tsx` now that `/[slug]` reaches parity (single `pages` render path — clarification 2026-06-01); prune its `tests/e2e/visual/screenshots/showcase/` baseline references.
+- [x] T025 [US5] Implement the generic `pages` route `src/app/(frontend)/[slug]/page.tsx` (Shape A): `<RenderBlocks blocks={page.layout} />` from `getPageBySlug`; `revalidate = 3600` + `dynamicParams = true`; `generateStaticParams` (published page slugs, via T006); `generateMetadata` (seo); draft branch + `PreviewBanner`; `notFound()` on miss (the `showcase/[slug]` pattern, generalized).
+- [x] T026 [US5] Reconcile drift #3 (retire spike placeholders): delete `src/app/(frontend)/about/[slug]/page.tsx` and `src/app/(frontend)/about/page.tsx` — `/about` is now a `pages` doc served by `/[slug]` (research §D5). Confirm `/[slug]` resolves `/about` and there is no route shadowing.
+- [x] T027 [US5] Retire the spike demo route `src/app/(frontend)/showcase/[slug]/page.tsx` now that `/[slug]` reaches parity (single `pages` render path — clarification 2026-06-01); prune its `tests/e2e/visual/screenshots/showcase/` baseline references.
 
 **Checkpoint**: All five marquee user stories independently functional.
 

@@ -317,6 +317,7 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 | `/insights/[slug]`                              | ISR            | 3600s               | Individual posts                         |
 | `/touchstone-workshops`                         | ISR            | 3600s               | Workshop landing                         |
 | `/touchstone-workshops/[slug]`                  | ISR            | 3600s               | Individual workshops                     |
+| `/team`                                         | ISR            | 3600s               | Team listing (spec 004 US3)              |
 | `/industries/[slug]`                            | ISR            | 3600s               | Industry pages                           |
 | `/consulting/[market]`                          | ISR            | 3600s               | Market landing pages                     |
 | `/contact`                                      | Static         | N/A                 | Form is client-side (HubSpot)            |
