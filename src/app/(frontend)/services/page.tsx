@@ -1,18 +1,35 @@
-import Link from 'next/link'
+import type { Metadata } from 'next'
 
-export const dynamic = 'force-dynamic'
+import { getSiteSettings, listServicePillars } from '@/lib/payload'
+import { buildMetadata } from '@/lib/metadata'
+import { ServicePillarCards } from '@/components/sections/ServicePillarCards'
 
-export default function ServicesLanding() {
+// spec 004 Phase 8 (T030). Services overview — the pillar cards. Replaces the
+// spike force-dynamic placeholder at this path.
+
+export const revalidate = 3600
+
+export async function generateMetadata(): Promise<Metadata> {
+  const siteSettings = await getSiteSettings()
+  return buildMetadata(null, {
+    title: 'Services',
+    description: 'How we help: strategy, delivery, and modernization across our practice areas.',
+    siteSettings,
+  })
+}
+
+export default async function ServicesPage() {
+  const pillars = await listServicePillars()
+
   return (
-    <main className="mx-auto max-w-container-md px-4 py-16 md:px-6 lg:px-8">
-      <h1 className="text-h1 font-bold">Services</h1>
-      <p className="mt-4 text-body-lg text-text-secondary">
-        Detailed content is coming soon. In the meantime, see the{' '}
-        <Link className="text-link underline hover:text-link-hover" href="/">
-          home page
-        </Link>{' '}
-        or get in touch.
-      </p>
-    </main>
+    <div data-testid="services-overview" className="mx-auto max-w-container-xl px-4 py-16 md:px-6">
+      <header className="mb-12">
+        <h1 className="text-h1 font-bold">Services</h1>
+        <p className="mt-4 text-body-lg text-text-secondary">
+          Practice areas built around one delivery model.
+        </p>
+      </header>
+      <ServicePillarCards pillars={pillars} />
+    </div>
   )
 }

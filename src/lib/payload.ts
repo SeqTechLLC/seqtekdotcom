@@ -1,24 +1,38 @@
 import 'server-only'
 
 import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 import { getPayload, type Payload } from 'payload'
 
 import config from '@/payload.config'
-import type { SiteSetting, Navigation, Homepage } from '@/payload-types'
+import type {
+  SiteSetting,
+  Navigation,
+  Homepage,
+  Page,
+  CaseStudy,
+  Post,
+  Service,
+  ServicePillar,
+  Workshop,
+  TeamMember,
+} from '@/payload-types'
 
-// T134 / spec 003 Polish. Module-level singleton + per-request `React.cache()`
-// readers so multiple server components in the same request share a single
-// Payload instance + dedupe their global reads. Spec 004 page templates
-// compose against these — without them every block/header/footer that needs
-// `siteSettings` or `navigation` would re-init Payload and re-query.
+// spec 004 Phase 2 (Foundational). The ISR correctness of every public route
+// rests on this module: each read is wrapped in `unstable_cache` with `tags`
+// that EXACTLY mirror `buildRevalidatePlan`'s output, so the already-shipped
+// `revalidateOnChange` afterChange hook (which calls `revalidateTag(...)`)
+// invalidates them on publish. The keystone test
+// `tests/int/lib/payload-cache-tags.int.spec.ts` (invariant C1) pins the tag
+// helpers below against `buildRevalidatePlan` — drift there is a silent
+// stale-page regression, so treat any red there as a build-breaker.
 
 let payloadPromise: Promise<Payload> | null = null
 
 /**
- * Module-level singleton — initialise Payload exactly once per Node process.
- * Repeated callers share the same promise so concurrent first-touches don't
- * race. Use this anywhere a server component or server action needs the
- * Local API.
+ * Module-level singleton — initialise Payload exactly once per Node process
+ * (invariant C4: the single `getPayload({ config })` site; templates and
+ * readers go through here, never `getPayload` directly).
  */
 export const getPayloadInstance = (): Promise<Payload> => {
   if (!payloadPromise) {
@@ -27,23 +41,243 @@ export const getPayloadInstance = (): Promise<Payload> => {
   return payloadPromise
 }
 
+// ---------------------------------------------------------------------------
+// Cache-tag contract (MUST mirror buildRevalidatePlan — invariant C1/C3)
+// ---------------------------------------------------------------------------
+
+/** Tags a collection detail reader registers: `${c}_${slug}` + `${c}_list`. */
+export const detailCacheTags = (collection: string, slug: string): string[] => [
+  `${collection}_${slug}`,
+  `${collection}_list`,
+]
+
+/** Tag a listing / static-params reader registers: `${c}_list`. */
+export const listCacheTags = (collection: string): string[] => [`${collection}_list`]
+
 /**
- * `React.cache` dedupes calls within a single React render pass — every
- * server component in the request tree that calls `getSiteSettings()` shares
- * the result of one underlying `findGlobal` round-trip. Across requests the
- * cache is reset, so this is safe for per-request data.
+ * Tag a global reader registers. `buildRevalidatePlan('<global>', …)` emits
+ * `['<global>_list']` (globals carry no slug, so no per-slug tag) — verified
+ * against `revalidateOnChange.ts` and pinned by the keystone test.
  */
-export const getSiteSettings = cache(async (): Promise<SiteSetting> => {
-  const payload = await getPayloadInstance()
-  return payload.findGlobal({ slug: 'siteSettings', depth: 2 }) as Promise<SiteSetting>
-})
+export const globalCacheTags = (globalSlug: string): string[] => [`${globalSlug}_list`]
 
-export const getNavigation = cache(async (): Promise<Navigation> => {
-  const payload = await getPayloadInstance()
-  return payload.findGlobal({ slug: 'navigation', depth: 2 }) as Promise<Navigation>
-})
+const ONE_HOUR = 3600
 
-export const getHomepage = cache(async (): Promise<Homepage> => {
+/** Collections this spec renders that carry a `slug` + published filter. */
+type SluggedCollection =
+  | 'pages'
+  | 'caseStudies'
+  | 'posts'
+  | 'services'
+  | 'servicePillars'
+  | 'workshops'
+
+// ---------------------------------------------------------------------------
+// Chrome globals — layered React.cache → unstable_cache
+// ---------------------------------------------------------------------------
+// `React.cache` dedupes within a single render pass (one Postgres round-trip
+// per request even though header + footer + page all read these). The inner
+// `unstable_cache` adds cross-request, tag-invalidated caching so an editor
+// publish busts them via the hook. Order matters — cached-readers.md
+// §Migration note: cache(async () => unstable_cache(read, key, { tags })()).
+// Under draft mode `unstable_cache` auto-bypasses, so preview never serves
+// or pollutes the published cache.
+
+export const getSiteSettings = cache(
+  async (): Promise<SiteSetting> =>
+    unstable_cache(
+      async () => {
+        const payload = await getPayloadInstance()
+        return (await payload.findGlobal({ slug: 'siteSettings', depth: 2 })) as SiteSetting
+      },
+      ['global', 'siteSettings'],
+      { tags: globalCacheTags('siteSettings'), revalidate: ONE_HOUR },
+    )(),
+)
+
+export const getNavigation = cache(
+  async (): Promise<Navigation> =>
+    unstable_cache(
+      async () => {
+        const payload = await getPayloadInstance()
+        return (await payload.findGlobal({ slug: 'navigation', depth: 2 })) as Navigation
+      },
+      ['global', 'navigation'],
+      { tags: globalCacheTags('navigation'), revalidate: ONE_HOUR },
+    )(),
+)
+
+export const getHomepage = cache(
+  async (): Promise<Homepage> =>
+    unstable_cache(
+      async () => {
+        const payload = await getPayloadInstance()
+        return (await payload.findGlobal({ slug: 'homepage', depth: 2 })) as Homepage
+      },
+      ['global', 'homepage'],
+      { tags: globalCacheTags('homepage'), revalidate: ONE_HOUR },
+    )(),
+)
+
+// ---------------------------------------------------------------------------
+// Collection detail readers — published-only, tagged
+// ---------------------------------------------------------------------------
+// `draft: false` + `overrideAccess: false` apply the `publishedOrAuthed`
+// access filter with no editorial user => published rows only, no draft leak
+// (invariant C2). Draft preview does NOT go through these readers; the route
+// reads Payload directly with `draft: true` (see route-render.md / D2).
+
+// The raw published reads below (`findPublished*`) are exported so the
+// `generateStaticParams` data-layer test (T010 / invariant R3) can exercise
+// the published filter directly — `unstable_cache` cannot run outside the Next
+// server (`incrementalCache missing`). Production code calls the cached
+// wrappers; the wrappers add only the tag caching that T009 pins.
+
+export const findPublishedBySlug = async (collection: SluggedCollection, slug: string) => {
   const payload = await getPayloadInstance()
-  return payload.findGlobal({ slug: 'homepage', depth: 2 }) as Promise<Homepage>
-})
+  const { docs } = await payload.find({
+    collection,
+    where: { slug: { equals: slug } },
+    draft: false,
+    overrideAccess: false,
+    depth: 2,
+    limit: 1,
+  })
+  return docs[0] ?? null
+}
+
+export const getPageBySlug = (slug: string): Promise<Page | null> =>
+  unstable_cache(
+    async () => (await findPublishedBySlug('pages', slug)) as Page | null,
+    ['pages', slug],
+    { tags: detailCacheTags('pages', slug), revalidate: ONE_HOUR },
+  )()
+
+export const getCaseStudyBySlug = (slug: string): Promise<CaseStudy | null> =>
+  unstable_cache(
+    async () => (await findPublishedBySlug('caseStudies', slug)) as CaseStudy | null,
+    ['caseStudies', slug],
+    { tags: detailCacheTags('caseStudies', slug), revalidate: ONE_HOUR },
+  )()
+
+export const getPostBySlug = (slug: string): Promise<Post | null> =>
+  unstable_cache(
+    async () => (await findPublishedBySlug('posts', slug)) as Post | null,
+    ['posts', slug],
+    { tags: detailCacheTags('posts', slug), revalidate: ONE_HOUR },
+  )()
+
+export const getServiceBySlug = (slug: string): Promise<Service | null> =>
+  unstable_cache(
+    async () => (await findPublishedBySlug('services', slug)) as Service | null,
+    ['services', slug],
+    { tags: detailCacheTags('services', slug), revalidate: ONE_HOUR },
+  )()
+
+export const getServicePillarBySlug = (slug: string): Promise<ServicePillar | null> =>
+  unstable_cache(
+    async () => (await findPublishedBySlug('servicePillars', slug)) as ServicePillar | null,
+    ['servicePillars', slug],
+    { tags: detailCacheTags('servicePillars', slug), revalidate: ONE_HOUR },
+  )()
+
+export const getWorkshopBySlug = (slug: string): Promise<Workshop | null> =>
+  unstable_cache(
+    async () => (await findPublishedBySlug('workshops', slug)) as Workshop | null,
+    ['workshops', slug],
+    { tags: detailCacheTags('workshops', slug), revalidate: ONE_HOUR },
+  )()
+
+// ---------------------------------------------------------------------------
+// Listing / static-params readers — published-only, list-tagged
+// ---------------------------------------------------------------------------
+
+export const findPublishedList = async (
+  collection: SluggedCollection | 'teamMembers',
+  opts: { sort?: string; depth?: number } = {},
+) => {
+  const payload = await getPayloadInstance()
+  const { docs } = await payload.find({
+    collection,
+    draft: false,
+    overrideAccess: false,
+    depth: opts.depth ?? 1,
+    limit: 200,
+    pagination: false,
+    ...(opts.sort ? { sort: opts.sort } : {}),
+  })
+  return docs
+}
+
+export const listCaseStudies = (): Promise<CaseStudy[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('caseStudies', { sort: '-publishedAt' })) as CaseStudy[],
+    ['caseStudies', 'list'],
+    { tags: listCacheTags('caseStudies'), revalidate: ONE_HOUR },
+  )()
+
+export const listPosts = (): Promise<Post[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('posts', { sort: '-publishedAt' })) as Post[],
+    ['posts', 'list'],
+    { tags: listCacheTags('posts'), revalidate: ONE_HOUR },
+  )()
+
+export const listServices = (): Promise<Service[]> =>
+  unstable_cache(
+    // depth 2 so `pillar` is populated — the nested `/services/[pillar]/[slug]`
+    // URL + static params need the pillar slug.
+    async () => (await findPublishedList('services', { sort: 'order', depth: 2 })) as Service[],
+    ['services', 'list'],
+    { tags: listCacheTags('services'), revalidate: ONE_HOUR },
+  )()
+
+export const listServicePillars = (): Promise<ServicePillar[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('servicePillars', { sort: 'order' })) as ServicePillar[],
+    ['servicePillars', 'list'],
+    { tags: listCacheTags('servicePillars'), revalidate: ONE_HOUR },
+  )()
+
+export const listWorkshops = (): Promise<Workshop[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('workshops', { sort: 'order' })) as Workshop[],
+    ['workshops', 'list'],
+    { tags: listCacheTags('workshops'), revalidate: ONE_HOUR },
+  )()
+
+export const listTeamMembers = (): Promise<TeamMember[]> =>
+  unstable_cache(
+    // `teamMembers` is public-read with no drafts. Leadership-first ordering is
+    // applied at the template (US3) — here we just sort by `order`.
+    async () => (await findPublishedList('teamMembers', { sort: 'order' })) as TeamMember[],
+    ['teamMembers', 'list'],
+    { tags: listCacheTags('teamMembers'), revalidate: ONE_HOUR },
+  )()
+
+/** Raw published-slug read — exported for the T010 R3 test (see note above). */
+export const findPublishedSlugs = async (collection: SluggedCollection): Promise<string[]> => {
+  const payload = await getPayloadInstance()
+  const { docs } = await payload.find({
+    collection,
+    draft: false,
+    overrideAccess: false,
+    depth: 0,
+    limit: 1000,
+    pagination: false,
+  })
+  return docs
+    .map((d) => (d as { slug?: string | null }).slug)
+    .filter((s): s is string => typeof s === 'string' && s.length > 0)
+}
+
+/**
+ * Published slugs for a collection — feeds `generateStaticParams`. Published
+ * filter (`overrideAccess: false`) so drafts never enter the static manifest
+ * (invariant R3 / the spec-003 US5 draft-leak invariant on the public side).
+ */
+export const publishedSlugsFor = (collection: SluggedCollection): Promise<string[]> =>
+  unstable_cache(() => findPublishedSlugs(collection), ['publishedSlugs', collection], {
+    tags: listCacheTags(collection),
+    revalidate: ONE_HOUR,
+  })()

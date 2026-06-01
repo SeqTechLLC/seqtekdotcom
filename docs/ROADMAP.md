@@ -72,13 +72,9 @@ Carrying over the structure from ARCHITECTURE.md §11 with refinements from this
 
 Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./PROJECT_HISTORY.md). Phase 1 is closed — every roadmap-level Phase 1 item has shipped. Production cutover to `seqtek.com` (Phase 6) plus the multi-AZ RDS + private-subnet ASG flips (Phase 5.5) carry the remaining infra polish.
 
-### Phase 2 — Content models (spec 003) — substantially closed
+### Phase 2 — Content models (spec 003) — closed
 
-Completed items live in [`PROJECT_HISTORY.md` § Phase 2 implementation (P2)](./PROJECT_HISTORY.md). US1–US5 shipped (PRs #11/#13/#14/#15/#16); DB migration collapse + PG 18 bump shipped (#17). Open carry-over:
-
-- [ ] **US6 — media via S3 plugin** (spec 003 T114–T120). Conditional `@payloadcms/storage-s3` registration in `payload.config.ts` only when `S3_BUCKET` is set; alt-required server-side validation; MIME / 25MB size cap; staging upload smoke against `seqtek-media-staging`. **Prereq for content-team uploads** — without it, admin uploads land on the EC2 instance's local FS and disappear on ASG refresh. Half-day wrap-up PR.
-- [ ] **US7 — scheduled-publish hook** (spec 003 T121–T123). Verify `enforceDraftWhenScheduled` is wired on every draftable collection with `publishedAt`. **Deferred to Phase 5.5 launch readiness** — cron trigger is intentionally out of scope, only the Payload-side invariant matters today.
-- [ ] **Polish carry-over** (spec 003 Phase 10). Vercel react-best-practices audit follow-ups. Defer to Phase 5.
+All shipped — completed items live in [`PROJECT_HISTORY.md` § Phase 2 implementation (P2)](./PROJECT_HISTORY.md). US1–US5 (PRs #11/#13/#14/#15/#16), DB migration collapse + PG 18 bump (#17), and **US6 (media via S3) + US7 (scheduled-publish wire-up) + Polish (PR #19, P2-7)**. No open carry-over. (The US7 cron trigger `/api/cron/publish-scheduled` stays intentionally deferred — see Phase 5.5; only the Payload-side invariant was in scope.)
 
 ### Phase 3 — Public render foundation + marquee pages (spec 004) (3-4 weeks)
 
@@ -121,8 +117,14 @@ The supporting content for the active AI workshop marketing push, plus filling o
 - [ ] Cookie consent flow end-to-end test (HubSpot ↔ GTM bridge)
 - [ ] CSP promoted from report-only to enforcing
 - [ ] Cross-browser/device QA (Chrome, Safari, Firefox; iOS, Android)
-- [ ] **Spec 003 Polish carry-over** — Vercel react-best-practices audit follow-ups
 - [ ] Long-tail content — industry pages (6) and market landing pages (4) per the original Phase 4 list, if leadership/SEO priorities still call for them at this point
+
+**Deferred from spec 004 (Phase 3) — explicitly tracked, not dropped:**
+
+- [ ] **Slow-request / hung-request handling** (ERROR_PAGES.md §5) — the 5s Payload-call `Promise.race` timeout + client-side form timeout. Not load-bearing for marquee render; lands in Phase 5 polish.
+- [ ] **Live HubSpot Forms API integration** (research §D10) — spec 004 ships only the Phase-2 placeholder `hubspot-form` block. The live custom React form → `api.hsforms.com`, the Zod submit state machine, GTM `dataLayer` events, and the CSP-nonce + consent wiring are a follow-up, gated on the Workshop Inquiry Form GUID (INTEGRATIONS.md §1.2 "TBD") + lead-magnet asset decision.
+- [ ] **CSP enforce, cookie-consent E2E, cross-browser/device QA, performance tuning** — already listed above; spec 004 keeps CSP report-only and Lighthouse Performance budgets at `warn` (a11y/best-practices/SEO gate now).
+- [ ] **Block-library accent-contrast sweep** — many spec-003 section components (`Hero`, `HomepageHero`, `StatsBar`, `MetricDisplay`, `FeaturedCaseStudy`, `ServicePillarHero`, `TwoColumn`, `NewsletterCta`, `ContactCta`, `KeyTakeaways`, …) use `bg-accent`/`text-accent` (brand-green-500 `#72b94d`), which **fails WCAG AA** with white text / on light backgrounds — a documented no-go in DESIGN_SYSTEM.md §2.2 (use green-700/`accent-strong`). Spec 004 fixed the ones on the shipped marquee surfaces (`CtaSection`, `DownloadCard`, `HubspotForm`, the 404/500 buttons, case-study metrics) to `accent-strong`; the remaining components need the same swap as their pages get a11y coverage (will shift the showcase visual baselines — re-capture in the same change).
 
 ### Phase 5.5 — Launch readiness review (1 week)
 

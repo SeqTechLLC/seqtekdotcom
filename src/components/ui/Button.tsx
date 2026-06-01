@@ -63,8 +63,11 @@ export function Button({
   if ('href' in rest && rest.href) {
     const { href, ...anchorProps } = rest
     if (isInternalHref(href)) {
+      // prefetch={false}: the header/mobile CTA points at /contact/book-a-call,
+      // which isn't built yet — prefetching it 404s and dings the Lighthouse
+      // best-practices gate (console errors). See SmartLink for the rationale.
       return (
-        <Link href={href} className={classes} {...anchorProps}>
+        <Link href={href} prefetch={false} className={classes} {...anchorProps}>
           {children}
         </Link>
       )

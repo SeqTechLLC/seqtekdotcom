@@ -38,14 +38,18 @@ test.beforeAll(async () => {
 
 for (const slug of SLUGS) {
   for (const viewport of VIEWPORTS) {
-    test(`visual capture: /showcase/${slug} @ ${viewport.name}`, async ({ page }) => {
+    // spec 004 T027: the dedicated /showcase/[slug] demo route was retired for
+    // a single `pages` render path. The showcase fixtures are `pages` docs
+    // with slug `showcase-<slug>`, now served flat via /[slug]. This is a
+    // capture harness (overwrites baselines), not a CI gate.
+    test(`visual capture: /showcase-${slug} @ ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
-      const response = await page.goto(`/showcase/${slug}`, { waitUntil: 'networkidle' })
+      const response = await page.goto(`/showcase-${slug}`, { waitUntil: 'networkidle' })
       expect(
         response?.status(),
-        `route /showcase/${slug} not found — run npm run seed:showcase first`,
+        `route /showcase-${slug} not found — run npm run seed:showcase first`,
       ).toBe(200)
-      await expect(page.getByTestId('showcase-page')).toBeVisible()
+      await expect(page.getByTestId('page')).toBeVisible()
       const file = path.join(SCREENSHOT_DIR, `${slug}-${viewport.name}.png`)
       await page.screenshot({ path: file, fullPage: true })
     })
