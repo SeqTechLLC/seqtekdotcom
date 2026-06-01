@@ -108,7 +108,7 @@ export default async function CaseStudyPage({ params }: Props) {
             <dl className="grid grid-cols-1 gap-6 sm:grid-cols-3">
               {caseStudy.metrics.map((metric) => (
                 <div key={metric.id ?? metric.label} className="border-l-2 border-accent pl-4">
-                  <dd className="text-h2 font-bold text-accent">{metric.number}</dd>
+                  <dd className="text-h2 font-bold text-accent-strong">{metric.number}</dd>
                   <dt className="mt-1 text-body text-text-secondary">{metric.label}</dt>
                   {metric.context ? (
                     <p className="mt-1 text-small text-text-muted">{metric.context}</p>

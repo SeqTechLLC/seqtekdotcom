@@ -41,7 +41,7 @@ export default function NotFound() {
       <div className="mt-12">
         <Link
           href="/contact"
-          className="inline-block rounded-md bg-accent px-6 py-3 font-semibold text-white transition hover:opacity-90"
+          className="inline-block rounded-md bg-accent-strong px-6 py-3 font-semibold text-white transition hover:opacity-90"
         >
           Book a strategy call
         </Link>

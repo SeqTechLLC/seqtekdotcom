@@ -14,7 +14,7 @@ export function HubspotForm({ heading, description, formId, submitRedirect }: Hu
           <p className="mt-3 text-body-lg text-text-secondary">{description}</p>
         ) : null}
         <div className="mt-8 rounded-md border border-border-strong bg-surface-subtle p-8 text-center">
-          <p className="text-caption uppercase tracking-wide text-accent">HubSpot Form</p>
+          <p className="text-caption uppercase tracking-wide text-accent-strong">HubSpot Form</p>
           <p className="mt-2 text-body-lg font-semibold">Form {formId}</p>
           {submitRedirect ? (
             <p className="mt-2 text-small text-text-muted">

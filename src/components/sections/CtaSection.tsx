@@ -32,7 +32,9 @@ export function CtaSection({
   const isInverse = variant === 'inverse' || background === 'accent'
   const wrapperCls = [
     'relative px-4 py-16 md:px-6 lg:px-8',
-    isInverse ? 'bg-accent text-white' : 'bg-surface-subtle',
+    // accent-strong (green-700) — brand-green-500 (`bg-accent`) fails WCAG AA
+    // contrast with white text (2.39:1). DESIGN_SYSTEM.md §14.
+    isInverse ? 'bg-accent-strong text-white' : 'bg-surface-subtle',
   ].join(' ')
   const alignmentCls = variant === 'centered' ? 'text-center' : 'text-left'
 
@@ -55,7 +57,7 @@ export function CtaSection({
           {primaryCta?.label && primaryCta?.url ? (
             <Link
               href={primaryCta.url}
-              className={`rounded-md px-5 py-3 font-medium ${isInverse ? 'bg-white text-accent' : 'bg-accent text-white'}`}
+              className={`rounded-md px-5 py-3 font-medium ${isInverse ? 'bg-white text-accent-strong' : 'bg-accent-strong text-white'}`}
             >
               {primaryCta.label}
             </Link>
