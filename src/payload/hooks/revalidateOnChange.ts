@@ -26,9 +26,27 @@ const resolvePillarSlug = (doc: DocLike): string | undefined => {
     : undefined
 }
 
+/**
+ * Extract a service's pillar relationship ID. At afterChange depth `pillar` is
+ * an ID; the populated-object form is handled defensively. Used to detect a
+ * pillar *move* so the previous pillar's now-stale paths get busted too.
+ */
+const pillarIdOf = (doc: DocLike): string | number | undefined => {
+  const pillar = doc.pillar
+  if (typeof pillar === 'number' || typeof pillar === 'string') return pillar
+  if (pillar && typeof pillar === 'object' && 'id' in pillar) {
+    const id = (pillar as { id?: unknown }).id
+    if (typeof id === 'number' || typeof id === 'string') return id
+  }
+  return undefined
+}
+
 interface PreviousDocLike {
   _status?: 'draft' | 'published'
   slug?: string
+  pillar?: unknown
+  pillarSlug?: string
+  [key: string]: unknown
 }
 
 export interface RevalidatePlan {
@@ -77,12 +95,22 @@ export const buildRevalidatePlan = (
       case 'services': {
         // drift #1 (research §D4): service detail lives at the NESTED path
         // `/services/[pillar]/[slug]`; the pillar landing at `/services/[pillar]`.
-        // Fall back to the flat path only when the pillar slug can't be
-        // resolved (e.g. a minimal test doc with no pillar) so revalidation
+        // When a service MOVES pillars, the *previous* pillar's nested + landing
+        // paths also go stale — so bust both pillars (the hook resolves the old
+        // pillar slug onto `previousDoc.pillarSlug`). Fall back to the flat path
+        // only when no pillar resolves (e.g. a minimal test doc) so revalidation
         // still busts something rather than nothing.
-        const pillarSlug = resolvePillarSlug(doc)
-        if (pillarSlug) {
-          detailPaths.push(`/services/${pillarSlug}/${s}`, `/services/${pillarSlug}`)
+        const pillarSlugs = Array.from(
+          new Set(
+            [resolvePillarSlug(doc), resolvePillarSlug(previousDoc ?? {})].filter(
+              (p): p is string => Boolean(p),
+            ),
+          ),
+        )
+        if (pillarSlugs.length > 0) {
+          for (const p of pillarSlugs) {
+            detailPaths.push(`/services/${p}/${s}`, `/services/${p}`)
+          }
         } else {
           detailPaths.push(`/services/${s}`)
         }
@@ -146,8 +174,7 @@ const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {
  */
 const enrichServiceDoc = async (doc: DocLike, req: PayloadRequest): Promise<DocLike> => {
   if (resolvePillarSlug(doc)) return doc
-  const pillar = doc.pillar
-  const pillarId = typeof pillar === 'number' || typeof pillar === 'string' ? pillar : undefined
+  const pillarId = pillarIdOf(doc)
   if (pillarId === undefined || !req?.payload) return doc
   try {
     const fetched = await req.payload.findByID({
@@ -167,9 +194,18 @@ const enrichServiceDoc = async (doc: DocLike, req: PayloadRequest): Promise<DocL
 export const revalidateOnChange =
   (collection: string): CollectionAfterChangeHook =>
   async ({ doc, previousDoc, req }) => {
-    const enriched =
-      collection === 'services' ? await enrichServiceDoc(doc as DocLike, req) : (doc as DocLike)
-    const plan = buildRevalidatePlan(collection, enriched, previousDoc as PreviousDocLike)
+    let enriched = doc as DocLike
+    let prev = previousDoc as PreviousDocLike | undefined
+    if (collection === 'services') {
+      enriched = await enrichServiceDoc(doc as DocLike, req)
+      // A pillar move makes the OLD pillar's nested + landing paths stale too.
+      // Resolve the previous pillar slug only when the pillar actually changed,
+      // so the common no-move save stays a single fetch.
+      if (prev && pillarIdOf(prev) !== undefined && pillarIdOf(prev) !== pillarIdOf(enriched)) {
+        prev = (await enrichServiceDoc(prev as DocLike, req)) as PreviousDocLike
+      }
+    }
+    const plan = buildRevalidatePlan(collection, enriched, prev)
     await runRevalidation(plan)
     return doc
   }

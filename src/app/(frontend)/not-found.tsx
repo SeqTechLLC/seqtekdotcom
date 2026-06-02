@@ -39,12 +39,15 @@ export default function NotFound() {
       </ul>
 
       <div className="mt-12">
-        <Link
-          href="/contact"
+        {/* `/contact` (and `/contact/book-a-call`) aren't built yet — falling back to a
+            working mailto so the most prominent 404 action isn't itself a dead end.
+            Repoint to `/contact/book-a-call` once that route ships. */}
+        <a
+          href="mailto:contact@seqtek.com?subject=Strategy%20call%20request"
           className="inline-block rounded-md bg-accent-strong px-6 py-3 font-semibold text-white transition hover:opacity-90"
         >
           Book a strategy call
-        </Link>
+        </a>
       </div>
     </div>
   )
