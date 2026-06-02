@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-31
 
-**Status**: Stub — fill in via `/speckit-specify` / `/speckit-plan` / `/speckit-tasks` before implementation
+**Status**: **Engineering scope complete — closed 2026-06-01 (PR #21).** All 47 tasks (T001–T047) shipped; 443/443 int tests green. Acceptance is **template-scope** per the 2026-06-01 clarifications below — the templates render against Payload data and are verified against drafted content. The named, published marquee **content** (homepage copy, flagship case study, team bios/photos, localshoring narrative, workshop landing copy) is carved out to a content-lead-gated track (ROADMAP §1 C-1/C-3/C-7/C-8 + the Phase 3 deferred content list); it is **not** a blocking acceptance criterion for this spec. Deferred _tech_ (slow-request handling, live HubSpot Forms API, accent-contrast sweep, the two PR #21 review follow-ups) is tracked under ROADMAP Phase 5 "Deferred from spec 004."
 
 **Input**: User strategic pivot 2026-05-31 — "Let's make a site that looks like a company we'd want to hire. With real people. We have a whole marketing campaign we need to publish on seqtek's AI strategy and workshop. Freeze the seed work and pivot to marquee pages. Tech first then content."
 

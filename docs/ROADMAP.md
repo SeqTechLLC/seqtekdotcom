@@ -1,10 +1,10 @@
 # SEQTEK Website — Roadmap & Status Tracker
 
-**Last updated:** 2026-05-31 (Phase 2 substantially closed — spec 003 US1–US5 shipped (PRs #11/#13/#14/#15/#16), DB migration collapse + Postgres 16 → 18 bump shipped (#17), staging healthy on PG 18.3. US6 — media via S3 plugin — is the only remaining wrap-up item and the prereq for content-team uploads. **Strategic pivot 2026-05-31:** freeze further audit-seed investment; treat the seed pipeline as a one-shot migration tool + 301-redirect-map source, not a publish baseline. Phase 3 retargeted at marquee pages first — homepage wired to Payload, flagship case study, team page, Touchstone AI workshop campaign, localshoring story. Spec 004 opens as the home for the engineering side of that work.)
+**Last updated:** 2026-06-01 (Phase 2 closed — spec 003 US1–US7 + media (S3) shipped through PR #19; staging healthy on PG 18.3. **Phase 3 split (2026-06-01):** spec 004's _engineering_ scope — the public render foundation + all five marquee page _templates_ — shipped in **PR #21** (cached readers + ISR tag-parity per ADR 0005, error/maintenance pages, 301 redirect map, metadata/JSON-LD, dynamic sitemap; 47/47 tasks, 443/443 int tests). Spec 004 acceptance was **template-scope** per its 2026-06-01 clarifications, so the spec is _done_, not blocked. The marquee _content_ is carved out to a content-lead-gated track (C-1/C-3/C-7/C-8) — templates are live and waiting on copy/photos, not on engineers. Next: deferred-tech follow-ups + Phase 5 polish.)
 
 > **Convention:** When a Phase implementation item ships, _move_ it out of this file (don't just check it off) and add a `P{N}-*` row to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md). The roadmap stays a short punch list of what's _open_; history carries the audit trail.
 
-**Status:** Phase 2 wrap-up (003 US6) + Phase 3 (spec 004 — marquee pages) starting
+**Status:** Phase 3 render foundation (spec 004) shipped (PR #21) and closed; marquee _content_ deferred to the content track (content-lead-gated). Active engineering: deferred-tech follow-ups + Phase 5 polish.
 
 Single source of truth for what's open, what's blocked, what's next on the website rebuild. Keep current. When something moves status, edit this file in the same commit. Completed items are archived in [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) so this file stays focused on active work.
 
@@ -76,26 +76,21 @@ Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./
 
 All shipped — completed items live in [`PROJECT_HISTORY.md` § Phase 2 implementation (P2)](./PROJECT_HISTORY.md). US1–US5 (PRs #11/#13/#14/#15/#16), DB migration collapse + PG 18 bump (#17), and **US6 (media via S3) + US7 (scheduled-publish wire-up) + Polish (PR #19, P2-7)**. No open carry-over. (The US7 cron trigger `/api/cron/publish-scheduled` stays intentionally deferred — see Phase 5.5; only the Payload-side invariant was in scope.)
 
-### Phase 3 — Public render foundation + marquee pages (spec 004) (3-4 weeks)
+### Phase 3 — Public render foundation (spec 004) — closed (engineering)
 
-The pivot. Tech-first, content-second per Kenn 2026-05-31. Block library is comprehensive; what's missing is the public-render wiring + the marquee-page content. Reference: `specs/004-*/spec.md` once stubbed.
+The pivot, tech half. Spec 004's engineering scope shipped in **PR #21** (2026-06-01): cached Payload readers with ISR tag-parity (ADR 0005), all five marquee page _templates_ (homepage, case studies, team, Touchstone workshops, localshoring) plus the remaining in-scope routes (insights, services pillar/detail, listings), error/maintenance pages, the 301 redirect map, metadata + JSON-LD, and the dynamic sitemap. All 47 spec tasks (T001–T047) done; 443/443 int tests green. Acceptance was **template-scope** per the spec's 2026-06-01 clarifications — templates render against drafted content; the named, published marquee content is a separately-tracked content-lead deliverable. Implementation detail moved to [`PROJECT_HISTORY.md` § Phase 3 implementation (P3)](./PROJECT_HISTORY.md).
 
-**Tech (engineer-driven, days):**
+> **The split (2026-06-01):** spec 004 is the _engineering_ deliverable and it is done, not blocked — its acceptance was always template-scope. The marquee _content_ is the second half, carved out below into a content-lead-gated track so the engineering spec can close cleanly. Remaining engineering work is content-independent and lives in the Phase 5 "Deferred from spec 004" subsection.
 
-- [ ] **Homepage template** — replace the spike `(frontend)/page.tsx` placeholder with a Payload-driven template that fetches the `homepage` global and renders its block array through `RenderBlocks`. Highest-traffic URL — proves the loop end-to-end.
-- [ ] **Generic `/[slug]` page route** for `pages` collection (about-section pages, etc.) via `RenderBlocks` dispatcher
-- [ ] **Collection detail routes** — `/case-studies/[slug]`, `/insights/[slug]`, `/services/[pillar]/[slug]`, `/touchstone-workshops/[slug]`. Same pattern, different fetch.
-- [ ] **Collection listing routes** — `/case-studies`, `/insights`, `/services`, `/team`, `/touchstone-workshops`
-- [ ] **404 / 500 / maintenance pages** per `docs/ERROR_PAGES.md` (D-12 was the spec; render now lands the pages)
-- [ ] **301 redirect map** from old Wix slugs (the seed pipeline produced the source-of-truth mapping; wire it via `next.config.ts` redirects or middleware)
+### Phase 3 content — marquee content population (deferred — content-lead-gated, NOT engineering-blocked)
 
-**Marquee content (content-lead-driven, weeks — drives the order):**
+The content half of the original Phase 3. The templates are **live and waiting**; these items are gated on the C-\* content collection items in §1 (copy, photos, testimonials, logo permissions), not on any further engineering. Kenn is tracking down the source content.
 
-- [ ] **Homepage** — hero copy + brand teaser + stats bar + featured case study + workshop CTA. Source: `BRAND_STRATEGY_RESEARCH.md` + `VALUES_REWRITE.md`. Depends on Sequoyah brand story draft (C-3) + hero copy decision (DS-2).
-- [ ] **One flagship case study** — pick the strongest current engagement, rewrite specifically (not generically), get client headshot + named quote (C-1, C-7). One great case study beats 8 generic ones.
-- [ ] **Team page** — upload existing photos (C-8 once US6 ships), draft 3 leadership bios + 5-6 team bios (C-3). This humanizes the firm immediately.
-- [ ] **Localshoring story page** — your differentiator vs. nearshore / offshore. Rewrite from existing.
-- [ ] **Touchstone AI workshop landing** — the active marketing campaign destination. Includes workshop description, agenda, registration CTA, supporting blog post links.
+- [ ] 🔴 **Homepage content** — hero copy + brand teaser + stats bar + featured case study + workshop CTA. Source: `BRAND_STRATEGY_RESEARCH.md` + `VALUES_REWRITE.md`. Gated on Sequoyah brand story (C-3), hero copy decision (DS-2), canonical stats (BR-5).
+- [ ] 🔴 **One flagship case study** — strongest current engagement, rewritten specifically, client headshot + named quote. One great case study beats 8 generic ones. Gated on C-1 / C-5 / C-7.
+- [ ] 🔴 **Team page content** — ingest existing photos (C-8), draft 3 leadership + 5-6 team bios (C-3). Humanizes the firm immediately.
+- [ ] 🟡 **Localshoring story content** — rewrite from existing audit content (less people-gated than the others; the differentiator narrative vs. nearshore / offshore).
+- [ ] 🔴 **Touchstone AI workshop landing content** — workshop description, agenda, registration CTA, supporting post links. The active campaign destination. (Live form wiring is the deferred-tech HubSpot item under Phase 5.)
 
 ### Phase 4 — Campaign content expansion (2-3 weeks)
 
@@ -110,8 +105,8 @@ The supporting content for the active AI workshop marketing push, plus filling o
 
 ### Phase 5 — Polish (1-2 weeks)
 
-- [ ] SEO: structured data (JSON-LD), dynamic sitemap, meta tags
-- [ ] AICO baseline (F-6) — `llms.txt` + `llms-full.txt`, `.md` alternatives, crawler-aware caching
+- [ ] SEO: deeper structured data + per-page OG images. _Baseline shipped in spec 004 (PR #21): `Organization`/`Article`/`BreadcrumbList` JSON-LD, dynamic sitemap, metadata helper with OG defaults. Phase 5 is the richer schema + per-page social-image work._
+- [ ] AICO baseline (F-6) — `llms.txt` + `llms-full.txt`, `.md` alternatives, crawler-aware caching (the `llms-full` body needs published page content — partly content-gated)
 - [ ] Accessibility audit (axe + manual screen reader pass) on the marquee + campaign pages
 - [ ] Performance optimization until Lighthouse CI passes ARCHITECTURE.md §7 thresholds
 - [ ] Cookie consent flow end-to-end test (HubSpot ↔ GTM bridge)
@@ -125,6 +120,8 @@ The supporting content for the active AI workshop marketing push, plus filling o
 - [ ] **Live HubSpot Forms API integration** (research §D10) — spec 004 ships only the Phase-2 placeholder `hubspot-form` block. The live custom React form → `api.hsforms.com`, the Zod submit state machine, GTM `dataLayer` events, and the CSP-nonce + consent wiring are a follow-up, gated on the Workshop Inquiry Form GUID (INTEGRATIONS.md §1.2 "TBD") + lead-magnet asset decision.
 - [ ] **CSP enforce, cookie-consent E2E, cross-browser/device QA, performance tuning** — already listed above; spec 004 keeps CSP report-only and Lighthouse Performance budgets at `warn` (a11y/best-practices/SEO gate now).
 - [ ] **Block-library accent-contrast sweep** — many spec-003 section components (`Hero`, `HomepageHero`, `StatsBar`, `MetricDisplay`, `FeaturedCaseStudy`, `ServicePillarHero`, `TwoColumn`, `NewsletterCta`, `ContactCta`, `KeyTakeaways`, …) use `bg-accent`/`text-accent` (brand-green-500 `#72b94d`), which **fails WCAG AA** with white text / on light backgrounds — a documented no-go in DESIGN_SYSTEM.md §2.2 (use green-700/`accent-strong`). Spec 004 fixed the ones on the shipped marquee surfaces (`CtaSection`, `DownloadCard`, `HubspotForm`, the 404/500 buttons, case-study metrics) to `accent-strong`; the remaining components need the same swap as their pages get a11y coverage (will shift the showcase visual baselines — re-capture in the same change).
+- [ ] **PR #21 review follow-up — 404-page `/contact` dead link** — `src/app/(frontend)/not-found.tsx` primary CTA ("Book a strategy call") links to `/contact`, which doesn't exist yet, so a 404 → click → 404 dead-end. Point it at a `mailto:` (as the error pages do) or `/touchstone-workshops` until the contact route ships, or fast-follow the route.
+- [ ] **PR #21 review follow-up — services pillar-change path-invalidation gap** — `revalidateOnChange.ts` resolves only the new pillar's path when a service moves pillars (A→B), leaving the stale `/services/A/<slug>` path until the 3600s fallback. Tags are unaffected (slug-based). Resolve `previousDoc`'s pillar too and emit both paths, or document pillar reassignment as out of scope for on-demand path busting.
 
 ### Phase 5.5 — Launch readiness review (1 week)
 
