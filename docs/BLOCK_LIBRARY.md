@@ -365,11 +365,13 @@ Frontend emits `FAQPage` JSON-LD automatically.
 
 #### `newsletter-signup` — inline email capture
 
-| Field     | Type     | Required | Notes                                                        |
-| --------- | -------- | -------- | ------------------------------------------------------------ |
-| `heading` | text     | no       | Default "Subscribe to SEQTEK Insights"                       |
-| `body`    | textarea | no       |                                                              |
-| `formId`  | text     | no       | Defaults to env var `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID` |
+> **Dormant (spec 005, 2026-06-02):** no newsletter program exists and the old site had none, so this block is unused in templates and `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID` was removed. The definition stays in the library; wire it only if a newsletter program starts.
+
+| Field     | Type     | Required | Notes                                                |
+| --------- | -------- | -------- | ---------------------------------------------------- |
+| `heading` | text     | no       | Default "Subscribe to SEQTEK Insights"               |
+| `body`    | textarea | no       |                                                      |
+| `formId`  | text     | no       | HubSpot form GUID (none provisioned — block dormant) |
 
 #### `hubspot-form` — full HubSpot form embed
 
@@ -511,11 +513,11 @@ The homepage global has fixed fields that map 1:1 to the renderer:
 
 ### Blog post (`posts` — structured fields with inline-block rich text body)
 
-`<BlogPostHeader>` (title, eyebrow, author byline, date, hero image) → `<Prose>` (body with inline CTAs, callouts, testimonial embeds) → `<RelatedContent type="posts">` → `<RelatedContent type="services">` → `<NewsletterSignup>` → share buttons
+`<BlogPostHeader>` (title, eyebrow, author byline, date, hero image) → `<Prose>` (body with inline CTAs, callouts, testimonial embeds) → `<RelatedContent type="posts">` → `<RelatedContent type="services">` → share buttons
 
 ### Blog listing (`/insights`)
 
-`<Hero variant="text-only">` → category filter chips → `<Pagination>` paginated `<PostGrid>` → `<NewsletterSignup>`
+`<Hero variant="text-only">` → category filter chips → `<Pagination>` paginated `<PostGrid>`
 
 ### Industry page (`industries` — structured fields)
 

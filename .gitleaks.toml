@@ -24,4 +24,8 @@ regexes = [
   # Public marketing-side identifiers documented in INTEGRATIONS.md
   '''AW-810041431''',         # Google Ads conversion ID (public)
   '''GTM-[A-Z0-9]+''',         # GTM container IDs (public)
+  # HubSpot form GUIDs — public (visible in any embed code), documented in
+  # INTEGRATIONS.md §1.2. List each provisioned GUID explicitly; do NOT use a
+  # broad UUID pattern, which would mask real UUID-shaped secrets.
+  '''66dba2bf-f099-44d5-8c6e-f24292cefe53''', # Workshop Inquiry form GUID
 ]
