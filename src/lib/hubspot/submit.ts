@@ -11,8 +11,8 @@
  * validation, submitting state, success view, dataLayer events — is exercisable
  * end-to-end without hitting HubSpot. Drop a GUID into the env var to go live.
  *
- * NOTE (go-live): `api.hsforms.com` must be added to CSP `connect-src`
- * (src/lib/csp.ts currently allows `*.hsforms.net`, not `.com`).
+ * NOTE (go-live): `api.hsforms.com` is already allowed in CSP `connect-src`
+ * (src/lib/csp.ts — `*.hsforms.com`, spec 005), so going live needs no CSP change.
  */
 
 const SUBMIT_TIMEOUT_MS = 15_000
@@ -142,6 +142,10 @@ export async function submitHubspotForm(args: SubmitArgs): Promise<HubspotSubmit
 
   let result = await postOnce(args)
 
+  // Worst case on a timeout path is bounded but slow: 15s abort + 1s backoff +
+  // 15s abort ≈ 31s before the error view shows. Accepted per the §1.2 state
+  // machine (single retry on transient failures); the button stays in its
+  // submitting state throughout.
   if (result.status === 'error' && RETRYABLE.has(result.errorClass)) {
     await new Promise((resolve) => setTimeout(resolve, RETRY_BACKOFF_MS))
     result = await postOnce(args)

@@ -29,6 +29,8 @@ const WORKSHOP_FIELDS: FormFieldConfig[] = [
     name: 'marketing_info',
     label: 'Which workshop?',
     type: 'select',
+    // `required` here is a page-side UX choice; HubSpot treats `marketing_info`
+    // as optional (INTEGRATIONS.md §1.2). Don't relax this to match HubSpot.
     required: true,
     options: [
       { label: 'AI Strategy', value: 'AI Strategy' },
