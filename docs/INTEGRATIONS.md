@@ -52,12 +52,11 @@ SEQTEK's forms must look native to the site design, not like HubSpot iframe embe
 
 **Forms to build:**
 
-| Form             | Location                | Fields                                                                | HubSpot Form GUID       |
-| ---------------- | ----------------------- | --------------------------------------------------------------------- | ----------------------- |
-| Contact          | `/contact`              | First name, last name, email, phone, inquiry type (dropdown), message | TBD — create in HubSpot |
-| Book a Call      | `/contact/book-a-call`  | HubSpot Meetings embed (see 1.4)                                      | N/A (Meetings widget)   |
-| Newsletter       | Blog sidebar/footer     | Email                                                                 | TBD                     |
-| Workshop Inquiry | `/touchstone-workshops` | Name, email, company, workshop interest, message                      | TBD                     |
+| Form             | Location                | Fields                                                                | HubSpot Form GUID                      |
+| ---------------- | ----------------------- | --------------------------------------------------------------------- | -------------------------------------- |
+| Contact          | `/contact`              | First name, last name, email, phone, inquiry type (dropdown), message | TBD — create in HubSpot                |
+| Book a Call      | `/contact/book-a-call`  | HubSpot Meetings embed (see 1.4)                                      | N/A (Meetings widget)                  |
+| Workshop Inquiry | `/touchstone-workshops` | First/last name, email, phone, company, workshop type (free text)     | `66dba2bf-f099-44d5-8c6e-f24292cefe53` |
 
 #### Provisioning checklist (request from the HubSpot portal admin)
 
@@ -67,7 +66,7 @@ Every live form is blocked on HubSpot-side setup. For each form we submit via th
 
 1. **Form GUID** — the `formId` in the form's Share / Embed code (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). Fills the `TBD` cells above; stored per form as a constant / env var.
 2. **Field internal names** — the property internal name of every field on the form (e.g. `firstname`, `lastname`, `email`, `company`, `message`), _not_ the display label. The `fields[].name` we POST must match these exactly, and each field must exist on the form, or the submit 400s with `PROPERTY_DOESNT_EXIST`.
-3. **Dropdown option values** — for enumeration fields (Contact "inquiry type", Workshop "workshop interest"), the internal **value** of each option (not the label). We submit the value.
+3. **Dropdown option values** — for enumeration fields (e.g. Contact "inquiry type"), the internal **value** of each option (not the label). We submit the value. (The Workshop form's "workshop type" is a free-text property, not a dropdown — see the provisioned block below.)
 4. **Subscription type ID(s)** — only if the form collects a marketing opt-in (see consent below); needed for `legalConsentOptions.consent.communications[].subscriptionTypeId`.
 5. **Portal / Hub ID confirmation** — confirm **8504846**.
 
@@ -107,11 +106,36 @@ Content-Type: application/json
 
 - `legalConsentOptions` is included only when the form collects consent (item 4 / the consent decision above).
 - Success returns `{ inlineMessage }` (or `{ redirectUrl }`); validation failures return `status: "error"` with an `errors[]` array — drive the §1.2 failure-handling state machine off that.
-- The same request can provision the **Contact** and **Newsletter** GUIDs in one round-trip. `Book a Call` is a Meetings embed (§1.4), not an API form — no GUID.
+- `Book a Call` is a Meetings embed (§1.4), not an API form — no GUID. Newsletter was dropped (2026-06-02): no newsletter program, and the old site had none (see spec 005).
 
 > **Open content dependency (not the HubSpot admin's task):** the Workshop landing's lead-magnet asset (the gated download behind `DownloadCard`) is a content-lead decision, tracked separately. The form can ship without it; the download just has nothing to deliver until that asset lands.
 
 _Verified against the HubSpot Forms API docs + the documented `FORM_HAS_RECAPTCHA_ENABLED` limitation (2026-06)._
+
+#### Workshop Inquiry — provisioned (confirmed with HubSpot admin, 2026-06-02)
+
+First form off the checklist. Values confirmed by Chad Coleman (portal admin):
+
+- **Form GUID:** `66dba2bf-f099-44d5-8c6e-f24292cefe53` (env `NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID`)
+- **Portal / Hub ID:** `8504846` — confirmed
+- **Region:** `na1` (from the embed `data-region`)
+- **CAPTCHA / SPAM prevention:** off (never enabled) — API submissions accepted
+- **Consent / GDPR:** none on this form — omit `legalConsentOptions` from the payload
+- **Domain allowlist:** none to clear — the Forms API submit endpoint is open / CORS-enabled (see above), no per-form domain restriction for `seqtek-preview.com` or `seqtek.com`
+
+**Field internal names** (the `fields[].name` we POST):
+
+| Page field    | Internal name    | Required | Notes                                                                    |
+| ------------- | ---------------- | -------- | ------------------------------------------------------------------------ |
+| First name    | `firstname`      | Yes      |                                                                          |
+| Last name     | `lastname`       | Yes      |                                                                          |
+| Email         | `email`          | Yes      |                                                                          |
+| Phone         | `phone`          | Yes      | Required on the form — the page must collect it and submit it every time |
+| Company       | `company`        | No       | Added at our request                                                     |
+| Workshop type | `marketing_info` | No       | **Free-text property, not a dropdown** — see note                        |
+
+- **`marketing_info` is a plain text input, not an enumeration.** The admin keeps it as a reusable text property, so HubSpot does no option-value validation. The workshop-interest choices (Touchstone, Five Dysfunctions, etc.) are a page-side decision: render the dropdown on our page and POST the selected string into `marketing_info`. There are no HubSpot-side option values to match.
+- **Message field dropped.** The admin removed it; there is no HubSpot property to receive a free-text message on this form, so the page omits it (deviation from the field list in the table above). If we want message capture later, the admin must add a property and return its internal name.
 
 **Form submission flow:**
 
@@ -151,7 +175,7 @@ Every form on the site goes through the same submission state machine and error 
 | `form_submission_success` | `{ formId }`                                                       | On 200 response from HubSpot                         |
 | `form_submission_failure` | `{ formId, errorClass: '4xx' \| '5xx' \| 'network' \| 'timeout' }` | On any terminal failure (after retry, if applicable) |
 
-**Data handling:** No payment or sensitive data is collected by any form on this site. The contact, newsletter, and workshop-inquiry forms capture name, email, company, and message only — no SSN, no payment, no health data. This constrains the failure surface meaningfully: a failed submission can be safely retried client-side without secondary-storage concerns.
+**Data handling:** No payment or sensitive data is collected by any form on this site. The contact and workshop-inquiry forms capture name, email, company, and message only — no SSN, no payment, no health data. This constrains the failure surface meaningfully: a failed submission can be safely retried client-side without secondary-storage concerns.
 
 ### 1.3 Chat Widget
 
@@ -548,14 +572,14 @@ If SES is unreachable (network, throttle, regional outage), Payload's mailer log
 
 ### Client-Side (`NEXT_PUBLIC_` Prefix — Visible in Browser JS)
 
-| Variable                                 | Purpose                 | Example Value                  |
-| ---------------------------------------- | ----------------------- | ------------------------------ |
-| `NEXT_PUBLIC_SITE_URL`                   | Canonical URL, OG tags  | `https://seqtek.com`           |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`          | HubSpot portal          | `8504846`                      |
-| `NEXT_PUBLIC_GTM_ID`                     | GTM container           | `GTM-XXXXXXX`                  |
-| `NEXT_PUBLIC_SCOREAPP_URL`               | ScoreApp assessment URL | `https://app.scoreapp.com/...` |
-| `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`    | Contact form GUID       | HubSpot form ID                |
-| `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID` | Newsletter form GUID    | HubSpot form ID                |
+| Variable                               | Purpose                    | Example Value                          |
+| -------------------------------------- | -------------------------- | -------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                 | Canonical URL, OG tags     | `https://seqtek.com`                   |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`        | HubSpot portal             | `8504846`                              |
+| `NEXT_PUBLIC_GTM_ID`                   | GTM container              | `GTM-XXXXXXX`                          |
+| `NEXT_PUBLIC_SCOREAPP_URL`             | ScoreApp assessment URL    | `https://app.scoreapp.com/...`         |
+| `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`  | Contact form GUID          | HubSpot form ID                        |
+| `NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID` | Workshop Inquiry form GUID | `66dba2bf-f099-44d5-8c6e-f24292cefe53` |
 
 ### `.env.example` (Committed to Repo)
 
@@ -587,7 +611,7 @@ NEXT_PUBLIC_HUBSPOT_PORTAL_ID=
 NEXT_PUBLIC_GTM_ID=
 NEXT_PUBLIC_SCOREAPP_URL=
 NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=
-NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID=
+NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=
 ```
 
 ---

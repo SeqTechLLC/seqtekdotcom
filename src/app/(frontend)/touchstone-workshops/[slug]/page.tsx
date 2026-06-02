@@ -9,13 +9,14 @@ import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RichText } from '@/components/richText/RichText'
-import { HubspotForm } from '@/components/sections/HubspotForm'
+import { WorkshopInquiryForm } from '@/components/forms/WorkshopInquiryForm'
 import { DownloadCard } from '@/components/sections/DownloadCard'
 import type { Workshop } from '@/payload-types'
 
-// spec 004 US4 (T022). Workshop campaign landing (Shape B). The HubSpot form
-// stays the Phase-2 PLACEHOLDER block — the live Forms API integration is
-// deferred (research §D10, confirmed 2026-05-31). Only the placeholder mounts.
+// spec 004 US4 (T022) + spec 005. Workshop campaign landing (Shape B). The
+// Workshop Inquiry form is the live (half-wired) custom form — provisioned GUID
+// in NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID (INTEGRATIONS.md §1.2). It runs the
+// full client lifecycle now; live submit activates once the env var is set.
 
 // Dynamically rendered (no generateStaticParams) — layout CSP nonce forces
 // dynamic rendering (Constitution §IV, ADR 0005); data ISR-cached via the
@@ -124,11 +125,13 @@ export default async function WorkshopPage({ params }: Props) {
             />
           </section>
           <section data-testid="hubspot-form">
-            <HubspotForm
-              heading="Request this workshop"
-              description="Tell us about your team and we will follow up with dates."
-              formId="workshop-inquiry"
-            />
+            <h2 className="text-h2 font-bold">Request this workshop</h2>
+            <p className="mt-3 text-body-lg text-text-secondary">
+              Tell us about your team and we will follow up with dates.
+            </p>
+            <div className="mt-6">
+              <WorkshopInquiryForm />
+            </div>
           </section>
         </div>
       </article>
