@@ -40,6 +40,7 @@ export function HubspotLeadForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [state, setState] = useState<FormState>('idle')
   const [formError, setFormError] = useState<string | null>(null)
+  const [honeypot, setHoneypot] = useState('')
 
   function update(name: string, value: string) {
     setValues((prev) => ({ ...prev, [name]: value }))
@@ -47,6 +48,15 @@ export function HubspotLeadForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    // Honeypot: a field humans never see. If it's filled, a bot did it — show
+    // success without sending anything (INTEGRATIONS.md §1.2: spam protection
+    // lives on our page since CAPTCHA is off on the API forms).
+    if (honeypot.trim() !== '') {
+      setState('success')
+      return
+    }
+
     const errors = validateFields(fields, values)
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
@@ -86,6 +96,21 @@ export function HubspotLeadForm({
 
   return (
     <form noValidate onSubmit={handleSubmit} data-testid="hubspot-lead-form" className="space-y-5">
+      {/* Honeypot — hidden from humans + the a11y tree; naive bots fill it and
+          get silently dropped on submit. */}
+      <div hidden>
+        <label htmlFor="company_website">Company website</label>
+        <input
+          id="company_website"
+          name="company_website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(event) => setHoneypot(event.target.value)}
+        />
+      </div>
+
       {!isHubspotLive(formId) ? (
         <p className="rounded-md bg-surface-subtle px-3 py-2 text-caption text-text-muted">
           Preview mode — submissions are not yet sent to HubSpot.

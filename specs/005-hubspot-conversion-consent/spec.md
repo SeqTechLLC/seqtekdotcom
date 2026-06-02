@@ -36,6 +36,9 @@ The Wix audit (`SITE-AUDIT.md`) shows the old site had **no** newsletter signup 
 - `src/components/sections/HubspotForm.tsx` — placeholder card → live (half-wired) form.
 - `src/app/(frontend)/contact/page.tsx` — new `/contact` route.
 - `.env.example` + `tests/int/lib/hubspot-submit.int.spec.ts`.
+- Honeypot spam protection in `HubspotLeadForm` (CAPTCHA is off on the API forms — §1.2; naive bots silently dropped).
+- 404 CTA repointed to `/contact` (#23 merged, so the route + CTA are both live).
+- Playwright E2E `tests/e2e/hubspot-forms.e2e.spec.ts` — contact-form lifecycle (render, validation, submit → success, `dataLayer` events, honeypot hidden, axe-clean).
 
 ## Half-wired (the deferred seam)
 
@@ -60,7 +63,6 @@ All form GUIDs are `TBD` (INTEGRATIONS.md §1.2). The portal admin must create e
 
 - ⏳ Provisioning request sent; awaiting GUID, field internal names, inquiry-type option values, consent decision.
 - ⏳ On receipt: set `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`, confirm field names (placeholders today → `PROPERTY_DOESNT_EXIST` if wrong), wire `legalConsentOptions` if consent applies.
-- ⏳ Repoint the 404 CTA (`not-found.tsx`) back to `/contact` once PR #23 merges.
 
 ## Out of scope (separate specs)
 
