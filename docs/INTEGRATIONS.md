@@ -48,6 +48,7 @@ SEQTEK's forms must look native to the site design, not like HubSpot iframe embe
 - The API is CORS-enabled for browser submissions
 - No server-side proxy needed
 - Form GUID is configured per form in HubSpot, referenced as a constant or env var
+- **Forms with HubSpot CAPTCHA / SPAM-prevention enabled reject API submissions** (`FORM_HAS_RECAPTCHA_ENABLED`). Keep CAPTCHA off on any form we submit here and protect against spam on our own page. See the provisioning checklist below.
 
 **Forms to build:**
 
@@ -57,6 +58,60 @@ SEQTEK's forms must look native to the site design, not like HubSpot iframe embe
 | Book a Call      | `/contact/book-a-call`  | HubSpot Meetings embed (see 1.4)                                      | N/A (Meetings widget)   |
 | Newsletter       | Blog sidebar/footer     | Email                                                                 | TBD                     |
 | Workshop Inquiry | `/touchstone-workshops` | Name, email, company, workshop interest, message                      | TBD                     |
+
+#### Provisioning checklist (request from the HubSpot portal admin)
+
+Every live form is blocked on HubSpot-side setup. For each form we submit via the API, the portal admin must create the form, apply two settings, and return five values. Portal ID is already known (**8504846**).
+
+**Values to obtain (per form):**
+
+1. **Form GUID** — the `formId` in the form's Share / Embed code (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). Fills the `TBD` cells above; stored per form as a constant / env var.
+2. **Field internal names** — the property internal name of every field on the form (e.g. `firstname`, `lastname`, `email`, `company`, `message`), _not_ the display label. The `fields[].name` we POST must match these exactly, and each field must exist on the form, or the submit 400s with `PROPERTY_DOESNT_EXIST`.
+3. **Dropdown option values** — for enumeration fields (Contact "inquiry type", Workshop "workshop interest"), the internal **value** of each option (not the label). We submit the value.
+4. **Subscription type ID(s)** — only if the form collects a marketing opt-in (see consent below); needed for `legalConsentOptions.consent.communications[].subscriptionTypeId`.
+5. **Portal / Hub ID confirmation** — confirm **8504846**.
+
+**Settings the admin must apply:**
+
+- **Disable CAPTCHA / SPAM prevention on every API-submitted form.** A form with HubSpot reCAPTCHA enabled rejects all API submissions with `FORM_HAS_RECAPTCHA_ENABLED` ("Form '…' can't receive API submissions as Captcha (SPAM prevention) is enabled"). Spam protection lives on our page (honeypot / Cloudflare Turnstile), not in HubSpot, for the API path.
+- **GDPR / consent decision.** If the form needs consent-to-process and/or a marketing opt-in, the admin supplies the exact consent text + subscription type ID(s); we echo them back in `legalConsentOptions` or the submit fails validation. If the portal isn't running GDPR consent on this form, confirm so we omit `legalConsentOptions`.
+- **Domain allowlist (if any).** We submit from `seqtek-preview.com` (staging) and `seqtek.com` (launch). Confirm no form-level domain restriction blocks these.
+- **On-submit automation** (admin-owned, FYI only): internal notification, owner / routing, list membership, lifecycle stage, autoresponder, workflows. These fire automatically server-side on a successful submit; no code trigger needed.
+
+**Submit payload reference** (what each requested value maps to):
+
+```http
+POST https://api.hsforms.com/submissions/v3/integration/submit/8504846/{FORM_GUID}
+Content-Type: application/json
+
+{
+  "fields": [
+    { "name": "<field internal name>", "value": "<user input | dropdown option value>" }
+  ],
+  "context": {
+    "hutk": "<hubspotutk cookie — set by the §1.1 tracking script; links the submit to the visitor>",
+    "pageUri": "https://seqtek.com/touchstone-workshops/…",
+    "pageName": "<document title>"
+  },
+  "legalConsentOptions": {
+    "consent": {
+      "consentToProcess": true,
+      "text": "<exact processing-consent text from the admin>",
+      "communications": [
+        { "value": true, "subscriptionTypeId": "<id from the admin>", "text": "<opt-in text>" }
+      ]
+    }
+  }
+}
+```
+
+- `legalConsentOptions` is included only when the form collects consent (item 4 / the consent decision above).
+- Success returns `{ inlineMessage }` (or `{ redirectUrl }`); validation failures return `status: "error"` with an `errors[]` array — drive the §1.2 failure-handling state machine off that.
+- The same request can provision the **Contact** and **Newsletter** GUIDs in one round-trip. `Book a Call` is a Meetings embed (§1.4), not an API form — no GUID.
+
+> **Open content dependency (not the HubSpot admin's task):** the Workshop landing's lead-magnet asset (the gated download behind `DownloadCard`) is a content-lead decision, tracked separately. The form can ship without it; the download just has nothing to deliver until that asset lands.
+
+_Verified against the HubSpot Forms API docs + the documented `FORM_HAS_RECAPTCHA_ENABLED` limitation (2026-06)._
 
 **Form submission flow:**
 
