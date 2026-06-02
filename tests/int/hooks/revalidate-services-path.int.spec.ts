@@ -56,4 +56,21 @@ describe('buildRevalidatePlan(services) — nested path', () => {
     expect(plan.paths).toContain('/services/ops/new')
     expect(plan.paths).toContain('/services/ops/old')
   })
+
+  it('busts BOTH pillars when a service moves pillars (PR #21 review follow-up)', () => {
+    // previousDoc carries the OLD pillar slug (the afterChange hook enriches it
+    // when the pillar relationship changes). Without this, the stale
+    // `/services/old-pillar/...` paths would survive until the 3600s fallback.
+    const plan = buildRevalidatePlan(
+      'services',
+      { _status: 'published', slug: 'svc', pillarSlug: 'new-pillar' },
+      { _status: 'published', slug: 'svc', pillarSlug: 'old-pillar' },
+    )
+    expect(plan.paths).toContain('/services/new-pillar/svc')
+    expect(plan.paths).toContain('/services/new-pillar')
+    expect(plan.paths).toContain('/services/old-pillar/svc')
+    expect(plan.paths).toContain('/services/old-pillar')
+    // tags stay slug-based — keystone C1 parity is unaffected by the pillar move
+    expect(plan.tags.sort()).toEqual(['services_list', 'services_svc'])
+  })
 })
