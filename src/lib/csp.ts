@@ -35,6 +35,7 @@ const HUBSPOT_CONNECT = [
   '*.hubspot.com',
   '*.hs-analytics.net',
   '*.hsforms.net',
+  '*.hsforms.com', // Forms API submit endpoint (api.hsforms.com) — spec 005
   '*.hs-banner.com',
   '*.usemessages.com',
 ] as const
