@@ -1,6 +1,6 @@
 # Implementation Plan: Consent & Privacy Compliance
 
-**Branch**: `006-consent-privacy-compliance` | **Date**: 2026-06-03 | **Spec**: [spec.md](./spec.md)
+**Branch**: `feat/006-consent-privacy-compliance` | **Date**: 2026-06-03 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/006-consent-privacy-compliance/spec.md`
 

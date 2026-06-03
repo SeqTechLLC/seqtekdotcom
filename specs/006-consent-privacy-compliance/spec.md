@@ -1,6 +1,6 @@
 # Feature Specification: Consent & Privacy Compliance
 
-**Feature Branch**: `006-consent-privacy-compliance`
+**Feature Branch**: `feat/006-consent-privacy-compliance`
 
 **Created**: 2026-06-03
 
