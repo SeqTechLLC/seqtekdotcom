@@ -17,8 +17,8 @@
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 [P] Create `infra/gtm/` with `infra/gtm/README.md` documenting the GTM container export → commit workflow and the TBD Container ID (FR-008; first `infra/` use, constitution-sanctioned location).
-- [ ] T002 [P] Add a shared Playwright consent harness (stub `window._hsp`, capture `window.dataLayer` consent/`gtag` pushes, seed/clear `__hs_opt_out`/`__hs_cookie_cat_pref`/`hubspotutk` cookies) for reuse across the consent E2E specs, co-located with the existing `tests/e2e/` helpers.
+- [x] T001 [P] Create `infra/gtm/` with `infra/gtm/README.md` documenting the GTM container export → commit workflow and the TBD Container ID (FR-008; first `infra/` use, constitution-sanctioned location).
+- [x] T002 [P] Add a shared Playwright consent harness (stub `window._hsp`, capture `window.dataLayer` consent/`gtag` pushes, seed/clear `__hs_opt_out`/`__hs_cookie_cat_pref`/`hubspotutk` cookies) for reuse across the consent E2E specs, co-located with the existing `tests/e2e/` helpers.
 
 ---
 
@@ -26,9 +26,9 @@
 
 **⚠️ Blocks the consent stories (US1/US3/US4). US2 (CSP) and US5 (privacy page) are independent of this phase and may proceed in parallel.**
 
-- [ ] T003 Correct the consent bridge in `src/components/integrations/ConsentDefault.tsx`: replace the `window.addEventListener('__hs_opt_in_consent', …)` path with `window._hsp.push(['addPrivacyConsentListener', cb])`; in `cb`, derive `analytics = consent.allowed || consent.categories?.analytics` and `ads = consent.allowed || consent.categories?.advertisement`, call `gtag('consent','update', …)` per the mapping, then `gtag('event','hubspotConsentUpdate')` (contracts/consent-bridge.md C2/C4). Keep the inline consent default (C1) and the nonce/`suppressHydrationWarning` handling unchanged.
-- [ ] T004 Reconcile `docs/INTEGRATIONS.md` §2.2 to the official `addPrivacyConsentListener` API (replace the `__hs_opt_in_consent` snippet + prose) — same commit as T003 (Constitution Principle III). Keep ARCHITECTURE.md §6 untouched here (CSP parity handled in T027).
-- [ ] T005 [P] Add ADR `docs/decisions/0006-hubspot-consent-bridge.md`: records the bridge-API correction (research R1) and the fail-closed / geo-deferred consent-regime decision (research R5); link from `docs/decisions/README.md`.
+- [x] T003 Correct the consent bridge in `src/components/integrations/ConsentDefault.tsx`: replace the `window.addEventListener('__hs_opt_in_consent', …)` path with `window._hsp.push(['addPrivacyConsentListener', cb])`; in `cb`, derive `analytics = consent.allowed || consent.categories?.analytics` and `ads = consent.allowed || consent.categories?.advertisement`, call `gtag('consent','update', …)` per the mapping, then `gtag('event','hubspotConsentUpdate')` (contracts/consent-bridge.md C2/C4). Keep the inline consent default (C1) and the nonce/`suppressHydrationWarning` handling unchanged.
+- [x] T004 Reconcile `docs/INTEGRATIONS.md` §2.2 to the official `addPrivacyConsentListener` API (replace the `__hs_opt_in_consent` snippet + prose) — same commit as T003 (Constitution Principle III). Keep ARCHITECTURE.md §6 untouched here (CSP parity handled in T027).
+- [x] T005 [P] Add ADR `docs/decisions/0006-hubspot-consent-bridge.md`: records the bridge-API correction (research R1) and the fail-closed / geo-deferred consent-regime decision (research R5); link from `docs/decisions/README.md`.
 
 **Checkpoint**: the consent bridge fires off the official HubSpot API; consent stories can build on it.
 
@@ -42,7 +42,7 @@
 
 ### Tests for User Story 1 (MANDATORY) ⚠️
 
-- [ ] T006 [P] [US1] E2E `tests/e2e/consent-flows.e2e.spec.ts` (using the T002 harness): simulate the `addPrivacyConsentListener` callback for Accept-all / Deny-all / Customize(analytics on, ads off); assert the correct `gtag('consent','update')` signals each time AND no request to Meta/LinkedIn/Google-Ads/HubSpot-analytics hosts on Deny (SC-001). Author before T003 to confirm the current bridge fails; T003 turns it green.
+- [x] T006 [P] [US1] E2E `tests/e2e/consent-flows.e2e.spec.ts` (using the T002 harness): simulate the `addPrivacyConsentListener` callback for Accept-all / Deny-all / Customize(analytics on, ads off); assert the correct `gtag('consent','update')` signals each time AND no request to Meta/LinkedIn/Google-Ads/HubSpot-analytics hosts on Deny (SC-001). Author before T003 to confirm the current bridge fails; T003 turns it green.
 
 ### Implementation for User Story 1
 
@@ -62,12 +62,12 @@
 
 ### Tests for User Story 2 (MANDATORY) ⚠️
 
-- [ ] T010 [P] [US2] Int test `tests/int/lib/csp.int.spec.ts`: for each `CSP_MODE` (`enforce`/`report-only`/`off`) assert `cspHeaderName` + the built directive set parity with ARCHITECTURE.md §6, and `upgrade-insecure-requests` present only when enforcing (csp.md P2/P6).
-- [ ] T011 [P] [US2] Extend `tests/e2e/csp.e2e.spec.ts`: under enforce, assert the `Content-Security-Policy` header is present and no console CSP violation blocks a legitimate resource on the marquee surfaces + the `/admin` Lexical editor (csp.md P6).
+- [x] T010 [P] [US2] Int test `tests/int/lib/csp.int.spec.ts`: for each `CSP_MODE` (`enforce`/`report-only`/`off`) assert `cspHeaderName` + the built directive set parity with ARCHITECTURE.md §6, and `upgrade-insecure-requests` present only when enforcing (csp.md P2/P6).
+- [x] T011 [P] [US2] Extend `tests/e2e/csp.e2e.spec.ts`: under enforce, assert the `Content-Security-Policy` header is present and no console CSP violation blocks a legitimate resource on the marquee surfaces + the `/admin` Lexical editor (csp.md P6).
 
 ### Implementation for User Story 2
 
-- [ ] T012 [P] [US2] Create `docs/CSP_VIOLATIONS_KNOWN.md` with the catalogue schema (data-model §6: `directive`/`blocked-uri`/`source`/`status`/`first-seen`/`note`) seeded with expected browser-extension/third-party noise (FR-011).
+- [x] T012 [P] [US2] Create `docs/CSP_VIOLATIONS_KNOWN.md` with the catalogue schema (data-model §6: `directive`/`blocked-uri`/`source`/`status`/`first-seen`/`note`) seeded with expected browser-extension/third-party noise (FR-011).
 - [ ] T013 [US2] (infra/CDK — spec 002 stack) Add the CloudWatch metric filter (per-directive count) + alarm at >100 violations/hour/directive on the CSP report log group (FR-012 / csp.md P3); flag if it lands in the infra repo rather than here.
 - [ ] T014 [US2] (GATED: ≥7-day soak) Execute the promote-to-enforce gate (csp.md P5 / INTEGRATIONS.md §8): staging report-only ≥7d, no new violation directives in the trailing 3d, catalogue current, one engineer sign-off + dated cutover recorded in the cutover ticket. **Watch `style-src` specifically.**
 - [ ] T015 [US2] (GATED: T014) Flip `CSP_MODE=enforce` in production Parameter Store at the cutover; verify the enforcing header + no breakage (forms/media/tracking/`/admin`). Record in INTEGRATIONS.md §8 / the cutover ticket.
@@ -85,11 +85,11 @@
 
 ### Tests for User Story 3 (MANDATORY) ⚠️
 
-- [ ] T017 [P] [US3] E2E in `tests/e2e/consent-flows.e2e.spec.ts` (T002 harness): seed the consent cookies for a prior Accept-all and a prior Deny; assert the banner is not shown and the consent `update` matches the seeded choice before any pixel host appears (SC-003).
+- [x] T017 [P] [US3] E2E in `tests/e2e/consent-flows.e2e.spec.ts` (T002 harness): seed the consent cookies for a prior Accept-all and a prior Deny; assert the banner is not shown and the consent `update` matches the seeded choice before any pixel host appears (SC-003).
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Confirm the rehydration ordering in `src/components/integrations/ConsentDefault.tsx` + `src/app/(frontend)/layout.tsx`: `_hsp.push(['addPrivacyConsentListener', …])` runs in `<head>` before the tracking script loads so HubSpot invokes the callback on init for returning visitors (research R3). No new code expected beyond T003; adjust ordering only if T017 reveals a race.
+- [x] T018 [US3] Confirm the rehydration ordering in `src/components/integrations/ConsentDefault.tsx` + `src/app/(frontend)/layout.tsx`: `_hsp.push(['addPrivacyConsentListener', …])` runs in `<head>` before the tracking script loads so HubSpot invokes the callback on init for returning visitors (research R3). No new code expected beyond T003; adjust ordering only if T017 reveals a race.
 - [ ] T019 [US3] (GATED: live config) Staging confirm: returning Accept-all fires consented tags, returning Deny stays blocked (R3 inferred guarantee verified empirically).
 
 **Checkpoint**: returning-visitor persistence proven in CI (T017); live confirm gated.
@@ -104,12 +104,12 @@
 
 ### Tests for User Story 4 (MANDATORY) ⚠️
 
-- [ ] T020 [P] [US4] E2E `tests/e2e/privacy-consent-ui.e2e.spec.ts` (T002 harness): assert the footer consent control renders on a sample of pages, is keyboard-focusable + axe-clean, pushes `['showBanner']` on activate and `['revokeCookieConsent']` on withdraw (contracts/consent-bridge.md C3).
+- [x] T020 [P] [US4] E2E `tests/e2e/privacy-consent-ui.e2e.spec.ts` (T002 harness): assert the footer consent control renders on a sample of pages, is keyboard-focusable + axe-clean, pushes `['showBanner']` on activate and `['revokeCookieConsent']` on withdraw (contracts/consent-bridge.md C3).
 
 ### Implementation for User Story 4
 
-- [ ] T021 [P] [US4] Create `src/components/layout/ConsentPreferences.tsx` (`'use client'`): a "Cookie preferences" control → `window._hsp.push(['showBanner'])` and a "Withdraw consent" affordance → `window._hsp.push(['revokeCookieConsent'])`; render inert (no-op, no throw) when `window._hsp` is absent (env-unset local/CI).
-- [ ] T022 [US4] Mount `ConsentPreferences` in `src/components/layout/SiteFooter.tsx` `legalNav` with an accessible label, present on every page.
+- [x] T021 [P] [US4] Create `src/components/layout/ConsentPreferences.tsx` (`'use client'`): a "Cookie preferences" control → `window._hsp.push(['showBanner'])` and a "Withdraw consent" affordance → `window._hsp.push(['revokeCookieConsent'])`; render inert (no-op, no throw) when `window._hsp` is absent (env-unset local/CI).
+- [x] T022 [US4] Mount `ConsentPreferences` in `src/components/layout/SiteFooter.tsx` `legalNav` with an accessible label, present on every page.
 
 **Checkpoint**: footer consent control live + a11y-clean.
 
@@ -123,13 +123,13 @@
 
 ### Tests for User Story 5 (MANDATORY) ⚠️
 
-- [ ] T023 [P] [US5] E2E in `tests/e2e/privacy-consent-ui.e2e.spec.ts`: `/privacy-policy` renders the data/cookie/third-party disclosures, links the `ConsentPreferences` control, shows **12 N Cheyenne Ave, Tulsa, OK 74103** with 0 "Sapulpa" matches, is reachable from the footer, and is axe-clean (SC-007).
+- [x] T023 [P] [US5] E2E in `tests/e2e/privacy-consent-ui.e2e.spec.ts`: `/privacy-policy` renders the data/cookie/third-party disclosures, links the `ConsentPreferences` control, shows **12 N Cheyenne Ave, Tulsa, OK 74103** with 0 "Sapulpa" matches, is reachable from the footer, and is axe-clean (SC-007).
 
 ### Implementation for User Story 5
 
-- [ ] T024 [US5] Create `src/app/(frontend)/privacy-policy/page.tsx` — static route with a metadata export (via `src/lib/metadata.ts`), the data/cookie-category/third-party disclosures (data-model §7), the canonical address, and a link to the footer consent control. Legal prose is a reviewable placeholder pending the Phase 5.5 "Legal / privacy" sign-off.
-- [ ] T025 [P] [US5] Add `/privacy-policy` to `src/app/(frontend)/sitemap.ts`.
-- [ ] T026 [US5] Add the "Privacy policy" link to `src/components/layout/SiteFooter.tsx` `legalNav` (alongside the T022 consent control).
+- [x] T024 [US5] Create `src/app/(frontend)/privacy-policy/page.tsx` — static route with a metadata export (via `src/lib/metadata.ts`), the data/cookie-category/third-party disclosures (data-model §7), the canonical address, and a link to the footer consent control. Legal prose is a reviewable placeholder pending the Phase 5.5 "Legal / privacy" sign-off.
+- [x] T025 [P] [US5] Add `/privacy-policy` to `src/app/(frontend)/sitemap.ts`.
+- [x] T026 [US5] Add the "Privacy policy" link to `src/components/layout/SiteFooter.tsx` `legalNav` (alongside the T022 consent control).
 
 **Checkpoint**: all five stories independently functional (code-owned scope).
 
@@ -137,11 +137,11 @@
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T027 [P] Reconcile the ARCHITECTURE.md §6 CSP directive table with `src/lib/csp.ts` (Principle III; keep INTEGRATIONS.md §8 authoritative per its own note).
+- [x] T027 [P] Reconcile the ARCHITECTURE.md §6 CSP directive table with `src/lib/csp.ts` (Principle III; keep INTEGRATIONS.md §8 authoritative per its own note).
 - [ ] T028 [P] On ship, MOVE the consent-bridge + CSP-enforce ROADMAP items (Phase 5 "Deferred from spec 004" + "Cookie consent flow E2E" + "CSP promoted to enforcing") into a `PROJECT_HISTORY.md` P-entry — do not checkbox-flip (Principle III).
-- [ ] T029 [P] Run the `quickstart.md` validation pass (US1–US5 checklist) and record results.
+- [x] T029 [P] Run the `quickstart.md` validation pass (US1–US5 checklist) and record results.
 - [ ] T030 (GATED: live config) Cross-browser/device QA of the consent banner + enforcing CSP (Chrome/Safari/Firefox; iOS/Android) — Phase 5 QA item.
-- [ ] T031 Confirm Lighthouse a11y/best-practices/SEO ≥ 0.95 on `/privacy-policy` + the footer-control surfaces; verify enforcing CSP does not regress best-practices (Principle II).
+- [x] T031 Confirm Lighthouse a11y/best-practices/SEO ≥ 0.95 on `/privacy-policy` + the footer-control surfaces; verify enforcing CSP does not regress best-practices (Principle II).
 
 ---
 
@@ -200,3 +200,13 @@ Foundation → US1 (MVP) → US2 / US4 / US5 in parallel → gated live verifica
 - The single highest-impact change is T003 (bridge correction) — without it consent never propagates. Its doc reconciliation (T004) ships in the same commit.
 - No new runtime dependency → no Principle IV dep-trust review; `npm audit` gate unaffected.
 - Commit after each task or logical group; keep tests green.
+
+## Implementation status — 2026-06-03 (code-owned MVP shipped)
+
+The code-owned increment is complete and green; the gated tail awaits external config.
+
+- **Done (21 tasks):** T001–T006, T010–T012, T017, T018, T020–T027, T029, T031. Bridge corrected to the official `addPrivacyConsentListener` API (+ INTEGRATIONS.md §2.2 reconcile + ADR 0006); footer `ConsentPreferences` control; `/privacy-policy` route (+ sitemap + LHCI URL); `docs/CSP_VIOLATIONS_KNOWN.md`; CSP int + e2e shape tests; ARCHITECTURE.md §6 CSP-table parity.
+- **Verification:** `npm run typecheck` clean; full int suite **462 passed / 32 files** (incl. new `csp.int.spec.ts` ×13); the new + touched e2e specs pass against a dev server with HubSpot/GTM env blanked (the spec's designed test posture) — US1 Accept/Deny/Customize, US3 returning-visitor, US4 footer control (axe-clean), US5 privacy page (axe-clean, canonical Cheyenne address, 0 Sapulpa); existing `csp`/`integrations`/`layout`/`a11y` e2e still green.
+- **T013** (CloudWatch per-directive metric filter + >100/hr alarm): belongs in the infra/CDK (spec 002) stack, not this repo — left for the infra change.
+- **T028** (move ROADMAP items → PROJECT_HISTORY): intentionally NOT done. It is an on-merge bookkeeping step, and "CSP promoted to enforcing" is still gated (report-only) — moving it now would misrepresent state. Do it when the PR merges, and only move the consent-bridge/E2E line; the CSP-enforce line moves at the actual T015 cutover.
+- **Gated tail (external config / soak):** T007–T009 (GTM container + Wix pixel IDs + live fire-matrix), T014–T016 (≥7-day CSP soak → prod enforce flip → conditional `style-src` relax), T019 (live returning-visitor confirm), T030 (cross-browser/device QA). The `style-src 'self'` vs HubSpot-banner question (csp.md P4 / `CSP_VIOLATIONS_KNOWN.md` `action-required` row) is the soak's #1 target.

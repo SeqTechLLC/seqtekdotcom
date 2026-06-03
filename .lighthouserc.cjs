@@ -31,6 +31,10 @@ module.exports = {
         'http://localhost:3200/insights',
         'http://localhost:3200/services',
         'http://localhost:3200/touchstone-workshops',
+        // spec 006 T031 — static legal route (200s against the empty CI DB);
+        // carries the same public a11y/best-practices/SEO >= 0.95 gate, and
+        // covers the footer consent-preferences control (present on every page).
+        'http://localhost:3200/privacy-policy',
         'http://localhost:3200/admin/login',
         // Seeded-env-only (404 against the empty CI DB): /about, /localshoring,
         // and the per-slug detail URLs (/case-studies/<slug>, /touchstone-

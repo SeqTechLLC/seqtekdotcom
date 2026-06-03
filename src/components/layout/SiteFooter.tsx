@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 import { SmartLink } from '@/components/ui/SmartLink'
+import { ConsentPreferences } from '@/components/layout/ConsentPreferences'
 import { navigation, siteSettings } from '@/lib/site-content'
 
 function LinkedInIcon() {
@@ -127,6 +128,8 @@ export function SiteFooter() {
                 </SmartLink>
               </li>
             ))}
+            {/* spec 006 US4 (T022): persistent consent control on every page. */}
+            <ConsentPreferences />
           </ul>
         </div>
       </Container>

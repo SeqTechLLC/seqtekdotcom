@@ -53,8 +53,11 @@ A concrete trigger that should reopen this decision (e.g., "we hit X scale," "ve
 
 ## Index
 
-| #                                        | Title                                                | Status   | Date       |
-| ---------------------------------------- | ---------------------------------------------------- | -------- | ---------- |
-| [0001](0001-tailwind-v3.md)              | Use Tailwind CSS v3, not v4 or plain CSS             | Accepted | 2026-05-14 |
-| [0002](0002-auth-strategy.md)            | Payload local auth in spike, Google OAuth in Phase 1 | Accepted | 2026-05-14 |
-| [0003](0003-sequoyah-brand-narrative.md) | Lean into the Sequoyah heritage as brand depth       | Accepted | 2026-05-20 |
+| #                                             | Title                                                  | Status   | Date       |
+| --------------------------------------------- | ------------------------------------------------------ | -------- | ---------- |
+| [0001](0001-tailwind-v3.md)                   | Use Tailwind CSS v3, not v4 or plain CSS               | Accepted | 2026-05-14 |
+| [0002](0002-auth-strategy.md)                 | Payload local auth in spike, Google OAuth in Phase 1   | Accepted | 2026-05-14 |
+| [0003](0003-sequoyah-brand-narrative.md)      | Lean into the Sequoyah heritage as brand depth         | Accepted | 2026-05-20 |
+| [0004](0004-postgres-18.md)                   | Move to PostgreSQL 18                                  | Accepted | 2026-05-29 |
+| [0005](0005-isr-unstable-cache-tag-parity.md) | ISR caching via `unstable_cache` with tag parity       | Accepted | 2026-06-01 |
+| [0006](0006-hubspot-consent-bridge.md)        | HubSpot consent bridge: official listener, fail-closed | Accepted | 2026-06-03 |
