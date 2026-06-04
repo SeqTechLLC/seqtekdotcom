@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test'
 
+type Violation = { effectiveDirective: string; blockedURI: string; violatedDirective: string }
+
+declare global {
+  interface Window {
+    __cspViolations?: Violation[]
+  }
+}
+
 test.describe('CSP proxy', () => {
   test('public route sets report-only CSP with a per-request nonce', async ({ request }) => {
     const first = await request.get('/')
@@ -113,5 +121,65 @@ test.describe('CSP report endpoint (/api/csp-report)', () => {
     const response = await request.get('/api/csp-report')
     expect(response.status()).toBe(405)
     expect(response.headers().allow).toBe('POST')
+  })
+})
+
+test.describe('CSP enforce readiness (US2 T011 / csp.md P6)', () => {
+  // Record CSP violations the browser raises while a marquee surface loads.
+  // Under report-only (the staging/dev default) the browser REPORTS the same
+  // violations it would BLOCK under enforce, so this is a preview of what
+  // enforcing would break — without needing CSP_MODE=enforce in CI.
+  //
+  // The meaningful production signal is a blocked REAL RESOURCE: a violation
+  // whose blockedURI is a concrete http(s) URL we failed to allowlist. Two
+  // classes of violation are dev-only noise that a production build does NOT
+  // emit and so must be excluded here:
+  //   - `script-src ⟵ eval`  — Next.js dev bundler / React Refresh use eval;
+  //     production bundles do not (this is also why local dev runs
+  //     report-only, not the enforce posture ARCHITECTURE.md §6 targets).
+  //   - `style-src ⟵ inline`  — Next.js dev HMR + browser-extension injected
+  //     styles; the documented soak risk (csp.md P4). Tailwind ships external
+  //     CSS in production.
+  // Live third-party host coverage (HubSpot banner/beacons, GTM) is verified
+  // empirically in the gated staging soak (T014), not against this dev server.
+  const captureViolations = async (page: import('@playwright/test').Page, path: string) => {
+    await page.addInitScript(() => {
+      window.__cspViolations = []
+      document.addEventListener('securitypolicyviolation', (e) => {
+        window.__cspViolations!.push({
+          effectiveDirective: e.effectiveDirective,
+          blockedURI: e.blockedURI,
+          violatedDirective: e.violatedDirective,
+        })
+      })
+    })
+    await page.goto(path, { waitUntil: 'networkidle' })
+    return page.evaluate(() => window.__cspViolations ?? [])
+  }
+
+  test('homepage blocks no real (http) resource under the policy', async ({ page }) => {
+    const violations = await captureViolations(page, '/')
+    // Keep only blocks of a concrete http(s) resource (a genuine allowlist gap);
+    // drop dev-tooling keyword blocks (`eval`, `inline`, `blob:`) and
+    // browser-extension noise (`chrome-extension:` etc.).
+    const realResourceBlocks = violations.filter((v) => /^https?:/i.test(v.blockedURI))
+    expect(
+      realResourceBlocks,
+      `enforcing CSP would block legitimate external resources:\n` +
+        realResourceBlocks.map((v) => `  • ${v.effectiveDirective} ⟵ ${v.blockedURI}`).join('\n'),
+    ).toEqual([])
+  })
+
+  test('when CSP_MODE=enforce, the enforcing header is present on a public route', async ({
+    request,
+  }) => {
+    test.skip(
+      process.env.CSP_MODE !== 'enforce',
+      'CSP_MODE is not enforce in this environment (default report-only) — header-name assertion N/A',
+    )
+    const response = await request.get('/')
+    expect(response.headers()['content-security-policy']).toBeTruthy()
+    expect(response.headers()['content-security-policy-report-only']).toBeFalsy()
+    expect(response.headers()['content-security-policy']).toContain('upgrade-insecure-requests')
   })
 })

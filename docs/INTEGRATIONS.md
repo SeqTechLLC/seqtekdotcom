@@ -276,30 +276,45 @@ GTM must integrate with HubSpot's cookie consent banner to conditionally fire pi
 </script>
 ```
 
-Setting the defaults inline (rather than relying solely on GTM-container-side defaults) ensures `window.dataLayer` already reflects "all denied" by the time GTM or HubSpot arrive — neither's load order is deterministic under `afterInteractive`. The `wait_for_update: 500` window gives HubSpot's banner time to read its prior-consent cookie on returning visits and fire `__hs_opt_in_consent` before any tag evaluates consent.
+Setting the defaults inline (rather than relying solely on GTM-container-side defaults) ensures `window.dataLayer` already reflects "all denied" by the time GTM or HubSpot arrive — neither's load order is deterministic under `afterInteractive`. The `wait_for_update: 500` window gives HubSpot's banner time to read its prior-consent cookie on returning visits and invoke the consent listener (below) before any tag evaluates consent.
 
-**HubSpot–GTM consent bridge:** HubSpot's cookie banner fires a `__hs_opt_in_consent` event. A GTM Custom Event trigger listens for this and pushes a `consent` update (`gtag('consent', 'update', { ... })`) reflecting the user's choice. For returning visitors with a prior-consent cookie, HubSpot fires the event on initialization — no banner UI is shown, but the consent state is rehydrated through the same path. Several community GTM templates implement this bridge.
+**HubSpot–GTM consent bridge:** HubSpot exposes a consent-change callback via its privacy command queue: `window._hsp.push(['addPrivacyConsentListener', cb])`. The callback receives a `consent` object whose `categories.{analytics,advertisement,functionality}` booleans (with a `consent.allowed` fallback for notify-only / banner-off / accepted) reflect the visitor's choice. Our bridge maps those to a `gtag('consent','update', { … })` and then fires a `hubspotConsentUpdate` Custom Event so GTM tags without built-in Consent Mode checks can trigger off it. For returning visitors with a prior-consent cookie, HubSpot invokes the same callback on initialization — no banner UI is shown, but the consent state is rehydrated through the same path.
+
+> **API note (spec 006 / research R1 / ADR 0006):** this is HubSpot's _official_, documented consent API ([cookie-banner-api](https://developers.hubspot.com/docs/api-reference/cookie-banner/cookie-banner-api)). It replaces the earlier `__hs_opt_in_consent` DOM `CustomEvent` snippet that previously lived here — that event name appears nowhere in HubSpot's docs (it is a community pattern) and most likely never fired, silently pinning consent at the all-denied default. The `_hsp` _privacy_ queue is distinct from the `_hsq` analytics queue (e.g. `doNotTrack`) — do not cross them. Category key spelling is load-bearing: HubSpot uses `advertisement` (full word).
 
 #### Implementation
 
-The consent default script (above) initializes `dataLayer` and the `gtag` shim. Directly after it — same `<head>`, same request nonce — register the HubSpot bridge as a second inline script:
+The consent default script (above) initializes `dataLayer` and the `gtag` shim. In the **same** inline `<head>` script (same request nonce), register the HubSpot consent listener directly after the default:
 
 ```html
 <script nonce="{REQUEST_NONCE}">
-  window.addEventListener('__hs_opt_in_consent', (e) => {
-    const c = (e && e.detail) || {}
-    gtag('consent', 'update', {
-      analytics_storage: c.analytics ? 'granted' : 'denied',
-      ad_storage: c.advertisement ? 'granted' : 'denied',
-      ad_user_data: c.advertisement ? 'granted' : 'denied',
-      ad_personalization: c.advertisement ? 'granted' : 'denied',
-      functionality_storage: 'granted',
-    })
-  })
+  // … gtag('consent','default', { … }) from above …
+  var _hsp = (window._hsp = window._hsp || [])
+  _hsp.push([
+    'addPrivacyConsentListener',
+    function (consent) {
+      var analytics = !!(
+        consent &&
+        (consent.allowed || (consent.categories && consent.categories.analytics))
+      )
+      var ads = !!(
+        consent &&
+        (consent.allowed || (consent.categories && consent.categories.advertisement))
+      )
+      gtag('consent', 'update', {
+        analytics_storage: analytics ? 'granted' : 'denied',
+        ad_storage: ads ? 'granted' : 'denied',
+        ad_user_data: ads ? 'granted' : 'denied',
+        ad_personalization: ads ? 'granted' : 'denied',
+        functionality_storage: 'granted',
+      })
+      gtag('event', 'hubspotConsentUpdate')
+    },
+  ])
 </script>
 ```
 
-Registering the listener inline (before GTM and HubSpot load under `afterInteractive`) guarantees the bridge is already wired when HubSpot fires the event — either from the banner interaction (first-time visitor) or from rehydrating the consent cookie on init (returning visitor). The returning-visitor case takes exactly the same listener path: no banner UI is shown, but consent state is restored before any tag evaluates.
+Pushing the listener inline (before GTM and HubSpot load under `afterInteractive`) guarantees the bridge is already wired when HubSpot reports consent — either from the banner interaction (first-time visitor) or from rehydrating the consent cookie on init (returning visitor). The returning-visitor case takes exactly the same callback path: no banner UI is shown, but consent state is restored before any tag evaluates. The footer "Cookie preferences" control re-opens the banner via `_hsp.push(['showBanner'])` and offers a "Withdraw consent" affordance via `_hsp.push(['revokeCookieConsent'])` (spec 006 US4).
 
 **GTM container configuration:** Tag, trigger, and variable configuration lives in the GTM web UI. On every meaningful change, export the container as JSON and commit it to `infra/gtm/container.json`. This gives the configuration a reviewable diff, a rollback target, and a reproducible state — without it, the container is effectively unversioned production config.
 

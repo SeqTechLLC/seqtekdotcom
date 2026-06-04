@@ -28,6 +28,7 @@ const STATIC_PATHS = [
   '/services',
   '/touchstone-workshops',
   '/team',
+  '/privacy-policy', // spec 006 US5 (T025): static legal route
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
