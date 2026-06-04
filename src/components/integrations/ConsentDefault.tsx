@@ -16,9 +16,26 @@ import { NONCE_HEADER } from '@/lib/csp'
  *     (everything denied except functionality; `wait_for_update: 500` gives
  *     the HubSpot banner time to rehydrate a prior-consent cookie before
  *     any tag evaluates).
- *  2. Register the `__hs_opt_in_consent` listener so the bridge is already
- *     wired when HubSpot's banner (or its returning-visitor rehydration)
- *     fires consent.
+ *  2. Register HubSpot's official consent listener
+ *     (`_hsp.push(['addPrivacyConsentListener', cb])`) so the bridge is
+ *     already wired when HubSpot's banner (or its returning-visitor
+ *     rehydration on init) reports a consent decision.
+ *
+ * The listener is HubSpot's documented consent-change mechanism
+ * (developers.hubspot.com/docs/api-reference/cookie-banner/cookie-banner-api).
+ * It supersedes the unofficial `__hs_opt_in_consent` DOM event the scaffold
+ * used — that event name appears nowhere in HubSpot's docs and most likely
+ * never fired, silently pinning consent at the all-denied default. See
+ * research.md R1 + ADR 0006. The `_hsp` *privacy* queue is distinct from the
+ * `_hsq` analytics queue — do not cross them (research R2).
+ *
+ * Consent payload (research R1): treat a category as granted when
+ * `consent.allowed` (banner-off / notify-only / accepted) OR the per-category
+ * flag is set. HubSpot's category keys are exactly `analytics`,
+ * `advertisement` (full word — spelling is load-bearing), `functionality`.
+ * After mapping to Google Consent Mode v2 signals, fire a
+ * `hubspotConsentUpdate` Custom Event so GTM tags without built-in consent
+ * checks can trigger off it (contracts/gtm-consent-governance.md G2).
  */
 const SNIPPET = `
 window.dataLayer = window.dataLayer || [];
@@ -31,16 +48,19 @@ gtag('consent', 'default', {
   functionality_storage: 'granted',
   wait_for_update: 500
 });
-window.addEventListener('__hs_opt_in_consent', function(event){
-  var c = (event && event.detail) || {};
+var _hsp = (window._hsp = window._hsp || []);
+_hsp.push(['addPrivacyConsentListener', function(consent){
+  var analytics = !!(consent && (consent.allowed || (consent.categories && consent.categories.analytics)));
+  var ads = !!(consent && (consent.allowed || (consent.categories && consent.categories.advertisement)));
   gtag('consent', 'update', {
-    analytics_storage: c.analytics ? 'granted' : 'denied',
-    ad_storage: c.advertisement ? 'granted' : 'denied',
-    ad_user_data: c.advertisement ? 'granted' : 'denied',
-    ad_personalization: c.advertisement ? 'granted' : 'denied',
+    analytics_storage: analytics ? 'granted' : 'denied',
+    ad_storage: ads ? 'granted' : 'denied',
+    ad_user_data: ads ? 'granted' : 'denied',
+    ad_personalization: ads ? 'granted' : 'denied',
     functionality_storage: 'granted'
   });
-});
+  gtag('event', 'hubspotConsentUpdate');
+}]);
 `.trim()
 
 export async function ConsentDefault() {
