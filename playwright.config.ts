@@ -4,6 +4,16 @@ import { config as dotenvConfig } from 'dotenv'
 dotenvConfig({ path: '.env.local' })
 dotenvConfig({ path: '.env' })
 
+// Seeded-content E2E tests bust the dev server's `unstable_cache` through the
+// in-process `/api/revalidate` route: mutations run in a SEPARATE Payload
+// process from the dev server, so the afterChange `revalidateTag` never reaches
+// the server's cache. The test workers and the spawned `npm run dev` webServer
+// both inherit this `process.env`, so a single shared secret lets them agree.
+// Default it (CI doesn't set one) so the route accepts the test's Bearer token.
+if (!process.env.REVALIDATION_SECRET) {
+  process.env.REVALIDATION_SECRET = 'e2e-revalidation-secret'
+}
+
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3100'
 const externalServer = !!process.env.PLAYWRIGHT_BASE_URL
 
