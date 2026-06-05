@@ -50,6 +50,6 @@ Staging runs at `https://seqtek-preview.com` on Postgres 18.3. Production cutove
 
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/006-consent-privacy-compliance/plan.md`.
+`specs/007-launch-hardening-polish/plan.md`.
 
 <!-- SPECKIT END -->

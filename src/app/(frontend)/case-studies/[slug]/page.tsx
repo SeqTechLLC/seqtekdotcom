@@ -107,7 +107,10 @@ export default async function CaseStudyPage({ params }: Props) {
           <section data-testid="case-study-metrics" className="mb-12">
             <dl className="grid grid-cols-1 gap-6 sm:grid-cols-3">
               {caseStudy.metrics.map((metric) => (
-                <div key={metric.id ?? metric.label} className="border-l-2 border-accent pl-4">
+                <div
+                  key={metric.id ?? metric.label}
+                  className="border-l-2 border-accent-strong pl-4"
+                >
                   <dd className="text-h2 font-bold text-accent-strong">{metric.number}</dd>
                   <dt className="mt-1 text-body text-text-secondary">{metric.label}</dt>
                   {metric.context ? (
@@ -121,7 +124,7 @@ export default async function CaseStudyPage({ params }: Props) {
 
         {testimonial?.quote ? (
           <section data-testid="case-study-testimonial" className="mb-12">
-            <blockquote className="border-l-4 border-accent pl-6 text-body-lg italic text-text-secondary">
+            <blockquote className="border-l-4 border-accent-strong pl-6 text-body-lg italic text-text-secondary">
               <p>&ldquo;{testimonial.quote}&rdquo;</p>
               {testimonial.personName ? (
                 <footer className="mt-4 text-small not-italic text-text-muted">

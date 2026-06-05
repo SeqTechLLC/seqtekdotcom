@@ -29,7 +29,7 @@ export default function NotFound() {
           <li key={d.href}>
             <Link
               href={d.href}
-              className="block rounded-md border border-border-subtle p-6 text-left transition hover:border-accent"
+              className="block rounded-md border border-border-subtle p-6 text-left transition hover:border-accent-strong"
             >
               <span className="block text-body font-semibold">{d.title}</span>
               <span className="mt-1 block text-small text-text-muted">{d.body}</span>

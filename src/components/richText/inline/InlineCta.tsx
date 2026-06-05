@@ -7,7 +7,7 @@ interface InlineCtaProps {
 }
 
 const VARIANT_CLASSES: Record<NonNullable<InlineCtaProps['variant']>, string> = {
-  primary: 'underline font-semibold text-accent',
+  primary: 'underline font-semibold text-accent-strong',
   secondary: 'underline text-text-secondary',
   ghost: 'underline',
   link: 'underline',

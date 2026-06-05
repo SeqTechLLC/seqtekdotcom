@@ -28,7 +28,7 @@ export default async function InsightsPage() {
           Field notes from the work, not thought-leadership for its own sake.
         </p>
       </header>
-      <PostList source="manual" manualItems={posts} limit={posts.length} />
+      <PostList source="manual" manualItems={posts} limit={posts.length} headingLevel="h2" />
     </div>
   )
 }

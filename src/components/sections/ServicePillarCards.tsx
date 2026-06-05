@@ -10,14 +10,22 @@ interface PillarDoc {
 interface ServicePillarCardsProps {
   heading?: string | null
   pillars?: Array<PillarDoc | string | number> | null
+  /** Card title level. Defaults to `h3`; listing pages with a page-level `h1`
+   *  and no section heading pass `h2` to keep heading order non-skipping. */
+  headingLevel?: 'h2' | 'h3'
 }
 
 const isDoc = (v: unknown): v is PillarDoc =>
   typeof v === 'object' && v !== null && 'title' in (v as object)
 
-export function ServicePillarCards({ heading, pillars }: ServicePillarCardsProps) {
+export function ServicePillarCards({
+  heading,
+  pillars,
+  headingLevel = 'h3',
+}: ServicePillarCardsProps) {
   const docs = (pillars ?? []).filter(isDoc)
   if (docs.length === 0) return null
+  const CardHeading = headingLevel
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
@@ -28,9 +36,9 @@ export function ServicePillarCards({ heading, pillars }: ServicePillarCardsProps
               key={p.id ?? p.slug}
               className="rounded-md border border-border-subtle bg-surface p-6 shadow-xs"
             >
-              <h3 className="text-h3 font-semibold">
+              <CardHeading className="text-h3 font-semibold">
                 {p.slug ? <Link href={`/services/${p.slug}`}>{p.title}</Link> : p.title}
-              </h3>
+              </CardHeading>
               {p.tagline ? <p className="mt-3 text-body text-text-secondary">{p.tagline}</p> : null}
             </li>
           ))}

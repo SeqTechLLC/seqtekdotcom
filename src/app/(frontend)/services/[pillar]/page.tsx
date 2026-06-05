@@ -49,7 +49,7 @@ export default async function ServicePillarPage({ params }: Props) {
       <header className="mb-12">
         <h1 className="text-h1 font-bold">{pillar.title}</h1>
       </header>
-      <ServiceCards source="manual" manualItems={children} />
+      <ServiceCards source="manual" manualItems={children} headingLevel="h2" />
     </div>
   )
 }

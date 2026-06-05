@@ -24,7 +24,7 @@ export function FeaturedCaseStudy({ heading, caseStudy }: FeaturedCaseStudyProps
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
-        <p className="text-caption uppercase tracking-wide text-accent">
+        <p className="text-caption uppercase tracking-wide text-accent-strong">
           {heading ?? 'Featured case study'}
         </p>
         <div className="mt-4 grid gap-10 lg:grid-cols-2 lg:items-center">
@@ -44,7 +44,7 @@ export function FeaturedCaseStudy({ heading, caseStudy }: FeaturedCaseStudyProps
             {caseStudy.slug ? (
               <Link
                 href={`/case-studies/${caseStudy.slug}`}
-                className="mt-6 inline-block rounded-md bg-accent px-5 py-3 font-medium text-white"
+                className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
               >
                 Read the case study
               </Link>

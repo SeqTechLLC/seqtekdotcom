@@ -63,7 +63,7 @@ export function Hero({
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className={`mx-auto max-w-container-md ${alignmentCls}`}>
         {eyebrow ? (
-          <p className="text-eyebrow uppercase tracking-wide text-accent">{eyebrow}</p>
+          <p className="text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
         ) : null}
         <h1 className="mt-2 text-h1 font-bold">{headline}</h1>
         {subheadline ? (
@@ -95,7 +95,7 @@ export function Hero({
           {primaryCta?.label && primaryCta?.url ? (
             <Link
               href={primaryCta.url}
-              className="rounded-md bg-accent px-5 py-3 font-medium text-white"
+              className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
             >
               {primaryCta.label}
             </Link>

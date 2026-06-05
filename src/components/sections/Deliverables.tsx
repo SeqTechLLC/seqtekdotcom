@@ -21,7 +21,7 @@ export function Deliverables({ heading, items }: DeliverablesProps) {
             >
               <span
                 aria-hidden
-                className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-accent"
+                className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-accent-strong"
               />
               <span className="text-body">{item.label}</span>
             </li>

@@ -131,6 +131,8 @@ The site is built against semantic tokens, not raw ramps. A component reads `tex
 | `--color-accent-hover`     | `brand-green-800` | Hover for solid accent backgrounds              |
 | `--color-accent-pressed`   | `brand-green-900` | Pressed state for solid accent backgrounds      |
 
+> **The `text-accent` naming trap (spec 007).** Tailwind flattens the color theme, so the utility **`text-accent`** resolves to `accent.DEFAULT` → `--color-accent` → **brand-green-500 (`#72b94d`, 2.4:1 on white — fails AA even for large text)**. It does **not** resolve to the green-700 `--color-text-accent` token (that one is reached via **`text-text-accent`**). The green-500 seed is a legitimate _decorative/illustration_ color only. For any **meaning-bearing accent text** (eyebrows, stat figures, step numbers, inline links, toggle glyphs) use **`text-accent-strong`** (preferred, matches the `bg-accent-strong` CTA fills) — or `text-text-accent` / `text-link`. The same applies to meaning-bearing borders/dividers (`border-accent` → `border-accent-strong`) and solid fills (`bg-accent` → `bg-accent-strong`). Decorative-only accents (e.g. the `bg-accent/5` wash) stay green-500 and are hidden from assistive tech where they'd otherwise be announced. axe `color-contrast` across the seeded in-scope routes is the regression guard.
+
 ### 2.5 Contrast pairs reference
 
 WCAG 2.2 floor compliance (AA: 4.5:1 body, 3:1 large/UI) for general site content. AAA (7:1 body, 4.5:1 large) for hero copy specifically — see §12 for the page-by-page list.
@@ -159,7 +161,7 @@ Verified pairings for white text on a colored background (for buttons, badges, d
 | `brand-green-600` (`#5A9C3B`) | 3.9:1             | AA large only — large CTA buttons (≥18pt or 14pt bold)                                                                 |
 | `brand-green-500` (`#72B94D`) | 2.5:1             | **Fails AA.** Never use as button background with white text — pair with navy text instead, or use 600/700 with white. |
 
-**Important pattern:** the brand green at `500` is too light for white text. Solid green CTAs use `brand-green-700` for body sizes, `brand-green-600` for large sizes. Alternatively, the brand-green-500 background with navy text (`navy-800`) yields ~4.4:1 — passes AA large only. Document this everywhere a "green button" appears.
+**Important pattern:** the brand green at `500` is too light for white text **and for foreground text/borders on light surfaces**. Solid green CTAs use `brand-green-700` for body sizes, `brand-green-600` for large sizes. Alternatively, the brand-green-500 background with navy text (`navy-800`) yields ~4.4:1 — passes AA large only. The same floor applies beyond buttons: **green-500 foreground text/icons** (eyebrows, stat figures, inline links) and **green-500 borders/dividers** (blockquote rules, metric rules, hover outlines) on white/light backgrounds fail their floor — use the `*-accent-strong` (green-700) family. Green-500 on **navy** already passes (~6.95:1) and is left as-is. Document this everywhere a green accent appears, not just "green buttons" (see the §2.4 `text-accent` trap note).
 
 ---
 
