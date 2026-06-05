@@ -1,0 +1,31 @@
+{
+  "slug": "acme-logistics-platform",
+  "title": "Rebuilding Acme's Logistics Platform",
+  "subtitle": "A legacy rewrite that cut dispatch time in half",
+  "industry": "logistics",
+  "services": ["custom-software", "cloud-infrastructure"],
+  "client": {
+    "name": "Acme Logistics",
+    "isAnonymized": false,
+    "logo": { "file": "./assets/acme-logo.png", "alt": "Acme Logistics logo" }
+  },
+  "heroImage": {
+    "file": "./assets/acme-hero.jpg",
+    "alt": "Acme dispatch operators at workstations"
+  },
+  "problem": "Acme's dispatch ran on a 12-year-old desktop application that only one vendor could maintain. Orders were keyed in twice, outages were common, and the team had no visibility into driver status.\n\nThe business needed to scale into three new markets, but the software could not follow.",
+  "solution": "We rebuilt the platform as a cloud-native web application with a real-time dispatch board.\n\n1. Domain model\nWe started by mapping the order lifecycle with Acme's dispatchers, then modeled it cleanly so the new system matched how the business actually worked.\n\n2. Incremental cutover\nWe ran the old and new systems in parallel and migrated one market at a time, so dispatch never stopped.",
+  "impact": "Dispatch time dropped by half and double-entry disappeared. Acme opened two new markets in the first year on the same headcount.",
+  "metrics": [
+    { "number": "52%", "label": "Faster dispatch", "context": "median order-to-driver time" },
+    { "number": "2", "label": "New markets", "context": "opened in year one" },
+    { "number": "0", "label": "Unplanned outages", "context": "since cutover" }
+  ],
+  "technologies": ["Next.js", "PostgreSQL", "AWS", "TypeScript"],
+  "relatedCaseStudies": [],
+  "seo": {
+    "metaTitle": "Acme Logistics Platform Rebuild | SEQTEK",
+    "metaDescription": "How SEQTEK rebuilt Acme's legacy dispatch system as a cloud-native platform and cut dispatch time in half."
+  },
+  "publishedAt": "2026-06-04"
+}
