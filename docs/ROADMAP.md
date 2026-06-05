@@ -47,12 +47,13 @@ _BR-1, BR-2, BR-3 resolved on 2026-05-20 — see `PROJECT_HISTORY.md`. Items rem
 
 ## 2. Design & engineering open work
 
-| ID   | Task                                                                                 | Status | Notes                                                             |
-| ---- | ------------------------------------------------------------------------------------ | ------ | ----------------------------------------------------------------- |
-| DS-1 | TestimonialCarousel — autoplay vs manual-only decision                               | 🟡     | Confirm during D-3 wireframe pass; accessibility implications     |
-| DS-2 | Homepage hero size — `text-display-xl` (61px) vs `text-display` (49px)               | 🟡     | Depends on hero copy draft (CONTENT-REQUIREMENTS §4)              |
-| DS-3 | Lexical rich-text styling — validate `@tailwindcss/typography` matches design system | 🟡     | Validate during Phase 1; may need a `prose-seqtek` override class |
-| D-3  | 5 archetype wireframes (Home, About, Service Pillar, Service Detail, Case Study)     | 🟡     | Excalidraw or Figma; block-order sketches                         |
+| ID   | Task                                                                                 | Status | Notes                                                                                                                                                                                                                                       |
+| ---- | ------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-1 | TestimonialCarousel — autoplay vs manual-only decision                               | 🟡     | Confirm during D-3 wireframe pass; accessibility implications                                                                                                                                                                               |
+| DS-2 | Homepage hero size — `text-display-xl` (61px) vs `text-display` (49px)               | 🟡     | Depends on hero copy draft (CONTENT-REQUIREMENTS §4)                                                                                                                                                                                        |
+| DS-3 | Lexical rich-text styling — validate `@tailwindcss/typography` matches design system | 🟡     | Validate during Phase 1; may need a `prose-seqtek` override class                                                                                                                                                                           |
+| D-3  | 5 archetype wireframes (Home, About, Service Pillar, Service Detail, Case Study)     | 🟡     | Excalidraw or Figma; block-order sketches                                                                                                                                                                                                   |
+| T-1  | Case-study importer — media dedup                                                    | 🟡     | `tools/import-case-study` (PR #27) re-uploads the hero on every re-import, orphaning the previous `media` row. Add hash-based reuse like the audit pipeline (`CONTENT_MIGRATION.md` §8) and optionally prune the superseded hero on update. |
 
 ---
 
