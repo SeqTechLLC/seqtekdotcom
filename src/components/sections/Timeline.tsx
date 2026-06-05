@@ -22,7 +22,7 @@ export function Timeline({ heading, items }: TimelineProps) {
         <ol className="mt-8 space-y-8 border-l-2 border-border-strong pl-6">
           {items.map((item, i) => (
             <li key={item.id ?? i} className="relative">
-              <span className="absolute -left-[1.875rem] top-1.5 h-3 w-3 rounded-full bg-accent" />
+              <span className="absolute -left-[1.875rem] top-1.5 h-3 w-3 rounded-full bg-accent-strong" />
               <p className="text-caption uppercase tracking-wide text-text-muted">{item.date}</p>
               <h3 className="mt-1 text-h4 font-semibold">{item.title}</h3>
               <p className="mt-2 text-body text-text-secondary">{item.body}</p>

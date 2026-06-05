@@ -38,7 +38,7 @@ export default async function TeamPage() {
           Senior practitioners who do the work, in the markets we serve.
         </p>
       </header>
-      <TeamGrid filter="all" layout="cards" manualItems={ordered} />
+      <TeamGrid filter="all" layout="cards" manualItems={ordered} headingLevel="h2" />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import 'server-only'
 
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
+import { headers } from 'next/headers'
 import { getPayload, type Payload } from 'payload'
 
 import config from '@/payload.config'
@@ -39,6 +40,83 @@ export const getPayloadInstance = (): Promise<Payload> => {
     payloadPromise = getPayload({ config })
   }
   return payloadPromise
+}
+
+// ---------------------------------------------------------------------------
+// Read-timeout layer (spec 007 US3 — ERROR_PAGES §5 / ADR 0007)
+// ---------------------------------------------------------------------------
+// Every cached public reader is wrapped, as the OUTERMOST layer, in a 5s budget.
+// A hung read fails fast to the branded `error.tsx` instead of holding a
+// response thread, and emits a correlated warn log. `headers()` is read in the
+// wrapper's catch — which runs in the RSC render scope where it is legal — and
+// MUST NOT move inside `unstable_cache` (it throws there). The losing query is
+// orphaned (Payload's Local API takes no AbortSignal, so there is nothing to
+// cancel; Promise.race frees the response thread). Cache hits are a no-op
+// beyond one setTimeout/clearTimeout (FR-013).
+
+export const READ_TIMEOUT_MS = 5000
+
+/**
+ * Dev/test-only sentinel. A reader called with this value as its first arg
+ * sleeps past the budget so the timeout path can be exercised end-to-end
+ * (US3 E2E `slow-request.e2e.spec.ts`). Ignored when NODE_ENV === 'production',
+ * and per-call (keyed on the arg) so it never affects any other reader or any
+ * other test sharing the dev server. Visiting e.g. `/case-studies/__timeout_probe__`
+ * triggers it through the real `getCaseStudyBySlug` call site.
+ */
+export const TEST_TIMEOUT_PROBE_SLUG = '__timeout_probe__'
+
+export class PayloadReadTimeoutError extends Error {
+  readonly reader: string
+  constructor(reader: string) {
+    super(`Payload read "${reader}" exceeded ${READ_TIMEOUT_MS}ms`)
+    this.name = 'PayloadReadTimeoutError'
+    this.reader = reader
+  }
+}
+
+export function withReadTimeout<A extends unknown[], T>(
+  label: string,
+  fn: (...args: A) => Promise<T>,
+): (...args: A) => Promise<T> {
+  return async (...args: A): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new PayloadReadTimeoutError(label)), READ_TIMEOUT_MS)
+    })
+    const work = (async (): Promise<T> => {
+      if (process.env.NODE_ENV !== 'production' && args[0] === TEST_TIMEOUT_PROBE_SLUG) {
+        await new Promise((resolve) => setTimeout(resolve, READ_TIMEOUT_MS + 1_000))
+      }
+      return fn(...args)
+    })()
+    try {
+      return await Promise.race([work, timeout])
+    } catch (err) {
+      if (err instanceof PayloadReadTimeoutError) {
+        let requestId = 'unknown'
+        try {
+          requestId = (await headers()).get('x-request-id') ?? 'unknown'
+        } catch {
+          // Non-request scope (e.g. sitemap.ts ISR, revalidate=3600): headers()
+          // is unavailable and throws. The correlation id is best-effort.
+          requestId = 'unknown'
+        }
+        console.warn(
+          JSON.stringify({
+            type: 'payload_read_timeout',
+            ts: new Date().toISOString(),
+            requestId,
+            reader: label,
+            args: args.length > 0 ? String(args[0]) : undefined,
+          }),
+        )
+      }
+      throw err
+    } finally {
+      clearTimeout(timer)
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -81,42 +159,52 @@ type SluggedCollection =
 // publish busts them via the hook. Order matters — cached-readers.md
 // §Migration note: cache(async () => unstable_cache(read, key, { tags })()).
 // Under draft mode `unstable_cache` auto-bypasses, so preview never serves
-// or pollutes the published cache.
+// or pollutes the published cache. `withReadTimeout` wraps the OUTSIDE of the
+// cache stack (spec 007 — so headers() is legal in its catch).
 
-export const getSiteSettings = cache(
-  async (): Promise<SiteSetting> =>
-    unstable_cache(
-      async () => {
-        const payload = await getPayloadInstance()
-        return (await payload.findGlobal({ slug: 'siteSettings', depth: 2 })) as SiteSetting
-      },
-      ['global', 'siteSettings'],
-      { tags: globalCacheTags('siteSettings'), revalidate: ONE_HOUR },
-    )(),
+export const getSiteSettings = withReadTimeout(
+  'getSiteSettings',
+  cache(
+    async (): Promise<SiteSetting> =>
+      unstable_cache(
+        async () => {
+          const payload = await getPayloadInstance()
+          return (await payload.findGlobal({ slug: 'siteSettings', depth: 2 })) as SiteSetting
+        },
+        ['global', 'siteSettings'],
+        { tags: globalCacheTags('siteSettings'), revalidate: ONE_HOUR },
+      )(),
+  ),
 )
 
-export const getNavigation = cache(
-  async (): Promise<Navigation> =>
-    unstable_cache(
-      async () => {
-        const payload = await getPayloadInstance()
-        return (await payload.findGlobal({ slug: 'navigation', depth: 2 })) as Navigation
-      },
-      ['global', 'navigation'],
-      { tags: globalCacheTags('navigation'), revalidate: ONE_HOUR },
-    )(),
+export const getNavigation = withReadTimeout(
+  'getNavigation',
+  cache(
+    async (): Promise<Navigation> =>
+      unstable_cache(
+        async () => {
+          const payload = await getPayloadInstance()
+          return (await payload.findGlobal({ slug: 'navigation', depth: 2 })) as Navigation
+        },
+        ['global', 'navigation'],
+        { tags: globalCacheTags('navigation'), revalidate: ONE_HOUR },
+      )(),
+  ),
 )
 
-export const getHomepage = cache(
-  async (): Promise<Homepage> =>
-    unstable_cache(
-      async () => {
-        const payload = await getPayloadInstance()
-        return (await payload.findGlobal({ slug: 'homepage', depth: 2 })) as Homepage
-      },
-      ['global', 'homepage'],
-      { tags: globalCacheTags('homepage'), revalidate: ONE_HOUR },
-    )(),
+export const getHomepage = withReadTimeout(
+  'getHomepage',
+  cache(
+    async (): Promise<Homepage> =>
+      unstable_cache(
+        async () => {
+          const payload = await getPayloadInstance()
+          return (await payload.findGlobal({ slug: 'homepage', depth: 2 })) as Homepage
+        },
+        ['global', 'homepage'],
+        { tags: globalCacheTags('homepage'), revalidate: ONE_HOUR },
+      )(),
+  ),
 )
 
 // ---------------------------------------------------------------------------
@@ -131,7 +219,9 @@ export const getHomepage = cache(
 // `generateStaticParams` data-layer test (T010 / invariant R3) can exercise
 // the published filter directly — `unstable_cache` cannot run outside the Next
 // server (`incrementalCache missing`). Production code calls the cached
-// wrappers; the wrappers add only the tag caching that T009 pins.
+// wrappers; the wrappers add only the tag caching that T009 pins. They run
+// INSIDE `unstable_cache`, so they are NOT timeout-wrapped (headers() is
+// illegal there, and they are test-only direct entry points).
 
 export const findPublishedBySlug = async (collection: SluggedCollection, slug: string) => {
   const payload = await getPayloadInstance()
@@ -146,47 +236,65 @@ export const findPublishedBySlug = async (collection: SluggedCollection, slug: s
   return docs[0] ?? null
 }
 
-export const getPageBySlug = (slug: string): Promise<Page | null> =>
-  unstable_cache(
-    async () => (await findPublishedBySlug('pages', slug)) as Page | null,
-    ['pages', slug],
-    { tags: detailCacheTags('pages', slug), revalidate: ONE_HOUR },
-  )()
+export const getPageBySlug = withReadTimeout(
+  'getPageBySlug',
+  (slug: string): Promise<Page | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('pages', slug)) as Page | null,
+      ['pages', slug],
+      { tags: detailCacheTags('pages', slug), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const getCaseStudyBySlug = (slug: string): Promise<CaseStudy | null> =>
-  unstable_cache(
-    async () => (await findPublishedBySlug('caseStudies', slug)) as CaseStudy | null,
-    ['caseStudies', slug],
-    { tags: detailCacheTags('caseStudies', slug), revalidate: ONE_HOUR },
-  )()
+export const getCaseStudyBySlug = withReadTimeout(
+  'getCaseStudyBySlug',
+  (slug: string): Promise<CaseStudy | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('caseStudies', slug)) as CaseStudy | null,
+      ['caseStudies', slug],
+      { tags: detailCacheTags('caseStudies', slug), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const getPostBySlug = (slug: string): Promise<Post | null> =>
-  unstable_cache(
-    async () => (await findPublishedBySlug('posts', slug)) as Post | null,
-    ['posts', slug],
-    { tags: detailCacheTags('posts', slug), revalidate: ONE_HOUR },
-  )()
+export const getPostBySlug = withReadTimeout(
+  'getPostBySlug',
+  (slug: string): Promise<Post | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('posts', slug)) as Post | null,
+      ['posts', slug],
+      { tags: detailCacheTags('posts', slug), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const getServiceBySlug = (slug: string): Promise<Service | null> =>
-  unstable_cache(
-    async () => (await findPublishedBySlug('services', slug)) as Service | null,
-    ['services', slug],
-    { tags: detailCacheTags('services', slug), revalidate: ONE_HOUR },
-  )()
+export const getServiceBySlug = withReadTimeout(
+  'getServiceBySlug',
+  (slug: string): Promise<Service | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('services', slug)) as Service | null,
+      ['services', slug],
+      { tags: detailCacheTags('services', slug), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const getServicePillarBySlug = (slug: string): Promise<ServicePillar | null> =>
-  unstable_cache(
-    async () => (await findPublishedBySlug('servicePillars', slug)) as ServicePillar | null,
-    ['servicePillars', slug],
-    { tags: detailCacheTags('servicePillars', slug), revalidate: ONE_HOUR },
-  )()
+export const getServicePillarBySlug = withReadTimeout(
+  'getServicePillarBySlug',
+  (slug: string): Promise<ServicePillar | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('servicePillars', slug)) as ServicePillar | null,
+      ['servicePillars', slug],
+      { tags: detailCacheTags('servicePillars', slug), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const getWorkshopBySlug = (slug: string): Promise<Workshop | null> =>
-  unstable_cache(
-    async () => (await findPublishedBySlug('workshops', slug)) as Workshop | null,
-    ['workshops', slug],
-    { tags: detailCacheTags('workshops', slug), revalidate: ONE_HOUR },
-  )()
+export const getWorkshopBySlug = withReadTimeout(
+  'getWorkshopBySlug',
+  (slug: string): Promise<Workshop | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('workshops', slug)) as Workshop | null,
+      ['workshops', slug],
+      { tags: detailCacheTags('workshops', slug), revalidate: ONE_HOUR },
+    )(),
+)
 
 // ---------------------------------------------------------------------------
 // Listing / static-params readers — published-only, list-tagged
@@ -209,51 +317,69 @@ export const findPublishedList = async (
   return docs
 }
 
-export const listCaseStudies = (): Promise<CaseStudy[]> =>
-  unstable_cache(
-    async () => (await findPublishedList('caseStudies', { sort: '-publishedAt' })) as CaseStudy[],
-    ['caseStudies', 'list'],
-    { tags: listCacheTags('caseStudies'), revalidate: ONE_HOUR },
-  )()
+export const listCaseStudies = withReadTimeout(
+  'listCaseStudies',
+  (): Promise<CaseStudy[]> =>
+    unstable_cache(
+      async () => (await findPublishedList('caseStudies', { sort: '-publishedAt' })) as CaseStudy[],
+      ['caseStudies', 'list'],
+      { tags: listCacheTags('caseStudies'), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const listPosts = (): Promise<Post[]> =>
-  unstable_cache(
-    async () => (await findPublishedList('posts', { sort: '-publishedAt' })) as Post[],
-    ['posts', 'list'],
-    { tags: listCacheTags('posts'), revalidate: ONE_HOUR },
-  )()
+export const listPosts = withReadTimeout(
+  'listPosts',
+  (): Promise<Post[]> =>
+    unstable_cache(
+      async () => (await findPublishedList('posts', { sort: '-publishedAt' })) as Post[],
+      ['posts', 'list'],
+      { tags: listCacheTags('posts'), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const listServices = (): Promise<Service[]> =>
-  unstable_cache(
-    // depth 2 so `pillar` is populated — the nested `/services/[pillar]/[slug]`
-    // URL + static params need the pillar slug.
-    async () => (await findPublishedList('services', { sort: 'order', depth: 2 })) as Service[],
-    ['services', 'list'],
-    { tags: listCacheTags('services'), revalidate: ONE_HOUR },
-  )()
+export const listServices = withReadTimeout(
+  'listServices',
+  (): Promise<Service[]> =>
+    unstable_cache(
+      // depth 2 so `pillar` is populated — the nested `/services/[pillar]/[slug]`
+      // URL + static params need the pillar slug.
+      async () => (await findPublishedList('services', { sort: 'order', depth: 2 })) as Service[],
+      ['services', 'list'],
+      { tags: listCacheTags('services'), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const listServicePillars = (): Promise<ServicePillar[]> =>
-  unstable_cache(
-    async () => (await findPublishedList('servicePillars', { sort: 'order' })) as ServicePillar[],
-    ['servicePillars', 'list'],
-    { tags: listCacheTags('servicePillars'), revalidate: ONE_HOUR },
-  )()
+export const listServicePillars = withReadTimeout(
+  'listServicePillars',
+  (): Promise<ServicePillar[]> =>
+    unstable_cache(
+      async () => (await findPublishedList('servicePillars', { sort: 'order' })) as ServicePillar[],
+      ['servicePillars', 'list'],
+      { tags: listCacheTags('servicePillars'), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const listWorkshops = (): Promise<Workshop[]> =>
-  unstable_cache(
-    async () => (await findPublishedList('workshops', { sort: 'order' })) as Workshop[],
-    ['workshops', 'list'],
-    { tags: listCacheTags('workshops'), revalidate: ONE_HOUR },
-  )()
+export const listWorkshops = withReadTimeout(
+  'listWorkshops',
+  (): Promise<Workshop[]> =>
+    unstable_cache(
+      async () => (await findPublishedList('workshops', { sort: 'order' })) as Workshop[],
+      ['workshops', 'list'],
+      { tags: listCacheTags('workshops'), revalidate: ONE_HOUR },
+    )(),
+)
 
-export const listTeamMembers = (): Promise<TeamMember[]> =>
-  unstable_cache(
-    // `teamMembers` is public-read with no drafts. Leadership-first ordering is
-    // applied at the template (US3) — here we just sort by `order`.
-    async () => (await findPublishedList('teamMembers', { sort: 'order' })) as TeamMember[],
-    ['teamMembers', 'list'],
-    { tags: listCacheTags('teamMembers'), revalidate: ONE_HOUR },
-  )()
+export const listTeamMembers = withReadTimeout(
+  'listTeamMembers',
+  (): Promise<TeamMember[]> =>
+    unstable_cache(
+      // `teamMembers` is public-read with no drafts. Leadership-first ordering is
+      // applied at the template (US3) — here we just sort by `order`.
+      async () => (await findPublishedList('teamMembers', { sort: 'order' })) as TeamMember[],
+      ['teamMembers', 'list'],
+      { tags: listCacheTags('teamMembers'), revalidate: ONE_HOUR },
+    )(),
+)
 
 /** Raw published-slug read — exported for the T010 R3 test (see note above). */
 export const findPublishedSlugs = async (collection: SluggedCollection): Promise<string[]> => {
@@ -276,8 +402,11 @@ export const findPublishedSlugs = async (collection: SluggedCollection): Promise
  * filter (`overrideAccess: false`) so drafts never enter the static manifest
  * (invariant R3 / the spec-003 US5 draft-leak invariant on the public side).
  */
-export const publishedSlugsFor = (collection: SluggedCollection): Promise<string[]> =>
-  unstable_cache(() => findPublishedSlugs(collection), ['publishedSlugs', collection], {
-    tags: listCacheTags(collection),
-    revalidate: ONE_HOUR,
-  })()
+export const publishedSlugsFor = withReadTimeout(
+  'publishedSlugsFor',
+  (collection: SluggedCollection): Promise<string[]> =>
+    unstable_cache(() => findPublishedSlugs(collection), ['publishedSlugs', collection], {
+      tags: listCacheTags(collection),
+      revalidate: ONE_HOUR,
+    })(),
+)

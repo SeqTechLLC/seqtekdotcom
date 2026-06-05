@@ -13,6 +13,9 @@ interface PostListProps {
   source: 'latest' | 'by-category' | 'manual'
   manualItems?: Array<PostDoc | string | number> | null
   limit?: number | null
+  /** Card title level. Defaults to `h3`; listing pages with a page-level `h1`
+   *  and no section heading pass `h2` to keep heading order non-skipping. */
+  headingLevel?: 'h2' | 'h3'
 }
 
 const isDoc = (v: unknown): v is PostDoc =>
@@ -21,8 +24,15 @@ const isDoc = (v: unknown): v is PostDoc =>
 const isMedia = (v: unknown): v is { url: string; alt?: string | null } =>
   typeof v === 'object' && v !== null && 'url' in (v as object) && !!(v as { url: unknown }).url
 
-export function PostList({ heading, source, manualItems, limit = 3 }: PostListProps) {
+export function PostList({
+  heading,
+  source,
+  manualItems,
+  limit = 3,
+  headingLevel = 'h3',
+}: PostListProps) {
   const docs = source === 'manual' ? (manualItems ?? []).filter(isDoc).slice(0, limit ?? 12) : []
+  const CardHeading = headingLevel
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
@@ -48,9 +58,9 @@ export function PostList({ heading, source, manualItems, limit = 3 }: PostListPr
                   />
                 ) : null}
                 <div className="p-5">
-                  <h3 className="text-h4 font-semibold">
+                  <CardHeading className="text-h4 font-semibold">
                     {p.slug ? <Link href={`/insights/${p.slug}`}>{p.title}</Link> : p.title}
-                  </h3>
+                  </CardHeading>
                   {p.excerpt ? (
                     <p className="mt-2 text-body text-text-secondary">{p.excerpt}</p>
                   ) : null}

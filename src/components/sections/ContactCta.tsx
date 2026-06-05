@@ -27,7 +27,7 @@ export function ContactCta({
             {primaryCta?.label && primaryCta?.url ? (
               <Link
                 href={primaryCta.url}
-                className="rounded-md bg-accent px-5 py-3 font-medium text-white"
+                className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
               >
                 {primaryCta.label}
               </Link>
@@ -42,7 +42,7 @@ export function ContactCta({
         <div className="rounded-md border border-border-subtle bg-surface-subtle p-6 text-center">
           {meetingUrl ? (
             <>
-              <p className="text-caption uppercase tracking-wide text-accent">Book a time</p>
+              <p className="text-caption uppercase tracking-wide text-accent-strong">Book a time</p>
               <p className="mt-2 text-body-lg font-semibold">HubSpot Meetings embed</p>
               <p className="mt-1 text-small text-text-muted">{meetingUrl}</p>
             </>

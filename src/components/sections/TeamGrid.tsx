@@ -13,6 +13,9 @@ interface TeamGridProps {
   filter: 'leadership-only' | 'featured' | 'all'
   layout?: 'cards' | 'compact' | null
   manualItems?: Array<TeamMemberDoc | string | number> | null
+  /** Card title level. Defaults to `h3`; listing pages with a page-level `h1`
+   *  and no section heading pass `h2` to keep heading order non-skipping. */
+  headingLevel?: 'h2' | 'h3'
 }
 
 const isDoc = (v: unknown): v is TeamMemberDoc =>
@@ -21,8 +24,15 @@ const isDoc = (v: unknown): v is TeamMemberDoc =>
 const isMedia = (v: unknown): v is { url: string; alt?: string | null } =>
   typeof v === 'object' && v !== null && 'url' in (v as object) && !!(v as { url: unknown }).url
 
-export function TeamGrid({ heading, filter, layout = 'cards', manualItems }: TeamGridProps) {
+export function TeamGrid({
+  heading,
+  filter,
+  layout = 'cards',
+  manualItems,
+  headingLevel = 'h3',
+}: TeamGridProps) {
   const docs = (manualItems ?? []).filter(isDoc)
+  const CardHeading = headingLevel
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
@@ -48,9 +58,9 @@ export function TeamGrid({ heading, filter, layout = 'cards', manualItems }: Tea
                     className="h-24 w-24 rounded-full object-cover"
                   />
                 ) : null}
-                <h3 className="mt-4 text-h4 font-semibold">
+                <CardHeading className="mt-4 text-h4 font-semibold">
                   {m.slug ? <Link href={`/team/${m.slug}`}>{m.name}</Link> : m.name}
-                </h3>
+                </CardHeading>
                 {m.role ? <p className="mt-1 text-small text-text-secondary">{m.role}</p> : null}
               </li>
             ))}

@@ -25,7 +25,7 @@ export function BrandTeaser({ headline, body, linkLabel, linkUrl, image }: Brand
           <p className="mt-4 text-body-lg text-text-secondary">{body}</p>
           <Link
             href={linkUrl}
-            className="mt-6 inline-block rounded-md border border-accent px-5 py-3 font-medium text-accent hover:bg-accent hover:text-white"
+            className="mt-6 inline-block rounded-md border border-accent-strong px-5 py-3 font-medium text-accent-strong hover:bg-accent-strong hover:text-white"
           >
             {linkLabel}
           </Link>

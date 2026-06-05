@@ -13,6 +13,9 @@ interface CaseStudyGridProps {
   source: 'manual' | 'latest' | 'by-industry' | 'by-service'
   manualItems?: Array<CaseStudyDoc | string | number> | null
   limit?: number | null
+  /** Card title level. Defaults to `h3`; listing pages with a page-level `h1`
+   *  and no section heading pass `h2` to keep heading order non-skipping. */
+  headingLevel?: 'h2' | 'h3'
 }
 
 const isDoc = (v: unknown): v is CaseStudyDoc =>
@@ -21,10 +24,17 @@ const isDoc = (v: unknown): v is CaseStudyDoc =>
 const isMedia = (v: unknown): v is { url: string; alt?: string | null } =>
   typeof v === 'object' && v !== null && 'url' in (v as object) && !!(v as { url: unknown }).url
 
-export function CaseStudyGrid({ heading, source, manualItems, limit = 3 }: CaseStudyGridProps) {
+export function CaseStudyGrid({
+  heading,
+  source,
+  manualItems,
+  limit = 3,
+  headingLevel = 'h3',
+}: CaseStudyGridProps) {
   // Non-manual sources resolve at template time (Phase 3). Showcase renders
   // the manual path; other sources show the affordance only.
   const docs = source === 'manual' ? (manualItems ?? []).filter(isDoc).slice(0, limit ?? 9) : []
+  const CardHeading = headingLevel
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
@@ -50,9 +60,9 @@ export function CaseStudyGrid({ heading, source, manualItems, limit = 3 }: CaseS
                   />
                 ) : null}
                 <div className="p-5">
-                  <h3 className="text-h4 font-semibold">
+                  <CardHeading className="text-h4 font-semibold">
                     {d.slug ? <Link href={`/case-studies/${d.slug}`}>{d.title}</Link> : d.title}
-                  </h3>
+                  </CardHeading>
                   {d.subtitle ? (
                     <p className="mt-2 text-body text-text-secondary">{d.subtitle}</p>
                   ) : null}

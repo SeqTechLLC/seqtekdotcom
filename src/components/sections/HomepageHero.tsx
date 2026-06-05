@@ -47,7 +47,7 @@ export function HomepageHero({
           {primaryCta?.label && primaryCta?.url ? (
             <Link
               href={primaryCta.url}
-              className="rounded-md bg-accent px-6 py-3 font-medium text-white"
+              className="rounded-md bg-accent-strong px-6 py-3 font-medium text-white"
             >
               {primaryCta.label}
             </Link>

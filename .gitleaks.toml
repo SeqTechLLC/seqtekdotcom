@@ -28,4 +28,9 @@ regexes = [
   # INTEGRATIONS.md §1.2. List each provisioned GUID explicitly; do NOT use a
   # broad UUID pattern, which would mask real UUID-shaped secrets.
   '''66dba2bf-f099-44d5-8c6e-f24292cefe53''', # Workshop Inquiry form GUID
+  # E2E-only default for REVALIDATION_SECRET (playwright.config.ts). Not a real
+  # secret — only injected into the test-spawned dev server so seeded-content
+  # tests can call the /api/revalidate route. Mirrors the existing int-test
+  # placeholder ('test-revalidation-secret').
+  '''e2e-revalidation-secret''',
 ]

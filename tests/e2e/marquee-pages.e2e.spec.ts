@@ -4,6 +4,7 @@ import { getPayload, type Payload } from 'payload'
 
 import config from '../../src/payload.config'
 import { attachEditorSessionToContext, cleanupEditorSession } from '../sessions/editorSession'
+import { revalidateDevCache } from './helpers/revalidateDevCache'
 import type { CaseStudy } from '../../src/payload-types'
 
 /** Minimal valid Payload/Lexical richText value carrying a single paragraph. */
@@ -131,7 +132,7 @@ test.describe('US3 — team page renders members with photos', () => {
     })
   })
 
-  test('GET /team → 200, TeamGrid renders the member, axe-clean', async ({ page }) => {
+  test('GET /team → 200, TeamGrid renders the member, axe-clean', async ({ page, request }) => {
     const media = await payload.create({
       collection: 'media',
       data: { alt: 'US3 marquee headshot' },
@@ -156,6 +157,13 @@ test.describe('US3 — team page renders members with photos', () => {
       },
       overrideAccess: true,
     })
+
+    // `/team` is the one cached LISTING route this suite asserts seeded content
+    // on. The create above mutates via a separate Payload process, so its
+    // afterChange `revalidateTag` never reaches the dev server — and a sibling
+    // suite (a11y) may have already warmed `teamMembers_list`. Bust it in-process
+    // so the render reflects the just-created member regardless of suite order.
+    await revalidateDevCache(request, ['teamMembers_list'])
 
     const res = await page.goto('/team')
     expect(res?.status()).toBe(200)

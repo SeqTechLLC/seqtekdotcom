@@ -26,7 +26,7 @@ export function NewsletterCta({ heading, body, formId }: NewsletterCtaProps) {
           />
           <button
             type="button"
-            className="rounded-md bg-accent px-5 py-3 font-medium text-white"
+            className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
             disabled
           >
             Subscribe

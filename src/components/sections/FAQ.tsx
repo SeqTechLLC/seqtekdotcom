@@ -24,7 +24,9 @@ export function FAQ({ heading, items }: FAQProps) {
               <details className="group">
                 <summary className="flex cursor-pointer items-center justify-between py-4 text-body-lg font-semibold">
                   <span>{item.question}</span>
-                  <span className="ml-4 text-accent transition group-open:rotate-180">▾</span>
+                  <span className="ml-4 text-accent-strong transition group-open:rotate-180">
+                    ▾
+                  </span>
                 </summary>
                 <div className="pb-4">
                   <RichText data={item.answer} withProse />

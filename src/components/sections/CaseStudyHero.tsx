@@ -29,12 +29,12 @@ export function CaseStudyHero({ eyebrow, headline, metric, heroImage }: CaseStud
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
         <div>
-          <p className="text-caption uppercase tracking-wide text-accent">{eyebrow}</p>
+          <p className="text-caption uppercase tracking-wide text-accent-strong">{eyebrow}</p>
           <h1 className="mt-2 text-h1 font-bold">{headline}</h1>
           {metric ? (
-            <div className="mt-8 border-l-4 border-accent pl-4">
+            <div className="mt-8 border-l-4 border-accent-strong pl-4">
               {metric.number ? (
-                <p className="text-display font-bold text-accent">{metric.number}</p>
+                <p className="text-display font-bold text-accent-strong">{metric.number}</p>
               ) : null}
               {metric.label ? (
                 <p className="mt-1 text-body-lg font-semibold">{metric.label}</p>

@@ -830,6 +830,8 @@ The repo is public — a single accidental commit of credentials means they are 
 | Lighthouse SEO            | 95+    | 85                         | Structured data, semantic HTML, meta tags                                     |
 | Lighthouse Accessibility  | 95+    | Unknown                    | WCAG 2.1 AA compliance                                                        |
 
+> **Proof recorded (spec 007, 2026-06-05):** a production-representative run (`npm run build && npm run start`, seeded DB, mobile) is captured in [`specs/007-launch-hardening-polish/perf-results.md`](../specs/007-launch-hardening-polish/perf-results.md). **Accessibility = 1.00, SEO = 1.00, CLS = 0.000 on every public route**; Performance is 0.95–0.96 on the tuned detail routes. LCP (~2.1–2.6s) and TBT (~145–229ms) sit above target on localhost only because there is **no CloudFront edge** and the **local HubSpot portal is force-loaded** (in production those scripts are consent-gated and behind the CDN). Per the 2026-06-05 clarification, spec 007 **records** this proof and does **not** arm the gate: `.lighthouserc.cjs` keeps Performance/LCP/TBT/CLS at `warn` while a11y/best-practices/SEO gate at ≥ 0.95. **Phase 5.5 launch-readiness step:** re-take the proof against CloudFront staging (consent-gated third-party) and flip the four `performance` rows from `warn` → `error`.
+
 ### How to Hit These Numbers
 
 1. **Self-hosted fonts** with `font-display: swap` and preload hints in `<head>`

@@ -207,7 +207,7 @@ HubSpot provides a cookie consent banner as part of the tracking script (`//js.h
 **Configuration in HubSpot portal (Privacy & Consent settings):**
 
 - Cookie categorization: Necessary, Analytics, Advertising, Functionality
-- Consent collection: Opt-in (GDPR-style) or notice-only (depends on legal requirements)
+- Consent collection: **notice-only** (decided 2026-06-05). The banner informs visitors but does not gate the pixels. If a specific market ever needs opt-in, that is a per-region config change in this portal, not a code change. (The §2.2 GTM consent bridge already supports this: under notice-only HubSpot reports `consent.allowed`, so the bridge grants `analytics_storage` / `ad_storage` and the tags fire.)
 - Banner appearance: Customizable colors and text — should match site brand
 - Geographic targeting: Can show different banners by region
 
@@ -217,7 +217,7 @@ HubSpot provides a cookie consent banner as part of the tracking script (`//js.h
 
 ## 2. Google Tag Manager (GTM)
 
-**Container ID:** TBD (use existing or create new)
+**Container ID:** `GTM-54KBJ2Z3` (container name `seqtek.com`, created 2026-06-05; Kenn is admin). Wired via `NEXT_PUBLIC_GTM_ID`.
 **Role:** Container for all tracking pixels. Single point of management for Meta Pixels, LinkedIn Insight Tag, and any future tracking scripts.
 
 ### 2.1 GTM Loading
@@ -357,7 +357,15 @@ All tracking pixels are configured INSIDE GTM, not in the Next.js codebase. This
 | LinkedIn Insight Tag       | 1     | ad_storage          |                     |
 | Google Ads (AW-810041431)  | 1     | ad_storage          | Conversion tracking |
 
-**Action required:** Verify all pixel IDs from the current Wix site and configure them in the GTM container. The current site loads these directly — they need to be moved into GTM for proper consent management.
+**IDs pulled from the current Wix site (2026-06-05):**
+
+- Meta Pixels (8): `1186714053236201`, `1220594586925181`, `1257168352957823`, `1441004027824917`, `1478518097610326`, `2012483126370954`, `4208687456061834`, `884182914464592`
+- LinkedIn Insight partner ID: `3952964`
+- Google Ads: `AW-810041431`
+
+**Status (2026-06-05):** GTM container created (`GTM-54KBJ2Z3`). Kenn has Meta Business, LinkedIn Campaign Manager, Google Ads, and GTM admin access.
+
+**Remaining:** map each of the 8 Meta pixel IDs above to the market/variant slots in the table (which ID is Tulsa A, Tulsa B, OKC A, etc.), and confirm none are missing or were added after this list. Pending from Domanick/Justine, or self-serve via Meta Events Manager → Data Sources (pixel name, status, last event). Once mapped, configure the tags in the container — the current Wix site loads these directly and they need to move into GTM for consent management.
 
 ### 2.4 GTM DataLayer Events
 

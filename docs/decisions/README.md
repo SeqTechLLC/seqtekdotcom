@@ -61,3 +61,4 @@ A concrete trigger that should reopen this decision (e.g., "we hit X scale," "ve
 | [0004](0004-postgres-18.md)                   | Move to PostgreSQL 18                                  | Accepted | 2026-05-29 |
 | [0005](0005-isr-unstable-cache-tag-parity.md) | ISR caching via `unstable_cache` with tag parity       | Accepted | 2026-06-01 |
 | [0006](0006-hubspot-consent-bridge.md)        | HubSpot consent bridge: official listener, fail-closed | Accepted | 2026-06-03 |
+| [0007](0007-read-timeout.md)                  | Server-read timeout: `Promise.race` outermost layer    | Accepted | 2026-06-05 |

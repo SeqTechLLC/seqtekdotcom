@@ -16,7 +16,7 @@ export function KeyTakeaways({ heading, items }: KeyTakeawaysProps) {
         <ol className="mt-8 space-y-4">
           {items.map((item, i) => (
             <li key={item.id ?? i} className="flex items-start gap-4">
-              <span className="text-h3 font-bold text-accent">{i + 1}.</span>
+              <span className="text-h3 font-bold text-accent-strong">{i + 1}.</span>
               <span className="text-body-lg">{item.label}</span>
             </li>
           ))}

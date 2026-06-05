@@ -11,13 +11,22 @@ interface ServiceCardsProps {
   heading?: string | null
   source: 'by-pillar' | 'manual'
   manualItems?: Array<ServiceDoc | string | number> | null
+  /** Card title level. Defaults to `h3`; the pillar page (page-level `h1`, no
+   *  section heading) passes `h2` to keep heading order non-skipping. */
+  headingLevel?: 'h2' | 'h3'
 }
 
 const isDoc = (v: unknown): v is ServiceDoc =>
   typeof v === 'object' && v !== null && 'title' in (v as object)
 
-export function ServiceCards({ heading, source, manualItems }: ServiceCardsProps) {
+export function ServiceCards({
+  heading,
+  source,
+  manualItems,
+  headingLevel = 'h3',
+}: ServiceCardsProps) {
   const docs = source === 'manual' ? (manualItems ?? []).filter(isDoc) : []
+  const CardHeading = headingLevel
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
@@ -34,10 +43,10 @@ export function ServiceCards({ heading, source, manualItems }: ServiceCardsProps
                 key={s.id ?? s.slug}
                 className="rounded-md border border-border-subtle bg-surface p-6 shadow-xs"
               >
-                {s.icon ? <p className="text-h3 text-accent">{s.icon}</p> : null}
-                <h3 className="mt-2 text-h4 font-semibold">
+                {s.icon ? <p className="text-h3 text-accent-strong">{s.icon}</p> : null}
+                <CardHeading className="mt-2 text-h4 font-semibold">
                   {s.slug ? <Link href={`/services/${s.slug}`}>{s.title}</Link> : s.title}
-                </h3>
+                </CardHeading>
               </li>
             ))}
           </ul>

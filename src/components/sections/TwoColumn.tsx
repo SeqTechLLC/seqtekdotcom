@@ -39,7 +39,7 @@ export function TwoColumn({ mediaPosition, body, media, cta }: TwoColumnProps) {
       {cta?.label && cta?.url ? (
         <Link
           href={cta.url}
-          className="mt-6 inline-block rounded-md bg-accent px-5 py-3 font-medium text-white"
+          className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
         >
           {cta.label}
         </Link>

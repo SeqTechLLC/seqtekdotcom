@@ -20,7 +20,9 @@ export function Accordion({ heading, items }: AccordionProps) {
               <details className="group">
                 <summary className="flex cursor-pointer items-center justify-between py-3 text-body font-semibold">
                   <span>{item.title}</span>
-                  <span className="ml-4 text-accent transition group-open:rotate-180">▾</span>
+                  <span className="ml-4 text-accent-strong transition group-open:rotate-180">
+                    ▾
+                  </span>
                 </summary>
                 <p className="pb-3 text-body text-text-secondary">{item.body}</p>
               </details>
