@@ -344,28 +344,41 @@ All tracking pixels are configured INSIDE GTM, not in the Next.js codebase. This
 
 **Pixels managed in GTM:**
 
-| Pixel                      | Count | Consent Requirement | Notes               |
-| -------------------------- | ----- | ------------------- | ------------------- |
-| Meta Pixel (Tulsa A)       | 1     | ad_storage          | A/B test variant    |
-| Meta Pixel (Tulsa B)       | 1     | ad_storage          | A/B test variant    |
-| Meta Pixel (OKC A)         | 1     | ad_storage          |                     |
-| Meta Pixel (OKC B)         | 1     | ad_storage          |                     |
-| Meta Pixel (NW Arkansas A) | 1     | ad_storage          |                     |
-| Meta Pixel (NW Arkansas B) | 1     | ad_storage          |                     |
-| Meta Pixel (Kansas City A) | 1     | ad_storage          |                     |
-| Meta Pixel (Kansas City B) | 1     | ad_storage          |                     |
-| LinkedIn Insight Tag       | 1     | ad_storage          |                     |
-| Google Ads (AW-810041431)  | 1     | ad_storage          | Conversion tracking |
+| Pixel                      | Pixel ID           | Consent Requirement | Notes                                      |
+| -------------------------- | ------------------ | ------------------- | ------------------------------------------ |
+| Meta Pixel (Tulsa A)       | `4208687456061834` | ad_storage          | Browser pixel today; A/B variant           |
+| Meta Pixel (Tulsa B)       | `1220594586925181` | ad_storage          | No integration yet (0 events); A/B variant |
+| Meta Pixel (OKC A)         | `1257168352957823` | ad_storage          | Currently CAPI (server-side)               |
+| Meta Pixel (OKC B)         | `1478518097610326` | ad_storage          | Browser pixel + CAPI                       |
+| Meta Pixel (NW Arkansas A) | `1441004027824917` | ad_storage          | Currently CAPI (server-side)               |
+| Meta Pixel (NW Arkansas B) | `2012483126370954` | ad_storage          | Currently CAPI (server-side)               |
+| Meta Pixel (Kansas City A) | `1186714053236201` | ad_storage          | Currently CAPI (server-side)               |
+| Meta Pixel (Kansas City B) | `884182914464592`  | ad_storage          | Currently CAPI (server-side)               |
+| LinkedIn Insight Tag       | partner `3952964`  | ad_storage          | Justine's ad account; 9 active conversions |
+| Google Ads                 | `AW-810041431`     | ad_storage          | Conversion tracking                        |
 
-**IDs pulled from the current Wix site (2026-06-05):**
+**Mapping confirmed 2026-06-05** (Events Manager, via Megan). All 8 Meta pixels present — none missing, none added. The IDs in the table above are the live dataset IDs.
 
-- Meta Pixels (8): `1186714053236201`, `1220594586925181`, `1257168352957823`, `1441004027824917`, `1478518097610326`, `2012483126370954`, `4208687456061834`, `884182914464592`
-- LinkedIn Insight partner ID: `3952964`
-- Google Ads: `AW-810041431`
+**LinkedIn Insight Tag:** lives in Justine's LinkedIn ad account, status Active (data last received 2026-06-05), enhanced conversion tracking enabled. 9 active conversions: KC / NW Ark / OKC / Tulsa Case Study Workshop, Careers Page, SEQTEK Services, Website Home Page, Website Contact Us Page (plus several Inactive legacy ones).
 
-**Status (2026-06-05):** GTM container created (`GTM-54KBJ2Z3`). Kenn has Meta Business, LinkedIn Campaign Manager, Google Ads, and GTM admin access.
+**Heads-up — server-side CAPI:** 6 of the 8 Meta datasets currently receive via the Conversions API (server-side); only Tulsa A and OKC B have a browser Meta Pixel, and Tulsa B has no integration yet. **Server-side CAPI is not gated by the cookie banner** — consent mode in GTM governs only the browser pixel. Confirm whether CAPI keeps running after launch; if it does, consent for those events must be enforced at the CAPI source, not here.
 
-**Remaining:** map each of the 8 Meta pixel IDs above to the market/variant slots in the table (which ID is Tulsa A, Tulsa B, OKC A, etc.), and confirm none are missing or were added after this list. Pending from Domanick/Justine, or self-serve via Meta Events Manager → Data Sources (pixel name, status, last event). Once mapped, configure the tags in the container — the current Wix site loads these directly and they need to move into GTM for consent management.
+**Trigger URLs (per-variant):** each Meta pixel fires only on its market/variant Case Study Workshop landing page. In GTM, trigger each browser Meta Pixel tag on the matching page path:
+
+| Market / Variant | Page path (current Wix)  | Pixel ID           |
+| ---------------- | ------------------------ | ------------------ |
+| Tulsa A          | /tulsaacasestudyworkshop | `4208687456061834` |
+| Tulsa B          | /tulsabcasestudyworkshop | `1220594586925181` |
+| OKC A            | /okcacasestudyworkshop   | `1257168352957823` |
+| OKC B            | /okcbcasestudyworkshop   | `1478518097610326` |
+| NW Arkansas A    | /nwarkacasestudyworkshop | `1441004027824917` |
+| NW Arkansas B    | /nwarkbcasestudyworkshop | `2012483126370954` |
+| Kansas City A    | /kcacasestudyworkshop    | `1186714053236201` |
+| Kansas City B    | /kcbcasestudyworkshop    | `884182914464592`  |
+
+On the current Wix site these were deployed via Wix Studio → Settings → Custom Code with page-specific rules — that is what GTM replaces. **Paths above are the current Wix routes; confirm the new site's equivalent routes before building the URL triggers.** (Mapping corroborated by both Megan's Events Manager screenshot and Domanick's mapping email.)
+
+**Status:** GTM container `GTM-54KBJ2Z3` created; Kenn has GTM admin + Google Ads access. Remaining: build the browser tags in GTM (Meta / LinkedIn / Google Ads), set each to require `ad_storage`, and run the §2.2 accept / deny / customize test plan on staging.
 
 ### 2.4 GTM DataLayer Events
 
