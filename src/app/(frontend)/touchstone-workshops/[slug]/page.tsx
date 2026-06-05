@@ -103,7 +103,7 @@ export default async function WorkshopPage({ params }: Props) {
 
         {testimonial?.quote ? (
           <section data-testid="workshop-testimonial" className="mb-12">
-            <blockquote className="border-l-4 border-accent pl-6 text-body-lg italic text-text-secondary">
+            <blockquote className="border-l-4 border-accent-strong pl-6 text-body-lg italic text-text-secondary">
               <p>&ldquo;{testimonial.quote}&rdquo;</p>
               {testimonial.personName ? (
                 <footer className="mt-4 text-small not-italic text-text-muted">

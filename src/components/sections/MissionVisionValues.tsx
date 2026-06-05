@@ -26,16 +26,16 @@ export function MissionVisionValues({
       <div className="mx-auto max-w-container-lg space-y-12">
         <div className="grid gap-8 md:grid-cols-2">
           <div>
-            <p className="text-caption uppercase tracking-wide text-accent">Mission</p>
+            <p className="text-caption uppercase tracking-wide text-accent-strong">Mission</p>
             <p className="mt-2 text-body-lg">{mission}</p>
           </div>
           <div>
-            <p className="text-caption uppercase tracking-wide text-accent">Vision</p>
+            <p className="text-caption uppercase tracking-wide text-accent-strong">Vision</p>
             <p className="mt-2 text-body-lg">{vision}</p>
           </div>
         </div>
         <div>
-          <p className="text-caption uppercase tracking-wide text-accent">Values</p>
+          <p className="text-caption uppercase tracking-wide text-accent-strong">Values</p>
           <ul className={valuesCls}>
             {values.map((v, i) => (
               <li

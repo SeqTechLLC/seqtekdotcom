@@ -17,7 +17,7 @@ export function TestimonialEmbed({ testimonial }: TestimonialEmbedProps) {
   const { quote, personName, personTitle, company } = testimonial
   if (!quote) return null
   return (
-    <blockquote className="my-6 border-l-4 border-accent pl-4 italic">
+    <blockquote className="my-6 border-l-4 border-accent-strong pl-4 italic">
       <p>“{quote}”</p>
       {(personName || company) && (
         <footer className="mt-2 not-italic text-sm text-text-secondary">

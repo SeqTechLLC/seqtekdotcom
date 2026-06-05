@@ -2,6 +2,11 @@
 
 How to run and verify each of the four tracks locally. Dev server is port 3100; Lighthouse runs against a production build on 3200. (Confirm any script flag against `package.json` before relying on it — script names below are current as of this plan.)
 
+> **Script + convention drift recorded at implementation (T001):**
+>
+> - All four leaned-on scripts exist and are unchanged: `test:e2e`, `visual:capture` (uses a separate `playwright.visual.config.ts`), `test:lhci`, `seed:showcase`. DB env var is `DATABASE_URL` (not `DATABASE_URI`).
+> - **Visual baselines are git-ignored** (`.gitignore`: `/tests/e2e/visual/screenshots/` — "keep out of the repo to avoid binary churn"). So FR-004 / the original D5 wording "**commit** the re-captured baselines in the same change" does not apply: `visual:capture` is a **capture harness** (it screenshots, it does not diff/assert), and there is **nothing to commit**. The accent edits are verified by the axe `color-contrast` sweep (`a11y.e2e.spec.ts`, green across all 14 in-scope routes) and the showcase capture re-runs cleanly; baselines are regenerated locally, never committed.
+
 ## Prerequisites
 
 ```bash

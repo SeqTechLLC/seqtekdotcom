@@ -31,7 +31,12 @@ export default async function CaseStudiesPage() {
           Real engagements, real outcomes. A look at how we work.
         </p>
       </header>
-      <CaseStudyGrid source="manual" manualItems={caseStudies} limit={caseStudies.length} />
+      <CaseStudyGrid
+        source="manual"
+        manualItems={caseStudies}
+        limit={caseStudies.length}
+        headingLevel="h2"
+      />
     </div>
   )
 }

@@ -29,7 +29,7 @@ export default async function ServicesPage() {
           Practice areas built around one delivery model.
         </p>
       </header>
-      <ServicePillarCards pillars={pillars} />
+      <ServicePillarCards pillars={pillars} headingLevel="h2" />
     </div>
   )
 }

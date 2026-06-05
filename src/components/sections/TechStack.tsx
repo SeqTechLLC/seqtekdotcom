@@ -22,7 +22,7 @@ export function TechStack({ heading, items }: TechStackProps) {
               <li key={item.id ?? i}>
                 <Link
                   href={item.linkUrl}
-                  className="inline-block rounded-full border border-border-strong bg-surface px-4 py-1.5 text-small font-medium text-text-secondary hover:border-accent hover:text-accent"
+                  className="inline-block rounded-full border border-border-strong bg-surface px-4 py-1.5 text-small font-medium text-text-secondary hover:border-accent-strong hover:text-accent-strong"
                 >
                   {item.label}
                 </Link>

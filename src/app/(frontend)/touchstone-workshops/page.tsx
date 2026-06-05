@@ -28,7 +28,7 @@ export default async function WorkshopsPage() {
           Facilitated sessions that move teams from AI ambition to an actionable plan.
         </p>
       </header>
-      <WorkshopList workshops={workshops} />
+      <WorkshopList workshops={workshops} headingLevel="h2" />
     </div>
   )
 }

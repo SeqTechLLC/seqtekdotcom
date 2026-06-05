@@ -64,7 +64,7 @@ export function ComparisonTable({ heading, columns, rows, bestForRow }: Comparis
                 <tr className="bg-surface-accent">
                   <th
                     scope="row"
-                    className="px-3 py-3 text-left text-caption uppercase tracking-wide text-accent"
+                    className="px-3 py-3 text-left text-caption uppercase tracking-wide text-accent-strong"
                   >
                     Best for
                   </th>
