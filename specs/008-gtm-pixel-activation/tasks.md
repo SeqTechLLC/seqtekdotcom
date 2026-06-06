@@ -33,7 +33,7 @@ Per plan.md "Phasing & gated tail", tasks fall into three lanes:
 **Purpose**: Confirm the external access and the in-repo patterns this feature composes against (no new project scaffolding — the app, container, and consent foundation already exist).
 
 - [ ] T001 Confirm preconditions for the GTM-UI work: admin access to container `GTM-54KBJ2Z3`, access to the Google Ads (`AW-810041431`) and LinkedIn (partner `3952964`, Justine's ad account) accounts, and that `NEXT_PUBLIC_GTM_ID=GTM-54KBJ2Z3` is set for staging — cross-check against `docs/INTEGRATIONS.md` §2.3 and `.env.example`
-- [ ] T002 [P] Review the existing consent foundation (`src/components/integrations/GtmScript.tsx`, `src/components/integrations/ConsentDefault.tsx`, `src/lib/csp.ts`) and the `pushDataLayer` pattern in `src/lib/hubspot/submit.ts`; confirm it is reused **unchanged** (FR-012) so US1 mirrors its consent defaults and US3 generalizes its emitter faithfully — no code change
+- [x] T002 [P] Review the existing consent foundation (`src/components/integrations/GtmScript.tsx`, `src/components/integrations/ConsentDefault.tsx`, `src/lib/csp.ts`) and the `pushDataLayer` pattern in `src/lib/hubspot/submit.ts`; confirm it is reused **unchanged** (FR-012) so US1 mirrors its consent defaults and US3 generalizes its emitter faithfully — no code change
 
 ---
 
@@ -82,7 +82,7 @@ Per plan.md "Phasing & gated tail", tasks fall into three lanes:
 ### Implementation for User Story 2
 
 - [ ] T010 🔶 [US2] Export the live container (GTM **Admin → Export Container**, the full `containerVersion` JSON) and commit it **verbatim** over `infra/gtm/container.json` — the first real export of `GTM-54KBJ2Z3`, replacing the `TBD` posture (FR-006; A5/G5; research R4). No transform/redaction (no credentials in a GTM export)
-- [ ] T011 [P] [US2] Update `infra/gtm/README.md`: container ID `TBD` → `GTM-54KBJ2Z3`; add the Meta-deferral note + the live-vs-deferred tag scope (LinkedIn/Google Ads live; 8 Meta staged); re-affirm the **export-on-change convention** (export → save over the file → commit `feat(gtm):`/`chore(gtm):` on the same change); record the per-market Meta URL triggers from INTEGRATIONS.md §2.3 as a **documented TODO** for the content track (FR-007; FR-011 doc side; A5)
+- [x] T011 [P] [US2] Update `infra/gtm/README.md`: container ID `TBD` → `GTM-54KBJ2Z3`; add the Meta-deferral note + the live-vs-deferred tag scope (LinkedIn/Google Ads live; 8 Meta staged); re-affirm the **export-on-change convention** (export → save over the file → commit `feat(gtm):`/`chore(gtm):` on the same change); record the per-market Meta URL triggers from INTEGRATIONS.md §2.3 as a **documented TODO** for the content track (FR-007; FR-011 doc side; A5)
 
 ### Verification for User Story 2 (re-export diff — the independent test)
 
@@ -104,21 +104,21 @@ Per plan.md "Phasing & gated tail", tasks fall into three lanes:
 
 > **Write these FIRST and verify they FAIL before the implementation tasks (T015–T019) turn them green.** With only the helper present and no emitters, the CTA click / case-study view produce no push → red.
 
-- [ ] T013 [P] [US3] Write the E2E test `tests/e2e/datalayer-events.e2e.spec.ts`: clicking a primary CTA pushes **exactly one** `cta_click` with `event` + `ctaId` present; navigating to `/case-studies/<slug>` pushes **exactly one** `case_study_view` with the correct `slug`. Reuse `tests/e2e/helpers/consent.ts` patterns and the `revalidateDevCache` helper if the test depends on seeded case-study content (contracts D1/D2; quickstart §1)
-- [ ] T014 [P] [US3] Add an integration test in `tests/int/` asserting `pushDataLayer` is **SSR-safe** (no-op when `window` is undefined) and produces the documented shapes for the new event union (INV-1, INV-4)
+- [x] T013 [P] [US3] Write the E2E test `tests/e2e/datalayer-events.e2e.spec.ts`: clicking a primary CTA pushes **exactly one** `cta_click` with `event` + `ctaId` present; navigating to `/case-studies/<slug>` pushes **exactly one** `case_study_view` with the correct `slug`. Reuse `tests/e2e/helpers/consent.ts` patterns and the `revalidateDevCache` helper if the test depends on seeded case-study content (contracts D1/D2; quickstart §1)
+- [x] T014 [P] [US3] Add an integration test in `tests/int/` asserting `pushDataLayer` is **SSR-safe** (no-op when `window` is undefined) and produces the documented shapes for the new event union (INV-1, INV-4)
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Create `src/lib/analytics/dataLayer.ts`: the SSR-safe `pushDataLayer()` (`typeof window === 'undefined'` guard), the **single** `Window.dataLayer` global declaration, and the typed event union (`cta_click`, `case_study_view`, `booking_complete`) generalizing the proven `src/lib/hubspot/submit.ts` pattern (research R3; data-model §A; INV-1/INV-2)
-- [ ] T016 [P] [US3] Refactor `src/lib/hubspot/submit.ts` to import `pushDataLayer` + the `Window.dataLayer` declaration from `src/lib/analytics/dataLayer.ts` (remove its local copy so there is **one** SSR guard / **one** global declaration); keep the `form_submission_*` event shapes **unchanged** (INV-3) (depends on T015)
-- [ ] T017 [P] [US3] Emit `cta_click` from the CTA surfaces — `src/components/ui/Button.tsx` (when rendered as a CTA), `src/components/sections/CtaSection.tsx`, `src/components/sections/ContactCta.tsx`, `src/components/richText/inline/InlineCta.tsx` — via a client `onClick`, **non-blocking** (never delay/swallow navigation), payload `{ event, ctaId, label, location, href? }` (contract D1; FR-008) (depends on T015)
-- [ ] T018 [P] [US3] Add a `'use client'` `<TrackView slug title/>` island and emit `case_study_view` **once on mount** (not on client re-render) from `src/app/(frontend)/case-studies/[slug]/page.tsx`, sourcing `slug`/`title` from the already-loaded document (contract D2; FR-008) (depends on T015)
-- [ ] T019 [P] [US3] Define the `booking_complete` listener **seam** in `src/components/sections/HubspotMeetings.tsx` (HubSpot Meetings `onMeetingBookSucceeded` cross-window `message` → `pushDataLayer({ event: 'booking_complete', meetingUrl })`); emission stays **gated** on the real Meetings embed (placeholder today) and is documented as deferred (contract D3) (depends on T015)
-- [ ] T020 [US3] Run `npm run test:e2e -- datalayer-events` (and `npm run test:int -- dataLayer`) and make T013/T014 **green** (depends on T015–T018)
+- [x] T015 [US3] Create `src/lib/analytics/dataLayer.ts`: the SSR-safe `pushDataLayer()` (`typeof window === 'undefined'` guard), the **single** `Window.dataLayer` global declaration, and the typed event union (`cta_click`, `case_study_view`, `booking_complete`) generalizing the proven `src/lib/hubspot/submit.ts` pattern (research R3; data-model §A; INV-1/INV-2)
+- [x] T016 [P] [US3] Refactor `src/lib/hubspot/submit.ts` to import `pushDataLayer` + the `Window.dataLayer` declaration from `src/lib/analytics/dataLayer.ts` (remove its local copy so there is **one** SSR guard / **one** global declaration); keep the `form_submission_*` event shapes **unchanged** (INV-3) (depends on T015)
+- [x] T017 [P] [US3] Emit `cta_click` from the CTA surfaces — `src/components/ui/Button.tsx` (when rendered as a CTA), `src/components/sections/CtaSection.tsx`, `src/components/sections/ContactCta.tsx`, `src/components/richText/inline/InlineCta.tsx` — via a client `onClick`, **non-blocking** (never delay/swallow navigation), payload `{ event, ctaId, label, location, href? }` (contract D1; FR-008) (depends on T015)
+- [x] T018 [P] [US3] Add a `'use client'` `<TrackView slug title/>` island and emit `case_study_view` **once on mount** (not on client re-render) from `src/app/(frontend)/case-studies/[slug]/page.tsx`, sourcing `slug`/`title` from the already-loaded document (contract D2; FR-008) (depends on T015)
+- [x] T019 [P] [US3] Define the `booking_complete` listener **seam** in `src/components/sections/HubspotMeetings.tsx` (HubSpot Meetings `onMeetingBookSucceeded` cross-window `message` → `pushDataLayer({ event: 'booking_complete', meetingUrl })`); emission stays **gated** on the real Meetings embed (placeholder today) and is documented as deferred (contract D3) (depends on T015)
+- [x] T020 [US3] Run `npm run test:e2e -- datalayer-events` (and `npm run test:int -- dataLayer`) and make T013/T014 **green** (depends on T015–T018)
 
 ### Docs for User Story 3
 
-- [ ] T021 [P] [US3] Document the three new events (payloads + Live/seam status) in `docs/INTEGRATIONS.md` §2.4, consistent with `specs/008-gtm-pixel-activation/contracts/datalayer-events.md` and `data-model.md` §A (FR-008 documented-payload; constitution III)
+- [x] T021 [P] [US3] Document the three new events (payloads + Live/seam status) in `docs/INTEGRATIONS.md` §2.4, consistent with `specs/008-gtm-pixel-activation/contracts/datalayer-events.md` and `data-model.md` §A (FR-008 documented-payload; constitution III)
 
 **Checkpoint**: The conversion-signal surface is complete, tested, and documented; `booking_complete` is a reviewable seam awaiting the embed.
 
@@ -134,8 +134,8 @@ Per plan.md "Phasing & gated tail", tasks fall into three lanes:
 
 ### Implementation for User Story 4
 
-- [ ] T022 [US4] Record the CAPI decision in `docs/INTEGRATIONS.md` §2.3: whether the six CAPI-fed Meta datasets continue post-launch and the rationale; if continuing, that consent is enforced **at the CAPI source (off-site)** with a named owner/action; if stopping, the cutoff and who actions it. Resolve the open question (does the new site even feed CAPI post-cutover?) per research R2 / `contracts/gtm-activation.md` A4 (FR-009)
-- [ ] T023 [US4] Confirm the §2.3 decision is self-contained (posture + enforcement point + owner all present) so the SC-006 doc-review test passes; link the deferral from the relevant ROADMAP item
+- [x] T022 [US4] Record the CAPI decision in `docs/INTEGRATIONS.md` §2.3: whether the six CAPI-fed Meta datasets continue post-launch and the rationale; if continuing, that consent is enforced **at the CAPI source (off-site)** with a named owner/action; if stopping, the cutoff and who actions it. Resolve the open question (does the new site even feed CAPI post-cutover?) per research R2 / `contracts/gtm-activation.md` A4 (FR-009)
+- [x] T023 [US4] Confirm the §2.3 decision is self-contained (posture + enforcement point + owner all present) so the SC-006 doc-review test passes; link the deferral from the relevant ROADMAP item
 
 **Checkpoint**: The CAPI consent gap is on the record with an owner — no silent "yes, it keeps running".
 
@@ -145,9 +145,9 @@ Per plan.md "Phasing & gated tail", tasks fall into three lanes:
 
 **Purpose**: Bookkeeping and whole-feature validation across all stories.
 
-- [ ] T024 [P] On merge, move the relevant `docs/ROADMAP.md` item to `docs/PROJECT_HISTORY.md` (preserve the ID; don't checkbox-flip), leaving the Meta-trigger, CAPI-enforcement, and `booking_complete`-emission deferrals as **open items** pointing at their gating tracks (constitution III; quickstart §4)
-- [ ] T025 Run the full `specs/008-gtm-pixel-activation/quickstart.md` validation (§1 events, §2 export, §3 fire-matrix) and confirm SC-001…SC-007 are each satisfied or explicitly deferred (Meta rows N/A)
-- [ ] T026 [P] Run `npm run lint`, `npm run typecheck`, and the full test suite; confirm CI is green (the consent-gating substrate is already covered by spec 006's `consent-flows.e2e.spec.ts`)
+- [x] T024 [P] On merge, move the relevant `docs/ROADMAP.md` item to `docs/PROJECT_HISTORY.md` (preserve the ID; don't checkbox-flip), leaving the Meta-trigger, CAPI-enforcement, and `booking_complete`-emission deferrals as **open items** pointing at their gating tracks (constitution III; quickstart §4) — _ROADMAP block added recording US3/US4 shipped + the four open items (US1/US2 external tail, Meta triggers, CAPI enforcement, booking_complete emission); the PROJECT_HISTORY move is deferred until the full feature lands (external verification tail still open), so nothing is prematurely flipped to done._
+- [ ] T025 Run the full `specs/008-gtm-pixel-activation/quickstart.md` validation (§1 events, §2 export, §3 fire-matrix) and confirm SC-001…SC-007 are each satisfied or explicitly deferred (Meta rows N/A) — _§1 (events) DONE: `datalayer-events.e2e.spec.ts` + `dataLayer.int.spec.ts` green (SC covered for the dataLayer surface). §2 (export) + §3 (fire-matrix) are the external-config tail (SC-001/002/003/004/007) — gated on GTM-UI work + staging deploy; SC-006 (CAPI doc review) DONE via §2.3._
+- [x] T026 [P] Run `npm run lint`, `npm run typecheck`, and the full test suite; confirm CI is green (the consent-gating substrate is already covered by spec 006's `consent-flows.e2e.spec.ts`) — _lint clean (4 pre-existing migration warnings, 0 errors), typecheck clean; `dataLayer` + `hubspot-submit` int green, `datalayer-events` + `a11y` (14/14) + `layout` E2E green. The consent/CSP/best-practices specs are env-gated locally (real `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` in `.env.local`) and gate in CI with IDs unset — my change touches neither the consent bridge, CSP, nor the loaders._
 
 ---
 

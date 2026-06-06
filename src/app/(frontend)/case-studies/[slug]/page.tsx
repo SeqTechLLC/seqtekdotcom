@@ -10,6 +10,7 @@ import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RichText } from '@/components/richText/RichText'
+import { TrackView } from '@/components/analytics/TrackView'
 import type { CaseStudy } from '@/payload-types'
 
 // spec 004 US2 (T016). Bespoke structured template (Shape B) over the
@@ -66,6 +67,8 @@ export default async function CaseStudyPage({ params }: Props) {
         ])}
       />
       {isDraft && <PreviewBanner />}
+      {/* Fire-once case_study_view (spec 008 US3, contract D2). */}
+      <TrackView slug={slug} title={caseStudy.title} />
 
       <article data-testid="case-study" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
         <header className="mb-12">

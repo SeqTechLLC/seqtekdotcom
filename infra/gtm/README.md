@@ -8,12 +8,28 @@ production config. (INTEGRATIONS.md §2.2 / spec 006 FR-008.)
 
 ## Container ID
 
-**`TBD`** — the GTM Container ID is not yet provisioned. It is a soft block
-(mirrors spec 005's form-GUID seam): the bridge code, the consent default, and
-the privacy surfaces ship without it; the live tag fire-matrix verification
-(spec 006 US1 / SC-002) is gated on the container existing and the HubSpot
-portal banner being configured. When it lands, set `NEXT_PUBLIC_GTM_ID` in the
-environment (see INTEGRATIONS.md §7) and record the ID here.
+**`GTM-54KBJ2Z3`** (created 2026-06-05; Kenn = admin). Set
+`NEXT_PUBLIC_GTM_ID=GTM-54KBJ2Z3` in the environment to load it (see
+INTEGRATIONS.md §7); leave it unset locally/CI so no real tags load.
+
+## Tag scope (spec 008)
+
+- **Live (site-wide):** the **LinkedIn Insight Tag** (partner `3952964`) and the
+  **Google Ads** conversion tag (`AW-810041431`). Both require `ad_storage` (G3)
+  and fire on Page View paired with the `hubspotConsentUpdate` Custom Event (G2),
+  so they re-evaluate the instant consent flips.
+- **Deferred (staged, no live trigger):** the **8 Meta browser pixels**. They are
+  per-market and fire only on per-variant Case Study Workshop landing routes
+  (`/tulsaacasestudyworkshop`, …) that **do not exist on the new site**. Stage
+  them in the container labeled "pending per-market landing routes — content
+  track" with **no bound trigger**; do **not** wire the `/…casestudyworkshop`
+  path triggers. The per-market URL→pixel mapping in INTEGRATIONS.md §2.3 is a
+  **documented TODO** for the content / paid-landing-page track: when those
+  routes ship, bind each Meta tag to its path trigger and re-run G4 for those
+  tags.
+- **Server-side CAPI** (6 of 8 Meta datasets) is **not governed by this
+  container** — it bypasses the cookie banner. Consent posture + owner are
+  recorded in INTEGRATIONS.md §2.3 (spec 008 / FR-009).
 
 ## What the container must encode (spec 006, contracts/gtm-consent-governance.md)
 
@@ -41,12 +57,18 @@ environment (see INTEGRATIONS.md §7) and record the ID here.
 4. Commit on the same change (`feat(gtm): …` or `chore(gtm): …`) so the diff
    is reviewable. The committed JSON is the rollback target.
 
-`container.json` is **not** present until the container exists (Container ID is
-`TBD`). It is committed here on the first meaningful container change.
+**Export-on-change is the convention** — the live container is operational
+truth, but the committed `container.json` is authoritative for review and
+rollback. Every container change re-exports and commits in the **same** change,
+so the config always has a reviewable diff. A re-export-and-diff at verification
+time confirms zero drift (spec 008 SC-004). `container.json` lands on the first
+real export of `GTM-54KBJ2Z3` (spec 008 US2), replacing this `TBD`-era note.
 
 ## Verification (the staging acceptance test — gtm-consent-governance.md G4)
 
 Exercise Accept-all / Deny-all / Customize in GTM Preview/Debug and confirm the
-tag fire matrix, corroborated by the browser Network tab (no pixel host on
-Deny). This is gated on the Container ID + HubSpot portal banner config and is
-tracked as the spec 006 live-verification tail (T009/T019/T030).
+tag fire matrix, corroborated by the browser Network tab (no ad host on Deny).
+For spec 008 this runs on staging for the **live** tags only (LinkedIn + Google
+Ads); the Meta rows are N/A until their landing routes exist. It is gated on
+doing the GTM-UI build + a staging deploy (no longer on a missing container ID)
+— the spec 008 external-config tail.
