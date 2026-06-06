@@ -127,7 +127,7 @@ A stakeholder responsible for compliance needs a clear, written answer to: do th
 - **SC-002**: On an Accept-all visit, 100% of the site-wide advertising tags (LinkedIn, Google Ads) fire after consent is granted.
 - **SC-003**: On a Customize (analytics-yes, advertising-no) visit, advertising tags fire 0% of the time while analytics is allowed.
 - **SC-004**: The live container and the committed `infra/gtm/container.json` are identical at the end of the feature (zero drift), verifiable by a re-export diff.
-- **SC-005**: All three new dataLayer events fire on their respective interactions in 100% of test runs with the documented payload shape.
+- **SC-005**: The two live dataLayer events added here (`cta_click`, `case_study_view`) fire on their respective interactions in 100% of test runs with the documented payload shape. `booking_complete` ships as a documented contract + listener seam only — it has no live emission until the HubSpot Meetings embed exists (see Assumptions and data-model §A), and its firing is verified when that embed lands.
 - **SC-006**: A reviewer can determine the CAPI post-launch consent posture and its enforcement owner from the documentation alone, without asking a person.
 - **SC-007**: All three consent flows are recorded as executed on staging with captured results, and no advertising host appears in the Deny-flow network capture.
 
