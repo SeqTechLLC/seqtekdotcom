@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
+
 type Cta = { label?: string | null; url?: string | null } | null
 
 interface MediaLike {
@@ -55,12 +57,15 @@ export function CtaSection({
           className={`mt-8 flex flex-wrap items-center gap-4 ${variant === 'centered' ? 'justify-center' : ''}`}
         >
           {primaryCta?.label && primaryCta?.url ? (
-            <Link
+            <TrackedCtaLink
               href={primaryCta.url}
+              ctaId="cta-section-primary"
+              location="cta-section"
+              label={primaryCta.label}
               className={`rounded-md px-5 py-3 font-medium ${isInverse ? 'bg-white text-accent-strong' : 'bg-accent-strong text-white'}`}
             >
               {primaryCta.label}
-            </Link>
+            </TrackedCtaLink>
           ) : null}
           {secondaryCta?.label && secondaryCta?.url ? (
             <Link href={secondaryCta.url} className="font-medium underline">

@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
+
 type Cta = { label?: string | null; url?: string | null } | null
 
 interface ContactCtaProps {
@@ -25,12 +27,15 @@ export function ContactCta({
           {body ? <p className="mt-4 text-body-lg text-text-secondary">{body}</p> : null}
           <div className="mt-8 flex flex-wrap items-center gap-4">
             {primaryCta?.label && primaryCta?.url ? (
-              <Link
+              <TrackedCtaLink
                 href={primaryCta.url}
+                ctaId="contact-cta-primary"
+                location="contact-cta"
+                label={primaryCta.label}
                 className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
               >
                 {primaryCta.label}
-              </Link>
+              </TrackedCtaLink>
             ) : null}
             {secondaryCta?.label && secondaryCta?.url ? (
               <Link href={secondaryCta.url} className="font-medium underline">

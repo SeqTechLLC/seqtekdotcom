@@ -361,7 +361,14 @@ All tracking pixels are configured INSIDE GTM, not in the Next.js codebase. This
 
 **LinkedIn Insight Tag:** lives in Justine's LinkedIn ad account, status Active (data last received 2026-06-05), enhanced conversion tracking enabled. 9 active conversions: KC / NW Ark / OKC / Tulsa Case Study Workshop, Careers Page, SEQTEK Services, Website Home Page, Website Contact Us Page (plus several Inactive legacy ones).
 
-**Heads-up — server-side CAPI:** 6 of the 8 Meta datasets currently receive via the Conversions API (server-side); only Tulsa A and OKC B have a browser Meta Pixel, and Tulsa B has no integration yet. **Server-side CAPI is not gated by the cookie banner** — consent mode in GTM governs only the browser pixel. Confirm whether CAPI keeps running after launch; if it does, consent for those events must be enforced at the CAPI source, not here.
+**Heads-up — server-side CAPI:** 6 of the 8 Meta datasets currently receive via the Conversions API (server-side); only Tulsa A and OKC B have a browser Meta Pixel, and Tulsa B has no integration yet. **Server-side CAPI is not gated by the cookie banner** — consent mode in GTM governs only the browser pixel.
+
+**CAPI consent decision (spec 008 / FR-009):**
+
+- **Posture.** The new Next.js site **does not originate any CAPI events.** The server-side Conversions API sends are an upstream integration (Wix-era platform and/or the HubSpot↔Meta connector), not code in this repo. The site governs **only the browser pixels** (LinkedIn, Google Ads, and the deferred Meta browser tags) via GTM Consent Mode. Nothing in this app can gate an event it never emits — so there is **no in-app CAPI enforcement obligation**, and none is built.
+- **Open question, resolved.** Whether CAPI keeps running after the `seqtek.com` cutover is an **upstream** question: if the CAPI sends were a Wix-platform integration, the cutover most likely **stops them**, leaving only the browser pixels (which we do gate). This must be **confirmed at the source**, not assumed here.
+- **Enforcement point (if CAPI continues).** Consent for any continuing CAPI events must be enforced **at the CAPI source, off-site** — by passing Meta's `data_processing_options` / limited-data-use signals or by suppressing sends for non-consented users in whatever server posts to Meta. Not implementable from this codebase.
+- **Owner / action.** The marketing / ad-platform owners (**Megan** — Meta Events Manager; **Domanick** — dataset mapping) own (1) confirming whether CAPI continues post-cutover, and (2) if it does, enforcing consent at the source. Tracked as an open item in ROADMAP (spec 008 deferrals); see research R2.
 
 **Trigger URLs (per-variant):** each Meta pixel fires only on its market/variant Case Study Workshop landing page. In GTM, trigger each browser Meta Pixel tag on the matching page path:
 
@@ -378,23 +385,37 @@ All tracking pixels are configured INSIDE GTM, not in the Next.js codebase. This
 
 On the current Wix site these were deployed via Wix Studio → Settings → Custom Code with page-specific rules — that is what GTM replaces. **Paths above are the current Wix routes; confirm the new site's equivalent routes before building the URL triggers.** (Mapping corroborated by both Megan's Events Manager screenshot and Domanick's mapping email.)
 
-**Status:** GTM container `GTM-54KBJ2Z3` created; Kenn has GTM admin + Google Ads access. Remaining: build the browser tags in GTM (Meta / LinkedIn / Google Ads), set each to require `ad_storage`, and run the §2.2 accept / deny / customize test plan on staging.
+**Status (spec 008):** GTM container `GTM-54KBJ2Z3` created; Kenn has GTM admin + Google Ads access. **Live scope:** the **LinkedIn Insight Tag** (`3952964`) and **Google Ads** conversion tag (`AW-810041431`) are the site-wide tags this feature activates — both require `ad_storage` (G3) and fire on Page View paired with the `hubspotConsentUpdate` Custom Event (G2). **Deferred:** the **8 Meta browser pixels** are staged **without a live trigger** (labeled "pending per-market landing routes") — their per-variant `…casestudyworkshop` routes don't exist on the new site, so the URL triggers above are a **documented TODO for the content / paid-landing-page track**, not wired here (an unbound Meta tag firing on an unintended page is the Deny/Network leak G4 guards against). External-config tail: build the LinkedIn + Google Ads tags in GTM, export `infra/gtm/container.json`, deploy to staging, and run the §2.2 accept / deny / customize fire-matrix.
 
 ### 2.4 GTM DataLayer Events
 
-Push custom events to GTM's dataLayer for conversion tracking:
+Conversion signals are pushed to `window.dataLayer` so GTM triggers build on
+stable, documented events rather than DOM scraping. Every push routes through a
+single SSR-safe emitter — `pushDataLayer()` in `src/lib/analytics/dataLayer.ts`
+(no-op when `window` is absent; harmless when `NEXT_PUBLIC_GTM_ID` is unset).
+No raw `window.dataLayer.push` at call sites. Payloads carry **no PII** —
+interaction signals only (§1.2). Event contracts: `specs/008-gtm-pixel-activation/contracts/datalayer-events.md`.
 
-| Event                 | Trigger                    | Purpose                    |
-| --------------------- | -------------------------- | -------------------------- |
-| `form_submission`     | Any HubSpot form submitted | Track lead conversions     |
-| `contact_form_submit` | Contact form submitted     | Primary conversion         |
-| `booking_complete`    | HubSpot Meetings booking   | High-value conversion      |
-| `assessment_start`    | ScoreApp link clicked      | Assessment funnel tracking |
-| `newsletter_signup`   | Newsletter form submitted  | Email list growth          |
-| `case_study_view`     | Case study page viewed     | Content engagement         |
-| `cta_click`           | Any CTA button clicked     | CTA effectiveness          |
+| Event                     | Payload                                    | Emitted when                                      | Status                                                      |
+| ------------------------- | ------------------------------------------ | ------------------------------------------------- | ----------------------------------------------------------- |
+| `form_submission_attempt` | `{ event, formId }`                        | a HubSpot form submit fires (before the network)  | **Live** (spec 005)                                         |
+| `form_submission_success` | `{ event, formId }`                        | 200 from HubSpot (or the half-wired stub)         | **Live** (spec 005)                                         |
+| `form_submission_failure` | `{ event, formId, errorClass }`            | terminal submit failure (after retry)             | **Live** (spec 005)                                         |
+| `cta_click`               | `{ event, ctaId, label, location, href? }` | a primary CTA is clicked (non-blocking onClick)   | **Live** (spec 008)                                         |
+| `case_study_view`         | `{ event, slug, title }`                   | a case-study detail page mounts (fire-once)       | **Live** (spec 008)                                         |
+| `booking_complete`        | `{ event, meetingUrl }`                    | HubSpot Meetings reports `onMeetingBookSucceeded` | **Seam — emission gated** on the real Meetings embed (§1.4) |
 
-Implementation: Push to `window.dataLayer` from React event handlers. GTM triggers fire on these events and can route them to any configured pixel/tag.
+`cta_click` is emitted by a single client primitive (`TrackedCtaLink`) that the
+CTA surfaces (`Button` as a CTA, `CtaSection`, `ContactCta`, `InlineCta`) render
+through. `ctaId` is a stable identifier (not the editable label); `location` is
+a coarse placement (`header`, `cta-section`, `contact-cta`, `inline`, …).
+`booking_complete` is wired as a dormant listener seam (`BookingCompleteSeam`)
+that cannot fire until the placeholder `HubspotMeetings` component loads the real
+embed — mirrors the Meta-pixel deferral.
+
+**Not yet built (out of spec 008 scope):** `assessment_start` (ScoreApp — §3)
+and `newsletter_signup` (no newsletter form yet). Add them through the same
+emitter + union when those surfaces ship.
 
 ---
 
