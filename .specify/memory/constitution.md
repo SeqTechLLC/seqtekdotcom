@@ -1,4 +1,40 @@
 <!--
+SYNC IMPACT REPORT — v1.2.0 (amended 2026-06-06)
+
+Version change: 1.1.0 → 1.2.0
+Bump rationale: MINOR — adds an explicit carve-out to Principle II for config-,
+decision-, and documentation-only user stories whose load-bearing path is external to
+this codebase. Such a story MAY substitute a verification deliverable (captured staging
+evidence, a re-export/diff, or a doc-review acceptance) for the mandated automated test,
+provided the in-repo substrate it depends on is already CI-covered and the substitution
+is declared in the plan's Constitution Check. No principle removed or redefined; the
+"test what matters / do not pad" intent of Principle II is unchanged.
+
+Driver: spec 006 (gated consent tail) + spec 008 (GTM pixel activation). Both contain
+user stories that are pure external GTM/ad-platform configuration, a versioned container
+export, or a recorded compliance (CAPI) decision — none with an in-repo code path that
+could be tested without padding. The consent gating those stories rely on is already
+covered by spec 006's `tests/e2e/consent-flows.e2e.spec.ts`.
+
+Modified principles:
+  II. Tests Gate Merge → adds the external-verification carve-out (new paragraph before
+     the Rationale). The mandate for automated tests on code paths is unchanged.
+
+Modified sections: none.
+Added sections: none.
+Removed sections: none.
+
+Templates requiring updates:
+  ✅ .specify/templates/tasks-template.md — Tests note updated to reference the carve-out.
+  ✅ .specify/templates/plan-template.md — no structural change; the Constitution Check
+     section picks up the carve-out at plan time (the plan declares any substitution).
+  ✅ .specify/templates/spec-template.md — no structural change.
+
+Follow-up TODOs: none.
+
+------------------------------------------------------------------------------
+PRIOR ENTRIES
+
 SYNC IMPACT REPORT — v1.1.0 (amended 2026-05-24)
 
 Version change: 1.0.0 → 1.1.0
@@ -47,8 +83,6 @@ Templates requiring updates:
 Follow-up TODOs: none. The CI dep-audit gate ratified here was already implemented in
 spec 001 PR #1 (commit 7af0ce8); the constitution now reflects the as-built state.
 
-------------------------------------------------------------------------------
-PRIOR ENTRIES
 
 v1.0.0 (initial ratification, 2026-05-21) — first ratification; defined the five core
 principles, Additional Constraints, Development Workflow, and Governance. All templates
@@ -106,6 +140,19 @@ do not pad coverage on view components.
 Performance budgets (Performance / LCP / TBT / CLS) are staged as warnings during Phase 1
 and flip to errors in Phase 5 "Polish" per ARCHITECTURE.md §7. Accessibility,
 best-practices, and SEO budgets gate from day one.
+
+**External-verification carve-out (config / decision / documentation stories).** A user
+story whose load-bearing path lives outside this codebase — external GTM/ad-platform
+configuration, a versioned third-party export, or a recorded compliance decision — MAY
+substitute its mandated test with an explicit **verification deliverable**: a staging run
+with captured evidence (e.g. a GTM fire-matrix + Network HAR), a re-export-and-diff, or a
+doc-review acceptance. Two conditions hold: (a) the in-repo substrate the story depends on
+is already covered by CI, and (b) the substitution is named in the plan's Constitution
+Check. This is NOT a license to skip tests on code — a story that adds or changes a code
+path on the load-bearing surface still ships an automated test (write-first where
+practical). Precedent: spec 006's gated consent tail and spec 008's GTM activation, whose
+consent gating is CI-covered while the GTM-UI wiring and CAPI decision are verified on
+staging and in docs because there is no in-repo path to exercise without padding.
 
 **Rationale**: A marketing site does not need 90% line coverage on view components — it
 needs absolute confidence in load-bearing paths under every deploy. ARCHITECTURE.md §12.
@@ -280,4 +327,4 @@ recent decisions, in-flight conventions). This constitution carries the standing
 When the two disagree about a rule, this constitution wins; CLAUDE.md is updated in the
 same commit.
 
-**Version**: 1.1.0 | **Ratified**: 2026-05-21 | **Last Amended**: 2026-05-24
+**Version**: 1.2.0 | **Ratified**: 2026-05-21 | **Last Amended**: 2026-06-06
