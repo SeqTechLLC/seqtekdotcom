@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
 
 interface InlineCtaProps {
   label?: string | null
@@ -17,9 +17,9 @@ export function InlineCta({ label, url, variant = 'primary' }: InlineCtaProps) {
   if (!label || !url) return null
   const cls = VARIANT_CLASSES[variant ?? 'primary']
   return (
-    <Link href={url} className={cls}>
+    <TrackedCtaLink href={url} ctaId="inline-cta" location="inline" label={label} className={cls}>
       {label}
-    </Link>
+    </TrackedCtaLink>
   )
 }
 

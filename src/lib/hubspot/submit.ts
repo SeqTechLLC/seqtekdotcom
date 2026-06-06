@@ -15,6 +15,8 @@
  * (src/lib/csp.ts — `*.hsforms.com`, spec 005), so going live needs no CSP change.
  */
 
+import { pushDataLayer } from '@/lib/analytics/dataLayer'
+
 const SUBMIT_TIMEOUT_MS = 15_000
 const RETRY_BACKOFF_MS = 1_000
 const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -47,27 +49,18 @@ const ERROR_COPY: Record<HubspotErrorClass, string> = {
 
 const RETRYABLE: ReadonlySet<HubspotErrorClass> = new Set(['5xx', 'network', 'timeout'])
 
-declare global {
-  interface Window {
-    dataLayer?: Array<Record<string, unknown>>
-  }
-}
-
 /** True only when a live submit can actually reach HubSpot. */
 export function isHubspotLive(formId: string | undefined | null): boolean {
   return Boolean(process.env.NEXT_PUBLIC_HUBSPOT_PORTAL_ID && formId && GUID_RE.test(formId))
 }
 
-type DataLayerEvent =
+// Form events ride the shared SSR-safe emitter (src/lib/analytics/dataLayer.ts)
+// — one push path, one `Window.dataLayer` declaration. Shapes are unchanged
+// from spec 005 (INV-3): existing GTM triggers depend on them.
+type FormSubmissionEvent =
   | { event: 'form_submission_attempt'; formId: string }
   | { event: 'form_submission_success'; formId: string }
   | { event: 'form_submission_failure'; formId: string; errorClass: HubspotErrorClass }
-
-function pushDataLayer(payload: DataLayerEvent): void {
-  if (typeof window === 'undefined') return
-  window.dataLayer = window.dataLayer ?? []
-  window.dataLayer.push(payload)
-}
 
 /** Read the HubSpot visitor cookie so the submit links to the tracked session. */
 function readHutk(): string | undefined {
@@ -132,11 +125,17 @@ async function postOnce(args: SubmitArgs): Promise<HubspotSubmitResult> {
  * Pushes attempt/success/failure dataLayer events around the lifecycle.
  */
 export async function submitHubspotForm(args: SubmitArgs): Promise<HubspotSubmitResult> {
-  pushDataLayer({ event: 'form_submission_attempt', formId: args.formId })
+  pushDataLayer({
+    event: 'form_submission_attempt',
+    formId: args.formId,
+  } satisfies FormSubmissionEvent)
 
   // HALF-WIRED: no live target yet → exercise the lifecycle, skip the network.
   if (!isHubspotLive(args.formId)) {
-    pushDataLayer({ event: 'form_submission_success', formId: args.formId })
+    pushDataLayer({
+      event: 'form_submission_success',
+      formId: args.formId,
+    } satisfies FormSubmissionEvent)
     return { status: 'success', stub: true }
   }
 
@@ -152,13 +151,16 @@ export async function submitHubspotForm(args: SubmitArgs): Promise<HubspotSubmit
   }
 
   if (result.status === 'success') {
-    pushDataLayer({ event: 'form_submission_success', formId: args.formId })
+    pushDataLayer({
+      event: 'form_submission_success',
+      formId: args.formId,
+    } satisfies FormSubmissionEvent)
   } else {
     pushDataLayer({
       event: 'form_submission_failure',
       formId: args.formId,
       errorClass: result.errorClass,
-    })
+    } satisfies FormSubmissionEvent)
   }
 
   return result

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/cn'
+import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'link'
 export type ButtonSize = 'sm' | 'md' | 'lg'
@@ -23,11 +24,16 @@ const sizeClass: Record<ButtonSize, string> = {
   lg: 'h-12 px-6 text-body-lg',
 }
 
+/** Opt a link-mode Button into `cta_click` tracking (spec 008 US3, T017). */
+export type ButtonCta = { ctaId: string; location: string; label?: string }
+
 type CommonProps = {
   variant?: ButtonVariant
   size?: ButtonSize
   children: ReactNode
   className?: string
+  /** When set on a link-mode Button, emit `cta_click` via TrackedCtaLink. */
+  cta?: ButtonCta
 }
 
 type ButtonAsButton = CommonProps &
@@ -56,12 +62,34 @@ export function Button({
   size = 'md',
   className,
   children,
+  cta,
   ...rest
 }: ButtonProps) {
   const classes = cn(base, variantClass[variant], variant !== 'link' && sizeClass[size], className)
 
   if ('href' in rest && rest.href) {
     const { href, ...anchorProps } = rest
+
+    // CTA-tracked link: route through the single `cta_click` emitter, keeping
+    // Button's internal/external + prefetch={false} behavior (TrackedCtaLink
+    // mirrors it). A forwarded onClick (e.g. mobile-nav close) still runs.
+    if (cta) {
+      return (
+        <TrackedCtaLink
+          href={href}
+          ctaId={cta.ctaId}
+          location={cta.location}
+          label={cta.label ?? (typeof children === 'string' ? children : undefined)}
+          className={classes}
+          prefetch={false}
+          newTab
+          {...anchorProps}
+        >
+          {children}
+        </TrackedCtaLink>
+      )
+    }
+
     if (isInternalHref(href)) {
       // prefetch={false}: the header/mobile CTA points at /contact/book-a-call,
       // which isn't built yet — prefetching it 404s and dings the Lighthouse

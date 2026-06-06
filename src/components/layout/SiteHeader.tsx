@@ -47,7 +47,12 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Button href={ctaButton.url} size="sm" className="hidden md:inline-flex">
+            <Button
+              href={ctaButton.url}
+              size="sm"
+              className="hidden md:inline-flex"
+              cta={{ ctaId: 'header-cta', location: 'header' }}
+            >
               {ctaButton.label}
             </Button>
             <MobileNav navItems={mainNav} ctaButton={ctaButton} />

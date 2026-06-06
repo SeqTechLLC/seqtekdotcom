@@ -1,3 +1,5 @@
+import { BookingCompleteSeam } from '@/components/analytics/BookingCompleteSeam'
+
 interface HubspotMeetingsProps {
   meetingUrl: string
   heading?: string | null
@@ -6,6 +8,9 @@ interface HubspotMeetingsProps {
 export function HubspotMeetings({ meetingUrl, heading }: HubspotMeetingsProps) {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
+      {/* booking_complete seam (spec 008 US3, contract D3) — dormant until the
+          real Meetings embed posts onMeetingBookSucceeded. */}
+      <BookingCompleteSeam meetingUrl={meetingUrl} />
       <div className="mx-auto max-w-container-md">
         {heading ? <h2 className="text-h2 font-bold">{heading ?? 'Book a time'}</h2> : null}
         <div className="mt-8 rounded-md border border-border-strong bg-surface-subtle p-8 text-center">

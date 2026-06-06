@@ -114,7 +114,13 @@ export function MobileNav({ navItems, ctaButton }: MobileNavProps) {
           </nav>
 
           <div className="border-t border-border-subtle p-4">
-            <Button href={ctaButton.url} size="md" className="w-full" onClick={close}>
+            <Button
+              href={ctaButton.url}
+              size="md"
+              className="w-full"
+              onClick={close}
+              cta={{ ctaId: 'mobile-nav-cta', location: 'mobile-nav' }}
+            >
               {ctaButton.label}
             </Button>
           </div>

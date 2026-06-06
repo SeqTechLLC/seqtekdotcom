@@ -8,7 +8,7 @@ description: 'Task list template for feature implementation'
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: This project's constitution (`.specify/memory/constitution.md` § Principle II) requires every user story to ship with **at least one Vitest integration or Playwright E2E test** that exercises the load-bearing path. Test tasks are NOT optional here — include them in each User Story phase. Where applicable, write the test first and verify it FAILS before the implementation tasks turn it green.
+**Tests**: This project's constitution (`.specify/memory/constitution.md` § Principle II) requires every user story to ship with **at least one Vitest integration or Playwright E2E test** that exercises the load-bearing path. Test tasks are NOT optional here — include them in each User Story phase. Where applicable, write the test first and verify it FAILS before the implementation tasks turn it green. **Exception (constitution v1.2.0):** a config-, decision-, or documentation-only story whose load-bearing path is external to this codebase (e.g. external GTM/ad-platform config, a versioned third-party export, a recorded compliance decision) MAY substitute a **verification deliverable** — captured staging evidence, a re-export/diff, or a doc-review acceptance — for the automated test, provided the in-repo substrate is already CI-covered and the substitution is declared in the plan's Constitution Check.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
