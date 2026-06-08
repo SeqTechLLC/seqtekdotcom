@@ -44,6 +44,9 @@ brandkit/
 # Payload local media uploads (see docs/LOCAL_DEVELOPMENT.md)
 media/
 
+# Photo-ingest dedup manifest — env-scoped, maps to per-env media IDs (C-8)
+tools/ingest-photos/.manifest.*.json
+
 # TypeScript build info
 *.tsbuildinfo
 next-env.d.ts
