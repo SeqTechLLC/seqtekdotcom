@@ -14,6 +14,7 @@
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "ingest:photos": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/ingest-photos/index.ts",
+    "ingest:curated": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/ingest-photos/ingest-curated.ts",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "prepare": "husky",
