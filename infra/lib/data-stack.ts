@@ -146,6 +146,19 @@ export class DataStack extends Stack {
       description: 'S3 regional hostname for next/image remotePatterns.',
     })
 
+    // S3_REGION is REQUIRED for the Payload S3 storage adapter:
+    // `conditionalS3Storage()` (src/payload/storage/s3.ts) activates only when
+    // BOTH S3_BUCKET and S3_REGION are set, otherwise it falls back to local FS
+    // storage — which on the read-only container fs throws `EACCES mkdir media`
+    // and 500s every upload. This param was missing originally; see the
+    // staging hotfix note in the PR. The launch template maps the leaf name to
+    // S3_REGION (basename | uppercase).
+    new ssm.StringParameter(this, 'S3RegionParam', {
+      parameterName: `${this.parameterPathPrefix}/s3_region`,
+      stringValue: this.region,
+      description: 'AWS region for the Payload S3 storage adapter (S3_REGION).',
+    })
+
     // ----- Outputs -----
     new CfnOutput(this, 'DbEndpointHostname', {
       value: this.database.instanceEndpoint.hostname,

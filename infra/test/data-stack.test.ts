@@ -125,7 +125,7 @@ describe('DataStack', () => {
       })
     })
 
-    it('creates two non-sensitive Parameter Store entries (no sensitive values in SSM)', () => {
+    it('creates three non-sensitive Parameter Store entries (no sensitive values in SSM)', () => {
       t.hasResourceProperties('AWS::SSM::Parameter', {
         Name: '/seqtek/website/staging/s3_bucket',
         Type: 'String',
@@ -134,11 +134,17 @@ describe('DataStack', () => {
         Name: '/seqtek/website/staging/s3_bucket_hostname',
         Type: 'String',
       })
-      // Total SSM params for staging-data = 2. Anything else means a
+      // s3_region is REQUIRED — without it the Payload S3 adapter stays off and
+      // uploads fall back to local FS (EACCES on the read-only container fs).
+      t.hasResourceProperties('AWS::SSM::Parameter', {
+        Name: '/seqtek/website/staging/s3_region',
+        Type: 'String',
+      })
+      // Total SSM params for staging-data = 3. Anything else means a
       // regression to the SSM-SecureString-mirror pattern that we
       // explicitly dropped after the failed first deploy.
       const params = t.findResources('AWS::SSM::Parameter')
-      expect(Object.keys(params)).toHaveLength(2)
+      expect(Object.keys(params)).toHaveLength(3)
     })
 
     it('creates Secrets Manager secrets for sensitive values', () => {
