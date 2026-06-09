@@ -89,6 +89,17 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Verify admin importMap is up to date
+        # Payload's S3 storage plugin contributes an admin client component
+        # (S3ClientUploadHandler) to the import map. The plugin is always
+        # registered (src/payload/storage/s3.ts), so the map is environment-
+        # independent — regenerate and fail if the committed copy drifted
+        # (e.g. a new admin field/component/plugin wasn't checked in). A stale
+        # import map silently white-screens the entire admin, login included.
+        run: |
+          npm run generate:importmap
+          git diff --exit-code "src/app/(payload)/admin/importMap.js"
+
       - name: Lint
         run: npm run lint
 

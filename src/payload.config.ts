@@ -21,12 +21,13 @@ import { Homepage } from './globals/Homepage'
 import { Navigation } from './globals/Navigation'
 import { SiteSettings } from './globals/SiteSettings'
 import { editorConfig } from './payload/editor/editorConfig'
-import { conditionalS3Storage } from './payload/storage/s3'
+import { s3StoragePlugin } from './payload/storage/s3'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-const s3Plugin = conditionalS3Storage()
+// Always registered; activated by env inside the plugin. See storage/s3.ts.
+const s3Plugin = s3StoragePlugin()
 
 export default buildConfig({
   serverURL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3100',
@@ -81,5 +82,5 @@ export default buildConfig({
     push: process.env.NODE_ENV !== 'production',
   }),
   sharp,
-  plugins: s3Plugin ? [s3Plugin] : [],
+  plugins: [s3Plugin],
 })
