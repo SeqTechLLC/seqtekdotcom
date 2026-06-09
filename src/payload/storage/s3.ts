@@ -20,6 +20,14 @@ import { s3Storage } from '@payloadcms/storage-s3'
  * (payload.com/docs/upload/storage-adapters → "Conditionally Enable/Disable")
  * and keeps the import map identical across every environment.
  *
+ * `alwaysInsertFields` applies the same dev/prod-consistency principle to the
+ * collection schema: the `prefix` field is inserted whether or not the plugin
+ * is enabled, so `media` carries the column in every environment instead of
+ * only where S3 is active. This is the Payload v4 default and keeps the
+ * generated `payload-types.ts` and the database schema env-independent (the
+ * prod column is provisioned by the companion migration in #39; dev/CI get it
+ * via drizzle push).
+ *
  * AWS credentials come from the default credential chain (EC2 instance profile
  * in prod, optional `~/.aws/credentials` locally).
  */
@@ -30,6 +38,7 @@ export const s3StoragePlugin = (): Plugin => {
 
   return s3Storage({
     enabled: active,
+    alwaysInsertFields: true,
     collections: {
       media: {
         // Key shape: `<media-id>/<filename>` per ARCHITECTURE.md §5.
