@@ -1,3 +1,5 @@
+import path from 'path'
+
 import type { Plugin } from 'payload'
 import { s3Storage } from '@payloadcms/storage-s3'
 
@@ -31,6 +33,57 @@ import { s3Storage } from '@payloadcms/storage-s3'
  * AWS credentials come from the default credential chain (EC2 instance profile
  * in prod, optional `~/.aws/credentials` locally).
  */
+
+/**
+ * Object-key prefix for the media collection. Keys are `media/<filename>`
+ * (spec 009 / ADR 0008, clarified 2026-06-09): the CloudFront `/media/*`
+ * behavior (infra/lib/edge-stack.ts) has no originPath, so the public URL
+ * path is forwarded VERBATIM as the S3 object key — the static `media`
+ * prefix makes path == key with zero edge configuration. Size variants are
+ * flat siblings under the same prefix. See ARCHITECTURE.md §5 and
+ * specs/009-media-cloudfront-serving/contracts/media-url.md; changing any
+ * side of that contract requires changing all three.
+ */
+const MEDIA_PREFIX = 'media'
+
+/**
+ * The single source of the public media URL:
+ * `${NEXT_PUBLIC_SITE_URL}/media/<encoded-filename>` — served by the
+ * CloudFront `/media/*` S3-via-OAC behavior, never the app proxy.
+ *
+ * - Pure (no I/O) so the contract is unit-testable in isolation
+ *   (tests/int/media-url.int.spec.ts).
+ * - Built from the DOC's stored `prefix` (passed by the plugin's hooks),
+ *   mirroring how `@payloadcms/storage-s3` computes the actual object key —
+ *   URL and key cannot drift per-document.
+ * - Encoding mirrors the adapter's own `generateURL.js`: encode the filename
+ *   segment, never the `/` joiner.
+ * - Host fallback matches `payload.config.ts` serverURL. In deployed envs
+ *   `NEXT_PUBLIC_SITE_URL` comes from the `next_public_site_url` SSM param at
+ *   RUNTIME (server-side reads only) — `NEXT_PUBLIC_*` build-time inlining
+ *   applies to client bundles, so client components must NOT rely on this
+ *   value (the CI build has it unset).
+ *
+ * Why `generateFileURL` and not `disablePayloadAccessControl`: the latter
+ * emits raw S3-endpoint URLs (bypassing CloudFront) and removes the
+ * `/api/media/file/*` static-handler fallback the admin still uses. Hook
+ * order makes `generateFileURL` authoritative: Payload core's url-field
+ * afterRead hook runs FIRST (mergeBaseFields concats base-then-plugin), and
+ * the plugin's hook returns `generateFileURL`'s result unconditionally — so
+ * the URL is recomputed on every read and nothing persisted goes stale.
+ */
+export const mediaFileURL = ({
+  prefix,
+  filename,
+}: {
+  prefix?: string | null
+  filename: string
+}): string => {
+  const host = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3100').replace(/\/+$/, '')
+  const key = path.posix.join(prefix || '', encodeURIComponent(filename))
+  return `${host}/${key}`
+}
+
 export const s3StoragePlugin = (): Plugin => {
   const bucket = process.env.S3_BUCKET
   const region = process.env.S3_REGION
@@ -41,8 +94,13 @@ export const s3StoragePlugin = (): Plugin => {
     alwaysInsertFields: true,
     collections: {
       media: {
-        // Key shape: `<media-id>/<filename>` per ARCHITECTURE.md §5.
-        prefix: '',
+        prefix: MEDIA_PREFIX,
+        // Recomputed on every read for the original and each size variant
+        // (the plugin passes the variant's filename + the doc-level prefix).
+        // Inactive in local dev/CI: with `enabled: false` the plugin attaches
+        // no URL hooks, so local uploads keep the core
+        // `/api/media/file/<filename>` URLs against the local filesystem.
+        generateFileURL: ({ filename, prefix }) => mediaFileURL({ prefix, filename }),
         // Only bypass local-FS storage when the S3 adapter is actually active;
         // when disabled, uploads must keep writing to the local filesystem.
         disableLocalStorage: active,

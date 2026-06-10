@@ -340,13 +340,13 @@ For external integrations that need to trigger revalidation (e.g., a CI pipeline
 
 ISR revalidation only updates the page cache on the EC2 origin. CloudFront edge caches sit in front of the ALB and will continue serving stale content until their TTL expires. Explicit cache behaviors ensure each route type gets the right caching strategy:
 
-| Path Pattern      | Origin    | Cache Policy      | TTL                | Notes                                                      |
-| ----------------- | --------- | ----------------- | ------------------ | ---------------------------------------------------------- |
-| `/_next/static/*` | ALB       | Long-lived        | 1 year (immutable) | Content-hashed by Next.js — new deploys use new URLs       |
-| `/media/*`        | S3 bucket | Long-lived        | 1 year             | Versioning handled by S3 object keys                       |
-| `/admin/*`        | ALB       | `CachingDisabled` | None               | Payload admin panel — authenticated, dynamic, never cached |
-| `/api/*`          | ALB       | `CachingDisabled` | None               | Payload API routes, health checks, webhooks                |
-| `Default (*)`     | ALB       | Short-lived       | 60-120s            | Public HTML pages — ISR-generated, short edge TTL          |
+| Path Pattern      | Origin    | Cache Policy      | TTL                | Notes                                                                   |
+| ----------------- | --------- | ----------------- | ------------------ | ----------------------------------------------------------------------- |
+| `/_next/static/*` | ALB       | Long-lived        | 1 year (immutable) | Content-hashed by Next.js — new deploys use new URLs                    |
+| `/media/*`        | S3 bucket | Long-lived        | 1 year             | Stable `media/<filename>` keys; replace/delete invalidated by hook (§6) |
+| `/admin/*`        | ALB       | `CachingDisabled` | None               | Payload admin panel — authenticated, dynamic, never cached              |
+| `/api/*`          | ALB       | `CachingDisabled` | None               | Payload API routes, health checks, webhooks                             |
+| `Default (*)`     | ALB       | Short-lived       | 60-120s            | Public HTML pages — ISR-generated, short edge TTL                       |
 
 **Content-publish invalidation:** When an editor publishes content, the Payload `afterChange` hook revalidates the ISR cache on the origin _and_ issues a targeted CloudFront invalidation for the affected paths (e.g., `/case-studies/the-slug` + `/case-studies`). This eliminates edge staleness — editors see their content live immediately. The invalidation targets specific paths, not `/*`, so it stays well within the 1,000 free invalidation paths per month.
 
@@ -569,8 +569,8 @@ Media uploads (Payload's `media` collection) live in S3 and are served to the pu
 - Origin host is the bucket's **regional** endpoint (`seqtek-media-prod.s3.us-east-1.amazonaws.com`), not the website endpoint. The website endpoint serves HTTP only and doesn't support OAC
 - OAC attached to the origin with SigV4 signing
 - Viewer protocol policy: `redirect-to-https`
-- Cache policy: AWS managed `CachingOptimized` (long TTL). Payload's S3 adapter writes objects under `<media-id>/<filename>`, so any content change produces a new key — cache busting happens naturally via new URLs, no invalidation needed for media
-- Custom error response: S3 returns 403 for any object the bucket policy doesn't allow (which includes missing objects, since anonymous reads aren't permitted). The distribution rewrites 403 → 404 so missing media surfaces the correct status code. No custom response page — just the status remap
+- Cache policy: AWS managed `CachingOptimized` (long TTL). Object keys are **stable** (`media/<filename>`, see Object key strategy below), so a same-filename file replacement does NOT mint a new key — a Media `afterChange`/`afterDelete` hook (`src/payload/hooks/invalidateMediaOnChange.ts`, spec 009 FR-011) issues a targeted CloudFront invalidation for the affected `/media/*` paths (original + size variants) on file replace and delete, reusing the same `invalidateCloudFrontPaths` plumbing as content publishes. New uploads need no invalidation (fresh keys — Payload dedup-renames filename collisions)
+- Custom error response: S3 returns 403 for any object the bucket policy doesn't allow (which includes missing objects, since anonymous reads aren't permitted). A 403 → 404 remap is **deferred to Phase 5.5** — CloudFront requires `responseHttpStatus` + `responsePagePath` together, so the remap ships with the static error page (see the note in `infra/lib/edge-stack.ts`); until then missing media surfaces as 403
 
 **Bucket policy** (production; the staging bucket has the analogous statement for its own distribution):
 
@@ -598,7 +598,7 @@ The `AWS:SourceArn` condition scopes read access to the one specific distributio
 
 **Payload write access:** The EC2 instance profile holds an IAM policy granting `s3:PutObject`, `s3:DeleteObject`, and `s3:GetObject` on `arn:aws:s3:::seqtek-media-prod/*` (and the staging ARN on staging instances). `@payloadcms/storage-s3` uses the default AWS SDK credential chain, which picks up the instance profile automatically via IMDSv2 (hop limit 2, see Container Strategy above). No static AWS credentials live anywhere in the system — not in the container, not in Parameter Store, not in the repo.
 
-**Object key strategy:** Payload stores uploads at `<media-id>/<filename>`. Filenames are preserved for SEO-friendly URLs. The per-environment bucket split above prevents staging media from ever resolving against the production distribution.
+**Object key strategy:** Payload stores uploads at **`media/<filename>`** (static `media` prefix on the storage adapter; size variants are flat siblings under the same prefix — settled in ADR 0008 / spec 009). The CloudFront `/media/*` behavior has no originPath, so the public URL path is forwarded **verbatim** as the S3 object key: `https://<site>/media/<filename>` ↔ key `media/<filename>`, with zero edge rewriting. URL generation lives in `mediaFileURL()` (`src/payload/storage/s3.ts`), computed on every read from `NEXT_PUBLIC_SITE_URL` + the document's stored `prefix` — the three surfaces (adapter, CDN behavior, this section) form one contract (`specs/009-media-cloudfront-serving/contracts/media-url.md`). Filenames are preserved for SEO-friendly URLs (Payload enforces per-collection filename uniqueness). The per-environment bucket split above prevents staging media from ever resolving against the production distribution. Per-environment `serverURL` comes from the `next_public_site_url` SSM parameter (provisioned by the data stack whenever `domainName` is set); production inherits the whole design at cutover by config only.
 
 **Lifecycle policy** (managed in the data stack — see §13):
 
