@@ -76,7 +76,11 @@ tunnel drops mid-way.
 - `https://seqtek-preview.com/admin/collections/media` — 23 new rows, each with
   alt text and a `[curated:<slot>]` caption.
 - Media serves via CloudFront OAC; uploads are live immediately (object keys are
-  `<media-id>/<filename>`, so no cache invalidation is needed).
+  `media/<filename>` — settled in ADR 0008 / spec 009; the URL path maps
+  verbatim onto the key, so fresh uploads need no cache invalidation).
+  Replacing a file under the **same** filename keeps the same key — the Media
+  collection's invalidation hook (`src/payload/hooks/invalidateMediaOnChange.ts`)
+  busts the affected `/media/*` edge paths automatically.
 
 ## Notes
 
@@ -86,3 +90,8 @@ tunnel drops mid-way.
   staging → prod via a DB dump/restore + `aws s3 sync` (see `ARCHITECTURE.md` §5).
 - A tarball of the bundle (`photo-catalog/curated.tar.gz`) exists if you'd rather
   copy it onto an in-VPC host and run there instead of port-forwarding.
+- **One-shot migration (run once, after the spec 009 deploy):** objects
+  uploaded before spec 009 landed at bare `<filename>` keys; `rekey-staging.ts`
+  moves them in place to `media/<filename>` and patches each doc's stored
+  `prefix` (preserving media IDs and relations). Idempotent — re-running finds
+  nothing to do.

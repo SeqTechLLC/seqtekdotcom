@@ -140,11 +140,20 @@ describe('DataStack', () => {
         Name: '/seqtek/website/staging/s3_region',
         Type: 'String',
       })
-      // Total SSM params for staging-data = 3. Anything else means a
+      // Total SSM params for a domainless config = 3. Anything else means a
       // regression to the SSM-SecureString-mirror pattern that we
       // explicitly dropped after the failed first deploy.
       const params = t.findResources('AWS::SSM::Parameter')
       expect(Object.keys(params)).toHaveLength(3)
+    })
+
+    it('omits next_public_site_url when domainName is null (no stable public host pre-cutover)', () => {
+      // With the CloudFront-default topology there is no stable public URL to
+      // provision; the app falls back to its default serverURL. The param
+      // appears only once domainName is set (see the domain-bearing suite).
+      const params = t.findResources('AWS::SSM::Parameter')
+      const names = Object.values(params).map((p) => (p.Properties as { Name: string }).Name)
+      expect(names).not.toContain('/seqtek/website/staging/next_public_site_url')
     })
 
     it('creates Secrets Manager secrets for sensitive values', () => {
@@ -186,6 +195,29 @@ describe('DataStack', () => {
           `${id} must not embed a literal SecretString in the template`,
         ).toBeUndefined()
       }
+    })
+  })
+
+  describe('staging with domainName set (live seqtek-preview.com topology)', () => {
+    const t = synthDataStack('staging', {
+      ...stagingCfg,
+      domainName: 'seqtek-preview.com',
+      hostedZoneId: 'Z0000000000000000000A',
+      certificateArn: null,
+    })
+
+    it('provisions next_public_site_url so serverURL never falls back to localhost (spec 009 FR-001)', () => {
+      // Maps to NEXT_PUBLIC_SITE_URL via the compute-stack user-data loop
+      // (UPPERCASE-basename convention) — drives Payload serverURL, media
+      // URLs, canonical/OG tags, and the sitemap (ADR 0008).
+      t.hasResourceProperties('AWS::SSM::Parameter', {
+        Name: '/seqtek/website/staging/next_public_site_url',
+        Type: 'String',
+        Value: 'https://seqtek-preview.com',
+      })
+      // 3 storage params + the site URL. Still no sensitive values in SSM.
+      const params = t.findResources('AWS::SSM::Parameter')
+      expect(Object.keys(params)).toHaveLength(4)
     })
   })
 

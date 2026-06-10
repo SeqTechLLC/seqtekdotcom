@@ -159,6 +159,22 @@ export class DataStack extends Stack {
       description: 'AWS region for the Payload S3 storage adapter (S3_REGION).',
     })
 
+    // NEXT_PUBLIC_SITE_URL (basename | uppercase). Without it the deployed
+    // container's Payload serverURL falls back to http://localhost:3100,
+    // poisoning media URLs, canonical/OG tags, and the sitemap (spec 009 /
+    // ADR 0008). Only provisioned once the env has a stable public host —
+    // pre-cutover prod (domainName: null) runs on the CloudFront-default URL
+    // and inherits this param when domainName flips at Phase 6 cutover
+    // (config-only inheritance, spec 009 FR-008).
+    if (cfg.domainName !== null) {
+      new ssm.StringParameter(this, 'NextPublicSiteUrlParam', {
+        parameterName: `${this.parameterPathPrefix}/next_public_site_url`,
+        stringValue: `https://${cfg.domainName}`,
+        description:
+          'Public site origin for Payload serverURL + absolute URLs (NEXT_PUBLIC_SITE_URL).',
+      })
+    }
+
     // ----- Outputs -----
     new CfnOutput(this, 'DbEndpointHostname', {
       value: this.database.instanceEndpoint.hostname,

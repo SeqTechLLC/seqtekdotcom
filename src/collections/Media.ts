@@ -6,6 +6,10 @@ import {
 } from 'payload'
 
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
+import {
+  invalidateMediaOnChange,
+  invalidateMediaOnDelete,
+} from '../payload/hooks/invalidateMediaOnChange'
 
 // data-model §1.12: 25 MB upload cap. Payload v3 has no collection-level
 // `maxFileSize` field on UploadConfig, so we enforce it in a beforeOperation
@@ -87,6 +91,13 @@ export const Media: CollectionConfig = {
   },
   hooks: {
     beforeOperation: [enforceMaxFileSize],
+    // Stable media/<filename> S3 keys (spec 009/ADR 0008) forfeit the
+    // new-key-per-change cache busting — a file REPLACE or DELETE must
+    // invalidate the long-TTL CloudFront /media/* paths (FR-011). No-op
+    // locally/CI (no CLOUDFRONT_DISTRIBUTION_ID) and for metadata-only
+    // updates.
+    afterChange: [invalidateMediaOnChange],
+    afterDelete: [invalidateMediaOnDelete],
   },
   fields: [
     {
