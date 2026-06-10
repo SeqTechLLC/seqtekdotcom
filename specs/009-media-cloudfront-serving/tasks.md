@@ -42,9 +42,9 @@
 - [x] T007 [P] [US1] Create one-shot idempotent re-key script `tools/ingest-photos/rekey-staging.ts` per research R4 + quickstart.md §Re-key: list bucket keys not under `media/` → S3 server-side copy to `media/<key>` → verify → delete old key → REST `PATCH /api/media/<id> {prefix: 'media'}` for docs with prefix ≠ `'media'` (reuse `PayloadRestClient` from `tools/import-case-study/client`); `--dry-run` support; move objects BEFORE patching docs (keeps the static-handler fallback alive mid-run); never log `IMPORT_TOKEN`
 - [x] T008 [US1] Local regression gate (FR-006): `npm run typecheck && npm run lint && npm run test:int && npm run test:e2e` — local dev/CI behavior unchanged (plugin disabled → no hooks, research R5); fix any fallout
 - [x] T009 [US1] Regenerate Payload importMap (`npm run generate:importmap`) and types (`npm run generate:types`) if the config change touched either; commit any diff
-- [ ] T010 [US1] Ship + activate: merge PR → staging deploy; then ASG **instance refresh** so the user-data loop writes `NEXT_PUBLIC_SITE_URL` into `/etc/seqtek-website.env`; confirm via `curl -s https://seqtek-preview.com/api/health` and an admin page load
-- [ ] T011 [US1] Execute the re-key on staging per quickstart.md: `--dry-run` first (expect 27 originals + variants listed), then live; re-run to confirm idempotence (nothing to move/patch)
-- [ ] T012 [US1] **Verification deliverable** (Principle II carve-out, declared in plan.md): capture staging evidence per quickstart.md §Verify — `/team` renders 12/12 (screenshot), `x-cache: Hit from cloudfront` on second media request, bucket conformance check (zero keys outside `media/`), admin thumbnails render, one fresh `/admin` upload renders on a page with no manual fix-up (SC-001, SC-002, SC-004, SC-006); attach to the PR
+- [x] T010 [US1] Ship + activate: merge PR → staging deploy; then ASG **instance refresh** so the user-data loop writes `NEXT_PUBLIC_SITE_URL` into `/etc/seqtek-website.env`; confirm via `curl -s https://seqtek-preview.com/api/health` and an admin page load
+- [x] T011 [US1] Execute the re-key on staging per quickstart.md: `--dry-run` first (expect 27 originals + variants listed), then live; re-run to confirm idempotence (nothing to move/patch)
+- [x] T012 [US1] **Verification deliverable** (Principle II carve-out, declared in plan.md): capture staging evidence per quickstart.md §Verify — `/team` renders 12/12 (screenshot), `x-cache: Hit from cloudfront` on second media request, bucket conformance check (zero keys outside `media/`), admin thumbnails render, one fresh `/admin` upload renders on a page with no manual fix-up (SC-001, SC-002, SC-004, SC-006); attach to the PR
 
 **Checkpoint**: US1 fully shipped and verified — media is edge-served, MVP complete.
 
@@ -58,7 +58,7 @@
 
 ### Verification for User Story 2 (carve-out — config-only story, substrate CI-covered)
 
-- [ ] T013 [US2] **Verification deliverable**: after T010, capture SC-003 evidence per quickstart.md — `curl` sweep of `/`, `/team`, a case study, and `/sitemap.xml` grepping for `localhost` (expect 0) and confirming `og:image`/canonical/JSON-LD URLs are absolute on the public host; spot-check live-preview opens from `/admin` against the staging domain; attach to the PR
+- [x] T013 [US2] **Verification deliverable**: after T010, capture SC-003 evidence per quickstart.md — `curl` sweep of `/`, `/team`, a case study, and `/sitemap.xml` grepping for `localhost` (expect 0) and confirming `og:image`/canonical/JSON-LD URLs are absolute on the public host; spot-check live-preview opens from `/admin` against the staging domain; attach to the PR
 
 **Checkpoint**: US1 + US2 verified on staging.
 
@@ -81,8 +81,8 @@
 
 ## Phase 5: Polish & Cross-Cutting
 
-- [ ] T018 Full CI-parity gate locally: `npm run typecheck && npm run lint && npm run format:check && npm run test:int && npm run test:e2e` + Lighthouse budgets (note: consent/CSP Lighthouse failures from real local HubSpot/GTM IDs are a known local-only condition — pass in CI)
-- [ ] T019 Final quickstart.md walkthrough: every §Verify command re-run clean; PR description links the evidence (T012, T013, T017); conventional-commit series reviewed (`fix(media): …`, `fix(infra): …`, `docs: …`)
+- [x] T018 Full CI-parity gate locally: `npm run typecheck && npm run lint && npm run format:check && npm run test:int && npm run test:e2e` + Lighthouse budgets (note: consent/CSP Lighthouse failures from real local HubSpot/GTM IDs are a known local-only condition — pass in CI)
+- [x] T019 Final quickstart.md walkthrough: every §Verify command re-run clean; PR description links the evidence (T012, T013, T017); conventional-commit series reviewed (`fix(media): …`, `fix(infra): …`, `docs: …`)
 
 ---
 

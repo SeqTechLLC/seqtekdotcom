@@ -144,6 +144,34 @@ describe('EdgeStack', () => {
       })
     })
 
+    it('provisions cloudfront_distribution_id so the invalidation hooks actually fire (spec 009 FR-011 follow-up)', () => {
+      // Without this param CLOUDFRONT_DISTRIBUTION_ID never reaches the
+      // container env and BOTH invalidation paths (page publishes per R-03
+      // and media replace/delete per spec 009 FR-011) silently skip —
+      // staging had ZERO invalidations ever before this landed. The
+      // user-data loop maps the basename to CLOUDFRONT_DISTRIBUTION_ID.
+      t.hasResourceProperties('AWS::SSM::Parameter', {
+        Name: '/seqtek/website/staging/cloudfront_distribution_id',
+        Type: 'String',
+      })
+    })
+
+    it('grants the app instance role cloudfront:CreateInvalidation scoped to this distribution', () => {
+      // The policy lives in EdgeStack (not ComputeStack) because it needs
+      // the distribution ARN — same Compute → Data → Edge → Compute
+      // cycle-breaking rationale as the media bucket policy above it.
+      t.hasResourceProperties('AWS::IAM::Policy', {
+        PolicyDocument: Match.objectLike({
+          Statement: Match.arrayWith([
+            Match.objectLike({
+              Action: 'cloudfront:CreateInvalidation',
+              Effect: 'Allow',
+            }),
+          ]),
+        }),
+      })
+    })
+
     it('does NOT include broken 403→404 remap (deferred to Phase 5.5)', () => {
       // CloudFront rejects responseHttpStatus without responsePagePath.
       // Phase 5.5 will add a /404.html to the S3 bucket and wire up the
