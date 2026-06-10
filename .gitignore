@@ -92,3 +92,6 @@ infra/.cdk.staging/
 /.claude/skills/vercel-cli-with-tokens
 /.claude/skills/vercel-optimize
 /.claude/skills/web-design-guidelines
+
+# Private SEQTEK content drafts (employee PII) — keep out of the public repo
+docs/content-drafts/
