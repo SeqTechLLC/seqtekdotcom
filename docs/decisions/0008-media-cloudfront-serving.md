@@ -1,6 +1,6 @@
 # 0008. Serve Payload media via CloudFront `/media/*`, not the app proxy
 
-**Status:** Proposed
+**Status:** Accepted (2026-06-10, spec 009)
 **Date:** 2026-06-09
 
 ## Context
@@ -31,11 +31,13 @@ This was invisible until now because no rendered media existed on any deployed p
 
 Adopt **A** as the target design (media served from CloudFront `/media/*`, edge-cached, URLs generated against `S3_BUCKET_HOSTNAME`/the site domain), reconciling the key shape to a single documented form. Use **B as an interim unblock** only if staging media needs to render before A lands — but B alone is not the finish line, because it defeats the CDN the edge stack was built to provide.
 
-Open sub-decisions to resolve during implementation:
+Sub-decisions — **resolved at implementation** (spec 009, clarified 2026-06-09; see `specs/009-media-cloudfront-serving/` for the full research trail):
 
-- **Key shape:** keep `<filename>` (simplest; matches what's already uploaded) **or** move to `<media-id>/<filename>` (matches ARCHITECTURE §5; requires re-keying the 27 already-uploaded staging objects + updating the `s3.ts` prefix/comment). Recommend picking one and making ARCHITECTURE, `s3.ts`, and the CloudFront origin path agree.
-- **URL host:** site domain (`/media/*` behavior on the main distribution, already defined) vs. a dedicated media host (`S3_BUCKET_HOSTNAME`). The `/media/*` behavior already exists, so the site domain is the lower-friction choice.
-- **`serverURL`:** provision `next_public_site_url` regardless (it also affects canonical URLs / OG tags / sitemap absolute URLs, not just media).
+- **Key shape → `media/<filename>`** (a third option neither original bullet named): the `/media/*` CloudFront behavior has **no originPath**, so the URL path forwards verbatim as the S3 key — neither bare `<filename>` nor `<media-id>/<filename>` maps onto it without extra edge config. A static `media` prefix on the storage adapter makes path == key with zero infra change; Payload's per-collection filename uniqueness covers collisions. ARCHITECTURE §5/§6, `s3.ts`, and the CDN behavior now state this one shape (`specs/009-media-cloudfront-serving/contracts/media-url.md`).
+- **URL host → site domain** (the existing `/media/*` behavior on the main distribution). `S3_BUCKET_HOSTNAME` stays wired into the CSP as belt-and-braces but is not used for URL generation.
+- **`serverURL` → `next_public_site_url` SSM parameter**, provisioned by the data stack whenever `cfg.domainName` is set (staging now; prod automatically at the Phase 6 cutover). The compute-stack user-data loop maps it to `NEXT_PUBLIC_SITE_URL` with no launch-template change.
+- **Re-key mechanics → in place** (S3 server-side move + per-document `prefix` PATCH via `tools/ingest-photos/rekey-staging.ts`), not the delete + re-push originally sketched: the seeded media docs are referenced by team members, and delete + re-push would mint new IDs and orphan those relations. Metadata-only PATCHes upload/delete nothing in the storage plugin, so the move is safe with IDs preserved.
+- **Consequence accepted:** stable keys forfeit the "new key per change" cache busting this ADR's context assumed — a Media `afterChange`/`afterDelete` hook (spec 009 FR-011) invalidates the affected `/media/*` paths on file replace/delete via the existing `invalidateCloudFrontPaths` plumbing.
 
 ## Consequences
 
