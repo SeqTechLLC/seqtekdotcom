@@ -58,8 +58,8 @@ export default async function WorkshopPage({ params }: Props) {
       <JsonLd
         data={breadcrumbLd([
           { name: 'Home', path: '/' },
-          { name: 'Touchstone workshops', path: '/touchstone-workshops' },
-          { name: workshop.title, path: `/touchstone-workshops/${slug}` },
+          { name: 'Workshops', path: '/workshops' },
+          { name: workshop.title, path: `/workshops/${slug}` },
         ])}
       />
       {isDraft && <PreviewBanner />}

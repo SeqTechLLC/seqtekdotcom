@@ -289,9 +289,7 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
     })
   })
 
-  test('GET /touchstone-workshops/<slug> → 200, detail + hubspot-form mount, axe-clean', async ({
-    page,
-  }) => {
+  test('GET /workshops/<slug> → 200, detail + hubspot-form mount, axe-clean', async ({ page }) => {
     await payload.delete({
       collection: 'workshops',
       where: { slug: { equals: WORKSHOP_SLUG } },
@@ -309,7 +307,7 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
       overrideAccess: true,
     })
 
-    const res = await page.goto(`/touchstone-workshops/${WORKSHOP_SLUG}`)
+    const res = await page.goto(`/workshops/${WORKSHOP_SLUG}`)
     expect(res?.status()).toBe(200)
     await expect(page.getByTestId('workshop-detail')).toBeVisible()
     await expect(page.getByTestId('workshop-description')).toBeVisible()

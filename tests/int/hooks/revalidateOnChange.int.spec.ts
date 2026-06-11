@@ -86,7 +86,7 @@ describe('buildRevalidatePlan — per-collection routing', () => {
     {
       collection: 'workshops',
       slug: 'ws-1',
-      detailIncludes: '/touchstone-workshops/ws-1',
+      detailIncludes: '/workshops/ws-1',
     },
     { collection: 'industries', slug: 'energy', detailIncludes: '/industries/energy' },
     { collection: 'locations', slug: 'tulsa', detailIncludes: '/consulting/tulsa' },

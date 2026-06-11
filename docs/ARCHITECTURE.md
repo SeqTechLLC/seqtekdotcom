@@ -193,7 +193,7 @@ Full-attribution testimonials used across the site.
 
 #### `workshops`
 
-Touchstone Workshop pages at `/touchstone-workshops/[slug]`.
+Workshop pages at `/workshops/[slug]` (one Touchstone workshop among three; IA corrected 2026-06-11, PR #49).
 
 | Field          | Type                         | Notes                                  |
 | -------------- | ---------------------------- | -------------------------------------- |
@@ -315,8 +315,8 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 | `/case-studies/[slug]`                          | ISR            | 3600s               | Individual case studies                  |
 | `/insights`                                     | ISR            | 3600s               | Blog listing                             |
 | `/insights/[slug]`                              | ISR            | 3600s               | Individual posts                         |
-| `/touchstone-workshops`                         | ISR            | 3600s               | Workshop landing                         |
-| `/touchstone-workshops/[slug]`                  | ISR            | 3600s               | Individual workshops                     |
+| `/workshops`                                    | ISR            | 3600s               | Workshop landing                         |
+| `/workshops/[slug]`                             | ISR            | 3600s               | Individual workshops                     |
 | `/team`                                         | ISR            | 3600s               | Team listing (spec 004 US3)              |
 | `/industries/[slug]`                            | ISR            | 3600s               | Industry pages                           |
 | `/consulting/[market]`                          | ISR            | 3600s               | Market landing pages                     |
@@ -385,7 +385,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   │   │   ├── page.tsx               # Blog listing
 │   │   │   │   ├── [slug]/page.tsx        # Individual post
 │   │   │   │   └── category/[slug]/page.tsx
-│   │   │   ├── touchstone-workshops/
+│   │   │   ├── workshops/
 │   │   │   │   ├── page.tsx               # Workshop landing
 │   │   │   │   └── [slug]/page.tsx        # Individual workshop
 │   │   │   ├── industries/
@@ -660,7 +660,7 @@ EC2 and RDS both live in the same VPC. The Node process maintains a persistent c
 - **Output mode:** `output: 'standalone'` — produces a self-contained build with only the required `node_modules` files. Required for the Docker deployment strategy.
 - **Image optimization:** `remotePatterns` allowlists the S3 bucket hostname (from `S3_BUCKET_HOSTNAME` env var). The env var is validated at runtime in the image loader, not at config load time, so local dev works without S3 credentials.
 - **Security headers:** Applied to all routes — `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` disabling camera/microphone/geolocation. CSP is handled via the Next.js Proxy (see Section 6).
-- **301 redirects:** Old Wix URLs mapped to new routes (`/about-us-1` → `/about`, `/our-services` → `/services`, `/blog-old` → `/insights`, `/workshops` → `/touchstone-workshops`). Full redirect map maintained in INTEGRATIONS.md.
+- **301 redirects:** Old Wix URLs mapped to new routes (`/about-us-1` → `/about`, `/our-services` → `/services`, `/blog-old` → `/insights`, `/touchstone-workshops(/:slug*)` → `/workshops(/:slug*)`). Full redirect map maintained in INTEGRATIONS.md.
 
 ### Scaling Path
 

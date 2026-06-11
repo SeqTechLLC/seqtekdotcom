@@ -56,7 +56,7 @@ SEQTEK's forms must look native to the site design, not like HubSpot iframe embe
 | ---------------- | ----------------------- | --------------------------------------------------------------------- | -------------------------------------- |
 | Contact          | `/contact`              | First name, last name, email, phone, inquiry type (dropdown), message | TBD — create in HubSpot                |
 | Book a Call      | `/contact/book-a-call`  | HubSpot Meetings embed (see 1.4)                                      | N/A (Meetings widget)                  |
-| Workshop Inquiry | `/touchstone-workshops` | First/last name, email, phone, company, workshop type (free text)     | `66dba2bf-f099-44d5-8c6e-f24292cefe53` |
+| Workshop Inquiry | `/workshops/touchstone` | First/last name, email, phone, company, workshop type (free text)     | `66dba2bf-f099-44d5-8c6e-f24292cefe53` |
 
 #### Provisioning checklist (request from the HubSpot portal admin)
 
@@ -89,7 +89,7 @@ Content-Type: application/json
   ],
   "context": {
     "hutk": "<hubspotutk cookie — set by the §1.1 tracking script; links the submit to the visitor>",
-    "pageUri": "https://seqtek.com/touchstone-workshops/…",
+    "pageUri": "https://seqtek.com/workshops/…",
     "pageName": "<document title>"
   },
   "legalConsentOptions": {
@@ -729,25 +729,25 @@ Note: ARCHITECTURE.md §6 CSP table should be kept in sync with this list — if
 
 All redirects configured in `next.config.ts` `redirects()`. These preserve any SEO value from the existing Wix URLs.
 
-| Source                                 | Destination                                     | Permanent |
-| -------------------------------------- | ----------------------------------------------- | --------- |
-| `/about-us-1`                          | `/about`                                        | Yes       |
-| `/our-services`                        | `/services`                                     | Yes       |
-| `/workshops`                           | `/touchstone-workshops`                         | Yes       |
-| `/blog-old`                            | `/insights`                                     | Yes       |
-| `/blog-old/:path*`                     | `/insights/:path*`                              | Yes       |
-| `/organizational-strategy-1-5`         | `/resources/organizational-maturity-assessment` | Yes       |
-| `/organizational-strategy-1-1-1-3`     | `/case-studies/airline-automation`              | Yes       |
-| `/organizational-strategy-1-1-1-3-1`   | `/case-studies/oil-gas-modernization`           | Yes       |
-| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform`    | Yes       |
-| `/organizational-strategy-1-3-1-1-1`   | `/case-studies`                                 | Yes       |
-| `/case-study-3`                        | `/case-studies/mobile-apps-remote-operations`   | Yes       |
-| `/case-study-4`                        | `/case-studies/retail-pos-update-experience`    | Yes       |
-| `/case-study-5`                        | `/case-studies/data-warehouse-strategy`         | Yes       |
-| `/driving-innovation-case-study`       | `/case-studies/healthcare-ux-redesign`          | Yes       |
-| `/modernizing-healthcare-case-study`   | `/case-studies/healthcare-data-modernization`   | Yes       |
-| `/contact`                             | `/contact`                                      | Yes       |
-| `/privacy-policy`                      | `/privacy-policy`                               | Yes       |
+| Source                                                  | Destination                                     | Permanent |
+| ------------------------------------------------------- | ----------------------------------------------- | --------- |
+| `/about-us-1`                                           | `/about`                                        | Yes       |
+| `/our-services`                                         | `/services`                                     | Yes       |
+| `/touchstone-workshops`, `/touchstone-workshops/:slug*` | `/workshops`, `/workshops/:slug*`               | Yes       |
+| `/blog-old`                                             | `/insights`                                     | Yes       |
+| `/blog-old/:path*`                                      | `/insights/:path*`                              | Yes       |
+| `/organizational-strategy-1-5`                          | `/resources/organizational-maturity-assessment` | Yes       |
+| `/organizational-strategy-1-1-1-3`                      | `/case-studies/airline-automation`              | Yes       |
+| `/organizational-strategy-1-1-1-3-1`                    | `/case-studies/oil-gas-modernization`           | Yes       |
+| `/organizational-strategy-1-1-1-3-1-1`                  | `/case-studies/banking-integration-platform`    | Yes       |
+| `/organizational-strategy-1-3-1-1-1`                    | `/case-studies`                                 | Yes       |
+| `/case-study-3`                                         | `/case-studies/mobile-apps-remote-operations`   | Yes       |
+| `/case-study-4`                                         | `/case-studies/retail-pos-update-experience`    | Yes       |
+| `/case-study-5`                                         | `/case-studies/data-warehouse-strategy`         | Yes       |
+| `/driving-innovation-case-study`                        | `/case-studies/healthcare-ux-redesign`          | Yes       |
+| `/modernizing-healthcare-case-study`                    | `/case-studies/healthcare-data-modernization`   | Yes       |
+| `/contact`                                              | `/contact`                                      | Yes       |
+| `/privacy-policy`                                       | `/privacy-policy`                               | Yes       |
 
 **Post-launch verification:** After DNS cutover, crawl all old URLs to confirm 301 responses and correct destinations. Use a tool like Screaming Frog or a simple script.
 

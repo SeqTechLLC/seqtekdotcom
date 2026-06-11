@@ -103,10 +103,10 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 │       ├── /services/ai-automation/data-intelligence-foundation
 │       └── /services/ai-automation/ai-readiness-strategy
 │
-├── /touchstone-workshops/                           Touchstone Workshops Landing
-│   ├── /touchstone-workshops/five-dysfunctions
-│   ├── /touchstone-workshops/re-alignment
-│   └── /touchstone-workshops/case-study-workshop
+├── /workshops/                                      Workshops Landing (IA corrected 2026-06-11: ONE Touchstone workshop among three)
+│   ├── /workshops/touchstone
+│   ├── /workshops/five-dysfunctions
+│   └── /workshops/re-alignment
 │
 ├── /case-studies/                                   Case Studies Index (PILLAR)
 │   ├── /case-studies/airline-automation
@@ -842,24 +842,24 @@ Per Google Search Central (2024 site migration guidance) and Moz: **failing to i
 4. Monitor Search Console for 404 errors weekly for 90 days post-launch
 5. Keep redirects in place **permanently** — removing them after a few months loses accumulated link equity
 
-| Old URL (Wix)                          | New URL                                         | Notes                          |
-| -------------------------------------- | ----------------------------------------------- | ------------------------------ |
-| `/about-us-1`                          | `/about`                                        |                                |
-| `/our-services`                        | `/services`                                     |                                |
-| `/workshops`                           | `/touchstone-workshops`                         |                                |
-| `/blog-old`                            | `/insights`                                     |                                |
-| `/blog-old/[slug]`                     | `/insights/[slug]`                              | Match individual post slugs    |
-| `/organizational-strategy-1-5`         | `/resources/organizational-maturity-assessment` | Assessment                     |
-| `/organizational-strategy-1-1-1-3`     | `/case-studies/airline-automation`              | Verify mapping                 |
-| `/organizational-strategy-1-1-1-3-1`   | `/case-studies/oil-gas-modernization`           | Verify mapping                 |
-| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform`    | Verify mapping                 |
-| `/case-study-3`                        | `/case-studies/mobile-apps-remote-operations`   | Verify mapping                 |
-| `/case-study-4`                        | `/case-studies/retail-pos-update-experience`    | Verify mapping                 |
-| `/case-study-5`                        | `/case-studies/data-warehouse-strategy`         | Verify mapping                 |
-| `/driving-innovation-case-study`       | `/case-studies/healthcare-ux-redesign`          |                                |
-| `/modernizing-healthcare-case-study`   | `/case-studies/healthcare-data-modernization`   |                                |
-| `/contact`                             | `/contact`                                      | Verify no trailing differences |
-| `/privacy-policy`                      | `/privacy-policy`                               | Same path                      |
+| Old URL (Wix)                          | New URL                                         | Notes                            |
+| -------------------------------------- | ----------------------------------------------- | -------------------------------- |
+| `/about-us-1`                          | `/about`                                        |                                  |
+| `/our-services`                        | `/services`                                     |                                  |
+| `/touchstone-workshops(/[slug])`       | `/workshops(/[slug])`                           | IA corrected 2026-06-11 (PR #49) |
+| `/blog-old`                            | `/insights`                                     |                                  |
+| `/blog-old/[slug]`                     | `/insights/[slug]`                              | Match individual post slugs      |
+| `/organizational-strategy-1-5`         | `/resources/organizational-maturity-assessment` | Assessment                       |
+| `/organizational-strategy-1-1-1-3`     | `/case-studies/airline-automation`              | Verify mapping                   |
+| `/organizational-strategy-1-1-1-3-1`   | `/case-studies/oil-gas-modernization`           | Verify mapping                   |
+| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform`    | Verify mapping                   |
+| `/case-study-3`                        | `/case-studies/mobile-apps-remote-operations`   | Verify mapping                   |
+| `/case-study-4`                        | `/case-studies/retail-pos-update-experience`    | Verify mapping                   |
+| `/case-study-5`                        | `/case-studies/data-warehouse-strategy`         | Verify mapping                   |
+| `/driving-innovation-case-study`       | `/case-studies/healthcare-ux-redesign`          |                                  |
+| `/modernizing-healthcare-case-study`   | `/case-studies/healthcare-data-modernization`   |                                  |
+| `/contact`                             | `/contact`                                      | Verify no trailing differences   |
+| `/privacy-policy`                      | `/privacy-policy`                               | Same path                        |
 
 **Action required:**
 
