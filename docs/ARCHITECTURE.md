@@ -686,6 +686,7 @@ All secrets and configuration are managed via environment variables, never commi
 | `S3_REGION`                     | Server | Config         | AWS region                                                              |
 | `S3_BUCKET_HOSTNAME`            | Server | Config         | For next/image remotePatterns                                           |
 | `REVALIDATION_SECRET`           | Server | **Secret**     | Validates webhook requests                                              |
+| `CLOUDFRONT_DISTRIBUTION_ID`    | Server | Config         | Targeted CloudFront invalidations on publish + media replace/delete     |
 | `NEXT_PUBLIC_SITE_URL`          | Client | Public         | Canonical URL (`https://seqtek.com`)                                    |
 | `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | Client | Public         | HubSpot portal (8504846)                                                |
 | `NEXT_PUBLIC_GTM_ID`            | Client | Public         | GTM container ID                                                        |
