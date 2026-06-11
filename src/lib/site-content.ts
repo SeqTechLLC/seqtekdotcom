@@ -58,7 +58,7 @@ export const navigation: Navigation = {
         { label: 'AI & Automation', url: '/services/ai-automation' },
       ],
     },
-    { label: 'Workshops', url: '/touchstone-workshops' },
+    { label: 'Workshops', url: '/workshops' },
     { label: 'Case Studies', url: '/case-studies' },
     { label: 'Insights', url: '/insights' },
     { label: 'Contact', url: '/contact' },
@@ -90,7 +90,7 @@ export const navigation: Navigation = {
       children: [
         { label: 'Case Studies', url: '/case-studies' },
         { label: 'Insights', url: '/insights' },
-        { label: 'Touchstone Workshops', url: '/touchstone-workshops' },
+        { label: 'Workshops', url: '/workshops' },
         { label: 'Assessment', url: '/resources/organizational-maturity-assessment' },
       ],
     },

@@ -126,9 +126,9 @@ export default async function HomePage() {
         <section data-testid="workshop-cta">
           <CtaSection
             variant="split"
-            headline="Touchstone AI Strategy Workshop"
-            body="A working session that turns AI ambition into a sequenced, fundable plan."
-            primaryCta={{ label: 'Explore the workshop', url: '/touchstone-workshops' }}
+            headline="The Touchstone Workshop"
+            body="A working session that turns AI ambition into an architecture, named epics, and a build sequence."
+            primaryCta={{ label: 'Explore the workshop', url: '/workshops/touchstone' }}
           />
         </section>
 
