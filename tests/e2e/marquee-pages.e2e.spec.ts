@@ -287,12 +287,23 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
       where: { slug: { equals: WORKSHOP_SLUG } },
       overrideAccess: true,
     })
+    await payload.delete({
+      collection: 'media',
+      where: { alt: { equals: 'US4 workshop proof photo' } },
+      overrideAccess: true,
+    })
   })
 
   test('GET /workshops/<slug> → 200, detail + hubspot-form mount, axe-clean', async ({ page }) => {
     await payload.delete({
       collection: 'workshops',
       where: { slug: { equals: WORKSHOP_SLUG } },
+      overrideAccess: true,
+    })
+    const proofPhoto = await payload.create({
+      collection: 'media',
+      data: { alt: 'US4 workshop proof photo' },
+      file: { data: PNG_1x1, mimetype: 'image/png', name: 'us4-proof.png', size: PNG_1x1.length },
       overrideAccess: true,
     })
     await payload.create({
@@ -302,6 +313,8 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
         slug: WORKSHOP_SLUG,
         description: lexical('A facilitated working session for leadership teams.'),
         audience: lexical('For executives accountable for an AI roadmap.'),
+        photos: [{ image: proofPhoto.id, caption: 'Working the plan at the whiteboard.' }],
+        video: { provider: 'youtube', videoId: 'dQw4w9WgXcQ', title: 'Workshop recap' },
         _status: 'published',
       },
       overrideAccess: true,
@@ -311,6 +324,11 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
     expect(res?.status()).toBe(200)
     await expect(page.getByTestId('workshop-detail')).toBeVisible()
     await expect(page.getByTestId('workshop-description')).toBeVisible()
+    // Proof section: captioned photo gallery + video embed render from the
+    // new schema fields (spec: touchstone-landing.md §5).
+    await expect(page.getByTestId('workshop-photos')).toBeVisible()
+    await expect(page.getByText('Working the plan at the whiteboard.')).toBeVisible()
+    await expect(page.getByTestId('workshop-video')).toBeVisible()
     // The placeholder block mounts; a live HubSpot submission is NOT asserted.
     await expect(page.getByTestId('hubspot-form')).toBeVisible()
 
