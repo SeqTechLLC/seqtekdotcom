@@ -13,7 +13,13 @@ import type { Redirect } from 'next/dist/lib/load-custom-routes'
 export const redirectMap: Redirect[] = [
   { source: '/about-us-1', destination: '/about', permanent: true },
   { source: '/our-services', destination: '/services', permanent: true },
-  { source: '/workshops', destination: '/touchstone-workshops', permanent: true },
+  // Old-Wix `/workshops` is now an identity (the canonical route IS
+  // /workshops since the 2026-06-11 IA correction: ONE Touchstone workshop
+  // among three, no branded umbrella) — omitted per the identity-row rule.
+  // The previously-canonical branded URLs 301 to the generic routes so ad
+  // links and bookmarks survive.
+  { source: '/touchstone-workshops', destination: '/workshops', permanent: true },
+  { source: '/touchstone-workshops/:slug*', destination: '/workshops/:slug*', permanent: true },
   { source: '/blog-old', destination: '/insights', permanent: true },
   { source: '/blog-old/:path*', destination: '/insights/:path*', permanent: true },
   {

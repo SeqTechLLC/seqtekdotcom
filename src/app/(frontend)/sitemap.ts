@@ -26,7 +26,7 @@ const STATIC_PATHS = [
   '/case-studies',
   '/insights',
   '/services',
-  '/touchstone-workshops',
+  '/workshops',
   '/team',
   '/privacy-policy', // spec 006 US5 (T025): static legal route
 ]
@@ -54,7 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const slug of pageSlugs) paths.add(`/${slug}`)
     for (const slug of caseStudySlugs) paths.add(`/case-studies/${slug}`)
     for (const slug of postSlugs) paths.add(`/insights/${slug}`)
-    for (const slug of workshopSlugs) paths.add(`/touchstone-workshops/${slug}`)
+    for (const slug of workshopSlugs) paths.add(`/workshops/${slug}`)
     for (const pillar of pillars) {
       if (pillar.slug) paths.add(`/services/${pillar.slug}`)
     }

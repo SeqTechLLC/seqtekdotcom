@@ -11,8 +11,9 @@ export const revalidate = 3600
 export async function generateMetadata(): Promise<Metadata> {
   const siteSettings = await getSiteSettings()
   return buildMetadata(null, {
-    title: 'Touchstone workshops',
-    description: 'Working sessions that turn ambition into a sequenced, fundable plan.',
+    title: 'Workshops',
+    description:
+      'Three facilitated workshops: the Touchstone Workshop for a specific technical problem, Five Dysfunctions and Re-Alignment for the team that has to solve it.',
     siteSettings,
   })
 }
@@ -23,9 +24,11 @@ export default async function WorkshopsPage() {
   return (
     <div data-testid="workshops-listing" className="mx-auto max-w-container-xl px-4 py-16 md:px-6">
       <header className="mb-12">
-        <h1 className="text-h1 font-bold">Touchstone workshops</h1>
+        <h1 className="text-h1 font-bold">Workshops</h1>
         <p className="mt-4 text-body-lg text-text-secondary">
-          Facilitated sessions that move teams from AI ambition to an actionable plan.
+          Three working sessions. The Touchstone Workshop turns a specific problem into an
+          architecture and a plan; Five Dysfunctions and Re-Alignment strengthen the team that has
+          to deliver it.
         </p>
       </header>
       <WorkshopList workshops={workshops} headingLevel="h2" />

@@ -120,7 +120,7 @@ export const buildRevalidatePlan = (
         detailPaths.push(`/services/${s}`, '/services')
         break
       case 'workshops':
-        detailPaths.push(`/touchstone-workshops/${s}`, '/touchstone-workshops')
+        detailPaths.push(`/workshops/${s}`, '/workshops')
         break
       case 'industries':
         detailPaths.push(`/industries/${s}`)

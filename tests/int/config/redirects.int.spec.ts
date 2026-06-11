@@ -14,7 +14,8 @@ import { redirectMap } from '../../../src/lib/redirects'
 const EXPECTED_SOURCES = [
   '/about-us-1',
   '/our-services',
-  '/workshops',
+  '/touchstone-workshops',
+  '/touchstone-workshops/:slug*',
   '/blog-old',
   '/blog-old/:path*',
   '/organizational-strategy-1-5',
@@ -30,13 +31,7 @@ const EXPECTED_SOURCES = [
 ]
 
 // Top-level segments with a dedicated nested route (data-model §1).
-const ROUTABLE_PREFIXES = new Set([
-  'case-studies',
-  'insights',
-  'services',
-  'touchstone-workshops',
-  'team',
-])
+const ROUTABLE_PREFIXES = new Set(['case-studies', 'insights', 'services', 'workshops', 'team'])
 
 // Destinations whose route is PLANNED but not built in spec 004 — explicitly
 // allowlisted so RM3 doesn't silently pass on a typo, and the deferral is
