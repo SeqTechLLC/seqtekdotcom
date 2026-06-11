@@ -166,6 +166,16 @@ describe('EdgeStack', () => {
             Match.objectLike({
               Action: 'cloudfront:CreateInvalidation',
               Effect: 'Allow',
+              // Enforce the scoping the test name promises — a regression
+              // to `resources: ['*']` must fail here. The ARN embeds the
+              // distribution's CFN Ref, so it synthesizes as an Fn::Join
+              // whose first fragment is the literal ARN prefix.
+              Resource: {
+                'Fn::Join': [
+                  '',
+                  Match.arrayWith(['arn:aws:cloudfront::123456789012:distribution/']),
+                ],
+              },
             }),
           ]),
         }),
