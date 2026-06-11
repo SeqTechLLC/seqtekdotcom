@@ -1292,6 +1292,18 @@ export interface Workshop {
         id?: string | null;
       }[]
     | null;
+  photos?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  video?: {
+    provider?: ('youtube' | 'vimeo') | null;
+    videoId?: string | null;
+    title?: string | null;
+  };
   facilitator?: (number | null) | TeamMember;
   testimonial?: (number | null) | Testimonial;
   order?: number | null;
@@ -2716,6 +2728,20 @@ export interface WorkshopsSelect<T extends boolean = true> {
     | {
         label?: T;
         id?: T;
+      };
+  photos?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  video?:
+    | T
+    | {
+        provider?: T;
+        videoId?: T;
+        title?: T;
       };
   facilitator?: T;
   testimonial?: T;

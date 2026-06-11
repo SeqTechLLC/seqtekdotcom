@@ -11,6 +11,8 @@ import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RichText } from '@/components/richText/RichText'
 import { WorkshopInquiryForm } from '@/components/forms/WorkshopInquiryForm'
 import { DownloadCard } from '@/components/sections/DownloadCard'
+import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
+import { VideoEmbed } from '@/components/sections/VideoEmbed'
 import type { Workshop } from '@/payload-types'
 
 // spec 004 US4 (T022) + spec 005. Workshop campaign landing (Shape B). The
@@ -52,6 +54,10 @@ export default async function WorkshopPage({ params }: Props) {
 
   const facilitator = isRelObject(workshop.facilitator) ? workshop.facilitator : null
   const testimonial = isRelObject(workshop.testimonial) ? workshop.testimonial : null
+  // Proof gallery: keep only rows whose upload relation is populated (depth>0).
+  const photos = (workshop.photos ?? [])
+    .map((p) => (isRelObject(p.image) ? { image: p.image, caption: p.caption ?? null } : null))
+    .filter((p): p is NonNullable<typeof p> => p !== null)
 
   return (
     <>
@@ -112,6 +118,38 @@ export default async function WorkshopPage({ params }: Props) {
                 </footer>
               ) : null}
             </blockquote>
+          </section>
+        ) : null}
+
+        {photos.length > 0 ? (
+          <section data-testid="workshop-photos" className="mb-12">
+            <h2 className="mb-4 text-h3 font-semibold">What a real workshop looks like</h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {photos.map((p, i) => (
+                <figure key={i} className="overflow-hidden rounded-md border border-border-subtle">
+                  <ResponsiveImage
+                    media={p.image}
+                    sizes="(min-width: 640px) 50vw, 100vw"
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                  {p.caption ? (
+                    <figcaption className="px-4 py-3 text-small text-text-secondary">
+                      {p.caption}
+                    </figcaption>
+                  ) : null}
+                </figure>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {workshop.video?.videoId ? (
+          <section data-testid="workshop-video" className="mb-12">
+            <VideoEmbed
+              provider={workshop.video.provider ?? 'youtube'}
+              videoId={workshop.video.videoId}
+              title={workshop.video.title ?? `${workshop.title} recap`}
+            />
           </section>
         ) : null}
 

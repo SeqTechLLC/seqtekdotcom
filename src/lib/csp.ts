@@ -49,6 +49,11 @@ const HUBSPOT_FRAME = [
 
 const HUBSPOT_IMG = ['*.hubspot.com', '*.hsforms.net'] as const
 
+// Privacy-respecting video embeds (workshop proof sections, VideoEmbed
+// block). youtube-nocookie defers cookies until playback; Vimeo's player
+// host is its only embed origin. Iframes only — no script/img surface.
+const VIDEO_FRAME = ['www.youtube-nocookie.com', 'player.vimeo.com'] as const
+
 type BuildOptions = {
   nonce: string
   /** Pathname of the request. /admin/* relaxes style-src for the Payload Lexical editor. */
@@ -86,7 +91,7 @@ export function buildCspPolicy({
       '*.googletagmanager.com',
       '*.google-analytics.com',
     ],
-    'frame-src': ["'self'", ...HUBSPOT_FRAME],
+    'frame-src': ["'self'", ...HUBSPOT_FRAME, ...VIDEO_FRAME],
     'frame-ancestors': ["'none'"],
     'base-uri': ["'self'"],
     'form-action': ["'self'", '*.hsforms.net'],

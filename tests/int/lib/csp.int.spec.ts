@@ -84,6 +84,12 @@ describe('buildCspPolicy — directive parity with ARCHITECTURE.md §6', () => {
     expect(policy).toMatch(/img-src 'self' data: \*\.hubspot\.com \*\.hsforms\.net/)
   })
 
+  it('allowlists the privacy-respecting video embed frames (workshop proof sections)', () => {
+    // youtube-nocookie + Vimeo player iframes only — no script/img surface.
+    expect(policy).toMatch(/frame-src [^;]*www\.youtube-nocookie\.com/)
+    expect(policy).toMatch(/frame-src [^;]*player\.vimeo\.com/)
+  })
+
   it('appends the report directives when a reportUri is set', () => {
     expect(policy).toContain('report-uri /api/csp-report')
     expect(policy).toContain('report-to csp-endpoint')
