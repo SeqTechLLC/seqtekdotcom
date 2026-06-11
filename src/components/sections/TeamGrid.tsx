@@ -1,11 +1,21 @@
 import Link from 'next/link'
 
+import { ResponsiveImage } from '../ui/ResponsiveImage'
+
+interface PhotoDoc {
+  url?: string | null
+  alt?: string | null
+  width?: number | null
+  height?: number | null
+  sizes?: Record<string, { url?: string | null; width?: number | null } | null | undefined> | null
+}
+
 interface TeamMemberDoc {
   id?: string | number
   name?: string | null
   slug?: string | null
   role?: string | null
-  photo?: { url?: string | null; alt?: string | null } | string | number | null
+  photo?: PhotoDoc | string | number | null
 }
 
 interface TeamGridProps {
@@ -21,7 +31,7 @@ interface TeamGridProps {
 const isDoc = (v: unknown): v is TeamMemberDoc =>
   typeof v === 'object' && v !== null && 'name' in (v as object)
 
-const isMedia = (v: unknown): v is { url: string; alt?: string | null } =>
+const isMedia = (v: unknown): v is PhotoDoc & { url: string } =>
   typeof v === 'object' && v !== null && 'url' in (v as object) && !!(v as { url: unknown }).url
 
 export function TeamGrid({
@@ -48,20 +58,40 @@ export function TeamGrid({
             {docs.map((m) => (
               <li
                 key={m.id ?? m.slug}
-                className="flex flex-col items-center rounded-md border border-border-subtle bg-surface p-5 text-center shadow-xs"
+                className={
+                  layout === 'compact'
+                    ? 'flex flex-col items-center rounded-md border border-border-subtle bg-surface p-5 text-center shadow-xs'
+                    : 'flex flex-col overflow-hidden rounded-md border border-border-subtle bg-surface text-center shadow-xs'
+                }
               >
                 {isMedia(m.photo) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={m.photo.url}
-                    alt={m.photo.alt ?? m.name ?? ''}
-                    className="h-24 w-24 rounded-full object-cover"
-                  />
+                  layout === 'compact' ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={m.photo.url}
+                      alt={m.photo.alt ?? m.name ?? ''}
+                      className="h-24 w-24 rounded-full object-cover"
+                    />
+                  ) : (
+                    // Cards: the photo IS the card — full-bleed 4:3 (the
+                    // headshot sources are landscape, so 4:3 crops kindly).
+                    // ResponsiveImage serves the per-breakpoint variants
+                    // instead of the 2400px original.
+                    <ResponsiveImage
+                      media={{ ...m.photo, alt: m.photo.alt ?? m.name ?? '' }}
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  )
                 ) : null}
-                <CardHeading className="mt-4 text-h4 font-semibold">
-                  {m.slug ? <Link href={`/team/${m.slug}`}>{m.name}</Link> : m.name}
-                </CardHeading>
-                {m.role ? <p className="mt-1 text-small text-text-secondary">{m.role}</p> : null}
+                <div className={layout === 'compact' ? '' : 'p-5'}>
+                  <CardHeading
+                    className={`text-h4 font-semibold ${layout === 'compact' ? 'mt-4' : ''}`}
+                  >
+                    {m.slug ? <Link href={`/team/${m.slug}`}>{m.name}</Link> : m.name}
+                  </CardHeading>
+                  {m.role ? <p className="mt-1 text-small text-text-secondary">{m.role}</p> : null}
+                </div>
               </li>
             ))}
           </ul>
