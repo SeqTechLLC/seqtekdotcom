@@ -153,6 +153,7 @@ The content-and-copy gate before DNS cutover. Per `project_internal_dynamics.md`
 ### Phase 6 — Launch (1 week)
 
 - [ ] DNS cutover (low-traffic window)
+- [ ] **Prod instance refresh AFTER the Edge stack deploys** — on a fresh environment Compute boots before Edge exists, so first-boot instances can never see the Edge-owned `cloudfront_distribution_id` SSM param; without the post-Edge refresh, CloudFront invalidations (page publish + media replace/delete) silently skip — the exact dormancy found on staging (spec 009 / PR #44). Verify post-refresh: a media delete produces an entry in `aws cloudfront list-invalidations`.
 - [ ] Monitor errors/performance (CloudWatch + Search Console)
 - [ ] Google Search Console: submit sitemap, verify redirects
 - [ ] CloudFront cache behavior validation

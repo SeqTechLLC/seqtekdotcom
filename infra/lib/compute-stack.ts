@@ -42,6 +42,14 @@ export class ComputeStack extends Stack {
   public readonly autoScalingGroup: autoscaling.AutoScalingGroup
   public readonly httpListener: elbv2.ApplicationListener
   public readonly appLogGroup: logs.ILogGroup
+  /**
+   * EC2 instance profile role, exposed so EdgeStack can attach the
+   * distribution-scoped `cloudfront:CreateInvalidation` policy (the
+   * distribution ARN lives in Edge; defining the grant there breaks the
+   * Compute → Edge dependency cycle — same pattern as the media bucket
+   * policy).
+   */
+  public readonly appInstanceRole: iam.IRole
 
   constructor(scope: Construct, id: string, props: ComputeStackProps) {
     super(scope, id, props)
@@ -107,6 +115,7 @@ export class ComputeStack extends Stack {
         iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
       ],
     })
+    this.appInstanceRole = appInstanceRole
 
     appInstanceRole.addToPolicy(
       new iam.PolicyStatement({

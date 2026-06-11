@@ -2,9 +2,11 @@ import { CfnOutput, Duration, Stack, type StackProps } from 'aws-cdk-lib'
 import * as acm from 'aws-cdk-lib/aws-certificatemanager'
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront'
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
+import * as iam from 'aws-cdk-lib/aws-iam'
 import * as route53 from 'aws-cdk-lib/aws-route53'
 import * as r53targets from 'aws-cdk-lib/aws-route53-targets'
 import * as s3 from 'aws-cdk-lib/aws-s3'
+import * as ssm from 'aws-cdk-lib/aws-ssm'
 import type { Construct } from 'constructs'
 import type { EnvConfig, EnvName } from './construct-utils'
 import type { ComputeStack } from './compute-stack'
@@ -186,6 +188,40 @@ export class EdgeStack extends Stack {
         ],
       },
     })
+
+    // ----- CloudFront invalidation wiring (spec 009 FR-011 follow-up) -----
+    // Both invalidation callers (page publishes per R-03 and media
+    // replace/delete per spec 009 FR-011) read CLOUDFRONT_DISTRIBUTION_ID
+    // and silently skip without it — and until this landed it was never
+    // provisioned anywhere (staging had zero invalidations ever; page
+    // staleness self-healed via the 60-120s default TTL, but /media/* is
+    // cached for a year). The param lives here, not DataStack, because the
+    // distribution ID is Edge-owned — same cycle-breaking rationale as the
+    // bucket policy above. The user-data loop maps the basename to
+    // CLOUDFRONT_DISTRIBUTION_ID (basename | uppercase).
+    new ssm.StringParameter(this, 'CloudFrontDistributionIdParam', {
+      parameterName: `${data.parameterPathPrefix}/cloudfront_distribution_id`,
+      stringValue: this.distribution.distributionId,
+      description:
+        'CloudFront distribution ID for targeted invalidations (CLOUDFRONT_DISTRIBUTION_ID).',
+    })
+
+    // The grant needs the distribution ARN (Edge-owned), so the Policy
+    // resource lives in Edge and attaches to the Compute-owned role —
+    // Edge → Compute is an existing dependency direction (ALB origin).
+    compute.appInstanceRole.attachInlinePolicy(
+      new iam.Policy(this, 'AppCloudFrontInvalidationPolicy', {
+        statements: [
+          new iam.PolicyStatement({
+            sid: 'CloudFrontCreateInvalidationScoped',
+            actions: ['cloudfront:CreateInvalidation'],
+            resources: [
+              `arn:aws:cloudfront::${this.account}:distribution/${this.distribution.distributionId}`,
+            ],
+          }),
+        ],
+      }),
+    )
 
     // ----- Optional: Route53 A-record (when domainName is set) -----
     if (hostedZone && cfg.domainName) {
