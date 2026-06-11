@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 
 import { listServicePillars, listServices, publishedSlugsFor } from '@/lib/payload'
+import { redirectMap } from '@/lib/redirects'
 import type { Service } from '@/payload-types'
 
 // spec 004 T043. Dynamic sitemap from published slugs across the in-scope
@@ -51,7 +52,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         listServices(),
       ])
 
-    for (const slug of pageSlugs) paths.add(`/${slug}`)
+    // A page slug that collides with a 301 source (e.g. the audit-seeded
+    // `touchstone-workshops` doc, if ever published) would put a
+    // redirecting URL in the sitemap — the redirect wins over the route,
+    // so exclude redirect sources here (PR #49 review hardening).
+    const redirectSources = new Set(redirectMap.map((r) => r.source))
+    for (const slug of pageSlugs) {
+      if (!redirectSources.has(`/${slug}`)) paths.add(`/${slug}`)
+    }
     for (const slug of caseStudySlugs) paths.add(`/case-studies/${slug}`)
     for (const slug of postSlugs) paths.add(`/insights/${slug}`)
     for (const slug of workshopSlugs) paths.add(`/workshops/${slug}`)

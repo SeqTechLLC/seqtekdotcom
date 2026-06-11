@@ -76,9 +76,14 @@ describe('301 redirect map', () => {
   })
 
   it('wildcard sources carry the wildcard through to the destination', () => {
+    // Any named wildcard (`:path*`, `:slug*`, ...) — not just the literal
+    // `:path*` — must survive into the destination, or the redirect flattens
+    // every child URL onto the bare parent (PR #49 review hardening).
+    const wildcard = /:[a-zA-Z]+\*/
     for (const r of redirectMap) {
-      if (r.source.includes(':path*')) {
-        expect(r.destination, `${r.source} → ${r.destination}`).toContain(':path*')
+      const m = r.source.match(wildcard)
+      if (m) {
+        expect(r.destination, `${r.source} → ${r.destination}`).toContain(m[0])
       }
     }
   })
