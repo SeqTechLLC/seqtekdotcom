@@ -97,6 +97,27 @@ jobs:
             ${{ steps.img.outputs.image }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # NEXT_PUBLIC_* client IDs are build-time-inlined into the browser
+          # bundle, so runtime SSM provisioning can't deliver them — they ride
+          # as build args. All values are public by definition (shipped to
+          # every visitor's browser; portal ID + workshop GUID are committed
+          # in INTEGRATIONS.md §1.2). CI's own builds pass no args, keeping
+          # test runs hermetic (forms stay in stub mode there by design).
+          #
+          # Deliberately EMPTY until their gates clear:
+          #  - NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID: the Contact form has not
+          #    been created in HubSpot yet (INTEGRATIONS.md §1.2 provisioning
+          #    checklist). Paste the GUID here when the portal admin creates
+          #    it — nothing else is needed; the form goes live next deploy.
+          #  - NEXT_PUBLIC_GTM_ID: GTM-54KBJ2Z3 is the LIVE Wix-era container;
+          #    loading it on staging before the spec 008 container rebuild
+          #    would fire its legacy tags uncontrolled. Set it as part of the
+          #    spec 008 GTM-UI/staging tail.
+          build-args: |
+            NEXT_PUBLIC_HUBSPOT_PORTAL_ID=8504846
+            NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=66dba2bf-f099-44d5-8c6e-f24292cefe53
+            NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=
+            NEXT_PUBLIC_GTM_ID=
 
       - uses: actions/setup-node@v4
         with:

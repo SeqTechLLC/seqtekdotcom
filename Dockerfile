@@ -35,6 +35,21 @@ COPY . .
 # Disable Next.js telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# NEXT_PUBLIC_* values are inlined into the CLIENT bundle at build time —
+# runtime env (SSM → /etc/seqtek-website.env) cannot reach client code, so
+# these must arrive as build args (deploy.yml passes them; CI passes none).
+# All are public-by-definition (they ship to every browser; the portal ID
+# and workshop GUID are already committed in INTEGRATIONS.md §1.2). Empty
+# default preserves the env-gated stub behavior, keeping CI builds hermetic.
+ARG NEXT_PUBLIC_HUBSPOT_PORTAL_ID=""
+ARG NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=""
+ARG NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=""
+ARG NEXT_PUBLIC_GTM_ID=""
+ENV NEXT_PUBLIC_HUBSPOT_PORTAL_ID=$NEXT_PUBLIC_HUBSPOT_PORTAL_ID
+ENV NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=$NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID
+ENV NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=$NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID
+ENV NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
+
 RUN npm run build
 
 # ---- runner stage: slim production image ----
@@ -43,6 +58,19 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Mirror the public client IDs into the runtime env too: server components
+# (e.g. the env-gated integration loaders) read process.env at request
+# time, and these values are not in SSM — the build arg is their single
+# source. ARGs are stage-scoped, so re-declare.
+ARG NEXT_PUBLIC_HUBSPOT_PORTAL_ID=""
+ARG NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=""
+ARG NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=""
+ARG NEXT_PUBLIC_GTM_ID=""
+ENV NEXT_PUBLIC_HUBSPOT_PORTAL_ID=$NEXT_PUBLIC_HUBSPOT_PORTAL_ID
+ENV NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=$NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID
+ENV NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=$NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID
+ENV NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
 
 # Non-root user matching the spike convention (uid/gid 1001).
 RUN addgroup --system --gid 1001 nodejs \
