@@ -2,6 +2,7 @@ interface VideoEmbedProps {
   provider: 'youtube' | 'vimeo'
   videoId: string
   title: string
+  eyebrow?: string | null
   thumbnail?: { url?: string | null; alt?: string | null } | string | number | null
 }
 
@@ -13,12 +14,23 @@ const buildSrc = (provider: 'youtube' | 'vimeo', id: string) =>
     ? `https://www.youtube-nocookie.com/embed/${id}`
     : `https://player.vimeo.com/video/${id}`
 
-export function VideoEmbed({ provider, videoId, title, thumbnail }: VideoEmbedProps) {
+/**
+ * Renders on a subtle-surface band at the same container width as the
+ * two-column sections (the about page stacks them adjacent — shared grid
+ * edge), with the caption anchored inside the card rather than floating
+ * below it. The optional eyebrow ("From the SEQTEK Podcast") marks the
+ * section as an intentional interlude; templates that pass none (workshop
+ * recaps) render the bare card.
+ */
+export function VideoEmbed({ provider, videoId, title, eyebrow, thumbnail }: VideoEmbedProps) {
   return (
-    <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
-        <figure>
-          <div className="aspect-video overflow-hidden rounded-md bg-surface-inverse">
+    <section className="bg-surface-subtle px-4 py-14 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-container-lg">
+        {eyebrow ? (
+          <p className="mb-4 text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
+        ) : null}
+        <figure className="overflow-hidden rounded-md border border-border-subtle bg-surface shadow-sm">
+          <div className="aspect-video bg-surface-inverse">
             {isMedia(thumbnail) ? (
               <div className="relative h-full w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -47,7 +59,7 @@ export function VideoEmbed({ provider, videoId, title, thumbnail }: VideoEmbedPr
               />
             )}
           </div>
-          <figcaption className="mt-3 text-small text-text-secondary">{title}</figcaption>
+          <figcaption className="px-5 py-4 text-small text-text-secondary">{title}</figcaption>
         </figure>
       </div>
     </section>

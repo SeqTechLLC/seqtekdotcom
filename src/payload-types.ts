@@ -1341,6 +1341,7 @@ export interface VideoEmbedBlock {
   provider: 'youtube' | 'vimeo';
   videoId: string;
   title: string;
+  eyebrow?: string | null;
   thumbnail?: (number | null) | Media;
   id?: string | null;
   blockName?: string | null;
@@ -2348,6 +2349,7 @@ export interface VideoEmbedBlockSelect<T extends boolean = true> {
   provider?: T;
   videoId?: T;
   title?: T;
+  eyebrow?: T;
   thumbnail?: T;
   id?: T;
   blockName?: T;
