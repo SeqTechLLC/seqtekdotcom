@@ -30,6 +30,12 @@ export const VideoEmbed: Block = {
       },
     },
     { name: 'title', type: 'text', required: true },
+    {
+      // Optional kicker above the card (e.g. "From the SEQTEK Podcast") —
+      // marks the video as an intentional interlude on narrative pages.
+      name: 'eyebrow',
+      type: 'text',
+    },
     { name: 'thumbnail', type: 'upload', relationTo: 'media' },
   ],
 }
