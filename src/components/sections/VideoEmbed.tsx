@@ -41,7 +41,7 @@ export function VideoEmbed({ provider, videoId, title, thumbnail }: VideoEmbedPr
                 allow="autoplay; encrypted-media; picture-in-picture"
                 allowFullScreen
                 loading="lazy"
-                referrerPolicy="no-referrer"
+                referrerPolicy="strict-origin-when-cross-origin"
               />
             )}
           </div>

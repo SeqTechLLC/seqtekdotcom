@@ -39,7 +39,7 @@ export function Map({ heading, embedUrl, caption, height = 400 }: MapProps) {
                 title={caption ?? heading ?? 'Map'}
                 className="h-full w-full"
                 loading="lazy"
-                referrerPolicy="no-referrer"
+                referrerPolicy="strict-origin-when-cross-origin"
               />
             ) : (
               <p className="p-6 text-small text-text-muted">
