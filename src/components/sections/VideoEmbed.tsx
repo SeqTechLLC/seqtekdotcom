@@ -41,6 +41,8 @@ export function VideoEmbed({ provider, videoId, title, thumbnail }: VideoEmbedPr
                 allow="autoplay; encrypted-media; picture-in-picture"
                 allowFullScreen
                 loading="lazy"
+                // no-referrer breaks YouTube (player error 153): the embed
+                // must send its origin for YouTube to validate the embedder.
                 referrerPolicy="strict-origin-when-cross-origin"
               />
             )}
