@@ -35,7 +35,7 @@ export function Embed({ title, url, caption, height = 600 }: EmbedProps) {
                 className="h-full w-full"
                 loading="lazy"
                 sandbox="allow-scripts allow-forms allow-popups"
-                referrerPolicy="no-referrer"
+                referrerPolicy="strict-origin-when-cross-origin"
               />
             ) : (
               <p className="p-6 text-small text-text-muted">Embed URL must be https://.</p>

@@ -332,7 +332,15 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
     // The placeholder block mounts; a live HubSpot submission is NOT asserted.
     await expect(page.getByTestId('hubspot-form')).toBeVisible()
 
-    const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+    // Exclude third-party video player frames from the scan: with the iframe
+    // referrer policy fixed (YouTube error 153), the real player DOM loads
+    // here and axe flags violations inside it (role-less aria-label div,
+    // unlabeled buttons) — YouTube's markup, not ours. The gate covers our DOM.
+    const results = await new AxeBuilder({ page })
+      .withTags(AXE_TAGS)
+      .exclude('iframe[src*="youtube-nocookie.com"]')
+      .exclude('iframe[src*="player.vimeo.com"]')
+      .analyze()
     expect(
       results.violations,
       results.violations.map((v) => `[${v.id}] ${v.help}`).join('\n'),
