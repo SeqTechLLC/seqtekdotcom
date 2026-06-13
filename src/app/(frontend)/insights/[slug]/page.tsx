@@ -9,6 +9,7 @@ import { articleLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RichText } from '@/components/richText/RichText'
+import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import type { Post } from '@/payload-types'
 
 // spec 004 Phase 8 (T029). Insights detail (Shape C) — richText `content`
@@ -74,6 +75,16 @@ export default async function InsightPage({ params }: Props) {
             ) : null}
           </div>
         </header>
+
+        {isRelObject(post.featuredImage) ? (
+          <ResponsiveImage
+            media={post.featuredImage}
+            sizes="(min-width: 768px) 768px, 100vw"
+            className="mb-10 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
+            loading="eager"
+            fetchPriority="high"
+          />
+        ) : null}
 
         {post.content ? (
           <div data-testid="insight-content">
