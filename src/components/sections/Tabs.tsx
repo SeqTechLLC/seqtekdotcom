@@ -15,7 +15,7 @@ interface TabsProps {
 export function Tabs({ heading, tabs }: TabsProps) {
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
+      <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
         <nav aria-label="Tabs" className="mt-6 flex flex-wrap gap-2 border-b border-border-subtle">
           {tabs.map((t, i) => (

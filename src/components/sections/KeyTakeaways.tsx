@@ -11,7 +11,7 @@ interface KeyTakeawaysProps {
 export function KeyTakeaways({ heading, items }: KeyTakeawaysProps) {
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
+      <div className="mx-auto max-w-container-lg">
         <h2 className="text-h2 font-bold">{heading ?? 'Key takeaways'}</h2>
         <ol className="mt-8 space-y-4">
           {items.map((item, i) => (

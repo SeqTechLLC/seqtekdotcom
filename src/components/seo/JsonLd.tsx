@@ -20,6 +20,14 @@ export async function JsonLd({ data }: JsonLdProps) {
   const json = JSON.stringify(data).replace(/</g, '\\u003c')
 
   return (
-    <script type="application/ld+json" nonce={nonce} dangerouslySetInnerHTML={{ __html: json }} />
+    <script
+      type="application/ld+json"
+      nonce={nonce}
+      // Browsers strip the nonce attribute value from the DOM (exposed only
+      // via the .nonce property, anti-exfiltration), so React's hydration
+      // diff always sees "" vs the server value and warns. Expected; suppress.
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: json }}
+    />
   )
 }

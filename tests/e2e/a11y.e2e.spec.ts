@@ -54,7 +54,15 @@ test.describe('a11y — WCAG 2.2 A/AA, all in-scope routes (T005/T015)', () => {
       const res = await page.goto(route.path)
       expect(res?.status(), `${route.path} did not return 200`).toBe(200)
 
-      const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+      // Exclude third-party video player frames: a route with a video embed
+      // (e.g. /about) renders YouTube's own player DOM, which axe flags
+      // (role-less aria-label div, unlabeled buttons) — their markup, not
+      // ours. Same scope as the marquee suite (PR #51).
+      const results = await new AxeBuilder({ page })
+        .withTags(AXE_TAGS)
+        .exclude('iframe[src*="youtube-nocookie.com"]')
+        .exclude('iframe[src*="player.vimeo.com"]')
+        .analyze()
       expect(
         results.violations,
         `axe found ${results.violations.length} violation(s) on ${route.path}:\n` +

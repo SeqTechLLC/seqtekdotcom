@@ -20,7 +20,7 @@ export function RelatedPosts({ heading, manualItems, limit = 3 }: RelatedPostsPr
   if (docs.length === 0) {
     return (
       <section className="border-t border-border-subtle px-4 py-12 md:px-6 lg:px-8">
-        <div className="mx-auto max-w-container-md">
+        <div className="mx-auto max-w-container-lg">
           <h2 className="text-h3 font-semibold">{heading ?? 'Related posts'}</h2>
           <p className="mt-2 text-caption text-text-muted">
             No manual items — falls back to category-derived list at render time.
@@ -31,7 +31,7 @@ export function RelatedPosts({ heading, manualItems, limit = 3 }: RelatedPostsPr
   }
   return (
     <section className="border-t border-border-subtle px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
+      <div className="mx-auto max-w-container-lg">
         <h2 className="text-h3 font-semibold">{heading ?? 'Related posts'}</h2>
         <ul className="mt-6 grid gap-4 md:grid-cols-3">
           {docs.map((p) => (

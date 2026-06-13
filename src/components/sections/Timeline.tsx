@@ -17,7 +17,7 @@ const hasUrl = (v: unknown): v is { url: string; alt?: string | null } =>
 export function Timeline({ heading, items }: TimelineProps) {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
+      <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ol className="mt-8 space-y-8 border-l-2 border-border-strong pl-6">
           {items.map((item, i) => (

@@ -22,7 +22,7 @@ export default async function WorkshopsPage() {
   const workshops = await listWorkshops()
 
   return (
-    <div data-testid="workshops-listing" className="mx-auto max-w-container-xl px-4 py-16 md:px-6">
+    <div data-testid="workshops-listing" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
       <header className="mb-12">
         <h1 className="text-h1 font-bold">Workshops</h1>
         <p className="mt-4 text-body-lg text-text-secondary">

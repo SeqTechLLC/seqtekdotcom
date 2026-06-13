@@ -36,7 +36,7 @@ export function SiteFooter() {
 
   return (
     <footer data-testid="site-footer" className="bg-surface-inverse text-text-inverse">
-      <Container size="xl">
+      <Container size="lg">
         <div className="grid gap-10 py-12 md:grid-cols-2 md:py-16 lg:grid-cols-6">
           <div className="lg:col-span-2">
             <Link href="/" aria-label={companyName} className="inline-block">

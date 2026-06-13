@@ -17,6 +17,12 @@ type ContainerProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode
 }
 
+/**
+ * Padding sits OUTSIDE the max-width box (same model as the section
+ * components: padded wrapper, then `mx-auto max-w-*`). With padding inside
+ * the box, Container content sat 32px right of section content at the same
+ * size — the header/footer never shared the page grid edge.
+ */
 export function Container({
   size = 'xl',
   padded = true,
@@ -25,11 +31,10 @@ export function Container({
   ...rest
 }: ContainerProps) {
   return (
-    <div
-      className={cn('mx-auto w-full', sizeClass[size], padded && 'px-4 md:px-6 lg:px-8', className)}
-      {...rest}
-    >
-      {children}
+    <div className={cn(padded && 'px-4 md:px-6 lg:px-8')}>
+      <div className={cn('mx-auto w-full', sizeClass[size], className)} {...rest}>
+        {children}
+      </div>
     </div>
   )
 }

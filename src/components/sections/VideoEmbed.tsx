@@ -29,7 +29,7 @@ export function VideoEmbed({ provider, videoId, title, eyebrow, thumbnail }: Vid
         {eyebrow ? (
           <p className="mb-4 text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
         ) : null}
-        <figure className="overflow-hidden rounded-md border border-border-subtle bg-surface shadow-sm">
+        <figure className="overflow-hidden rounded-md border border-border-subtle bg-surface-elevated shadow-sm">
           <div className="aspect-video bg-surface-inverse">
             {isMedia(thumbnail) ? (
               <div className="relative h-full w-full">
@@ -59,7 +59,6 @@ export function VideoEmbed({ provider, videoId, title, eyebrow, thumbnail }: Vid
               />
             )}
           </div>
-          <figcaption className="px-5 py-4 text-small text-text-secondary">{title}</figcaption>
         </figure>
       </div>
     </section>

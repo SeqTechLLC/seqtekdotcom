@@ -11,7 +11,7 @@ interface DeliverablesProps {
 export function Deliverables({ heading, items }: DeliverablesProps) {
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
+      <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
         <ul className="mt-6 grid gap-3 sm:grid-cols-2">
           {items.map((item, i) => (

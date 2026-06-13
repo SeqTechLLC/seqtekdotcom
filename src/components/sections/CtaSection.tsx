@@ -50,7 +50,7 @@ export function CtaSection({
           className="absolute inset-0 -z-10 h-full w-full object-cover opacity-30"
         />
       ) : null}
-      <div className={`mx-auto max-w-container-md ${alignmentCls}`}>
+      <div className={`mx-auto max-w-container-lg ${alignmentCls}`}>
         <h2 className="text-h2 font-bold">{headline}</h2>
         {body ? <p className="mt-4 text-body-lg">{body}</p> : null}
         <div

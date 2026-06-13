@@ -14,7 +14,7 @@ interface TechStackProps {
 export function TechStack({ heading, items }: TechStackProps) {
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
+      <div className="mx-auto max-w-container-lg">
         <h2 className="text-h3 font-semibold">{heading ?? 'Technologies'}</h2>
         <ul className="mt-6 flex flex-wrap gap-2">
           {items.map((item, i) =>

@@ -21,7 +21,7 @@ export default async function InsightsPage() {
   const posts = await listPosts()
 
   return (
-    <div data-testid="insights-listing" className="mx-auto max-w-container-xl px-4 py-16 md:px-6">
+    <div data-testid="insights-listing" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
       <header className="mb-12">
         <h1 className="text-h1 font-bold">Insights</h1>
         <p className="mt-4 text-body-lg text-text-secondary">

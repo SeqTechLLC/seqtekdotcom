@@ -14,7 +14,7 @@ export function SiteHeader() {
       data-testid="site-header"
       className="sticky top-0 z-sticky border-b border-border-subtle bg-surface"
     >
-      <Container size="xl">
+      <Container size="lg">
         <div className="flex h-16 items-center justify-between gap-4 md:h-20">
           <Link
             href="/"

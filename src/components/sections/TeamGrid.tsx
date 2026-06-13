@@ -60,8 +60,8 @@ export function TeamGrid({
                 key={m.id ?? m.slug}
                 className={
                   layout === 'compact'
-                    ? 'flex flex-col items-center rounded-md border border-border-subtle bg-surface p-5 text-center shadow-xs'
-                    : 'flex flex-col overflow-hidden rounded-md border border-border-subtle bg-surface text-center shadow-xs'
+                    ? 'flex flex-col items-center rounded-md border border-border-subtle bg-surface-elevated p-5 text-center shadow-xs'
+                    : 'flex flex-col overflow-hidden rounded-md border border-border-subtle bg-surface-elevated text-center shadow-xs'
                 }
               >
                 {isMedia(m.photo) ? (

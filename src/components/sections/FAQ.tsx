@@ -16,7 +16,7 @@ interface FAQProps {
 export function FAQ({ heading, items }: FAQProps) {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
+      <div className="mx-auto max-w-container-lg">
         <h2 className="text-h2 font-bold">{heading ?? 'Frequently asked questions'}</h2>
         <ul className="mt-8 divide-y divide-border-subtle border-y border-border-subtle">
           {items.map((item, i) => (

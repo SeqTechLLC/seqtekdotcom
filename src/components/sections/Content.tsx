@@ -25,8 +25,12 @@ export function Content({ width = 'standard', body, background = 'none' }: Conte
   const bgCls = BACKGROUND_CLASSES[background ?? 'none']
   return (
     <section className={`px-4 py-12 md:px-6 lg:px-8 ${bgCls}`}>
-      <div className={`mx-auto ${widthCls}`}>
-        <RichText data={body} />
+      {/* Outer rail = the page grid (container-lg); the reading measure
+          stays narrow but left-aligned to the shared edge, not centered. */}
+      <div className="mx-auto max-w-container-lg">
+        <div className={widthCls}>
+          <RichText data={body} />
+        </div>
       </div>
     </section>
   )

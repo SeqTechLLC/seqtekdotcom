@@ -52,7 +52,7 @@ export function TestimonialBlock({ testimonial, layout = 'centered' }: Testimoni
   const flexCls = layout === 'with-photo-right' ? 'flex-row-reverse' : 'flex-row'
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
-      <div className={`mx-auto flex max-w-container-md items-start gap-8 ${flexCls}`}>
+      <div className={`mx-auto flex max-w-container-lg items-start gap-8 ${flexCls}`}>
         {photoEl}
         <div>
           <blockquote className="text-h3 font-semibold">&ldquo;{quote}&rdquo;</blockquote>

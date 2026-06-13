@@ -45,7 +45,7 @@ export default async function ServicePillarPage({ params }: Props) {
   const children = allServices.filter((s) => pillarSlugOf(s) === pillarSlug)
 
   return (
-    <div data-testid="service-pillar" className="mx-auto max-w-container-xl px-4 py-16 md:px-6">
+    <div data-testid="service-pillar" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
       <header className="mb-12">
         <h1 className="text-h1 font-bold">{pillar.title}</h1>
       </header>
