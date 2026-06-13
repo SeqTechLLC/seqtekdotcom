@@ -16,7 +16,7 @@
     /* Text */
     --color-text-primary: #1c1c31; /* neutral-900 */
     --color-text-secondary: #3e3e47; /* neutral-700 */
-    --color-text-muted: #6e6e7a; /* neutral-500 */
+    --color-text-muted: #65656f; /* neutral-500, nudged darker — clears AA (4.5:1) on the warm band, not just on white */
     --color-text-inverse: #ffffff; /* neutral-0 */
     --color-text-accent: #46792f; /* brand-green-700 */
 
@@ -26,7 +26,7 @@
 
     /* Surface */
     --color-surface: #faf8f4; /* warm paper — folksy, kills the wall of white */
-    --color-surface-subtle: #f1eee7; /* deeper warm band */
+    --color-surface-subtle: #f6f3ec; /* warm band — kept light enough that the green eyebrow (accent-strong) clears AA on it */
     --color-surface-elevated: #ffffff; /* neutral-0 */
     --color-surface-inverse: #1c1c31; /* neutral-900 */
     --color-surface-accent: #f3f9ec; /* brand-green-50 */
