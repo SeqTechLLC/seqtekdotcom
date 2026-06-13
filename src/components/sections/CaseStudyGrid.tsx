@@ -46,29 +46,40 @@ export function CaseStudyGrid({
         ) : null}
         {docs.length > 0 ? (
           <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {docs.map((d) => (
-              <li
-                key={d.id ?? d.slug}
-                className="overflow-hidden rounded-md border border-border-subtle bg-surface shadow-xs"
-              >
-                {isMedia(d.heroImage) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={d.heroImage.url}
-                    alt={d.heroImage.alt ?? d.title ?? ''}
-                    className="h-40 w-full object-cover"
-                  />
-                ) : null}
-                <div className="p-5">
-                  <CardHeading className="text-h4 font-semibold">
-                    {d.slug ? <Link href={`/case-studies/${d.slug}`}>{d.title}</Link> : d.title}
-                  </CardHeading>
-                  {d.subtitle ? (
-                    <p className="mt-2 text-body text-text-secondary">{d.subtitle}</p>
+            {docs.map((d) => {
+              const card = (
+                <>
+                  {isMedia(d.heroImage) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={d.heroImage.url}
+                      alt={d.heroImage.alt ?? d.title ?? ''}
+                      className="aspect-[16/9] w-full object-cover"
+                    />
                   ) : null}
-                </div>
-              </li>
-            ))}
+                  <div className="p-5">
+                    <CardHeading className="text-h4 font-semibold">{d.title}</CardHeading>
+                    {d.subtitle ? (
+                      <p className="mt-2 text-body text-text-secondary">{d.subtitle}</p>
+                    ) : null}
+                  </div>
+                </>
+              )
+              return (
+                <li
+                  key={d.id ?? d.slug}
+                  className="group overflow-hidden rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+                >
+                  {d.slug ? (
+                    <Link href={`/case-studies/${d.slug}`} className="block h-full">
+                      {card}
+                    </Link>
+                  ) : (
+                    card
+                  )}
+                </li>
+              )
+            })}
           </ul>
         ) : null}
       </div>

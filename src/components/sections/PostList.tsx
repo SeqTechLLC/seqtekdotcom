@@ -44,29 +44,42 @@ export function PostList({
         ) : null}
         {docs.length > 0 ? (
           <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {docs.map((p) => (
-              <li
-                key={p.id ?? p.slug}
-                className="overflow-hidden rounded-md border border-border-subtle bg-surface shadow-xs"
-              >
-                {isMedia(p.featuredImage) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.featuredImage.url}
-                    alt={p.featuredImage.alt ?? p.title ?? ''}
-                    className="h-36 w-full object-cover"
-                  />
-                ) : null}
-                <div className="p-5">
-                  <CardHeading className="text-h4 font-semibold">
-                    {p.slug ? <Link href={`/insights/${p.slug}`}>{p.title}</Link> : p.title}
-                  </CardHeading>
-                  {p.excerpt ? (
-                    <p className="mt-2 text-body text-text-secondary">{p.excerpt}</p>
+            {docs.map((p) => {
+              const card = (
+                <>
+                  {isMedia(p.featuredImage) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.featuredImage.url}
+                      alt={p.featuredImage.alt ?? p.title ?? ''}
+                      className="aspect-[16/9] w-full object-cover"
+                    />
                   ) : null}
-                </div>
-              </li>
-            ))}
+                  <div className="p-5">
+                    <CardHeading className="text-h4 font-semibold">{p.title}</CardHeading>
+                    {p.excerpt ? (
+                      <p className="mt-2 text-body text-text-secondary">{p.excerpt}</p>
+                    ) : null}
+                  </div>
+                </>
+              )
+              // Whole card is the click target. group + transition for a subtle
+              // hover lift; the heading inherits color so it is not a separate link.
+              return (
+                <li
+                  key={p.id ?? p.slug}
+                  className="group overflow-hidden rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+                >
+                  {p.slug ? (
+                    <Link href={`/insights/${p.slug}`} className="block h-full">
+                      {card}
+                    </Link>
+                  ) : (
+                    card
+                  )}
+                </li>
+              )
+            })}
           </ul>
         ) : null}
       </div>
