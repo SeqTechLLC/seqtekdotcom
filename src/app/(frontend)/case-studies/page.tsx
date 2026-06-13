@@ -23,7 +23,7 @@ export default async function CaseStudiesPage() {
   return (
     <div
       data-testid="case-studies-listing"
-      className="mx-auto max-w-container-xl px-4 py-16 md:px-6"
+      className="mx-auto max-w-container-lg px-4 py-16 md:px-6"
     >
       <header className="mb-12">
         <h1 className="text-h1 font-bold">Case studies</h1>
