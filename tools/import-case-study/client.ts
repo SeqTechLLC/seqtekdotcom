@@ -213,4 +213,19 @@ export class PayloadRestClient {
     const json = (await res.json()) as WriteResponse
     return json.doc?.id ?? id
   }
+
+  /** Update a Payload global by slug (POST /api/globals/:slug). */
+  async updateGlobal(
+    slug: string,
+    data: Record<string, unknown>,
+    opts: WriteOptions,
+  ): Promise<void> {
+    const url = `${this.baseUrl}/api/globals/${slug}${opts.draft ? '?draft=true' : ''}`
+    const res = await this.fetchFn(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+      body: JSON.stringify(data),
+    })
+    if (!res.ok) throw await this.toError(res, `update global ${slug}`)
+  }
 }
