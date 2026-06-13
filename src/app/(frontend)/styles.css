@@ -25,15 +25,15 @@
     --color-link-hover: #355b24; /* brand-green-800 */
 
     /* Surface */
-    --color-surface: #ffffff; /* neutral-0 */
-    --color-surface-subtle: #f7f7f8; /* neutral-50 */
+    --color-surface: #faf8f4; /* warm paper — folksy, kills the wall of white */
+    --color-surface-subtle: #f1eee7; /* deeper warm band */
     --color-surface-elevated: #ffffff; /* neutral-0 */
     --color-surface-inverse: #1c1c31; /* neutral-900 */
     --color-surface-accent: #f3f9ec; /* brand-green-50 */
 
     /* Border */
-    --color-border-subtle: #ededf0; /* neutral-100 */
-    --color-border-strong: #d9d9df; /* neutral-200 */
+    --color-border-subtle: #e7e3da; /* warm border */
+    --color-border-strong: #d6d0c2; /* warm border strong */
     --color-border-focus: #5a9c3b; /* brand-green-600 */
 
     /* Accent */

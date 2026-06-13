@@ -61,19 +61,23 @@ export function Hero({
   const alignmentCls = alignment === 'center' ? 'text-center mx-auto' : 'text-left'
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className={`mx-auto max-w-container-md ${alignmentCls}`}>
+      {/* container-lg: the hero shares the page grid edge with every section
+          below it (two-column, video bands). Headline at display scale with
+          a measure cap so it wraps editorially instead of spanning the
+          container; subheadline capped likewise. */}
+      <div className={`mx-auto max-w-container-lg ${alignmentCls}`}>
         {eyebrow ? (
           <p className="text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
         ) : null}
-        <h1 className="mt-2 text-h1 font-bold">{headline}</h1>
+        <h1 className="mt-3 max-w-3xl text-display font-bold md:text-display-xl">{headline}</h1>
         {subheadline ? (
-          <p className="mt-4 text-body-lg text-text-secondary">{subheadline}</p>
+          <p className="mt-5 max-w-2xl text-body-lg text-text-secondary">{subheadline}</p>
         ) : null}
         {(variant === 'with-image' || variant === 'split') && isFullMedia(media) && media.url ? (
           <ResponsiveImage
             media={media}
             sizes="100vw"
-            className="mt-8 w-full rounded-md"
+            className="mt-8 w-full rounded-lg border border-border-subtle shadow-sm"
             loading="eager"
             fetchPriority="high"
           />
