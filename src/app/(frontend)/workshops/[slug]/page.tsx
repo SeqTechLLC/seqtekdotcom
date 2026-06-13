@@ -107,6 +107,25 @@ export default async function WorkshopPage({ params }: Props) {
           </section>
         ) : null}
 
+        {workshop.deliverables?.length ? (
+          <section
+            data-testid="workshop-deliverables"
+            className="mb-12 rounded-md border border-border-subtle bg-surface-subtle p-6 md:p-8"
+          >
+            <h2 className="mb-6 text-h3 font-semibold">What you leave with</h2>
+            <ul className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
+              {workshop.deliverables.map((d, i) => (
+                <li key={d.id ?? i} className="flex gap-3 text-body">
+                  <span aria-hidden className="mt-1 select-none font-bold text-accent-strong">
+                    &#10003;
+                  </span>
+                  <span>{d.label}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         {testimonial?.quote ? (
           <section data-testid="workshop-testimonial" className="mb-12">
             <blockquote className="border-l-4 border-accent-strong pl-6 text-body-lg italic text-text-secondary">
