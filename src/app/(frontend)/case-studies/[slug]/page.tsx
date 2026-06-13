@@ -10,6 +10,7 @@ import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RichText } from '@/components/richText/RichText'
+import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import { TrackView } from '@/components/analytics/TrackView'
 import type { CaseStudy } from '@/payload-types'
 
@@ -84,6 +85,16 @@ export default async function CaseStudyPage({ params }: Props) {
             <p className="mt-4 text-body-lg text-text-secondary">{caseStudy.subtitle}</p>
           ) : null}
         </header>
+
+        {isRelObject(caseStudy.heroImage) ? (
+          <ResponsiveImage
+            media={caseStudy.heroImage}
+            sizes="(min-width: 1024px) 1024px, 100vw"
+            className="mb-12 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
+            loading="eager"
+            fetchPriority="high"
+          />
+        ) : null}
 
         {caseStudy.problem ? (
           <section data-testid="case-study-problem" className="mb-12">
