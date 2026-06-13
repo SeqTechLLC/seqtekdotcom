@@ -30,7 +30,7 @@ export function TwoColumn({ mediaPosition, body, media, cta }: TwoColumnProps) {
       <ResponsiveImage
         media={media}
         sizes="(min-width: 1024px) 50vw, 100vw"
-        className="w-full rounded-md"
+        className="w-full rounded-lg border border-border-subtle shadow-sm"
       />
     ) : null
   const bodyEl = (
