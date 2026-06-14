@@ -59,7 +59,7 @@ function parseArgs(argv: readonly string[]): { slug?: string; count: number } {
   return out
 }
 
-async function headers(key: string): Promise<Record<string, string>> {
+function headers(key: string): Record<string, string> {
   return {
     accept: 'application/json',
     'content-type': 'application/json',
@@ -70,7 +70,7 @@ async function headers(key: string): Promise<Record<string, string>> {
 async function createGeneration(key: string, prompt: string, count: number): Promise<string> {
   const res = await fetch(`${API}/generations`, {
     method: 'POST',
-    headers: await headers(key),
+    headers: headers(key),
     body: JSON.stringify({
       prompt,
       negative_prompt: NEGATIVE,
@@ -90,7 +90,7 @@ async function createGeneration(key: string, prompt: string, count: number): Pro
 async function waitForImages(key: string, genId: string): Promise<GenImage[]> {
   for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
     await new Promise((r) => setTimeout(r, POLL_MS))
-    const res = await fetch(`${API}/generations/${genId}`, { headers: await headers(key) })
+    const res = await fetch(`${API}/generations/${genId}`, { headers: headers(key) })
     if (!res.ok) {
       // 4xx (bad/expired key, unknown id) won't fix itself — fail fast with the
       // status instead of masquerading as a 5-minute timeout. 429 + 5xx are
