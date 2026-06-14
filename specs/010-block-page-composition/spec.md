@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: Implements ADR `docs/decisions/0009-block-first-composition.md`. Retire bespoke per-type page templates; every page is a block-composed **Page** or a **Post**; specialized types become "a Page + typed metadata." Layout is editor-controlled; only adding/fixing a block type requires code.
+**Input**: Implements ADR `docs/decisions/0009-block-first-composition.md`. Retire bespoke per-type page templates; every page **except the blog** is a block-composed **Page**, and the blog is a **Post** — the single sanctioned bespoke (rich-text article) template. Specialized types become "a Page body + typed metadata." Layout is editor-controlled; only adding/fixing a block type requires code.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -86,6 +86,21 @@ The homepage (currently a bespoke global composition) is moved onto block compos
 
 ---
 
+### User Story 6 - Convert an existing page into blocks via a skill (Priority: P3)
+
+An operator points a conversion skill at an existing page (a migrated record, a legacy Wix-audit page, or a hand-built one) and gets back a valid block **layout** that reproduces the page's content, ready to review and publish — with no hand-coding and no bespoke template.
+
+**Why this priority**: Turns "we have N existing pages" into a repeatable, reviewable conversion rather than a per-page manual rebuild, and gives the migration a tool of record beyond the one-shot per-type seed.
+
+**Independent Test**: Run the conversion skill against an existing page; it emits a block layout using only existing blocks that reproduces the source content, or names the specific missing block. No bespoke page code is produced.
+
+**Acceptance Scenarios**:
+
+1. **Given** an existing page expressible with current blocks, **When** the conversion skill runs, **Then** it produces a block layout reproducing the source content with no code changes.
+2. **Given** source content needing a capability no block provides, **When** the skill runs, **Then** it flags the specific missing block rather than hand-coding the page.
+
+---
+
 ### Edge Cases
 
 - **Empty / partial layout**: a page with no blocks (or a block missing required content) renders a safe empty state, never a crash.
@@ -99,8 +114,8 @@ The homepage (currently a bespoke global composition) is moved onto block compos
 
 ### Functional Requirements
 
-- **FR-001**: The site MUST render all pages through exactly two primitives — a block-composed **Page** and a **Post** — with no per-type bespoke render template.
-- **FR-002**: Each specialized type (workshops, case studies, services, team) MUST expose a block **layout** for its body plus only the structured metadata its listing, navigation, relationships, and SEO require.
+- **FR-001**: The site MUST render every page **except the blog** through one primitive — the block-composed **Page**. The blog (**Post**) is the single sanctioned bespoke render (rich-text article template); no other per-type bespoke render template may exist.
+- **FR-002**: Each specialized type (workshops, case studies, services, team) MUST expose a block **layout** for its body plus only the structured metadata its listing, navigation, relationships, SEO, and AICO (AI / answer-engine optimization) require.
 - **FR-003**: A content editor MUST be able to add, remove, reorder, and swap blocks on any page in the admin and publish the result **without any code change or deploy**.
 - **FR-004**: Introducing or fixing a **block type** MUST be the ONLY change that requires code and a deploy.
 - **FR-005**: The block library MUST cover every capability the retired templates provided; any gap (at minimum an image/gallery block) MUST be filled before the corresponding type is migrated.
@@ -112,11 +127,12 @@ The homepage (currently a bespoke global composition) is moved onto block compos
 - **FR-011**: The project MUST document a block-curation loop defining how a missing/able-to-fix block is added (the single legitimate code path) and the block inventory MUST stay current.
 - **FR-012**: Caching/ISR with cache-tag parity, draft/live-preview, and the access-matrix invariant MUST continue to hold for all block-composed pages.
 - **FR-013**: Implementation MUST be phased — workshops (pilot) → case studies → services → team → homepage — each phase independently shippable and verifiable.
+- **FR-014**: The project MUST provide a general, re-runnable **conversion** skill/script that transforms an existing page — including future imports such as the Wix audit content — into a valid block **layout**, distinct from both the per-type seed migration (FR-007) and the net-new authoring skill (FR-010). It MUST flag the specific missing block when a source layout cannot be expressed with existing blocks rather than emitting bespoke page code.
 
 ### Key Entities
 
 - **Page**: a block-composed content document (a `layout` of ordered blocks) — the universal body shape.
-- **Post**: the long-form blog/insights type; body also block-composed.
+- **Post**: the long-form blog/insights type — the one primitive that keeps a bespoke (rich-text) article template rather than block composition; the single sanctioned exception to the block model.
 - **Specialized type (Workshop / Case Study / Service / Team member)**: a collection of typed metadata (title, slug, listing image, order, SEO, relationships such as facilitator/testimonial) attached to a Page body.
 - **Block**: a reusable, typed layout/content unit in the shared library, rendered by the shared renderer; the only unit that requires code to create.
 - **Default skeleton**: a content-level starting layout seeded onto new specialized records for baseline uniformity.
@@ -125,7 +141,7 @@ The homepage (currently a bespoke global composition) is moved onto block compos
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of public page types render through the two primitives; zero bespoke per-type render templates remain at completion.
+- **SC-001**: Every public page type except the blog renders through the block-composed **Page** primitive; zero bespoke per-type render templates remain at completion other than the blog (the single sanctioned exception).
 - **SC-002**: A content editor can reorder or swap two elements on any page and have it live after publish with **zero** code changes and **zero** deploys — verified per type.
 - **SC-003**: Every migrated record reproduces its prior published content (0 instances of dropped content across the migration).
 - **SC-004**: No regression in existing automated coverage (E2E, visual capture, integration) and no change to listing pages or structured data, verified per phase.
@@ -142,6 +158,7 @@ The homepage (currently a bespoke global composition) is moved onto block compos
 - Marquee **copy and photography** are produced by the separate content track and are out of scope here.
 - The auth model and deploy/infrastructure model are unchanged and out of scope.
 - "Uniformity" is achieved via the seeded default skeleton + curated blocks + the authoring skill, not via schema-enforced required sections.
+- The blog (Post) is the single sanctioned bespoke template and is explicitly out of the block-composition migration; only its surrounding chrome/SEO/AICO metadata is touched, if anything.
 
 ## Out of Scope
 
