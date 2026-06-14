@@ -48,6 +48,23 @@ Staging runs at `https://seqtek-preview.com` on Postgres 18.3. Production cutove
 - **Tooling and scripts** live in subdirectories, not the repo root.
 - **Private SEQTEK assets** (brand kit PDF, trademarked logos, Wix content audit) are kept outside this repo. By convention they live at `~/projects/seqtek-internal/brandkit/` and `~/projects/seqtek-internal/audit/` (sibling directories). The seed script reads `AUDIT_DIR` env var; design-system docs reference brand assets by name without committing them.
 
+## Visual verification (required for UI changes)
+
+Any change that affects rendered output must be **looked at**, not just type-checked. A green `tsc`, passing E2E, or "it renders" is NOT visual verification — and don't claim a page was visually checked unless you actually opened the screenshot and judged it.
+
+The repo has a Playwright capture harness. Run it against the local mirror (or any base URL):
+
+```
+PLAYWRIGHT_BASE_URL=http://localhost:3100 npm run visual:capture
+```
+
+This captures, into `tests/e2e/visual/screenshots/` (gitignored, overwritten each run):
+
+- **Every real public page** — `tests/e2e/visual/pages.e2e.spec.ts` → `screenshots/pages/<route>-<desktop|mobile>.png`. Add new routes to its `ROUTES` list as pages ship.
+- **Every block in isolation** — `showcase.e2e.spec.ts` → `screenshots/showcase/` (needs `npm run seed:showcase` first).
+
+The expectation: open the PNGs for **every page your change touches**, at both viewports, and judge them like the live site — legibility, sizing, spacing, alignment, against the old seqtek.com where a reference exists. For pixel-level layout complaints, also measure boxes (`getBoundingClientRect`) at the reported viewport rather than reasoning from CSS classes.
+
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,

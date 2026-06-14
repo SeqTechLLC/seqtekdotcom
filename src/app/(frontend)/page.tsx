@@ -10,7 +10,7 @@ import { HomepageHero } from '@/components/sections/HomepageHero'
 import { StatsBar } from '@/components/sections/StatsBar'
 import { FeaturedCaseStudy } from '@/components/sections/FeaturedCaseStudy'
 import { BrandTeaser } from '@/components/sections/BrandTeaser'
-import { LogoBar } from '@/components/sections/LogoBar'
+import { ClientLogoGrid } from '@/components/sections/ClientLogoGrid'
 import { FeaturedTestimonials } from '@/components/sections/FeaturedTestimonials'
 import { PostList } from '@/components/sections/PostList'
 import { CtaSection } from '@/components/sections/CtaSection'
@@ -105,11 +105,10 @@ export default async function HomePage() {
 
         {homepage?.clientLogos?.length ? (
           <section data-testid="client-logos">
-            <LogoBar
-              heading="Trusted by teams across the region"
-              source="inline"
+            <ClientLogoGrid
+              heading="Serving industry leaders"
               logos={homepage.clientLogos}
-              treatment="color"
+              columns="4"
             />
           </section>
         ) : null}
