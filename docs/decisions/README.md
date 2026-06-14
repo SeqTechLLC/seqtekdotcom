@@ -62,3 +62,5 @@ A concrete trigger that should reopen this decision (e.g., "we hit X scale," "ve
 | [0005](0005-isr-unstable-cache-tag-parity.md) | ISR caching via `unstable_cache` with tag parity       | Accepted | 2026-06-01 |
 | [0006](0006-hubspot-consent-bridge.md)        | HubSpot consent bridge: official listener, fail-closed | Accepted | 2026-06-03 |
 | [0007](0007-read-timeout.md)                  | Server-read timeout: `Promise.race` outermost layer    | Accepted | 2026-06-05 |
+| [0008](0008-media-cloudfront-serving.md)      | Serve Payload media via CloudFront `/media/*`          | Accepted | 2026-06-09 |
+| [0009](0009-block-first-composition.md)       | Two content primitives: block-composed Pages and Posts | Accepted | 2026-06-14 |
