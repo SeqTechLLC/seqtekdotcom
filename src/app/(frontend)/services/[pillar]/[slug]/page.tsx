@@ -52,6 +52,11 @@ export default async function ServiceDetailPage({ params }: Props) {
 
   const pillar = service.pillar && typeof service.pillar === 'object' ? service.pillar : null
 
+  // Reading column: this template is all text, so every section sits in a
+  // centered 65ch measure (DESIGN_SYSTEM.md "Reading column"). Center the block,
+  // keep text left-justified; never left-justify the column or widen past 65ch.
+  const readingCol = 'mx-auto max-w-prose'
+
   return (
     <>
       <JsonLd
@@ -68,28 +73,28 @@ export default async function ServiceDetailPage({ params }: Props) {
         data-testid="service-detail"
         className="mx-auto max-w-container-lg px-4 py-16 md:px-6"
       >
-        <header className="mb-12">
+        <header className={`${readingCol} mb-12`}>
           <h1 className="text-h1 font-bold" data-testid="service-title">
             {service.title}
           </h1>
         </header>
 
         {service.description ? (
-          <section data-testid="service-description" className="mb-12">
+          <section data-testid="service-description" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">Overview</h2>
             <RichText data={service.description} />
           </section>
         ) : null}
 
         {service.approach ? (
-          <section data-testid="service-approach" className="mb-12">
+          <section data-testid="service-approach" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">Our approach</h2>
             <RichText data={service.approach} />
           </section>
         ) : null}
 
         {service.deliverables?.length ? (
-          <section data-testid="service-deliverables" className="mb-12">
+          <section data-testid="service-deliverables" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">Deliverables</h2>
             <ul className="list-disc space-y-2 pl-6 text-body text-text-secondary">
               {service.deliverables.map((d) => (
@@ -100,7 +105,10 @@ export default async function ServiceDetailPage({ params }: Props) {
         ) : null}
 
         {service.faq?.length ? (
-          <section data-testid="service-faq" className="border-t border-border-subtle pt-8">
+          <section
+            data-testid="service-faq"
+            className={`${readingCol} border-t border-border-subtle pt-8`}
+          >
             <h2 className="mb-4 text-h3 font-semibold">FAQ</h2>
             <dl className="space-y-6">
               {service.faq.map((item) => (

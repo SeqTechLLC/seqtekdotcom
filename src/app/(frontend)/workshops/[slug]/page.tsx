@@ -59,6 +59,12 @@ export default async function WorkshopPage({ params }: Props) {
     .map((p) => (isRelObject(p.image) ? { image: p.image, caption: p.caption ?? null } : null))
     .filter((p): p is NonNullable<typeof p> => p !== null)
 
+  // Reading column: headings + body text sit in a centered 65ch measure
+  // (DESIGN_SYSTEM.md "Reading column"). The photo grid, video, and download/form
+  // grid deliberately break out wider — different widths, all centered on one
+  // axis. Never left-justify; never widen body past 65ch.
+  const readingCol = 'mx-auto max-w-prose'
+
   return (
     <>
       <JsonLd
@@ -74,7 +80,7 @@ export default async function WorkshopPage({ params }: Props) {
         data-testid="workshop-detail"
         className="mx-auto max-w-container-lg px-4 py-16 md:px-6"
       >
-        <header className="mb-12">
+        <header className={`${readingCol} mb-12`}>
           <h1 className="text-h1 font-bold" data-testid="workshop-title">
             {workshop.title}
           </h1>
@@ -87,21 +93,21 @@ export default async function WorkshopPage({ params }: Props) {
         </header>
 
         {workshop.description ? (
-          <section data-testid="workshop-description" className="mb-12">
+          <section data-testid="workshop-description" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">What it is</h2>
             <RichText data={workshop.description} />
           </section>
         ) : null}
 
         {workshop.format ? (
-          <section data-testid="workshop-format" className="mb-12">
+          <section data-testid="workshop-format" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">Format</h2>
             <RichText data={workshop.format} />
           </section>
         ) : null}
 
         {workshop.audience ? (
-          <section data-testid="workshop-audience" className="mb-12">
+          <section data-testid="workshop-audience" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">Who it is for</h2>
             <RichText data={workshop.audience} />
           </section>
@@ -110,7 +116,7 @@ export default async function WorkshopPage({ params }: Props) {
         {workshop.deliverables?.length ? (
           <section
             data-testid="workshop-deliverables"
-            className="mb-12 rounded-md border border-border-subtle bg-surface-subtle p-6 md:p-8"
+            className={`${readingCol} mb-12 rounded-md border border-border-subtle bg-surface-subtle p-6 md:p-8`}
           >
             <h2 className="mb-6 text-h3 font-semibold">What you leave with</h2>
             <ul className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
@@ -127,7 +133,7 @@ export default async function WorkshopPage({ params }: Props) {
         ) : null}
 
         {testimonial?.quote ? (
-          <section data-testid="workshop-testimonial" className="mb-12">
+          <section data-testid="workshop-testimonial" className={`${readingCol} mb-12`}>
             <blockquote className="border-l-4 border-accent-strong pl-6 text-body-lg italic text-text-secondary">
               <p>&ldquo;{testimonial.quote}&rdquo;</p>
               {testimonial.personName ? (

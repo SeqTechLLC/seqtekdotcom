@@ -9,7 +9,6 @@ import { articleLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RichText } from '@/components/richText/RichText'
-import { Prose } from '@/components/ui/Prose'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import type { Post } from '@/payload-types'
 
@@ -92,14 +91,12 @@ export default async function InsightPage({ params }: Props) {
         ) : null}
 
         {post.content ? (
-          // max-w-none: the `prose` class hard-caps body text at 65ch (~595px),
-          // which is NARROWER than the hero image and title (the column width),
-          // leaving the body's right edge short of everything beside it. Fill the
-          // column so title, image, and body share one centered right edge.
+          // Body is a centered 65ch reading column. Keep the `prose` 65ch cap for
+          // readability and center it with `mx-auto` so the body shares a vertical
+          // axis with the (wider, also-centered) title and hero — concentric, not
+          // left-justified. See DESIGN_SYSTEM.md "Reading column".
           <div data-testid="insight-content">
-            <Prose className="max-w-none">
-              <RichText data={post.content} withProse={false} />
-            </Prose>
+            <RichText data={post.content} className="mx-auto" />
           </div>
         ) : null}
       </article>

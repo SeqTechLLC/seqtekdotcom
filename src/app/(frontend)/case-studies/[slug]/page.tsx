@@ -58,6 +58,12 @@ export default async function CaseStudyPage({ params }: Props) {
   const related = (caseStudy.relatedCaseStudies ?? []).filter(isRelObject).slice(0, 3)
   const industry = isRelObject(caseStudy.industry) ? caseStudy.industry : null
 
+  // Reading column: headings + body text sit in a centered 65ch measure
+  // (DESIGN_SYSTEM.md "Reading column"). The hero and metrics grid deliberately
+  // break out to the full container width — different widths, all centered on one
+  // axis. Never left-justify; never widen body past 65ch.
+  const readingCol = 'mx-auto max-w-prose'
+
   return (
     <>
       <JsonLd
@@ -72,7 +78,7 @@ export default async function CaseStudyPage({ params }: Props) {
       <TrackView slug={slug} title={caseStudy.title} />
 
       <article data-testid="case-study" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
-        <header className="mb-12">
+        <header className={`${readingCol} mb-12`}>
           {industry?.title ? (
             <p className="text-small font-semibold uppercase tracking-wide text-text-muted">
               {industry.title}
@@ -97,21 +103,21 @@ export default async function CaseStudyPage({ params }: Props) {
         ) : null}
 
         {caseStudy.problem ? (
-          <section data-testid="case-study-problem" className="mb-12">
+          <section data-testid="case-study-problem" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">The problem</h2>
             <RichText data={caseStudy.problem} />
           </section>
         ) : null}
 
         {caseStudy.solution ? (
-          <section data-testid="case-study-solution" className="mb-12">
+          <section data-testid="case-study-solution" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">The solution</h2>
             <RichText data={caseStudy.solution} />
           </section>
         ) : null}
 
         {caseStudy.impact ? (
-          <section data-testid="case-study-impact" className="mb-12">
+          <section data-testid="case-study-impact" className={`${readingCol} mb-12`}>
             <h2 className="mb-4 text-h3 font-semibold">The impact</h2>
             <RichText data={caseStudy.impact} />
           </section>
@@ -137,7 +143,7 @@ export default async function CaseStudyPage({ params }: Props) {
         ) : null}
 
         {testimonial?.quote ? (
-          <section data-testid="case-study-testimonial" className="mb-12">
+          <section data-testid="case-study-testimonial" className={`${readingCol} mb-12`}>
             <blockquote className="border-l-4 border-accent-strong pl-6 text-body-lg italic text-text-secondary">
               <p>&ldquo;{testimonial.quote}&rdquo;</p>
               {testimonial.personName ? (
@@ -152,7 +158,10 @@ export default async function CaseStudyPage({ params }: Props) {
         ) : null}
 
         {related.length ? (
-          <section data-testid="case-study-related" className="border-t border-border-subtle pt-8">
+          <section
+            data-testid="case-study-related"
+            className={`${readingCol} border-t border-border-subtle pt-8`}
+          >
             <h2 className="mb-4 text-h4 font-semibold">Related work</h2>
             <ul className="flex flex-col gap-2">
               {related.map((rel) => (
