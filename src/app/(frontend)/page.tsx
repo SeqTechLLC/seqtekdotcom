@@ -109,7 +109,7 @@ export default async function HomePage() {
               heading="Trusted by teams across the region"
               source="inline"
               logos={homepage.clientLogos}
-              treatment="grayscale-on-color-hover"
+              treatment="color"
             />
           </section>
         ) : null}
