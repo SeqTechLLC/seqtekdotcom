@@ -9,6 +9,7 @@ import { articleLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RichText } from '@/components/richText/RichText'
+import { Prose } from '@/components/ui/Prose'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import type { Post } from '@/payload-types'
 
@@ -57,6 +58,10 @@ export default async function InsightPage({ params }: Props) {
       <JsonLd data={articleLd(post)} />
       {isDraft && <PreviewBanner />}
 
+      {/* A text-only essay: one reading column (~768px) CENTERED in the page
+          with equal margins — not a narrow column offset to one side. The wider
+          header/footer chrome (container-lg) intentionally frames this narrower
+          measure, the conventional long-form article layout. */}
       <article data-testid="insight" className="mx-auto max-w-container-md px-4 py-16 md:px-6">
         <header className="mb-10">
           <h1 className="text-h1 font-bold" data-testid="insight-title">
@@ -87,8 +92,14 @@ export default async function InsightPage({ params }: Props) {
         ) : null}
 
         {post.content ? (
+          // max-w-none: the `prose` class hard-caps body text at 65ch (~595px),
+          // which is NARROWER than the hero image and title (the column width),
+          // leaving the body's right edge short of everything beside it. Fill the
+          // column so title, image, and body share one centered right edge.
           <div data-testid="insight-content">
-            <RichText data={post.content} />
+            <Prose className="max-w-none">
+              <RichText data={post.content} withProse={false} />
+            </Prose>
           </div>
         ) : null}
       </article>
