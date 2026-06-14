@@ -8,7 +8,16 @@ export interface LexNode {
   type: string
   tag?: string
   children?: Array<{ text?: string }>
-  fields?: { blockType?: string }
+  // Block nodes carry a Payload block payload here; figure blocks add
+  // id/image/caption alongside blockType. The index signature keeps it
+  // open for other block types without a per-block interface.
+  fields?: {
+    blockType?: string
+    id?: string
+    image?: number | string
+    caption?: string
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 

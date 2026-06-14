@@ -50,8 +50,11 @@ function parseArgs(argv: readonly string[]): { slug?: string; count: number } {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a === '--slug' && argv[i + 1]) out.slug = argv[++i]
-    else if (a === '--count' && argv[i + 1]) out.count = Number(argv[++i])
-    else throw new Error(`Unknown argument: ${a}`)
+    else if (a === '--count' && argv[i + 1]) {
+      const n = Number(argv[++i])
+      if (!Number.isInteger(n) || n < 1) throw new Error(`--count must be a positive integer`)
+      out.count = n
+    } else throw new Error(`Unknown argument: ${a}`)
   }
   return out
 }
@@ -88,7 +91,15 @@ async function waitForImages(key: string, genId: string): Promise<GenImage[]> {
   for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
     await new Promise((r) => setTimeout(r, POLL_MS))
     const res = await fetch(`${API}/generations/${genId}`, { headers: await headers(key) })
-    if (!res.ok) continue // transient; try again
+    if (!res.ok) {
+      // 4xx (bad/expired key, unknown id) won't fix itself — fail fast with the
+      // status instead of masquerading as a 5-minute timeout. 429 + 5xx are
+      // transient, so keep polling those.
+      if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+        throw new Error(`poll ${res.status} for ${genId}: ${(await res.text()).slice(0, 200)}`)
+      }
+      continue
+    }
     const gen = (await res.json())?.generations_by_pk
     const status = gen?.status
     if (status === 'COMPLETE') {
@@ -126,7 +137,7 @@ async function runConcept(key: string, c: Concept, count: number): Promise<void>
   }
   writeFileSync(
     path.join(dir, 'manifest.json'),
-    `${JSON.stringify({ slug: c.slug, prompt, generatedAt: genId, candidates: manifest }, null, 2)}\n`,
+    `${JSON.stringify({ slug: c.slug, prompt, generationId: genId, candidates: manifest }, null, 2)}\n`,
   )
 }
 

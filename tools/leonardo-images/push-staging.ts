@@ -10,6 +10,11 @@
  * Idempotent: media is reused when insight-<slug>.jpg already exists, and a post
  * that already carries a `figure` block is left untouched. Run generate.ts first
  * so out/<slug>/ holds the candidates.
+ *
+ * Note: PayloadRestClient.uploadMedia only forwards `alt`, so staging media docs
+ * carry no `caption` (insert.ts sets one locally). This is cosmetic — the rendered
+ * caption comes from the `figure` block, not the media doc — so the divergence is
+ * left as-is rather than widening the shared REST client.
  */
 import { copyFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
