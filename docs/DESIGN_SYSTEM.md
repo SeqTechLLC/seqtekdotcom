@@ -447,6 +447,17 @@ Horizontal padding: `space-4` (16px) at mobile, `space-6` (24px) at `md`, `space
 
 Per §4, three section padding tokens (`section-tight`, `section-default`, `section-spacious`). `<Section>` primitive in BLOCK_LIBRARY.md §3 accepts a `padding` prop that maps to these.
 
+### 11.4 Reading column (body-copy alignment)
+
+**Body copy is a left-justified block, capped at the `prose` measure (`max-w-prose`, 65ch), and CENTERED as a block within its container.** This is a hard rule — every long-form template (insights, case studies, the Content block / about) must follow it.
+
+- **Why 65ch:** the `@tailwindcss/typography` `prose` class caps line length at 65ch — the readable measure (~50–75 chars/line). Keep it. Do **not** widen body copy past it.
+- **Center the block, not the text.** Use `mx-auto` (auto side margins) so the column sits on the page's centre axis. Never use `text-center` on body copy or headings — centered _text_ (ragged both edges) looks broken; we want left-justified text in a centred block.
+- **Different widths are fine if everything is centred.** A full-width hero, a wide metrics grid, and a 65ch body column can coexist — as long as they all share one vertical centre axis (concentric). What looks broken is **left-justifying** mismatched widths (wide title, narrower hero, narrower body all hugging the left edge with ragged right edges).
+- **A section's heading travels with its body.** Put the heading inside the same centred reading column as its paragraphs (e.g. case-study `readingCol = 'mx-auto max-w-prose'`), so the heading and body share a left edge. Don't leave a full-width heading above a centred body.
+
+**Banned:** `max-w-none` on a `prose`/`Prose` block to "fill the column," and any "left-aligned to the shared edge" wrapper. Both are workarounds for a missing `mx-auto` and were the root of repeated alignment churn. To center a body column, pass `className="mx-auto"` to `<RichText>` (forwarded to `<Prose>`) or wrap the section in `mx-auto max-w-prose`.
+
 ---
 
 ## 12. Accessibility specs

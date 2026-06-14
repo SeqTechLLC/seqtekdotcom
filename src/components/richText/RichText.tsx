@@ -13,6 +13,9 @@ interface RichTextProps {
   inlineRegistry?: Record<string, ComponentType<any>>
   /** Wrap output in `<Prose>` (default: true). */
   withProse?: boolean
+  /** Extra classes for the `<Prose>` wrapper, e.g. `mx-auto` to center the
+   *  reading column (see DESIGN_SYSTEM.md — body copy is a centered 65ch column). */
+  className?: string
 }
 
 type BlockNodeLike = { fields: { blockType: string; [key: string]: unknown } }
@@ -65,6 +68,7 @@ export function RichText({
   data,
   inlineRegistry = defaultInlineRegistry,
   withProse = true,
+  className,
 }: RichTextProps): ReactElement | null {
   if (!data) return null
 
@@ -87,5 +91,5 @@ export function RichText({
     />
   )
 
-  return withProse ? <Prose>{body}</Prose> : body
+  return withProse ? <Prose className={className}>{body}</Prose> : body
 }
