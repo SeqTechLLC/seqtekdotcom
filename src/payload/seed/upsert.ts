@@ -20,6 +20,14 @@ export interface UpsertOptions<TData> {
   data: TData
   /** When true, no writes happen; the planned operation is returned for stdout. */
   dryRun?: boolean
+  /**
+   * Whether the write lands as a draft. Defaults to `true` (the audit-seed
+   * behavior: tolerate null required relationships, log gaps, let an editor
+   * publish). The field→layout composers (spec 010) pass `false` for records
+   * whose source was already published, so the route switch to `RenderBlocks`
+   * is non-breaking (the published version carries the composed `layout`).
+   */
+  draft?: boolean
   /** Optional logger so the helper can surface parse/lookup gaps. */
   logger?: MigrationLogger
 }
@@ -42,6 +50,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
   slug,
   data,
   dryRun = false,
+  draft = true,
   logger,
 }: UpsertOptions<TData>): Promise<UpsertResult<TData>> {
   if (!slug) {
@@ -91,7 +100,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
       id: found.id,
       data: merged as never,
       overrideAccess: true,
-      draft: true,
+      draft,
     })
     return { collection, slug, operation: 'update', id: updated.id, data: merged }
   }
@@ -100,7 +109,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
     collection,
     data: merged as never,
     overrideAccess: true,
-    draft: true,
+    draft,
   })
   return { collection, slug, operation: 'create', id: created.id, data: merged }
 }

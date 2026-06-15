@@ -1,12 +1,20 @@
 import type { LivePreviewConfig } from 'payload'
 
-export type PreviewCollection = 'pages' | 'posts' | 'caseStudies' | 'services'
+export type PreviewCollection =
+  | 'pages'
+  | 'posts'
+  | 'caseStudies'
+  | 'services'
+  | 'workshops'
+  | 'teamMembers'
 
 export const PREVIEW_COLLECTIONS: readonly PreviewCollection[] = [
   'pages',
   'posts',
   'caseStudies',
   'services',
+  'workshops',
+  'teamMembers',
 ] as const
 
 type DocLike = { slug?: string; pillar?: { slug?: string } | string | null }
@@ -20,6 +28,8 @@ const PUBLIC_PATH_BUILDERS: Record<PreviewCollection, (doc: DocLike) => string |
     const pillarSlug = typeof doc.pillar === 'object' && doc.pillar ? doc.pillar.slug : undefined
     return pillarSlug ? `/services/${pillarSlug}/${doc.slug}` : `/services/${doc.slug}`
   },
+  workshops: (doc) => (doc.slug ? `/workshops/${doc.slug}` : null),
+  teamMembers: (doc) => (doc.slug ? `/team/${doc.slug}` : null),
 }
 
 const SITE_URL = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3100'

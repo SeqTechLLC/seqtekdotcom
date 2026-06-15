@@ -22,17 +22,22 @@ afterEach(() => {
 })
 
 describe('isPreviewCollection', () => {
-  it.each(['pages', 'posts', 'caseStudies', 'services'] as const)('accepts %s', (slug) => {
-    expect(isPreviewCollection(slug)).toBe(true)
-  })
+  // spec 010 (R6): workshops + teamMembers gain live preview alongside the
+  // original four (type-generic cross-cutting wiring).
+  it.each(['pages', 'posts', 'caseStudies', 'services', 'workshops', 'teamMembers'] as const)(
+    'accepts %s',
+    (slug) => {
+      expect(isPreviewCollection(slug)).toBe(true)
+    },
+  )
 
-  it.each(['users', 'media', 'workshops', 'unknown', ''])('rejects %s', (slug) => {
+  it.each(['users', 'media', 'unknown', ''])('rejects %s', (slug) => {
     expect(isPreviewCollection(slug)).toBe(false)
   })
 
-  it('PREVIEW_COLLECTIONS is exactly the four supported collections', () => {
+  it('PREVIEW_COLLECTIONS is exactly the six supported collections', () => {
     expect(new Set(PREVIEW_COLLECTIONS)).toEqual(
-      new Set(['pages', 'posts', 'caseStudies', 'services']),
+      new Set(['pages', 'posts', 'caseStudies', 'services', 'workshops', 'teamMembers']),
     )
   })
 })
@@ -67,6 +72,14 @@ describe('publicPathFor', () => {
     expect(publicPathFor('services', { slug: 'partial-draft', pillar: 'pillar-id' })).toBe(
       '/services/partial-draft',
     )
+  })
+
+  it('workshops → /workshops/<slug> (spec 010)', () => {
+    expect(publicPathFor('workshops', { slug: 'touchstone' })).toBe('/workshops/touchstone')
+  })
+
+  it('teamMembers → /team/<slug> (spec 010)', () => {
+    expect(publicPathFor('teamMembers', { slug: 'dana-dudley' })).toBe('/team/dana-dudley')
   })
 
   it('returns null when slug is missing for any collection', () => {

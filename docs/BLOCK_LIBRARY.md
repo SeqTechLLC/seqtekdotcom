@@ -165,6 +165,28 @@ Inline blocks available within the `body` richText:
 | `media`         | upload (media) | yes      |                  |
 | `cta`           | group          | no       |                  |
 
+#### `image` — single captioned figure (spec 010, FR-005)
+
+| Field       | Type           | Required | Notes                                                             |
+| ----------- | -------------- | -------- | ----------------------------------------------------------------- |
+| `image`     | upload (media) | yes      | alt sourced from Media collection                                 |
+| `caption`   | text           | no       | rendered as `<figcaption>`                                        |
+| `width`     | select         | no       | `narrow` / `standard` / `wide` / `full`; default `standard`       |
+| `alignment` | select         | no       | `center` / `left` / `right`; default `center` (reading-axis safe) |
+
+The one-off counterpart to `gallery`. Width variants mirror the `content` reading-column measures so a figure shares the body's vertical axis (DESIGN_SYSTEM §11.4 — owned by the block).
+
+#### `gallery` — 1..N image gallery (spec 010, FR-005)
+
+| Field     | Type   | Required       | Notes                                                       |
+| --------- | ------ | -------------- | ----------------------------------------------------------- |
+| `heading` | text   | no             | Optional section heading                                    |
+| `items`   | array  | yes (min 1)    | Each: `image` (upload, required), `caption` (text)          |
+| `layout`  | select | no             | `grid` / `carousel`; default `grid`                         |
+| `columns` | select | no (grid only) | `2` / `3` / `4`; default `3`; hidden when `layout=carousel` |
+
+The "drop a one-to-many picture section onto any page layout" block. Workshop `photos[]` migrates here; one-off figures use `image`. Unpopulated rows (depth-0 / missing upload) are dropped at render, never thrown.
+
 #### `process-steps` — numbered methodology
 
 | Field     | Type  | Required           | Notes                                                          |
@@ -457,6 +479,36 @@ Spec 003 Phase 2 (T050–T056) shipped 32 layout blocks. The mapping below recon
 **Catalog blocks landed in the same PR** (built in the second pass after initial deferral): `deliverables` (§5.2), `metric-display` (§5.3), `service-pillar-cards` (§5.5), `team-grid` (§5.5), `download-card` (§5.6), `hubspot-form` (§5.6), `hubspot-meetings` (§5.6), `brand-teaser` (§5.6), `nav-cards` (§5.6), `key-takeaways` (§5.6), `tech-stack` (§5.6).
 
 **Final Phase 2 layout block count: 43** — every block enumerated in §5.1–§5.6 is implemented, plus the 7 additions beyond the catalog from the table above. HubSpot-driven blocks (`hubspot-form`, `hubspot-meetings`, `download-card`, `newsletter-cta`) ship with static placeholder affordances in the Phase 2 renderer; the live HubSpot script integration lands in Phase 3 per `docs/INTEGRATIONS.md` §1–§3.
+
+**Spec 010 additions (ADR 0009, FR-005): +2 → 45 blocks.** `image` (§5.2) and `gallery` (§5.2) close the image gap surfaced by the block-coverage audit (§5.8). These are the only new blocks the block-composed-pages migration required.
+
+### 5.8 Block-coverage audit (spec 010 / SC-005)
+
+ADR 0009 retires every bespoke per-type render template (workshops, case studies, services, team, homepage) in favor of `RenderBlocks(layout)`. SC-005 requires that **every capability of each retired template maps to ≥1 existing block — zero capabilities lost.** The audit below is the proof; the only gap was images, closed by `image` + `gallery`.
+
+| Retired template capability                                     | Block(s) that cover it                                                                                           |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Workshop description / format / audience (richText)             | `content`                                                                                                        |
+| Workshop deliverables (array)                                   | `deliverables`                                                                                                   |
+| Workshop photos (1..N images)                                   | **`gallery`** (new)                                                                                              |
+| Workshop recap video                                            | `video-embed`                                                                                                    |
+| Workshop testimonial                                            | `testimonial-block`                                                                                              |
+| Workshop download + inquiry form                                | `download-card`, `hubspot-form`                                                                                  |
+| Case study hero + lead metric                                   | `case-study-hero`                                                                                                |
+| Case study problem / solution / impact (richText)               | `content`                                                                                                        |
+| Case study metrics                                              | `stats-bar`, `metric-display`                                                                                    |
+| Case study technologies                                         | `tech-stack`                                                                                                     |
+| Case study key takeaways                                        | `key-takeaways`                                                                                                  |
+| Service description / approach (richText)                       | `content`                                                                                                        |
+| Service deliverables                                            | `deliverables`                                                                                                   |
+| Service FAQ (preserves FAQPage JSON-LD)                         | `faq`                                                                                                            |
+| Team member bio / narrative                                     | `content`                                                                                                        |
+| Team member expertise / certs / education / facts               | `deliverables`, `key-takeaways`, `content`                                                                       |
+| Team member quote                                               | `testimonial-block`                                                                                              |
+| Homepage hero / stats / featured / brand / logos / testimonials | `homepage-hero`, `stats-bar`, `featured-case-study`, `brand-teaser`, `client-logo-grid`, `featured-testimonials` |
+| One-off figure (any page)                                       | **`image`** (new)                                                                                                |
+
+Result: 0 lost capabilities. The reading-column rule (DESIGN_SYSTEM §11.4) is enforced inside the block components, so it travels with the block onto any page (FR-009).
 
 ---
 
