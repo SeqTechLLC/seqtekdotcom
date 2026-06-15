@@ -510,6 +510,23 @@ ADR 0009 retires every bespoke per-type render template (workshops, case studies
 
 Result: 0 lost capabilities. The reading-column rule (DESIGN_SYSTEM §11.4) is enforced inside the block components, so it travels with the block onto any page (FR-009).
 
+### 5.9 Block-curation loop — the one code path (spec 010 / ADR 0009 / FR-011)
+
+Under ADR 0009 every non-blog page is `RenderBlocks(layout)`. Rearranging, enriching, or building a page is a **content edit with no deploy**. The single change that legitimately requires code is **adding or fixing a block type** — and once a block lands it is usable on every page type with no per-type code. This is that loop. `image` + `gallery` (the only gap the §5.8 audit found) are its worked example.
+
+1. **Surface the gap.** A page cannot be expressed with the current library — discovered while composing (the [`compose-page`](../.claude/skills/compose-page/SKILL.md) authoring skill, and the forthcoming `convert-to-blocks` conversion skill (FR-014), emit a single **named block gap** instead of a layout) or by hand. The skills never hand-code a page; they name exactly one missing block and stop.
+2. **Confirm it is really a gap.** Re-run the §5.8 audit method against the need: does an existing block (or an existing block plus one new field/variant) already cover it? Prefer **extending an existing block** over a new slug when the capability is a variant of something we already render (e.g. a new `content.width` value, a `testimonial-block` layout option). Only a genuinely new capability earns a new block. If more than one capability is missing, close the highest-leverage one first, then re-run the skill.
+3. **Add or fix the block (the only code).** This is the whole code path:
+   - Block config: `src/payload/blocks/layout/<Name>.ts` (kebab-case `slug`), then register it in `src/payload/blocks/layout/index.ts` **and** add it to the exported `layoutBlocks` array.
+   - Render component: `src/components/sections/<Name>.tsx`, then register the slug in `src/components/sections/registry.ts`. The reading-column rule (DESIGN_SYSTEM §11.4) lives **inside the component** so it travels with the block onto every page (FR-009).
+   - Run `npm run generate:types` and `npm run generate:importmap`.
+   - Add the Payload migration for the new block tables (`<collection>_blocks_<slug>*` live **and** `_<collection>_v_blocks_<slug>*` version tables) — never `drizzle-kit push` (Constitution V). Because `layout` is the same `[...layoutBlocks]` array on every collection, the generated migration adds the block's tables for **every** collection at once.
+   - Add a showcase fixture (`src/payload/seed/showcase/fixtures.ts`) and visually verify per CLAUDE.md.
+4. **Document it.** Add the block to the §5 catalog (category + field table) and bump the count in §5.7. The registry↔library coupling is guarded by `tests/int/render/registryCoverage.int.spec.ts` (every layout export has a registry entry and vice-versa — no orphans).
+5. **Available everywhere, no per-type code.** Every collection's `layout` field spreads the **same** `layoutBlocks` array and every page renders through the **one** `RenderBlocks` dispatcher, so the new block is immediately usable on pages, workshops, case studies, services, and team with zero per-type code. This reuse property is pinned by `tests/int/blocks/blockReuseAcrossTypes.int.spec.tsx` (the `gallery` worked example renders identically on page + case study + workshop from one definition).
+
+The loop is deliberately the **only** exception to "no code for layout" (SC-006): if a change is not "add or fix a block type," it should not require a deploy.
+
 ---
 
 ## 6. Page composition matrix
