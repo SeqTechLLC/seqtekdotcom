@@ -93,43 +93,43 @@ Single Next.js + Payload app: `src/` and `tests/` at repo root; collections in `
 
 ### Case studies
 
-- [ ] T028 [P] [US2] caseStudies fidelity + idempotency case in `tests/int/seed/composeFidelity.int.spec.ts`
-- [ ] T029 [P] [US2] E2E: case-study detail renders via RenderBlocks + grid/listing + breadcrumb parity in `tests/e2e/blocks/case-studies-compose.e2e.spec.ts`
-- [ ] T030 [US2] Add `layout` (+ skeleton) to `src/collections/CaseStudies.ts`; hide `problem`/`solution`/`impact`/`metrics`/`technologies`
-- [ ] T031 [P] [US2] Default case-study skeleton in `src/payload/seed/skeletons/caseStudy.ts`
-- [ ] T032 [US2] generate:types + migration `add_layout_case_studies` (live + `_v`) under `src/migrations/` (depends T030)
-- [ ] T033 [US2] Composer `src/payload/seed/compose/caseStudyToLayout.ts` (case-study-hero/content/stats-bar+metric-display/tech-stack/key-takeaways/testimonial-block)
-- [ ] T034 [US2] Switch `src/app/(frontend)/case-studies/[slug]/page.tsx` body to `<RenderBlocks/>`; keep metadata/breadcrumb/draft
-- [ ] T035 [US2] Run composer (dry-run → real); idempotency + fidelity green
-- [ ] T036 [US2] Visual-verify `/case-studies` + `/case-studies/[slug]` at both viewports
+- [x] T028 [P] [US2] caseStudies fidelity + idempotency case in `tests/int/seed/composeFidelity.int.spec.ts`
+- [x] T029 [P] [US2] E2E: case-study detail renders via RenderBlocks + grid/listing + breadcrumb parity in `tests/e2e/blocks/case-studies-compose.e2e.spec.ts`
+- [x] T030 [US2] Add `layout` (+ skeleton) to `src/collections/CaseStudies.ts`; hide `problem`/`solution`/`impact`/`metrics`/`technologies`
+- [x] T031 [P] [US2] Default case-study skeleton in `src/payload/seed/skeletons/caseStudy.ts`
+- [x] T032 [US2] generate:types + migration `add_layout_case_studies` (live + `_v`) under `src/migrations/` (depends T030)
+- [x] T033 [US2] Composer `src/payload/seed/compose/caseStudyToLayout.ts` (case-study-hero/content/stats-bar+metric-display/tech-stack/key-takeaways/testimonial-block)
+- [x] T034 [US2] Switch `src/app/(frontend)/case-studies/[slug]/page.tsx` body to `<RenderBlocks/>`; keep metadata/breadcrumb/draft
+- [x] T035 [US2] Run composer (dry-run → real); idempotency + fidelity green
+- [x] T036 [US2] Visual-verify `/case-studies` + `/case-studies/[slug]` at both viewports
 
 ### Services
 
-- [ ] T037 [P] [US2] services fidelity + idempotency case in `tests/int/seed/composeFidelity.int.spec.ts`
-- [ ] T038 [P] [US2] E2E: nested `/services/[pillar]/[slug]` renders via RenderBlocks + breadcrumb + pillar-move revalidation parity in `tests/e2e/blocks/services-compose.e2e.spec.ts`
-- [ ] T039 [US2] Add `layout` (+ skeleton) to `src/collections/Services.ts`; hide `description`/`approach`/`deliverables`/`faq`
-- [ ] T040 [P] [US2] Default service skeleton in `src/payload/seed/skeletons/service.ts`
-- [ ] T041 [US2] generate:types + migration `add_layout_services` (live + `_v`) under `src/migrations/` (depends T039)
-- [ ] T042 [US2] Composer `src/payload/seed/compose/serviceToLayout.ts` (content/deliverables/faq — `faq` block preserves FAQPage JSON-LD)
-- [ ] T043 [US2] Switch `src/app/(frontend)/services/[pillar]/[slug]/page.tsx` body to `<RenderBlocks/>`; preserve nested URL + breadcrumb; leave `revalidateOnChange` services pillar-move logic untouched
-- [ ] T044 [US2] Run composer; idempotency + fidelity green
-- [ ] T045 [US2] Visual-verify `/services`, `/services/[pillar]`, `/services/[pillar]/[slug]` at both viewports
+- [x] T037 [P] [US2] services fidelity + idempotency case in `tests/int/seed/composeFidelity.int.spec.ts`
+- [x] T038 [P] [US2] E2E: nested `/services/[pillar]/[slug]` renders via RenderBlocks + breadcrumb + pillar-move revalidation parity in `tests/e2e/blocks/services-compose.e2e.spec.ts`
+- [x] T039 [US2] Add `layout` (+ skeleton) to `src/collections/Services.ts`; hide `description`/`approach`/`deliverables`/`faq`
+- [x] T040 [P] [US2] Default service skeleton in `src/payload/seed/skeletons/service.ts`
+- [x] T041 [US2] generate:types + migration `add_layout_services` (live + `_v`) under `src/migrations/` (depends T039)
+- [x] T042 [US2] Composer `src/payload/seed/compose/serviceToLayout.ts` (content/deliverables/faq — `faq` block preserves FAQPage JSON-LD)
+- [x] T043 [US2] Switch `src/app/(frontend)/services/[pillar]/[slug]/page.tsx` body to `<RenderBlocks/>`; preserve nested URL + breadcrumb; leave `revalidateOnChange` services pillar-move logic untouched
+- [x] T044 [US2] Run composer; idempotency + fidelity green
+- [x] T045 [US2] Visual-verify `/services`, `/services/[pillar]`, `/services/[pillar]/[slug]` at both viewports
 
 ### Team (page + block; owner clarification 2026-06-14)
 
-- [ ] T046 [P] [US2] teamMembers fidelity + idempotency case in `tests/int/seed/composeFidelity.int.spec.ts`
-- [ ] T047 [P] [US2] E2E: `/team/[slug]` renders via RenderBlocks + Person JSON-LD + `/team` listing parity in `tests/e2e/blocks/team-compose.e2e.spec.ts`
-- [ ] T048 [US2] Update access-matrix test: `teamMembers` moves to the `editorial-draftable` tier in `tests/int/collections/access.int.spec.ts`
-- [ ] T049 [US2] In `src/collections/TeamMembers.ts`: add `layout` (+ skeleton), `versions:{drafts:true,maxPerDoc:50}`, `livePreviewFor('teamMembers')`, `enforceDraftWhenScheduled`, and an `seo` group; hide `bio`/`expertise`/`certifications`/`education`/`personalFacts`/`quote`
-- [ ] T050 [P] [US2] Default team-member skeleton in `src/payload/seed/skeletons/teamMember.ts`
-- [ ] T051 [US2] generate:types + migration `add_layout_team_members` (adds version tables since teamMembers was non-versioned) under `src/migrations/` (depends T049)
-- [ ] T052 [US2] Composer `src/payload/seed/compose/teamMemberToLayout.ts` (content/deliverables/key-takeaways/testimonial-block)
-- [ ] T053 [US2] Add `personLd(member)` to `src/lib/structured-data.ts` and `getTeamMemberBySlug` cached reader to `src/lib/payload.ts` (detailCacheTags parity)
-- [ ] T054 [US2] Create NEW route `src/app/(frontend)/team/[slug]/page.tsx` — RenderBlocks body + Person + breadcrumb JSON-LD + cached-read-then-draftMode ordering + PreviewBanner
-- [ ] T055 [US2] Update `src/app/(frontend)/team/page.tsx` listing cards to link to `/team/[slug]`; confirm the existing `team-grid` block still composes team onto any page with no new code (page + block, per clarification)
-- [ ] T056 [US2] Extend cache-tag parity for `teamMembers` (incl. `/team/[slug]` path) and confirm `sitemap.ts` enumerates `/team/[slug]` via `publishedSlugsFor('teamMembers')`
-- [ ] T057 [US2] Run composer; idempotency + fidelity green
-- [ ] T058 [US2] Visual-verify `/team` + `/team/[slug]` at both viewports
+- [x] T046 [P] [US2] teamMembers fidelity + idempotency case in `tests/int/seed/composeFidelity.int.spec.ts`
+- [x] T047 [P] [US2] E2E: `/team/[slug]` renders via RenderBlocks + Person JSON-LD + `/team` listing parity in `tests/e2e/blocks/team-compose.e2e.spec.ts`
+- [x] T048 [US2] Update access-matrix test: `teamMembers` moves to the `editorial-draftable` tier in `tests/int/collections/access.int.spec.ts`
+- [x] T049 [US2] In `src/collections/TeamMembers.ts`: add `layout` (+ skeleton), `versions:{drafts:true,maxPerDoc:50}`, `livePreviewFor('teamMembers')`, `enforceDraftWhenScheduled`, and an `seo` group; hide `bio`/`expertise`/`certifications`/`education`/`personalFacts`/`quote`
+- [x] T050 [P] [US2] Default team-member skeleton in `src/payload/seed/skeletons/teamMember.ts`
+- [x] T051 [US2] generate:types + migration `add_layout_team_members` (adds version tables since teamMembers was non-versioned) under `src/migrations/` (depends T049)
+- [x] T052 [US2] Composer `src/payload/seed/compose/teamMemberToLayout.ts` (content/deliverables/key-takeaways/testimonial-block)
+- [x] T053 [US2] Add `personLd(member)` to `src/lib/structured-data.ts` and `getTeamMemberBySlug` cached reader to `src/lib/payload.ts` (detailCacheTags parity)
+- [x] T054 [US2] Create NEW route `src/app/(frontend)/team/[slug]/page.tsx` — RenderBlocks body + Person + breadcrumb JSON-LD + cached-read-then-draftMode ordering + PreviewBanner
+- [x] T055 [US2] Update `src/app/(frontend)/team/page.tsx` listing cards to link to `/team/[slug]`; confirm the existing `team-grid` block still composes team onto any page with no new code (page + block, per clarification)
+- [x] T056 [US2] Extend cache-tag parity for `teamMembers` (incl. `/team/[slug]` path) and confirm `sitemap.ts` enumerates `/team/[slug]` via `publishedSlugsFor('teamMembers')`
+- [x] T057 [US2] Run composer; idempotency + fidelity green
+- [x] T058 [US2] Visual-verify `/team` + `/team/[slug]` at both viewports
 
 **Checkpoint**: Case studies, services, and team all block-composed; listings/JSON-LD/nested URLs preserved; team usable both as a page and as a block.
 

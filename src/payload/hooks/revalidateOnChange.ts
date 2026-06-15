@@ -122,6 +122,10 @@ export const buildRevalidatePlan = (
       case 'workshops':
         detailPaths.push(`/workshops/${s}`, '/workshops')
         break
+      case 'teamMembers':
+        // spec 010 US2 (Phase E): teamMembers gains a `/team/[slug]` detail route.
+        detailPaths.push(`/team/${s}`, '/team')
+        break
       case 'industries':
         detailPaths.push(`/industries/${s}`)
         break

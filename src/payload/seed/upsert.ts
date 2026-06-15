@@ -66,6 +66,13 @@ export async function upsertBySlug<TData extends { slug?: string }>({
 
   const merged = { ...data, slug } as TData
 
+  // Existence check uses the SAME `draft` flag as the write. With draft:true
+  // (audit seed) this matches draft records via the version table; with
+  // draft:false (the publish-preserving composers) it matches the published
+  // main row — which is the only place a row exists for a collection that just
+  // had drafts enabled and has no version snapshots yet (teamMembers, spec 010
+  // Phase E). A fixed draft:true there would miss the published row and try to
+  // re-create it, hitting the unique-slug constraint.
   if (dryRun) {
     const existing = await payload.find({
       collection,
@@ -73,7 +80,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
       limit: 1,
       depth: 0,
       overrideAccess: true,
-      draft: true,
+      draft,
     })
     return {
       collection,
@@ -90,7 +97,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
     limit: 1,
     depth: 0,
     overrideAccess: true,
-    draft: true,
+    draft,
   })
 
   if (existing.totalDocs > 0) {

@@ -361,13 +361,16 @@ const COLLECTION_SPECS: CollectionSpec[] = [
     updateData: { city: 'AM City updated' },
   },
   {
+    // spec 010 US2 (Phase E): teamMembers gained drafts, moving it to the
+    // editorial-draftable tier (read-published public, read-draft hidden).
     slug: 'teamMembers',
-    tier: 'public-read-editorial-mutate',
+    tier: 'editorial-draftable',
     visibleData: (s) => ({
       name: `AM Member ${s}`,
       slug: `access-matrix-member-${s}`,
       photo: sharedMediaId,
     }),
+    hiddenData: (s) => ({ name: `AM Member ${s}`, slug: `access-matrix-member-${s}` }),
     updateData: { title: 'Updated job title' },
   },
   {

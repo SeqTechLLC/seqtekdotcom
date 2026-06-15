@@ -175,12 +175,16 @@ export async function runComposer(options: RunComposerOptions): Promise<ComposeR
     payload = await getPayload({ config: await config })
   }
 
-  // Latest version of every record (draft:true) at depth 0 so media/relations
-  // come back as ids ready to drop straight into block fields.
+  // Read published main rows (draft:false) at depth 0 so media/relations come
+  // back as ids ready to drop straight into block fields. draft:false (not
+  // draft:true) migrates the LIVE published content and — unlike a version-table
+  // read — works for a collection that just had drafts enabled and has no
+  // version snapshots yet (teamMembers, Phase E). Unpublished drafts have no
+  // live body to migrate; the composer is re-runnable when they publish.
   const { docs } = await payload.find({
     collection: options.collection,
     overrideAccess: true,
-    draft: true,
+    draft: false,
     depth: 0,
     limit: 1000,
     pagination: false,

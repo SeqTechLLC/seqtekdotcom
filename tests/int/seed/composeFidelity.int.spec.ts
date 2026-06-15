@@ -4,6 +4,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import config from '../../../src/payload.config'
 import { composeWorkshopLayout } from '../../../src/payload/seed/compose/workshopToLayout'
+import { composeCaseStudyLayout } from '../../../src/payload/seed/compose/caseStudyToLayout'
+import { composeServiceLayout } from '../../../src/payload/seed/compose/serviceToLayout'
+import { composeTeamMemberLayout } from '../../../src/payload/seed/compose/teamMemberToLayout'
 import { upsertBySlug } from '../../../src/payload/seed/upsert'
 import { buildLexical } from '../../../src/payload/seed/showcase/lexical'
 
@@ -229,6 +232,360 @@ describe('workshops field→layout composer (US1)', () => {
     expect(gallery?.items?.[0]?.image).toBe(mediaId)
     const tb = layout.find((b) => b.blockType === 'testimonial-block') as { testimonial?: unknown }
     expect(tb?.testimonial).toBe(testimonialId)
+  })
+
+  it('is idempotent — a second run yields an identical layout (SC-004)', async () => {
+    const first = await runComposeOnce()
+    const second = await runComposeOnce()
+    expect(stripIds(second)).toEqual(stripIds(first))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// US2 — Case studies (Phase C). SC-003 fidelity + SC-004 idempotency.
+// ---------------------------------------------------------------------------
+describe('case studies field→layout composer (US2)', () => {
+  const SLUG = 'compose-fidelity-case'
+  let mediaId: string | number
+  let industryId: string | number
+  let testimonialId: string | number
+
+  beforeAll(async () => {
+    const media = await payload.create({
+      collection: 'media',
+      data: { alt: 'Case hero' },
+      file: {
+        data: TINY_PNG,
+        mimetype: 'image/png',
+        name: `${SLUG}-hero.png`,
+        size: TINY_PNG.length,
+      },
+      overrideAccess: true,
+    })
+    mediaId = media.id
+    const industry = await payload.create({
+      collection: 'industries',
+      data: { title: 'Energy', slug: `${SLUG}-industry` },
+      overrideAccess: true,
+    })
+    industryId = industry.id
+    const testimonial = await payload.create({
+      collection: 'testimonials',
+      data: { quote: 'They cut our deploy time in half.', personName: 'C. Lead' },
+      overrideAccess: true,
+      draft: true,
+    })
+    testimonialId = testimonial.id
+
+    await payload.create({
+      collection: 'caseStudies',
+      data: {
+        title: 'Fidelity Pilot Case',
+        slug: SLUG,
+        industry: industryId,
+        heroImage: mediaId,
+        _status: 'published',
+        problem: buildLexical([{ kind: 'p', text: 'PROB-legacy-system-slow' }]) as never,
+        solution: buildLexical([{ kind: 'p', text: 'SOL-strangler-fig-migration' }]) as never,
+        impact: buildLexical([{ kind: 'p', text: 'IMP-daily-deploys' }]) as never,
+        metrics: [
+          { number: '50%', label: 'METRIC-faster-deploys', context: 'CTX-over-90-days' },
+          { number: '3x', label: 'METRIC-release-frequency' },
+        ],
+        technologies: [{ label: 'TECH-typescript' }, { label: 'TECH-postgres' }],
+        testimonial: testimonialId,
+      },
+      overrideAccess: true,
+    })
+  })
+
+  afterAll(async () => {
+    await payload.delete({
+      collection: 'caseStudies',
+      where: { slug: { equals: SLUG } },
+      overrideAccess: true,
+    })
+    await payload.delete({
+      collection: 'industries',
+      where: { id: { equals: industryId } },
+      overrideAccess: true,
+    })
+    await payload.delete({
+      collection: 'testimonials',
+      where: { id: { equals: testimonialId } },
+      overrideAccess: true,
+    })
+    await payload.delete({
+      collection: 'media',
+      where: { id: { equals: mediaId } },
+      overrideAccess: true,
+    })
+  })
+
+  const runComposeOnce = async (): Promise<BlockLike[]> => {
+    const { docs } = await payload.find({
+      collection: 'caseStudies',
+      where: { slug: { equals: SLUG } },
+      overrideAccess: true,
+      draft: true,
+      depth: 0,
+      limit: 1,
+    })
+    const layout = composeCaseStudyLayout(docs[0] as unknown as Record<string, unknown>)
+    await upsertBySlug({
+      payload,
+      collection: 'caseStudies',
+      slug: SLUG,
+      data: { slug: SLUG, layout: layout as unknown[] },
+      draft: false,
+    })
+    return readLayout('caseStudies', SLUG)
+  }
+
+  it('composes the documented block order with no content lost (SC-003)', async () => {
+    const layout = await runComposeOnce()
+    expect(blockTypesOf(layout)).toEqual([
+      'content',
+      'content',
+      'content',
+      'metric-display',
+      'metric-display',
+      'tech-stack',
+      'testimonial-block',
+    ])
+    const json = JSON.stringify(layout)
+    for (const marker of [
+      'PROB-legacy-system-slow',
+      'SOL-strangler-fig-migration',
+      'IMP-daily-deploys',
+      'METRIC-faster-deploys',
+      'CTX-over-90-days',
+      'METRIC-release-frequency',
+      'TECH-typescript',
+      'TECH-postgres',
+    ]) {
+      expect(json).toContain(marker)
+    }
+    const tb = layout.find((b) => b.blockType === 'testimonial-block') as { testimonial?: unknown }
+    expect(tb?.testimonial).toBe(testimonialId)
+  })
+
+  it('is idempotent — a second run yields an identical layout (SC-004)', async () => {
+    const first = await runComposeOnce()
+    const second = await runComposeOnce()
+    expect(stripIds(second)).toEqual(stripIds(first))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// US2 — Services (Phase D). SC-003 fidelity + SC-004 idempotency.
+// ---------------------------------------------------------------------------
+describe('services field→layout composer (US2)', () => {
+  const SLUG = 'compose-fidelity-service'
+  let pillarId: string | number
+
+  beforeAll(async () => {
+    const pillar = await payload.create({
+      collection: 'servicePillars',
+      data: { title: 'Engineering', slug: `${SLUG}-pillar`, _status: 'published' },
+      overrideAccess: true,
+    })
+    pillarId = pillar.id
+    await payload.create({
+      collection: 'services',
+      data: {
+        title: 'Fidelity Pilot Service',
+        slug: SLUG,
+        pillar: pillarId,
+        _status: 'published',
+        description: buildLexical([
+          { kind: 'p', text: 'SVC-DESC-platform-modernization' },
+        ]) as never,
+        approach: buildLexical([{ kind: 'p', text: 'SVC-APPROACH-incremental' }]) as never,
+        deliverables: [
+          { label: 'SVC-DELIV-roadmap' },
+          { label: 'SVC-DELIV-pipeline' },
+          { label: 'SVC-DELIV-runbook' },
+        ],
+        faq: [
+          {
+            question: 'FAQ-Q-how-long',
+            answer: buildLexical([{ kind: 'p', text: 'FAQ-A-four-weeks' }]) as never,
+          },
+          {
+            question: 'FAQ-Q-pricing',
+            answer: buildLexical([{ kind: 'p', text: 'FAQ-A-fixed-fee' }]) as never,
+          },
+        ],
+      },
+      overrideAccess: true,
+    })
+  })
+
+  afterAll(async () => {
+    await payload.delete({
+      collection: 'services',
+      where: { slug: { equals: SLUG } },
+      overrideAccess: true,
+    })
+    await payload.delete({
+      collection: 'servicePillars',
+      where: { id: { equals: pillarId } },
+      overrideAccess: true,
+    })
+  })
+
+  const runComposeOnce = async (): Promise<BlockLike[]> => {
+    const { docs } = await payload.find({
+      collection: 'services',
+      where: { slug: { equals: SLUG } },
+      overrideAccess: true,
+      draft: true,
+      depth: 0,
+      limit: 1,
+    })
+    const layout = composeServiceLayout(docs[0] as unknown as Record<string, unknown>)
+    await upsertBySlug({
+      payload,
+      collection: 'services',
+      slug: SLUG,
+      data: { slug: SLUG, layout: layout as unknown[] },
+      draft: false,
+    })
+    return readLayout('services', SLUG)
+  }
+
+  it('composes the documented block order with no content lost (SC-003)', async () => {
+    const layout = await runComposeOnce()
+    expect(blockTypesOf(layout)).toEqual([
+      'content',
+      'content',
+      'deliverables',
+      'faq',
+      'contact-cta',
+    ])
+    const json = JSON.stringify(layout)
+    for (const marker of [
+      'SVC-DESC-platform-modernization',
+      'SVC-APPROACH-incremental',
+      'SVC-DELIV-roadmap',
+      'SVC-DELIV-pipeline',
+      'SVC-DELIV-runbook',
+      'FAQ-Q-how-long',
+      'FAQ-A-four-weeks',
+      'FAQ-Q-pricing',
+      'FAQ-A-fixed-fee',
+    ]) {
+      expect(json).toContain(marker)
+    }
+  })
+
+  it('is idempotent — a second run yields an identical layout (SC-004)', async () => {
+    const first = await runComposeOnce()
+    const second = await runComposeOnce()
+    expect(stripIds(second)).toEqual(stripIds(first))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// US2 — Team members (Phase E). SC-003 fidelity + SC-004 idempotency.
+// ---------------------------------------------------------------------------
+describe('team members field→layout composer (US2)', () => {
+  const SLUG = 'compose-fidelity-member'
+  let mediaId: string | number
+
+  beforeAll(async () => {
+    const media = await payload.create({
+      collection: 'media',
+      data: { alt: 'Member photo' },
+      file: {
+        data: TINY_PNG,
+        mimetype: 'image/png',
+        name: `${SLUG}-photo.png`,
+        size: TINY_PNG.length,
+      },
+      overrideAccess: true,
+    })
+    mediaId = media.id
+    await payload.create({
+      collection: 'teamMembers',
+      data: {
+        name: 'Fidelity Pilot Member',
+        slug: SLUG,
+        title: 'Principal Engineer',
+        photo: mediaId,
+        _status: 'published',
+        bio: buildLexical([{ kind: 'p', text: 'BIO-twenty-years-experience' }]) as never,
+        expertise: [{ label: 'EXP-typescript' }, { label: 'EXP-postgres' }, { label: 'EXP-aws' }],
+        certifications: [{ label: 'CERT-aws-solutions-architect' }],
+        education: [{ degree: 'EDU-bs-cs', institution: 'EDU-state-university' }],
+        personalFacts: [
+          { label: 'FACT-trail-runner' },
+          { label: 'FACT-coffee-roaster' },
+          { label: 'FACT-volunteers' },
+        ],
+        quote: 'QUOTE-build-for-the-next-decade',
+      },
+      overrideAccess: true,
+    })
+  })
+
+  afterAll(async () => {
+    await payload.delete({
+      collection: 'teamMembers',
+      where: { slug: { equals: SLUG } },
+      overrideAccess: true,
+    })
+    await payload.delete({
+      collection: 'media',
+      where: { id: { equals: mediaId } },
+      overrideAccess: true,
+    })
+  })
+
+  const runComposeOnce = async (): Promise<BlockLike[]> => {
+    const { docs } = await payload.find({
+      collection: 'teamMembers',
+      where: { slug: { equals: SLUG } },
+      overrideAccess: true,
+      draft: true,
+      depth: 0,
+      limit: 1,
+    })
+    const layout = composeTeamMemberLayout(docs[0] as unknown as Record<string, unknown>)
+    await upsertBySlug({
+      payload,
+      collection: 'teamMembers',
+      slug: SLUG,
+      data: { slug: SLUG, layout: layout as unknown[] },
+      draft: false,
+    })
+    return readLayout('teamMembers', SLUG)
+  }
+
+  it('composes the documented block order with no content lost (SC-003)', async () => {
+    const layout = await runComposeOnce()
+    expect(blockTypesOf(layout)).toEqual([
+      'content', // bio
+      'deliverables', // expertise (3 items)
+      'content', // certifications
+      'content', // education
+      'key-takeaways', // personalFacts (3 items)
+      'content', // quote
+    ])
+    const json = JSON.stringify(layout)
+    for (const marker of [
+      'BIO-twenty-years-experience',
+      'EXP-typescript',
+      'EXP-aws',
+      'CERT-aws-solutions-architect',
+      'EDU-bs-cs',
+      'EDU-state-university',
+      'FACT-trail-runner',
+      'QUOTE-build-for-the-next-decade',
+    ]) {
+      expect(json).toContain(marker)
+    }
   })
 
   it('is idempotent — a second run yields an identical layout (SC-004)', async () => {
