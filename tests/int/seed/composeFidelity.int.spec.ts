@@ -7,6 +7,7 @@ import { composeWorkshopLayout } from '../../../src/payload/seed/compose/worksho
 import { composeCaseStudyLayout } from '../../../src/payload/seed/compose/caseStudyToLayout'
 import { composeServiceLayout } from '../../../src/payload/seed/compose/serviceToLayout'
 import { composeTeamMemberLayout } from '../../../src/payload/seed/compose/teamMemberToLayout'
+import { composeHomepageLayout } from '../../../src/payload/seed/compose/homepageToLayout'
 import { upsertBySlug } from '../../../src/payload/seed/upsert'
 import { buildLexical } from '../../../src/payload/seed/showcase/lexical'
 
@@ -592,5 +593,103 @@ describe('team members field→layout composer (US2)', () => {
     const first = await runComposeOnce()
     const second = await runComposeOnce()
     expect(stripIds(second)).toEqual(stripIds(first))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// US5 (Phase F) — the homepage GLOBAL field→layout composer. composeHomepageLayout
+// is a pure function (no DB), so fidelity + idempotency are asserted directly on
+// a synthetic global record (the relation fields carry bare ids at depth 0, the
+// shape the composer reads). The global write/read path is exercised by the e2e
+// (tests/e2e/blocks/homepage-compose) and the real composer run (T069).
+// ---------------------------------------------------------------------------
+describe('homepage global field→layout composer (US5)', () => {
+  // A fully-populated homepage: every deprecated field present so the mapping
+  // emits all six blocks in the documented order.
+  const homepageRecord = {
+    _status: 'published',
+    hero: {
+      headline: 'HP-headline-local-partner',
+      subheadline: 'HP-sub-better-tomorrow',
+      backgroundImage: 11,
+      cta: { label: 'HP-cta-get-started', url: '/services' },
+    },
+    stats: [
+      { number: '25', suffix: '+', label: 'HP-stat-years' },
+      { number: '500', suffix: '+', label: 'HP-stat-projects' },
+      { number: '10000', suffix: '+', label: 'HP-stat-lives' },
+    ],
+    featuredCaseStudy: 22,
+    brandTeaser: {
+      headline: 'HP-brand-headline-purpose',
+      body: 'HP-brand-body-innovate-implement-deliver',
+      linkLabel: 'HP-brand-link-read-story',
+      linkUrl: '/about/our-story',
+      image: 33,
+    },
+    clientLogos: [{ logo: 41 }, { logo: 42 }, { logo: 43 }, { logo: 44 }],
+    featuredTestimonials: [51, 52],
+  }
+
+  it('composes the documented block order with no content lost (SC-003)', () => {
+    const layout = composeHomepageLayout(homepageRecord)
+    expect(blockTypesOf(layout as BlockLike[])).toEqual([
+      'homepage-hero',
+      'stats-bar',
+      'featured-case-study',
+      'brand-teaser',
+      'client-logo-grid',
+      'featured-testimonials',
+    ])
+    const json = JSON.stringify(layout)
+    for (const marker of [
+      'HP-headline-local-partner',
+      'HP-sub-better-tomorrow',
+      'HP-cta-get-started',
+      'HP-stat-years',
+      'HP-stat-projects',
+      'HP-stat-lives',
+      'HP-brand-headline-purpose',
+      'HP-brand-body-innovate-implement-deliver',
+      'HP-brand-link-read-story',
+    ]) {
+      expect(json).toContain(marker)
+    }
+    // Relations are carried as ids.
+    const hero = layout.find((b) => b.blockType === 'homepage-hero') as {
+      primaryCta?: { label?: string; url?: string }
+      secondaryCta?: { label?: string; url?: string }
+      backgroundImage?: unknown
+    }
+    expect(hero?.primaryCta).toEqual({ label: 'HP-cta-get-started', url: '/services' })
+    // The block requires a secondary CTA the global does not carry — a documented default.
+    expect(hero?.secondaryCta?.label).toBeTruthy()
+    expect(hero?.secondaryCta?.url).toBeTruthy()
+    expect(hero?.backgroundImage).toBe(11)
+    const fcs = layout.find((b) => b.blockType === 'featured-case-study') as { caseStudy?: unknown }
+    expect(fcs?.caseStudy).toBe(22)
+    const ft = layout.find((b) => b.blockType === 'featured-testimonials') as {
+      testimonials?: unknown
+    }
+    expect(ft?.testimonials).toEqual([51, 52])
+  })
+
+  it('is idempotent — a second run yields an identical layout (SC-004)', () => {
+    expect(stripIds(composeHomepageLayout(homepageRecord))).toEqual(
+      stripIds(composeHomepageLayout(homepageRecord)),
+    )
+  })
+
+  it('falls back to logo-bar / testimonial-block below the grid minRows', () => {
+    const sparse = composeHomepageLayout({
+      ...homepageRecord,
+      clientLogos: [{ logo: 41 }, { logo: 42 }],
+      featuredTestimonials: [51],
+    })
+    const types = blockTypesOf(sparse as BlockLike[])
+    expect(types).toContain('logo-bar')
+    expect(types).not.toContain('client-logo-grid')
+    expect(types).toContain('testimonial-block')
+    expect(types).not.toContain('featured-testimonials')
   })
 })

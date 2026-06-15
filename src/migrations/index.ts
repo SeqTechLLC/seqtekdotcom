@@ -7,6 +7,7 @@ import * as migration_20260614_225002_add_layout_workshops from './20260614_2250
 import * as migration_20260615_103758_add_layout_case_studies from './20260615_103758_add_layout_case_studies'
 import * as migration_20260615_104012_add_layout_services from './20260615_104012_add_layout_services'
 import * as migration_20260615_104531_add_layout_team_members from './20260615_104531_add_layout_team_members'
+import * as migration_20260615_225007_add_layout_homepage from './20260615_225007_add_layout_homepage'
 
 export const migrations = [
   {
@@ -53,5 +54,10 @@ export const migrations = [
     up: migration_20260615_104531_add_layout_team_members.up,
     down: migration_20260615_104531_add_layout_team_members.down,
     name: '20260615_104531_add_layout_team_members',
+  },
+  {
+    up: migration_20260615_225007_add_layout_homepage.up,
+    down: migration_20260615_225007_add_layout_homepage.down,
+    name: '20260615_225007_add_layout_homepage',
   },
 ]

@@ -6,20 +6,17 @@ import { buildMetadata } from '@/lib/metadata'
 import { organizationLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
-import { HomepageHero } from '@/components/sections/HomepageHero'
-import { StatsBar } from '@/components/sections/StatsBar'
-import { FeaturedCaseStudy } from '@/components/sections/FeaturedCaseStudy'
-import { BrandTeaser } from '@/components/sections/BrandTeaser'
-import { ClientLogoGrid } from '@/components/sections/ClientLogoGrid'
-import { FeaturedTestimonials } from '@/components/sections/FeaturedTestimonials'
+import { RenderBlocks } from '@/components/sections/RenderBlocks'
 import { PostList } from '@/components/sections/PostList'
 import { CtaSection } from '@/components/sections/CtaSection'
 import type { Homepage } from '@/payload-types'
 
-// spec 004 US1 (T012/T013). Drive `/` from the `homepage` GLOBAL — a bespoke
-// composition mapping its structured fields to the existing section components
-// (research §D3). This retires the spike placeholder + the `pages`-slug-`home`
-// query (drift #2). ISR per ARCHITECTURE.md §3 — no `force-dynamic`.
+// spec 010 US5 (Phase F) — `/` is driven by the `homepage` GLOBAL's `layout`
+// blocks rendered through RenderBlocks (ADR 0009): editors reorder/edit the
+// homepage sections with no deploy. The Organization JSON-LD and the
+// conversion-signal surface are unchanged (data-model.md "Keep"). The Touchstone
+// CTA + latest-insights stay template-level: latest-insights resolves posts at
+// render time (a static block cannot), so it is not a stored homepage field.
 
 export const revalidate = 3600
 
@@ -61,8 +58,8 @@ export default async function HomePage() {
   const { isEnabled: isDraft } = await draftMode()
   const homepage = isDraft ? await readDraftHomepage() : publishedHomepage
 
-  const hero = homepage?.hero
-  const brandTeaser = homepage?.brandTeaser
+  // payload-types Homepage['layout'] is the RenderBlocks-compatible shape.
+  const layout = (homepage?.layout ?? []) as never
 
   return (
     <>
@@ -70,57 +67,7 @@ export default async function HomePage() {
       {isDraft && <PreviewBanner />}
 
       <div data-testid="homepage" data-homepage="true">
-        <section data-testid="hero">
-          <HomepageHero
-            headline={hero?.headline ?? siteSettings?.companyName ?? 'SEQTEK'}
-            subheadline={hero?.subheadline}
-            backgroundImage={hero?.backgroundImage}
-            primaryCta={hero?.cta}
-          />
-        </section>
-
-        {homepage?.stats?.length ? (
-          <section data-testid="stats">
-            <StatsBar source="inline" items={homepage.stats} />
-          </section>
-        ) : null}
-
-        {homepage?.featuredCaseStudy ? (
-          <section data-testid="featured-case-study">
-            <FeaturedCaseStudy heading="Featured work" caseStudy={homepage.featuredCaseStudy} />
-          </section>
-        ) : null}
-
-        {brandTeaser?.headline ? (
-          <section data-testid="brand-teaser">
-            <BrandTeaser
-              headline={brandTeaser.headline}
-              body={brandTeaser.body ?? ''}
-              linkLabel={brandTeaser.linkLabel ?? 'Read the story'}
-              linkUrl={brandTeaser.linkUrl ?? '/about'}
-              image={brandTeaser.image}
-            />
-          </section>
-        ) : null}
-
-        {homepage?.clientLogos?.length ? (
-          <section data-testid="client-logos">
-            <ClientLogoGrid
-              heading="Serving industry leaders"
-              logos={homepage.clientLogos}
-              columns="4"
-            />
-          </section>
-        ) : null}
-
-        {homepage?.featuredTestimonials?.length ? (
-          <section data-testid="featured-testimonials">
-            <FeaturedTestimonials
-              heading="What clients say"
-              testimonials={homepage.featuredTestimonials}
-            />
-          </section>
-        ) : null}
+        <RenderBlocks blocks={layout} />
 
         <section data-testid="workshop-cta">
           <CtaSection

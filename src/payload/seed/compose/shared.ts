@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 
-import type { CollectionSlug, Payload } from 'payload'
+import type { CollectionSlug, GlobalSlug, Payload } from 'payload'
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
 import { createMigrationLogger, type MigrationLogger } from '../log'
@@ -252,4 +252,84 @@ export async function runComposer(options: RunComposerOptions): Promise<ComposeR
       (dryRun ? ' (--dry-run, no writes)' : `, errors logged to ${logger.filePath}`),
   )
   return { exitCode: 0, results, logger }
+}
+
+export interface RunGlobalComposerOptions {
+  /** Global whose record is composed (e.g. 'homepage'). */
+  global: GlobalSlug
+  /** Transform the global's discrete fields → ordered layout blocks. */
+  compose: (record: Record<string, unknown>, ctx: ComposeContext) => LayoutBlock[]
+  argv?: readonly string[]
+  payload?: Payload
+  env?: Record<string, string | undefined>
+  logPath?: string
+  stdout?: (line: string) => void
+  stderr?: (line: string) => void
+  now?: Date
+}
+
+/**
+ * The global analogue of `runComposer`. A global is a singleton, so there is no
+ * collection to iterate or slug to key on: read the published record, compose
+ * its `layout`, and write it back via `updateGlobal`. Same env-gating and
+ * `--dry-run` (JSON-Lines plan, zero writes) contract. A published global keeps
+ * a published layout so the public `/` switch to RenderBlocks is non-breaking.
+ */
+export async function runGlobalComposer(
+  options: RunGlobalComposerOptions,
+): Promise<ComposeRunSummary> {
+  const env = options.env ?? process.env
+  const stdout = options.stdout ?? ((line: string) => console.log(line))
+  const stderr = options.stderr ?? ((line: string) => console.error(line))
+  const argv = options.argv ?? process.argv.slice(2)
+  const dryRun = argv.includes('--dry-run')
+
+  const logger = createMigrationLogger(
+    options.logPath ?? resolve(process.cwd(), 'migration-errors.log'),
+    { dryRun, nowFn: options.now ? () => options.now! : undefined },
+  )
+
+  if (!options.payload) {
+    const missing = REQUIRED_ENV_KEYS.filter((key) => !env[key])
+    if (missing.length > 0) {
+      stderr(`Missing required env var(s): ${missing.join(', ')}`)
+      return { exitCode: 1, results: [], logger }
+    }
+  }
+
+  let payload = options.payload
+  if (!payload) {
+    const { getPayload } = await import('payload')
+    const { default: config } = await import('../../../payload.config')
+    payload = await getPayload({ config: await config })
+  }
+
+  const record = (await payload.findGlobal({
+    slug: options.global,
+    overrideAccess: true,
+    draft: false,
+    depth: 0,
+  })) as unknown as Record<string, unknown>
+
+  const layout = options.compose(record, { logger })
+  // A never-published global has no `_status`; treat it as published so the
+  // public `/` (which reads the published global) shows the composed layout.
+  const wasPublished = record._status === 'published' || record._status === undefined
+
+  if (dryRun) {
+    stdout(JSON.stringify({ global: options.global, blockTypes: layout.map((b) => b.blockType) }))
+    stderr(`${options.global}: composed ${layout.length} block(s) (--dry-run, no writes)`)
+    return { exitCode: 0, results: [], logger }
+  }
+
+  await payload.updateGlobal({
+    slug: options.global,
+    data: { layout } as never,
+    overrideAccess: true,
+    draft: !wasPublished,
+  })
+  stdout(
+    `${options.global}: ${layout.length} block(s) composed and written, errors logged to ${logger.filePath}`,
+  )
+  return { exitCode: 0, results: [], logger }
 }
