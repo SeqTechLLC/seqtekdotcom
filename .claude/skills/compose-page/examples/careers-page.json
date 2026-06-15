@@ -1,0 +1,156 @@
+{
+  "kind": "layout",
+  "brief": "A 'Careers at SEQTEK' page: warm intro to working here, a few proof-point stats, what we offer, the team you'd join, common hiring questions, and a clear way to apply. Target collection: pages.",
+  "collection": "pages",
+  "layout": [
+    {
+      "blockType": "hero",
+      "variant": "standard",
+      "eyebrow": "Careers",
+      "headline": "Build a career close to home",
+      "subheadline": "We hire local talent across Tulsa, OKC, Northwest Arkansas, and Kansas City, then keep the work and the people right here.",
+      "alignment": "left",
+      "primaryCta": { "label": "See open roles", "url": "#open-roles", "variant": "primary" }
+    },
+    {
+      "blockType": "content",
+      "width": "standard",
+      "body": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "direction": "ltr",
+          "children": [
+            {
+              "type": "paragraph",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "textFormat": 0,
+              "textStyle": "",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "We started 25 years ago with a simple idea: great software gets built by people who stay. That belief still shapes how we hire, how we mentor, and how we grow careers here."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blockType": "stats-bar",
+      "heading": "Why people stay",
+      "items": [
+        { "number": "25", "label": "Years in business", "suffix": "+" },
+        { "number": "4", "label": "Markets we hire in" },
+        { "number": "90", "label": "Retention after year one", "suffix": "%" }
+      ]
+    },
+    {
+      "blockType": "deliverables",
+      "heading": "What we offer",
+      "items": [
+        { "label": "Mentorship from senior engineers on every team" },
+        { "label": "Real ownership of client outcomes, not ticket queues" },
+        { "label": "Local roles with no relocation and no offshore hours" },
+        { "label": "Health, retirement, and continuing-education support" }
+      ]
+    },
+    {
+      "blockType": "team-grid",
+      "heading": "The people you'd work with",
+      "filter": "all",
+      "layout": "grid"
+    },
+    {
+      "blockType": "faq",
+      "heading": "Hiring questions",
+      "items": [
+        {
+          "question": "Do you hire remote?",
+          "answer": {
+            "root": {
+              "type": "root",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "direction": "ltr",
+              "children": [
+                {
+                  "type": "paragraph",
+                  "version": 1,
+                  "format": "",
+                  "indent": 0,
+                  "direction": "ltr",
+                  "textFormat": 0,
+                  "textStyle": "",
+                  "children": [
+                    {
+                      "type": "text",
+                      "version": 1,
+                      "detail": 0,
+                      "format": 0,
+                      "mode": "normal",
+                      "style": "",
+                      "text": "Most roles are hybrid within our four markets. We keep teams close to clients and to each other."
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "question": "What does your interview process look like?",
+          "answer": {
+            "root": {
+              "type": "root",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "direction": "ltr",
+              "children": [
+                {
+                  "type": "paragraph",
+                  "version": 1,
+                  "format": "",
+                  "indent": 0,
+                  "direction": "ltr",
+                  "textFormat": 0,
+                  "textStyle": "",
+                  "children": [
+                    {
+                      "type": "text",
+                      "version": 1,
+                      "detail": 0,
+                      "format": 0,
+                      "mode": "normal",
+                      "style": "",
+                      "text": "A short intro call, a practical exercise drawn from real work, and a team conversation. No trick questions and no take-home marathons."
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "blockType": "contact-cta",
+      "heading": "Ready to apply?",
+      "body": "Send us your resume and a note about the kind of work you want to do. We read every one.",
+      "primaryCta": { "label": "Apply now", "url": "/contact" }
+    }
+  ]
+}

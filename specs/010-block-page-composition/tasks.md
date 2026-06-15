@@ -141,8 +141,8 @@ Single Next.js + Payload app: `src/` and `tests/` at repo root; collections in `
 
 **Independent Test**: Run the skill on a brief → valid block layout using only existing blocks, OR a named missing block. No bespoke page code.
 
-- [ ] T059 [P] [US3] Fixture check: `compose-page` output uses only `registry.ts` slugs or names exactly one gap, in `tests/int/skills/composePage.int.spec.ts` (validates emitted layout shape per contracts/authoring-skill.md)
-- [ ] T060 [US3] Implement `.claude/skills/compose-page/SKILL.md` (frontmatter + procedure) citing BLOCK_LIBRARY §5/§6, DESIGN_SYSTEM §11.4, CONTENT-REQUIREMENTS §8 (FR-010)
+- [x] T059 [P] [US3] Fixture check: `compose-page` output uses only `registry.ts` slugs or names exactly one gap, in `tests/int/skills/composePage.int.spec.ts` (validates emitted layout shape per contracts/authoring-skill.md) — **DONE**: test validates the two committed worked-example outputs in `.claude/skills/compose-page/examples/` against the registry (source of truth), asserting (a) exactly one output mode per example, (b) ≥1 layout AND ≥1 gap present, (c) every layout `blockType` is a real registry slug, (d) every named gap is a genuine gap (slug absent from registry) with a reason + valid `nearestExisting`. Verified FAIL before examples existed → 6/6 green after.
+- [x] T060 [US3] Implement `.claude/skills/compose-page/SKILL.md` (frontmatter + procedure) citing BLOCK_LIBRARY §5/§6, DESIGN_SYSTEM §11.4, CONTENT-REQUIREMENTS §8 (FR-010) — **DONE**: user-invocable skill (frontmatter matches speckit format) with a 6-step procedure (read registry as authoritative slug source → start from per-type skeleton → map sections to best-fit blocks → honor reading-column/AICO/no-em-dash rules → decide layout vs single gap → validate every slug against registry). Documents the doc-name↔slug drift (testimonial-single→testimonial-block, latest-insights→post-list, markets-map→map, etc.; registry wins) and the JSON output schema. Two test-guarded `examples/` (careers-page layout, savings-calculator gap).
 
 **Checkpoint**: Net-new pages authorable from blocks at speed.
 
