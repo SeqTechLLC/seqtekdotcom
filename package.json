@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
+    "check:overrides": "node tools/check-stale-overrides/check-stale-overrides.mjs",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --port 3100",
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev --port 3100",
     "format": "prettier --write .",
@@ -88,6 +89,11 @@
     "drizzle-kit": {
       "esbuild": "^0.28.1"
     }
+  },
+  "_overridesNotes": {
+    "_doc": "Why each security `overrides` entry exists and when it can go. Keyed by the overridden package name. Advisory IDs are NOT hand-maintained here — `npm run check:overrides` reads them live from `npm audit` and flags any override that is no longer load-bearing. A note here with no matching `overrides` entry is reported as 'pending' (e.g. queued for an unmerged PR), not an error.",
+    "esbuild": "Pinned (under drizzle-kit) to clear the transitive esbuild dev-server advisory that failed the production audit gate in PR #52. Remove once drizzle-kit's dependency tree resolves esbuild to a fixed version on its own — run `npm run check:overrides` to confirm.",
+    "ws": "Pinned to ^8.21.0 (under payload and happy-dom) to clear the transitive ws advisory pulled in via @lexical/headless. Remove once payload and happy-dom resolve ws to a non-vulnerable version on their own. NOTE: the `ws` override itself lands on main with PR #66 (feat/010); until then this note is reported as 'pending' by `npm run check:overrides`."
   },
   "engines": {
     "node": ">=22.0.0"
