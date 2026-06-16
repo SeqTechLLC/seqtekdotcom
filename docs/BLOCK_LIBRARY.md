@@ -17,21 +17,22 @@ Payload supports two ways to model page content:
 - **Structured fields** — fixed schema, predictable shape (e.g., a `CaseStudies` collection always has `problem`, `solution`, `impact`).
 - **Blocks (`type: blocks`)** — polymorphic, repeatable, editor-arranged (e.g., a `Page` can stack Hero + Stats + Content + CTA in any order).
 
-The wrong choice creates either rigidity (structured-only) or chaos (blocks-only). Rule of thumb:
+**As of spec 010 / ADR 0009 this choice is largely settled: two content primitives.** Every non-blog page renders its body from a `layout` blocks array through `RenderBlocks`; only the blog Post keeps a bespoke richText article body. The "structured vs blocks" tension below is now mostly historical context — the rule of thumb still governs _new_ models, but the specialized detail types have all moved to blocks (keeping their typed metadata: slug, listing image, SEO, relationships).
 
-| Collection / Global | Approach                                   | Why                                                                                                                                          |
-| ------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pages`             | **Blocks** (`layout` field)                | Generic content pages (about sub-pages, resources, etc.) need flexible composition                                                           |
-| `homepage` (global) | **Structured fields**                      | Content is fixed and intentional; editors should not be able to remove the stats bar                                                         |
-| `posts`             | **Structured + inline blocks in richText** | Title/excerpt/author are fixed; body is rich text with embedded CTA/testimonial/callout blocks                                               |
-| `caseStudies`       | **Structured**                             | Per CONTENT-REQUIREMENTS, every case study has the same Challenge → Approach → Results → Testimonial structure. Variance kills scannability. |
-| `services`          | **Structured**                             | Same — buyers compare service pages side-by-side; consistent shape helps                                                                     |
-| `servicePillars`    | **Structured**                             | Three pillars, three identical pages, predictable shape                                                                                      |
-| `workshops`         | **Structured**                             | Workshop pages are product pages with consistent fields                                                                                      |
-| `industries`        | **Structured**                             | Industry pages share a fixed template per CONTENT-REQUIREMENTS                                                                               |
-| `locations`         | **Structured**                             | Market landing pages — same shape, different city content                                                                                    |
+| Collection / Global | Body approach                              | Notes                                                                                                                  |
+| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `pages`             | **Blocks** (`layout`)                      | The reference model; generic content pages composed freely                                                             |
+| `homepage` (global) | **Blocks** (`layout`)                      | spec 010: was structured; now block-composed and editor-reorderable (composer adds the dual-CTA hero defaults)         |
+| `caseStudies`       | **Blocks** (`layout`)                      | spec 010: was structured (problem/solution/impact/metrics/…); composed into blocks, typed metadata retained            |
+| `services`          | **Blocks** (`layout`)                      | spec 010: was structured; composed; nested `/services/[pillar]/[slug]` URL + pillar-move revalidation preserved        |
+| `workshops`         | **Blocks** (`layout`)                      | spec 010 pilot (US1): the acceptance gate; composed (incl. `gallery` proof photos + `video-embed`)                     |
+| `teamMembers`       | **Blocks** (`layout`)                      | spec 010: gained `layout` + drafts/live-preview; new `/team/[slug]` detail renders via `RenderBlocks` + Person JSON-LD |
+| `posts`             | **Structured + inline blocks in richText** | **The sanctioned exception** (ADR 0009): title/excerpt/author fixed; body is rich text with embedded inline blocks     |
+| `servicePillars`    | **Structured**                             | Listing target, not a retired detail template; keeps its `description` richText                                        |
+| `industries`        | **Structured**                             | Taxonomy/listing; no body composition                                                                                  |
+| `locations`         | **Structured**                             | Market landing taxonomy; no body composition                                                                           |
 
-Net: only `pages` uses the full block library as `layout`. Other collections embed specific blocks at known field positions (e.g., a `richText` body field with `BlocksFeature` for inline blocks).
+Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `servicePillars`/`industries`/`locations` stay structured because they are listing/taxonomy targets, not retired detail templates. Old discrete body columns are retained one release (hidden + read-only, expand/contract) then dropped (`drop_legacy_body_columns`).
 
 ---
 
@@ -532,6 +533,8 @@ The loop is deliberately the **only** exception to "no code for layout" (SC-006)
 ## 6. Page composition matrix
 
 Block order per page type. This is the canonical reference — content layouts should follow these unless there's a documented reason to vary.
+
+> **Post-spec-010 note (ADR 0009):** the entries below that describe a type as "structured fields rendered through fixed sequence" (case study, service detail, service pillar) are **historical** — those bodies are now `layout` blocks rendered by `RenderBlocks`, and the per-type seed composers (`src/payload/seed/compose/*ToLayout.ts`) emit exactly these orderings as each record's default `layout`. So this matrix is now the **composer's default block order** (and the editor's starting point), not a hardcoded render template. Component names like `<Prose>`/`<MetricsGrid>`/`<TestimonialSingle>` map to the real block slugs `content`/`metric-display`+`stats-bar`/`testimonial-block` (see §5.7 renames). Only the blog Post still renders a bespoke richText body.
 
 ### Homepage (`homepage` global — structured fields, not blocks)
 
