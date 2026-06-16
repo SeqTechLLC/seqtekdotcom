@@ -5,7 +5,7 @@
   "layout": [
     {
       "blockType": "hero",
-      "variant": "standard",
+      "variant": "text-only",
       "eyebrow": "Careers",
       "headline": "Build a career close to home",
       "subheadline": "We hire local talent across Tulsa, OKC, Northwest Arkansas, and Kansas City, then keep the work and the people right here.",
@@ -70,7 +70,7 @@
       "blockType": "team-grid",
       "heading": "The people you'd work with",
       "filter": "all",
-      "layout": "grid"
+      "layout": "cards"
     },
     {
       "blockType": "faq",

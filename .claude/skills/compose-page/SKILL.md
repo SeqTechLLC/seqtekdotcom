@@ -39,7 +39,7 @@ It is distinct from `convert-to-blocks` (which reproduces an *existing* page's c
 
 ### 2. Start from the per-type skeleton (when a target collection is given)
 
-If the brief names a target collection (workshop, case study, service, team, homepage), read its default skeleton under `src/payload/seed/skeletons/<type>.ts` and use it as the starting frame — it encodes the expected block order and the per-type SEO/JSON-LD-bearing blocks (hero, testimonial, contact CTA, etc.). A generic `pages` page has no skeleton; compose from the brief's sections directly. Specialized collections keep their typed metadata (slug, listing image, order, SEO, relationships) outside the `layout`; only the page **body** is composed here.
+If the brief names one of the collections that has a default skeleton (workshop, case study, service, team), read it under `src/payload/seed/skeletons/<type>.ts` and use it as the starting frame — it encodes the expected block order and the per-type SEO/JSON-LD-bearing blocks (hero, testimonial, contact CTA, etc.). A generic `pages` page and the `homepage` global have **no** skeleton (the homepage is composer-driven, `homepageToLayout.ts`); compose from the brief's sections directly. Specialized collections keep their typed metadata (slug, listing image, order, SEO, relationships) outside the `layout`; only the page **body** is composed here.
 
 ### 3. Map each section of the brief to a block
 
