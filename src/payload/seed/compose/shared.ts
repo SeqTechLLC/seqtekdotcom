@@ -322,12 +322,26 @@ export async function runGlobalComposer(
     return { exitCode: 0, results: [], logger }
   }
 
-  await payload.updateGlobal({
-    slug: options.global,
-    data: { layout } as never,
-    overrideAccess: true,
-    draft: !wasPublished,
-  })
+  // A composed block that fails validation on publish must be logged, not throw
+  // and abort the run — mirrors runComposer's per-record catch-and-continue.
+  try {
+    await payload.updateGlobal({
+      slug: options.global,
+      data: { layout } as never,
+      overrideAccess: true,
+      draft: !wasPublished,
+    })
+  } catch (err) {
+    logger.log({
+      level: 'ERROR',
+      kind: 'PARSE_ERROR',
+      collection: options.global,
+      slug: '<global>',
+      detail: `compose write failed: ${(err as Error).message}`,
+    })
+    stderr(`${options.global}: compose write failed — ${(err as Error).message}`)
+    return { exitCode: 1, results: [], logger }
+  }
   stdout(
     `${options.global}: ${layout.length} block(s) composed and written, errors logged to ${logger.filePath}`,
   )

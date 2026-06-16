@@ -71,11 +71,13 @@ export function composeHomepageLayout(record: HomepageRecord): LayoutBlock[] {
     })
   }
 
-  // 2. stats → stats-bar (inline). minRows 3; 1–2 preserved as a content line.
+  // 2. stats → stats-bar (inline). The block enforces minRows 3 / maxRows 5; 1–2
+  // OR >5 are preserved as a content line so no stat is lost and the block never
+  // fails validation on write.
   const stats = (record.stats ?? []).filter(
     (s): s is HomepageStat => !!s && !!s.number && !!s.label,
   )
-  if (stats.length >= 3) {
+  if (stats.length >= 3 && stats.length <= 5) {
     blocks.push({
       blockType: 'stats-bar',
       source: 'inline',

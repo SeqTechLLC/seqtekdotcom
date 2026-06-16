@@ -697,4 +697,20 @@ describe('homepage global field→layout composer (US5)', () => {
     expect(types).toContain('testimonial-block')
     expect(types).not.toContain('featured-testimonials')
   })
+
+  it('caps stats at the stats-bar maxRows (5) — >5 degrades to a content line, no stat lost', () => {
+    const overflow = composeHomepageLayout({
+      ...homepageRecord,
+      stats: Array.from({ length: 7 }, (_, i) => ({
+        number: String(i + 1),
+        label: `HP-overflow-stat-${i + 1}`,
+      })),
+    })
+    const types = blockTypesOf(overflow as BlockLike[])
+    // 7 stats can't satisfy maxRows 5 → no stats-bar (which would fail validation).
+    expect(types).not.toContain('stats-bar')
+    // Every stat is still present (preserved as a content line — SC-003).
+    const json = JSON.stringify(overflow)
+    for (let i = 1; i <= 7; i++) expect(json).toContain(`HP-overflow-stat-${i}`)
+  })
 })
