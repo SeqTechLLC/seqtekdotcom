@@ -33,8 +33,9 @@ const BLOG_ROUTE = 'src/app/(frontend)/insights/[slug]/page.tsx'
 describe('SC-001 — only block-composed bodies remain (RenderBlocks), except the blog Post', () => {
   it.each(RENDER_BLOCKS_ROUTES)('%s renders its body through RenderBlocks', (routePath) => {
     const src = read(routePath)
-    expect(src).toContain('RenderBlocks')
-    expect(src).toMatch(/<RenderBlocks\b/)
+    // Assert the exact dispatch (not just a `RenderBlocks` substring) — the body
+    // is the `layout` blocks array handed to the shared dispatcher.
+    expect(src).toContain('<RenderBlocks blocks={layout}')
     // A migrated body route must NOT fall back to a bespoke richText article body.
     expect(src).not.toContain('<RichText')
   })
