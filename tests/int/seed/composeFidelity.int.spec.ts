@@ -218,8 +218,10 @@ describe('workshops field→layout composer (US1)', () => {
       'AUDIENCE-leadership-teams',
       'DELIV-plan-of-record',
       'DELIV-runbook',
+      'DELIV-handoff-session',
       'CAPTION-discovery',
       'dQw4w9WgXcQ',
+      'VIDEO-recap',
     ]) {
       expect(json).toContain(marker)
     }
@@ -578,11 +580,14 @@ describe('team members field→layout composer (US2)', () => {
     for (const marker of [
       'BIO-twenty-years-experience',
       'EXP-typescript',
+      'EXP-postgres',
       'EXP-aws',
       'CERT-aws-solutions-architect',
       'EDU-bs-cs',
       'EDU-state-university',
       'FACT-trail-runner',
+      'FACT-coffee-roaster',
+      'FACT-volunteers',
       'QUOTE-build-for-the-next-decade',
     ]) {
       expect(json).toContain(marker)

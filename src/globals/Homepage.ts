@@ -1,8 +1,8 @@
 import type { GlobalConfig } from 'payload'
 
-import { layoutBlocks } from '../payload/blocks/layout'
 import { isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthedGlobal } from '../payload/access/publishedOrAuthed'
+import { layoutBlocks } from '../payload/blocks/layout'
 import { safeUrlValidate } from '../payload/fields/url'
 import { revalidateGlobalOnChange } from '../payload/hooks/revalidateOnChange'
 

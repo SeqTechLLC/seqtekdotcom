@@ -31,9 +31,11 @@ export function composeServiceLayout(record: ServiceRecord): LayoutBlock[] {
   const deliverables = (record.deliverables ?? [])
     .map((d) => (d?.label ? { label: d.label } : null))
     .filter((d): d is { label: string } => d !== null)
-  if (deliverables.length >= 3) {
+  if (deliverables.length >= 3 && deliverables.length <= 8) {
     blocks.push({ blockType: 'deliverables', heading: 'Deliverables', items: deliverables })
   } else if (deliverables.length > 0) {
+    // 1–2 items can't satisfy the block's minRows, and >8 exceeds maxRows —
+    // either way preserve them as a content list so no deliverable is lost.
     const body = buildLexical(deliverables.map((d) => ({ kind: 'p' as const, text: d.label })))
     const block = contentBlock(body, { heading: 'Deliverables' })
     if (block) blocks.push(block)
