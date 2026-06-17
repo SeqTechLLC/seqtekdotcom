@@ -1,13 +1,12 @@
 name: CI
 
 on:
-  # Push runs cover the default branch only (post-merge validation). PR branches
-  # are validated by the `pull_request` event below (it re-runs on every push via
-  # `synchronize`), so listing feature-branch globs here too would double-run CI
-  # — push + pull_request — on every PR commit, doubling Actions spend.
-  push:
-    branches:
-      - main
+  # CI runs on PRs only. main is PR-only (branch protection: required_pull_request
+  # + strict "up to date with main"), so the exact to-be-merged commit is always
+  # validated on the PR before it can land — a post-merge `push: main` run would
+  # just re-run the same green tree and gate nothing, doubling Actions spend.
+  # Pushing to main is handled by deploy.yml (build + deploy + post-deploy smoke),
+  # which runs independently of CI.
   pull_request:
     branches:
       - main
