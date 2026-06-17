@@ -87,6 +87,12 @@
     "tsx": "$tsx",
     "drizzle-kit": {
       "esbuild": "^0.28.1"
+    },
+    "payload": {
+      "ws": "^8.21.0"
+    },
+    "happy-dom": {
+      "ws": "^8.21.0"
     }
   },
   "engines": {
