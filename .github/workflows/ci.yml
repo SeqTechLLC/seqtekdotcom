@@ -1,12 +1,13 @@
 name: CI
 
 on:
+  # Push runs cover the default branch only (post-merge validation). PR branches
+  # are validated by the `pull_request` event below (it re-runs on every push via
+  # `synchronize`), so listing feature-branch globs here too would double-run CI
+  # — push + pull_request — on every PR commit, doubling Actions spend.
   push:
     branches:
       - main
-      - 'spike/**'
-      - 'feat/**'
-      - 'fix/**'
   pull_request:
     branches:
       - main
