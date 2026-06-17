@@ -1,12 +1,12 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
-      - 'spike/**'
-      - 'feat/**'
-      - 'fix/**'
+  # CI runs on PRs only. main is PR-only (branch protection: required_pull_request
+  # + strict "up to date with main"), so the exact to-be-merged commit is always
+  # validated on the PR before it can land — a post-merge `push: main` run would
+  # just re-run the same green tree and gate nothing, doubling Actions spend.
+  # Pushing to main is handled by deploy.yml (build + deploy + post-deploy smoke),
+  # which runs independently of CI.
   pull_request:
     branches:
       - main
@@ -30,6 +30,10 @@ jobs:
   changes:
     name: Detect changed paths
     runs-on: ubuntu-latest
+    # Per-job timeout: the light jobs all finish in under 2 min, so 10 min is a
+    # generous cap that kills a hung/runaway job long before GitHub's 6-hour
+    # default burns the runner. The heavy `tests` job below gets a larger budget.
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: read
@@ -75,6 +79,7 @@ jobs:
   quality:
     name: Typecheck + Lint + Format
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -112,6 +117,7 @@ jobs:
   lint-workflows:
     name: Workflows lint (actionlint)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: changes
     if: needs.changes.outputs.workflows == 'true'
     steps:
@@ -126,6 +132,7 @@ jobs:
   infra-synth:
     name: CDK synth + assertion tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [quality, changes]
     if: needs.changes.outputs.infra == 'true'
     steps:
@@ -152,6 +159,7 @@ jobs:
   secrets:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -170,6 +178,7 @@ jobs:
   int-tests:
     name: Vitest (integration, testcontainers-backed)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [quality, changes]
     if: needs.changes.outputs.src == 'true'
     # No postgres service container — vitest.globalSetup.ts spins up an
@@ -195,6 +204,11 @@ jobs:
   tests:
     name: Playwright + axe + Lighthouse
     runs-on: ubuntu-latest
+    # Heaviest job (production build + Playwright E2E + axe + Lighthouse).
+    # Healthy runs land at ~10 min, so 20 min (~2x) absorbs a slow run while
+    # still killing a hang well short of the 6-hour default — a recent runaway
+    # burned 45 min before failing.
+    timeout-minutes: 20
     needs: [quality, changes]
     if: needs.changes.outputs.src == 'true'
     # Job runs inside Microsoft's official Playwright image: Chromium +
