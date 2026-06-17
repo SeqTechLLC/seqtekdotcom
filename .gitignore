@@ -93,5 +93,9 @@ infra/.cdk.staging/
 /.claude/skills/vercel-optimize
 /.claude/skills/web-design-guidelines
 
+# Claude Code session artifacts (PR-review iterations, scratch worktrees) — not project code
+/.claude/iterate-pr/
+/.claude/worktrees/
+
 # Private SEQTEK content drafts (employee PII) — keep out of the public repo
 docs/content-drafts/
