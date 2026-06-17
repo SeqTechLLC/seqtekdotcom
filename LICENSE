@@ -39,8 +39,13 @@ The following files contain SEQTEK's strategic, marketing, and brand content
   - docs/CONTENT-REQUIREMENTS.md
   - docs/BRAND_STRATEGY_RESEARCH.md
   - any future content under src/content/, src/copy/, or content/
-  - any committed brand-asset files (note: brand kit PDF and logo files are
-    deliberately not committed to this repository — see CLAUDE.md)
+  - the committed SEQTEK brand marks used to render the site chrome:
+    public/brand/* and the app icons src/app/favicon.ico and src/app/icon.png
+    (these are the web-display logo files only, and are also covered by the
+    Trademarks terms in section 3)
+  - any other committed brand-asset files (note: the full brand kit — the brand
+    kit PDF and the complete source logo pack — is deliberately not committed to
+    this repository; see CLAUDE.md)
 
 The Proprietary Content is published in this repository for transparency and
 portfolio purposes only. All rights are reserved by SeqTech, LLC. You may not
