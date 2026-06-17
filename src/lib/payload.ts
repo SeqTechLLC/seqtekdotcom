@@ -54,7 +54,14 @@ export const getPayloadInstance = (): Promise<Payload> => {
 // cancel; Promise.race frees the response thread). Cache hits are a no-op
 // beyond one setTimeout/clearTimeout (FR-013).
 
-export const READ_TIMEOUT_MS = 5000
+// Production budget is 5s (ADR 0007). E2E overrides it via
+// PAYLOAD_READ_TIMEOUT_MS: the dev-mode webServer serves the spec-010
+// block-composed pages with unoptimized, cold heavy joins, so a fresh
+// (cache-busted) homepage read on a CI runner legitimately exceeds 5s — the
+// same enlarged-schema slowness behind the int hookTimeout bump. Prod is
+// untouched (no env → 5000). The E2E value stays under the slow-request probe's
+// 15s ceiling (tests/e2e/slow-request.e2e.spec.ts).
+export const READ_TIMEOUT_MS = Number(process.env.PAYLOAD_READ_TIMEOUT_MS) || 5000
 
 /**
  * Dev/test-only sentinel. A reader called with this value as its first arg
