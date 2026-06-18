@@ -73,10 +73,16 @@ test.describe('US1 — homepage renders the homepage global', () => {
     await payload.updateGlobal({
       slug: 'homepage',
       data: {
-        hero: {
-          headline: 'A consulting partner you would want to hire',
-          subheadline: 'Strategy, delivery, and localshoring from Tulsa.',
-        },
+        // spec 010 (ADR 0009): the homepage renders its `layout` blocks, not the
+        // legacy `hero` field — seed a homepage-hero block so the composition has
+        // a heading to assert.
+        layout: [
+          {
+            blockType: 'homepage-hero',
+            headline: 'A consulting partner you would want to hire',
+            subheadline: 'Strategy, delivery, and localshoring from Tulsa.',
+          },
+        ] as never,
         _status: 'published',
       },
       overrideAccess: true,
@@ -87,15 +93,16 @@ test.describe('US1 — homepage renders the homepage global', () => {
     page,
   }) => {
     await revalidateDevCache(page.request, ['homepage_list'])
-    await warmRoute(page.request, '/', 'data-testid="hero"')
+    await warmRoute(page.request, '/', 'A consulting partner you would want to hire')
     const res = await page.goto('/')
     expect(res?.status()).toBe(200)
 
     await expect(page.getByTestId('homepage')).toBeVisible()
-    await expect(page.getByTestId('hero')).toBeVisible()
-    // The hero renders a heading from the homepage global (or its fallback) —
-    // proves the template composed, not the empty-state placeholder.
-    await expect(page.getByTestId('hero').locator('h1, h2').first()).toBeVisible()
+    // The homepage-hero block composed from the global's `layout` proves the
+    // template rendered the composition, not the empty-state placeholder.
+    await expect(
+      page.getByRole('heading', { name: 'A consulting partner you would want to hire' }),
+    ).toBeVisible()
 
     // The spike "No page yet" placeholder must be gone (drift #2).
     await expect(page.getByText('No page yet')).toHaveCount(0)

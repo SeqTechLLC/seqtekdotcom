@@ -23,6 +23,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
+  // CI gets a larger per-test budget: content tests warm a cold, heavy
+  // block-composed route first (warmRoute polls while the orphaned read
+  // populates unstable_cache) before asserting, which can exceed the 30s
+  // default. Local keeps 30s — the dev server is already warm there.
+  timeout: process.env.CI ? 120_000 : 30_000,
   reporter: 'html',
   use: {
     baseURL,
