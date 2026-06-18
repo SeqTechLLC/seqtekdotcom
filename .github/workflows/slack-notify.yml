@@ -1,0 +1,101 @@
+name: Slack notify
+
+# Reusable workflow: posts a single Block Kit status message to the
+# #seqtek-website-alerts Slack channel via an incoming webhook. Called by
+# deploy.yml (every run) and ci.yml (failures on any ref + successes on main).
+#
+# This is the GitHub Actions -> Slack path. It is deliberately SEPARATE from the
+# CloudWatch alarm path (SNS -> infra/lambda/slack-notifier -> Slack): GitHub
+# runners have no AWS identity, and faking an SNS alarm payload just to reach the
+# same channel would be a workaround. Both paths land in the same channel; the
+# webhook URL here lives as a GitHub Actions secret (SLACK_WEBHOOK_URL), whereas
+# the alarm path reads its URL from SSM Parameter Store at Lambda runtime.
+#
+# Graceful no-op: if SLACK_WEBHOOK_URL is not configured, the post step is
+# skipped (not failed), so callers can merge this before the secret exists.
+
+on:
+  workflow_call:
+    inputs:
+      status:
+        description: 'success | failure (the caller computes this from its job results)'
+        required: true
+        type: string
+      workflow-name:
+        description: 'Label for the message header; falls back to github.workflow if empty'
+        required: false
+        type: string
+        default: ''
+      site-url:
+        description: 'Optional URL to surface in the message (e.g. the deployed staging site)'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  notify:
+    name: Post to Slack
+    runs-on: ubuntu-latest
+    # The Slack incoming webhook needs no GITHUB_TOKEN scopes.
+    permissions: {}
+    env:
+      # Mapped to env so the `if:` guards below can test it — the `secrets`
+      # context is not available in step-level `if:` expressions.
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Build Block Kit payload
+        id: build
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
+        env:
+          STATUS: ${{ inputs.status }}
+          SITE_URL: ${{ inputs.site-url }}
+          # Explicit from the caller; github.workflow is the fallback.
+          WORKFLOW_NAME: ${{ inputs.workflow-name }}
+          GITHUB_WORKFLOW_FALLBACK: ${{ github.workflow }}
+          # Only present on push events; empty on pull_request / workflow_dispatch.
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          set -euo pipefail
+
+          WORKFLOW_NAME="${WORKFLOW_NAME:-$GITHUB_WORKFLOW_FALLBACK}"
+
+          if [ "$STATUS" = "success" ]; then
+            EMOJI="✅"; WORD="Succeeded"
+          else
+            EMOJI="❌"; WORD="Failed"
+          fi
+
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          # First line of the commit message only (parameter expansion avoids a
+          # pipe so `set -o pipefail` can't trip on SIGPIPE). Empty for PR runs.
+          SUBJECT="${COMMIT_MSG%%$'\n'*}"
+          COMMIT_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          SECTION="${EMOJI} *${WORKFLOW_NAME}*: ${WORD}"$'\n'"\`${GITHUB_REF_NAME}\` · <${COMMIT_URL}|${SHORT_SHA}>"
+          if [ -n "$SUBJECT" ]; then
+            SECTION="${SECTION} ${SUBJECT}"
+          fi
+          if [ -n "$SITE_URL" ]; then
+            SECTION="${SECTION}"$'\n'"🔗 <${SITE_URL}|${SITE_URL}>"
+          fi
+
+          CONTEXT="triggered by ${GITHUB_ACTOR} · <${RUN_URL}|run #${GITHUB_RUN_NUMBER}> · ${GITHUB_EVENT_NAME}"
+
+          # jq builds the JSON so commit subjects with quotes/specials can't break
+          # the payload. Block Kit: one section + one context line.
+          jq -n --arg section "$SECTION" --arg context "$CONTEXT" \
+            '{blocks: [
+               {type: "section", text: {type: "mrkdwn", text: $section}},
+               {type: "context", elements: [{type: "mrkdwn", text: $context}]}
+             ]}' > "$RUNNER_TEMP/slack-payload.json"
+
+          echo "payload-path=$RUNNER_TEMP/slack-payload.json" >> "$GITHUB_OUTPUT"
+
+      - name: Post to #seqtek-website-alerts
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
+        uses: slackapi/slack-github-action@v3.0.3
+        with:
+          webhook: ${{ env.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload-file-path: ${{ steps.build.outputs.payload-path }}

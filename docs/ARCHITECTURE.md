@@ -623,6 +623,8 @@ The Instance Refresh process: ASG launches a new instance with the updated launc
 
 **Cost of blue-green:** A second `t3.small` runs for ~5-10 minutes during each deploy. At $0.0208/hour, that's ~$0.003 per deploy — fractions of a penny.
 
+**Slack notifications:** Both the deploy and CI workflows report status to the same `#seqtek-website-alerts` channel the CloudWatch alarms use, via the reusable `slack-notify.yml` workflow. This is a separate path from the alarm pipeline (SNS → Lambda → Slack): GitHub runners have no AWS identity, so the webhook URL is a GitHub Actions secret (`SLACK_WEBHOOK_URL`) rather than the SSM parameter the alarm Lambda reads. `deploy.yml` posts every staging deploy outcome (success and failure); `ci.yml` posts every failure on any branch/PR plus successes on `main` only, to keep green PR pushes quiet. If `SLACK_WEBHOOK_URL` is unset the post step is skipped, not failed — so the workflows are safe to run before the secret is provisioned.
+
 ### Branch Strategy & Environments
 
 | Branch           | Deploys To                      | Database                        | Purpose                    |
