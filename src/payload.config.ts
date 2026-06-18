@@ -79,7 +79,14 @@ export default buildConfig({
     // drift can sneak into a deployed image without a corresponding
     // migration file (this is exactly the failure mode that caused PR #17's
     // migration collapse). Local dev keeps push for fast iteration.
-    push: process.env.NODE_ENV !== 'production',
+    //
+    // E2E/CI also opts out via PAYLOAD_DISABLE_PUSH=true and provisions the
+    // schema once with `payload migrate` (see pretest:e2e). Otherwise the dev
+    // webServer AND every Playwright worker each push the (spec-010 enlarged)
+    // schema concurrently on init, contending on Drizzle's introspection until
+    // getPayload blows the 30s beforeAll budget — the failure that kept the
+    // block-composition E2E suite red. Mirrors production: migrate, don't push.
+    push: process.env.NODE_ENV !== 'production' && process.env.PAYLOAD_DISABLE_PUSH !== 'true',
   }),
   sharp,
   plugins: [s3Plugin],

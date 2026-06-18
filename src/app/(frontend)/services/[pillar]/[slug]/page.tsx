@@ -8,11 +8,13 @@ import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
-import { RichText } from '@/components/richText/RichText'
+import { RenderBlocks } from '@/components/sections/RenderBlocks'
 import type { Service } from '@/payload-types'
 
-// spec 004 Phase 8 (T032). Service detail at the NESTED URL
-// `/services/[pillar]/[slug]` (drift #1 / research §D4). Shape B.
+// spec 004 + spec 010 (ADR 0009). Service detail at the NESTED URL
+// `/services/[pillar]/[slug]`; the body is block-composed via RenderBlocks.
+// Nested URL + pillar-match guard + breadcrumb + pillar-move revalidation
+// (revalidateOnChange) are preserved; only the body fields became `layout`.
 
 // Dynamically rendered (no generateStaticParams) — layout CSP nonce forces
 // dynamic rendering (Constitution §IV, ADR 0005); data ISR-cached via the
@@ -51,10 +53,11 @@ export default async function ServiceDetailPage({ params }: Props) {
   if (!service || pillarSlugOf(service) !== pillarSlug) notFound()
 
   const pillar = service.pillar && typeof service.pillar === 'object' ? service.pillar : null
+  // payload-types Service['layout'] is the RenderBlocks-compatible shape.
+  const layout = (service.layout ?? []) as never
 
-  // Reading column: this template is all text, so every section sits in a
-  // centered 65ch measure (DESIGN_SYSTEM.md "Reading column"). Center the block,
-  // keep text left-justified; never left-justify the column or widen past 65ch.
+  // Reading column for the route-owned header (DESIGN_SYSTEM §11.4). Body blocks
+  // own their own widths/centering (FR-009).
   const readingCol = 'mx-auto max-w-prose'
 
   return (
@@ -73,57 +76,13 @@ export default async function ServiceDetailPage({ params }: Props) {
         data-testid="service-detail"
         className="mx-auto max-w-container-lg px-4 py-16 md:px-6"
       >
-        <header className={`${readingCol} mb-12`}>
+        <header className={`${readingCol} mb-4`}>
           <h1 className="text-h1 font-bold" data-testid="service-title">
             {service.title}
           </h1>
         </header>
 
-        {service.description ? (
-          <section data-testid="service-description" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">Overview</h2>
-            <RichText data={service.description} />
-          </section>
-        ) : null}
-
-        {service.approach ? (
-          <section data-testid="service-approach" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">Our approach</h2>
-            <RichText data={service.approach} />
-          </section>
-        ) : null}
-
-        {service.deliverables?.length ? (
-          <section data-testid="service-deliverables" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">Deliverables</h2>
-            <ul className="list-disc space-y-2 pl-6 text-body text-text-secondary">
-              {service.deliverables.map((d) => (
-                <li key={d.id ?? d.label}>{d.label}</li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {service.faq?.length ? (
-          <section
-            data-testid="service-faq"
-            className={`${readingCol} border-t border-border-subtle pt-8`}
-          >
-            <h2 className="mb-4 text-h3 font-semibold">FAQ</h2>
-            <dl className="space-y-6">
-              {service.faq.map((item) => (
-                <div key={item.id ?? item.question}>
-                  <dt className="text-body font-semibold">{item.question}</dt>
-                  {item.answer ? (
-                    <dd className="mt-2 text-text-secondary">
-                      <RichText data={item.answer} withProse={false} />
-                    </dd>
-                  ) : null}
-                </div>
-              ))}
-            </dl>
-          </section>
-        ) : null}
+        <RenderBlocks blocks={layout} />
       </article>
     </>
   )

@@ -1,0 +1,20 @@
+{
+  "kind": "gap",
+  "brief": "Convert a legacy Wix 'Localshoring vs Offshore' page whose centerpiece is a draggable before/after image comparison slider into blocks. The surrounding prose and CTA map cleanly, but the slider itself has no block.",
+  "source": {
+    "ref": "audit:localshoring-vs-offshore",
+    "type": "wix-audit",
+    "content": {
+      "mustReproduce": [
+        "See the difference localshoring makes",
+        "Drag to compare an offshore handoff against a local team in the room",
+        "Talk to us"
+      ]
+    }
+  },
+  "missingBlock": {
+    "name": "image-comparison-slider",
+    "reason": "The page's centerpiece is a draggable before/after comparison: two images stacked with a handle the visitor drags to reveal one over the other. No existing block renders a stateful, client-side drag-to-reveal interaction. `gallery` shows images side by side or in a carousel and `two-column` places two figures next to each other, but neither provides the overlay-and-drag behavior the source depends on. The surrounding prose (`content`) and CTA (`contact-cta`) convert cleanly; only the slider is a real capability gap, so it routes to the block-curation loop (FR-011) for a new `image-comparison-slider` block rather than hand-coding a one-off page.",
+    "nearestExisting": "two-column"
+  }
+}

@@ -51,6 +51,8 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 
 All collections are defined in TypeScript. Payload auto-generates the database schema, REST API, GraphQL API, and admin panel from these definitions.
 
+> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`services`/`teamMembers`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields some tables still list (`problem`/`solution`/`impact`, `bio`, `hero`/`stats`/…) are retained one release (hidden + read-only, expand/contract) and composed into `layout` by `src/payload/seed/compose/*ToLayout.ts`. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `servicePillars`/`industries`/`locations` stay structured — they are listing/taxonomy targets, not retired detail templates.
+
 ### Document Collections
 
 #### `users`

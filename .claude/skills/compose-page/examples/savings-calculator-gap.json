@@ -1,0 +1,10 @@
+{
+  "kind": "gap",
+  "brief": "A localshoring landing page whose centerpiece is an interactive savings calculator: the visitor enters team size and current offshore rate, drags a slider, and sees projected annual savings recompute live on the page. Target collection: pages.",
+  "collection": "pages",
+  "missingBlock": {
+    "name": "savings-calculator",
+    "reason": "The brief's centerpiece is a stateful, client-side interactive widget (inputs + slider that recompute a result on change). No existing block renders editable inputs or live client-side computation. `stats-bar` and `metric-display` present fixed, authored numbers; `embed` could host a third-party calculator but the brief asks for a first-party, branded, on-page experience. This is a genuine capability gap, so it routes to the block-curation loop (FR-011) for a new `savings-calculator` block rather than hand-coding a one-off page.",
+    "nearestExisting": "metric-display"
+  }
+}

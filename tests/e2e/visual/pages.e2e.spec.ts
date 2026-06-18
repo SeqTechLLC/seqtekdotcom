@@ -32,6 +32,10 @@ const ROUTES: { slug: string; path: string }[] = [
   { slug: 'workshops', path: '/workshops' },
   { slug: 'contact', path: '/contact' },
   { slug: 'privacy-policy', path: '/privacy-policy' },
+  // spec 010: the block-composed team detail route (new in US2). The other
+  // migrated detail routes (workshops/case-studies/services) use content-specific
+  // slugs and are swept ad-hoc; the listings above already cover their grids.
+  { slug: 'team-detail', path: '/team/dana-dudley' },
 ]
 
 test.beforeAll(async () => {

@@ -1,0 +1,324 @@
+{
+  "kind": "layout",
+  "brief": "Convert the existing migrated Touchstone workshop record into a block layout reproducing its body, consistent with the per-type workshop composer.",
+  "source": {
+    "ref": "workshops/touchstone",
+    "type": "migrated-record",
+    "content": {
+      "mustReproduce": [
+        "Touchstone is a hands-on session where your team maps real delivery decisions onto a shared model.",
+        "One full day, on site or remote, capped at twelve participants.",
+        "Built for product, engineering, and operations leaders who own delivery.",
+        "A shared decision model your team actually uses",
+        "A prioritized list of delivery risks",
+        "A 30-day action plan with owners",
+        "Mapping decisions on the wall",
+        "Touchstone recap"
+      ]
+    },
+    "record": {
+      "title": "Touchstone",
+      "description": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "direction": "ltr",
+          "children": [
+            {
+              "type": "paragraph",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "textFormat": 0,
+              "textStyle": "",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "Touchstone is a hands-on session where your team maps real delivery decisions onto a shared model."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "format": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "direction": "ltr",
+          "children": [
+            {
+              "type": "paragraph",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "textFormat": 0,
+              "textStyle": "",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "One full day, on site or remote, capped at twelve participants."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "audience": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "direction": "ltr",
+          "children": [
+            {
+              "type": "paragraph",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "textFormat": 0,
+              "textStyle": "",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "Built for product, engineering, and operations leaders who own delivery."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "deliverables": [
+        { "label": "A shared decision model your team actually uses" },
+        { "label": "A prioritized list of delivery risks" },
+        { "label": "A 30-day action plan with owners" }
+      ],
+      "photos": [{ "image": 101, "caption": "Mapping decisions on the wall" }],
+      "video": { "provider": "youtube", "videoId": "k4Touchstone", "title": "Touchstone recap" },
+      "testimonial": 7
+    }
+  },
+  "layout": [
+    {
+      "blockType": "content",
+      "width": "standard",
+      "background": "none",
+      "body": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "direction": "ltr",
+          "children": [
+            {
+              "type": "heading",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "tag": "h2",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "What it is"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "textFormat": 0,
+              "textStyle": "",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "Touchstone is a hands-on session where your team maps real delivery decisions onto a shared model."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blockType": "content",
+      "width": "standard",
+      "background": "none",
+      "body": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "direction": "ltr",
+          "children": [
+            {
+              "type": "heading",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "tag": "h2",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "Format"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "textFormat": 0,
+              "textStyle": "",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "One full day, on site or remote, capped at twelve participants."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blockType": "content",
+      "width": "standard",
+      "background": "none",
+      "body": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "direction": "ltr",
+          "children": [
+            {
+              "type": "heading",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "tag": "h2",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "Who it is for"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "textFormat": 0,
+              "textStyle": "",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "Built for product, engineering, and operations leaders who own delivery."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blockType": "deliverables",
+      "heading": "What you leave with",
+      "items": [
+        { "label": "A shared decision model your team actually uses" },
+        { "label": "A prioritized list of delivery risks" },
+        { "label": "A 30-day action plan with owners" }
+      ]
+    },
+    {
+      "blockType": "gallery",
+      "heading": "What a real workshop looks like",
+      "layout": "grid",
+      "columns": "3",
+      "items": [{ "image": 101, "caption": "Mapping decisions on the wall" }]
+    },
+    {
+      "blockType": "video-embed",
+      "provider": "youtube",
+      "videoId": "k4Touchstone",
+      "title": "Touchstone recap"
+    },
+    {
+      "blockType": "testimonial-block",
+      "testimonial": 7,
+      "layout": "centered"
+    },
+    {
+      "blockType": "contact-cta",
+      "heading": "Request this workshop",
+      "body": "Tell us about your team and we will follow up with dates.",
+      "primaryCta": { "label": "Book a call", "url": "/contact/book-a-call" }
+    }
+  ]
+}

@@ -20,6 +20,14 @@ export interface UpsertOptions<TData> {
   data: TData
   /** When true, no writes happen; the planned operation is returned for stdout. */
   dryRun?: boolean
+  /**
+   * Whether the write lands as a draft. Defaults to `true` (the audit-seed
+   * behavior: tolerate null required relationships, log gaps, let an editor
+   * publish). The field→layout composers (spec 010) pass `false` for records
+   * whose source was already published, so the route switch to `RenderBlocks`
+   * is non-breaking (the published version carries the composed `layout`).
+   */
+  draft?: boolean
   /** Optional logger so the helper can surface parse/lookup gaps. */
   logger?: MigrationLogger
 }
@@ -42,6 +50,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
   slug,
   data,
   dryRun = false,
+  draft = true,
   logger,
 }: UpsertOptions<TData>): Promise<UpsertResult<TData>> {
   if (!slug) {
@@ -57,6 +66,13 @@ export async function upsertBySlug<TData extends { slug?: string }>({
 
   const merged = { ...data, slug } as TData
 
+  // Existence check uses the SAME `draft` flag as the write. With draft:true
+  // (audit seed) this matches draft records via the version table; with
+  // draft:false (the publish-preserving composers) it matches the published
+  // main row — which is the only place a row exists for a collection that just
+  // had drafts enabled and has no version snapshots yet (teamMembers, spec 010
+  // Phase E). A fixed draft:true there would miss the published row and try to
+  // re-create it, hitting the unique-slug constraint.
   if (dryRun) {
     const existing = await payload.find({
       collection,
@@ -64,7 +80,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
       limit: 1,
       depth: 0,
       overrideAccess: true,
-      draft: true,
+      draft,
     })
     return {
       collection,
@@ -81,7 +97,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
     limit: 1,
     depth: 0,
     overrideAccess: true,
-    draft: true,
+    draft,
   })
 
   if (existing.totalDocs > 0) {
@@ -91,7 +107,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
       id: found.id,
       data: merged as never,
       overrideAccess: true,
-      draft: true,
+      draft,
     })
     return { collection, slug, operation: 'update', id: updated.id, data: merged }
   }
@@ -100,7 +116,7 @@ export async function upsertBySlug<TData extends { slug?: string }>({
     collection,
     data: merged as never,
     overrideAccess: true,
-    draft: true,
+    draft,
   })
   return { collection, slug, operation: 'create', id: created.id, data: merged }
 }

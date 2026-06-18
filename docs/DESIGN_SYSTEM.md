@@ -449,8 +449,9 @@ Per §4, three section padding tokens (`section-tight`, `section-default`, `sect
 
 ### 11.4 Reading column (body-copy alignment)
 
-**Body copy is a left-justified block, capped at the `prose` measure (`max-w-prose`, 65ch), and CENTERED as a block within its container.** This is a hard rule — every long-form template (insights, case studies, the Content block / about) must follow it.
+**Body copy is a left-justified block, capped at the `prose` measure (`max-w-prose`, 65ch), and CENTERED as a block within its container.** This is a hard rule.
 
+- **The rule lives in the block components, not in templates (FR-009, ADR 0009).** After spec 010 every non-blog page renders its body through `RenderBlocks`, so the reading-column wrapper is owned by the block render components (`src/components/sections/Content.tsx`, `Image.tsx`, `Gallery.tsx`, `Deliverables.tsx`, …): each wraps its content in `mx-auto max-w-container-lg` with the centred reading measure inside. Fix the wrapper in one block and that layout is fixed everywhere it renders — the "four-templates-one-bug" problem ADR 0009 cites. The only sanctioned exception is the bespoke Posts (insights) article template. Verify by **measuring element boxes** at desktop+mobile via the visual harness, not by reasoning from classes (memory: "measure, don't reason").
 - **Why 65ch:** the `@tailwindcss/typography` `prose` class caps line length at 65ch — the readable measure (~50–75 chars/line). Keep it. Do **not** widen body copy past it.
 - **Center the block, not the text.** Use `mx-auto` (auto side margins) so the column sits on the page's centre axis. Never use `text-center` on body copy or headings — centered _text_ (ragged both edges) looks broken; we want left-justified text in a centred block.
 - **Different widths are fine if everything is centred.** A full-width hero, a wide metrics grid, and a 65ch body column can coexist — as long as they all share one vertical centre axis (concentric). What looks broken is **left-justifying** mismatched widths (wide title, narrower hero, narrower body all hugging the left edge with ragged right edges).

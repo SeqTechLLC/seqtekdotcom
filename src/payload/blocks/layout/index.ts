@@ -16,10 +16,12 @@ import { Embed } from './Embed'
 import { FAQ } from './FAQ'
 import { FeaturedCaseStudy } from './FeaturedCaseStudy'
 import { FeaturedTestimonials } from './FeaturedTestimonials'
+import { Gallery } from './Gallery'
 import { Hero } from './Hero'
 import { HomepageHero } from './HomepageHero'
 import { HubspotForm } from './HubspotForm'
 import { HubspotMeetings } from './HubspotMeetings'
+import { Image } from './Image'
 import { IndustryGrid } from './IndustryGrid'
 import { KeyTakeaways } from './KeyTakeaways'
 import { LocationsList } from './LocationsList'
@@ -61,10 +63,12 @@ export {
   FAQ,
   FeaturedCaseStudy,
   FeaturedTestimonials,
+  Gallery,
   Hero,
   HomepageHero,
   HubspotForm,
   HubspotMeetings,
+  Image,
   IndustryGrid,
   KeyTakeaways,
   LocationsList,
@@ -98,6 +102,8 @@ export const layoutBlocks = [
   HomepageHero,
   Content,
   TwoColumn,
+  Image,
+  Gallery,
   ProcessSteps,
   Deliverables,
   ComparisonTable,

@@ -17,21 +17,22 @@ Payload supports two ways to model page content:
 - **Structured fields** — fixed schema, predictable shape (e.g., a `CaseStudies` collection always has `problem`, `solution`, `impact`).
 - **Blocks (`type: blocks`)** — polymorphic, repeatable, editor-arranged (e.g., a `Page` can stack Hero + Stats + Content + CTA in any order).
 
-The wrong choice creates either rigidity (structured-only) or chaos (blocks-only). Rule of thumb:
+**As of spec 010 / ADR 0009 this choice is largely settled: two content primitives.** Every non-blog page renders its body from a `layout` blocks array through `RenderBlocks`; only the blog Post keeps a bespoke richText article body. The "structured vs blocks" tension below is now mostly historical context — the rule of thumb still governs _new_ models, but the specialized detail types have all moved to blocks (keeping their typed metadata: slug, listing image, SEO, relationships).
 
-| Collection / Global | Approach                                   | Why                                                                                                                                          |
-| ------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pages`             | **Blocks** (`layout` field)                | Generic content pages (about sub-pages, resources, etc.) need flexible composition                                                           |
-| `homepage` (global) | **Structured fields**                      | Content is fixed and intentional; editors should not be able to remove the stats bar                                                         |
-| `posts`             | **Structured + inline blocks in richText** | Title/excerpt/author are fixed; body is rich text with embedded CTA/testimonial/callout blocks                                               |
-| `caseStudies`       | **Structured**                             | Per CONTENT-REQUIREMENTS, every case study has the same Challenge → Approach → Results → Testimonial structure. Variance kills scannability. |
-| `services`          | **Structured**                             | Same — buyers compare service pages side-by-side; consistent shape helps                                                                     |
-| `servicePillars`    | **Structured**                             | Three pillars, three identical pages, predictable shape                                                                                      |
-| `workshops`         | **Structured**                             | Workshop pages are product pages with consistent fields                                                                                      |
-| `industries`        | **Structured**                             | Industry pages share a fixed template per CONTENT-REQUIREMENTS                                                                               |
-| `locations`         | **Structured**                             | Market landing pages — same shape, different city content                                                                                    |
+| Collection / Global | Body approach                              | Notes                                                                                                                  |
+| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `pages`             | **Blocks** (`layout`)                      | The reference model; generic content pages composed freely                                                             |
+| `homepage` (global) | **Blocks** (`layout`)                      | spec 010: was structured; now block-composed and editor-reorderable (composer adds the dual-CTA hero defaults)         |
+| `caseStudies`       | **Blocks** (`layout`)                      | spec 010: was structured (problem/solution/impact/metrics/…); composed into blocks, typed metadata retained            |
+| `services`          | **Blocks** (`layout`)                      | spec 010: was structured; composed; nested `/services/[pillar]/[slug]` URL + pillar-move revalidation preserved        |
+| `workshops`         | **Blocks** (`layout`)                      | spec 010 pilot (US1): the acceptance gate; composed (incl. `gallery` proof photos + `video-embed`)                     |
+| `teamMembers`       | **Blocks** (`layout`)                      | spec 010: gained `layout` + drafts/live-preview; new `/team/[slug]` detail renders via `RenderBlocks` + Person JSON-LD |
+| `posts`             | **Structured + inline blocks in richText** | **The sanctioned exception** (ADR 0009): title/excerpt/author fixed; body is rich text with embedded inline blocks     |
+| `servicePillars`    | **Structured**                             | Listing target, not a retired detail template; keeps its `description` richText                                        |
+| `industries`        | **Structured**                             | Taxonomy/listing; no body composition                                                                                  |
+| `locations`         | **Structured**                             | Market landing taxonomy; no body composition                                                                           |
 
-Net: only `pages` uses the full block library as `layout`. Other collections embed specific blocks at known field positions (e.g., a `richText` body field with `BlocksFeature` for inline blocks).
+Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `servicePillars`/`industries`/`locations` stay structured because they are listing/taxonomy targets, not retired detail templates. Old discrete body columns are retained one release (hidden + read-only, expand/contract) then dropped (`drop_legacy_body_columns`).
 
 ---
 
@@ -164,6 +165,28 @@ Inline blocks available within the `body` richText:
 | `body`          | richText       | yes      |                  |
 | `media`         | upload (media) | yes      |                  |
 | `cta`           | group          | no       |                  |
+
+#### `image` — single captioned figure (spec 010, FR-005)
+
+| Field       | Type           | Required | Notes                                                             |
+| ----------- | -------------- | -------- | ----------------------------------------------------------------- |
+| `image`     | upload (media) | yes      | alt sourced from Media collection                                 |
+| `caption`   | text           | no       | rendered as `<figcaption>`                                        |
+| `width`     | select         | no       | `narrow` / `standard` / `wide` / `full`; default `standard`       |
+| `alignment` | select         | no       | `center` / `left` / `right`; default `center` (reading-axis safe) |
+
+The one-off counterpart to `gallery`. Width variants mirror the `content` reading-column measures so a figure shares the body's vertical axis (DESIGN_SYSTEM §11.4 — owned by the block).
+
+#### `gallery` — 1..N image gallery (spec 010, FR-005)
+
+| Field     | Type   | Required       | Notes                                                       |
+| --------- | ------ | -------------- | ----------------------------------------------------------- |
+| `heading` | text   | no             | Optional section heading                                    |
+| `items`   | array  | yes (min 1)    | Each: `image` (upload, required), `caption` (text)          |
+| `layout`  | select | no             | `grid` / `carousel`; default `grid`                         |
+| `columns` | select | no (grid only) | `2` / `3` / `4`; default `3`; hidden when `layout=carousel` |
+
+The "drop a one-to-many picture section onto any page layout" block. Workshop `photos[]` migrates here; one-off figures use `image`. Unpopulated rows (depth-0 / missing upload) are dropped at render, never thrown.
 
 #### `process-steps` — numbered methodology
 
@@ -458,11 +481,60 @@ Spec 003 Phase 2 (T050–T056) shipped 32 layout blocks. The mapping below recon
 
 **Final Phase 2 layout block count: 43** — every block enumerated in §5.1–§5.6 is implemented, plus the 7 additions beyond the catalog from the table above. HubSpot-driven blocks (`hubspot-form`, `hubspot-meetings`, `download-card`, `newsletter-cta`) ship with static placeholder affordances in the Phase 2 renderer; the live HubSpot script integration lands in Phase 3 per `docs/INTEGRATIONS.md` §1–§3.
 
+**Spec 010 additions (ADR 0009, FR-005): +2 → 45 blocks.** `image` (§5.2) and `gallery` (§5.2) close the image gap surfaced by the block-coverage audit (§5.8). These are the only new blocks the block-composed-pages migration required.
+
+### 5.8 Block-coverage audit (spec 010 / SC-005)
+
+ADR 0009 retires every bespoke per-type render template (workshops, case studies, services, team, homepage) in favor of `RenderBlocks(layout)`. SC-005 requires that **every capability of each retired template maps to ≥1 existing block — zero capabilities lost.** The audit below is the proof; the only gap was images, closed by `image` + `gallery`.
+
+| Retired template capability                                     | Block(s) that cover it                                                                                           |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Workshop description / format / audience (richText)             | `content`                                                                                                        |
+| Workshop deliverables (array)                                   | `deliverables`                                                                                                   |
+| Workshop photos (1..N images)                                   | **`gallery`** (new)                                                                                              |
+| Workshop recap video                                            | `video-embed`                                                                                                    |
+| Workshop testimonial                                            | `testimonial-block`                                                                                              |
+| Workshop download + inquiry form                                | `download-card`, `hubspot-form`                                                                                  |
+| Case study hero + lead metric                                   | `case-study-hero`                                                                                                |
+| Case study problem / solution / impact (richText)               | `content`                                                                                                        |
+| Case study metrics                                              | `stats-bar`, `metric-display`                                                                                    |
+| Case study technologies                                         | `tech-stack`                                                                                                     |
+| Case study key takeaways                                        | `key-takeaways`                                                                                                  |
+| Service description / approach (richText)                       | `content`                                                                                                        |
+| Service deliverables                                            | `deliverables`                                                                                                   |
+| Service FAQ (preserves FAQPage JSON-LD)                         | `faq`                                                                                                            |
+| Team member bio / narrative                                     | `content`                                                                                                        |
+| Team member expertise / certs / education / facts               | `deliverables`, `key-takeaways`, `content`                                                                       |
+| Team member quote                                               | `testimonial-block`                                                                                              |
+| Homepage hero / stats / featured / brand / logos / testimonials | `homepage-hero`, `stats-bar`, `featured-case-study`, `brand-teaser`, `client-logo-grid`, `featured-testimonials` |
+| One-off figure (any page)                                       | **`image`** (new)                                                                                                |
+
+Result: 0 lost capabilities. The reading-column rule (DESIGN_SYSTEM §11.4) is enforced inside the block components, so it travels with the block onto any page (FR-009).
+
+### 5.9 Block-curation loop — the one code path (spec 010 / ADR 0009 / FR-011)
+
+Under ADR 0009 every non-blog page is `RenderBlocks(layout)`. Rearranging, enriching, or building a page is a **content edit with no deploy**. The single change that legitimately requires code is **adding or fixing a block type** — and once a block lands it is usable on every page type with no per-type code. This is that loop. `image` + `gallery` (the only gap the §5.8 audit found) are its worked example.
+
+1. **Surface the gap.** A page cannot be expressed with the current library — discovered while composing (the [`compose-page`](../.claude/skills/compose-page/SKILL.md) authoring skill and the [`convert-to-blocks`](../.claude/skills/convert-to-blocks/SKILL.md) conversion skill each emit a single **named block gap** instead of a layout) or by hand. The skills never hand-code a page; they name exactly one missing block and stop.
+2. **Confirm it is really a gap.** Re-run the §5.8 audit method against the need: does an existing block (or an existing block plus one new field/variant) already cover it? Prefer **extending an existing block** over a new slug when the capability is a variant of something we already render (e.g. a new `content.width` value, a `testimonial-block` layout option). Only a genuinely new capability earns a new block. If more than one capability is missing, close the highest-leverage one first, then re-run the skill.
+3. **Add or fix the block (the only code).** This is the whole code path:
+   - Block config: `src/payload/blocks/layout/<Name>.ts` (kebab-case `slug`), then register it in `src/payload/blocks/layout/index.ts` **and** add it to the exported `layoutBlocks` array.
+   - Render component: `src/components/sections/<Name>.tsx`, then register the slug in `src/components/sections/registry.ts`. The reading-column rule (DESIGN_SYSTEM §11.4) lives **inside the component** so it travels with the block onto every page (FR-009).
+   - Run `npm run generate:types` and `npm run generate:importmap`.
+   - Add the Payload migration for the new block tables (`<collection>_blocks_<slug>*` live **and** `_<collection>_v_blocks_<slug>*` version tables) — never `drizzle-kit push` (Constitution V). Because `layout` is the same `[...layoutBlocks]` array on every collection, the generated migration adds the block's tables for **every** collection at once.
+   - Add a showcase fixture (`src/payload/seed/showcase/fixtures.ts`) and visually verify per CLAUDE.md.
+4. **Document it.** Add the block to the §5 catalog (category + field table) and bump the count in §5.7. The registry↔library coupling is guarded by `tests/int/render/registryCoverage.int.spec.ts` (every layout export has a registry entry and vice-versa — no orphans).
+5. **Available everywhere, no per-type code.** Every collection's `layout` field spreads the **same** `layoutBlocks` array and every page renders through the **one** `RenderBlocks` dispatcher, so the new block is immediately usable on pages, workshops, case studies, services, and team with zero per-type code. This reuse property is pinned by `tests/int/blocks/blockReuseAcrossTypes.int.spec.tsx` (the `gallery` worked example renders identically on page + case study + workshop from one definition).
+
+The loop is deliberately the **only** exception to "no code for layout" (SC-006): if a change is not "add or fix a block type," it should not require a deploy.
+
 ---
 
 ## 6. Page composition matrix
 
 Block order per page type. This is the canonical reference — content layouts should follow these unless there's a documented reason to vary.
+
+> **Post-spec-010 note (ADR 0009):** the entries below that describe a type as "structured fields rendered through fixed sequence" (case study, service detail, service pillar) are **historical** — those bodies are now `layout` blocks rendered by `RenderBlocks`, and the per-type seed composers (`src/payload/seed/compose/*ToLayout.ts`) emit exactly these orderings as each record's default `layout`. So this matrix is now the **composer's default block order** (and the editor's starting point), not a hardcoded render template. Component names like `<Prose>`/`<MetricsGrid>`/`<TestimonialSingle>` map to the real block slugs `content`/`metric-display`+`stats-bar`/`testimonial-block` (see §5.7 renames). Only the blog Post still renders a bespoke richText body.
 
 ### Homepage (`homepage` global — structured fields, not blocks)
 

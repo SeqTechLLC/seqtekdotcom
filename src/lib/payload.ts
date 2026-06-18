@@ -149,6 +149,7 @@ type SluggedCollection =
   | 'services'
   | 'servicePillars'
   | 'workshops'
+  | 'teamMembers'
 
 // ---------------------------------------------------------------------------
 // Chrome globals — layered React.cache → unstable_cache
@@ -293,6 +294,18 @@ export const getWorkshopBySlug = withReadTimeout(
       async () => (await findPublishedBySlug('workshops', slug)) as Workshop | null,
       ['workshops', slug],
       { tags: detailCacheTags('workshops', slug), revalidate: ONE_HOUR },
+    )(),
+)
+
+// spec 010 US2 (Phase E): teamMembers gains a block-composed `/team/[slug]`
+// detail route (R7). Same cached-reader stack + tag parity as the others.
+export const getTeamMemberBySlug = withReadTimeout(
+  'getTeamMemberBySlug',
+  (slug: string): Promise<TeamMember | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('teamMembers', slug)) as TeamMember | null,
+      ['teamMembers', slug],
+      { tags: detailCacheTags('teamMembers', slug), revalidate: ONE_HOUR },
     )(),
 )
 

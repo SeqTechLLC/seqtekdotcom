@@ -1,4 +1,4 @@
-import type { Post, SiteSetting } from '@/payload-types'
+import type { Post, SiteSetting, TeamMember } from '@/payload-types'
 
 // spec 004 Phase 2 (T008). JSON-LD builders (research §D7). These return plain
 // serializable objects; render them through the nonce-safe `<JsonLd>` server
@@ -72,6 +72,36 @@ export const articleLd = (post: Post): JsonLdObject => {
     ...(post.updatedAt ? { dateModified: post.updatedAt } : {}),
     ...(author ? { author } : {}),
     publisher: { '@type': 'Organization', name: 'SEQTEK' },
+  }
+}
+
+/**
+ * Person schema for `/team/[slug]` (spec 010 US2 / CONTENT-REQUIREMENTS §8.7 —
+ * AICO/E-E-A-T: job title, expertise keywords, a `sameAs` link, canonical URL).
+ */
+export const personLd = (member: TeamMember): JsonLdObject => {
+  const image =
+    member.photo && typeof member.photo === 'object' && 'url' in member.photo
+      ? (member.photo.url ?? undefined)
+      : undefined
+  const sameAs = [member.linkedinUrl].filter(
+    (u): u is string => typeof u === 'string' && u.length > 0,
+  )
+  const expertise = (member.expertise ?? [])
+    .map((e) => e?.label)
+    .filter((l): l is string => typeof l === 'string' && l.length > 0)
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: member.name,
+    ...(member.title ? { jobTitle: member.title } : {}),
+    url: absolute(`/team/${member.slug}`),
+    ...(image ? { image } : {}),
+    ...(member.email ? { email: member.email } : {}),
+    ...(expertise.length ? { knowsAbout: expertise } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+    worksFor: { '@type': 'Organization', name: 'SEQTEK' },
   }
 }
 

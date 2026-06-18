@@ -286,6 +286,75 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
       ],
     },
     {
+      blockType: 'image',
+      category: 'content',
+      variants: [
+        {
+          name: 'standard-center',
+          data: {
+            blockType: 'image',
+            image: media.photo,
+            caption: 'Standard width, centered on the reading axis.',
+            width: 'standard',
+            alignment: 'center',
+          },
+        },
+        {
+          name: 'wide',
+          data: {
+            blockType: 'image',
+            image: media.screenshot,
+            caption: 'Wider measure for product screenshots and diagrams.',
+            width: 'wide',
+            alignment: 'center',
+          },
+        },
+        {
+          name: 'full-bleed',
+          data: {
+            blockType: 'image',
+            image: media.photo,
+            width: 'full',
+            alignment: 'center',
+          },
+        },
+      ],
+    },
+    {
+      blockType: 'gallery',
+      category: 'content',
+      variants: [
+        {
+          name: 'grid-three',
+          data: {
+            blockType: 'gallery',
+            heading: 'What a real workshop looks like',
+            layout: 'grid',
+            columns: '3',
+            items: [
+              { image: media.photo, caption: 'Discovery session' },
+              { image: media.screenshot, caption: 'Whiteboard mapping' },
+              { image: media.illustration, caption: 'Plan of record' },
+              { image: media.photo, caption: 'Team readout' },
+            ],
+          },
+        },
+        {
+          name: 'carousel',
+          data: {
+            blockType: 'gallery',
+            heading: 'Engagement gallery (carousel)',
+            layout: 'carousel',
+            items: [
+              { image: media.photo, caption: 'On-site week one' },
+              { image: media.screenshot, caption: 'Build phase' },
+              { image: media.illustration, caption: 'Handoff' },
+            ],
+          },
+        },
+      ],
+    },
+    {
       blockType: 'process-steps',
       category: 'content',
       variants: [
