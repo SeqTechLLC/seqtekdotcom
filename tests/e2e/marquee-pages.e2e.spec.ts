@@ -86,7 +86,8 @@ test.describe('US1 — homepage renders the homepage global', () => {
   test('GET / → 200, homepage composition renders (no placeholder), axe-clean', async ({
     page,
   }) => {
-    await warmRoute(page.request, '/')
+    await revalidateDevCache(page.request, ['homepage_list'])
+    await warmRoute(page.request, '/', 'data-testid="hero"')
     const res = await page.goto('/')
     expect(res?.status()).toBe(200)
 
@@ -167,7 +168,7 @@ test.describe('US3 — team page renders members with photos', () => {
     // so the render reflects the just-created member regardless of suite order.
     await revalidateDevCache(request, ['teamMembers_list'])
 
-    await warmRoute(request, '/team')
+    await warmRoute(request, '/team', TEAM_NAME)
     const res = await page.goto('/team')
     expect(res?.status()).toBe(200)
     await expect(page.getByTestId('team')).toBeVisible()
@@ -251,6 +252,11 @@ test.describe('US2 — case study renders structured fields', () => {
       overrideAccess: true,
     })
 
+    // Warm the cached published read (getCaseStudyBySlug) to a cache hit (null —
+    // this case study is draft-only) so the draft render skips the cold heavy
+    // published query that can trip the read-timeout. allowNotFound: once the
+    // null read is cached the warm lands on the 404.
+    await warmRoute(page.request, `/case-studies/${CASE_SLUG}`, [], true)
     await attachEditorSessionToContext(context, baseURL!, CASE_EDITOR)
 
     // The preview route authenticates, enables draft mode, and 302s to the
@@ -323,6 +329,7 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
       overrideAccess: true,
     })
 
+    await warmRoute(page.request, `/workshops/${WORKSHOP_SLUG}`, 'data-testid="workshop-detail"')
     const res = await page.goto(`/workshops/${WORKSHOP_SLUG}`)
     expect(res?.status()).toBe(200)
     await expect(page.getByTestId('workshop-detail')).toBeVisible()

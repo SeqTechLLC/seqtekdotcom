@@ -3,6 +3,7 @@ import type { Payload } from 'payload'
 
 import { getPayloadClient, lexical, PNG_1x1 } from '../helpers/seedInScopeRoutes'
 import { revalidateDevCache } from '../helpers/revalidateDevCache'
+import { warmRoute } from '../helpers/warmRoute'
 
 // spec 010 US2 (Phase C) — case-study body renders via RenderBlocks; the
 // grid/listing + breadcrumb JSON-LD are unchanged (FR-006). Kept metadata
@@ -81,6 +82,7 @@ test('case-study renders RenderBlocks body + listing + breadcrumb JSON-LD intact
 }) => {
   await revalidateDevCache(request, [`caseStudies_${SLUG}`, 'caseStudies_list'])
 
+  await warmRoute(request, `/case-studies/${SLUG}`, TITLE)
   await page.goto(`/case-studies/${SLUG}`)
   await expect(page.getByTestId('case-study-title')).toHaveText(TITLE)
   // Body composed block renders.
@@ -90,6 +92,7 @@ test('case-study renders RenderBlocks body + listing + breadcrumb JSON-LD intact
   expect(ld.some((s) => s.includes('BreadcrumbList'))).toBe(true)
 
   // Listing parity: the case study appears on /case-studies.
+  await warmRoute(request, '/case-studies', TITLE)
   await page.goto('/case-studies')
   await expect(page.getByRole('link', { name: new RegExp(TITLE) })).toBeVisible()
 })

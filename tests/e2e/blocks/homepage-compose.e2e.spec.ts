@@ -83,7 +83,7 @@ test('homepage renders its global layout via RenderBlocks with Organization JSON
   // The mutation ran in a separate process from the dev server — bust the
   // homepage_list cache (globalCacheTags('homepage')).
   await revalidateDevCache(request, ['homepage_list'])
-  await warmRoute(request, '/')
+  await warmRoute(request, '/', HERO_MARKER)
   await page.goto('/')
 
   // The composed blocks render — proves `/` reads `homepage.layout` through the
@@ -103,7 +103,7 @@ test('the header cta_click conversion signal still fires on the composed homepag
   request,
 }) => {
   await revalidateDevCache(request, ['homepage_list'])
-  await warmRoute(request, '/')
+  await warmRoute(request, '/', HERO_MARKER)
   await page.goto('/')
   await page.waitForFunction(() => Array.isArray(window.dataLayer))
 

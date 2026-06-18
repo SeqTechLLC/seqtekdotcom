@@ -78,7 +78,7 @@ test('workshop renders block layout, listing + breadcrumb JSON-LD intact', async
   expect(ld.some((s) => s.includes('BreadcrumbList'))).toBe(true)
 
   // Listing parity: the workshop appears on /workshops.
-  await warmRoute(request, '/workshops')
+  await warmRoute(request, '/workshops', TITLE)
   await page.goto('/workshops')
   await expect(page.getByRole('link', { name: TITLE })).toBeVisible()
 })

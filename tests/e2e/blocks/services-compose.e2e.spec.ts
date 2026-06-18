@@ -3,6 +3,7 @@ import type { Payload } from 'payload'
 
 import { getPayloadClient, lexical } from '../helpers/seedInScopeRoutes'
 import { revalidateDevCache } from '../helpers/revalidateDevCache'
+import { warmRoute } from '../helpers/warmRoute'
 
 // spec 010 US2 (Phase D) — service body renders via RenderBlocks at the NESTED
 // URL `/services/[pillar]/[slug]`; breadcrumb + pillar-match guard preserved
@@ -74,6 +75,7 @@ test('nested /services/[pillar]/[slug] renders RenderBlocks body + breadcrumb', 
     `servicePillars_${PILLAR}`,
   ])
 
+  await warmRoute(request, `/services/${PILLAR}/${SLUG}`, TITLE)
   await page.goto(`/services/${PILLAR}/${SLUG}`)
   await expect(page.getByTestId('service-title')).toHaveText(TITLE)
   await expect(page.getByTestId('service-detail')).toContainText(BODY)

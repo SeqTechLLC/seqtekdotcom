@@ -3,6 +3,7 @@ import type { Payload } from 'payload'
 
 import { getPayloadClient, lexical, PNG_1x1 } from '../helpers/seedInScopeRoutes'
 import { revalidateDevCache } from '../helpers/revalidateDevCache'
+import { warmRoute } from '../helpers/warmRoute'
 
 // spec 010 US2 (Phase E) — the NEW /team/[slug] detail route renders via
 // RenderBlocks, emits Person JSON-LD (AICO), and the /team listing links to it.
@@ -67,6 +68,7 @@ test('/team/[slug] renders RenderBlocks body + Person JSON-LD; /team links to it
 }) => {
   await revalidateDevCache(request, [`teamMembers_${SLUG}`, 'teamMembers_list'])
 
+  await warmRoute(request, `/team/${SLUG}`, NAME)
   await page.goto(`/team/${SLUG}`)
   await expect(page.getByTestId('team-member-name')).toHaveText(NAME)
   await expect(page.getByTestId('team-member-detail')).toContainText(BODY)
@@ -77,6 +79,7 @@ test('/team/[slug] renders RenderBlocks body + Person JSON-LD; /team links to it
   expect(ld.some((s) => s.includes('BreadcrumbList'))).toBe(true)
 
   // Listing parity: /team links to the detail route.
+  await warmRoute(request, '/team', NAME)
   await page.goto('/team')
   const link = page.getByRole('link', { name: NAME })
   await expect(link).toBeVisible()
