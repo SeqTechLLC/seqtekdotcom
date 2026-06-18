@@ -81,6 +81,8 @@ test.describe('US1 — homepage renders the homepage global', () => {
             blockType: 'homepage-hero',
             headline: 'A consulting partner you would want to hire',
             subheadline: 'Strategy, delivery, and localshoring from Tulsa.',
+            primaryCta: { label: 'Explore our services', url: '/services' },
+            secondaryCta: { label: 'Book a call', url: '/contact' },
           },
         ] as never,
         _status: 'published',
@@ -164,6 +166,7 @@ test.describe('US3 — team page renders members with photos', () => {
         photo: media.id,
         isLeadership: true,
         order: 1,
+        _status: 'published',
       },
       overrideAccess: true,
     })
@@ -219,7 +222,11 @@ test.describe('US2 — case study renders structured fields', () => {
     await cleanupEditorSession(CASE_EDITOR.email)
   })
 
-  test('draft case study renders problem/metrics/testimonial + axe-clean', async ({
+  // FIXME(spec-010): superseded by blocks/case-studies-compose.e2e.spec.ts. This
+  // spec-004 test seeds the legacy case-study FIELD shape and asserts testids the
+  // block-composition rewrite (ADR 0009) removed; its cold published read also
+  // trips the 5s read-timeout in CI. Rewrite onto the layout shape or retire.
+  test.fixme('draft case study renders problem/metrics/testimonial + axe-clean', async ({
     context,
     page,
     baseURL,
@@ -310,7 +317,12 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
     })
   })
 
-  test('GET /workshops/<slug> → 200, detail + hubspot-form mount, axe-clean', async ({ page }) => {
+  // FIXME(spec-010): superseded by blocks/workshops-compose.e2e.spec.ts. The
+  // workshop detail moved to block composition (ADR 0009); the proof-section
+  // testids this asserts (workshop-description/photos/video) no longer exist.
+  test.fixme('GET /workshops/<slug> → 200, detail + hubspot-form mount, axe-clean', async ({
+    page,
+  }) => {
     await payload.delete({
       collection: 'workshops',
       where: { slug: { equals: WORKSHOP_SLUG } },
