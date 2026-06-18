@@ -5,6 +5,7 @@ import { getPayload, type Payload } from 'payload'
 import config from '../../src/payload.config'
 import { attachEditorSessionToContext, cleanupEditorSession } from '../sessions/editorSession'
 import { revalidateDevCache } from './helpers/revalidateDevCache'
+import { warmRoute } from './helpers/warmRoute'
 import type { CaseStudy } from '../../src/payload-types'
 
 /** Minimal valid Payload/Lexical richText value carrying a single paragraph. */
@@ -72,10 +73,18 @@ test.describe('US1 — homepage renders the homepage global', () => {
     await payload.updateGlobal({
       slug: 'homepage',
       data: {
-        hero: {
-          headline: 'A consulting partner you would want to hire',
-          subheadline: 'Strategy, delivery, and localshoring from Tulsa.',
-        },
+        // spec 010 (ADR 0009): the homepage renders its `layout` blocks, not the
+        // legacy `hero` field — seed a homepage-hero block so the composition has
+        // a heading to assert.
+        layout: [
+          {
+            blockType: 'homepage-hero',
+            headline: 'A consulting partner you would want to hire',
+            subheadline: 'Strategy, delivery, and localshoring from Tulsa.',
+            primaryCta: { label: 'Explore our services', url: '/services' },
+            secondaryCta: { label: 'Book a call', url: '/contact' },
+          },
+        ] as never,
         _status: 'published',
       },
       overrideAccess: true,
@@ -85,14 +94,17 @@ test.describe('US1 — homepage renders the homepage global', () => {
   test('GET / → 200, homepage composition renders (no placeholder), axe-clean', async ({
     page,
   }) => {
+    await revalidateDevCache(page.request, ['homepage_list'])
+    await warmRoute(page.request, '/', 'A consulting partner you would want to hire')
     const res = await page.goto('/')
     expect(res?.status()).toBe(200)
 
     await expect(page.getByTestId('homepage')).toBeVisible()
-    await expect(page.getByTestId('hero')).toBeVisible()
-    // The hero renders a heading from the homepage global (or its fallback) —
-    // proves the template composed, not the empty-state placeholder.
-    await expect(page.getByTestId('hero').locator('h1, h2').first()).toBeVisible()
+    // The homepage-hero block composed from the global's `layout` proves the
+    // template rendered the composition, not the empty-state placeholder.
+    await expect(
+      page.getByRole('heading', { name: 'A consulting partner you would want to hire' }),
+    ).toBeVisible()
 
     // The spike "No page yet" placeholder must be gone (drift #2).
     await expect(page.getByText('No page yet')).toHaveCount(0)
@@ -154,6 +166,7 @@ test.describe('US3 — team page renders members with photos', () => {
         photo: media.id,
         isLeadership: true,
         order: 1,
+        _status: 'published',
       },
       overrideAccess: true,
     })
@@ -165,6 +178,7 @@ test.describe('US3 — team page renders members with photos', () => {
     // so the render reflects the just-created member regardless of suite order.
     await revalidateDevCache(request, ['teamMembers_list'])
 
+    await warmRoute(request, '/team', TEAM_NAME)
     const res = await page.goto('/team')
     expect(res?.status()).toBe(200)
     await expect(page.getByTestId('team')).toBeVisible()
@@ -208,7 +222,11 @@ test.describe('US2 — case study renders structured fields', () => {
     await cleanupEditorSession(CASE_EDITOR.email)
   })
 
-  test('draft case study renders problem/metrics/testimonial + axe-clean', async ({
+  // FIXME(spec-010): superseded by blocks/case-studies-compose.e2e.spec.ts. This
+  // spec-004 test seeds the legacy case-study FIELD shape and asserts testids the
+  // block-composition rewrite (ADR 0009) removed; its cold published read also
+  // trips the 5s read-timeout in CI. Rewrite onto the layout shape or retire.
+  test.fixme('draft case study renders problem/metrics/testimonial + axe-clean', async ({
     context,
     page,
     baseURL,
@@ -248,6 +266,11 @@ test.describe('US2 — case study renders structured fields', () => {
       overrideAccess: true,
     })
 
+    // Warm the cached published read (getCaseStudyBySlug) to a cache hit (null —
+    // this case study is draft-only) so the draft render skips the cold heavy
+    // published query that can trip the read-timeout. allowNotFound: once the
+    // null read is cached the warm lands on the 404.
+    await warmRoute(page.request, `/case-studies/${CASE_SLUG}`, [], true)
     await attachEditorSessionToContext(context, baseURL!, CASE_EDITOR)
 
     // The preview route authenticates, enables draft mode, and 302s to the
@@ -294,7 +317,12 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
     })
   })
 
-  test('GET /workshops/<slug> → 200, detail + hubspot-form mount, axe-clean', async ({ page }) => {
+  // FIXME(spec-010): superseded by blocks/workshops-compose.e2e.spec.ts. The
+  // workshop detail moved to block composition (ADR 0009); the proof-section
+  // testids this asserts (workshop-description/photos/video) no longer exist.
+  test.fixme('GET /workshops/<slug> → 200, detail + hubspot-form mount, axe-clean', async ({
+    page,
+  }) => {
     await payload.delete({
       collection: 'workshops',
       where: { slug: { equals: WORKSHOP_SLUG } },
@@ -320,6 +348,7 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
       overrideAccess: true,
     })
 
+    await warmRoute(page.request, `/workshops/${WORKSHOP_SLUG}`, 'data-testid="workshop-detail"')
     const res = await page.goto(`/workshops/${WORKSHOP_SLUG}`)
     expect(res?.status()).toBe(200)
     await expect(page.getByTestId('workshop-detail')).toBeVisible()

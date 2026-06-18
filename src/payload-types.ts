@@ -291,6 +291,8 @@ export interface Page {
         | HomepageHeroBlock
         | ContentBlock
         | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
         | ProcessStepsBlock
         | DeliverablesBlock
         | ComparisonTableBlock
@@ -474,6 +476,36 @@ export interface TwoColumnBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'two-column';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ImageBlock".
+ */
+export interface ImageBlock {
+  image: number | Media;
+  caption?: string | null;
+  width?: ('narrow' | 'standard' | 'wide' | 'full') | null;
+  alignment?: ('center' | 'left' | 'right') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'image';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GalleryBlock".
+ */
+export interface GalleryBlock {
+  heading?: string | null;
+  items: {
+    image: number | Media;
+    caption?: string | null;
+    id?: string | null;
+  }[];
+  layout?: ('grid' | 'carousel') | null;
+  columns?: ('2' | '3' | '4') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'gallery';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -663,6 +695,55 @@ export interface CaseStudy {
     isAnonymized?: boolean | null;
   };
   heroImage: number | Media;
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | MissionVisionValuesBlock
+        | TimelineBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | FAQBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
+    | null;
   problem?: {
     root: {
       type: string;
@@ -782,6 +863,57 @@ export interface Service {
   title: string;
   slug: string;
   pillar: number | ServicePillar;
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | MissionVisionValuesBlock
+        | TimelineBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | FAQBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
+    | null;
+  icon?: string | null;
+  relatedCaseStudies?: (number | CaseStudy)[] | null;
   description?: {
     root: {
       type: string;
@@ -818,8 +950,6 @@ export interface Service {
         id?: string | null;
       }[]
     | null;
-  icon?: string | null;
-  relatedCaseStudies?: (number | CaseStudy)[] | null;
   faq?:
     | {
         question: string;
@@ -1098,6 +1228,64 @@ export interface TeamMember {
   title?: string | null;
   role?: string | null;
   photo: number | Media;
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | MissionVisionValuesBlock
+        | TimelineBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | FAQBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
+    | null;
+  linkedinUrl?: string | null;
+  email?: string | null;
+  isLeadership?: boolean | null;
+  order?: number | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
   bio?: {
     root: {
       type: string;
@@ -1132,8 +1320,6 @@ export interface TeamMember {
         id?: string | null;
       }[]
     | null;
-  linkedinUrl?: string | null;
-  email?: string | null;
   personalFacts?:
     | {
         label: string;
@@ -1141,10 +1327,9 @@ export interface TeamMember {
       }[]
     | null;
   quote?: string | null;
-  isLeadership?: boolean | null;
-  order?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1241,6 +1426,55 @@ export interface Workshop {
   id: number;
   title: string;
   slug: string;
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | MissionVisionValuesBlock
+        | TimelineBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | FAQBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
+    | null;
   description?: {
     root: {
       type: string;
@@ -1818,6 +2052,8 @@ export interface PagesSelect<T extends boolean = true> {
         'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
         'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
         'process-steps'?: T | ProcessStepsBlockSelect<T>;
         deliverables?: T | DeliverablesBlockSelect<T>;
         'comparison-table'?: T | ComparisonTableBlockSelect<T>;
@@ -1980,6 +2216,36 @@ export interface TwoColumnBlockSelect<T extends boolean = true> {
         label?: T;
         url?: T;
       };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ImageBlock_select".
+ */
+export interface ImageBlockSelect<T extends boolean = true> {
+  image?: T;
+  caption?: T;
+  width?: T;
+  alignment?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GalleryBlock_select".
+ */
+export interface GalleryBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  layout?: T;
+  columns?: T;
   id?: T;
   blockName?: T;
 }
@@ -2566,6 +2832,55 @@ export interface CaseStudiesSelect<T extends boolean = true> {
         isAnonymized?: T;
       };
   heroImage?: T;
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
   problem?: T;
   solution?: T;
   impact?: T;
@@ -2605,6 +2920,57 @@ export interface ServicesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   pillar?: T;
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
+  icon?: T;
+  relatedCaseStudies?: T;
   description?: T;
   approach?: T;
   deliverables?:
@@ -2613,8 +2979,6 @@ export interface ServicesSelect<T extends boolean = true> {
         label?: T;
         id?: T;
       };
-  icon?: T;
-  relatedCaseStudies?: T;
   faq?:
     | T
     | {
@@ -2666,6 +3030,66 @@ export interface TeamMembersSelect<T extends boolean = true> {
   title?: T;
   role?: T;
   photo?: T;
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
+  linkedinUrl?: T;
+  email?: T;
+  isLeadership?: T;
+  order?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
   bio?: T;
   expertise?:
     | T
@@ -2686,8 +3110,6 @@ export interface TeamMembersSelect<T extends boolean = true> {
         institution?: T;
         id?: T;
       };
-  linkedinUrl?: T;
-  email?: T;
   personalFacts?:
     | T
     | {
@@ -2695,10 +3117,9 @@ export interface TeamMembersSelect<T extends boolean = true> {
         id?: T;
       };
   quote?: T;
-  isLeadership?: T;
-  order?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2722,6 +3143,55 @@ export interface TestimonialsSelect<T extends boolean = true> {
 export interface WorkshopsSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
   description?: T;
   format?: T;
   audience?: T;
@@ -2946,6 +3416,55 @@ export interface Navigation {
  */
 export interface Homepage {
   id: number;
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | MissionVisionValuesBlock
+        | TimelineBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | FAQBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
+    | null;
   hero?: {
     headline?: string | null;
     subheadline?: string | null;
@@ -3069,6 +3588,55 @@ export interface NavigationSelect<T extends boolean = true> {
  * via the `definition` "homepage_select".
  */
 export interface HomepageSelect<T extends boolean = true> {
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
   hero?:
     | T
     | {

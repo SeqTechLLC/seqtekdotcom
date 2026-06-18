@@ -64,9 +64,10 @@ export const buildRevalidatePlan = (
   doc: DocLike,
   previousDoc?: PreviousDocLike,
 ): RevalidatePlan => {
-  // Non-draftable collections (categories, teamMembers, testimonials) and
-  // un-versioned globals have no `_status` — every save is a publish, so the
-  // draft-skip guard only applies when `_status` is actually present.
+  // Non-draftable collections (categories, testimonials) and un-versioned
+  // globals have no `_status` — every save is a publish, so the draft-skip
+  // guard only applies when `_status` is actually present. (teamMembers gained
+  // drafts in spec 010 US2, so it now carries `_status` like the other draftable types.)
   const hasStatus = doc._status !== undefined || previousDoc?._status !== undefined
   if (hasStatus) {
     const isPublished = doc._status === 'published'
@@ -121,6 +122,10 @@ export const buildRevalidatePlan = (
         break
       case 'workshops':
         detailPaths.push(`/workshops/${s}`, '/workshops')
+        break
+      case 'teamMembers':
+        // spec 010 US2 (Phase E): teamMembers gains a `/team/[slug]` detail route.
+        detailPaths.push(`/team/${s}`, '/team')
         break
       case 'industries':
         detailPaths.push(`/industries/${s}`)

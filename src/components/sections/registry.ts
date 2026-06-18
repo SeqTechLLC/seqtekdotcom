@@ -15,10 +15,12 @@ import Embed from './Embed'
 import FAQ from './FAQ'
 import FeaturedCaseStudy from './FeaturedCaseStudy'
 import FeaturedTestimonials from './FeaturedTestimonials'
+import Gallery from './Gallery'
 import Hero from './Hero'
 import HomepageHero from './HomepageHero'
 import HubspotForm from './HubspotForm'
 import HubspotMeetings from './HubspotMeetings'
+import Image from './Image'
 import IndustryGrid from './IndustryGrid'
 import KeyTakeaways from './KeyTakeaways'
 import LocationsList from './LocationsList'
@@ -55,6 +57,8 @@ export const registry: Record<string, ComponentType<any>> = {
   'homepage-hero': HomepageHero,
   content: Content,
   'two-column': TwoColumn,
+  image: Image,
+  gallery: Gallery,
   'process-steps': ProcessSteps,
   deliverables: Deliverables,
   'comparison-table': ComparisonTable,

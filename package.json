@@ -19,10 +19,11 @@
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "prepare": "husky",
+    "pretest:e2e": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/e2e/provision-schema.ts",
     "seed:showcase": "cross-env NODE_OPTIONS=--no-deprecation tsx src/payload/seed/showcase/index.ts",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "npm run test:int && npm run test:e2e",
-    "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
+    "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" PAYLOAD_DISABLE_PUSH=true playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "test:lhci": "lhci autorun --config=.lighthouserc.cjs",
     "typecheck": "tsc --noEmit",
@@ -90,7 +91,8 @@
       "esbuild": "^0.28.1"
     },
     "payload": {
-      "ws": "^8.21.0"
+      "ws": "^8.21.0",
+      "undici": "^7.28.0"
     },
     "happy-dom": {
       "ws": "^8.21.0"
@@ -99,7 +101,8 @@
   "_overridesNotes": {
     "_doc": "Why each security `overrides` entry exists and when it can go. Keyed by the overridden package name. Advisory IDs are NOT hand-maintained here — `npm run check:overrides` reads them live from `npm audit` and flags any override that is no longer load-bearing. A note here with no matching `overrides` entry is reported as 'pending' (e.g. queued for an unmerged PR), not an error.",
     "esbuild": "Pinned (under drizzle-kit) to clear the transitive esbuild dev-server advisory that failed the production audit gate in PR #52. Remove once drizzle-kit's dependency tree resolves esbuild to a fixed version on its own — run `npm run check:overrides` to confirm.",
-    "ws": "Pinned to ^8.21.0 (under payload and happy-dom) to clear the transitive ws advisory pulled in via @lexical/headless. Remove once payload and happy-dom resolve ws to a non-vulnerable version on their own. NOTE: the `ws` override itself lands on main with PR #66 (feat/010); until then this note is reported as 'pending' by `npm run check:overrides`."
+    "ws": "Pinned to ^8.21.0 (under payload and happy-dom) to clear the transitive ws advisory pulled in via @lexical/headless. Remove once payload and happy-dom resolve ws to a non-vulnerable version on their own. NOTE: the `ws` override itself lands on main with PR #66 (feat/010); until then this note is reported as 'pending' by `npm run check:overrides`.",
+    "undici": "Pinned to ^7.28.0 (under payload) to clear the transitive undici high-severity advisories GHSA-vmh5-mc38-953g + GHSA-pr7r-676h-xcf6 (vulnerable 7.0.0–7.27.2). Remove once payload resolves undici to >=7.28.0 on its own — run `npm run check:overrides` to confirm."
   },
   "engines": {
     "node": ">=22.0.0"

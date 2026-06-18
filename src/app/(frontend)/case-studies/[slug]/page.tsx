@@ -9,14 +9,15 @@ import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
-import { RichText } from '@/components/richText/RichText'
+import { RenderBlocks } from '@/components/sections/RenderBlocks'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import { TrackView } from '@/components/analytics/TrackView'
 import type { CaseStudy } from '@/payload-types'
 
-// spec 004 US2 (T016). Bespoke structured template (Shape B) over the
-// `caseStudies` collection — it has no `layout` blocks array, so we compose
-// the discrete fields. route-render.md algorithm + invariants R1–R6.
+// spec 004 US2 + spec 010 (ADR 0009): the case-study body is block-composed and
+// rendered via RenderBlocks. Kept metadata (industry eyebrow, title, subtitle,
+// heroImage, related) stays on the route; the deprecated body fields
+// (problem/solution/impact/metrics/technologies/testimonial) live in `layout`.
 
 // Dynamically rendered (no generateStaticParams): the layout's per-request CSP
 // nonce forces dynamic rendering (Constitution §IV, ADR 0005). Data is ISR-
@@ -54,14 +55,13 @@ export default async function CaseStudyPage({ params }: Props) {
     : published
   if (!caseStudy) notFound()
 
-  const testimonial = isRelObject(caseStudy.testimonial) ? caseStudy.testimonial : null
   const related = (caseStudy.relatedCaseStudies ?? []).filter(isRelObject).slice(0, 3)
   const industry = isRelObject(caseStudy.industry) ? caseStudy.industry : null
+  // payload-types CaseStudy['layout'] is the RenderBlocks-compatible shape.
+  const layout = (caseStudy.layout ?? []) as never
 
-  // Reading column: headings + body text sit in a centered 65ch measure
-  // (DESIGN_SYSTEM.md "Reading column"). The hero and metrics grid deliberately
-  // break out to the full container width — different widths, all centered on one
-  // axis. Never left-justify; never widen body past 65ch.
+  // Reading column for the route-owned header + related footer (DESIGN_SYSTEM
+  // §11.4). The body blocks own their own widths/centering (FR-009).
   const readingCol = 'mx-auto max-w-prose'
 
   return (
@@ -102,60 +102,7 @@ export default async function CaseStudyPage({ params }: Props) {
           />
         ) : null}
 
-        {caseStudy.problem ? (
-          <section data-testid="case-study-problem" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">The problem</h2>
-            <RichText data={caseStudy.problem} />
-          </section>
-        ) : null}
-
-        {caseStudy.solution ? (
-          <section data-testid="case-study-solution" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">The solution</h2>
-            <RichText data={caseStudy.solution} />
-          </section>
-        ) : null}
-
-        {caseStudy.impact ? (
-          <section data-testid="case-study-impact" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">The impact</h2>
-            <RichText data={caseStudy.impact} />
-          </section>
-        ) : null}
-
-        {caseStudy.metrics?.length ? (
-          <section data-testid="case-study-metrics" className="mb-12">
-            <dl className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {caseStudy.metrics.map((metric) => (
-                <div
-                  key={metric.id ?? metric.label}
-                  className="border-l-2 border-accent-strong pl-4"
-                >
-                  <dd className="text-h2 font-bold text-accent-strong">{metric.number}</dd>
-                  <dt className="mt-1 text-body text-text-secondary">{metric.label}</dt>
-                  {metric.context ? (
-                    <p className="mt-1 text-small text-text-muted">{metric.context}</p>
-                  ) : null}
-                </div>
-              ))}
-            </dl>
-          </section>
-        ) : null}
-
-        {testimonial?.quote ? (
-          <section data-testid="case-study-testimonial" className={`${readingCol} mb-12`}>
-            <blockquote className="border-l-4 border-accent-strong pl-6 text-body-lg italic text-text-secondary">
-              <p>&ldquo;{testimonial.quote}&rdquo;</p>
-              {testimonial.personName ? (
-                <footer className="mt-4 text-small not-italic text-text-muted">
-                  {testimonial.personName}
-                  {testimonial.personTitle ? `, ${testimonial.personTitle}` : ''}
-                  {testimonial.company ? `, ${testimonial.company}` : ''}
-                </footer>
-              ) : null}
-            </blockquote>
-          </section>
-        ) : null}
+        <RenderBlocks blocks={layout} />
 
         {related.length ? (
           <section

@@ -2,11 +2,13 @@ import type { CollectionConfig } from 'payload'
 
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
+import { layoutBlocks } from '../payload/blocks/layout'
 import { editorConfig } from '../payload/editor/editorConfig'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
+import { caseStudySkeleton } from '../payload/seed/skeletons/caseStudy'
 
 export const CaseStudies: CollectionConfig = {
   slug: 'caseStudies',
@@ -56,12 +58,39 @@ export const CaseStudies: CollectionConfig = {
       ],
     },
     { name: 'heroImage', type: 'upload', relationTo: 'media', required: true },
-    { name: 'problem', type: 'richText', editor: editorConfig },
-    { name: 'solution', type: 'richText', editor: editorConfig },
-    { name: 'impact', type: 'richText', editor: editorConfig },
+    {
+      // spec 010 / ADR 0009: the block-composed body. New records get the
+      // default skeleton; the detail route renders this via RenderBlocks.
+      name: 'layout',
+      type: 'blocks',
+      blocks: [...layoutBlocks],
+      defaultValue: caseStudySkeleton,
+    },
+    // ---- Legacy body fields (expand/contract, R2) ----
+    // Composed into `layout` by caseStudyToLayout.ts; hidden + read-only, kept
+    // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
+    {
+      name: 'problem',
+      type: 'richText',
+      editor: editorConfig,
+      admin: { hidden: true, readOnly: true },
+    },
+    {
+      name: 'solution',
+      type: 'richText',
+      editor: editorConfig,
+      admin: { hidden: true, readOnly: true },
+    },
+    {
+      name: 'impact',
+      type: 'richText',
+      editor: editorConfig,
+      admin: { hidden: true, readOnly: true },
+    },
     {
       name: 'metrics',
       type: 'array',
+      admin: { hidden: true, readOnly: true },
       fields: [
         { name: 'number', type: 'text', required: true },
         { name: 'label', type: 'text', required: true },
@@ -71,6 +100,7 @@ export const CaseStudies: CollectionConfig = {
     {
       name: 'technologies',
       type: 'array',
+      admin: { hidden: true, readOnly: true },
       fields: [{ name: 'label', type: 'text', required: true }],
     },
     { name: 'testimonial', type: 'relationship', relationTo: 'testimonials' },

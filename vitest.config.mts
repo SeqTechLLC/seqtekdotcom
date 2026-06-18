@@ -10,7 +10,12 @@ export default defineConfig({
     globalSetup: ['./vitest.globalSetup.ts'],
     include: ['tests/int/**/*.int.spec.{ts,tsx}'],
     testTimeout: 60_000,
-    hookTimeout: 60_000,
+    // The first int file's beforeAll triggers the initial drizzle push of the
+    // whole Payload schema to the testcontainer DB. spec 010 ~5x'd that schema
+    // (a `layout` blocks family on every specialized collection + the homepage
+    // global), so the cold push exceeds 60s on slower/contended CI runners
+    // (it stays ~15s locally). 180s gives the cold-boot push headroom.
+    hookTimeout: 180_000,
     // The Payload+Postgres int suites all push schema to the same testcontainer
     // DB. Run them sequentially in one worker so getPayload's module-level
     // cache wins on schema setup and they don't race on enum/table creates.

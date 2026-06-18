@@ -35,6 +35,7 @@ const SLUGGED_COLLECTIONS = [
   'services',
   'servicePillars',
   'workshops',
+  'teamMembers',
 ] as const
 
 const GLOBALS = ['homepage', 'siteSettings', 'navigation'] as const
