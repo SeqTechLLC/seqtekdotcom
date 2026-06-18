@@ -3,6 +3,7 @@ import type { Payload } from 'payload'
 
 import { getPayloadClient, lexical } from '../helpers/seedInScopeRoutes'
 import { revalidateDevCache } from '../helpers/revalidateDevCache'
+import { warmRoute } from '../helpers/warmRoute'
 
 // spec 010 US1 (P1, MVP) — the acceptance gate for the whole feature: a
 // block-composed workshop is editor-rearrangeable with NO deploy. Reordering
@@ -61,6 +62,7 @@ test('workshop renders block layout, listing + breadcrumb JSON-LD intact', async
   // the detail + listing routes is stale (or warmed by a sibling suite). Bust
   // it before asserting (memory: E2E cache revalidation).
   await revalidateDevCache(request, [`workshops_${SLUG}`, 'workshops_list'])
+  await warmRoute(request, `/workshops/${SLUG}`)
   await page.goto(`/workshops/${SLUG}`)
   const article = page.getByTestId('workshop-detail')
   await expect(page.getByTestId('workshop-title')).toHaveText(TITLE)
@@ -76,6 +78,7 @@ test('workshop renders block layout, listing + breadcrumb JSON-LD intact', async
   expect(ld.some((s) => s.includes('BreadcrumbList'))).toBe(true)
 
   // Listing parity: the workshop appears on /workshops.
+  await warmRoute(request, '/workshops')
   await page.goto('/workshops')
   await expect(page.getByRole('link', { name: TITLE })).toBeVisible()
 })
@@ -100,6 +103,7 @@ test('reordering two blocks + publish flips the public DOM order with no deploy'
   // The mutation ran in this process, not the dev server — bust its cache.
   await revalidateDevCache(request, [`workshops_${SLUG}`, 'workshops_list'])
 
+  await warmRoute(request, `/workshops/${SLUG}`)
   await page.goto(`/workshops/${SLUG}`)
   const text = await page.getByTestId('workshop-detail').innerText()
   expect(text).toContain(ALPHA)

@@ -5,6 +5,7 @@ import { getPayload, type Payload } from 'payload'
 import config from '../../src/payload.config'
 import { attachEditorSessionToContext, cleanupEditorSession } from '../sessions/editorSession'
 import { revalidateDevCache } from './helpers/revalidateDevCache'
+import { warmRoute } from './helpers/warmRoute'
 import type { CaseStudy } from '../../src/payload-types'
 
 /** Minimal valid Payload/Lexical richText value carrying a single paragraph. */
@@ -85,6 +86,7 @@ test.describe('US1 — homepage renders the homepage global', () => {
   test('GET / → 200, homepage composition renders (no placeholder), axe-clean', async ({
     page,
   }) => {
+    await warmRoute(page.request, '/')
     const res = await page.goto('/')
     expect(res?.status()).toBe(200)
 
@@ -165,6 +167,7 @@ test.describe('US3 — team page renders members with photos', () => {
     // so the render reflects the just-created member regardless of suite order.
     await revalidateDevCache(request, ['teamMembers_list'])
 
+    await warmRoute(request, '/team')
     const res = await page.goto('/team')
     expect(res?.status()).toBe(200)
     await expect(page.getByTestId('team')).toBeVisible()
