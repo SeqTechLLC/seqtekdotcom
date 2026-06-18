@@ -275,3 +275,17 @@ jobs:
           name: lighthouse-reports
           path: .lighthouseci/
           retention-days: 7
+
+  notify:
+    name: Notify Slack
+    needs: [changes, quality, lint-workflows, infra-synth, secrets, int-tests, tests]
+    # Notify on any failure (any branch/PR), plus successes on main only — so a
+    # green PR push stays silent but a broken build is always surfaced. Skipped
+    # jobs (changes-gated) report 'skipped', not 'failure', so they don't trip
+    # the failure check. Stay quiet on cancellation.
+    if: ${{ !cancelled() && (contains(needs.*.result, 'failure') || github.ref == 'refs/heads/main') }}
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      workflow-name: CI
+      status: ${{ contains(needs.*.result, 'failure') && 'failure' || 'success' }}
+    secrets: inherit

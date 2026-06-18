@@ -250,3 +250,17 @@ jobs:
           name: post-deploy-playwright-report
           path: playwright-report/
           retention-days: 7
+
+  notify:
+    name: Notify Slack
+    needs: [deploy, smoke]
+    # Report every staging deploy outcome (success and failure), but stay quiet
+    # if the run was cancelled. A failed/skipped `deploy` makes `smoke` skip, so
+    # success requires BOTH jobs green.
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      workflow-name: Deploy (staging)
+      status: ${{ (needs.deploy.result == 'success' && needs.smoke.result == 'success') && 'success' || 'failure' }}
+      site-url: ${{ needs.deploy.outputs.site-url }}
+    secrets: inherit
