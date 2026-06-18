@@ -2,6 +2,7 @@ import type { GlobalConfig } from 'payload'
 
 import { isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthedGlobal } from '../payload/access/publishedOrAuthed'
+import { layoutBlocks } from '../payload/blocks/layout'
 import { safeUrlValidate } from '../payload/fields/url'
 import { revalidateGlobalOnChange } from '../payload/hooks/revalidateOnChange'
 
@@ -17,8 +18,20 @@ export const Homepage: GlobalConfig = {
   },
   fields: [
     {
+      // spec 010 / ADR 0009 (Phase F): the homepage is block-composed. `/`
+      // renders this via RenderBlocks; editors reorder/edit sections with no
+      // deploy. Composed from the legacy fields below by homepageToLayout.ts.
+      name: 'layout',
+      type: 'blocks',
+      blocks: [...layoutBlocks],
+    },
+    // ---- Legacy structured fields (expand/contract, R2) ----
+    // Composed into `layout` by homepageToLayout.ts; hidden + read-only and kept
+    // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
+    {
       name: 'hero',
       type: 'group',
+      admin: { hidden: true, readOnly: true },
       fields: [
         { name: 'headline', type: 'text' },
         { name: 'subheadline', type: 'textarea' },
@@ -36,16 +49,23 @@ export const Homepage: GlobalConfig = {
     {
       name: 'stats',
       type: 'array',
+      admin: { hidden: true, readOnly: true },
       fields: [
         { name: 'number', type: 'text', required: true },
         { name: 'label', type: 'text', required: true },
         { name: 'suffix', type: 'text' },
       ],
     },
-    { name: 'featuredCaseStudy', type: 'relationship', relationTo: 'caseStudies' },
+    {
+      name: 'featuredCaseStudy',
+      type: 'relationship',
+      relationTo: 'caseStudies',
+      admin: { hidden: true, readOnly: true },
+    },
     {
       name: 'brandTeaser',
       type: 'group',
+      admin: { hidden: true, readOnly: true },
       fields: [
         { name: 'headline', type: 'text' },
         { name: 'body', type: 'textarea' },
@@ -57,6 +77,7 @@ export const Homepage: GlobalConfig = {
     {
       name: 'clientLogos',
       type: 'array',
+      admin: { hidden: true, readOnly: true },
       fields: [{ name: 'logo', type: 'upload', relationTo: 'media', required: true }],
     },
     {
@@ -65,6 +86,7 @@ export const Homepage: GlobalConfig = {
       relationTo: 'testimonials',
       hasMany: true,
       maxRows: 3,
+      admin: { hidden: true, readOnly: true },
     },
   ],
 }

@@ -1,0 +1,104 @@
+name: Dependency hygiene
+
+# Weekly check for `package.json#overrides` entries that have gone stale — an
+# override is stale once removing it no longer introduces a high+ production
+# advisory beyond the current baseline (i.e. the upstream dependency shipped a
+# fix and the pin is now dead weight). Runs `tools/check-stale-overrides`, then
+# opens / updates / closes a SINGLE tracking issue labelled `deps-hygiene` so
+# the signal surfaces without blocking anyone.
+#
+# This is a reporter, not a gate: the per-PR audit gate (the `quality` job in
+# ci.yml, `npm audit --omit=dev --audit-level=high`) is what actually blocks
+# merges. This job only nudges us to prune overrides that have outlived their
+# advisory.
+#
+# Note: `schedule` and `workflow_dispatch` only fire from the default branch, so
+# this stays dormant until merged to `main`.
+
+on:
+  schedule:
+    # Mondays 14:00 UTC (~09:00 CT) — start of week, low-noise.
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+
+# Opt action runtimes into Node 24 ahead of the June 2026 default switch
+# (matches ci.yml / deploy.yml).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  issues: write
+
+# Don't stack scheduled runs on top of each other.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  check-overrides:
+    name: Check stale dependency overrides
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # No `npm ci` — the checker resolves every scenario in throwaway temp dirs
+      # seeded from package.json + package-lock.json, so the repo's node_modules
+      # is never read. It just needs npm + registry access (both on the runner).
+      - name: Check for stale overrides
+        # Always exits 0 — the report drives the tracking issue, not the exit code.
+        run: node tools/check-stale-overrides/check-stale-overrides.mjs --out-dir "$RUNNER_TEMP"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deps-hygiene-report
+          path: |
+            ${{ runner.temp }}/report.json
+            ${{ runner.temp }}/report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Open / update / close tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_JSON: ${{ runner.temp }}/report.json
+          REPORT_MD: ${{ runner.temp }}/report.md
+        run: |
+          set -euo pipefail
+          LABEL="deps-hygiene"
+          STALE=$(jq '.stale | length' "$REPORT_JSON")
+          echo "Stale overrides found: $STALE"
+
+          # Idempotently ensure the tracking label exists.
+          gh label create "$LABEL" \
+            --color FBCA04 \
+            --description "Stale / at-risk dependency overrides (deps-hygiene.yml)" \
+            --force
+
+          EXISTING=$(gh issue list --label "$LABEL" --state open --json number --jq '.[0].number // empty')
+
+          if [ "$STALE" -gt 0 ]; then
+            TITLE="Dependency overrides: $STALE stale override(s) to review"
+            if [ -n "$EXISTING" ]; then
+              gh issue edit "$EXISTING" --title "$TITLE" --body-file "$REPORT_MD"
+              echo "Updated tracking issue #$EXISTING"
+            else
+              gh issue create --title "$TITLE" --label "$LABEL" --body-file "$REPORT_MD"
+              echo "Opened tracking issue"
+            fi
+          else
+            if [ -n "$EXISTING" ]; then
+              gh issue comment "$EXISTING" --body "All \`package.json\` overrides are load-bearing again — no stale entries this run. Closing. (deps-hygiene.yml)"
+              gh issue close "$EXISTING"
+              echo "Closed tracking issue #$EXISTING (no stale overrides)"
+            else
+              echo "No stale overrides and no open tracking issue — nothing to do."
+            fi
+          fi

@@ -69,6 +69,6 @@ The expectation: open the PNGs for **every page your change touches**, at both v
 
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/009-media-cloudfront-serving/plan.md`.
+`specs/010-block-page-composition/plan.md`.
 
 <!-- SPECKIT END -->

@@ -42,12 +42,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // and let ISR backfill the dynamic slugs at runtime (revalidate + on-demand
   // `${collection}_list` tag invalidation).
   try {
-    const [pageSlugs, caseStudySlugs, postSlugs, workshopSlugs, pillars, services] =
+    const [pageSlugs, caseStudySlugs, postSlugs, workshopSlugs, teamSlugs, pillars, services] =
       await Promise.all([
         publishedSlugsFor('pages'),
         publishedSlugsFor('caseStudies'),
         publishedSlugsFor('posts'),
         publishedSlugsFor('workshops'),
+        publishedSlugsFor('teamMembers'),
         listServicePillars(),
         listServices(),
       ])
@@ -63,6 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const slug of caseStudySlugs) paths.add(`/case-studies/${slug}`)
     for (const slug of postSlugs) paths.add(`/insights/${slug}`)
     for (const slug of workshopSlugs) paths.add(`/workshops/${slug}`)
+    for (const slug of teamSlugs) paths.add(`/team/${slug}`)
     for (const pillar of pillars) {
       if (pillar.slug) paths.add(`/services/${pillar.slug}`)
     }

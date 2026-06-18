@@ -8,17 +8,14 @@ import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
-import { RichText } from '@/components/richText/RichText'
-import { WorkshopInquiryForm } from '@/components/forms/WorkshopInquiryForm'
-import { DownloadCard } from '@/components/sections/DownloadCard'
-import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
-import { VideoEmbed } from '@/components/sections/VideoEmbed'
+import { RenderBlocks } from '@/components/sections/RenderBlocks'
 import type { Workshop } from '@/payload-types'
 
-// spec 004 US4 (T022) + spec 005. Workshop campaign landing (Shape B). The
-// Workshop Inquiry form is the live (half-wired) custom form — provisioned GUID
-// in NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID (INTEGRATIONS.md §1.2). It runs the
-// full client lifecycle now; live submit activates once the env var is set.
+// spec 004 US4 + spec 010 (ADR 0009): the workshop body is block-composed and
+// rendered through RenderBlocks — no bespoke per-field template survives. Typed
+// metadata (title, facilitator, slug, SEO, JSON-LD) stays on the route; the
+// body (description/format/audience/deliverables/photos/video/testimonial/CTA)
+// lives in `layout` and is editor-rearrangeable with no deploy.
 
 // Dynamically rendered (no generateStaticParams) — layout CSP nonce forces
 // dynamic rendering (Constitution §IV, ADR 0005); data ISR-cached via the
@@ -53,17 +50,8 @@ export default async function WorkshopPage({ params }: Props) {
   if (!workshop) notFound()
 
   const facilitator = isRelObject(workshop.facilitator) ? workshop.facilitator : null
-  const testimonial = isRelObject(workshop.testimonial) ? workshop.testimonial : null
-  // Proof gallery: keep only rows whose upload relation is populated (depth>0).
-  const photos = (workshop.photos ?? [])
-    .map((p) => (isRelObject(p.image) ? { image: p.image, caption: p.caption ?? null } : null))
-    .filter((p): p is NonNullable<typeof p> => p !== null)
-
-  // Reading column: headings + body text sit in a centered 65ch measure
-  // (DESIGN_SYSTEM.md "Reading column"). The photo grid, video, and download/form
-  // grid deliberately break out wider — different widths, all centered on one
-  // axis. Never left-justify; never widen body past 65ch.
-  const readingCol = 'mx-auto max-w-prose'
+  // payload-types Workshop['layout'] is the RenderBlocks-compatible shape.
+  const layout = (workshop.layout ?? []) as never
 
   return (
     <>
@@ -76,11 +64,10 @@ export default async function WorkshopPage({ params }: Props) {
       />
       {isDraft && <PreviewBanner />}
 
-      <article
-        data-testid="workshop-detail"
-        className="mx-auto max-w-container-lg px-4 py-16 md:px-6"
-      >
-        <header className={`${readingCol} mb-12`}>
+      <article data-testid="workshop-detail" className="py-16">
+        {/* Reading column: the header sits in a centered 65ch measure; the body
+            blocks own their own widths/centering (DESIGN_SYSTEM §11.4, FR-009). */}
+        <header className="mx-auto mb-4 max-w-prose px-4 md:px-6">
           <h1 className="text-h1 font-bold" data-testid="workshop-title">
             {workshop.title}
           </h1>
@@ -92,111 +79,7 @@ export default async function WorkshopPage({ params }: Props) {
           ) : null}
         </header>
 
-        {workshop.description ? (
-          <section data-testid="workshop-description" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">What it is</h2>
-            <RichText data={workshop.description} />
-          </section>
-        ) : null}
-
-        {workshop.format ? (
-          <section data-testid="workshop-format" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">Format</h2>
-            <RichText data={workshop.format} />
-          </section>
-        ) : null}
-
-        {workshop.audience ? (
-          <section data-testid="workshop-audience" className={`${readingCol} mb-12`}>
-            <h2 className="mb-4 text-h3 font-semibold">Who it is for</h2>
-            <RichText data={workshop.audience} />
-          </section>
-        ) : null}
-
-        {workshop.deliverables?.length ? (
-          <section
-            data-testid="workshop-deliverables"
-            className={`${readingCol} mb-12 rounded-md border border-border-subtle bg-surface-subtle p-6 md:p-8`}
-          >
-            <h2 className="mb-6 text-h3 font-semibold">What you leave with</h2>
-            <ul className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
-              {workshop.deliverables.map((d, i) => (
-                <li key={d.id ?? i} className="flex gap-3 text-body">
-                  <span aria-hidden className="mt-1 select-none font-bold text-accent-strong">
-                    &#10003;
-                  </span>
-                  <span>{d.label}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {testimonial?.quote ? (
-          <section data-testid="workshop-testimonial" className={`${readingCol} mb-12`}>
-            <blockquote className="border-l-4 border-accent-strong pl-6 text-body-lg italic text-text-secondary">
-              <p>&ldquo;{testimonial.quote}&rdquo;</p>
-              {testimonial.personName ? (
-                <footer className="mt-4 text-small not-italic text-text-muted">
-                  {testimonial.personName}
-                  {testimonial.company ? `, ${testimonial.company}` : ''}
-                </footer>
-              ) : null}
-            </blockquote>
-          </section>
-        ) : null}
-
-        {photos.length > 0 ? (
-          <section data-testid="workshop-photos" className="mb-12">
-            <h2 className="mb-4 text-h3 font-semibold">What a real workshop looks like</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {photos.map((p, i) => (
-                <figure key={i} className="overflow-hidden rounded-md border border-border-subtle">
-                  <ResponsiveImage
-                    media={p.image}
-                    sizes="(min-width: 640px) 50vw, 100vw"
-                    className="aspect-[4/3] w-full object-cover"
-                  />
-                  {p.caption ? (
-                    <figcaption className="px-4 py-3 text-small text-text-secondary">
-                      {p.caption}
-                    </figcaption>
-                  ) : null}
-                </figure>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {workshop.video?.videoId ? (
-          <section data-testid="workshop-video" className="mb-12">
-            <VideoEmbed
-              provider={workshop.video.provider ?? 'youtube'}
-              videoId={workshop.video.videoId}
-              title={workshop.video.title ?? `${workshop.title} recap`}
-            />
-          </section>
-        ) : null}
-
-        <div className="grid grid-cols-1 gap-8 border-t border-border-subtle pt-12 md:grid-cols-2">
-          <section data-testid="download-card">
-            <DownloadCard
-              title="AI Strategy Field Guide"
-              description="A short framework for sequencing AI initiatives by value and feasibility."
-              formId="workshop-inquiry"
-              fileUrl="/downloads/ai-strategy-field-guide.pdf"
-            />
-          </section>
-          <section data-testid="hubspot-form">
-            <h2 className="text-h2 font-bold">Request this workshop</h2>
-            <p className="mt-3 text-body-lg text-text-secondary">
-              Tell us about your team and we will follow up with dates.
-            </p>
-            <div className="mt-6">
-              <WorkshopInquiryForm />
-            </div>
-          </section>
-        </div>
+        <RenderBlocks blocks={layout} />
       </article>
     </>
   )

@@ -2,7 +2,7 @@
 
 Open-source rebuild of [seqtek.com](https://www.seqtek.com) — moving from Wix to a self-hosted Next.js + Payload CMS stack on AWS. Public as a portfolio piece showing the stack choices, architectural reasoning, and process behind a real production marketing site rebuild.
 
-**Status:** Phase 1 — implementation in progress. The stack-validation spike is merged; collection schemas, content migration, and frontend block library are next. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the live status board.
+**Status:** Active development; staging live at `seqtek-preview.com`. Shipped across ~30 PRs: the Payload content models, the public render foundation + all marquee page templates, a block-composed content model (two primitives, no bespoke per-type templates — [ADR 0009](docs/decisions/0009-block-first-composition.md)), media via CloudFront, the analytics/conversion surface, and launch-hardening (WCAG 2.2 a11y, Lighthouse perf, cookie consent). Production cutover to `seqtek.com` is gated on final content + a launch-readiness review — not engineering. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for what's open and [`docs/PROJECT_HISTORY.md`](docs/PROJECT_HISTORY.md) for what's shipped.
 
 ## Stack
 
