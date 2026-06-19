@@ -11,12 +11,7 @@
 
 This single session unblocks more than anything else. Source guide: `docs/content-drafts/hank-interview-followup.md`. The items below **cannot be written without Hank** — no fabrication.
 
-**A. The name: Sequoyah** _(flagged "the most important content on the entire site"; currently a `[PLACEHOLDER]` in `about-our-story.md`)_
-
-- Why is the company named after Sequoyah? What connection did you see?
-- Who was Sequoyah to you when you chose the name?
-- Is there an Oklahoma / heritage angle you want honored?
-- 400–600 words of story is the target; we just need the substance from you.
+**A. The name: Sequoyah — ✅ DONE, no longer a gap.** Kenn supplied the story and it is **written and live on `/about`** (the "The name: Sequoyah" section — Sequoyah the Cherokee silversmith, the syllabary, "fit the symbols to the language, not the language to the symbols," the literacy story, the metaphor to SEQTEK's work, the quill-logo nod, and the explicit non-tribal acknowledgement) plus a companion podcast video. It shipped ahead of the interview; leadership only needs to read the rendered copy at 5.5. (The Jun-9 `about-our-story.md` draft still shows a `[PLACEHOLDER]` for this — that draft is stale; `seed-about-api.mts` is the source of truth and carries the real prose.)
 
 **B. Localshoring** _(the coined differentiator; trademarked term)_
 
@@ -120,7 +115,8 @@ Waiting only on placement/loading, not on you:
 - **3 service pillars + 10 services**, full copy + FAQs.
 - **Touchstone landing**, full copy + CrossCo proof video/photos (cleared).
 - **Hank & Dana bios**, publish-ready.
-- **Values** (7 pairs), **Mission/Vision**, **About / Our Story** founding narrative (through ~2004).
+- **Sequoyah name story** — written and **live on `/about`** + companion video (the old-feather Sequoyah Technologies logo is the swap-in for its current quill-panel placeholder).
+- **Values** (7 pairs), **Mission/Vision**, **About** founding narrative (name story + "gap nobody would fix" + "through the bust" — through ~2004). Still pending: the 1999→now 25-year timeline (Hank interview).
 - **8 release-cleared workshop testimonials** (4 with full name + title).
 - **Lead magnet** (the AI Dev Guide PDF) available for the workshop download card.
 - **Founder/brand videos** (Sequoyah origin, value, culture) with captions.
