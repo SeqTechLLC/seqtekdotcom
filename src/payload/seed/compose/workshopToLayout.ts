@@ -1,3 +1,5 @@
+import { WORKSHOP_FORM_ID } from '../../../lib/hubspot/forms'
+
 import { buildLexical, contentBlock, relId, runComposer, type LayoutBlock } from './shared'
 
 // spec 010 US1 (Phase B pilot) — workshop field→layout composer. Maps a
@@ -75,15 +77,15 @@ export function composeWorkshopLayout(record: WorkshopRecord): LayoutBlock[] {
     blocks.push({ blockType: 'testimonial-block', testimonial: testimonialId, layout: 'centered' })
   }
 
-  // Template tail (the retired page's DownloadCard + inquiry form) → a single
-  // contact CTA. The bespoke HubSpot inquiry form / download-card required a
-  // validated form GUID + cover image the records don't carry, so the faithful,
-  // publishable equivalent is contact-cta (data-model.md: "contact-cta/hubspot-form").
+  // Template tail (the retired page's inquiry form) → the live Workshop Inquiry
+  // HubSpot form (INTEGRATIONS.md §1.2; GUID provisioned 2026-06-02). The
+  // hubspot-form block renders WorkshopInquiryForm (phone + which-workshop fields)
+  // when its formId is the workshop GUID — see src/components/sections/HubspotForm.tsx.
   blocks.push({
-    blockType: 'contact-cta',
+    blockType: 'hubspot-form',
     heading: 'Request this workshop',
-    body: 'Tell us about your team and we will follow up with dates.',
-    primaryCta: { label: 'Book a call', url: '/contact/book-a-call' },
+    description: 'Tell us about your team and we will follow up with dates and what to expect.',
+    formId: WORKSHOP_FORM_ID,
   })
 
   return blocks

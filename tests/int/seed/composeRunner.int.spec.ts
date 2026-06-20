@@ -125,7 +125,7 @@ describe('runComposer (collection orchestration)', () => {
       stdout: capture().push,
     })
     const first = await readLayout()
-    expect(first.map((b) => b.blockType)).toEqual(['content', 'deliverables', 'contact-cta'])
+    expect(first.map((b) => b.blockType)).toEqual(['content', 'deliverables', 'hubspot-form'])
     expect(JSON.stringify(first)).toContain('RUNNER-deliv-2')
 
     await runComposer({
