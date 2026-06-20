@@ -315,10 +315,10 @@
       "layout": "centered"
     },
     {
-      "blockType": "contact-cta",
+      "blockType": "hubspot-form",
       "heading": "Request this workshop",
-      "body": "Tell us about your team and we will follow up with dates.",
-      "primaryCta": { "label": "Book a call", "url": "/contact/book-a-call" }
+      "description": "Tell us about your team and we will follow up with dates and what to expect.",
+      "formId": "66dba2bf-f099-44d5-8c6e-f24292cefe53"
     }
   ]
 }
