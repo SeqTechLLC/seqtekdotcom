@@ -207,7 +207,7 @@ describe('workshops field→layout composer (US1)', () => {
       'gallery',
       'video-embed',
       'testimonial-block',
-      'contact-cta',
+      'hubspot-form',
     ])
 
     const json = JSON.stringify(layout)

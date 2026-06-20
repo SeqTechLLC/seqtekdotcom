@@ -1,5 +1,7 @@
 import { HubspotLeadForm } from '@/components/forms/HubspotLeadForm'
+import { WorkshopInquiryForm } from '@/components/forms/WorkshopInquiryForm'
 import { type FormFieldConfig } from '@/lib/hubspot/fields'
+import { WORKSHOP_FORM_ID } from '@/lib/hubspot/forms'
 
 interface HubspotFormProps {
   heading?: string | null
@@ -8,10 +10,10 @@ interface HubspotFormProps {
   submitRedirect?: string | null
 }
 
-// Generic lead fields for content-placed `hubspot-form` blocks (e.g. the
-// Touchstone workshop page). Confirm field internal names against the HubSpot
-// form before going live (§1.2). For a richer, workshop-specific form, swap
-// this block for <WorkshopInquiryForm /> during pickup.
+// Generic lead fields for content-placed `hubspot-form` blocks. When the block's
+// formId is the Workshop Inquiry GUID we render the richer, workshop-specific
+// <WorkshopInquiryForm /> (phone + which-workshop) instead. Confirm field
+// internal names against the HubSpot form (§1.2).
 const DEFAULT_FIELDS: FormFieldConfig[] = [
   {
     name: 'firstname',
@@ -41,7 +43,11 @@ export function HubspotForm({ heading, description, formId }: HubspotFormProps) 
           <p className="mt-3 max-w-2xl text-body-lg text-text-secondary">{description}</p>
         ) : null}
         <div className="mt-8">
-          <HubspotLeadForm formId={formId} fields={DEFAULT_FIELDS} />
+          {formId === WORKSHOP_FORM_ID ? (
+            <WorkshopInquiryForm />
+          ) : (
+            <HubspotLeadForm formId={formId} fields={DEFAULT_FIELDS} />
+          )}
         </div>
       </div>
     </section>
