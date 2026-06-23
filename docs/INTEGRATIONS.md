@@ -54,9 +54,15 @@ SEQTEK's forms must look native to the site design, not like HubSpot iframe embe
 
 | Form             | Location                | Fields                                                                | HubSpot Form GUID                      |
 | ---------------- | ----------------------- | --------------------------------------------------------------------- | -------------------------------------- |
-| Contact          | `/contact`              | First name, last name, email, phone, inquiry type (dropdown), message | TBD — create in HubSpot                |
+| Contact          | `/contact`              | First name, last name, email, phone, inquiry type (dropdown), message | `8dc61ff4-9f95-46c5-b43e-8c82a394de42` |
 | Book a Call      | `/contact/book-a-call`  | HubSpot Meetings embed (see 1.4)                                      | N/A (Meetings widget)                  |
 | Workshop Inquiry | `/workshops/touchstone` | First/last name, email, phone, company, workshop type (free text)     | `66dba2bf-f099-44d5-8c6e-f24292cefe53` |
+
+> **Contact form GUID received 2026-06-22** from Chad Coleman (portal admin). GUID `8dc61ff4-9f95-46c5-b43e-8c82a394de42`, region `na1`, share link `https://52adq.share.hsforms.com/2jcYf9J-VRsW0PoyCo5TeQg`. Chad built it "just like" the Workshop form. Wired into `.env.local`.
+>
+> Background: the old site never had a HubSpot Contact form. The current `seqtek.com/contact` form is a native Wix form; HubSpot only ran the site-wide tracking script, so any "Contact Us" entry in the Forms list is just collected (non-HubSpot) submissions with no embeddable GUID. This form is net-new for the relaunch.
+>
+> **Verified 2026-06-22 by a direct API submit** (portal 8504846 + the GUID above): all `CONTACT_FIELDS` names — `firstname`, `lastname`, `email`, `phone`, `inquiry_type`, `message` — are accepted (HTTP 200), so the form's fields match the code and **CAPTCHA is off**. Submit succeeded with no `legalConsentOptions`, so the form isn't enforcing GDPR consent. The form has a post-submit redirect to `www.seqtek.com` — irrelevant to our API path, which renders its own success view. Caveats: the `inquiry_type` value `general` round-tripped but the other three options weren't each tested, and the probe left one junk submission ("Fieldmap Probe", email `not-an-email`) in the portal to delete. Remaining (optional): decide whether to enforce consent.
 
 #### Provisioning checklist (request from the HubSpot portal admin)
 
