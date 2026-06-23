@@ -2,8 +2,9 @@ import { type FormFieldConfig } from '@/lib/hubspot/fields'
 
 import { HubspotLeadForm } from './HubspotLeadForm'
 
-// Field internal names + dropdown values are v1 placeholders — replace with the
-// values the HubSpot admin returns for the "Website — Contact" form (§1.2).
+// Field internal names verified against the live HubSpot form by a test submit
+// 2026-06-22 (all accepted, HTTP 200 — INTEGRATIONS.md §1.2). The inquiry_type
+// option `general` round-tripped; the other three values weren't each tested.
 const CONTACT_FIELDS: FormFieldConfig[] = [
   {
     name: 'firstname',
