@@ -104,11 +104,11 @@ jobs:
           # in INTEGRATIONS.md §1.2). CI's own builds pass no args, keeping
           # test runs hermetic (forms stay in stub mode there by design).
           #
+          # NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID set 2026-06-22: Chad created the
+          # Contact form; the GUID was verified by a test submit (all fields
+          # accepted, CAPTCHA off — INTEGRATIONS.md §1.2). Live on next deploy.
+          #
           # Deliberately EMPTY until their gates clear:
-          #  - NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID: the Contact form has not
-          #    been created in HubSpot yet (INTEGRATIONS.md §1.2 provisioning
-          #    checklist). Paste the GUID here when the portal admin creates
-          #    it — nothing else is needed; the form goes live next deploy.
           #  - NEXT_PUBLIC_GTM_ID: GTM-54KBJ2Z3 is the LIVE Wix-era container;
           #    loading it on staging before the spec 008 container rebuild
           #    would fire its legacy tags uncontrolled. Set it as part of the
@@ -116,7 +116,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_HUBSPOT_PORTAL_ID=8504846
             NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=66dba2bf-f099-44d5-8c6e-f24292cefe53
-            NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=
+            NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=8dc61ff4-9f95-46c5-b43e-8c82a394de42
             NEXT_PUBLIC_GTM_ID=
 
       - uses: actions/setup-node@v4
