@@ -27,20 +27,31 @@ export function WorkshopList({ heading, workshops, headingLevel = 'h3' }: Worksh
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ol className="mt-8 grid gap-6 md:grid-cols-3">
-          {docs.map((w, i) => (
-            <li
-              key={w.id ?? w.slug}
-              className="rounded-md border border-border-subtle bg-surface p-6 shadow-xs"
-            >
-              <p className="text-display font-bold text-accent-strong">{i + 1}</p>
-              <CardHeading className="mt-2 text-h4 font-semibold">
-                {w.slug ? <Link href={`/workshops/${w.slug}`}>{w.title}</Link> : w.title}
-              </CardHeading>
-              {w.subtitle ? (
-                <p className="mt-2 text-body text-text-secondary">{w.subtitle}</p>
-              ) : null}
-            </li>
-          ))}
+          {docs.map((w, i) => {
+            const card = (
+              <>
+                <p className="text-display font-bold text-accent-strong">{i + 1}</p>
+                <CardHeading className="mt-2 text-h4 font-semibold">{w.title}</CardHeading>
+                {w.subtitle ? (
+                  <p className="mt-2 text-body text-text-secondary">{w.subtitle}</p>
+                ) : null}
+              </>
+            )
+            return (
+              <li
+                key={w.id ?? w.slug}
+                className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+              >
+                {w.slug ? (
+                  <Link href={`/workshops/${w.slug}`} className="block h-full p-6">
+                    {card}
+                  </Link>
+                ) : (
+                  <div className="p-6">{card}</div>
+                )}
+              </li>
+            )
+          })}
         </ol>
       </div>
     </section>
