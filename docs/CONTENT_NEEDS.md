@@ -1,6 +1,6 @@
 # Content We Still Need — Authoritative List
 
-**Owner:** Kenn Williamson · **Last updated:** 2026-06-24
+**Owner:** Kenn Williamson · **Last updated:** 2026-06-24 (Megan-review items re-verified against the raw meeting transcript `docs/meetings/2026-06-24-megan-website-feedback-transcript.md` — the action-item summary the first pass used had fabricated timestamps and omissions)
 **Purpose:** the single source of truth for content the website is still waiting on. Hand this to Hank, Justin, and Megan. If a request isn't on this list, we don't need it — see "Already decided / do not re-ask" below. This supersedes the scattered gap notes in `docs/content-drafts/CONTENT_GAPS.md` (dated 2026-06-11) and the long-lead `C-*` rows in `ROADMAP.md`.
 
 **State of the site (2026-06-19):** every page template is built and live on staging; the block migration is complete; most copy is already drafted in `docs/content-drafts/` and most photos are catalogued. What remains is a small, specific set of human inputs. Nearly everything else is _loading_ work the dev side does without you.
@@ -16,6 +16,8 @@ This single session unblocks more than anything else. Source guide: `docs/conten
 **A. The name: Sequoyah — ✅ DONE, no longer a gap.** Kenn supplied the story and it is **written and live on `/about`** (the "The name: Sequoyah" section — Sequoyah the Cherokee silversmith, the syllabary, "fit the symbols to the language, not the language to the symbols," the literacy story, the metaphor to SEQTEK's work, the quill-logo nod, and the explicit non-tribal acknowledgement) plus a companion podcast video. It shipped ahead of the interview; leadership only needs to read the rendered copy at 5.5. (The Jun-9 `about-our-story.md` draft still shows a `[PLACEHOLDER]` for this — that draft is stale; `seed-about-api.mts` is the source of truth and carries the real prose.)
 
 **B. Localshoring** _(the coined differentiator; trademarked term)_
+
+**Elevated by the 2026-06-24 review:** Localshoring must become **its own listed service** — a peer offering on `/services`, not a sub-bullet (see SVC-1 / the four-offering direction). It also gets a **Localshoring explainer video** on the team/localshoring pages (C-9). Right now there is **no concise definition of localshoring anywhere** — Kenn mined the podcasts for the about-page material but never found a tight, reusable definition, and we need one. The real, authoritative copy is still **Hank-gated** (no fabrication):
 
 - When and why did you coin "localshoring"? What were you seeing?
 - One- or two-sentence definition. How is it different from onshore / nearshore / offshore?
@@ -35,7 +37,21 @@ This single session unblocks more than anything else. Source guide: `docs/conten
 
 **E. Hank's own bio** — pick one of the three drafted pull-quote options (or give a fresh line); confirm the personal facts (rifle-for-a-computer, forest-ranger, college ball) are fair game and how personal the faith framing goes on the page. _(Faith framing itself is already approved — see §6.)_
 
-**F. Client-name + testimonial permissions** — 2–3 clients who'd give a short named quote (ideally one about localshoring); confirmation we can name the flagship client (NovaMud) and cite its metrics. **Named case-study target set (from the 2026-06-24 review): Hogan, Torax, NovaMud** — Megan is tracking the project histories + sign-offs for website use. This is a hard-launch gate (relational branding: named, signed studies only — anonymous studies are dropped).
+**F. Client-name + testimonial permissions** — 2–3 clients who'd give a short named quote (ideally one about localshoring); confirmation we can name the flagship client (NovaMud) and cite its metrics. **Named case-study target set (from the 2026-06-24 review), ordered by how likely we are to land the sign-off, with the internal person chasing each:**
+
+- **Well Checked** (via **Mike**) — the **most-certain** sign-off; the one Kenn is "reasonably certain" of. Case study.
+- **Hogan** (via **Ryan**) — a current client; this is **both** a case study **and** a logo on the Industry Leaders strip.
+- **Torax** (via **Andrew**) — **case study only.**
+- **NovaMud** (via **Sam**) — the **flagship** (the existing study, the only one with metrics); need it made specifically about them + permission to name them.
+
+Kenn has sign-off from **nobody** yet — Megan is tracking the project histories + sign-offs for website use. This is a hard-launch gate (relational branding: named, signed studies only — anonymous studies are dropped). **Logo note:** **BOK** is a **logo only** (current client, not a case-study target); **ONEOK + QuickTrip are a NO for case studies** (their logos may still be fine). See "Logos" below.
+
+**Logos — Industry Leaders strip (audit + curation, Megan owns).** The current strip was copied as-is from the live seqtek.com site, and the 2026-06-24 meeting **re-opened whether we actually have permission to show these** (the earlier "the logos run publicly, so we're covered" assumption was softer than the conversation). Working assumption: if no client has objected to marks already running publicly, they're probably fine — but **Megan owns curating the showcase list and chasing logo permission** with Hank/Brent before launch. Full meeting audit:
+
+- **Keep / current:** **Hogan**, **BOK**, **QuickTrip** (all current clients).
+- **Stale — drop or refresh:** **GE** (the Lovekin project, ~10 yr ago), **AVB** (last work ~5 yr ago), **Change Health** (~6 yr ago).
+- **Verify first:** **ONEOK / ONE Gas** — confirm SEQTEK ever did work with them at all (Kenn doesn't recall any).
+- **Case-study exclusions:** **ONEOK + QuickTrip are a NO for case studies** (logos only, if at all).
 
 ---
 
@@ -51,13 +67,19 @@ Brent's bio is the **only** leadership bio still incomplete (Hank's and Dana's a
 
 ## 3. Photo + video shoot (one session)
 
-Most studio headshots already exist and are catalogued (`../photo-catalog/`, mapped in `image-plan.md` / `team-page-picks.md`). **Photo and video shot together.** **Timing: the August All Hands** — group + headshots in one session (Megan coordinating; Justin to shoot). This shoot is the **hard-launch** gate. Still to capture:
+Most studio headshots already exist and are catalogued (`../photo-catalog/`, mapped in `image-plan.md` / `team-page-picks.md`). **Photo and video shot together.** **Timing: the August All Hands** (everyone is already required to be there — get group + headshots in one go instead of tracking people down). This shoot is the **hard-launch** gate.
 
-- Group leadership photo (Hank / Dana / Brent)
-- Full team photo
-- Kenn's studio headshot (current one is off-style)
-- Confirm active-roster status for Sam Haines / Matt Lemke / Jeff Jordan
-- Any office / candid b-roll for hero + culture strips (optional; we have 2022–23 candidates)
+- **Megan organizes the shoot** — gives the team advance notice, schedules group photo + headshots, and coordinates the action/candid session.
+- **Shooter: Justin is first choice** — he's the one who has shot SEQTEK's videos. **Confirm he also shoots stills** (Megan to check; if not, find someone who does). The goal is a professional camera, not phone photos.
+
+Still to capture:
+
+- **Group photo** of everyone + a **professional headshot for every team member** (the team page wants a name + face for everyone, not just leadership).
+- Group leadership photo (Hank / Dana / Brent).
+- Kenn's studio headshot (current one is off-style).
+- **Action / candid shots at the Gradient office** (the SEQTEK office) — pull in local Tulsa people (Brent, Daniel, Chad, Hank, Megan, Andrew, etc.); not everyone is required to come in given remote work. Ideas: walking the office stairs, the glass-elevator shot — real people in a great space. Megan to decide how to approach this separately from the All Hands group/headshot session.
+- Confirm active-roster status for Sam Haines / Matt Lemke / Jeff Jordan.
+- Any office / candid b-roll for hero + culture strips (we also have 2022–23 candidates).
 
 ---
 
@@ -97,14 +119,14 @@ The "Organizational Maturity Assessment" landing page is built but has nothing t
 
 These kept resurfacing; they're closed:
 
-| Topic                | Decision                                                                                                                           |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **Company stats**    | 25+ years, **500+ projects**. "Lives touched" is **dropped** (off-brand).                                                          |
-| **Client logos**     | The logos already on the live site for years are sufficient permission. New logos only — Kenn handles those.                       |
-| **Cherokee Nation**  | **No outreach.** Respectful allusion to a public historical figure needs no permission.                                            |
-| **Core values**      | 7 pattern/anti-pattern values written; **Hank signed off**.                                                                        |
-| **Faith framing**    | Approved and calibrated; lives on `/about/our-story` + Hank's bio, with a video cut. Hank holds final sign-off on _altitude_ only. |
-| **Blog post bodies** | Written (6 posts). Done.                                                                                                           |
+| Topic                | Decision                                                                                                                                                                                             |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Company stats**    | 25+ years, **500+ projects**. "Lives touched" is **dropped** (off-brand).                                                                                                                            |
+| **Client logos**     | **Re-opened 2026-06-24** (was "running publicly = sufficient permission"). Megan now owns curating the strip + chasing permission; full audit + the case-study exclusions are in §1.F under "Logos." |
+| **Cherokee Nation**  | **No outreach.** Respectful allusion to a public historical figure needs no permission.                                                                                                              |
+| **Core values**      | 7 pattern/anti-pattern values written; **Hank signed off**.                                                                                                                                          |
+| **Faith framing**    | Approved and calibrated; lives on `/about/our-story` + Hank's bio, with a video cut. Hank holds final sign-off on _altitude_ only.                                                                   |
+| **Blog post bodies** | Written (6 posts). Done.                                                                                                                                                                             |
 
 ---
 
