@@ -45,7 +45,7 @@ export const navigation: Navigation = {
       children: [
         { label: 'Our Story', url: '/about/our-story' },
         { label: 'Team', url: '/about/team' },
-        { label: 'Localshoring', url: '/about/localshoring' },
+        { label: 'Localshoring', url: '/localshoring' },
         { label: 'Careers', url: '/about/careers' },
       ],
     },
@@ -53,9 +53,13 @@ export const navigation: Navigation = {
       label: 'Services',
       url: '/services',
       children: [
-        { label: 'Organizational Strategy', url: '/services/organizational-strategy' },
-        { label: 'Technology & Data', url: '/services/technology-data' },
-        { label: 'AI & Automation', url: '/services/ai-automation' },
+        // feat/services-restructure — four peer offerings (ADR 0009). Workshops
+        // is the primary funnel, so it leads and points at /workshops (no
+        // /services/workshops page).
+        { label: 'Workshops', url: '/workshops' },
+        { label: 'Localshoring', url: '/services/localshoring' },
+        { label: 'AI Integration', url: '/services/ai-integration' },
+        { label: 'Digital Transformation', url: '/services/digital-transformation' },
       ],
     },
     { label: 'Workshops', url: '/workshops' },
@@ -71,7 +75,7 @@ export const navigation: Navigation = {
         { label: 'About', url: '/about' },
         { label: 'Our Story', url: '/about/our-story' },
         { label: 'Team', url: '/about/team' },
-        { label: 'Localshoring', url: '/about/localshoring' },
+        { label: 'Localshoring', url: '/localshoring' },
         { label: 'Careers', url: '/about/careers' },
       ],
     },
@@ -79,9 +83,11 @@ export const navigation: Navigation = {
       label: 'Services',
       url: '/services',
       children: [
-        { label: 'Organizational Strategy', url: '/services/organizational-strategy' },
-        { label: 'Technology & Data', url: '/services/technology-data' },
-        { label: 'AI & Automation', url: '/services/ai-automation' },
+        // feat/services-restructure — four peer offerings (ADR 0009).
+        { label: 'Workshops', url: '/workshops' },
+        { label: 'Localshoring', url: '/services/localshoring' },
+        { label: 'AI Integration', url: '/services/ai-integration' },
+        { label: 'Digital Transformation', url: '/services/digital-transformation' },
       ],
     },
     {

@@ -28,6 +28,19 @@ const EXPECTED_SOURCES = [
   '/case-study-5',
   '/driving-innovation-case-study',
   '/modernizing-healthcare-case-study',
+  // feat/services-restructure — old 3-pillar / 9-service IA → four peer offerings.
+  '/services/ai-automation',
+  '/services/technology-data',
+  '/services/organizational-strategy',
+  '/services/ai-automation/ai-assisted-modernization',
+  '/services/ai-automation/machine-learning-solutions',
+  '/services/ai-automation/process-automation',
+  '/services/technology-data/application-modernization',
+  '/services/technology-data/cloud-data-engineering',
+  '/services/technology-data/custom-software-development',
+  '/services/organizational-strategy/team-workshops',
+  '/services/organizational-strategy/fractional-product-ownership',
+  '/services/organizational-strategy/strategy-alignment',
 ]
 
 // Top-level segments with a dedicated nested route (data-model §1).
