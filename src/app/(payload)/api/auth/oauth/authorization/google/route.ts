@@ -8,7 +8,13 @@ import {
 
 const STATE_COOKIE = '__seqtek_oauth_state'
 const VERIFIER_COOKIE = '__seqtek_oauth_verifier'
-const ALLOWED_DOMAIN = 'seqtechllc.com'
+// `hd` is the Google account-picker hint. We run TWO Workspace domains
+// (seqtechllc.com + seqtek.com), and `hd` only takes a single domain — pinning
+// one would hide the other's accounts from the chooser. `*` restricts the
+// picker to any hosted (Workspace) account, keeping personal Gmail out; the
+// specific-domain enforcement happens server-side in the callback against the
+// shared allowlist (allowed-domains.ts).
+const HOSTED_DOMAIN_HINT = '*'
 const MAX_AGE_SECONDS = 600 // 10 minutes — long enough to complete consent
 
 function callbackUri(req: NextRequest): string {
@@ -47,7 +53,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     redirectUri: callbackUri(req),
     state,
     codeChallenge: challenge,
-    hd: ALLOWED_DOMAIN,
+    hd: HOSTED_DOMAIN_HINT,
   })
 
   const response = NextResponse.redirect(authorizationUrl)
