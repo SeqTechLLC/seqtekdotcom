@@ -1,9 +1,11 @@
 # Content We Still Need — Authoritative List
 
-**Owner:** Kenn Williamson · **Last updated:** 2026-06-19
+**Owner:** Kenn Williamson · **Last updated:** 2026-06-24
 **Purpose:** the single source of truth for content the website is still waiting on. Hand this to Hank, Justin, and Megan. If a request isn't on this list, we don't need it — see "Already decided / do not re-ask" below. This supersedes the scattered gap notes in `docs/content-drafts/CONTENT_GAPS.md` (dated 2026-06-11) and the long-lead `C-*` rows in `ROADMAP.md`.
 
 **State of the site (2026-06-19):** every page template is built and live on staging; the block migration is complete; most copy is already drafted in `docs/content-drafts/` and most photos are catalogued. What remains is a small, specific set of human inputs. Nearly everything else is _loading_ work the dev side does without you.
+
+**Launch model (decided 2026-06-24):** the launch is **phased**. **Soft launch** goes out with the content already in hand (everything in §8 below, placed) to gather feedback. **Hard launch** follows the **August All Hands** photo/video shoot (§3) plus the named case-study sign-offs (§1.F). So the §3 shoot and the §1.F permissions are **hard-launch** gates; the rest of this list should land for the soft launch.
 
 ---
 
@@ -33,7 +35,7 @@ This single session unblocks more than anything else. Source guide: `docs/conten
 
 **E. Hank's own bio** — pick one of the three drafted pull-quote options (or give a fresh line); confirm the personal facts (rifle-for-a-computer, forest-ranger, college ball) are fair game and how personal the faith framing goes on the page. _(Faith framing itself is already approved — see §6.)_
 
-**F. Client-name + testimonial permissions** — 2–3 clients who'd give a short named quote (ideally one about localshoring); confirmation we can name the flagship client (NovaMud) and cite its metrics.
+**F. Client-name + testimonial permissions** — 2–3 clients who'd give a short named quote (ideally one about localshoring); confirmation we can name the flagship client (NovaMud) and cite its metrics. **Named case-study target set (from the 2026-06-24 review): Hogan, Torax, NovaMud** — Megan is tracking the project histories + sign-offs for website use. This is a hard-launch gate (relational branding: named, signed studies only — anonymous studies are dropped).
 
 ---
 
@@ -49,7 +51,7 @@ Brent's bio is the **only** leadership bio still incomplete (Hank's and Dana's a
 
 ## 3. Photo + video shoot (one session)
 
-Most studio headshots already exist and are catalogued (`../photo-catalog/`, mapped in `image-plan.md` / `team-page-picks.md`). **Photo and video shot together.** Still to capture:
+Most studio headshots already exist and are catalogued (`../photo-catalog/`, mapped in `image-plan.md` / `team-page-picks.md`). **Photo and video shot together.** **Timing: the August All Hands** — group + headshots in one session (Megan coordinating; Justin to shoot). This shoot is the **hard-launch** gate. Still to capture:
 
 - Group leadership photo (Hank / Dana / Brent)
 - Full team photo
