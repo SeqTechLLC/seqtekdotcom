@@ -23,7 +23,10 @@ const RENDER_BLOCKS_ROUTES = [
   'src/app/(frontend)/[slug]/page.tsx', // generic pages
   'src/app/(frontend)/workshops/[slug]/page.tsx',
   'src/app/(frontend)/case-studies/[slug]/page.tsx',
-  'src/app/(frontend)/services/[pillar]/[slug]/page.tsx',
+  // feat/services-restructure (ADR 0009): the bespoke pillar/service route
+  // templates were retired in favor of block-composed offering Pages.
+  'src/app/(frontend)/services/page.tsx', // services overview (block Page)
+  'src/app/(frontend)/services/[offering]/page.tsx', // peer offerings (block Pages)
   'src/app/(frontend)/team/[slug]/page.tsx',
 ]
 
