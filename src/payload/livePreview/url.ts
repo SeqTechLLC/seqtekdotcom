@@ -23,6 +23,13 @@ const PUBLIC_PATH_BUILDERS: Record<PreviewCollection, (doc: DocLike) => string |
   pages: (doc) => (doc.slug ? `/${doc.slug}` : null),
   posts: (doc) => (doc.slug ? `/insights/${doc.slug}` : null),
   caseStudies: (doc) => (doc.slug ? `/case-studies/${doc.slug}` : null),
+  // NOTE: orphaned by feat/services-restructure. The public `/services/[pillar]`
+  // + `/services/[pillar]/[slug]` render routes were retired for the four
+  // block-composed offering Pages, so this still-existing collection now has no
+  // live public route to preview into. The builder is left as-is (its int
+  // coverage pins this shape) pending the services-collection deprecation
+  // decision; the services preview e2e is skipped meanwhile. See
+  // tests/e2e/preview/servicesPreview.e2e.spec.ts.
   services: (doc) => {
     if (!doc.slug) return null
     const pillarSlug = typeof doc.pillar === 'object' && doc.pillar ? doc.pillar.slug : undefined

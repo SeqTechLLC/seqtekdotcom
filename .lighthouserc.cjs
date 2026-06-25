@@ -22,14 +22,13 @@ module.exports = {
         // depend on DB content), so only routes that 200 without seeded content
         // are listed: the homepage + the collection listings (which render an
         // empty grid) + the admin login. CONTENT-dependent `pages` routes
-        // (/about, /localshoring) and per-slug detail URLs 404 here — they get
-        // LHCI coverage in a SEEDED environment (staging), tracked below, not
-        // silently dropped.
+        // (/about, /localshoring, /services + the offering pages) and per-slug
+        // detail URLs 404 here — they get LHCI coverage in a SEEDED environment
+        // (staging), tracked below, not silently dropped.
         'http://localhost:3200/',
         'http://localhost:3200/team',
         'http://localhost:3200/case-studies',
         'http://localhost:3200/insights',
-        'http://localhost:3200/services',
         'http://localhost:3200/touchstone-workshops',
         // spec 006 T031 — static legal route (200s against the empty CI DB);
         // carries the same public a11y/best-practices/SEO >= 0.95 gate, and
@@ -37,8 +36,11 @@ module.exports = {
         'http://localhost:3200/privacy-policy',
         'http://localhost:3200/admin/login',
         // Seeded-env-only (404 against the empty CI DB): /about, /localshoring,
-        // and the per-slug detail URLs (/case-studies/<slug>, /touchstone-
-        // workshops/<slug>). Add to a staging LHCI run with real content.
+        // /services + /services/<offering> (feat/services-restructure made these
+        // block-composed `pages` records looked up by slug, so they 404 without
+        // the services seed), and the per-slug detail URLs (/case-studies/<slug>,
+        // /touchstone-workshops/<slug>). Add to a staging LHCI run with real
+        // content.
       ],
       // :3200 keeps this clear of the other localhost projects (the Nuxt
       // dev container that auto-binds :3000, and the Next dev script that
