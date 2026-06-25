@@ -15,12 +15,10 @@ export const ALLOWED_WORKSPACE_DOMAINS = ['seqtechllc.com', 'seqtek.com'] as con
 /** True iff `email`'s host is exactly one of the allowed Workspace domains. */
 export function isAllowedWorkspaceEmail(email: string | null | undefined): boolean {
   if (!email) return false
-  const at = email.trim().toLowerCase().lastIndexOf('@')
+  const normalized = email.trim().toLowerCase()
+  const at = normalized.lastIndexOf('@')
   if (at === -1) return false
-  const domain = email
-    .trim()
-    .toLowerCase()
-    .slice(at + 1)
+  const domain = normalized.slice(at + 1)
   return (ALLOWED_WORKSPACE_DOMAINS as readonly string[]).includes(domain)
 }
 
