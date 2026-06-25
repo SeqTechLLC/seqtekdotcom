@@ -31,17 +31,30 @@ export function ServicePillarCards({
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ul className="mt-8 grid gap-6 md:grid-cols-3">
-          {docs.map((p) => (
-            <li
-              key={p.id ?? p.slug}
-              className="rounded-md border border-border-subtle bg-surface p-6 shadow-xs"
-            >
-              <CardHeading className="text-h3 font-semibold">
-                {p.slug ? <Link href={`/services/${p.slug}`}>{p.title}</Link> : p.title}
-              </CardHeading>
-              {p.tagline ? <p className="mt-3 text-body text-text-secondary">{p.tagline}</p> : null}
-            </li>
-          ))}
+          {docs.map((p) => {
+            const card = (
+              <>
+                <CardHeading className="text-h3 font-semibold">{p.title}</CardHeading>
+                {p.tagline ? (
+                  <p className="mt-3 text-body text-text-secondary">{p.tagline}</p>
+                ) : null}
+              </>
+            )
+            return (
+              <li
+                key={p.id ?? p.slug}
+                className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+              >
+                {p.slug ? (
+                  <Link href={`/services/${p.slug}`} className="block h-full p-6">
+                    {card}
+                  </Link>
+                ) : (
+                  <div className="p-6">{card}</div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       </div>
     </section>

@@ -38,17 +38,28 @@ export function ServiceCards({
         ) : null}
         {docs.length > 0 ? (
           <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {docs.map((s) => (
-              <li
-                key={s.id ?? s.slug}
-                className="rounded-md border border-border-subtle bg-surface p-6 shadow-xs"
-              >
-                {s.icon ? <p className="text-h3 text-accent-strong">{s.icon}</p> : null}
-                <CardHeading className="mt-2 text-h4 font-semibold">
-                  {s.slug ? <Link href={`/services/${s.slug}`}>{s.title}</Link> : s.title}
-                </CardHeading>
-              </li>
-            ))}
+            {docs.map((s) => {
+              const card = (
+                <>
+                  {s.icon ? <p className="text-h3 text-accent-strong">{s.icon}</p> : null}
+                  <CardHeading className="mt-2 text-h4 font-semibold">{s.title}</CardHeading>
+                </>
+              )
+              return (
+                <li
+                  key={s.id ?? s.slug}
+                  className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+                >
+                  {s.slug ? (
+                    <Link href={`/services/${s.slug}`} className="block h-full p-6">
+                      {card}
+                    </Link>
+                  ) : (
+                    <div className="p-6">{card}</div>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         ) : null}
       </div>

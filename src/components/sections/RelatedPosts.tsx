@@ -34,16 +34,23 @@ export function RelatedPosts({ heading, manualItems, limit = 3 }: RelatedPostsPr
       <div className="mx-auto max-w-container-lg">
         <h2 className="text-h3 font-semibold">{heading ?? 'Related posts'}</h2>
         <ul className="mt-6 grid gap-4 md:grid-cols-3">
-          {docs.map((p) => (
-            <li
-              key={p.id ?? p.slug}
-              className="rounded-md border border-border-subtle bg-surface-subtle p-4"
-            >
-              <h3 className="text-body font-semibold">
-                {p.slug ? <Link href={`/insights/${p.slug}`}>{p.title}</Link> : p.title}
-              </h3>
-            </li>
-          ))}
+          {docs.map((p) => {
+            const card = <h3 className="text-body font-semibold">{p.title}</h3>
+            return (
+              <li
+                key={p.id ?? p.slug}
+                className="group rounded-md border border-border-subtle bg-surface-subtle transition hover:border-border-strong hover:shadow-sm"
+              >
+                {p.slug ? (
+                  <Link href={`/insights/${p.slug}`} className="block h-full p-4">
+                    {card}
+                  </Link>
+                ) : (
+                  <div className="p-4">{card}</div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       </div>
     </section>
