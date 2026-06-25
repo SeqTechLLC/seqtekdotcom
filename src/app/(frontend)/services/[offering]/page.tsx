@@ -19,6 +19,14 @@ import type { Page } from '@/payload-types'
 // forces dynamic rendering (ADR 0005), so the cached published read comes FIRST,
 // then the dynamic draft check (draftMode() before unstable_cache throws
 // DYNAMIC_SERVER_USAGE under ISR).
+//
+// Dynamically rendered (no generateStaticParams) — the shared (frontend) layout
+// reads the per-request CSP nonce via headers(), which forces dynamic rendering;
+// declaring generateStaticParams makes Next attempt static generation and the
+// layout's headers() then throws DYNAMIC_SERVER_USAGE (a 500) on any on-demand /
+// not-found path (ADR 0005 Addendum). Data is still ISR-cached via the
+// unstable_cache reader (revalidate 3600 + tag invalidation); only the HTML
+// render is per-request, which the nonce requires anyway.
 export const revalidate = 3600
 
 // offering URL segment → the known Page slug the seeder writes.
@@ -32,10 +40,6 @@ const OFFERING_TITLE: Record<string, string> = {
   localshoring: 'Localshoring',
   'ai-integration': 'AI Integration',
   'digital-transformation': 'Digital Transformation',
-}
-
-export function generateStaticParams(): Array<{ offering: string }> {
-  return Object.keys(OFFERING_TO_SLUG).map((offering) => ({ offering }))
 }
 
 interface Props {
