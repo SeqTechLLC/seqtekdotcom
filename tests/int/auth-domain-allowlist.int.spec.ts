@@ -24,8 +24,12 @@ describe('isWorkspaceEmail (FR-002, R-5)', () => {
     ['foo@seqtechllc.com', true],
     ['Foo@SEQTECHLLC.com', true],
     ['  user@seqtechllc.com  ', true],
+    ['user@seqtek.com', true],
+    ['User@SEQTEK.com', true],
     ['foo@bar.seqtechllc.com', false],
+    ['foo@bar.seqtek.com', false],
     ['foo@seqtechllc.co', false],
+    ['foo@seqtek.co', false],
     ['foo@gmail.com', false],
     ['', false],
     [null, false],
@@ -83,6 +87,26 @@ describe('Users beforeChange rejects non-Workspace emails (FR-003, US3)', () => 
     ).rejects.toThrow(/Only SEQTEK Workspace accounts/)
     const users = await payload.find({ collection: 'users', overrideAccess: true })
     expect(users.docs).toHaveLength(0)
+  })
+
+  it('accepts a @seqtek.com Workspace email on the unauthed create path', async () => {
+    // The second SEQTEK Workspace domain. A marketing editor on @seqtek.com
+    // (e.g. Megan) must provision through the same OAuth-create path that an
+    // @seqtechllc.com account does — no req.user, domain hook enforced.
+    const created = await payload.create({
+      collection: 'users',
+      data: {
+        email: 'megan@seqtek.com',
+        name: 'Megan Kadel',
+        roles: ['editor'],
+      },
+      overrideAccess: true,
+      req: { user: null } as Parameters<typeof payload.create>[0]['req'],
+    })
+    expect(created.email).toBe('megan@seqtek.com')
+
+    const users = await payload.find({ collection: 'users', overrideAccess: true })
+    expect(users.docs).toHaveLength(1)
   })
 
   it('does not run on authenticated creates (admin manually creating a user)', async () => {

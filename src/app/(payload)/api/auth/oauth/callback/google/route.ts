@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { getPayload } from 'payload'
 
 import config from '../../../../../../../payload.config'
+import { isAllowedHostedDomain } from '../../../../../../../lib/auth/allowed-domains'
 import {
   OAuthError,
   exchangeCodeForTokens,
@@ -13,7 +14,6 @@ import type { User } from '../../../../../../../payload-types'
 
 const STATE_COOKIE = '__seqtek_oauth_state'
 const VERIFIER_COOKIE = '__seqtek_oauth_verifier'
-const ALLOWED_DOMAIN = 'seqtechllc.com'
 
 function loginErrorRedirect(req: NextRequest, code: string): NextResponse {
   const response = NextResponse.redirect(new URL(`/admin/login?error=${code}`, req.url))
@@ -72,8 +72,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   // Defence-in-depth: enforce the hd claim server-side. Even if Google's
-  // `hd=` hint were bypassed, the ID token's hd claim must match.
-  if (claims.hd !== ALLOWED_DOMAIN) {
+  // `hd=*` hint were bypassed, the ID token's hd claim must be one of our
+  // Workspace domains (seqtechllc.com / seqtek.com — see allowed-domains.ts).
+  if (!isAllowedHostedDomain(claims.hd)) {
     logSignIn({
       email: claims.email,
       outcome: 'domain-rejected',

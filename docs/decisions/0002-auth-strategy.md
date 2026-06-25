@@ -1,8 +1,8 @@
 # 0002. Payload local auth in spike, Google OAuth in Phase 1
 
-**Status:** Superseded by implementation. The Decision section's "Phase 1 (post-spike)" choice to adopt `@authsmith/payload-auth-plugin` was reverted during /speckit-implement on 2026-05-24; the **custom `auth.strategies` alternative listed in this ADR's Options section was taken instead**. The shape of the high-level outcome — Google OAuth, `@seqtechllc.com` domain restriction, no SMTP, ~5-10 admin users — is unchanged.
+**Status:** Superseded by implementation. The Decision section's "Phase 1 (post-spike)" choice to adopt `@authsmith/payload-auth-plugin` was reverted during /speckit-implement on 2026-05-24; the **custom `auth.strategies` alternative listed in this ADR's Options section was taken instead**. The shape of the high-level outcome — Google OAuth, Workspace-domain restriction, no SMTP, ~5-10 admin users — is unchanged. The domain restriction widened from one domain to two on 2026-06-24 (see the implementation note below) — the "revisit when" condition this ADR anticipated.
 
-**Date:** 2026-05-14 · **Revised:** 2026-05-24
+**Date:** 2026-05-14 · **Revised:** 2026-05-24, 2026-06-24
 
 **Implementation note (2026-05-24):**
 
@@ -10,6 +10,11 @@
 - The reversal was driven by trust-surface review: 305 stars, one named maintainer, exact-pinned vulnerable transitive deps (`js-cookie 3.0.5` HIGH, `uuid 11.1.0` MODERATE), and an inconvenient route-naming docs error that masked itself behind a generic 500. None individually disqualifying; in aggregate enough to take the listed fallback.
 - Custom implementation is **~250 LOC** across `src/app/(payload)/api/auth/oauth/{authorization,callback}/google/route.ts` and `src/lib/auth/{google-oauth,session-cookie}.ts`. Uses Google's OIDC discovery + JWKS via `jose` (mature, widely used by NextAuth/Auth0/etc.) and Payload's own session-cookie helpers (`getFieldsToSign`, `jwtSign`, `generatePayloadCookie`). No new runtime dependency beyond what Payload + Next already ship.
 - `npm audit --omit=dev --audit-level=high` added to CI `quality` job as a defence-in-depth check for future dep introductions.
+
+**Implementation note (2026-06-24) — two Workspace domains:**
+
+- SEQTEK runs **two** live Google Workspace domains: the legal entity (`seqtechllc.com`) and the public brand (`seqtek.com`). Staff exist under both (marketing is on `@seqtek.com`), so a `@seqtek.com` editor (Megan) was domain-rejected at `/admin` by the original single-domain allowlist. This is exactly the "Revisit when: editor set extends beyond `@seqtechllc.com`" trigger below.
+- Fix: a shared allowlist (`src/lib/auth/allowed-domains.ts`, `ALLOWED_WORKSPACE_DOMAINS = ['seqtechllc.com', 'seqtek.com']`) now backs all three domain gates — the email-suffix check (`enforce-domain.ts`), the Google `hd` account-picker hint (relaxed from a single domain to `*`, since `hd` takes only one value and pinning one would hide the other's accounts), and the callback `hd`-claim check. First sign-in still auto-provisions an `editor`; access is otherwise unchanged. Adding/removing a domain is a one-line edit to the shared array.
 
 ## Context
 

@@ -6,7 +6,7 @@ export default function BeforeLoginGoogle() {
         Sign in with Google
       </a>
       <p className="admin-login-google__hint">
-        Restricted to SEQTEK Workspace accounts (@seqtechllc.com).
+        Restricted to SEQTEK Workspace accounts (@seqtechllc.com or @seqtek.com).
       </p>
     </div>
   )
