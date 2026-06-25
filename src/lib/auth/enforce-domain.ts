@@ -1,19 +1,22 @@
 import type { CollectionBeforeChangeHook } from 'payload'
 
+import { isAllowedWorkspaceEmail } from './allowed-domains'
 import { logSignIn } from './sign-in-audit'
 
-const ALLOWED_DOMAIN = '@seqtechllc.com'
-
+/**
+ * True iff `email` belongs to a SEQTEK Workspace domain (`seqtechllc.com` or
+ * `seqtek.com`). Thin alias over the shared allowlist — kept under this name
+ * because it is the documented public check (FR-002). See `allowed-domains.ts`.
+ */
 export function isWorkspaceEmail(email: string | null | undefined): boolean {
-  if (!email) return false
-  return email.trim().toLowerCase().endsWith(ALLOWED_DOMAIN)
+  return isAllowedWorkspaceEmail(email)
 }
 
 /**
- * On OAuth-provisioning creates (req.user == null), reject any email not in
- * the SEQTEK Google Workspace tenant. Throws before any row is written
- * (FR-003). Audit-logs the rejection so unexpected access patterns are
- * observable in CloudWatch (FR-011).
+ * On OAuth-provisioning creates (req.user == null), reject any email not in a
+ * SEQTEK Google Workspace tenant. Throws before any row is written (FR-003).
+ * Audit-logs the rejection so unexpected access patterns are observable in
+ * CloudWatch (FR-011).
  */
 export const enforceDomainAllowlist: CollectionBeforeChangeHook = async ({
   data,
