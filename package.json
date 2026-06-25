@@ -20,6 +20,8 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "prepare": "husky",
     "pretest:e2e": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/e2e/provision-schema.ts",
+    "seed:services": "cross-env NODE_OPTIONS=--no-deprecation tsx src/payload/seed/services/index.ts",
+    "seed:services:remote": "cross-env NODE_OPTIONS=--no-deprecation tsx src/payload/seed/services/push-remote.ts",
     "seed:showcase": "cross-env NODE_OPTIONS=--no-deprecation tsx src/payload/seed/showcase/index.ts",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "npm run test:int && npm run test:e2e",

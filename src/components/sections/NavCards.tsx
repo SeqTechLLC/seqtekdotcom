@@ -47,7 +47,12 @@ export function NavCards({ cards }: NavCardsProps) {
                   />
                 ) : null}
                 <div className="p-5">
-                  <h3 className="text-h4 font-semibold">{c.title}</h3>
+                  {/* h2: nav cards are top-level navigation that sit directly
+                      under the page h1 (e.g. the /services overview), so their
+                      titles must be the next heading level down — an h3 here
+                      skips a level and trips the WCAG heading-order sweep. The
+                      text-h4 token keeps the visual size unchanged. */}
+                  <h2 className="text-h4 font-semibold">{c.title}</h2>
                   <p className="mt-2 text-body text-text-secondary">{c.description}</p>
                 </div>
               </Link>

@@ -5,7 +5,7 @@ import { test } from '@playwright/test'
 //
 // **Status:** skeleton — deferred until spec 004 (Phase 3 page templates)
 // lands. The public routes this test would observe (`/insights/<slug>`,
-// `/case-studies/<slug>`, `/services/<pillar>/<slug>`, `/<slug>`) don't
+// `/case-studies/<slug>`, `/services/<offering>`, `/<slug>`) don't
 // exist yet, so a publish-then-observe loop can't be wired end-to-end.
 //
 // The revalidation surface itself is already exercised:

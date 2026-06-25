@@ -26,6 +26,10 @@ const ROUTES: { slug: string; path: string }[] = [
   { slug: 'home', path: '/' },
   { slug: 'about', path: '/about' },
   { slug: 'services', path: '/services' },
+  // feat/services-restructure — the three peer-offering pages (ADR 0009).
+  { slug: 'service-localshoring', path: '/services/localshoring' },
+  { slug: 'service-ai-integration', path: '/services/ai-integration' },
+  { slug: 'service-digital-transformation', path: '/services/digital-transformation' },
   { slug: 'case-studies', path: '/case-studies' },
   { slug: 'insights', path: '/insights' },
   { slug: 'team', path: '/team' },

@@ -1,35 +1,59 @@
 import type { Metadata } from 'next'
+import { draftMode } from 'next/headers'
+import { notFound } from 'next/navigation'
 
-import { getSiteSettings, listServicePillars } from '@/lib/payload'
+import { getPageBySlug, getSiteSettings } from '@/lib/payload'
+import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
-import { ServicePillarCards } from '@/components/sections/ServicePillarCards'
+import { breadcrumbLd } from '@/lib/structured-data'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { PreviewBanner } from '@/components/layout/PreviewBanner'
+import { RenderBlocks } from '@/components/sections/RenderBlocks'
+import type { Page } from '@/payload-types'
 
-// spec 004 Phase 8 (T030). Services overview — the pillar cards. Replaces the
-// spike force-dynamic placeholder at this path.
-
+// feat/services-restructure (ADR 0009). Services overview is now a block-composed
+// Page (slug `service-overview`) rendered via RenderBlocks — the hand-rendered
+// ServicePillarCards header template is retired along with the pillar routes.
 export const revalidate = 3600
 
+const OVERVIEW_SLUG = 'service-overview'
+
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSettings = await getSiteSettings()
-  return buildMetadata(null, {
-    title: 'Services',
-    description: 'How we help: strategy, delivery, and modernization across our practice areas.',
-    siteSettings,
-  })
+  const [page, siteSettings] = await Promise.all([getPageBySlug(OVERVIEW_SLUG), getSiteSettings()])
+  if (!page) {
+    return buildMetadata(null, {
+      title: 'Services',
+      description:
+        'How we help: workshops, localshoring, AI integration, and digital transformation.',
+      siteSettings,
+    })
+  }
+  return buildMetadata(page.seo, { title: page.title, siteSettings })
 }
 
 export default async function ServicesPage() {
-  const pillars = await listServicePillars()
+  // Cached published read FIRST, then the dynamic draft check (order matters).
+  const published = await getPageBySlug(OVERVIEW_SLUG)
+  const { isEnabled: isDraft } = await draftMode()
+  const page = isDraft
+    ? ((await getDraftBySlug<Page>('pages', OVERVIEW_SLUG)) ?? published)
+    : published
+  if (!page) notFound()
+
+  const layout = (page.layout ?? []) as never
 
   return (
-    <div data-testid="services-overview" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
-      <header className="mb-12">
-        <h1 className="text-h1 font-bold">Services</h1>
-        <p className="mt-4 text-body-lg text-text-secondary">
-          Practice areas built around one delivery model.
-        </p>
-      </header>
-      <ServicePillarCards pillars={pillars} headingLevel="h2" />
-    </div>
+    <>
+      <JsonLd
+        data={breadcrumbLd([
+          { name: 'Home', path: '/' },
+          { name: 'Services', path: '/services' },
+        ])}
+      />
+      {isDraft && <PreviewBanner />}
+      <article data-testid="services-overview">
+        <RenderBlocks blocks={layout} />
+      </article>
+    </>
   )
 }

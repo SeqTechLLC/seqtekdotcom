@@ -2,6 +2,12 @@ import { getPayload, type Payload } from 'payload'
 
 import config from '../../../src/payload.config'
 import type { CaseStudy } from '../../../src/payload-types'
+import {
+  aiIntegrationLayout,
+  digitalTransformationLayout,
+  localshoringLayout,
+  overviewLayout,
+} from '../../../src/payload/seed/services/layouts'
 
 /**
  * spec 007 T004 — shared seeded-route fixture for the full in-scope route set
@@ -49,8 +55,6 @@ export const lexical = (text: string): NonNullable<CaseStudy['problem']> =>
 export interface InScopeSeed {
   caseStudySlug: string
   postSlug: string
-  pillarSlug: string
-  serviceSlug: string
   workshopSlug: string
   teamSlug: string
   aboutSlug: string
@@ -62,8 +66,6 @@ export interface InScopeSeed {
 export const IN_SCOPE_SEED: InScopeSeed = {
   caseStudySlug: 'a11y-case',
   postSlug: 'a11y-post',
-  pillarSlug: 'a11y-pillar',
-  serviceSlug: 'a11y-service',
   workshopSlug: 'a11y-workshop',
   teamSlug: 'a11y-member',
   aboutSlug: 'about',
@@ -71,6 +73,23 @@ export const IN_SCOPE_SEED: InScopeSeed = {
   industrySlug: 'a11y-industry',
   mediaAlt: 'a11y in-scope seed image',
 }
+
+/**
+ * The four-offering services IA (feat/services-restructure, ADR 0009). `/services`
+ * and each `/services/<offering>` are block-composed Pages looked up by these
+ * fixed slugs — NOT namespaced like the other a11y fixtures, because the
+ * `services/page.tsx` + `services/[offering]/page.tsx` routes hard-code the slug
+ * they read. We seed the real Page slugs so the in-scope routes 200.
+ */
+const SERVICE_PAGE_SLUGS = {
+  overview: 'service-overview',
+  localshoring: 'service-localshoring',
+  aiIntegration: 'service-ai-integration',
+  digitalTransformation: 'service-digital-transformation',
+} as const
+
+/** `/services/<offering>` URL segments the offering route maps to a Page slug. */
+const SERVICE_OFFERINGS = ['localshoring', 'ai-integration', 'digital-transformation'] as const
 
 /**
  * The full in-scope route inventory (contracts C-1). Listing routes render even
@@ -87,9 +106,11 @@ export function inScopeRoutes(
     { path: `/case-studies/${seed.caseStudySlug}`, label: 'case-study (detail)' },
     { path: '/insights', label: 'insights (listing)' },
     { path: `/insights/${seed.postSlug}`, label: 'insight (detail)' },
-    { path: '/services', label: 'services (listing)' },
-    { path: `/services/${seed.pillarSlug}`, label: 'service pillar' },
-    { path: `/services/${seed.pillarSlug}/${seed.serviceSlug}`, label: 'service detail' },
+    { path: '/services', label: 'services (overview)' },
+    ...SERVICE_OFFERINGS.map((offering) => ({
+      path: `/services/${offering}`,
+      label: `service offering (${offering})`,
+    })),
     { path: '/workshops', label: 'workshops (listing)' },
     { path: `/workshops/${seed.workshopSlug}`, label: 'workshop (detail)' },
     { path: '/privacy-policy', label: 'privacy-policy' },
@@ -159,7 +180,7 @@ export async function seedInScopeRoutes(
     overrideAccess: true,
   })
 
-  await payload.create({
+  const caseStudy = await payload.create({
     collection: 'caseStudies',
     data: {
       title: 'Modernizing a Legacy Platform',
@@ -194,27 +215,51 @@ export async function seedInScopeRoutes(
     overrideAccess: true,
   })
 
-  const pillar = await payload.create({
-    collection: 'servicePillars',
+  // /services + /services/<offering> — the four block-composed Pages of the
+  // four-offering IA (feat/services-restructure). REUSE the production layout
+  // builders (src/payload/seed/services/layouts.ts) so the a11y sweep runs the
+  // real composed markup, not a test-only stand-in. The two featured-case-study
+  // blocks point at the case study seeded just above, so the pages resolve a real
+  // study and never read-timeout on an unseeded id.
+  await payload.create({
+    collection: 'pages',
     data: {
-      title: 'Product Engineering',
-      slug: seed.pillarSlug,
-      description: lexical('We build and modernize software products.'),
-      order: 1,
+      title: 'Services',
+      slug: SERVICE_PAGE_SLUGS.overview,
+      layout: overviewLayout({ featuredCaseStudyId: caseStudy.id }) as never,
       _status: 'published',
     },
     overrideAccess: true,
   })
 
   await payload.create({
-    collection: 'services',
+    collection: 'pages',
     data: {
-      title: 'Platform Modernization',
-      slug: seed.serviceSlug,
-      pillar: pillar.id,
-      description: lexical('Incremental modernization of legacy platforms.'),
-      deliverables: [{ label: 'Migration roadmap' }, { label: 'CI/CD pipeline' }],
-      order: 1,
+      title: 'Localshoring',
+      slug: SERVICE_PAGE_SLUGS.localshoring,
+      layout: localshoringLayout() as never,
+      _status: 'published',
+    },
+    overrideAccess: true,
+  })
+
+  await payload.create({
+    collection: 'pages',
+    data: {
+      title: 'AI Integration',
+      slug: SERVICE_PAGE_SLUGS.aiIntegration,
+      layout: aiIntegrationLayout() as never,
+      _status: 'published',
+    },
+    overrideAccess: true,
+  })
+
+  await payload.create({
+    collection: 'pages',
+    data: {
+      title: 'Digital Transformation',
+      slug: SERVICE_PAGE_SLUGS.digitalTransformation,
+      layout: digitalTransformationLayout({ featuredCaseStudyId: caseStudy.id }) as never,
       _status: 'published',
     },
     overrideAccess: true,
@@ -289,12 +334,14 @@ export async function cleanupInScopeRoutes(
 ): Promise<void> {
   await del(payload, 'caseStudies', 'slug', seed.caseStudySlug)
   await del(payload, 'posts', 'slug', seed.postSlug)
-  await del(payload, 'services', 'slug', seed.serviceSlug)
-  await del(payload, 'servicePillars', 'slug', seed.pillarSlug)
   await del(payload, 'workshops', 'slug', seed.workshopSlug)
   await del(payload, 'teamMembers', 'slug', seed.teamSlug)
   await del(payload, 'pages', 'slug', seed.aboutSlug)
   await del(payload, 'pages', 'slug', seed.localshoringSlug)
+  // The four block-composed service Pages (feat/services-restructure).
+  for (const slug of Object.values(SERVICE_PAGE_SLUGS)) {
+    await del(payload, 'pages', 'slug', slug)
+  }
   await del(payload, 'industries', 'slug', seed.industrySlug)
   await payload.delete({
     collection: 'testimonials',

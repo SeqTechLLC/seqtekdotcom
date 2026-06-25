@@ -755,6 +755,31 @@ All redirects configured in `next.config.ts` `redirects()`. These preserve any S
 | `/contact`                                              | `/contact`                                      | Yes       |
 | `/privacy-policy`                                       | `/privacy-policy`                               | Yes       |
 
+### 9.1 Internal route→route redirects (services restructure)
+
+Distinct from the Wix-origin rows above: these are **internal** 301s added when
+`/services` was restructured from the 3-pillar / 9-service IA into four peer
+offerings (Localshoring, AI Integration, Digital Transformation, Workshops — see
+ADR 0009). They preserve any link equity on the old pillar/service URLs and keep
+existing bookmarks/ads working. The `organizational-strategy` pillar and its
+workshop/strategy leaves fold into `/workshops` (the primary funnel);
+`fractional-product-ownership` folds into Digital Transformation.
+
+| Source                                                           | Destination                        | Permanent |
+| ---------------------------------------------------------------- | ---------------------------------- | --------- |
+| `/services/ai-automation`                                        | `/services/ai-integration`         | Yes       |
+| `/services/technology-data`                                      | `/services/digital-transformation` | Yes       |
+| `/services/organizational-strategy`                              | `/workshops`                       | Yes       |
+| `/services/ai-automation/ai-assisted-modernization`              | `/services/ai-integration`         | Yes       |
+| `/services/ai-automation/machine-learning-solutions`             | `/services/ai-integration`         | Yes       |
+| `/services/ai-automation/process-automation`                     | `/services/ai-integration`         | Yes       |
+| `/services/technology-data/application-modernization`            | `/services/digital-transformation` | Yes       |
+| `/services/technology-data/cloud-data-engineering`               | `/services/digital-transformation` | Yes       |
+| `/services/technology-data/custom-software-development`          | `/services/digital-transformation` | Yes       |
+| `/services/organizational-strategy/team-workshops`               | `/workshops`                       | Yes       |
+| `/services/organizational-strategy/fractional-product-ownership` | `/services/digital-transformation` | Yes       |
+| `/services/organizational-strategy/strategy-alignment`           | `/workshops`                       | Yes       |
+
 **Post-launch verification:** After DNS cutover, crawl all old URLs to confirm 301 responses and correct destinations. Use a tool like Screaming Frog or a simple script.
 
 ---
