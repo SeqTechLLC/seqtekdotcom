@@ -65,6 +65,15 @@ This captures, into `tests/e2e/visual/screenshots/` (gitignored, overwritten eac
 
 The expectation: open the PNGs for **every page your change touches**, at both viewports, and judge them like the live site — legibility, sizing, spacing, alignment, against the old seqtek.com where a reference exists. For pixel-level layout complaints, also measure boxes (`getBoundingClientRect`) at the reported viewport rather than reasoning from CSS classes.
 
+## Content loading & deploys
+
+Content lives in the **database**, not in committed code, and **CD does not seed content** — a deploy ships code, never copy or media. There are **no committed remote-push scripts** (don't add one; don't frame `npm run …:remote` as a deploy step). The single way to (re)load content, local or remote, is the **gitignored** `docs/content-drafts/*-api.mts` REST seeders:
+
+- **Environment-parameterized:** `IMPORT_BASE_URL` (default `http://localhost:3100`; staging `https://seqtek-preview.com`) + `IMPORT_TOKEN` (an `/admin` `payload-token` JWT, ~2h expiry, that the site owner mints and hands over — staging/prod have no direct DB access, so REST-with-a-token is the only path). The same script runs against local or staging; `--dry-run` previews without writes. Keep the token **outside the repo**; never commit it (gitleaks blocks it regardless).
+- **Builders that tests also import** (e.g. `src/payload/seed/services/layouts.ts`, consumed by `tests/e2e/helpers/seedInScopeRoutes.ts`) stay **committed** as the single source of truth so test / local / staging never drift; only the gitignored runner imports them. Local-API fixture seeders (`seed:showcase`) are for dev/test artifacts, not marketing content.
+
+**To load content onto staging:** work from a worktree off `origin/main` (so the committed builders the seeder imports are present), `mkdir -p docs/content-drafts` (it's gitignored, so absent in a fresh worktree) and copy the seeder in from the main checkout, `--dry-run` with the token, run live, then verify the public routes (HTTP 200 + the 301/308 redirect map) and **look at** the rendered pages (`PLAYWRIGHT_BASE_URL=https://seqtek-preview.com`). The local checkout's running dev server (`:3100`) runs different code — don't pull or mutate it mid-session; run your own server on a free port.
+
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
