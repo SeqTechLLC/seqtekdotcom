@@ -6,6 +6,12 @@
  * Funnel rule (decided): Workshops is the primary funnel. Every closing CTA's
  * primary action is "Start with a workshop" → /workshops; secondary is
  * "Book a call" → /contact/book-a-call.
+ *
+ * Single source of truth for the four Pages' blocks. Consumers:
+ *   - tests/e2e/helpers/seedInScopeRoutes.ts (seeds the Pages in the CI E2E env)
+ *   - docs/content-drafts/seed-services-api.mts (gitignored REST seeder — loads
+ *     local/staging with a /admin token; the convention for getting content onto
+ *     the remote, since CD does not seed and there is no committed remote script)
  */
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
