@@ -18,6 +18,7 @@
     "ingest:curated": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/ingest-photos/ingest-curated.ts",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "payload:seed": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/payload-seed/index.ts",
     "prepare": "husky",
     "pretest:e2e": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/e2e/provision-schema.ts",
     "seed:showcase": "cross-env NODE_OPTIONS=--no-deprecation tsx src/payload/seed/showcase/index.ts",

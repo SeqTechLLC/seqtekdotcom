@@ -11,7 +11,7 @@
 
 import { readFile } from 'node:fs/promises'
 
-import { PayloadRestClient } from './client'
+import { PayloadRestClient } from '../payload-rest/client'
 import { importCaseStudy } from './importer'
 import { validateInput } from './types'
 
