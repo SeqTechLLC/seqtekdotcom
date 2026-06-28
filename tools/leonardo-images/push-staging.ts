@@ -20,7 +20,7 @@ import { copyFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { PayloadRestClient } from '../import-case-study/client'
+import { PayloadRestClient } from '../payload-rest/client'
 import { CONCEPTS, WINNERS } from './concepts'
 import { figureNode, hasFigure, spliceAfterSection, type LexNode } from './figure'
 
