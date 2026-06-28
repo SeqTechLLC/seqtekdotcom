@@ -6,7 +6,7 @@
 
 import { textToLexical } from '../../src/payload/seed/htmlToLexical'
 
-import { PayloadRestClient } from './client'
+import { PayloadRestClient } from '../payload-rest/client'
 import type { CaseStudyInput, ImageRef } from './types'
 
 type DocId = string | number

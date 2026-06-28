@@ -8,19 +8,15 @@
  * rather than throwing on the first.
  */
 
+import type { ImageRef } from '../payload-rest/client'
+
+// `ImageRef` now lives with the shared REST client (it's part of that client's
+// surface); re-export it so existing `./types` importers keep resolving.
+export type { ImageRef }
+
 // Mirrors `validateSlug` in src/payload/hooks/slugFromTitle.ts so the importer
 // rejects bad slugs before a round-trip rather than surfacing a 400 from the API.
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-
-/** A source image: a local file path OR a remote URL, plus required alt text. */
-export interface ImageRef {
-  /** Local filesystem path to the image (mutually exclusive with `url`). */
-  file?: string
-  /** Remote URL to fetch the image from (mutually exclusive with `file`). */
-  url?: string
-  /** Alt text — the media collection requires it (FR-023). */
-  alt: string
-}
 
 export interface MetricInput {
   number: string

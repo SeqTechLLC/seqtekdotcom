@@ -32,7 +32,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3'
 
-import { PayloadRestClient } from '../import-case-study/client'
+import { PayloadRestClient } from '../payload-rest/client'
 
 const MEDIA_PREFIX = 'media'
 

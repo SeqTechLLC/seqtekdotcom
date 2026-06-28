@@ -1,19 +1,28 @@
 /**
- * Thin Payload REST client for the case-study importer.
+ * Thin, generic Payload REST client shared by the repo's content tools
+ * (case-study importer, photo ingest, Leonardo image push, generic seeder).
  *
  * Authenticates with `Authorization: JWT <token>` — the token is the caller's
  * own `payload-token` session JWT from a logged-in /admin session. Payload's
  * built-in JWT strategy (registered in src/collections/Users.ts) reads that
- * header, so the importer needs no new auth surface (no API key, no schema
- * change). `fetch` is injectable so the unit tests can run without a server.
+ * header, so callers need no new auth surface (no API key, no schema change).
+ * `fetch` is injectable so the unit tests can run without a server.
  */
 
 import { readFile } from 'node:fs/promises'
 import { basename, extname } from 'node:path'
 
-import type { ImageRef } from './types'
-
 export type FetchFn = typeof fetch
+
+/** A source image: a local file path OR a remote URL, plus required alt text. */
+export interface ImageRef {
+  /** Local filesystem path to the image (mutually exclusive with `url`). */
+  file?: string
+  /** Remote URL to fetch the image from (mutually exclusive with `file`). */
+  url?: string
+  /** Alt text — the media collection requires it (FR-023). */
+  alt: string
+}
 
 export interface ClientConfig {
   baseUrl: string
