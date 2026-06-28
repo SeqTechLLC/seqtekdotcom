@@ -1,7 +1,7 @@
 /**
  * Push a CURATED image set to a live Payload instance over the REST API using a
  * session JWT — no DB / S3 / SSM access needed (the running app does the writes
- * via its instance profile). Reuses the case-study importer's PayloadRestClient.
+ * via its instance profile). Reuses the shared PayloadRestClient.
  *
  *   IMPORT_TOKEN=<payload-token> IMPORT_BASE_URL=https://seqtek-preview.com \
  *     npx tsx tools/ingest-photos/push-to-payload.ts --dir <curated-dir> [--dry-run]
@@ -13,7 +13,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { PayloadRestClient } from '../import-case-study/client'
+import { PayloadRestClient } from '../payload-rest/client'
 
 interface Entry {
   curated: string

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 
-import { PayloadRestClient, type FetchFn } from '../../../tools/import-case-study/client'
+import { PayloadRestClient, type FetchFn } from '../../../tools/payload-rest/client'
 import { importCaseStudy, type ImportOptions } from '../../../tools/import-case-study/importer'
 import type { CaseStudyInput } from '../../../tools/import-case-study/types'
 import { validateInput } from '../../../tools/import-case-study/types'
