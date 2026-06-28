@@ -2,12 +2,6 @@ import { getPayload, type Payload } from 'payload'
 
 import config from '../../../src/payload.config'
 import type { CaseStudy } from '../../../src/payload-types'
-import {
-  aiIntegrationLayout,
-  digitalTransformationLayout,
-  localshoringLayout,
-  overviewLayout,
-} from '../../../src/payload/seed/services/layouts'
 
 /**
  * spec 007 T004 — shared seeded-route fixture for the full in-scope route set
@@ -216,54 +210,74 @@ export async function seedInScopeRoutes(
   })
 
   // /services + /services/<offering> — the four block-composed Pages of the
-  // four-offering IA (feat/services-restructure). REUSE the production layout
-  // builders (src/payload/seed/services/layouts.ts) so the a11y sweep runs the
-  // real composed markup, not a test-only stand-in. The two featured-case-study
-  // blocks point at the case study seeded just above, so the pages resolve a real
+  // four-offering IA (feat/services-restructure). These are GENERIC test
+  // fixtures (a representative mix of blocks), not the real marketing copy —
+  // the real services content lives in the gitignored docs/content-drafts JSON
+  // loaded by tools/payload-seed. The block TYPES get full a11y coverage from
+  // the showcase seeder; here we only need each route to 200 and pass the
+  // sweep. overview + digital-transformation keep a featured-case-study block
+  // pointing at the case study seeded just above, so those pages resolve a real
   // study and never read-timeout on an unseeded id.
-  await payload.create({
-    collection: 'pages',
-    data: {
-      title: 'Services',
-      slug: SERVICE_PAGE_SLUGS.overview,
-      layout: overviewLayout({ featuredCaseStudyId: caseStudy.id }) as never,
-      _status: 'published',
-    },
-    overrideAccess: true,
-  })
+  const servicePage = (
+    title: string,
+    slug: string,
+    layout: Record<string, unknown>[],
+  ): Promise<unknown> =>
+    payload.create({
+      collection: 'pages',
+      data: { title, slug, layout: layout as never, _status: 'published' },
+      overrideAccess: true,
+    })
 
-  await payload.create({
-    collection: 'pages',
-    data: {
-      title: 'Localshoring',
-      slug: SERVICE_PAGE_SLUGS.localshoring,
-      layout: localshoringLayout() as never,
-      _status: 'published',
+  await servicePage('Services', SERVICE_PAGE_SLUGS.overview, [
+    { blockType: 'content', body: lexical('Four ways SEQTEK helps.') },
+    {
+      blockType: 'nav-cards',
+      cards: [
+        {
+          title: 'Localshoring',
+          description: 'A senior US team.',
+          linkUrl: '/services/localshoring',
+        },
+        { title: 'Workshops', description: 'Start with a workshop.', linkUrl: '/workshops' },
+      ],
     },
-    overrideAccess: true,
-  })
+    { blockType: 'featured-case-study', heading: 'Featured work', caseStudy: caseStudy.id },
+  ])
 
-  await payload.create({
-    collection: 'pages',
-    data: {
-      title: 'AI Integration',
-      slug: SERVICE_PAGE_SLUGS.aiIntegration,
-      layout: aiIntegrationLayout() as never,
-      _status: 'published',
+  await servicePage('Localshoring', SERVICE_PAGE_SLUGS.localshoring, [
+    {
+      blockType: 'content',
+      body: lexical('A senior US engineering team that plugs into your roadmap.'),
     },
-    overrideAccess: true,
-  })
+    {
+      blockType: 'comparison-table',
+      heading: 'Localshoring vs the alternatives',
+      columns: [{ label: 'Localshoring' }, { label: 'Offshore' }],
+      rows: [{ dimension: 'Time zone', cells: [{ value: 'Same' }, { value: 'Opposite' }] }],
+      bestForRow: [{ value: 'Aligned teams' }, { value: 'Lowest hourly rate' }],
+    },
+  ])
 
-  await payload.create({
-    collection: 'pages',
-    data: {
-      title: 'Digital Transformation',
-      slug: SERVICE_PAGE_SLUGS.digitalTransformation,
-      layout: digitalTransformationLayout({ featuredCaseStudyId: caseStudy.id }) as never,
-      _status: 'published',
+  await servicePage('AI Integration', SERVICE_PAGE_SLUGS.aiIntegration, [
+    { blockType: 'content', body: lexical('Where AI fits your business, and where it does not.') },
+    {
+      blockType: 'process-steps',
+      heading: 'How an engagement runs',
+      steps: [
+        { title: 'Map the workflow', body: 'We learn how the work happens today.' },
+        { title: 'Prove it small', body: 'A narrow, measurable pilot.' },
+      ],
     },
-    overrideAccess: true,
-  })
+  ])
+
+  await servicePage('Digital Transformation', SERVICE_PAGE_SLUGS.digitalTransformation, [
+    {
+      blockType: 'content',
+      body: lexical('Custom software plus the change management to make it stick.'),
+    },
+    { blockType: 'featured-case-study', heading: 'Featured work', caseStudy: caseStudy.id },
+  ])
 
   await payload.create({
     collection: 'workshops',
