@@ -65,6 +65,15 @@ This captures, into `tests/e2e/visual/screenshots/` (gitignored, overwritten eac
 
 The expectation: open the PNGs for **every page your change touches**, at both viewports, and judge them like the live site — legibility, sizing, spacing, alignment, against the old seqtek.com where a reference exists. For pixel-level layout complaints, also measure boxes (`getBoundingClientRect`) at the reported viewport rather than reasoning from CSS classes.
 
+## Content loading & deploys
+
+Content lives in the **database**, not in committed code, and **CD does not seed content** — a deploy ships code, never copy or media. **Tool is committed; data is gitignored.** The way to (re)load content, local or remote, is the committed generic seeder driving gitignored JSON request files:
+
+- **The tool** — `tools/payload-seed` (`npm run payload:seed -- <file.json>`). Upserts any collection or global from a JSON request file over REST, idempotent by an identity field (default `slug`). Directives resolved at write time: `$ref` (relation by slug/field → id, with array fallback / `createIfMissing` / `omitIfMissing`), `$file` (media upload-or-reuse by filename → id), `$lexical` (prose → editorState). An array of specs runs in order, so earlier docs resolve as later refs. `IMPORT_BASE_URL` (default `http://localhost:3100`; staging `https://seqtek-preview.com`) + `IMPORT_TOKEN` (an `/admin` `payload-token` JWT the site owner mints — staging/prod have no direct DB access, so REST-with-a-token is the only path). `--dry-run` previews; keep the token **out of the repo** (gitleaks blocks it regardless). `tools/import-case-study` is the domain-specific importer for case studies; both share `tools/payload-rest/client.ts`. **Don't commit remote-push scripts** — the runner is committed once and generic; the data is not.
+- **The data** — gitignored `docs/content-drafts/*.json` (e.g. `homepage.json`, `about.json`, `team.json`, `workshops.json`, `services.json`, `content-batch.json`). These are the real marketing content (kept out of the public repo). Local dev and staging use the SAME files via `IMPORT_BASE_URL`.
+
+**Test fixtures are committed and generic, separate from real content.** `src/payload/seed/showcase` (`npm run seed:showcase`) builds 1-2 of every block type for the visual/showcase capture; `tests/e2e/helpers/seedInScopeRoutes.ts` seeds minimal generic fixtures for the a11y/in-scope routes. Tests never depend on the gitignored real content. The local dev server (`:3100`) runs different code — don't pull or mutate it mid-session; run your own server on a free port.
+
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
