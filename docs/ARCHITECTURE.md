@@ -308,27 +308,27 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 
 **Fallback revalidation:** Time-based ISR acts as a safety net in case the on-demand hook fails. Set conservatively — not for freshness, just for resilience.
 
-| Route                                           | Strategy       | Fallback Revalidate | Notes                                                            |
-| ----------------------------------------------- | -------------- | ------------------- | ---------------------------------------------------------------- |
-| `/`                                             | ISR            | 3600s (1hr)         | Homepage — changes infrequently                                  |
-| `/[slug]`                                       | ISR            | 3600s               | Catch-all for block-composed `pages` (About, localshoring, etc.) |
-| `/services`                                     | ISR            | 3600s               | Overview — `pages` record, slug `service-overview`               |
-| `/services/[offering]`                          | ISR            | 3600s               | Four-offering IA — each offering a `pages` record by slug        |
-| `/case-studies`                                 | ISR            | 3600s               | Listing                                                          |
-| `/case-studies/[slug]`                          | ISR            | 3600s               | Individual case studies                                          |
-| `/insights`                                     | ISR            | 3600s               | Blog listing                                                     |
-| `/insights/[slug]`                              | ISR            | 3600s               | Individual posts                                                 |
-| `/workshops`                                    | ISR            | 3600s               | Workshop landing                                                 |
-| `/workshops/[slug]`                             | ISR            | 3600s               | Individual workshops                                             |
-| `/team`                                         | ISR            | 3600s               | Team listing (spec 004 US3)                                      |
-| `/team/[slug]`                                  | ISR            | 3600s               | Team member detail (block-composed)                              |
-| `/contact`                                      | Static         | N/A                 | Form is client-side (HubSpot)                                    |
-| `/resources/organizational-maturity-assessment` | Static         | N/A                 | ScoreApp link/embed                                              |
-| `/privacy-policy`                               | ISR            | 86400s (24hr)       |                                                                  |
-| `/admin/[[...segments]]`                        | SSR (no cache) | N/A                 | Payload admin panel — authenticated only                         |
-| `/api/*`                                        | SSR            | N/A                 | Payload API routes + webhook handlers                            |
-| `/sitemap.xml`                                  | ISR            | 3600s               | Dynamic from Payload content                                     |
-| `/robots.txt`                                   | Static         | N/A                 |                                                                  |
+| Route                                           | Strategy       | Fallback Revalidate | Notes                                                                               |
+| ----------------------------------------------- | -------------- | ------------------- | ----------------------------------------------------------------------------------- |
+| `/`                                             | ISR            | 3600s (1hr)         | Homepage — changes infrequently                                                     |
+| `/[slug]`                                       | ISR            | 3600s               | Catch-all for block-composed `pages` (About, localshoring, etc.)                    |
+| `/services`                                     | ISR            | 3600s               | Overview — `pages` record, slug `service-overview`                                  |
+| `/services/[offering]`                          | ISR            | 3600s               | Four-offering IA — each offering a `pages` record by slug                           |
+| `/case-studies`                                 | ISR            | 3600s               | Listing                                                                             |
+| `/case-studies/[slug]`                          | ISR            | 3600s               | Individual case studies                                                             |
+| `/insights`                                     | ISR            | 3600s               | Blog listing                                                                        |
+| `/insights/[slug]`                              | ISR            | 3600s               | Individual posts                                                                    |
+| `/workshops`                                    | ISR            | 3600s               | Workshop landing                                                                    |
+| `/workshops/[slug]`                             | ISR            | 3600s               | Individual workshops                                                                |
+| `/team`                                         | ISR            | 3600s               | Team listing (spec 004 US3)                                                         |
+| `/team/[slug]`                                  | ISR            | 3600s               | Team member detail (block-composed)                                                 |
+| `/contact`                                      | Static         | N/A                 | Form is client-side (HubSpot)                                                       |
+| `/resources/organizational-maturity-assessment` | —              | N/A                 | ScoreApp — **planned, route not built** (footer link removed; see CONTENT_NEEDS §9) |
+| `/privacy-policy`                               | ISR            | 86400s (24hr)       |                                                                                     |
+| `/admin/[[...segments]]`                        | SSR (no cache) | N/A                 | Payload admin panel — authenticated only                                            |
+| `/api/*`                                        | SSR            | N/A                 | Payload API routes + webhook handlers                                               |
+| `/sitemap.xml`                                  | ISR            | 3600s               | Dynamic from Payload content                                                        |
+| `/robots.txt`                                   | Static         | N/A                 |                                                                                     |
 
 > **"ISR" here means ISR _data_ caching, not static prerender (spec 004 / ADR 0005).** The public render routes are dynamically rendered (`ƒ`) because the shared layout reads the per-request CSP nonce via `headers()`, which forces dynamic rendering. Page DATA still flows through `unstable_cache` readers (`revalidate = 3600` + on-demand tag invalidation), so the 1h fallback + instant-on-publish behavior in the table holds; only the HTML render is per-request (required for the nonce). `generateStaticParams` is intentionally not used on the detail routes.
 

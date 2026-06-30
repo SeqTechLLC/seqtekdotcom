@@ -105,7 +105,7 @@ The Postgres container:
 - Data persists in a Docker volume between restarts
 - Matches the same Postgres major version as production RDS
 
-Locally the Postgres adapter runs in **dev push** mode (`push: true` whenever `NODE_ENV !== 'production'`): on `npm run dev` Payload connects to Postgres and syncs the schema straight from the collection configs — no migration files, no manual step. Do **not** run `payload migrate` against the local DB. Versioned migrations are authored with `npm run payload migrate:create` and exist for staging/prod only; see [PAYLOAD_DEVELOPMENT.md](PAYLOAD_DEVELOPMENT.md) for that workflow.
+Locally the Postgres adapter runs in **dev push** mode (`push: true` when `NODE_ENV !== 'production'` **and** `PAYLOAD_DISABLE_PUSH !== 'true'` — the E2E suite sets `PAYLOAD_DISABLE_PUSH=true` to turn push off): on `npm run dev` Payload connects to Postgres and syncs the schema straight from the collection configs — no migration files, no manual step. Do **not** run `payload migrate` against the local DB. Versioned migrations are authored with `npm run payload migrate:create` and exist for staging/prod only; see [PAYLOAD_DEVELOPMENT.md](PAYLOAD_DEVELOPMENT.md) for that workflow.
 
 ---
 

@@ -492,7 +492,7 @@ The homepage is not a brochure — it's a routing mechanism. Per Nielsen Norman 
 | Stats bar              | 4 verified, consistent numbers                                     | Specific > round. Same numbers everywhere.                                       |
 | Service offering cards | 4 cards, one per peer offering, 2-sentence summaries               | Routes visitors to the right offering                                            |
 | Featured case study    | 1 highlighted with headline outcome metric                         | Social proof in the consideration zone                                           |
-| Sequoyah brand teaser  | 2-3 sentences + link to /about/our-story                           | Differentiation hook — no other firm has this story                              |
+| Sequoyah brand teaser  | 2-3 sentences + link to /about                                     | Differentiation hook — no other firm has this story                              |
 | Client logo bar        | 6-8 logos with "Trusted by" label                                  | Place ABOVE the fold or immediately below hero (per NN/g)                        |
 | Testimonials           | 2-3 with full attribution                                          | Full attribution required — see Section 6                                        |
 | Touchstone teaser      | 3-sentence preview + link                                          | Middle-of-funnel entry point                                                     |
@@ -907,7 +907,7 @@ Per HubSpot's topic cluster research (2024): sites with a deliberate internal li
 - Every industry page links to relevant case studies and services
 - The services overview links down to all four offering pages; the industries index and Insights hub link down to their cluster pages (this is what makes them pillar pages)
 - Each offering page links across to the other peer offerings and up to the services overview
-- All pages link to `/contact/book-a-call` via CTA
+- All pages link to `/contact` via CTA (the dedicated `/contact/book-a-call` booking route is not built yet — see CONTENT_NEEDS §4)
 
 **Link audit post-launch:** Use Screaming Frog or Sitebulb to identify orphan pages (pages with zero internal links pointing to them). Every page on the site should have a minimum of 3 internal links pointing to it.
 

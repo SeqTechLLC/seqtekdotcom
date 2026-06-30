@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-06-05
 
-> **Implementation note (2026-06-30).** The wrapper pattern is unchanged, but the reader count has grown: spec 010's block-composition readers bring the total to **19 cached public readers** (the Decision's count is updated to match). The enumerated `listServices` / `listServicePillars` readers still exist and remain wrapped, but are **likely vestigial** after the four-offering services restructure (PRs #79–#83), which routes `/services` and `/services/[offering]` off Pages by slug rather than the `Services` / `ServicePillars` collections. The `withReadTimeout`-outermost invariant and the `headers()`-in-catch reasoning below are unaffected.
+> **Implementation note (2026-06-30).** The wrapper pattern is unchanged, but the reader count has grown: spec 010's block-composition readers bring the total to **17 cached public readers** (the Decision's count is updated to match). The enumerated `listServices` / `listServicePillars` readers still exist and remain wrapped, but are **likely vestigial** after the four-offering services restructure (PRs #79–#83), which routes `/services` and `/services/[offering]` off Pages by slug rather than the `Services` / `ServicePillars` collections. The `withReadTimeout`-outermost invariant and the `headers()`-in-catch reasoning below are unaffected.
 
 ## Context
 
@@ -25,7 +25,7 @@ Some readers (`publishedSlugsFor`, `listServices`, `listServicePillars`) are als
 
 ## Decision
 
-Add `withReadTimeout(label, fn)` in `src/lib/payload.ts` and apply it as the **outermost** layer of all 19 cached public readers: `export const getX = withReadTimeout('getX', React.cache(unstable_cache(rawX)))`. It races the reader against a 5s timer with **`Promise.race`** (`clearTimeout` in `finally`). On timeout it reads `x-request-id` via `headers()` **in the `catch`** — which runs in the RSC render scope where `headers()` is legal, defensively falling back to `'unknown'` for the ISR scope — emits a single `console.warn(JSON.stringify({type:'payload_read_timeout', ts, requestId, reader, args}))`, and throws a typed `PayloadReadTimeoutError` that propagates to the existing branded `error.tsx`. The three raw `findPublished*` helpers run _inside_ `unstable_cache` and are intentionally **not** wrapped. `/api/health` runs its own DB ping and imports none of these readers, so it is exempt by construction.
+Add `withReadTimeout(label, fn)` in `src/lib/payload.ts` and apply it as the **outermost** layer of all 17 cached public readers: `export const getX = withReadTimeout('getX', React.cache(unstable_cache(rawX)))`. It races the reader against a 5s timer with **`Promise.race`** (`clearTimeout` in `finally`). On timeout it reads `x-request-id` via `headers()` **in the `catch`** — which runs in the RSC render scope where `headers()` is legal, defensively falling back to `'unknown'` for the ISR scope — emits a single `console.warn(JSON.stringify({type:'payload_read_timeout', ts, requestId, reader, args}))`, and throws a typed `PayloadReadTimeoutError` that propagates to the existing branded `error.tsx`. The three raw `findPublished*` helpers run _inside_ `unstable_cache` and are intentionally **not** wrapped. `/api/health` runs its own DB ping and imports none of these readers, so it is exempt by construction.
 
 ## Consequences
 

@@ -136,7 +136,7 @@ Waiting only on placement/loading, not on you:
 
 - **5 case studies** with full narratives (NovaMud is flagship-ready bar a hero image + named quote).
 - **6 blog posts**, full bodies.
-- **Four peer service offerings** (Localshoring, AI Integration, Digital Transformation, Workshops) rendered as block Pages by slug, full copy + FAQs. (The old 3-pillar / 10-service IA was retired in the #79–#83 restructure; the `services`/`servicePillars` collections still exist but are no longer publicly routed.)
+- **Four peer service offerings** (Localshoring, AI Integration, Digital Transformation, Workshops) rendered as block Pages by slug, full copy + FAQs. (The old 3-pillar service IA — 9 services across 3 pillars — was retired in the #79–#83 restructure; the `services`/`servicePillars` collections still exist but are no longer publicly routed.)
 - **Touchstone landing**, full copy + CrossCo proof video/photos (cleared).
 - **Hank & Dana bios**, publish-ready.
 - **Sequoyah name story** — written and **live on `/about`** + companion video (the old-feather Sequoyah Technologies logo is the swap-in for its current quill-panel placeholder).
