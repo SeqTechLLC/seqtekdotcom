@@ -74,36 +74,22 @@ Per WCAG 2.2 AA (W3C, 2023) and WebAIM research: accessible content is not optio
 
 Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluster model (per HubSpot/Semrush pillar-cluster research, which shows 3-5x organic traffic growth vs. flat site structures).
 
-**Pillar pages** (service landings, about, industries index) link down to all cluster pages. **Cluster pages** (individual services, case studies, blog posts) link up to their pillar and across to siblings. This creates topical authority signals for search engines.
+**Pillar pages** (the services overview, about, industries index) link down to all cluster pages. **Cluster pages** (offering pages, case studies, blog posts) link up to their pillar and across to siblings. This creates topical authority signals for search engines.
 
 ```
 /                                                    Homepage
 │
-├── /about/                                          About (landing/overview)
-│   ├── /about/our-story                             Origin Story & Sequoyah Heritage
-│   ├── /about/team                                  Leadership & Team
-│   ├── /about/localshoring                          The Localshoring Model
-│   └── /about/careers                               Careers & Culture
+├── /about                                           About — single flat block Page; Our Story, Mission/Vision/Values, and Careers & Culture are on-page sections (IA corrected: spec 010 block Pages / ADR 0009 — no /about/* sub-routes)
 │
-├── /services/                                       Services Overview (PILLAR)
-│   ├── /services/organizational-strategy            Pillar 1 Landing
-│   │   ├── /services/organizational-strategy/org-design-process
-│   │   ├── /services/organizational-strategy/project-program-management
-│   │   ├── /services/organizational-strategy/change-management
-│   │   ├── /services/organizational-strategy/leadership-culture
-│   │   └── /services/organizational-strategy/strategy-alignment
-│   ├── /services/technology-data                    Pillar 2 Landing
-│   │   ├── /services/technology-data/cloud-infrastructure
-│   │   ├── /services/technology-data/systems-integrations
-│   │   ├── /services/technology-data/data-strategy-analytics
-│   │   ├── /services/technology-data/software-implementations
-│   │   └── /services/technology-data/technical-strategy-architecture
-│   └── /services/ai-automation                      Pillar 3 Landing
-│       ├── /services/ai-automation/generative-ai
-│       ├── /services/ai-automation/ai-integration
-│       ├── /services/ai-automation/machine-learning-analytics
-│       ├── /services/ai-automation/data-intelligence-foundation
-│       └── /services/ai-automation/ai-readiness-strategy
+├── /team                                            Leadership & Team (top-level page; + /team/[slug] member detail)
+│
+├── /localshoring                                    The Localshoring Model (standalone top-level page — the model explainer; distinct from the /services/localshoring offering)
+│
+├── /services                                        Services Overview — four peer offerings (IA corrected: four peers replace the retired 3-pillar / 15-service tree — ADR 0009 / PR #79)
+│   ├── /services/localshoring                       Localshoring
+│   ├── /services/ai-integration                     AI Integration
+│   └── /services/digital-transformation             Digital Transformation
+│       (Workshops is the fourth peer offering — top-level at /workshops below)
 │
 ├── /workshops/                                      Workshops Landing (IA corrected 2026-06-11: ONE Touchstone workshop among three)
 │   ├── /workshops/touchstone
@@ -120,7 +106,7 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 │   ├── /case-studies/healthcare-ux-redesign
 │   └── /case-studies/healthcare-data-modernization
 │
-├── /industries/                                     Industries Index (PILLAR)
+├── /industries/                                     Industries Index (PILLAR) (planned — not yet built)
 │   ├── /industries/energy-oil-gas
 │   ├── /industries/banking-financial-services
 │   ├── /industries/healthcare
@@ -130,21 +116,21 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 │
 ├── /insights/                                       Blog / Insights Hub (PILLAR)
 │   ├── /insights/[slug]                             Individual posts
-│   └── /insights/category/[category]                Category archives
+│   └── /insights/category/[category]                Category archives (planned — not yet built)
 │
-├── /resources/                                      Resources & Downloads
+├── /resources/                                      Resources & Downloads (planned — not yet built)
 │   └── /resources/organizational-maturity-assessment ScoreApp Assessment Landing
 │
 ├── /contact/                                        Contact
-│   └── /contact/book-a-call                         HubSpot Meetings Embed
+│   └── /contact/book-a-call                         HubSpot Meetings Embed (planned — not yet built)
 │
-├── /tulsa-consulting                                Market Landing: Tulsa
-├── /okc-consulting                                  Market Landing: OKC
-├── /northwest-arkansas-consulting                   Market Landing: NW Arkansas
-├── /kansas-city-consulting                          Market Landing: Kansas City
+├── /tulsa-consulting                                Market Landing: Tulsa (planned — not yet built)
+├── /okc-consulting                                  Market Landing: OKC (planned — not yet built)
+├── /northwest-arkansas-consulting                   Market Landing: NW Arkansas (planned — not yet built)
+├── /kansas-city-consulting                          Market Landing: Kansas City (planned — not yet built)
 │
 ├── /privacy-policy                                  Privacy Policy
-└── /terms-of-service                                Terms of Service
+└── /terms-of-service                                Terms of Service (planned — not yet built)
 ```
 
 ---
@@ -177,7 +163,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
 
 3. **"Who We Are" Narrative Block**
    - 2-3 paragraphs. First-person voice ("We...").
-   - Must cover: founding year (1999), what SEQTEK stands for (Sequoyah Technologies), people-first philosophy, the three service pillars.
+   - Must cover: founding year (1999), what SEQTEK stands for (Sequoyah Technologies), people-first philosophy, the four core offerings (Localshoring, AI Integration, Digital Transformation, Workshops).
    - End with a link to the full origin story.
    - Word count: 150-250 words.
    - **Writing rule:** Lead with the client's world, not SEQTEK's history. "Organizations across Oklahoma face..." before "We've spent 25 years..."
@@ -261,7 +247,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
    - [ ] Growth milestones: When did the company reach 10/25/50/100 people?
    - [ ] When did major clients (GE, QuikTrip, etc.) come on board?
    - [ ] Office moves: When did SEQTEK move from Sapulpa (201 E Hobson Ave) to Tulsa (12 N Cheyenne Ave)?
-   - [ ] When were the three service pillars formalized?
+   - [ ] When did the current service offerings (Localshoring, AI Integration, Digital Transformation, Workshops) take their present shape?
    - [ ] When did AI services begin?
    - [ ] Market expansion: When did OKC, NW Arkansas, Kansas City begin?
    - [ ] Notable project milestones: First airline project, first Fortune 100 client
@@ -497,52 +483,42 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
 
 The homepage is not a brochure — it's a routing mechanism. Per Nielsen Norman Group (2024): users spend an average of 10-20 seconds on a homepage before deciding to stay or leave. The homepage must accomplish three things in that window: establish credibility, communicate the value proposition, and provide a clear next step.
 
-| Element               | Content Required                                                   | Why It Matters                                                                   |
-| --------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| Hero headline         | 8-12 words. Must include differentiator. Not generic.              | Per Unbounce: pages with specific headlines convert 30% better than generic ones |
-| Hero subheadline      | 1-2 sentences. Buyer-centric ("you/your"). Specific to SEQTEK.     | Clarifies the offer for the 80% who won't read past the hero                     |
-| Hero image/video      | Real SEQTEK photo or 15-second loop video                          | Stock photos are actively harmful — users distrust them (NN/g)                   |
-| Hero CTA              | Specific verb + outcome: "Book a 30-Minute Strategy Call"          | Per HubSpot: CTAs with time specificity ("30-minute") convert 10-15% better      |
-| Stats bar             | 4 verified, consistent numbers                                     | Specific > round. Same numbers everywhere.                                       |
-| Service pillar cards  | 3 cards, one per pillar, 2-sentence summaries                      | Routes visitors to the right service cluster                                     |
-| Featured case study   | 1 highlighted with headline outcome metric                         | Social proof in the consideration zone                                           |
-| Sequoyah brand teaser | 2-3 sentences + link to /about/our-story                           | Differentiation hook — no other firm has this story                              |
-| Client logo bar       | 6-8 logos with "Trusted by" label                                  | Place ABOVE the fold or immediately below hero (per NN/g)                        |
-| Testimonials          | 2-3 with full attribution                                          | Full attribution required — see Section 6                                        |
-| Touchstone teaser     | 3-sentence preview + link                                          | Middle-of-funnel entry point                                                     |
-| Latest insights       | 3 blog post cards                                                  | Freshness signal for SEO and returning visitors                                  |
-| Final CTA             | Primary: "Book a Strategy Call" / Secondary: "Take the Assessment" | Dual-track: high-intent and low-intent paths                                     |
+| Element                | Content Required                                                   | Why It Matters                                                                   |
+| ---------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Hero headline          | 8-12 words. Must include differentiator. Not generic.              | Per Unbounce: pages with specific headlines convert 30% better than generic ones |
+| Hero subheadline       | 1-2 sentences. Buyer-centric ("you/your"). Specific to SEQTEK.     | Clarifies the offer for the 80% who won't read past the hero                     |
+| Hero image/video       | Real SEQTEK photo or 15-second loop video                          | Stock photos are actively harmful — users distrust them (NN/g)                   |
+| Hero CTA               | Specific verb + outcome: "Book a 30-Minute Strategy Call"          | Per HubSpot: CTAs with time specificity ("30-minute") convert 10-15% better      |
+| Stats bar              | 4 verified, consistent numbers                                     | Specific > round. Same numbers everywhere.                                       |
+| Service offering cards | 4 cards, one per peer offering, 2-sentence summaries               | Routes visitors to the right offering                                            |
+| Featured case study    | 1 highlighted with headline outcome metric                         | Social proof in the consideration zone                                           |
+| Sequoyah brand teaser  | 2-3 sentences + link to /about/our-story                           | Differentiation hook — no other firm has this story                              |
+| Client logo bar        | 6-8 logos with "Trusted by" label                                  | Place ABOVE the fold or immediately below hero (per NN/g)                        |
+| Testimonials           | 2-3 with full attribution                                          | Full attribution required — see Section 6                                        |
+| Touchstone teaser      | 3-sentence preview + link                                          | Middle-of-funnel entry point                                                     |
+| Latest insights        | 3 blog post cards                                                  | Freshness signal for SEO and returning visitors                                  |
+| Final CTA              | Primary: "Book a Strategy Call" / Secondary: "Take the Assessment" | Dual-track: high-intent and low-intent paths                                     |
 
 **Homepage scroll depth benchmark:** Per Chartbeat research, 66% of engagement on a page happens below the fold. Don't front-load everything. The hero section qualifies intent; the below-fold content converts it.
 
-### Service Pillar Page (e.g., `/services/organizational-strategy`)
+### Service Offering Page (e.g., `/services/digital-transformation`)
 
-These are **pillar pages** in the topic cluster model. They must link to every sub-service page and serve as the topical authority hub.
+The retired 3-pillar / 15-service tree is replaced by **four peer offerings** — Localshoring, AI Integration, Digital Transformation, and Workshops (the Workshops offering lives at `/workshops`; see below). Each is a single block-composed page (ADR 0009 / PR #79), served by slug under `/services/[offering]`. There is no longer a pillar-landing → sub-service hierarchy, so each offering page must stand on its own and do the full conversion job. Per Semrush (2024 content research): pages with 1,000-2,000 words of unique content rank 3x better than thin pages (<500 words) — the depth the old service pages lacked.
 
-| Element              | Content Required                                                                                       |
-| -------------------- | ------------------------------------------------------------------------------------------------------ |
-| Hero                 | Pillar name + value proposition. Problem-first: "Your org chart shouldn't be your biggest bottleneck." |
-| Overview             | 200-300 words explaining the pillar's approach. Answer: "Why does this discipline matter?"             |
-| Sub-service cards    | 5 cards: title, 2-sentence summary, icon, link. Each card should reference a client outcome.           |
-| Social proof cluster | 2-3 case study cards from this pillar + 1 testimonial relevant to this service area                    |
-| Related industries   | Icons/links to relevant industry pages — creates cross-cluster internal links                          |
-| CTA                  | "Discuss Your [Pillar] Needs" — specific verb, not "Learn More"                                        |
-
-### Individual Service Page (e.g., `/services/organizational-strategy/change-management`)
-
-These pages do the heaviest conversion lifting. Per Semrush (2024 content research): pages with 1,000-2,000 words of unique content rank 3x better than thin pages (<500 words). The current site's biggest problem is duplicated content across service pages.
-
-| Element            | Content Required                            | Writing Guidance                                                                 |
-| ------------------ | ------------------------------------------- | -------------------------------------------------------------------------------- |
-| Hero               | Service name + 1-sentence value             | Lead with the client's pain, not the service name                                |
-| Problem statement  | 1-2 paragraphs: what problems signal a need | Use "You..." language. Describe symptoms the buyer recognizes.                   |
-| Our approach       | 3-5 steps or methodology description        | Numbered steps with clear deliverables at each stage                             |
-| Deliverables       | Bulleted list of what the client receives   | Be specific: "90-day implementation roadmap" not "a plan"                        |
-| Case study excerpt | 1 inline excerpt with link to full version  | Include the headline metric — e.g., "40% faster adoption"                        |
-| Related services   | 2-3 adjacent service links                  | Cross-links within the pillar cluster                                            |
-| FAQ                | 3-5 common questions                        | Use actual questions from sales calls. These also generate FAQ schema for SERPs. |
-| CTA                | "Start a [Service] Engagement"              | Specific to the service, not generic                                             |
-| **Word count**     | **800-1200 words UNIQUE copy**              | **This is non-negotiable. Duplicated content is worse than no content.**         |
+| Element            | Content Required                                      | Writing Guidance                                                                 |
+| ------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Hero               | Offering name + value proposition                     | Lead with the client's pain, not the offering name. Problem-first.               |
+| Problem statement  | 1-2 paragraphs: what problems signal a need           | Use "You..." language. Describe symptoms the buyer recognizes.                   |
+| Overview           | 200-300 words explaining the offering's approach      | Answer: "Why does this matter, and how does SEQTEK do it differently?"           |
+| Our approach       | 3-5 steps or methodology description                  | Numbered steps with clear deliverables at each stage                             |
+| Deliverables       | Bulleted list of what the client receives             | Be specific: "90-day implementation roadmap" not "a plan"                        |
+| Case study excerpt | 1 inline excerpt with link to full version            | Include the headline metric — e.g., "40% faster adoption"                        |
+| Social proof       | 2-3 case study cards + 1 relevant testimonial         | Cluster social proof in the consideration zone                                   |
+| Related offerings  | Links across to the other peer offerings              | Cross-links between peers — there is no sub-service tree to link down to         |
+| Related industries | Icons/links to relevant industry pages                | Creates cross-cluster internal links                                             |
+| FAQ                | 3-5 common questions                                  | Use actual questions from sales calls. These also generate FAQ schema for SERPs. |
+| CTA                | "Discuss Your [Offering] Needs" / engagement-specific | Specific verb + outcome, not "Learn More"                                        |
+| **Word count**     | **800-1200 words UNIQUE copy per offering**           | **This is non-negotiable. Duplicated content is worse than no content.**         |
 
 **FAQ content note:** Per Semrush: pages with FAQ sections rank for 2-3x more long-tail keywords. The FAQ schema also generates rich results in Google SERPs. Source FAQ questions from actual sales conversations and HubSpot form submissions.
 
@@ -619,7 +595,7 @@ Per Orbit Media Annual Blogging Survey (2024): the average blog post is now 1,42
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Hero               | "[City] Technology Consulting by SEQTEK"                                                                                                                                        |
 | Local context      | 2-3 paragraphs about SEQTEK's presence in this market. **Must be genuinely unique per city** — mention local clients (with permission), local events, local industry landscape. |
-| Services           | All 3 pillars with links                                                                                                                                                        |
+| Services           | All four offerings with links                                                                                                                                                   |
 | Local case studies | Projects completed for clients in this market                                                                                                                                   |
 | Local details      | Office address (if applicable), years in market, local phone number if available                                                                                                |
 | CTA                | "Connect with our [City] team"                                                                                                                                                  |
@@ -628,17 +604,18 @@ Per Orbit Media Annual Blogging Survey (2024): the average blog post is now 1,42
 
 **Google Business Profile requirement:** Each market where SEQTEK has a physical presence should have a verified Google Business Profile. For markets without a physical office, use the `ServiceArea` business type. Do NOT create fake office listings.
 
-### Touchstone Workshop Pages
+### Workshop Pages (`/workshops`)
 
-| Element              | Content Required                                                                                                                 |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Landing hero         | "Touchstone Workshops" branded + Sequoyah/touchstone connection                                                                  |
-| Name explanation     | Why "Touchstone"? Connection to heritage and testing authenticity                                                                |
-| Workshop progression | Visual showing 3-workshop sequence                                                                                               |
-| Stats                | 70% fail rate, $2.3T lost (**with cited sources** — currently unsourced. Likely from McKinsey or BCG research. Verify and cite.) |
-| Individual pages     | Full description, agenda/format, deliverables, duration, audience, facilitator bio, CTA                                          |
-| Testimonial          | From a past workshop participant                                                                                                 |
-| CTA                  | "Schedule a Touchstone Workshop"                                                                                                 |
+**IA corrected 2026-06-11:** the branded "Touchstone Workshops" umbrella is retired. `/workshops` is a single landing that presents **three peer workshops** — Touchstone is **one** of them (alongside Five Dysfunctions and Re-Alignment), not the brand for the whole track. Drop the umbrella hero and the standalone "Why Touchstone?" name explanation; the Sequoyah/touchstone meaning belongs on the Touchstone workshop's own page, not over the landing. Workshops is also the fourth peer service offering and the primary conversion funnel.
+
+| Element          | Content Required                                                                                                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Landing hero     | Workshops value proposition — not a branded umbrella. Lead with the buyer's problem; frame the three workshops as a set.                                               |
+| Workshop set     | The three workshops as peers (Touchstone, Five Dysfunctions, Re-Alignment), each a card linking to its own page.                                                       |
+| Stats            | 70% fail rate, $2.3T lost (**with cited sources** — currently unsourced. Likely from McKinsey or BCG research. Verify and cite.)                                       |
+| Individual pages | Per workshop: full description, agenda/format, deliverables, duration, audience, facilitator bio, CTA. The Touchstone page carries the Sequoyah/touchstone name story. |
+| Testimonial      | From a past workshop participant                                                                                                                                       |
+| CTA              | "Schedule a Workshop" on the landing; workshop-specific on each detail page (e.g. "Schedule a Touchstone Workshop")                                                    |
 
 **Workshop page note:** These pages function as product pages, not content pages. Per Unbounce: product/service pages with clear format + duration + audience + deliverables convert 25% better than vague descriptions. Be specific: "Half-day workshop. 4-12 participants. Delivered on-site or virtually."
 
@@ -730,10 +707,10 @@ For every testimonial on the site:
 1. Contact Mike K., Cindy B., Kevin R. from the current site for full attribution permission.
 2. If they decline, replace — do not keep anonymous testimonials.
 3. Target **12-15 total testimonials** (up from 8-12) distributed as:
-   - 2-3 per service pillar
+   - 2-3 per service offering
    - 1-2 per major industry
    - 2-3 specifically about localshoring
-   - 1-2 about Touchstone Workshops
+   - 1-2 about the workshops
 4. **Template the ask.** Send clients a brief guide: "We'd love a 2-3 sentence quote about [specific project/outcome]. Here's an example of the format..." Pre-written prompts increase response rates by 3x per Testimonial Hero research.
 5. Start collection in Week 1 — testimonials have the longest lead time of any content asset.
 
@@ -754,7 +731,7 @@ Week 2: Sequoyah brand story draft + leadership bios draft + photo shoot
    ↓
 Week 3: Mission/Vision/Values + localshoring explanation + homepage hero copy
    ↓
-Week 4: Service pillar landing pages + case study rewrites begin
+Week 4: Service offering pages + case study rewrites begin
 ```
 
 ### Tier 1: Write First (Weeks 1-4) — Blocks Launch
@@ -766,7 +743,7 @@ Week 4: Service pillar landing pages + case study rewrites begin
 | 3   | Mission / Vision / Values            | Write from scratch         | Leadership alignment session   | Decision (trust)    |
 | 4   | Localshoring explanation             | Rewrite from existing      | Leadership interview           | Consideration       |
 | 5   | Homepage hero copy                   | Write from scratch         | Brand story must be done first | Awareness (routing) |
-| 6   | 3 service pillar landing pages       | Rewrite (partially usable) | —                              | Consideration       |
+| 6   | 4 service offering pages             | Rewrite (partially usable) | —                              | Consideration       |
 
 ### Tier 2: Write Second (Weeks 4-7) — Highest Conversion Impact
 
@@ -774,8 +751,8 @@ Week 4: Service pillar landing pages + case study rewrites begin
 | --- | -------------------------------------- | -------------------------------- | ----------------------------- | ------------------------- |
 | 7   | 8 case study rewrites + testimonials   | Edit existing                    | Client testimonial collection | Consideration (strongest) |
 | 8   | Testimonial upgrades (12-15)           | Re-collect with full attribution | Client outreach               | All stages                |
-| 9   | 15 individual service descriptions     | 5 partial, 10+ rewrite           | No dependencies               | Consideration             |
-| 10  | Touchstone Workshop landing + branding | Rebrand with Touchstone name     | Brand story                   | Decision                  |
+| 9   | 4 offering pages: long-form copy + FAQ | Consolidate retired service copy | No dependencies               | Consideration             |
+| 10  | Workshops landing + 3 workshop cards   | Write (no Touchstone umbrella)   | Brand story                   | Decision                  |
 
 ### Tier 3: Write Third (Weeks 7-10) — SEO and Completeness
 
@@ -818,7 +795,7 @@ WEEK 2:
 WEEK 3-4:
 ├── ScoreApp account review (blocks: assessment landing page)
 ├── HubSpot Meetings configuration (blocks: booking page)
-└── Homepage and pillar page drafts
+└── Homepage and service offering page drafts
 
 WEEK 5+:
 └── Content production at full velocity — all dependencies cleared
@@ -928,8 +905,8 @@ Per HubSpot's topic cluster research (2024): sites with a deliberate internal li
 - Every case study links to services applied, industry page, and 1-2 related case studies
 - Every service page links to at least 1 case study and 1 blog post
 - Every industry page links to relevant case studies and services
-- Pillar pages link down to ALL sub-services (this is what makes them pillar pages)
-- Sub-service pages link across to adjacent sub-services within the same pillar
+- The services overview links down to all four offering pages; the industries index and Insights hub link down to their cluster pages (this is what makes them pillar pages)
+- Each offering page links across to the other peer offerings and up to the services overview
 - All pages link to `/contact/book-a-call` via CTA
 
 **Link audit post-launch:** Use Screaming Frog or Sitebulb to identify orphan pages (pages with zero internal links pointing to them). Every page on the site should have a minimum of 3 internal links pointing to it.
@@ -940,7 +917,7 @@ Treated as a sub-discipline of SEO, not a separate program. Most of what makes c
 
 **Citation hooks — required on every Insights post and Case Study:**
 
-- **Author byline** with link to that team member's `/about/team/[slug]` page. LLMs cite content that has a named human author far more readily than anonymous content.
+- **Author byline** with link to that team member's `/team/[slug]` page. LLMs cite content that has a named human author far more readily than anonymous content.
 - **Publication date** (ISO 8601 in JSON-LD `datePublished`) and **last-updated date** (`dateModified`) — both visible to readers and present in structured data. AI search engines deprioritize content that looks stale.
 - **Source citations** for every statistic, claim, or research reference — inline in the prose, formatted as parenthetical citations or footnoted links to primary sources. Per Princeton/Georgia Tech GEO research (2023): pages with citations to external sources are 40% more likely to be cited by LLMs than uncited pages.
 - **Distinctive claims over generic boilerplate.** "We deliver excellence" gets ignored; "Our localshoring model puts a senior engineer on-site within a 4-hour drive of every Tulsa, OKC, NW Arkansas, and Kansas City client" gets cited. Specificity is what makes content quotable.
@@ -1062,10 +1039,10 @@ Before launch, document current metrics for every page being replaced (from Goog
 | Additional team bios             | 6-8 (recommended) | Write from scratch                           | Tier 2                |
 | Mission/Vision/Values            | 1 set             | Write from scratch                           | Tier 1                |
 | Localshoring explanation         | 1 page            | Rewrite from existing                        | Tier 1                |
-| Service pillar descriptions      | 3                 | Rewrite                                      | Tier 1                |
-| Individual service descriptions  | 15                | 5 partial, 10+ full rewrite                  | Tier 2                |
+| Service offering pages           | 4                 | Rewrite                                      | Tier 1                |
+| Offering long-form copy + FAQ    | 4                 | Consolidate retired service copy             | Tier 2                |
 | Case study rewrites              | 8                 | Content exists, needs editing + testimonials | Tier 2                |
-| Workshop descriptions            | 4                 | Partially exist, needs Touchstone branding   | Tier 2                |
+| Workshop descriptions            | 4 (landing + 3)   | Partially exist; no Touchstone umbrella      | Tier 2                |
 | Industry pages                   | 6                 | Write from scratch                           | Tier 3                |
 | Market landing pages             | 4                 | Write from scratch (unique per city)         | Tier 3                |
 | Blog posts (migrate)             | 6                 | Migrate existing, add author/categories      | Tier 3                |
@@ -1075,7 +1052,7 @@ Before launch, document current metrics for every page being replaced (from Goog
 | Assessment landing page          | 1                 | Write from scratch                           | Tier 3                |
 | Careers page                     | 1                 | Write from scratch                           | Tier 4                |
 | Lead magnet (benchmark report)   | 1                 | Create downloadable asset                    | Tier 4                |
-| FAQ content for service pages    | 15 sets           | Write from actual client questions           | Tier 4                |
+| FAQ content for offering pages   | 4 sets            | Write from actual client questions           | Tier 4                |
 | Testimonials (full attribution)  | 12-15             | Must re-collect                              | Tier 2 (start Week 1) |
 | Professional headshots           | 3-10              | Photo shoot required                         | Tier 1 (Week 1-2)     |
 | Candid/action photos             | 15-20             | Photo shoot + ongoing                        | Tier 1 (Week 1-2)     |

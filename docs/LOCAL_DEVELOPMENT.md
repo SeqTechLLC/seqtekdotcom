@@ -6,13 +6,13 @@ How to get the SEQTEK website running on your machine.
 
 ## Prerequisites
 
-| Tool               | Version                           | Check                    |
-| ------------------ | --------------------------------- | ------------------------ |
-| **Node.js**        | 24.x (active LTS)                 | `node --version`         |
-| **npm**            | Bundled with Node 24              | `npm --version`          |
-| **Docker**         | Any recent version                | `docker --version`       |
-| **Docker Compose** | V2 (included with Docker Desktop) | `docker compose version` |
-| **Git**            | Any recent version                | `git --version`          |
+| Tool               | Version                                                     | Check                    |
+| ------------------ | ----------------------------------------------------------- | ------------------------ |
+| **Node.js**        | `>=22` (`package.json` engines floor; 24.x LTS recommended) | `node --version`         |
+| **npm**            | Bundled with Node                                           | `npm --version`          |
+| **Docker**         | Any recent version                                          | `docker --version`       |
+| **Docker Compose** | V2 (included with Docker Desktop)                           | `docker compose version` |
+| **Git**            | Any recent version                                          | `git --version`          |
 
 No AWS credentials, VPN access, or cloud accounts are needed for local development.
 
@@ -38,7 +38,7 @@ npm run dev
 
 The site is at `http://localhost:3100`. The Payload admin panel is at `http://localhost:3100/admin`.
 
-`/admin` is gated by Google Workspace SSO (`@seqtechllc.com` only). Before the first sign-in works locally you need a Google OAuth client — see [Google OAuth Client (D-14)](#google-oauth-client-d-14) below. On a fresh database the first signer is bootstrapped to the Admin role; later signers default to Editor.
+`/admin` is gated by Google Workspace SSO (both `@seqtechllc.com` and `@seqtek.com` accounts are admitted — see PR #77). Before the first sign-in works locally you need a Google OAuth client — see [Google OAuth Client (D-14)](#google-oauth-client-d-14) below. On a fresh database the first signer is bootstrapped to the Admin role; later signers default to Editor.
 
 ---
 
@@ -57,19 +57,19 @@ Copy `.env.example` to `.env.local` and fill in the values below. Only two are r
 
 ### Optional (leave blank for local dev)
 
-| Variable                        | Local Value             | Notes                                                                                                              |
-| ------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `PREVIEW_SECRET`                | Any 32+ char string     | Phase 2 (spec 003) — required to mint preview cookies for `pages`/`posts`/`caseStudies`/`services` drafts (FR-019) |
-| `REVALIDATION_SECRET`           | Any 32+ char string     | Phase 2 — Bearer secret for `POST /api/revalidate` (FR-026)                                                        |
-| `CLOUDFRONT_DISTRIBUTION_ID`    | _(empty)_               | Phase 2 — unset locally by design (R-03); set per-environment in staging/prod via Parameter Store (FR-027)         |
-| `S3_BUCKET`                     | _(empty)_               | Not needed. See [Media Storage](#media-storage-no-s3-needed) below                                                 |
-| `S3_REGION`                     | _(empty)_               | Required when `S3_BUCKET` is set                                                                                   |
-| `S3_BUCKET_HOSTNAME`            | _(empty)_               |                                                                                                                    |
-| `AUDIT_DIR`                     | _(empty)_               | Phase 2 — path to the private Wix audit (defaults to `~/projects/seqtek-internal/audit/`). Read by the seed script |
-| `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3100` | Used for canonical URLs and OG meta tags                                                                           |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | _(empty)_               | HubSpot forms won't render without this, which is fine for dev                                                     |
-| `NEXT_PUBLIC_GTM_ID`            | _(empty)_               | GTM won't load without this, which is fine for dev                                                                 |
-| `NEXT_PUBLIC_SCOREAPP_URL`      | _(empty)_               | Assessment link won't work, which is fine for dev                                                                  |
+| Variable                        | Local Value             | Notes                                                                                                                                        |
+| ------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PREVIEW_SECRET`                | Any 32+ char string     | Phase 2 (spec 003) — required to mint preview cookies for `pages`/`posts`/`caseStudies`/`services`/`workshops`/`teamMembers` drafts (FR-019) |
+| `REVALIDATION_SECRET`           | Any 32+ char string     | Phase 2 — Bearer secret for `POST /api/revalidate` (FR-026)                                                                                  |
+| `CLOUDFRONT_DISTRIBUTION_ID`    | _(empty)_               | Phase 2 — unset locally by design (R-03); set per-environment in staging/prod via Parameter Store (FR-027)                                   |
+| `S3_BUCKET`                     | _(empty)_               | Not needed. See [Media Storage](#media-storage-no-s3-needed) below                                                                           |
+| `S3_REGION`                     | _(empty)_               | Required when `S3_BUCKET` is set                                                                                                             |
+| `S3_BUCKET_HOSTNAME`            | _(empty)_               |                                                                                                                                              |
+| `AUDIT_DIR`                     | _(empty)_               | Phase 2 — path to the private Wix audit (defaults to `~/projects/seqtek-internal/audit/`). Read by the seed script                           |
+| `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3100` | Used for canonical URLs and OG meta tags                                                                                                     |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | _(empty)_               | HubSpot forms won't render without this, which is fine for dev                                                                               |
+| `NEXT_PUBLIC_GTM_ID`            | _(empty)_               | GTM won't load without this, which is fine for dev                                                                                           |
+| `NEXT_PUBLIC_SCOREAPP_URL`      | _(empty)_               | Assessment link won't work, which is fine for dev                                                                                            |
 
 ### What's NOT in .env.local
 
@@ -105,13 +105,13 @@ The Postgres container:
 - Data persists in a Docker volume between restarts
 - Matches the same Postgres major version as production RDS
 
-Payload runs database migrations automatically on startup. When you run `npm run dev`, Payload connects to Postgres and creates/migrates all tables based on the collection configs. No manual migration step needed.
+Locally the Postgres adapter runs in **dev push** mode (`push: true` whenever `NODE_ENV !== 'production'`): on `npm run dev` Payload connects to Postgres and syncs the schema straight from the collection configs — no migration files, no manual step. Do **not** run `payload migrate` against the local DB. Versioned migrations are authored with `npm run payload migrate:create` and exist for staging/prod only; see [PAYLOAD_DEVELOPMENT.md](PAYLOAD_DEVELOPMENT.md) for that workflow.
 
 ---
 
 ## Google OAuth Client (D-14)
 
-`/admin` uses Google Workspace SSO restricted to `@seqtechllc.com` accounts (ROADMAP D-14, ADR 0002, spec 001). You need an OAuth client to sign in locally.
+`/admin` uses Google Workspace SSO restricted to `@seqtechllc.com` **and** `@seqtek.com` accounts (ROADMAP D-14, ADR 0002, spec 001; second domain added in PR #77). You need an OAuth client to sign in locally.
 
 ### One-time setup
 
@@ -134,9 +134,9 @@ Never commit `.env.local`. `.env.example` lists the names with empty values.
 
 ### First sign-in
 
-Drop the Postgres volume if you want a clean cutover (`docker compose down -v`), restart, then visit `/admin` and click **Sign in with Google**. The first `@seqtechllc.com` signer becomes Admin; subsequent signers default to Editor. Promote them in `/admin/collections/users/<id>`.
+Drop the Postgres volume if you want a clean cutover (`docker compose down -v`), restart, then visit `/admin` and click **Sign in with Google**. The first signer from either admitted domain becomes Admin; subsequent signers default to Editor. Promote them in `/admin/collections/users/<id>`.
 
-Non-`@seqtechllc.com` accounts are rejected at the OAuth callback — no row is created.
+Accounts outside `@seqtechllc.com` and `@seqtek.com` are rejected at the OAuth callback — no row is created.
 
 ### Tests (no real Google needed)
 
@@ -180,9 +180,29 @@ If you have the audit directory:
 AUDIT_DIR=/path/to/audit npx tsx src/payload/seed/migrateFromAudit.ts
 ```
 
-This populates all collections with real content: case studies, services, team members, blog posts, etc. Useful for testing the full site experience with realistic data.
+This populates all collections with extracted Wix content: case studies, services, team members, blog posts, etc. It is a **one-shot migration tool** (and the source for the 301 redirect map), not the live-content publish baseline — for hand-authored content use the seeder below. Useful for testing the full site experience with realistic data.
 
 If you don't have the audit directory, you can still develop against the full site — you'll just need to create sample content manually in the admin panel.
+
+### Loading content drafts (`tools/payload-seed`)
+
+For real, hand-authored content — the path used to populate staging and local mirrors — the committed generic seeder is `tools/payload-seed` (PR #82), driven by `npm run payload:seed`. It upserts any collection document or global from a JSON request file over the REST API, resolving relations (`$ref`), images (`$file`), and rich text (`$lexical`) at write time. Upserts are idempotent (keyed on `slug` by default), so re-running a file is safe.
+
+The seeder is the committed _engine_; the content data itself is **not** committed — it lives gitignored under `docs/content-drafts/*.json` (with `*.mts` driver scripts alongside). Auth is your own `/admin` Google-SSO session: sign in on the target environment, copy the `payload-token` cookie, and export it as `IMPORT_TOKEN` (it expires with the session — grab a fresh one per run).
+
+```bash
+# Dry-run against local dev (no token, no writes):
+tsx tools/payload-seed/index.ts ./docs/content-drafts/<file>.json --dry-run
+
+# Seed local dev (server on :3100); publishes by default:
+IMPORT_TOKEN=<session-jwt> npm run payload:seed ./docs/content-drafts/<file>.json
+
+# Seed staging, forcing everything to draft:
+IMPORT_TOKEN=<session-jwt> npm run payload:seed ./docs/content-drafts/<file>.json \
+  --base-url=https://seqtek-preview.com --draft
+```
+
+The target origin comes from `--base-url` (default `http://localhost:3100`) or the `IMPORT_BASE_URL` env var, so the same seed file drives both local and staging. See `tools/payload-seed/README.md` for the full spec/directive reference.
 
 ---
 
@@ -212,7 +232,7 @@ The hook is non-negotiable for this repo — it's public, and a leaked credentia
 ### Reset the Database
 
 ```bash
-# Drop and recreate (Payload re-runs migrations on next startup)
+# Drop and recreate (dev push rebuilds the schema on next startup)
 docker compose down -v
 docker compose up -d
 npm run dev
@@ -220,7 +240,7 @@ npm run dev
 
 ### Change a Payload Collection
 
-Edit the collection config in `src/payload/collections/`. Payload auto-generates migrations when the schema changes. On the next `npm run dev`, the migration runs and the database schema updates. The admin panel and API reflect the changes immediately.
+Edit the collection config in `src/collections/`. Locally there are no migration files to generate — dev push syncs the schema directly: on the next `npm run dev` the database schema updates and the admin panel and API reflect the changes immediately. (Versioned migrations for staging/prod are authored separately with `npm run payload migrate:create` — see [PAYLOAD_DEVELOPMENT.md](PAYLOAD_DEVELOPMENT.md).)
 
 Two artefacts do **not** regenerate on their own — both need a manual step after any schema change. See the next two subsections.
 
@@ -305,7 +325,7 @@ Payload migrations haven't run. This usually means the dev server was started be
 npm run dev
 ```
 
-Payload runs migrations on startup. If the database existed but the schema is stale, Payload will generate and apply the missing migrations.
+On `npm run dev`, dev push syncs the local schema straight from the collection configs. If the database existed but the schema is stale, restarting reconciles it — no migration files are involved locally.
 
 ### Port 3100 already in use
 

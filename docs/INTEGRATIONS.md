@@ -1,6 +1,6 @@
 # SEQTEK Website — Integration Specifications
 
-**Date:** May 2026
+**Date:** June 2026
 **Status:** Reference — Phase 1 implementation
 
 ---
@@ -70,7 +70,7 @@ Every live form is blocked on HubSpot-side setup. For each form we submit via th
 
 **Values to obtain (per form):**
 
-1. **Form GUID** — the `formId` in the form's Share / Embed code (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). Fills the `TBD` cells above; stored per form as a constant / env var.
+1. **Form GUID** — the `formId` in the form's Share / Embed code (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). Populates the **HubSpot Form GUID** column above (Contact and Workshop Inquiry are now filled — see PRs #76 and #74); stored per form as a constant / env var.
 2. **Field internal names** — the property internal name of every field on the form (e.g. `firstname`, `lastname`, `email`, `company`, `message`), _not_ the display label. The `fields[].name` we POST must match these exactly, and each field must exist on the form, or the submit 400s with `PROPERTY_DOESNT_EXIST`.
 3. **Dropdown option values** — for enumeration fields (e.g. Contact "inquiry type"), the internal **value** of each option (not the label). We submit the value. (The Workshop form's "workshop type" is a free-text property, not a dropdown — see the provisioned block below.)
 4. **Subscription type ID(s)** — only if the form collects a marketing opt-in (see consent below); needed for `legalConsentOptions.consent.communications[].subscriptionTypeId`.
@@ -405,7 +405,7 @@ interaction signals only (§1.2). Event contracts: `specs/008-gtm-pixel-activati
 | Event                     | Payload                                    | Emitted when                                      | Status                                                      |
 | ------------------------- | ------------------------------------------ | ------------------------------------------------- | ----------------------------------------------------------- |
 | `form_submission_attempt` | `{ event, formId }`                        | a HubSpot form submit fires (before the network)  | **Live** (spec 005)                                         |
-| `form_submission_success` | `{ event, formId }`                        | 200 from HubSpot (or the half-wired stub)         | **Live** (spec 005)                                         |
+| `form_submission_success` | `{ event, formId }`                        | 200 from HubSpot                                  | **Live** (spec 005)                                         |
 | `form_submission_failure` | `{ event, formId, errorClass }`            | terminal submit failure (after retry)             | **Live** (spec 005)                                         |
 | `cta_click`               | `{ event, ctaId, label, location, href? }` | a primary CTA is clicked (non-blocking onClick)   | **Live** (spec 008)                                         |
 | `case_study_view`         | `{ event, slug, title }`                   | a case-study detail page mounts (fire-once)       | **Live** (spec 008)                                         |
@@ -815,7 +815,7 @@ The loading order matters for performance and consent compliance.
 ### HubSpot
 
 - [ ] Verify portal ID 8504846 is active and accessible
-- [ ] Create form GUIDs for: Contact, Newsletter, Workshop Inquiry
+- [x] Create form GUIDs for: Contact (#76), Workshop Inquiry (#74) — done; Newsletter still pending
 - [ ] Configure HubSpot Meetings for booking page
 - [ ] Configure cookie banner appearance (match site brand)
 - [ ] Set up chatflow (bot or live agent)

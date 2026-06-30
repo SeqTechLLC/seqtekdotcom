@@ -4,6 +4,8 @@
 **Status:** Research — informs the BR-1 (SEQTEK vs. Sequoyah) decision and feeds the DESIGN_SYSTEM and CONTENT-REQUIREMENTS docs.
 **Author:** Research compiled for senior leadership review.
 
+> **IA since superseded (2026-06-30).** This is a dated research artifact; the body is kept intact. Two information-architecture assumptions in it have since changed: the 3-pillar structure ("Organizational Strategy + Technology & Data + AI & Automation") became **four peer offerings** rendered as Pages, and the **"Touchstone Workshops" umbrella** became **one Touchstone workshop of three** at `/workshops`. Affected passages are flagged inline. The strategic recommendations still stand — workshops as the primary CTA/funnel is now implemented, and the localshoring positioning is current.
+
 ---
 
 ## Executive summary
@@ -84,12 +86,12 @@ The _Visible Expert_ study (Frederiksen, Harr, Feldman; published as a book and 
 
 - **Perceived expertise is the single most important factor in firm selection** — the only factor that outweighs an existing relationship ([Hinge, _Visible Expert Study: Research Summary_](https://hingemarketing.com/library/article/the-visible-expert-study-research-summary)).
 - **Top techniques used by Visible Experts** to build that expertise: referrals/recommendations (80.6%), social media (77.7%), speaking engagements (75.8%), networking events/trade shows (69.7%) ([Marketing Charts, summary of Hinge research](https://www.marketingcharts.com/industries/business-to-business-115874)).
-- **The largest single archetype (41.3%) of Visible Experts identify as "the bridge builder"** — experts spanning two different domains and connecting ideas across them. (SEQTEK's "Organizational Strategy + Technology & Data + AI & Automation" cross-pillar positioning is precisely this archetype.)
+- **The largest single archetype (41.3%) of Visible Experts identify as "the bridge builder"** — experts spanning two different domains and connecting ideas across them. (SEQTEK's "Organizational Strategy + Technology & Data + AI & Automation" cross-pillar positioning is precisely this archetype.) _[Note 2026-06-30: this 3-pillar IA is retired — now four peer offerings; the bridge-builder archetype point is unaffected.]_
 - **Top reported benefits** of Visible Expert status to the firm: name recognition (46%), revenue generation (41%), credibility/reputation (38%) ([Hinge, _Visible Value: How Firms Benefit from Visible Experts_](https://hingemarketing.com/library/article/visible-value-how-firms-benefit-from-visible-experts)).
 
 ### What this means for SEQTEK
 
-The research is consistent: high growth in professional services comes from (a) **a clear differentiator told as a story**, (b) **named experts producing content from named expertise**, and (c) **a diagnostic offer the buyer can take home.** SEQTEK's existing Touchstone Workshops methodology is exactly the kind of diagnostic-offer asset Hinge identifies — currently underweighted on the site relative to how much business-development work it could do.
+The research is consistent: high growth in professional services comes from (a) **a clear differentiator told as a story**, (b) **named experts producing content from named expertise**, and (c) **a diagnostic offer the buyer can take home.** SEQTEK's existing Touchstone Workshops methodology is exactly the kind of diagnostic-offer asset Hinge identifies — currently underweighted on the site relative to how much business-development work it could do. _[Note 2026-06-30: "Touchstone Workshops" as an umbrella is superseded — Touchstone is now one workshop of three at `/workshops`; the diagnostic-offer point stands.]_
 
 ---
 
@@ -189,7 +191,7 @@ The CONTENT-REQUIREMENTS doc is already aligned with this evidence (full-attribu
 
 1. **Named, attributed case studies with quantified outcomes** — content-marketing-institute and Demand Gen findings both make case studies the highest-leverage trust artifact, and they are the artifact most peer firms underuse.
 2. **Custom photography of real workshops/team members** — every regional consultancy we reviewed in §6 looks roughly the same in stock imagery; this is a cheap, slow differentiator.
-3. **A diagnostic/assessment offering** — Hinge's _single most impactful business-development technique_ among High Growth firms; SEQTEK's Touchstone Workshops are the right asset but appear to be underexposed on the current site.
+3. **A diagnostic/assessment offering** — Hinge's _single most impactful business-development technique_ among High Growth firms; SEQTEK's Touchstone Workshops are the right asset but appear to be underexposed on the current site. _[Note 2026-06-30: "Touchstone Workshops" umbrella superseded — now one Touchstone workshop of three at `/workshops`; see header note.]_
 
 ---
 
@@ -214,7 +216,7 @@ Ten regional/mid-market technology and management consultancies, with how they p
 
 - **None of the regional comparable firms (Daugherty, RevGen, Slalom local offices) ground their brand in a named founder/origin story.** Slalom's "local soul" is the closest, and it's a model claim, not an origin claim. SEQTEK can be the regional tech consultancy with a _named human story_ — that's open space.
 - **"Localshoring" as a structured positioning is underdeveloped industry-wide.** The published consulting literature on "localshoring" is thin (most search results returned generic nearshoring/onshoring content, not consulting positioning). SEQTEK has an opportunity to own the term in B2B consulting context if it commits to defining it explicitly — a cost-comparison, time-zone, cultural-fit, response-time framework would be the foundation of a category claim.
-- **Mid-market diagnostic offer.** Among the comparables, only Slalom and Pariveda have anything resembling a packaged assessment. Touchstone Workshops, properly positioned, would put SEQTEK in the top quartile of the regional set on the technique Hinge identifies as most impactful.
+- **Mid-market diagnostic offer.** Among the comparables, only Slalom and Pariveda have anything resembling a packaged assessment. Touchstone Workshops, properly positioned, would put SEQTEK in the top quartile of the regional set on the technique Hinge identifies as most impactful. _[Note 2026-06-30: "Touchstone Workshops" umbrella superseded — now one Touchstone workshop of three at `/workshops`; see header note.]_
 - **Named experts.** None of the comparable mid-market firms have a clearly visible "Visible Expert" on their site (named partner with publishing, speaking, content). This is the single largest brand-equity opportunity Hinge research identifies, and the field is open.
 
 ### Positioning gaps SEQTEK should _not_ try to close
@@ -275,7 +277,7 @@ Prioritized actions, ranked by leverage. References to existing brand assets are
 
 5. **Tighten the existing mission/vision/values draft against Hinge and Lencioni standards** before publication. The CONTENT-REQUIREMENTS doc already flags that the current mission ("help organizations innovate, implement, and deliver a better tomorrow") is interchangeable with any consulting firm. Per _High Growth Study 2024_, this is the single most expensive line of copy to leave generic. Recommend a leadership-alignment session as already scheduled.
 
-6. **Reposition Touchstone Workshops as a primary CTA**, not a secondary service. Hinge identifies assessments/consultations as the _single most impactful business-development technique_ for high-growth firms. The asset exists; the surfacing is the gap.
+6. **Reposition Touchstone Workshops as a primary CTA**, not a secondary service. Hinge identifies assessments/consultations as the _single most impactful business-development technique_ for high-growth firms. The asset exists; the surfacing is the gap. _[Note 2026-06-30: implemented — workshops are now the primary funnel at `/workshops` (Touchstone being one of three). This recommendation stands; only the "umbrella" naming is superseded.]_
 
 ### Tier 2 — within the first 90 days post-launch
 
