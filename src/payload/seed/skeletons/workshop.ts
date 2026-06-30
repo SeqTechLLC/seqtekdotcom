@@ -28,7 +28,7 @@ export const workshopSkeleton = (): Array<Record<string, unknown>> => [
     blockType: 'contact-cta',
     heading: 'Request this workshop',
     body: 'Tell us about your team and we will follow up with dates.',
-    primaryCta: { label: 'Book a call', url: '/contact/book-a-call' },
+    primaryCta: { label: 'Book a call', url: '/contact' },
   },
 ]
 
