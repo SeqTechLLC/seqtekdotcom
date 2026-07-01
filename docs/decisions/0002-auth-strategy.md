@@ -11,7 +11,7 @@
 - Custom implementation is **~250 LOC** across `src/app/(payload)/api/auth/oauth/{authorization,callback}/google/route.ts` and `src/lib/auth/{google-oauth,session-cookie}.ts`. Uses Google's OIDC discovery + JWKS via `jose` (mature, widely used by NextAuth/Auth0/etc.) and Payload's own session-cookie helpers (`getFieldsToSign`, `jwtSign`, `generatePayloadCookie`). No new runtime dependency beyond what Payload + Next already ship.
 - `npm audit --omit=dev --audit-level=high` added to CI `quality` job as a defence-in-depth check for future dep introductions.
 
-**Implementation note (2026-06-24) — two Workspace domains:**
+**Implementation note (2026-06-24, PR #77) — two Workspace domains:**
 
 - SEQTEK runs **two** live Google Workspace domains: the legal entity (`seqtechllc.com`) and the public brand (`seqtek.com`). Staff exist under both (marketing is on `@seqtek.com`), so a `@seqtek.com` editor (Megan) was domain-rejected at `/admin` by the original single-domain allowlist. This is exactly the "Revisit when: editor set extends beyond `@seqtechllc.com`" trigger below.
 - Fix: a shared allowlist (`src/lib/auth/allowed-domains.ts`, `ALLOWED_WORKSPACE_DOMAINS = ['seqtechllc.com', 'seqtek.com']`) now backs all three domain gates — the email-suffix check (`enforce-domain.ts`), the Google `hd` account-picker hint (relaxed from a single domain to `*`, since `hd` takes only one value and pinning one would hide the other's accounts), and the callback `hd`-claim check. First sign-in still auto-provisions an `editor`; access is otherwise unchanged. Adding/removing a domain is a one-line edit to the shared array.

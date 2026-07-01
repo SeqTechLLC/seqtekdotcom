@@ -1,6 +1,6 @@
 # Payload CMS v3 — Development Guide
 
-**Date:** May 2026
+**Date:** June 2026
 **Status:** Reference — Phase 1 implementation
 
 This is a practical reference for developing with Payload CMS v3 in the SEQTEK website project. It covers collection design, block development, Lexical editor customization, hooks, access control, querying, and admin panel configuration.
@@ -34,7 +34,7 @@ For architecture decisions and deployment, see [ARCHITECTURE.md](ARCHITECTURE.md
 
 Payload v3 is not a separate service — it's a library that embeds directly into the Next.js application. One Node process (`next start`) serves everything:
 
-- **Public pages** — your React components in `/app/(site)/`
+- **Public pages** — your React components in `/app/(frontend)/`
 - **Admin panel** — a React SPA at `/admin`, auto-generated from your content model
 - **REST API** — CRUD endpoints at `/api/[collection]`, auto-generated per collection
 - **GraphQL API** — full schema at `/api/graphql`
@@ -88,12 +88,15 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 
-import { Users } from './src/payload/collections/Users'
-import { Posts } from './src/payload/collections/Posts'
-import { CaseStudies } from './src/payload/collections/CaseStudies'
-import { Media } from './src/payload/collections/Media'
-import { SiteSettings } from './src/payload/globals/SiteSettings'
-import { Navigation } from './src/payload/globals/Navigation'
+// Illustrative snippet — real collections live in `src/collections/` and
+// globals in `src/globals/` (the project has 13 collections + 3 globals, not
+// the trimmed set shown here).
+import { Users } from './src/collections/Users'
+import { Posts } from './src/collections/Posts'
+import { CaseStudies } from './src/collections/CaseStudies'
+import { Media } from './src/collections/Media'
+import { SiteSettings } from './src/globals/SiteSettings'
+import { Navigation } from './src/globals/Navigation'
 
 export default buildConfig({
   // Default editor for all richText fields (can be overridden per-field)
@@ -124,7 +127,7 @@ export default buildConfig({
       },
     }),
     seoPlugin({
-      collections: ['posts', 'case-studies', 'pages', 'services'],
+      collections: ['pages', 'posts', 'caseStudies', 'services', 'workshops', 'teamMembers'],
       globals: ['homepage'],
       uploadsCollection: 'media',
       generateTitle: ({ doc }) => `${doc.title} | SEQTEK`,
@@ -144,7 +147,7 @@ export default buildConfig({
         `?collection=${collectionConfig?.slug}` +
         `&slug=${data?.slug ?? ''}` +
         `&token=${req?.user ? 'authed' : ''}`,
-      collections: ['posts', 'case-studies', 'pages', 'services'],
+      collections: ['pages', 'posts', 'caseStudies', 'services', 'workshops', 'teamMembers'],
       breakpoints: [
         { label: 'Mobile', name: 'mobile', width: 375, height: 667 },
         { label: 'Tablet', name: 'tablet', width: 768, height: 1024 },
@@ -1380,7 +1383,7 @@ admin: {
         `&id=${data?.id ?? ''}` +
         `&slug=${data?.slug ?? ''}`
     },
-    collections: ['posts', 'case-studies', 'pages', 'services', 'workshops'],
+    collections: ['pages', 'posts', 'caseStudies', 'services', 'workshops', 'teamMembers'],
     breakpoints: [
       { label: 'Mobile', name: 'mobile', width: 375, height: 667 },
       { label: 'Tablet', name: 'tablet', width: 768, height: 1024 },
@@ -1390,7 +1393,7 @@ admin: {
 }
 ```
 
-The `/api/preview` route handler validates the user has admin access (via the Payload session cookie), looks up the document with `payload.findByID({ collection, id, depth: 2 })` so relations are populated, computes the canonical URL (e.g., `/services/${pillar.slug}/${service.slug}` for service pages), and either redirects to that URL with a draft cookie set or renders the page directly with the populated draft data. This keeps relation resolution in one place and avoids the form-state pitfall.
+The `/api/preview` URL above is illustrative — the route that actually ships is the cookie-gated `src/app/(frontend)/preview/[collection]/[slug]/route.ts`. It authenticates on the admin session cookie (`payload-token`) rather than carrying `PREVIEW_SECRET` in the URL (the secret used to leak into the admin DOM, Referer headers, and ALB/CloudFront logs), looks up the draft, computes the canonical public path with `publicPathFor()` from `src/payload/livePreview/url.ts` — the single source of truth shared by the admin iframe `url` callback and this handler — and redirects there with a draft cookie set. Only the `collection` + `slug` pair is ferried through the URL; relation resolution stays server-side, which avoids the form-state pitfall. The old nested `/services/{pillar}/{service}` preview path is retired; service drafts resolve to a flat public path.
 
 ### Frontend Preview Component
 
@@ -1604,7 +1607,7 @@ Maps popular shadcn/ui block patterns to Payload CMS field types.
 ### How to Use These
 
 1. Browse the library for a block that matches your need
-2. Copy the block config into `src/payload/collections/blocks/` or inline it in your collection
+2. Copy the block config into `src/payload/blocks/` or inline it in your collection
 3. Copy the frontend component into `src/components/sections/`
 4. Restyle with your Tailwind theme tokens
 5. Register the block in your collection's `blocks` field
@@ -1651,7 +1654,7 @@ The `@payloadcms/plugin-seo` plugin adds `meta.title`, `meta.description`, and `
 
 ```typescript
 seoPlugin({
-  collections: ['posts', 'case-studies', 'pages', 'services'],
+  collections: ['pages', 'posts', 'caseStudies', 'services', 'workshops', 'teamMembers'],
   uploadsCollection: 'media',
   generateTitle: ({ doc }) => `${doc.title} | SEQTEK`,
   generateDescription: ({ doc }) => doc.excerpt,

@@ -19,20 +19,20 @@ Payload supports two ways to model page content:
 
 **As of spec 010 / ADR 0009 this choice is largely settled: two content primitives.** Every non-blog page renders its body from a `layout` blocks array through `RenderBlocks`; only the blog Post keeps a bespoke richText article body. The "structured vs blocks" tension below is now mostly historical context — the rule of thumb still governs _new_ models, but the specialized detail types have all moved to blocks (keeping their typed metadata: slug, listing image, SEO, relationships).
 
-| Collection / Global | Body approach                              | Notes                                                                                                                  |
-| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `pages`             | **Blocks** (`layout`)                      | The reference model; generic content pages composed freely                                                             |
-| `homepage` (global) | **Blocks** (`layout`)                      | spec 010: was structured; now block-composed and editor-reorderable (composer adds the dual-CTA hero defaults)         |
-| `caseStudies`       | **Blocks** (`layout`)                      | spec 010: was structured (problem/solution/impact/metrics/…); composed into blocks, typed metadata retained            |
-| `services`          | **Blocks** (`layout`)                      | spec 010: was structured; composed; nested `/services/[pillar]/[slug]` URL + pillar-move revalidation preserved        |
-| `workshops`         | **Blocks** (`layout`)                      | spec 010 pilot (US1): the acceptance gate; composed (incl. `gallery` proof photos + `video-embed`)                     |
-| `teamMembers`       | **Blocks** (`layout`)                      | spec 010: gained `layout` + drafts/live-preview; new `/team/[slug]` detail renders via `RenderBlocks` + Person JSON-LD |
-| `posts`             | **Structured + inline blocks in richText** | **The sanctioned exception** (ADR 0009): title/excerpt/author fixed; body is rich text with embedded inline blocks     |
-| `servicePillars`    | **Structured**                             | Listing target, not a retired detail template; keeps its `description` richText                                        |
-| `industries`        | **Structured**                             | Taxonomy/listing; no body composition                                                                                  |
-| `locations`         | **Structured**                             | Market landing taxonomy; no body composition                                                                           |
+| Collection / Global | Body approach                              | Notes                                                                                                                                                                                                                             |
+| ------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages`             | **Blocks** (`layout`)                      | The reference model; generic content pages composed freely                                                                                                                                                                        |
+| `homepage` (global) | **Blocks** (`layout`)                      | spec 010: was structured; now block-composed and editor-reorderable (composer adds the dual-CTA hero defaults)                                                                                                                    |
+| `caseStudies`       | **Blocks** (`layout`)                      | spec 010: was structured (problem/solution/impact/metrics/…); composed into blocks, typed metadata retained                                                                                                                       |
+| `services`          | **Blocks** (`layout`)                      | spec 010: was structured; composed. The nested `/services/[pillar]/[slug]` URL + pillar-move revalidation is **retired** — offerings are now four Pages addressed by slug; the `services` collection is no longer publicly routed |
+| `workshops`         | **Blocks** (`layout`)                      | spec 010 pilot (US1): the acceptance gate; composed (incl. `gallery` proof photos + `video-embed`)                                                                                                                                |
+| `teamMembers`       | **Blocks** (`layout`)                      | spec 010: gained `layout` + drafts/live-preview; new `/team/[slug]` detail renders via `RenderBlocks` + Person JSON-LD                                                                                                            |
+| `posts`             | **Structured + inline blocks in richText** | **The sanctioned exception** (ADR 0009): title/excerpt/author fixed; body is rich text with embedded inline blocks                                                                                                                |
+| `servicePillars`    | **Structured**                             | **Vestigial** — the pillar IA is retired (offerings are now four Pages by slug) and it is no longer publicly routed; kept only for the data it still backs                                                                        |
+| `industries`        | **Structured**                             | Taxonomy/listing; no body composition                                                                                                                                                                                             |
+| `locations`         | **Structured**                             | Market landing taxonomy; no body composition                                                                                                                                                                                      |
 
-Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `servicePillars`/`industries`/`locations` stay structured because they are listing/taxonomy targets, not retired detail templates. Old discrete body columns are retained one release (hidden + read-only, expand/contract) then dropped (`drop_legacy_body_columns`).
+Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `industries`/`locations` stay structured because they are listing/taxonomy targets; `servicePillars` is now vestigial (the pillar IA is retired and unrouted — see the table note above). Old discrete body columns are retained one release (hidden + read-only, expand/contract) then dropped (`drop_legacy_body_columns`).
 
 ---
 
@@ -51,35 +51,15 @@ Net (post-spec-010): every non-blog detail type **and** the homepage global rend
 
 Pure React, no Payload coupling. Used by sections and pages.
 
-| Component     | Props                                                                           | Variants                                                             | Notes                                                          |
-| ------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `Button`      | `as`, `href`, `variant`, `size`, `iconLeft`, `iconRight`, `disabled`, `loading` | `primary` / `secondary` / `ghost` / `link`; sizes `sm` / `md` / `lg` | Renders as `<a>` or `<button>` based on `href`                 |
-| `Card`        | `as`, `padding`, `elevation`, `interactive`                                     | flat / elevated / outlined                                           | Wrapper primitive                                              |
-| `Badge`       | `tone`, `size`                                                                  | `neutral` / `accent` / `success` / `warning`                         | For tags, status, categories                                   |
-| `Tag`         | `href`, `label`                                                                 | —                                                                    | Linkable category/technology tag                               |
-| `Avatar`      | `src`, `alt`, `size`, `fallback`                                                | `xs` / `sm` / `md` / `lg`                                            | Headshots, author bylines                                      |
-| `Icon`        | `name`, `size`, `className`                                                     | —                                                                    | Wraps Lucide React; whitelist allowed names in TS union        |
-| `SmartLink`   | `href`, `external` (auto-detected)                                              | —                                                                    | Adds external arrow + `rel="noopener noreferrer"` for off-site |
-| `Container`   | `size`, `padded`                                                                | `sm` / `md` / `lg` / `xl` / `full`                                   | Max-width wrapper with horizontal padding                      |
-| `Section`     | `as`, `tone`, `padding`                                                         | `default` / `subtle` / `inverse` / `accent`                          | Vertical-padded `<section>`                                    |
-| `Prose`       | `size`, `tone`                                                                  | `default` / `large` / `compact`                                      | Wraps Lexical output with `@tailwindcss/typography`            |
-| `Breadcrumbs` | `items`                                                                         | —                                                                    | Renders `BreadcrumbList` JSON-LD too                           |
-| `Pagination`  | `currentPage`, `totalPages`, `basePath`                                         | —                                                                    | For blog/case-study listing pages                              |
-| `ScrollToTop` | —                                                                               | —                                                                    | Floating button, appears after scroll threshold                |
+The real surface is small — five primitives. (Earlier drafts of this doc listed Card/Badge/Tag/Avatar/Icon/Section/Breadcrumbs/Pagination/ScrollToTop and a `ui/form/` subdir; none of those were built. Form UI lives in `src/components/forms/`, see §7.)
 
-### Form primitives (`src/components/ui/form/`)
-
-| Component      | Notes                                                                          |
-| -------------- | ------------------------------------------------------------------------------ |
-| `Input`        | text/email/tel/url types; `error` prop renders inline error                    |
-| `Textarea`     | autosize variant                                                               |
-| `Select`       | Native select for SSR; consider Radix UI Select if a richer dropdown is needed |
-| `Checkbox`     | Custom styled, accessible                                                      |
-| `Radio`        | Custom styled, accessible                                                      |
-| `FormField`    | Wrapper: label + control + help text + error message                           |
-| `SubmitButton` | `Button` with `loading` state during async submission                          |
-| `FormError`    | Banner for top-level submission errors                                         |
-| `FormSuccess`  | Confirmation state                                                             |
+| Component         | Props                                                          | Variants                                                             | Notes                                                                                                                   |
+| ----------------- | -------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `Button`          | `variant`, `size`, `href`, `cta`, + native button/anchor attrs | `primary` / `secondary` / `ghost` / `link`; sizes `sm` / `md` / `lg` | Renders `<a>` (via `next/link`) when `href` is set, else `<button>`; link-mode opts into `cta_click` tracking via `cta` |
+| `Container`       | `size`, + native div attrs                                     | `sm` / `md` / `lg` / `xl` (default) / `full`                         | Max-width wrapper (`mx-auto`) with horizontal padding                                                                   |
+| `Prose`           | `size`, `tone`                                                 | size `compact` / `default` / `large`; tone `default` / `inverse`     | Typographic wrapper for Lexical output (`@tailwindcss/typography`)                                                      |
+| `ResponsiveImage` | `media`, `sizes`, `className`, `loading`, `fetchPriority`      | —                                                                    | `<picture>` with webp + jpeg `srcSet` built from the Media collection's responsive sizes                                |
+| `SmartLink`       | `href`, `external` (auto-detected), + native anchor attrs      | —                                                                    | Internal hrefs render via `next/link`; off-site hrefs get `rel="noopener noreferrer"`                                   |
 
 ---
 
@@ -87,14 +67,14 @@ Pure React, no Payload coupling. Used by sections and pages.
 
 Not blocks — these are global chrome.
 
-| Component             | Data source                                | Notes                                                          |
-| --------------------- | ------------------------------------------ | -------------------------------------------------------------- |
-| `SiteHeader`          | `navigation` global, `siteSettings` global | Logo, primary nav, mobile menu trigger, primary CTA button     |
-| `SiteFooter`          | `navigation` global, `siteSettings` global | Multi-column nav, contact info, social, copyright, legal links |
-| `MobileNav`           | `navigation` global                        | Slide-over drawer, focus-trapped                               |
-| `MegaMenu`            | `navigation` global children               | Optional — services pillar may benefit from a dropdown         |
-| `CookieConsentBanner` | HubSpot-rendered                           | We do not own this UI; just ensure styling integrates          |
-| `SkipToContent`       | —                                          | Accessibility — first focusable element                        |
+| Component            | Data source                                          | Notes                                                                                                         |
+| -------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `SiteHeader`         | `navigation` / `siteSettings` (`@/lib/site-content`) | Logo, primary nav, mobile menu trigger, primary CTA button                                                    |
+| `SiteFooter`         | `navigation` / `siteSettings` (`@/lib/site-content`) | Multi-column nav, contact info, social, copyright, legal links                                                |
+| `MobileNav`          | `navItems`, `ctaButton` props                        | Slide-over drawer, focus-trapped                                                                              |
+| `PreviewBanner`      | Next.js draft-mode state                             | Server-rendered amber bar shown above content when draft mode is on (FR-020); dropped once per template       |
+| `ConsentPreferences` | HubSpot `_hsp` command queue                         | Footer control that re-opens HubSpot's own consent banner / withdraws consent — no custom consent UI is built |
+| `SkipToContent`      | `targetId` prop (default `main`)                     | Accessibility — first focusable element                                                                       |
 
 ---
 
@@ -135,7 +115,7 @@ Field-type shorthand below maps to PAYLOAD_DEVELOPMENT.md §5.
 
 #### `service-pillar-hero` — pillar landing hero
 
-Uses standard `hero` block with `variant: with-image` + structured eyebrow.
+Its **own registered block**, not a `hero` variant (earlier drafts of this doc claimed otherwise): config at `src/payload/blocks/layout/ServicePillarHero.ts`, renderer at `src/components/sections/ServicePillarHero.tsx`, wired in both `src/components/sections/registry.ts` and `src/payload/blocks/layout/index.ts`. **Now orphaned** by the services restructure (§1): the pillar-landing IA it served is retired, so it ships in the library but no live page composes it.
 
 ### 5.2 Content blocks
 
@@ -414,13 +394,13 @@ Frontend emits `FAQPage` JSON-LD automatically.
 
 #### `brand-teaser` — Sequoyah story teaser (homepage)
 
-| Field       | Type     | Required | Notes                      |
-| ----------- | -------- | -------- | -------------------------- |
-| `headline`  | text     | yes      |                            |
-| `body`      | textarea | yes      | 2-3 sentences              |
-| `linkLabel` | text     | yes      |                            |
-| `linkUrl`   | text     | yes      | Default `/about/our-story` |
-| `image`     | upload   | no       |                            |
+| Field       | Type     | Required | Notes                                                        |
+| ----------- | -------- | -------- | ------------------------------------------------------------ |
+| `headline`  | text     | yes      |                                                              |
+| `body`      | textarea | yes      | 2-3 sentences                                                |
+| `linkLabel` | text     | yes      |                                                              |
+| `linkUrl`   | text     | yes      | Default `/about` (the story lives on the flat `/about` Page) |
+| `image`     | upload   | no       |                                                              |
 
 #### `nav-cards` — 3-up navigation cards (about landing)
 
@@ -534,22 +514,22 @@ The loop is deliberately the **only** exception to "no code for layout" (SC-006)
 
 Block order per page type. This is the canonical reference — content layouts should follow these unless there's a documented reason to vary.
 
-> **Post-spec-010 note (ADR 0009):** the entries below that describe a type as "structured fields rendered through fixed sequence" (case study, service detail, service pillar) are **historical** — those bodies are now `layout` blocks rendered by `RenderBlocks`, and the per-type seed composers (`src/payload/seed/compose/*ToLayout.ts`) emit exactly these orderings as each record's default `layout`. So this matrix is now the **composer's default block order** (and the editor's starting point), not a hardcoded render template. Component names like `<Prose>`/`<MetricsGrid>`/`<TestimonialSingle>` map to the real block slugs `content`/`metric-display`+`stats-bar`/`testimonial-block` (see §5.7 renames). Only the blog Post still renders a bespoke richText body.
+> **Post-spec-010 note (ADR 0009):** the entries below that describe a type as "structured fields rendered through fixed sequence" (e.g. case study) are **historical** — those bodies are now `layout` blocks rendered by `RenderBlocks`, and the per-type seed composers (`src/payload/seed/compose/*ToLayout.ts`) emit exactly these orderings as each record's default `layout`. So this matrix is now the **composer's default block order** (and the editor's starting point), not a hardcoded render template. Component names like `<Prose>`/`<MetricsGrid>`/`<TestimonialSingle>` map to the real block slugs `content`/`metric-display`+`stats-bar`/`testimonial-block` (see §5.7 renames). The old "service pillar landing" / "service detail" rows are retired — both fold into the single **Service offering** entry below (§1: offerings are now four Pages by slug). Only the blog Post still renders a bespoke richText body.
 
-### Homepage (`homepage` global — structured fields, not blocks)
+### Homepage (`homepage` global — `layout` blocks via `RenderBlocks`)
 
-The homepage global has fixed fields that map 1:1 to the renderer:
+Spec 010 moved the homepage off structured fields onto an editor-reorderable `layout` blocks array (§1). The order below is the composer's default starting point, not a fixed renderer:
 
-1. `hero` → `<Hero variant="with-image" />` (above the fold; primary + secondary CTA)
-2. `stats` → `<StatsBar source="from-site-settings" />`
-3. `servicePillarCards` → `<ServicePillarCards>` (3-up)
-4. `featuredCaseStudy` → `<FeaturedCaseStudy>`
-5. `brandTeaser` → `<BrandTeaser>` (Sequoyah hook)
-6. `clientLogos` → `<LogoBar treatment="grayscale-on-color-hover" />`
-7. `featuredTestimonials` → `<TestimonialCarousel>` (max 3)
-8. `touchstoneTeaser` → `<CtaSection variant="split">`
-9. `latestInsights` → `<LatestInsights limit={3} />`
-10. `finalCta` → `<CtaSection variant="centered">` (dual CTA: book call + assessment)
+1. `homepage-hero` (above the fold; required dual CTA)
+2. `stats-bar` (`source: from-site-settings`)
+3. `service-pillar-cards` (3-up)
+4. `featured-case-study`
+5. `brand-teaser` (Sequoyah hook)
+6. `client-logo-grid` (`treatment: grayscale-on-color-hover`)
+7. `featured-testimonials` (max 3)
+8. `cta-section` (`variant: split` — Touchstone teaser)
+9. `post-list` (`limit: 3` — latest insights)
+10. `cta-section` (`variant: centered` — dual CTA: book call + assessment)
 
 ### About landing (`pages` collection — `layout` blocks)
 
@@ -571,13 +551,11 @@ The homepage global has fixed fields that map 1:1 to the renderer:
 
 `hero` → `content` (overview) → `service-pillar-cards` → `featured-case-study` → `cta-section`
 
-### Service pillar landing (`servicePillars` — structured fields rendered through fixed sequence)
+### Service offering (`pages` — `layout` blocks; one Page per offering, addressed by slug)
 
-`<ServicePillarHero>` → `<Prose>` (description) → `<ServiceCards source="by-pillar">` → `<TestimonialSingle>` → `<CaseStudyGrid source="by-service">` → `<IndustryGrid>` → `<CtaSection>`
+The retired `/services/[pillar]/[slug]` pillar→detail IA (the two rows that used to sit here) is replaced by **four offering Pages**, each composed from the block library. Default composer order:
 
-### Service detail (`services` — structured fields rendered through fixed sequence)
-
-`<Hero>` → `<Prose>` (problem statement from `description`) → `<ProcessSteps>` (from `approach`) → `<Deliverables>` → `<FeaturedCaseStudy>` (related) → `<RelatedContent type="services">` → `<Faq>` → `<CtaSection>`
+`hero` → `content` (what it is / approach) → `process-steps` → `deliverables` → `featured-case-study` → `faq` → `cta-section`
 
 ### Case study (`caseStudies` — structured fields rendered through fixed sequence)
 
@@ -599,9 +577,9 @@ The homepage global has fixed fields that map 1:1 to the renderer:
 
 `<Hero>` → `<Prose>` (local context — unique per city) → `<ServiceCards>` (all pillars) → `<CaseStudyGrid source="manual">` (local projects) → office details block → `<CtaSection>`
 
-### Workshop landing (`pages`)
+### Workshop landing (`pages` — `layout` blocks)
 
-`<Hero>` → `<Content>` (Touchstone naming explanation) → `<WorkshopProgression>` → `<StatsBar>` (workshop stats with citations) → `<CtaSection>`
+`hero` → `content` (program overview) → `workshop-list` (the `WorkshopList` renderer) → `stats-bar` (workshop stats with citations) → `cta-section`
 
 ### Workshop detail (`workshops` — structured fields)
 
@@ -623,159 +601,181 @@ The homepage global has fixed fields that map 1:1 to the renderer:
 
 ## 7. Component file structure
 
+Regenerated from the real tree. Block configs carry **no** `Block` suffix (`Hero.ts`, not `HeroBlock.ts`); each layout/inline config has a matching renderer of the same name, and the slug↔component pairing is test-enforced (`registryCoverage` / `inlineRegistryCoverage`).
+
 ```
 src/
 ├── components/
-│   ├── ui/
+│   ├── ui/                                  # UI primitives (§3)
 │   │   ├── Button.tsx
-│   │   ├── Card.tsx
-│   │   ├── Badge.tsx
-│   │   ├── Tag.tsx
-│   │   ├── Avatar.tsx
-│   │   ├── Icon.tsx
-│   │   ├── SmartLink.tsx
 │   │   ├── Container.tsx
-│   │   ├── Section.tsx
 │   │   ├── Prose.tsx
-│   │   ├── Breadcrumbs.tsx
-│   │   ├── Pagination.tsx
-│   │   ├── ScrollToTop.tsx
-│   │   └── form/
-│   │       ├── Input.tsx
-│   │       ├── Textarea.tsx
-│   │       ├── Select.tsx
-│   │       ├── Checkbox.tsx
-│   │       ├── Radio.tsx
-│   │       ├── FormField.tsx
-│   │       ├── SubmitButton.tsx
-│   │       ├── FormError.tsx
-│   │       └── FormSuccess.tsx
+│   │   ├── ResponsiveImage.tsx
+│   │   └── SmartLink.tsx
 │   │
-│   ├── layout/
+│   ├── layout/                              # Global chrome (§4)
 │   │   ├── SiteHeader.tsx
 │   │   ├── SiteFooter.tsx
 │   │   ├── MobileNav.tsx
-│   │   ├── MegaMenu.tsx
+│   │   ├── PreviewBanner.tsx
+│   │   ├── ConsentPreferences.tsx
 │   │   └── SkipToContent.tsx
 │   │
-│   ├── sections/                         # Payload block renderers
-│   │   ├── RenderBlocks.tsx              # Dispatcher
-│   │   ├── Hero.tsx
-│   │   ├── CaseStudyHero.tsx
-│   │   ├── ContentBlock.tsx
-│   │   ├── TwoColumn.tsx
-│   │   ├── ProcessSteps.tsx
-│   │   ├── Deliverables.tsx
-│   │   ├── ComparisonTable.tsx
-│   │   ├── Timeline.tsx
-│   │   ├── Faq.tsx
-│   │   ├── StatsBar.tsx
-│   │   ├── MetricDisplay.tsx
-│   │   ├── LogoBar.tsx
-│   │   ├── TestimonialSingle.tsx
-│   │   ├── TestimonialCarousel.tsx
-│   │   ├── CtaSection.tsx
-│   │   ├── FeaturedCaseStudy.tsx
+│   ├── sections/                            # Layout block renderers (§5)
+│   │   ├── registry.ts                      # blockType (kebab slug) → component
+│   │   ├── RenderBlocks.tsx                 # Walks layout[] and dispatches via registry
+│   │   ├── Accordion.tsx
+│   │   ├── BrandTeaser.tsx
 │   │   ├── CaseStudyGrid.tsx
-│   │   ├── ServicePillarCards.tsx
-│   │   ├── ServiceCards.tsx
-│   │   ├── TeamGrid.tsx
-│   │   ├── LatestInsights.tsx
-│   │   ├── IndustryGrid.tsx
-│   │   ├── MissionVisionValues.tsx
-│   │   ├── MarketsMap.tsx
-│   │   ├── WorkshopProgression.tsx
-│   │   ├── VideoEmbed.tsx
+│   │   ├── CaseStudyHero.tsx
+│   │   ├── ClientLogoGrid.tsx
+│   │   ├── ComparisonTable.tsx
+│   │   ├── ContactCta.tsx
+│   │   ├── Content.tsx
+│   │   ├── CtaSection.tsx
+│   │   ├── Deliverables.tsx
 │   │   ├── DownloadCard.tsx
-│   │   ├── NewsletterSignup.tsx
+│   │   ├── Embed.tsx
+│   │   ├── FAQ.tsx
+│   │   ├── FeaturedCaseStudy.tsx
+│   │   ├── FeaturedTestimonials.tsx
+│   │   ├── Gallery.tsx
+│   │   ├── Hero.tsx
+│   │   ├── HomepageHero.tsx
 │   │   ├── HubspotForm.tsx
 │   │   ├── HubspotMeetings.tsx
-│   │   ├── BrandTeaser.tsx
-│   │   ├── NavCards.tsx
+│   │   ├── Image.tsx
+│   │   ├── IndustryGrid.tsx
 │   │   ├── KeyTakeaways.tsx
+│   │   ├── LocationsList.tsx
+│   │   ├── LogoBar.tsx
+│   │   ├── Map.tsx
+│   │   ├── MetricDisplay.tsx
+│   │   ├── MissionVisionValues.tsx
+│   │   ├── NavCards.tsx
+│   │   ├── NewsletterCta.tsx
+│   │   ├── PostList.tsx
+│   │   ├── ProcessSteps.tsx
+│   │   ├── RelatedPosts.tsx
+│   │   ├── ServiceCards.tsx
+│   │   ├── ServicePillarCards.tsx
+│   │   ├── ServicePillarHero.tsx
+│   │   ├── StatsBar.tsx
+│   │   ├── Tabs.tsx
+│   │   ├── TeamGrid.tsx
 │   │   ├── TechStack.tsx
-│   │   ├── RelatedContent.tsx
-│   │   └── inline/                      # Inline blocks for richText body
-│   │       ├── InlineCta.tsx
-│   │       ├── TestimonialEmbed.tsx
+│   │   ├── TestimonialBlock.tsx
+│   │   ├── Timeline.tsx
+│   │   ├── TwoColumn.tsx
+│   │   ├── VideoEmbed.tsx
+│   │   └── WorkshopList.tsx
+│   │
+│   ├── richText/                            # Lexical body + inline block renderers
+│   │   ├── RichText.tsx                     # Lexical → React converter (wraps Prose)
+│   │   └── inline/
+│   │       ├── registry.ts                  # inline blockType → component
 │   │       ├── Callout.tsx
-│   │       ├── ImageWithCaption.tsx
+│   │       ├── Disclosure.tsx
 │   │       ├── Figure.tsx
-│   │       ├── PullQuote.tsx
-│   │       └── Disclosure.tsx
+│   │       ├── ImageWithCaption.tsx
+│   │       ├── InlineCta.tsx
+│   │       ├── QuotePullquote.tsx
+│   │       └── TestimonialEmbed.tsx
 │   │
-│   ├── case-studies/
-│   │   ├── CaseStudyCard.tsx
-│   │   ├── MetricsGrid.tsx
-│   │   └── CaseStudySidebar.tsx
+│   ├── forms/                               # React form clients
+│   │   ├── ContactForm.tsx
+│   │   ├── HubspotLeadForm.tsx
+│   │   └── WorkshopInquiryForm.tsx
 │   │
-│   ├── blog/
-│   │   ├── PostCard.tsx
-│   │   ├── PostGrid.tsx
-│   │   ├── CategoryChips.tsx
-│   │   ├── AuthorByline.tsx
-│   │   ├── ShareButtons.tsx
-│   │   └── BlogPostHeader.tsx
+│   ├── integrations/
+│   │   ├── ConsentDefault.tsx
+│   │   ├── GtmScript.tsx
+│   │   └── HubSpotTracking.tsx
 │   │
-│   ├── team/
-│   │   ├── TeamMemberCard.tsx
-│   │   └── FacilitatorBio.tsx
+│   ├── analytics/
+│   │   ├── BookingCompleteSeam.tsx
+│   │   ├── TrackedCtaLink.tsx
+│   │   └── TrackView.tsx
 │   │
-│   └── integrations/
-│       ├── GtmScript.tsx
-│       ├── HubspotTracking.tsx
-│       └── LivePreviewWrapper.tsx
+│   ├── seo/
+│   │   └── JsonLd.tsx
+│   │
+│   ├── error/
+│   │   ├── NotFoundTracker.tsx
+│   │   └── requestId.ts
+│   │
+│   └── admin/                               # Payload admin-panel customizations
+│       ├── BeforeLoginGoogle.tsx
+│       └── LoginError.tsx
 │
 └── payload/
-    ├── blocks/                          # Block configs (one per block)
-    │   ├── HeroBlock.ts
-    │   ├── CaseStudyHeroBlock.ts
-    │   ├── ContentBlock.ts
-    │   ├── TwoColumnBlock.ts
-    │   ├── ProcessStepsBlock.ts
-    │   ├── DeliverablesBlock.ts
-    │   ├── ComparisonTableBlock.ts
-    │   ├── TimelineBlock.ts
-    │   ├── FaqBlock.ts
-    │   ├── StatsBarBlock.ts
-    │   ├── MetricDisplayBlock.ts
-    │   ├── LogoBarBlock.ts
-    │   ├── TestimonialSingleBlock.ts
-    │   ├── TestimonialCarouselBlock.ts
-    │   ├── CtaSectionBlock.ts
-    │   ├── FeaturedCaseStudyBlock.ts
-    │   ├── CaseStudyGridBlock.ts
-    │   ├── ServicePillarCardsBlock.ts
-    │   ├── ServiceCardsBlock.ts
-    │   ├── TeamGridBlock.ts
-    │   ├── LatestInsightsBlock.ts
-    │   ├── IndustryGridBlock.ts
-    │   ├── MissionVisionValuesBlock.ts
-    │   ├── MarketsMapBlock.ts
-    │   ├── WorkshopProgressionBlock.ts
-    │   ├── VideoEmbedBlock.ts
-    │   ├── DownloadCardBlock.ts
-    │   ├── NewsletterSignupBlock.ts
-    │   ├── HubspotFormBlock.ts
-    │   ├── HubspotMeetingsBlock.ts
-    │   ├── BrandTeaserBlock.ts
-    │   ├── NavCardsBlock.ts
-    │   ├── KeyTakeawaysBlock.ts
-    │   ├── TechStackBlock.ts
-    │   ├── RelatedContentBlock.ts
-    │   └── inline/                      # Inline blocks for richText fields
-    │       ├── InlineCtaBlock.ts
-    │       ├── TestimonialEmbedBlock.ts
-    │       ├── CalloutBlock.ts
-    │       ├── ImageWithCaptionBlock.ts
-    │       ├── FigureBlock.ts
-    │       ├── PullQuoteBlock.ts
-    │       └── DisclosureBlock.ts
+    ├── blocks/
+    │   ├── conditional.ts                   # Shared conditional-field helpers
+    │   ├── layout/                          # Layout block configs (45)
+    │   │   ├── index.ts                     # Re-exports + the `layoutBlocks` array
+    │   │   ├── Accordion.ts
+    │   │   ├── BrandTeaser.ts
+    │   │   ├── CaseStudyGrid.ts
+    │   │   ├── CaseStudyHero.ts
+    │   │   ├── ClientLogoGrid.ts
+    │   │   ├── ComparisonTable.ts
+    │   │   ├── ContactCta.ts
+    │   │   ├── Content.ts
+    │   │   ├── CtaSection.ts
+    │   │   ├── Deliverables.ts
+    │   │   ├── DownloadCard.ts
+    │   │   ├── Embed.ts
+    │   │   ├── FAQ.ts
+    │   │   ├── FeaturedCaseStudy.ts
+    │   │   ├── FeaturedTestimonials.ts
+    │   │   ├── Gallery.ts
+    │   │   ├── Hero.ts
+    │   │   ├── HomepageHero.ts
+    │   │   ├── HubspotForm.ts
+    │   │   ├── HubspotMeetings.ts
+    │   │   ├── Image.ts
+    │   │   ├── IndustryGrid.ts
+    │   │   ├── KeyTakeaways.ts
+    │   │   ├── LocationsList.ts
+    │   │   ├── LogoBar.ts
+    │   │   ├── Map.ts
+    │   │   ├── MetricDisplay.ts
+    │   │   ├── MissionVisionValues.ts
+    │   │   ├── NavCards.ts
+    │   │   ├── NewsletterCta.ts
+    │   │   ├── PostList.ts
+    │   │   ├── ProcessSteps.ts
+    │   │   ├── RelatedPosts.ts
+    │   │   ├── ServiceCards.ts
+    │   │   ├── ServicePillarCards.ts
+    │   │   ├── ServicePillarHero.ts
+    │   │   ├── StatsBar.ts
+    │   │   ├── Tabs.ts
+    │   │   ├── TeamGrid.ts
+    │   │   ├── TechStack.ts
+    │   │   ├── TestimonialBlock.ts
+    │   │   ├── Timeline.ts
+    │   │   ├── TwoColumn.ts
+    │   │   ├── VideoEmbed.ts
+    │   │   └── WorkshopList.ts
+    │   └── inline/                          # Inline block configs (7)
+    │       ├── index.ts
+    │       ├── Callout.ts
+    │       ├── Disclosure.ts
+    │       ├── Figure.ts
+    │       ├── ImageWithCaption.ts
+    │       ├── InlineCta.ts
+    │       ├── QuotePullquote.ts
+    │       └── TestimonialEmbed.ts
     │
-    └── shared/
-        ├── ctaField.ts                  # Shared `cta` group field used in many blocks
-        ├── seoField.ts                  # Shared SEO group (also provided by plugin)
-        └── slugField.ts                 # Shared slug field with hook
+    ├── fields/
+    │   └── url.ts                           # Shared URL/link group field
+    │
+    └── hooks/
+        ├── enforceDraftWhenScheduled.ts
+        ├── invalidateMediaOnChange.ts
+        ├── revalidateOnChange.ts
+        └── slugFromTitle.ts                 # Auto-slug from title
 ```
 
 ---
@@ -785,13 +785,13 @@ src/
 A single dispatcher renders a `layout` array regardless of which blocks appear:
 
 ```typescript
-// src/components/sections/RenderBlocks.tsx
+// The map lives in src/components/sections/registry.ts; RenderBlocks.tsx imports it.
 import type { Page } from '@/payload-types'
 
 const registry: Record<string, React.ComponentType<any>> = {
   hero: Hero,
   'case-study-hero': CaseStudyHero,
-  content: ContentBlock,
+  content: Content,
   'two-column': TwoColumn,
   'process-steps': ProcessSteps,
   // ... one entry per block
@@ -832,10 +832,10 @@ For inline rich-text blocks, the same pattern applies inside the Lexical `RichTe
 
 ## 10. Open questions for this doc
 
-| ID  | Question                                                                                                                          | Owner                      |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| B-1 | Confirm `pages.layout` is the only blocks field, or also add to `services.description`? Current proposal: structured for services | Engineering                |
-| B-2 | Decide whether `featured-case-study` and `featured-testimonials` should be globals (homepage) only, or also reusable on Pages     | Engineering                |
-| B-3 | Should `mission-vision-values` source from `siteSettings` (single source of truth) or accept inline content per page?             | Engineering + Content      |
-| B-4 | `comparison-table` flexibility — fully generic or hardcoded to the 3-model localshoring comparison?                               | Content                    |
-| B-5 | Inline-blocks inside post body — confirm full list and editor UX (slash command vs button bar)                                    | Content lead + Engineering |
+| ID      | Question                                                                                                                                                                                                                           | Owner                      |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| ~~B-1~~ | **Resolved (ADR 0009 / spec 010).** `layout` is no longer pages-only — every non-blog collection **and** the homepage global spread the same `layoutBlocks` array and render through the one `RenderBlocks` dispatcher (§1, §5.9). | Engineering                |
+| B-2     | Decide whether `featured-case-study` and `featured-testimonials` should be globals (homepage) only, or also reusable on Pages                                                                                                      | Engineering                |
+| B-3     | Should `mission-vision-values` source from `siteSettings` (single source of truth) or accept inline content per page?                                                                                                              | Engineering + Content      |
+| B-4     | `comparison-table` flexibility — fully generic or hardcoded to the 3-model localshoring comparison?                                                                                                                                | Content                    |
+| B-5     | Inline-blocks inside post body — confirm full list and editor UX (slash command vs button bar)                                                                                                                                     | Content lead + Engineering |

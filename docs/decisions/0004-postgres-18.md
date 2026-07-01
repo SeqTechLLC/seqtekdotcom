@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-05-29
 
+> **Implementation note (2026-06-30).** Shipped. PostgreSQL 18 landed in **PR #17** (commit `9e237db`), ahead of the predicted Phase 5.5 milestone; staging now runs **PostgreSQL 18.3** (local Docker Compose and the RDS pin moved with it). The "next convenient infrastructure-touching milestone … most likely Phase 5.5" timing in the Decision below was overtaken by events — the bump rode an earlier infra change rather than the migration-baseline cutover. No application code changes were required, as predicted. The first "Revisit when" trigger (Phase 5.5 landing) is therefore moot.
+
 ## Context
 
 The stack-validation spike (ROADMAP D-13) pinned both local Docker Compose Postgres and the staging/prod RDS CDK (`infra/lib/data-stack.ts:54`, `rds.PostgresEngineVersion.VER_16_4`) to **PostgreSQL 16.4**. The choice was framed as "match prod parity, conservative pin," but the underlying reason was that the latest stable version wasn't checked during the spike. PostgreSQL 17 had been GA for over a year and PostgreSQL 18 (the current stable) had been GA for ~8 months at the time of the spike.
@@ -38,7 +40,7 @@ No application code changes expected — Payload's adapter is version-agnostic a
 
 ## Revisit when
 
-- Phase 5.5 actually lands, to confirm the bump is still ergonomic at that moment.
+- ~~Phase 5.5 actually lands, to confirm the bump is still ergonomic at that moment.~~ Resolved — the bump shipped early in PR #17 (commit `9e237db`); it was never gated on Phase 5.5.
 - If a Payload release ever publishes an explicit PG version compatibility matrix that excludes 18 (currently it doesn't).
 - If RDS deprecates PG 18 before we've shipped — at which point we re-pin to whatever's current stable.
 

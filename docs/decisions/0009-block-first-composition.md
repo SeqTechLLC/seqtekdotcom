@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-06-14
 
+> **Implementation note (2026-06-30).** Shipped. The two-primitive model landed via **spec 010 (PR #66)** and was applied to services by the four-offering restructure (**PRs #79–#83**): `/services` and `/services/[offering]` now render **Pages by slug**, so the `Services` and `ServicePillars` collections are **vestigial and unrouted** — Option C's "fold them into `pages`" path was effectively taken. Bespoke per-type templates are retired in favor of `RenderBlocks`. The "~34-block library" figure in Context is a point-in-time count and is left as written; the library now stands at ~45 blocks.
+
 ## Context
 
 The site grew two parallel content models:

@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-05-20
 
+> **Implementation note (2026-06-30).** This ADR's "Touchstone Workshops" framing predates the workshops IA correction in commit `fa42926`. Touchstone is no longer an umbrella program running a three-workshop journey (Five Dysfunctions → Re-Alignment → Case Study); it is now **one workshop among three** at `/workshops` (the "Case Study" workshop is no longer in the set). Read the umbrella references below (Context, Decision, the Touchstone-connection thread, Consequences, Revisit-when) as "the Touchstone workshop." The Sequoyah naming thesis and the "systems that scale what people can do" connective thread are unaffected and stand as written — they now anchor on the Touchstone workshop rather than a multi-workshop program.
+
 ## Context
 
 SEQTEK is short for Sequoyah Technologies — named for the Cherokee polymath who designed a writing system that gave his nation near-universal literacy within a generation. Internally there has been ongoing pressure to drop the Sequoyah connection on the grounds that the name doesn't read as "tech" in a five-second skim. The founder (Hank) has consistently held that the story is real, true, and worth telling. ROADMAP `BR-1` has been open since the project began.

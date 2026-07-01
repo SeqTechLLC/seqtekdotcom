@@ -4,7 +4,7 @@
 **Status:** Reference — applied
 **Depends on:** SEQTEK brand kit (private — kept outside this repo, see CLAUDE.md for local convention), `BRAND_STRATEGY_RESEARCH.md`, ADR `docs/decisions/0001-tailwind-v3.md`
 
-The foundation tokens for the SEQTEK website. The token reference in §14 is written in Tailwind v4 `@theme` syntax for clarity — the actual implementation uses Tailwind v3 per ADR 0001. Ramps and state colors are baked as hex into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, etc.); the semantic-token swap layer lives as `:root` CSS custom properties in `src/app/(frontend)/styles.css` and is referenced from the Tailwind config via `var(--color-…)`. This doc remains the source of truth for token _values_ — when this doc and the Tailwind config disagree, this doc wins.
+The foundation tokens for the SEQTEK website. The token reference in §14 is written in Tailwind v4 `@theme` syntax for clarity — the actual implementation uses Tailwind v3 per ADR 0001. Ramps and state colors are baked as hex into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, etc.); the semantic-token swap layer lives as `:root` CSS custom properties in `src/app/(frontend)/styles.css` and is referenced from the Tailwind config via `var(--color-…)`. This doc remains the source of truth for token _values_ — when this doc and the Tailwind config disagree, this doc wins. **One deliberate exception:** the surface/border palette (plus `--color-text-muted`) was re-pitched to **warm paper** in PRs #55/#66; there the implementation in `styles.css` is authoritative, and this doc has been updated to match it rather than the reverse. See §2.4.
 
 ---
 
@@ -24,12 +24,12 @@ The foundation tokens for the SEQTEK website. The token reference in §14 is wri
 
 From the official SEQTEK brand kit (kept privately outside this repo), four immutable values:
 
-| Name          | Hex       | Role                                                                  |
-| ------------- | --------- | --------------------------------------------------------------------- |
-| Brand Green   | `#72B94D` | Accent, calls-to-action, illustration highlights, the quill in the Q  |
-| Brand Navy    | `#1F3265` | Foundational structural color — headings, primary text, dark surfaces |
-| Brand "Black" | `#1C1C31` | Near-black with slight navy cast. Used as the deepest neutral.        |
-| Brand White   | `#FFFFFF` | Canonical surface                                                     |
+| Name          | Hex       | Role                                                                                                        |
+| ------------- | --------- | ----------------------------------------------------------------------------------------------------------- |
+| Brand Green   | `#72B94D` | Accent, calls-to-action, illustration highlights, the quill in the Q                                        |
+| Brand Navy    | `#1F3265` | Foundational structural color — headings, primary text, dark surfaces                                       |
+| Brand "Black" | `#1C1C31` | Near-black with slight navy cast. Used as the deepest neutral.                                              |
+| Brand White   | `#FFFFFF` | Elevated/card surface (`--color-surface-elevated`). The default _page_ surface is now warm paper — see §2.4 |
 
 These four values may not be edited. The ramps in §2.2 are extrapolated _around_ them so the brand seeds keep their named positions inside the system.
 
@@ -109,27 +109,29 @@ These are de-saturated enough to coexist with brand colors without competing for
 
 The site is built against semantic tokens, not raw ramps. A component reads `text-text-primary`; never `text-neutral-900`. This is the swap layer.
 
-| Token                      | Default value     | Purpose                                         |
-| -------------------------- | ----------------- | ----------------------------------------------- |
-| `--color-text-primary`     | `neutral-900`     | Primary text — body, headings                   |
-| `--color-text-secondary`   | `neutral-700`     | Secondary text — captions, metadata-with-weight |
-| `--color-text-muted`       | `neutral-500`     | De-emphasized text — timestamps, helper text    |
-| `--color-text-inverse`     | `neutral-0`       | Text on dark backgrounds                        |
-| `--color-text-accent`      | `brand-green-700` | Inline accent text                              |
-| `--color-link`             | `brand-green-700` | Default link color (passes AA body on white)    |
-| `--color-link-hover`       | `brand-green-800` | Link hover                                      |
-| `--color-surface`          | `neutral-0`       | Default surface                                 |
-| `--color-surface-subtle`   | `neutral-50`      | Alternating section background                  |
-| `--color-surface-elevated` | `neutral-0`       | Card surface (paired with shadow)               |
-| `--color-surface-inverse`  | `neutral-900`     | Dark sections, footer                           |
-| `--color-surface-accent`   | `brand-green-50`  | Highlight callouts                              |
-| `--color-border-subtle`    | `neutral-100`     | Dividers, default input borders                 |
-| `--color-border-strong`    | `neutral-200`     | Pronounced dividers, card outlines              |
-| `--color-border-focus`     | `brand-green-600` | Focus indicator ring                            |
-| `--color-accent`           | `brand-green-500` | Brand accent (the quill green)                  |
-| `--color-accent-strong`    | `brand-green-700` | Solid CTA backgrounds, badges                   |
-| `--color-accent-hover`     | `brand-green-800` | Hover for solid accent backgrounds              |
-| `--color-accent-pressed`   | `brand-green-900` | Pressed state for solid accent backgrounds      |
+The surface and border tokens (plus `--color-text-muted`) were re-pitched to a **warm-paper** palette in PRs #55/#66 — the values below are what ships in `styles.css` and deliberately diverge from the cool neutral ramp in §2.2. Where a token still tracks its ramp position, the ramp name is shown; the warm-paper overrides show their literal hex.
+
+| Token                      | Default value     | Purpose                                                                                               |
+| -------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `--color-text-primary`     | `neutral-900`     | Primary text — body, headings                                                                         |
+| `--color-text-secondary`   | `neutral-700`     | Secondary text — captions, metadata-with-weight                                                       |
+| `--color-text-muted`       | `#65656f`         | De-emphasized text — timestamps, helper text (neutral-500 nudged darker to clear AA on the warm band) |
+| `--color-text-inverse`     | `neutral-0`       | Text on dark backgrounds                                                                              |
+| `--color-text-accent`      | `brand-green-700` | Inline accent text                                                                                    |
+| `--color-link`             | `brand-green-700` | Default link color (passes AA body on white)                                                          |
+| `--color-link-hover`       | `brand-green-800` | Link hover                                                                                            |
+| `--color-surface`          | `#faf8f4`         | Default page surface — **warm paper** (PR #55/#66), not neutral-0                                     |
+| `--color-surface-subtle`   | `#f6f3ec`         | Alternating section background — **warm band**                                                        |
+| `--color-surface-elevated` | `#ffffff`         | Card surface (paired with shadow) — true white, lifts off the warm page                               |
+| `--color-surface-inverse`  | `neutral-900`     | Dark sections, footer                                                                                 |
+| `--color-surface-accent`   | `brand-green-50`  | Highlight callouts                                                                                    |
+| `--color-border-subtle`    | `#e7e3da`         | Dividers, default input borders — **warm border**                                                     |
+| `--color-border-strong`    | `#d6d0c2`         | Pronounced dividers, card outlines — **warm border strong**                                           |
+| `--color-border-focus`     | `brand-green-600` | Focus indicator ring                                                                                  |
+| `--color-accent`           | `brand-green-500` | Brand accent (the quill green)                                                                        |
+| `--color-accent-strong`    | `brand-green-700` | Solid CTA backgrounds, badges                                                                         |
+| `--color-accent-hover`     | `brand-green-800` | Hover for solid accent backgrounds                                                                    |
+| `--color-accent-pressed`   | `brand-green-900` | Pressed state for solid accent backgrounds                                                            |
 
 > **The `text-accent` naming trap (spec 007).** Tailwind flattens the color theme, so the utility **`text-accent`** resolves to `accent.DEFAULT` → `--color-accent` → **brand-green-500 (`#72b94d`, 2.4:1 on white — fails AA even for large text)**. It does **not** resolve to the green-700 `--color-text-accent` token (that one is reached via **`text-text-accent`**). The green-500 seed is a legitimate _decorative/illustration_ color only. For any **meaning-bearing accent text** (eyebrows, stat figures, step numbers, inline links, toggle glyphs) use **`text-accent-strong`** (preferred, matches the `bg-accent-strong` CTA fills) — or `text-text-accent` / `text-link`. The same applies to meaning-bearing borders/dividers (`border-accent` → `border-accent-strong`) and solid fills (`bg-accent` → `bg-accent-strong`). Decorative-only accents (e.g. the `bg-accent/5` wash) stay green-500 and are hidden from assistive tech where they'd otherwise be announced. axe `color-contrast` across the seeded in-scope routes is the regression guard.
 
@@ -468,9 +470,8 @@ WCAG 2.2 AA minimum across the site, with AAA contrast on specific high-impact s
 ### 12.1 AAA targets (must hit 7:1 body / 4.5:1 large)
 
 - Homepage hero headline + subhead
-- About landing hero
-- Our Story (`/about/our-story`) hero
-- Service pillar hero headlines (3 pages)
+- About hero (`/about` is a flat block Page — there is no separate `/about/our-story` route)
+- Offering page hero headlines (four offering pages)
 - Case study hero metric callouts
 
 For these, body uses `neutral-900` (16.4:1 on white), display uses `navy-800` (11.6:1 on white). No design freedom to use mid-tone grays in these zones.
@@ -676,20 +677,20 @@ The token reference. Per ADR 0001 the implementation uses Tailwind v3 — these 
    * ───────────────────────────────────────────────────── */
   --color-text-primary: var(--color-neutral-900);
   --color-text-secondary: var(--color-neutral-700);
-  --color-text-muted: var(--color-neutral-500);
+  --color-text-muted: #65656f; /* neutral-500, nudged darker — clears AA on the warm band */
   --color-text-inverse: var(--color-neutral-0);
   --color-text-accent: var(--color-brand-green-700);
   --color-link: var(--color-brand-green-700);
   --color-link-hover: var(--color-brand-green-800);
 
-  --color-surface: var(--color-neutral-0);
-  --color-surface-subtle: var(--color-neutral-50);
-  --color-surface-elevated: var(--color-neutral-0);
+  --color-surface: #faf8f4; /* warm paper (PR #55/#66) — not neutral-0 */
+  --color-surface-subtle: #f6f3ec; /* warm band */
+  --color-surface-elevated: #ffffff; /* true white card surface */
   --color-surface-inverse: var(--color-neutral-900);
   --color-surface-accent: var(--color-brand-green-50);
 
-  --color-border-subtle: var(--color-neutral-100);
-  --color-border-strong: var(--color-neutral-200);
+  --color-border-subtle: #e7e3da; /* warm border */
+  --color-border-strong: #d6d0c2; /* warm border strong */
   --color-border-focus: var(--color-brand-green-600);
 
   --color-accent: var(--color-brand-green-500);

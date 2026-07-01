@@ -1,8 +1,8 @@
 # SEQTEK Core Values: Behavioral Rewrite (Draft)
 
 **Date:** 2026-05-20
-**Status:** Proposed copy approved for dev placeholder (Kenn, 2026-05-20). Final leadership sign-off deferred to launch-readiness review (Phase 5.5).
-**Resolves:** ROADMAP `BR-4` (when accepted)
+**Status:** Accepted — Hank signed off the seven values 2026-06-19 (faith framing approved); values live on `/about`.
+**Resolves:** ROADMAP `BR-4` (resolved 2026-06-19)
 **Depends on:** `CONTENT-REQUIREMENTS.md` §1.4 (current values audit), `BRAND_STRATEGY_RESEARCH.md` §1
 **Source:** Current values text is verbatim from `~/projects/seqtek-internal/brandkit/brandkit.pdf` (2024 SEQTEK Internal Brand Kit), p. 4.
 **References:** Lencioni, _The Advantage_ (2012); Patagonia core values; Bain "True North"; Asana company values.
@@ -29,7 +29,7 @@ These bars are not mutually exclusive. Patagonia's _"Build the best product, cau
 - Each starts with **"We"** (promise grammar, not aspirational grammar).
 - Each describes a **specific behavior** that can be observed, recognized when violated, and used in feedback or review.
 - "Core intent" is preserved. The rewrites interpret each value's spirit; they do not redefine it.
-- **No em dashes.** This text becomes public-facing copy on `/about/our-values`. Common punctuation only (commas, periods, colons, semicolons, parentheses).
+- **No em dashes.** This text becomes public-facing copy in the values section of `/about`. Common punctuation only (commas, periods, colons, semicolons, parentheses).
 - **Order is by marketing arc**, not brand-kit alphabetical. See "Why this order" below.
 
 ## Why this order (not brand-kit order)
@@ -72,16 +72,16 @@ The seven values are reordered to move through a buyer journey rather than alpha
 
 **Respect (close).** Brand-kit intent is universal: "everyone we interact with." Most consultants are deferential to clients and dismissive of vendors and internal staff. The promise here is _symmetric_ dignity across the whole chain. The test: would a SEQTEK consultant treat a client's third-party vendor the same way they treat the client's CFO? The anti-pattern "don't blame your team when something goes wrong" names the most common dignity violation in a difficult engagement.
 
-## Status: ready for development as placeholder copy
+## Status: accepted — leadership signed off
 
-Per the project's engagement reality: leadership does not engage with brand copy during development. They engage when a launch-ready site is in front of them. The proposed seven Pattern / anti-pattern pairs are therefore the dev working copy until launch-readiness review.
+The launch-readiness assumption held: leadership engaged when a launch-ready site was in front of them. Hank reviewed the rendered values on `/about` and **signed off on 2026-06-19**, including the faith framing flagged below. The seven Pattern / anti-pattern pairs are no longer placeholder copy — they are the live, approved values, and they render in the values section of `/about`.
 
-What still needs to happen, in order of urgency:
+What still needs to happen:
 
-1. **Voice consistency pass** (any time before launch). 30-minute read of the fourteen sentences against `BRAND_STRATEGY_RESEARCH.md` §5+§8 (specific-over-generic trust-signal principle). Content-lead task; not blocking dev.
-2. **Page integration spec for `/about/our-values`** (Phase 3 dependency). Card layout for the Pattern / anti-pattern pair (likely "We do… / We don't…" split or stacked treatment). Where leadership bios reference individual values. Whether the lead value (Trust) surfaces in the homepage trust block. `CONTENT-REQUIREMENTS.md` owns this; runs in parallel with engineering.
-3. **Launch-readiness leadership review** (Phase 5.5, the hard gate). Leadership reads the fourteen sentences in context (rendered on the actual `/about/our-values` page), signs off or iterates. This is the moment the values become real. Until then they're the working copy.
-4. **Doc closure.** Once leadership signs off at launch readiness, this doc moves to `PROJECT_HISTORY.md` as `BR-4` resolved; approved values are written into `CONTENT-REQUIREMENTS.md` §1.4 and become the live `/about/our-values` page copy.
+1. **Voice consistency pass** (optional, any time). A 30-minute read of the fourteen sentences against `BRAND_STRATEGY_RESEARCH.md` §5+§8 (specific-over-generic trust-signal principle). Content-lead nicety, not a gate — the copy is already approved.
+2. ~~**Page integration spec for the values section.**~~ Done — the Pattern / anti-pattern pairs render as the values section of `/about`. Open follow-ups (whether leadership bios reference individual values; whether the lead value, Trust, surfaces in the homepage trust block) live in `CONTENT-REQUIREMENTS.md`.
+3. ~~**Launch-readiness leadership review.**~~ Done — Hank signed off 2026-06-19, reading the values in context on `/about`. This was the moment the values became real.
+4. **Doc closure.** With sign-off complete, `BR-4` is resolved; this doc can move to `PROJECT_HISTORY.md`, and the approved values are the live `/about` values-section copy (mirror into `CONTENT-REQUIREMENTS.md` §1.4 if not already done).
 
 ## Resolved during draft
 
@@ -91,13 +91,13 @@ What still needs to happen, in order of urgency:
 
 ## Adjacent findings from the brand kit (informational, not blockers for this doc)
 
-- **Mission statement carries a built-in Diligence echo:** _"saying what we do, doing what we say and supporting what we have done."_ Useful framing for `/about/our-story` copy: the Diligence value description and the mission statement reinforce each other.
-- **Founding date is August 29, 1999** (not just "1999"). Worth surfacing on `/about/our-story` and feeding into the BR-5 stats line ("25+ years").
-- **Brand story includes explicit faith framing** ("biblical principles," "grace and trust"). Internal-brand-kit content today. Whether and how it surfaces on the public site is a leadership call separate from the values rewrite; flag for `/about/our-story` review.
+- **Mission statement carries a built-in Diligence echo:** _"saying what we do, doing what we say and supporting what we have done."_ Useful framing for the `/about` story-section copy: the Diligence value description and the mission statement reinforce each other.
+- **Founding date is August 29, 1999** (not just "1999"). Worth surfacing in the `/about` story section and feeding into the BR-5 stats line ("25+ years").
+- **Brand story includes explicit faith framing** ("biblical principles," "grace and trust"). Internal-brand-kit content; **approved for the public site by Hank on 2026-06-19** alongside the values sign-off. Surfaces in the `/about` story section.
 
 ## Next steps
 
-1. Content lead voice pass against `BRAND_STRATEGY_RESEARCH.md` §5+§8 (any time).
-2. Engineering builds `/about/our-values` using this text as placeholder content during Phase 3.
-3. Phase 5.5 launch-readiness review: leadership reads the rendered page line-by-line, signs off or iterates.
-4. After Phase 5.5 sign-off, this doc closes and moves to `PROJECT_HISTORY.md` as `BR-4` resolved.
+1. Content lead voice pass against `BRAND_STRATEGY_RESEARCH.md` §5+§8 (optional; copy already approved).
+2. ~~Engineering builds the values section using this text as placeholder content.~~ Done — the values render in the values section of `/about`.
+3. ~~Launch-readiness review: leadership reads the rendered page line-by-line.~~ Done — Hank signed off 2026-06-19 (faith framing approved).
+4. Close this doc and move it to `PROJECT_HISTORY.md` as `BR-4` resolved; ensure the approved values are mirrored into `CONTENT-REQUIREMENTS.md` §1.4.

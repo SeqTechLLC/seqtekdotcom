@@ -1,7 +1,7 @@
 # Error Pages & Failure States
 
 **Date:** 2026-05-14
-**Status:** Reference — Phase 1 implementation
+**Status:** Reference — as built (spec 004 + spec 007)
 
 ---
 
@@ -28,7 +28,7 @@ Four failure states need explicit design: a missing page (404), a server-side ex
 - **Triggered when:** An uncaught exception in a server component, layout, or route handler.
 - **Layout:** Minimal. Logo at top, no global nav — the nav may itself be the thing that broke. Don't risk a cascading render error inside the error page.
 - **Content:** Short apology, "Try again" button that calls `reset()`, email fallback `support@seqtek.com`, and a visible request ID for support correlation.
-- **Request ID:** Generated in `src/proxy.ts` (Next 16 rename of `middleware.ts`) as a UUID v4, attached to every request via the `x-request-id` response header, and exposed to error pages via a context provider (or cookie fallback for `global-error.tsx`, which sits outside the root layout). Logged in CloudWatch Logs alongside the stack trace.
+- **Request ID:** Generated in `src/proxy.ts` (Next 16 rename of `middleware.ts`) as a UUID v4, attached to every request via the `x-request-id` response header for logs, and also written as a JS-readable `x-request-id` cookie (`httpOnly: false`, `sameSite: lax`). Both client error boundaries — `error.tsx` and `global-error.tsx` — surface it the same way: `readRequestId()` in `src/components/error/requestId.ts` parses that cookie and falls back to the Next error `digest` when the cookie is unavailable (e.g. a `global-error.tsx` render before the proxy ran). No context provider is involved. Logged in CloudWatch Logs alongside the stack trace.
 - **Tracking:** Error and full stack written to stdout — the CloudWatch Logs agent picks them up. A Sentry integration is deferred per ARCHITECTURE.md §8 Future Consideration; do not add a third-party error aggregator at launch.
 
 ---
@@ -44,7 +44,7 @@ Four failure states need explicit design: a missing page (404), a server-side ex
 
 ## 5. Slow Page & Hung Request Detection
 
-- **Server side (as built — spec 007, ADR 0007):** Next.js has no built-in request-level timeout. Rather than wrapping each call site, the budget lives **once** as the **outermost layer of the cached readers** in `src/lib/payload.ts`: `withReadTimeout(label, React.cache(unstable_cache(rawRead)))`. It races the reader against a 5-second hard timer with **`Promise.race`** — not `AbortController`, because Payload's Local API takes no `AbortSignal`, so the losing query is orphaned (runs to completion in the pool) while the response thread is freed immediately. On timeout it throws a typed `PayloadReadTimeoutError`, which falls through to the branded `error.tsx` (no new error UI), and emits a warn-level structured log `{type:'payload_read_timeout', ts, requestId, reader, args}`. The `x-request-id` is read via `headers()` **in the wrapper's `catch`** — this must stay **outside** `unstable_cache` (where `headers()` throws); that constraint is exactly why the wrapper is outermost. Readers reached from ISR scope (`sitemap.ts`, `revalidate = 3600`) guard the `headers()` read and fall back to `requestId: 'unknown'`. The happy path is a no-op beyond one `setTimeout`/`clearTimeout` (no measurable latency, no behavior change). All 16 cached public readers are wrapped; the three raw `findPublished*` helpers run _inside_ `unstable_cache` and are deliberately **not** wrapped.
+- **Server side (as built — spec 007, ADR 0007):** Next.js has no built-in request-level timeout. Rather than wrapping each call site, the budget lives **once** as the **outermost layer of the cached readers** in `src/lib/payload.ts`: `withReadTimeout(label, React.cache(unstable_cache(rawRead)))`. It races the reader against a 5-second hard timer with **`Promise.race`** — not `AbortController`, because Payload's Local API takes no `AbortSignal`, so the losing query is orphaned (runs to completion in the pool) while the response thread is freed immediately. On timeout it throws a typed `PayloadReadTimeoutError`, which falls through to the branded `error.tsx` (no new error UI), and emits a warn-level structured log `{type:'payload_read_timeout', ts, requestId, reader, args}`. The `x-request-id` is read via `headers()` **in the wrapper's `catch`** — this must stay **outside** `unstable_cache` (where `headers()` throws); that constraint is exactly why the wrapper is outermost. Readers reached from ISR scope (`sitemap.ts`, `revalidate = 3600`) guard the `headers()` read and fall back to `requestId: 'unknown'`. The happy path is a no-op beyond one `setTimeout`/`clearTimeout` (no measurable latency, no behavior change). All 17 cached public readers are wrapped (spec 010 added the team and workshop readers); the three raw `findPublished*` helpers run _inside_ `unstable_cache` and are deliberately **not** wrapped.
 - **Client side:** Forms already enforce a 15-second submission timeout (see INTEGRATIONS.md §1.2). Images use `next/image` with native lazy loading and graceful failure — no additional handling needed.
 - **ALB layer:** Target group health check hits `/api/health` every 30s, threshold 3 — the instance is replaced after three consecutive failures. Already documented in ARCHITECTURE.md §9; cross-reference there rather than duplicating.
 

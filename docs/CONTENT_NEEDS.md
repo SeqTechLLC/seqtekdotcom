@@ -1,9 +1,9 @@
 # Content We Still Need — Authoritative List
 
-**Owner:** Kenn Williamson · **Last updated:** 2026-06-24 (Megan-review items re-verified against the raw meeting transcript `docs/meetings/2026-06-24-megan-website-feedback-transcript.md` — the action-item summary the first pass used had fabricated timestamps and omissions)
-**Purpose:** the single source of truth for content the website is still waiting on. Hand this to Hank, Justin, and Megan. If a request isn't on this list, we don't need it — see "Already decided / do not re-ask" below. This supersedes the scattered gap notes in `docs/content-drafts/CONTENT_GAPS.md` (dated 2026-06-11) and the long-lead `C-*` rows in `ROADMAP.md`.
+**Owner:** Kenn Williamson · **Last updated:** 2026-06-30 (reconciled against a live crawl of every staging route + the Payload REST inventory; added §9 "Missing pages — linked but 404" from the link audit; marked the Contact form GUID and Brent's live bio draft as resolved)
+**Purpose:** the single source of truth for content the website is still waiting on. Hand this to Hank, Justin, and Megan. If a request isn't on this list, we don't need it — see "Already decided / do not re-ask" below. This supersedes the scattered gap notes in `docs/content-drafts/CONTENT_GAPS.md` (dated 2026-06-11, now stale — its snapshot shows services/case-studies/insights empty, all of which are live) and the long-lead `C-*` rows in `ROADMAP.md`.
 
-**State of the site (2026-06-19):** every page template is built and live on staging; the block migration is complete; most copy is already drafted in `docs/content-drafts/` and most photos are catalogued. What remains is a small, specific set of human inputs. Nearly everything else is _loading_ work the dev side does without you.
+**State of the site (2026-06-30):** the technology is essentially done. A full crawl of staging returns **36 live pages** (homepage, 5 case studies, 5 insights, 11 team bios, 4 service pages, 3 workshops, localshoring, about, contact, privacy) — every one with real, substantial, professionally-rendered copy (no lorem, no "coming soon", no missing alt text). The block migration is complete and most copy/photos are loaded. What remains is (1) a small set of **human inputs** (Hank interview, named client quotes, the photo/video shoot), and (2) a handful of **stub pages that are linked in the nav/footer but 404** (new §9 below). Everything else is _loading_ work the dev side does without you.
 
 **Launch model (decided 2026-06-24):** the launch is **phased**. **Soft launch** goes out with the content already in hand (everything in §8 below, placed) to gather feedback. **Hard launch** follows the **August All Hands** photo/video shoot (§3) plus the named case-study sign-offs (§1.F). So the §3 shoot and the §1.F permissions are **hard-launch** gates; the rest of this list should land for the soft launch.
 
@@ -57,7 +57,7 @@ Kenn has sign-off from **nobody** yet — Megan is tracking the project historie
 
 ## 2. Brent Fields — bio call
 
-Brent's bio is the **only** leadership bio still incomplete (Hank's and Dana's are done). We have his credentials (Addison Group, Rowland Group, MBA, Change Management Practitioner). We need the human layer, via the standard guide (`leadership-bio-interview.md`):
+**Update 2026-06-30:** a Brent bio draft is **already live on staging** (`/team/brent-fields`, ~1,700 chars — shorter than Hank's and Dana's). So this is no longer "missing," it's an **enrichment** pass: the live draft leans on credentials and still wants Brent's human layer. We have his credentials (Addison Group, Rowland Group, MBA, Change Management Practitioner). What the live draft still needs, via the standard guide (`leadership-bio-interview.md`):
 
 - His leadership philosophy (2–3 sentences, his words)
 - A pull-quote
@@ -85,14 +85,14 @@ Still to capture:
 
 ## 4. HubSpot (Chad Coleman, portal admin)
 
-- **Contact form GUID** — create the Contact form in HubSpot and return: form GUID, field internal names, inquiry-type dropdown internal values, CAPTCHA off, consent decision (`INTEGRATIONS.md` §1.2). The form renders today but silently discards submissions until this exists. _(It can't be scraped off the old site — that site uses Wix forms, not HubSpot embeds.)_ The Workshop form GUID is already done.
-- **Book-a-call** — decision: set up a HubSpot Meetings link, or for launch point "Book a Strategy Call" at the contact form (recommended) and add Meetings later. The old site has no booking link to reuse.
+- **Contact form GUID — ✅ DONE (PR #76, 2026-06-29).** The live Contact-form GUID is wired; the `/contact` form renders and posts to HubSpot. Workshop Inquiry form GUID was wired earlier (PR #74). _Remaining verify (not a content gap):_ confirm a test submission lands in the HubSpot portal and the inquiry-type dropdown values match.
+- **Book-a-call — interim decision implemented.** Every "Book a Call" CTA (header, footer, in-page service/workshop CTAs) now points at the `/contact` form — the link audit found they previously pointed at `/contact/book-a-call`, which **404s** (no such route). _Still open:_ if we want a true calendar-booking experience, set up a HubSpot Meetings link and repoint the CTAs (the `HubspotMeetings` block already exists). The old site has no booking link to reuse.
 
 ---
 
 ## 5. ScoreApp assessment (Daniel — he runs it)
 
-The "Organizational Maturity Assessment" landing page is built but has nothing to point at. We need the live ScoreApp assessment URL + a one-line description and time estimate. Draft email to Daniel:
+**Correction 2026-06-30:** the "Organizational Maturity Assessment" landing page is **not actually built** — `/resources/organizational-maturity-assessment` returns a **404** (there is no `/resources/*` route, only a redirect target). The footer "Assessment" link has been removed until the page ships. So two things are needed: (a) the live ScoreApp assessment URL + a one-line description and time estimate (below), and (b) a published landing/stub page to host or link it (see §9). Draft email to Daniel:
 
 > **Subject: ScoreApp assessment link for the new site's assessment page**
 >
@@ -136,7 +136,7 @@ Waiting only on placement/loading, not on you:
 
 - **5 case studies** with full narratives (NovaMud is flagship-ready bar a hero image + named quote).
 - **6 blog posts**, full bodies.
-- **3 service pillars + 10 services**, full copy + FAQs.
+- **Four peer service offerings** (Localshoring, AI Integration, Digital Transformation, Workshops) rendered as block Pages by slug, full copy + FAQs. (The old 3-pillar service IA — 9 services across 3 pillars — was retired in the #79–#83 restructure; the `services`/`servicePillars` collections still exist but are no longer publicly routed.)
 - **Touchstone landing**, full copy + CrossCo proof video/photos (cleared).
 - **Hank & Dana bios**, publish-ready.
 - **Sequoyah name story** — written and **live on `/about`** + companion video (the old-feather Sequoyah Technologies logo is the swap-in for its current quill-panel placeholder).
@@ -150,3 +150,39 @@ Waiting only on placement/loading, not on you:
 ### The flagship case study, specifically (what "done" means for NovaMud)
 
 A publishable case study record needs: hero image (real, non-stock) · client + industry metadata · Challenge / Approach / Results narrative · a metrics array · key takeaways · a named client testimonial. **NovaMud already has** the narrative, metadata, and metrics (30% less labor, 25%+ billing time returned). **It needs:** (1) a non-stock hero image, (2) one named client quote, (3) permission to name NovaMud and cite the numbers. That's the entire gap for the flagship.
+
+**The other four case studies** (Endurance Lift, Hogan, WellChecked, Taurex) are live with full narratives but have **empty metrics arrays and `testimonial: null`** — and all five currently use a generated dark-panel banner rather than a real photo. Named quotes + metrics for these are the §1.F sign-off work; real hero images are part of the §3 shoot.
+
+---
+
+## 9. Missing pages — linked but 404 (surfaced by the 2026-06-30 link audit)
+
+A crawl of every internal link on staging found **10 routes that are linked in the nav/footer/CTAs but return 404.** The nav/footer is code-driven (`src/lib/site-content.ts`), so as an immediate fix the dead links were either repointed to a live equivalent or removed (the live 404 page is professional, but a launched site should not dead-end). The rows below that need a **real page** are genuine content gaps:
+
+| Linked route (was 404)                                       | Interim fix shipped in code   | Real fix needed                                                                                                         | Owner / source | Severity                      |
+| ------------------------------------------------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------- |
+| `/contact/book-a-call` (primary "Book a Call" CTA, sitewide) | Repointed → `/contact` form   | Optional: HubSpot Meetings booking page (§4)                                                                            | Chad           | was a **blocker** (now fixed) |
+| `/about/our-story`                                           | Repointed → `/about`          | none — content lives at `/about`                                                                                        | —              | resolved                      |
+| `/about/team`                                                | Repointed → `/team`           | none — content lives at `/team`                                                                                         | —              | resolved                      |
+| `/tulsa-consulting`                                          | Repointed → `/localshoring`   | **Per-market SEO landing page** (Tulsa) — local copy, proof, contact                                                    | Hank/Megan     | Important (local SEO)         |
+| `/okc-consulting`                                            | Repointed → `/localshoring`   | **Per-market SEO landing page** (Oklahoma City)                                                                         | Hank/Megan     | Important (local SEO)         |
+| `/northwest-arkansas-consulting`                             | Repointed → `/localshoring`   | **Per-market SEO landing page** (NW Arkansas)                                                                           | Hank/Megan     | Important (local SEO)         |
+| `/kansas-city-consulting`                                    | Repointed → `/localshoring`   | **Per-market SEO landing page** (Kansas City)                                                                           | Hank/Megan     | Important (local SEO)         |
+| `/about/careers`                                             | Removed from nav              | **Careers stub page** — even a short "we hire senior practitioners; reach out" page with the localshoring/culture angle | Hank/Megan     | Important                     |
+| `/terms-of-service`                                          | Removed from footer legal nav | **Terms of Service page** — needs reviewed legal copy (privacy-policy already exists as the model)                      | Legal/Brent    | Important (launch)            |
+| `/resources/organizational-maturity-assessment`              | Removed from footer           | **ScoreApp assessment page** — also needs the live ScoreApp URL (§5)                                                    | Daniel         | Important                     |
+
+**The 4 regional pages are the biggest single content opportunity here.** They were a deliberate local-SEO play (one page per market: Tulsa, OKC, NW Arkansas, Kansas City) and the multi-market positioning is core to the brand. They are all currently parked on `/localshoring`. Each wants: a market-specific headline, why-local-here copy, ideally a local proof point or client, and a contact CTA. The block library can compose these today — the gap is **copy + per-market specifics**, not engineering. (If we'd rather not build four, decide whether to keep them in the footer at all.)
+
+---
+
+## 10. Data hygiene & loading defects (dev-side cleanup, no human input needed)
+
+Found in the live Payload inventory on 2026-06-30. None require leadership input — listed so they don't get lost:
+
+- **`industries` collection is empty** but published case studies reference industry IDs — the references are dangling. Either seed the industries or drop the relationship.
+- **`locations` collection is empty** — relevant once the regional pages (§9) are built.
+- **Junk category `ztest-delete-me`** in the `categories` collection — delete.
+- **`navigation` CMS global is empty `{}`** — the live nav/footer is still driven by the hardcoded `src/lib/site-content.ts`, not the CMS. The planned "swap to `payload.findGlobal()`" never happened. Fine for launch, but the CMS global is dead weight until then.
+- **`/about` video embeds** — the founder/brand videos render as large empty dark blocks in a fresh page capture; verify they show a poster frame (not a black box) before launch.
+- **Case-study `ogImage` is null** — social-share images missing (SEO nice-to-have).

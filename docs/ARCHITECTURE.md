@@ -1,7 +1,7 @@
 # SEQTEK Website — Architecture & Technical Design
 
-**Date:** May 2026
-**Status:** Design — Pre-Implementation
+**Date:** 2026-06
+**Status:** Living — Phase 5 (staging live)
 
 ---
 
@@ -32,11 +32,11 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 | ---------------------------- | --------------- | ------------------------------------------------------------------------------------- |
 | next                         | ^16.2.6         | Framework                                                                             |
 | react, react-dom             | 19.2.4          | UI library                                                                            |
-| payload                      | ^3.84.0         | CMS                                                                                   |
-| @payloadcms/next             | ^3.84.0         | Payload-Next.js integration                                                           |
-| @payloadcms/db-postgres      | ^3.84.0         | Postgres adapter                                                                      |
-| @payloadcms/richtext-lexical | ^3.84.0         | Rich text editor                                                                      |
-| @payloadcms/storage-s3       | ^3.84.0         | S3 media storage (added in Phase 1; not yet in `package.json`)                        |
+| payload                      | ^3.85.0         | CMS                                                                                   |
+| @payloadcms/next             | ^3.85.0         | Payload-Next.js integration                                                           |
+| @payloadcms/db-postgres      | ^3.85.0         | Postgres adapter                                                                      |
+| @payloadcms/richtext-lexical | ^3.85.0         | Rich text editor                                                                      |
+| @payloadcms/storage-s3       | ^3.85.0         | S3 media storage (S3 adapter; spec 009 shipped)                                       |
 | tailwindcss                  | ^3.4.17         | Styling — see [ADR 0001](decisions/0001-tailwind-v3.md)                               |
 | @tailwindcss/typography      | ^0.5.16         | Prose styling for CMS rich text (registered in `tailwind.config.mjs` `plugins` array) |
 | graphql                      | ^16.8.1         | Required peer dependency for Payload                                                  |
@@ -51,7 +51,7 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 
 All collections are defined in TypeScript. Payload auto-generates the database schema, REST API, GraphQL API, and admin panel from these definitions.
 
-> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`services`/`teamMembers`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields some tables still list (`problem`/`solution`/`impact`, `bio`, `hero`/`stats`/…) are retained one release (hidden + read-only, expand/contract) and composed into `layout` by `src/payload/seed/compose/*ToLayout.ts`. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `servicePillars`/`industries`/`locations` stay structured — they are listing/taxonomy targets, not retired detail templates.
+> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields some tables still list (`problem`/`solution`/`impact`, `bio`, `hero`/`stats`/…) are retained one release (hidden + read-only, expand/contract) and composed into `layout` by `src/payload/seed/compose/*ToLayout.ts`. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `services`/`servicePillars`/`industries`/`locations` stay structured — they are relationship/taxonomy targets, no longer publicly routed (the four `/services` offerings render as block-composed `pages` by slug — PR #79, ADR 0009).
 
 ### Document Collections
 
@@ -69,16 +69,18 @@ Access: Email/password auth with JWT. No public registration. Accounts created b
 
 #### `pages`
 
-Generic content pages (About, Contact, Privacy Policy, etc.).
+Block-composed content pages — the generic primitive (spec 010 / ADR 0009). The catch-all `/[slug]` route renders most of these by slug (About, localshoring, etc.); the `/services` overview and each `/services/[offering]` page are also `pages` records looked up by known slug. Source of truth: `src/collections/Pages.ts`.
 
-| Field     | Type               | Notes                                       |
-| --------- | ------------------ | ------------------------------------------- |
-| `title`   | text               | Required                                    |
-| `slug`    | text               | Auto-generated from title, editable         |
-| `content` | richText (Lexical) | Page body with embedded blocks              |
-| `hero`    | group              | headline, subheadline, backgroundImage, cta |
-| `seo`     | group              | metaTitle, metaDescription, ogImage         |
-| `status`  | select             | `draft`, `published`                        |
+| Field         | Type   | Notes                                                                               |
+| ------------- | ------ | ----------------------------------------------------------------------------------- |
+| `title`       | text   | Required                                                                            |
+| `slug`        | text   | Required, unique, indexed; auto-generated from title (`slugFromTitle` beforeChange) |
+| `publishedAt` | date   | Sidebar; a future date forces the doc back to `draft` (`enforceDraftWhenScheduled`) |
+| `hero`        | group  | headline, subheadline, backgroundImage, cta — legacy field, retained                |
+| `layout`      | blocks | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks`             |
+| `seo`         | group  | metaTitle, metaDescription, ogImage                                                 |
+
+Versions: Drafts enabled (`versions: { drafts: true, maxPerDoc: 50 }`). `_status` (`draft`/`published`) gates public reads via `publishedOrAuthed`; live preview is wired (`livePreviewFor('pages')`). There is no discrete `status` select or richText `content` field — the body is the `layout` blocks array.
 
 #### `posts`
 
@@ -127,39 +129,39 @@ The most important content type. Each gets a dedicated page at `/case-studies/[s
 
 #### `services`
 
-Individual service pages at `/services/[pillar]/[slug]`.
+Structured service records. **No longer publicly routed** — the four-offering `/services` IA (PR #79, ADR 0009) renders each offering as a block-composed `pages` record by known slug (`service-localshoring`, `service-ai-integration`, `service-digital-transformation`; Workshops is the fourth peer offering and lives at `/workshops`). This collection is retained as a relationship target (`posts.relatedServices`, `caseStudies.services`, `industries.relevantServices`) and migration/taxonomy data; the old `/services/[pillar]/[slug]` detail route is retired.
 
-| Field                | Type                                  | Notes                                                |
-| -------------------- | ------------------------------------- | ---------------------------------------------------- |
-| `title`              | text                                  | e.g., "Change Management & Transformation"           |
-| `slug`               | text                                  | Auto-generated                                       |
-| `pillar`             | relationship -> servicePillars        | Which of the 3 pillars this belongs to               |
-| `description`        | richText                              | Detailed service description (800-1200 words target) |
-| `approach`           | richText                              | Methodology / how SEQTEK delivers this service       |
-| `deliverables`       | array of text                         | Bulleted list of what the client receives            |
-| `icon`               | text                                  | Icon identifier for card displays                    |
-| `relatedCaseStudies` | relationship -> caseStudies (hasMany) |                                                      |
-| `faq`                | array                                 | Objects with `question` (text), `answer` (richText)  |
-| `seo`                | group                                 |                                                      |
-| `order`              | number                                | Display ordering within pillar                       |
-| `status`             | select                                | `draft`, `published`                                 |
+| Field                | Type                                  | Notes                                                   |
+| -------------------- | ------------------------------------- | ------------------------------------------------------- |
+| `title`              | text                                  | e.g., "Change Management & Transformation"              |
+| `slug`               | text                                  | Auto-generated                                          |
+| `pillar`             | relationship -> servicePillars        | Legacy grouping relationship (no longer drives routing) |
+| `description`        | richText                              | Detailed service description (800-1200 words target)    |
+| `approach`           | richText                              | Methodology / how SEQTEK delivers this service          |
+| `deliverables`       | array of text                         | Bulleted list of what the client receives               |
+| `icon`               | text                                  | Icon identifier for card displays                       |
+| `relatedCaseStudies` | relationship -> caseStudies (hasMany) |                                                         |
+| `faq`                | array                                 | Objects with `question` (text), `answer` (richText)     |
+| `seo`                | group                                 |                                                         |
+| `order`              | number                                | Display ordering                                        |
+| `status`             | select                                | `draft`, `published`                                    |
 
 #### `servicePillars`
 
-The 3 top-level groupings at `/services/[slug]`.
+Retained grouping records. **No longer publicly routed** — the pre-#79 `/services/[slug]` pillar landing pages are retired in favour of the four-offering IA. Kept as structured grouping data and as the relationship target for `services.pillar`.
 
-| Field         | Type           | Notes                                                             |
-| ------------- | -------------- | ----------------------------------------------------------------- |
-| `title`       | text           | "Organizational Strategy", "Technology & Data", "AI & Automation" |
-| `slug`        | text           |                                                                   |
-| `description` | richText       | Pillar overview                                                   |
-| `heroImage`   | upload (media) |                                                                   |
-| `seo`         | group          |                                                                   |
-| `order`       | number         | Display ordering (1, 2, 3)                                        |
+| Field         | Type           | Notes                 |
+| ------------- | -------------- | --------------------- |
+| `title`       | text           | Legacy grouping label |
+| `slug`        | text           |                       |
+| `description` | richText       | Grouping overview     |
+| `heroImage`   | upload (media) |                       |
+| `seo`         | group          |                       |
+| `order`       | number         | Display ordering      |
 
 #### `teamMembers`
 
-Team bios for `/about/team` and blog post authorship.
+Team bios, rendered as block-composed pages at `/team` (listing) and `/team/[slug]` (detail), plus blog post authorship.
 
 | Field            | Type           | Notes                                              |
 | ---------------- | -------------- | -------------------------------------------------- |
@@ -212,7 +214,7 @@ Workshop pages at `/workshops/[slug]` (one Touchstone workshop among three; IA c
 
 #### `industries`
 
-Industry/vertical pages at `/industries/[slug]`.
+Industry/vertical taxonomy records. **Not yet routed** — there is no `/industries/[slug]` route. Retained as a relationship target (`caseStudies.industry`, `services.relevantServices`-style relations) and listing/taxonomy data.
 
 | Field              | Type                               | Notes                           |
 | ------------------ | ---------------------------------- | ------------------------------- |
@@ -225,7 +227,7 @@ Industry/vertical pages at `/industries/[slug]`.
 
 #### `locations`
 
-Market landing pages at `/consulting/[slug]`.
+Market/location taxonomy records. **Not yet routed** — there is no `/consulting/[slug]` (or `/consulting/[market]`) route. Retained as structured market data.
 
 | Field         | Type     | Notes                                         |
 | ------------- | -------- | --------------------------------------------- |
@@ -306,29 +308,27 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 
 **Fallback revalidation:** Time-based ISR acts as a safety net in case the on-demand hook fails. Set conservatively — not for freshness, just for resilience.
 
-| Route                                           | Strategy       | Fallback Revalidate | Notes                                    |
-| ----------------------------------------------- | -------------- | ------------------- | ---------------------------------------- |
-| `/`                                             | ISR            | 3600s (1hr)         | Homepage — changes infrequently          |
-| `/about`, `/about/*`                            | ISR            | 3600s               | Rarely changes                           |
-| `/services`                                     | ISR            | 3600s               | Overview page                            |
-| `/services/[pillar]`                            | ISR            | 3600s               | Pillar landing pages                     |
-| `/services/[pillar]/[service]`                  | ISR            | 3600s               | Individual services                      |
-| `/case-studies`                                 | ISR            | 3600s               | Listing + individual                     |
-| `/case-studies/[slug]`                          | ISR            | 3600s               | Individual case studies                  |
-| `/insights`                                     | ISR            | 3600s               | Blog listing                             |
-| `/insights/[slug]`                              | ISR            | 3600s               | Individual posts                         |
-| `/workshops`                                    | ISR            | 3600s               | Workshop landing                         |
-| `/workshops/[slug]`                             | ISR            | 3600s               | Individual workshops                     |
-| `/team`                                         | ISR            | 3600s               | Team listing (spec 004 US3)              |
-| `/industries/[slug]`                            | ISR            | 3600s               | Industry pages                           |
-| `/consulting/[market]`                          | ISR            | 3600s               | Market landing pages                     |
-| `/contact`                                      | Static         | N/A                 | Form is client-side (HubSpot)            |
-| `/resources/organizational-maturity-assessment` | Static         | N/A                 | ScoreApp link/embed                      |
-| `/privacy-policy`                               | ISR            | 86400s (24hr)       |                                          |
-| `/admin/[[...segments]]`                        | SSR (no cache) | N/A                 | Payload admin panel — authenticated only |
-| `/api/*`                                        | SSR            | N/A                 | Payload API routes + webhook handlers    |
-| `/sitemap.xml`                                  | ISR            | 3600s               | Dynamic from Payload content             |
-| `/robots.txt`                                   | Static         | N/A                 |                                          |
+| Route                                           | Strategy       | Fallback Revalidate | Notes                                                                               |
+| ----------------------------------------------- | -------------- | ------------------- | ----------------------------------------------------------------------------------- |
+| `/`                                             | ISR            | 3600s (1hr)         | Homepage — changes infrequently                                                     |
+| `/[slug]`                                       | ISR            | 3600s               | Catch-all for block-composed `pages` (About, localshoring, etc.)                    |
+| `/services`                                     | ISR            | 3600s               | Overview — `pages` record, slug `service-overview`                                  |
+| `/services/[offering]`                          | ISR            | 3600s               | Four-offering IA — each offering a `pages` record by slug                           |
+| `/case-studies`                                 | ISR            | 3600s               | Listing                                                                             |
+| `/case-studies/[slug]`                          | ISR            | 3600s               | Individual case studies                                                             |
+| `/insights`                                     | ISR            | 3600s               | Blog listing                                                                        |
+| `/insights/[slug]`                              | ISR            | 3600s               | Individual posts                                                                    |
+| `/workshops`                                    | ISR            | 3600s               | Workshop landing                                                                    |
+| `/workshops/[slug]`                             | ISR            | 3600s               | Individual workshops                                                                |
+| `/team`                                         | ISR            | 3600s               | Team listing (spec 004 US3)                                                         |
+| `/team/[slug]`                                  | ISR            | 3600s               | Team member detail (block-composed)                                                 |
+| `/contact`                                      | Static         | N/A                 | Form is client-side (HubSpot)                                                       |
+| `/resources/organizational-maturity-assessment` | —              | N/A                 | ScoreApp — **planned, route not built** (footer link removed; see CONTENT_NEEDS §9) |
+| `/privacy-policy`                               | ISR            | 86400s (24hr)       |                                                                                     |
+| `/admin/[[...segments]]`                        | SSR (no cache) | N/A                 | Payload admin panel — authenticated only                                            |
+| `/api/*`                                        | SSR            | N/A                 | Payload API routes + webhook handlers                                               |
+| `/sitemap.xml`                                  | ISR            | 3600s               | Dynamic from Payload content                                                        |
+| `/robots.txt`                                   | Static         | N/A                 |                                                                                     |
 
 > **"ISR" here means ISR _data_ caching, not static prerender (spec 004 / ADR 0005).** The public render routes are dynamically rendered (`ƒ`) because the shared layout reads the per-request CSP nonce via `headers()`, which forces dynamic rendering. Page DATA still flows through `unstable_cache` readers (`revalidate = 3600` + on-demand tag invalidation), so the 1h fallback + instant-on-publish behavior in the table holds; only the HTML render is per-request (required for the nonce). `generateStaticParams` is intentionally not used on the detail routes.
 
@@ -366,122 +366,130 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 /
 ├── src/
 │   ├── app/
-│   │   ├── (site)/                        # Route group: public site
-│   │   │   ├── layout.tsx                 # Root layout (HubSpot, GTM, fonts, nav, footer)
+│   │   ├── (frontend)/                    # Route group: public site
+│   │   │   ├── layout.tsx                 # Site shell (nav, footer, fonts, GTM/HubSpot, CSP nonce)
 │   │   │   ├── page.tsx                   # Homepage
-│   │   │   ├── about/
-│   │   │   │   ├── page.tsx               # About landing
-│   │   │   │   ├── our-story/page.tsx
-│   │   │   │   ├── team/page.tsx
-│   │   │   │   ├── localshoring/page.tsx
-│   │   │   │   └── careers/page.tsx
+│   │   │   ├── styles.css
+│   │   │   ├── error.tsx                  # Route-segment error boundary
+│   │   │   ├── global-error.tsx           # Root error boundary
+│   │   │   ├── not-found.tsx              # 404
+│   │   │   ├── [slug]/page.tsx            # Catch-all: block-composed `pages` (About, localshoring, …)
 │   │   │   ├── services/
-│   │   │   │   ├── page.tsx               # Services overview
-│   │   │   │   └── [pillar]/
-│   │   │   │       ├── page.tsx           # Pillar landing
-│   │   │   │       └── [service]/page.tsx # Individual service
+│   │   │   │   ├── page.tsx               # Overview (`pages` slug `service-overview`)
+│   │   │   │   └── [offering]/page.tsx    # Four-offering IA — `pages` by known slug
 │   │   │   ├── case-studies/
 │   │   │   │   ├── page.tsx               # Listing
-│   │   │   │   └── [slug]/page.tsx        # Individual
+│   │   │   │   └── [slug]/page.tsx        # Detail
 │   │   │   ├── insights/
 │   │   │   │   ├── page.tsx               # Blog listing
-│   │   │   │   ├── [slug]/page.tsx        # Individual post
-│   │   │   │   └── category/[slug]/page.tsx
+│   │   │   │   └── [slug]/page.tsx        # Post (the one bespoke richText body)
 │   │   │   ├── workshops/
 │   │   │   │   ├── page.tsx               # Workshop landing
-│   │   │   │   └── [slug]/page.tsx        # Individual workshop
-│   │   │   ├── industries/
-│   │   │   │   └── [slug]/page.tsx
-│   │   │   ├── contact/
-│   │   │   │   ├── page.tsx
-│   │   │   │   └── book-a-call/page.tsx
-│   │   │   ├── resources/
-│   │   │   │   └── organizational-maturity-assessment/page.tsx
-│   │   │   ├── consulting/
-│   │   │   │   └── [market]/page.tsx      # Market landing pages
+│   │   │   │   └── [slug]/page.tsx        # Workshop detail
+│   │   │   ├── team/
+│   │   │   │   ├── page.tsx               # Team listing
+│   │   │   │   └── [slug]/page.tsx        # Member detail
+│   │   │   ├── contact/page.tsx
 │   │   │   ├── privacy-policy/page.tsx
-│   │   │   └── terms-of-service/page.tsx
+│   │   │   ├── preview/[collection]/[slug]/route.ts  # Draft live-preview entry
+│   │   │   ├── api/revalidate/route.ts    # On-demand ISR webhook (shared secret)
+│   │   │   └── sitemap.ts                 # Dynamic sitemap
 │   │   │
-│   │   ├── (payload)/                     # Route group: Payload admin
-│   │   │   └── admin/
-│   │   │       └── [[...segments]]/page.tsx
+│   │   ├── (payload)/                     # Route group: Payload admin + API
+│   │   │   ├── layout.tsx
+│   │   │   ├── custom.scss
+│   │   │   ├── admin/
+│   │   │   │   ├── importMap.js
+│   │   │   │   └── [[...segments]]/{page.tsx,not-found.tsx}
+│   │   │   └── api/
+│   │   │       ├── [...slug]/route.ts     # Payload REST API
+│   │   │       ├── graphql/route.ts
+│   │   │       ├── graphql-playground/route.ts
+│   │   │       ├── health/route.ts        # ALB health check
+│   │   │       ├── csp-report/route.ts    # CSP violation reports
+│   │   │       └── auth/oauth/{authorization,callback}/google/route.ts  # Google Workspace SSO
 │   │   │
-│   │   ├── api/
-│   │   │   ├── health/route.ts            # ALB health check endpoint
-│   │   │   ├── revalidate/route.ts        # Webhook handler for on-demand ISR
-│   │   │   └── [...payload]/route.ts      # Payload REST/GraphQL API
-│   │   │
-│   │   ├── sitemap.ts                     # Dynamic sitemap
-│   │   ├── robots.ts                      # Dynamic robots.txt
-│   │   └── not-found.tsx
+│   │   ├── favicon.ico
+│   │   └── icon.png
 │   │
-│   ├── proxy.ts                            # CSP nonce generation (Next 16 — renamed from middleware.ts)
+│   ├── collections/                       # Payload collection configs (one file each)
+│   │   ├── Users.ts  Pages.ts  Posts.ts  CaseStudies.ts  Services.ts
+│   │   ├── ServicePillars.ts  TeamMembers.ts  Testimonials.ts  Workshops.ts
+│   │   └── Industries.ts  Locations.ts  Media.ts  Categories.ts
 │   │
-│   ├── components/
-│   │   ├── ui/                            # Primitives: Button, Card, Badge, Container, Section
-│   │   ├── layout/                        # Header, Footer, Navigation, MobileNav
-│   │   ├── sections/                      # Hero, StatsBar, LogoBar, TestimonialCarousel, CTASection
-│   │   ├── blog/                          # PostCard, PostList, CategoryFilter
-│   │   ├── case-studies/                  # CaseStudyCard, MetricDisplay, TechStack
-│   │   ├── forms/                         # HubSpotForm (API submission wrapper)
-│   │   └── integrations/                  # HubSpotTracking, GTMScript, CookieConsent
+│   ├── globals/                           # Payload global (singleton) configs
+│   │   └── SiteSettings.ts  Navigation.ts  Homepage.ts
 │   │
 │   ├── payload/
-│   │   ├── collections/                   # All collection configs (one file per collection)
-│   │   │   ├── Users.ts
-│   │   │   ├── Pages.ts
-│   │   │   ├── Posts.ts
-│   │   │   ├── CaseStudies.ts
-│   │   │   ├── Services.ts
-│   │   │   ├── ServicePillars.ts
-│   │   │   ├── TeamMembers.ts
-│   │   │   ├── Testimonials.ts
-│   │   │   ├── Workshops.ts
-│   │   │   ├── Industries.ts
-│   │   │   ├── Locations.ts
-│   │   │   ├── Media.ts
-│   │   │   └── Categories.ts
-│   │   ├── globals/                       # Singleton configs
-│   │   │   ├── SiteSettings.ts
-│   │   │   ├── Navigation.ts
-│   │   │   └── Homepage.ts
-│   │   ├── access/                        # Reusable access control functions
-│   │   │   ├── isAdmin.ts
-│   │   │   ├── isAdminOrEditor.ts
-│   │   │   └── publishedOnly.ts
-│   │   ├── hooks/                         # Payload hooks (beforeChange, afterChange)
-│   │   │   └── revalidateOnChange.ts      # Triggers ISR revalidation + CloudFront path invalidation
-│   │   └── seed/                          # Data seeding scripts
-│   │       └── migrateFromAudit.ts        # Import extracted content from audit/ JSON
+│   │   ├── access/                        # Reusable access control
+│   │   │   ├── byRole.ts                  # isAdmin, isAdminOrEditor
+│   │   │   └── publishedOrAuthed.ts       # Public reads = published only
+│   │   ├── blocks/                        # Block configs for the layout + inline editors
+│   │   │   ├── layout/                    # Layout block library (Hero, CtaSection, …)
+│   │   │   ├── inline/                    # Inline blocks (Callout, Figure, InlineCta, …)
+│   │   │   └── conditional.ts
+│   │   ├── editor/                        # Lexical editor config
+│   │   ├── fields/url.ts                  # Safe-URL-validated field
+│   │   ├── hooks/                         # Payload hooks (beforeChange / afterChange)
+│   │   │   ├── slugFromTitle.ts
+│   │   │   ├── enforceDraftWhenScheduled.ts
+│   │   │   ├── revalidateOnChange.ts      # ISR revalidate + CloudFront path invalidation
+│   │   │   └── invalidateMediaOnChange.ts # Media replace/delete → CloudFront invalidation
+│   │   ├── livePreview/url.ts             # Live-preview URL builder
+│   │   ├── seed/                          # Audit-migration + seed pipeline
+│   │   │   ├── migrateFromAudit.ts        # Import extracted content from audit/ JSON
+│   │   │   ├── htmlToLexical.ts  upsert.ts  log.ts  slugRewrites.ts
+│   │   │   └── compose/  parsers/  skeletons/  showcase/
+│   │   └── storage/s3.ts                  # S3 adapter + mediaFileURL()
+│   │
+│   ├── components/
+│   │   ├── ui/                            # Primitives: Button, Container, Prose, ResponsiveImage, SmartLink
+│   │   ├── layout/                        # SiteHeader, SiteFooter, MobileNav, SkipToContent, PreviewBanner, ConsentPreferences
+│   │   ├── sections/                      # Block renderers: RenderBlocks + registry.ts + one component per block
+│   │   ├── richText/                      # Lexical → React serializer
+│   │   ├── forms/                         # HubSpot form wrappers
+│   │   ├── integrations/                  # GTM, HubSpot tracking
+│   │   ├── analytics/                     # dataLayer-driven components (TrackedCtaLink, TrackView, …)
+│   │   ├── seo/                           # JsonLd
+│   │   ├── error/                         # Error UI
+│   │   └── admin/                         # Custom Payload admin components
 │   │
 │   ├── lib/
-│   │   ├── payload.ts                     # Payload client for server components
+│   │   ├── payload.ts                     # Cached Payload readers for server components
+│   │   ├── preview.ts                     # Draft readers for live preview
 │   │   ├── metadata.ts                    # generateMetadata() helpers
-│   │   ├── structured-data.ts             # JSON-LD generators (Organization, Article, etc.)
-│   │   ├── constants.ts                   # Site-wide constants
-│   │   └── utils.ts                       # General utilities
+│   │   ├── structured-data.ts             # JSON-LD generators (Organization, Article, …)
+│   │   ├── csp.ts                         # buildCspPolicy (nonce, directive set)
+│   │   ├── redirects.ts                   # 301 Wix → new redirect map
+│   │   ├── site-content.ts  cn.ts
+│   │   ├── analytics/dataLayer.ts         # SSR-safe pushDataLayer emitter (GTM)
+│   │   ├── hubspot/                       # Forms API submit (fields, forms, submit)
+│   │   ├── cloudfront/invalidate.ts       # invalidateCloudFrontPaths
+│   │   └── auth/                          # Google OAuth: allowed-domains, enforce-domain, google-oauth, session-cookie, sign-in-audit, apply-bootstrap-role
 │   │
-│   └── styles/
-│       └── globals.css                    # @tailwind base/components/utilities, brand-token CSS custom properties
+│   ├── migrations/                        # Payload/Postgres migrations (staging/prod only)
+│   ├── proxy.ts                           # CSP nonce generation (Next 16 — renamed from middleware.ts)
+│   ├── payload.config.ts                  # Payload configuration
+│   └── payload-types.ts                   # Generated Payload types
 │
 ├── public/
-│   ├── fonts/                             # Self-hosted font files
-│   └── images/                            # Static images (logo, favicon, og-default)
+│   └── brand/                             # Brand assets (logos, etc.)
 │
-├── scripts/
-│   └── warm-cache.ts                      # Post-deploy ISR cache warming (fetches URL list from sitemap)
+├── infra/                                 # AWS CDK (see §13)
+├── tools/                                 # Subdir tooling: payload-seed, payload-rest, import-case-study, ingest-photos, leonardo-images, check-stale-overrides, e2e
+├── tests/                                 # Vitest (int/unit) + Playwright (e2e + visual)
+├── specs/                                 # Spec-Kit specs
+├── docs/                                  # This doc + ROADMAP, DESIGN_SYSTEM, BLOCK_LIBRARY, decisions/ (ADRs)
 │
 ├── Dockerfile                             # Production container image
-├── .dockerignore
 ├── docker-compose.yml                     # Local dev: Postgres + app
-├── payload.config.ts                      # Root Payload configuration
 ├── next.config.ts                         # Next.js config wrapped with withPayload()
-├── tsconfig.json
+├── tailwind.config.mjs  postcss.config.mjs  eslint.config.mjs  tsconfig.json
+├── playwright.config.ts  playwright.visual.config.ts  vitest.config.mts
 ├── .gitleaks.toml                         # Secret detection rules (pre-commit + CI)
 ├── .env.local                             # Local env vars (gitignored)
-├── .env.example                           # Template with all vars documented (committed)
 ├── package.json
-└── README.md                              # Setup instructions, architecture overview
+└── README.md  CHANGELOG.md  LICENSE
 ```
 
 ---
@@ -707,7 +715,7 @@ All secrets and configuration are managed via environment variables, never commi
 
 ### Payload Admin Authentication
 
-Payload's admin panel at `/admin` is protected by Google Workspace SSO (ROADMAP D-14, ADR 0002, spec 001) restricted to the `@seqtechllc.com` Google Workspace domain. Implementation is a **custom OAuth integration** in `src/app/(payload)/api/auth/oauth/{authorization,callback}/google/route.ts` plus helpers under `src/lib/auth/` (PKCE, state CSRF, `jose`-based ID-token verification against Google's JWKS, Payload session-cookie issuance via Payload's own `getFieldsToSign`/`jwtSign`/`generatePayloadCookie`). Payload's local email/password strategy is disabled on the `users` collection (`auth.disableLocalStrategy: true`). The 305-star community plugin originally chosen in ADR 0002 was dropped during implementation in favour of ~250 LOC we own — see ADR 0002 post-implementation note for reasoning.
+Payload's admin panel at `/admin` is protected by Google Workspace SSO (ROADMAP D-14, ADR 0002, spec 001) restricted to SEQTEK's two live Google Workspace domains — `@seqtechllc.com` (legal entity) and `@seqtek.com` (public brand; marketing staff sit here). The admitted-domain allowlist is the single source of truth in `src/lib/auth/allowed-domains.ts` (PR #77 — the ADR 0002 "revisit when the editor set extends beyond `@seqtechllc.com`" revision). Implementation is a **custom OAuth integration** in `src/app/(payload)/api/auth/oauth/{authorization,callback}/google/route.ts` plus helpers under `src/lib/auth/` (PKCE, state CSRF, `jose`-based ID-token verification against Google's JWKS, Payload session-cookie issuance via Payload's own `getFieldsToSign`/`jwtSign`/`generatePayloadCookie`). Payload's local email/password strategy is disabled on the `users` collection (`auth.disableLocalStrategy: true`). The 305-star community plugin originally chosen in ADR 0002 was dropped during implementation in favour of ~250 LOC we own — see ADR 0002 post-implementation note for reasoning.
 
 - Google OAuth (OIDC) — only sign-in path; the email/password form is removed from the login view entirely
 - Domain restriction enforced server-side in a `users` `beforeChange` hook (the Google `hd` parameter is a hint; the hook is the load-bearing check)
@@ -987,7 +995,7 @@ Since this is an open-source portfolio piece, code quality must be exemplary.
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | **1. Foundation**     | Next.js + Payload + Tailwind scaffold. Dockerfile + ECR repository. EC2 + ALB + CloudFront infrastructure. RDS + S3 provisioning. GitHub Actions CI/CD with blue-green deploys. Base layout components (Header, Footer, Nav). CSP proxy. HubSpot + GTM in root layout. CloudWatch alarms + health endpoint. | 1-2 weeks          |
 | **2. Content Models** | All Payload collections and globals defined. Admin panel functional. Seed script imports audit data into Payload.                                                                                                                                                                                           | 1 week             |
-| **3. Core Pages**     | Homepage, About section (4 pages), Services (overview + 3 pillars + 15 services), Case Studies (listing + 8 pages), Contact + booking.                                                                                                                                                                      | 2-3 weeks          |
+| **3. Core Pages**     | Homepage, About section (4 pages), Services (overview + four offering pages), Case Studies (listing + 8 pages), Contact + booking.                                                                                                                                                                          | 2-3 weeks          |
 | **4. Content & Blog** | Blog (listing + posts + categories), Touchstone Workshops (landing + 3 pages), Assessment landing page, Industry pages, Market landing pages.                                                                                                                                                               | 1-2 weeks          |
 | **5. Polish**         | SEO (structured data, sitemap, meta tags). Accessibility audit. Performance optimization. 301 redirects from old Wix URLs. Cookie consent flow. Cross-browser/device QA.                                                                                                                                    | 1-2 weeks          |
 | **6. Launch**         | DNS cutover. Monitor errors/performance. Google Search Console submission. Redirect verification. CloudFront cache behavior validation.                                                                                                                                                                     | 1 week             |
@@ -1118,7 +1126,7 @@ Generic `User-agent: *` rules don't distinguish crawlers that cite-with-attribut
 
 ### 14.2 Plain-text alternatives — `.md` parallel routes
 
-Every content page (`/insights/[slug]`, `/case-studies/[slug]`, `/services/[slug]`, `/services/[pillar]/[slug]`, `/industries/[slug]`, `/about/*`) is served in two shapes from a single content source:
+Every content page (`/[slug]`, `/insights/[slug]`, `/case-studies/[slug]`, `/services/[offering]`, `/workshops/[slug]`, `/team/[slug]`) is served in two shapes from a single content source:
 
 - **HTML** at the canonical URL — for browsers and crawlers that render
 - **Markdown** at the same path with `.md` suffix (e.g., `/insights/foo.md`) — for LLMs ingesting the content. ~10x smaller payload than the rendered HTML, no CSS/JS, no analytics, no ad units. Served with `Content-Type: text/markdown; charset=utf-8`.
