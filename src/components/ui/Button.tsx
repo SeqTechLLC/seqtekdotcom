@@ -91,9 +91,10 @@ export function Button({
     }
 
     if (isInternalHref(href)) {
-      // prefetch={false}: the header/mobile CTA points at /contact/book-a-call,
-      // which isn't built yet — prefetching it 404s and dings the Lighthouse
-      // best-practices gate (console errors). See SmartLink for the rationale.
+      // prefetch={false}: chrome/content links default to no-prefetch during the
+      // incomplete-route phase (see SmartLink for the rationale). The CTA now
+      // points at the live /contact, so the original 404-on-prefetch concern is
+      // resolved; left disabled for consistency — opt back in per-link if wanted.
       return (
         <Link href={href} prefetch={false} className={classes} {...anchorProps}>
           {children}

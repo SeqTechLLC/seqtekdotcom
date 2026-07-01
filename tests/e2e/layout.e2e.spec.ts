@@ -26,10 +26,11 @@ test.describe('Site chrome — desktop viewport', () => {
       await expect(primaryNav.getByRole('link', { name: label })).toBeVisible()
     }
 
-    // Desktop primary CTA links to /contact/book-a-call.
+    // Desktop primary CTA links to the contact form (the dedicated booking
+    // route is not built yet; see CONTENT_NEEDS §4).
     const ctaButton = header.getByRole('link', { name: /book a call/i })
     await expect(ctaButton).toBeVisible()
-    await expect(ctaButton).toHaveAttribute('href', '/contact/book-a-call')
+    await expect(ctaButton).toHaveAttribute('href', '/contact')
 
     // Footer is rendered with all four navigation columns + legal links.
     const footer = page.getByTestId('site-footer')
@@ -38,7 +39,8 @@ test.describe('Site chrome — desktop viewport', () => {
       await expect(footer.getByRole('heading', { name: column, level: 2 })).toBeVisible()
     }
     await expect(footer.getByRole('link', { name: 'Privacy Policy' })).toBeVisible()
-    await expect(footer.getByRole('link', { name: 'Terms of Service' })).toBeVisible()
+    // Terms of Service was removed from legalNav until the page is drafted
+    // (CONTENT_NEEDS §9); re-add this assertion when the stub ships.
 
     // Main landmark is present and skip link targets it.
     await expect(page.locator('main#main')).toBeVisible()

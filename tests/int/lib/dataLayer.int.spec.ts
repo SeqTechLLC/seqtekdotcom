@@ -27,7 +27,7 @@ describe('pushDataLayer (analytics dataLayer emitter)', () => {
       ctaId: 'header-cta',
       label: 'Book a Call',
       location: 'header',
-      href: '/contact/book-a-call',
+      href: '/contact',
     })
 
     expect(window.dataLayer).toEqual([
@@ -36,7 +36,7 @@ describe('pushDataLayer (analytics dataLayer emitter)', () => {
         ctaId: 'header-cta',
         label: 'Book a Call',
         location: 'header',
-        href: '/contact/book-a-call',
+        href: '/contact',
       },
     ])
   })

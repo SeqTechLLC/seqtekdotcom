@@ -25,7 +25,7 @@ export const serviceSkeleton = (): Array<Record<string, unknown>> => [
     blockType: 'contact-cta',
     heading: 'Talk to a pillar lead',
     body: 'Tell us what you are trying to ship.',
-    primaryCta: { label: 'Book a call', url: '/contact/book-a-call' },
+    primaryCta: { label: 'Book a call', url: '/contact' },
   },
 ]
 
