@@ -43,10 +43,14 @@ export const navigation: Navigation = {
       label: 'About',
       url: '/about',
       children: [
-        { label: 'Our Story', url: '/about/our-story' },
-        { label: 'Team', url: '/about/team' },
+        // 2026-06-30 link audit: /about/our-story and /about/team were never
+        // built — the content lives at /about and /team. Repointed so the nav
+        // no longer 404s.
+        { label: 'Our Story', url: '/about' },
+        { label: 'Team', url: '/team' },
         { label: 'Localshoring', url: '/localshoring' },
-        { label: 'Careers', url: '/about/careers' },
+        // TODO(stub): no Careers page exists yet. Re-add when the stub ships
+        // (docs/CONTENT_NEEDS.md §"Missing pages — linked but 404").
       ],
     },
     {
@@ -73,10 +77,11 @@ export const navigation: Navigation = {
       url: '/about',
       children: [
         { label: 'About', url: '/about' },
-        { label: 'Our Story', url: '/about/our-story' },
-        { label: 'Team', url: '/about/team' },
+        // 2026-06-30 link audit: repointed off the unbuilt /about/* routes.
+        { label: 'Our Story', url: '/about' },
+        { label: 'Team', url: '/team' },
         { label: 'Localshoring', url: '/localshoring' },
-        { label: 'Careers', url: '/about/careers' },
+        // TODO(stub): Careers page not built — re-add when it ships.
       ],
     },
     {
@@ -97,7 +102,8 @@ export const navigation: Navigation = {
         { label: 'Case Studies', url: '/case-studies' },
         { label: 'Insights', url: '/insights' },
         { label: 'Workshops', url: '/workshops' },
-        { label: 'Assessment', url: '/resources/organizational-maturity-assessment' },
+        // TODO(stub): /resources/organizational-maturity-assessment (ScoreApp)
+        // is not built — re-add when the assessment page ships (CONTENT_NEEDS §5).
       ],
     },
     {
@@ -105,19 +111,28 @@ export const navigation: Navigation = {
       url: '/contact',
       children: [
         { label: 'Contact', url: '/contact' },
-        { label: 'Book a Call', url: '/contact/book-a-call' },
-        { label: 'Tulsa', url: '/tulsa-consulting' },
-        { label: 'Oklahoma City', url: '/okc-consulting' },
-        { label: 'Northwest Arkansas', url: '/northwest-arkansas-consulting' },
-        { label: 'Kansas City', url: '/kansas-city-consulting' },
+        // Book-a-call repoints to the contact form until a HubSpot Meetings
+        // route ships (CONTENT_NEEDS §4; matches the not-found.tsx CTA).
+        { label: 'Book a Call', url: '/contact' },
+        // Interim: the four market landing pages aren't built yet, so the city
+        // links point at the localshoring story (our local-delivery model)
+        // rather than 404ing. TODO(stub): build /tulsa-consulting etc. as
+        // per-market SEO pages (CONTENT_NEEDS §"Missing pages — linked but 404").
+        { label: 'Tulsa', url: '/localshoring' },
+        { label: 'Oklahoma City', url: '/localshoring' },
+        { label: 'Northwest Arkansas', url: '/localshoring' },
+        { label: 'Kansas City', url: '/localshoring' },
       ],
     },
   ],
   legalNav: [
     { label: 'Privacy Policy', url: '/privacy-policy' },
-    { label: 'Terms of Service', url: '/terms-of-service' },
+    // TODO(stub): /terms-of-service not drafted yet — re-add once legal copy
+    // is reviewed (CONTENT_NEEDS §"Missing pages — linked but 404").
   ],
-  ctaButton: { label: 'Book a Call', url: '/contact/book-a-call' },
+  // Repoints to the contact form until a HubSpot Meetings route ships
+  // (CONTENT_NEEDS §4; matches the not-found.tsx "Book a strategy call" CTA).
+  ctaButton: { label: 'Book a Call', url: '/contact' },
 }
 
 // Address left empty pending BR-7 resolution of the canonical office location

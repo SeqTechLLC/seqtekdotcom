@@ -15,7 +15,8 @@ export const BrandTeaser: Block = {
       name: 'linkUrl',
       type: 'text',
       required: true,
-      defaultValue: '/about/our-story',
+      // /about/our-story is not a built route; the story lives at /about.
+      defaultValue: '/about',
       validate: safeUrlValidate,
     },
     { name: 'image', type: 'upload', relationTo: 'media' },

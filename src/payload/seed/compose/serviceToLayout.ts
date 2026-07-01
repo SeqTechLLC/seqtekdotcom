@@ -61,7 +61,7 @@ export function composeServiceLayout(record: ServiceRecord): LayoutBlock[] {
     blockType: 'contact-cta',
     heading: 'Talk to a pillar lead',
     body: 'Tell us what you are trying to ship and we will tell you whether we are the right team for it.',
-    primaryCta: { label: 'Book a call', url: '/contact/book-a-call' },
+    primaryCta: { label: 'Book a call', url: '/contact' },
   })
 
   return blocks
