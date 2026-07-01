@@ -2,7 +2,7 @@
 
 Open-source rebuild of [seqtek.com](https://www.seqtek.com) — moving from Wix to a self-hosted Next.js + Payload CMS stack on AWS. Public as a portfolio piece showing the stack choices, architectural reasoning, and process behind a real production marketing site rebuild.
 
-**Status:** Active development; staging live at `seqtek-preview.com`. Shipped across ~30 PRs: the Payload content models, the public render foundation + all marquee page templates, a block-composed content model (two primitives, no bespoke per-type templates — [ADR 0009](docs/decisions/0009-block-first-composition.md)), media via CloudFront, the analytics/conversion surface, and launch-hardening (WCAG 2.2 a11y, Lighthouse perf, cookie consent). Production cutover to `seqtek.com` is gated on final content + a launch-readiness review — not engineering. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for what's open and [`docs/PROJECT_HISTORY.md`](docs/PROJECT_HISTORY.md) for what's shipped.
+**Status:** Active development; staging live at `seqtek-preview.com`. Shipped across 40+ PRs: the Payload content models, the public render foundation + all marquee page templates, a block-composed content model (two primitives, no bespoke per-type templates — [ADR 0009](docs/decisions/0009-block-first-composition.md)), media via CloudFront, the analytics/conversion surface, and launch-hardening (WCAG 2.2 a11y, Lighthouse perf, cookie consent). Production cutover to `seqtek.com` is gated on final content + a launch-readiness review — not engineering. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for what's open and [`docs/PROJECT_HISTORY.md`](docs/PROJECT_HISTORY.md) for what's shipped.
 
 ## Stack
 
@@ -11,7 +11,7 @@ Open-source rebuild of [seqtek.com](https://www.seqtek.com) — moving from Wix 
 - **Tailwind v3** ([why not v4](docs/decisions/0001-tailwind-v3.md))
 - **Lexical** rich-text editor (Payload v3 default)
 - **AWS** for everything: EC2 + ALB + CloudFront, Docker via ECR, blue-green via ASG, RDS for Postgres, S3 for media (with Origin Access Control)
-- Auth via **Google Workspace OAuth** restricted to `@seqtechllc.com` ([why](docs/decisions/0002-auth-strategy.md))
+- Auth via **Google Workspace OAuth** restricted to SEQTEK's Google Workspace domains (`@seqtechllc.com` and `@seqtek.com`) ([why](docs/decisions/0002-auth-strategy.md))
 
 ## Where to look
 
@@ -32,7 +32,7 @@ git clone git@github.com:SeqTechLLC/seqtekdotcom.git
 cd seqtekdotcom
 npm install
 cp .env.example .env.local      # set PAYLOAD_SECRET (openssl rand -hex 32)
-docker compose up -d            # Postgres on :5432
+docker compose up -d            # Postgres on :5433
 npm run dev                     # site on :3100, admin at :3100/admin
 ```
 
