@@ -99,3 +99,7 @@ infra/.cdk.staging/
 
 # Private SEQTEK content drafts (employee PII) — keep out of the public repo
 docs/content-drafts/
+
+# Internal meeting notes + raw transcripts (client names, candid remarks about staff)
+# — referenced by ROADMAP/CONTENT_NEEDS by path, same as content-drafts, but never committed
+docs/meetings/
