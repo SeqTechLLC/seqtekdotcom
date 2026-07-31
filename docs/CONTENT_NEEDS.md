@@ -15,7 +15,7 @@
 
 **✅ FILMED 2026-07-27 — in edit.** This session happened, along with Brent's (§2) and the localshoring content. Source guide: `docs/content-drafts/hank-interview-followup.md`. The items below still **cannot be fabricated**, but they are no longer waiting on Hank's calendar — they are waiting on a transcript, which we can pull off the raw audio ourselves rather than waiting for the editor. Items B–F below are the extraction checklist: confirm each one is actually answered on tape, and flag anything that isn't as a short follow-up rather than a re-shoot.
 
-**A. The name: Sequoyah — ✅ DONE, no longer a gap.** Kenn supplied the story and it is **written and live on `/about`** (the "The name: Sequoyah" section — Sequoyah the Cherokee silversmith, the syllabary, "fit the symbols to the language, not the language to the symbols," the literacy story, the metaphor to SEQTEK's work, the quill-logo nod, and the explicit non-tribal acknowledgement) plus a companion podcast video. It shipped ahead of the interview; leadership only needs to read the rendered copy at 5.5. (The Jun-9 `about-our-story.md` draft still shows a `[PLACEHOLDER]` for this — that draft is stale; `seed-about-api.mts` is the source of truth and carries the real prose.)
+**A. The name: Sequoyah — ✅ DONE, no longer a gap.** Kenn supplied the story and it is **written and live on `/our-story`** (the "The name: Sequoyah" section — Sequoyah the Cherokee silversmith, the syllabary, "fit the symbols to the language, not the language to the symbols," the literacy story, the metaphor to SEQTEK's work, the quill-logo nod, and the explicit non-tribal acknowledgement) plus a companion podcast video. It shipped ahead of the interview; leadership only needs to read the rendered copy at 5.5. (The Jun-9 `about-our-story.md` draft still shows a `[PLACEHOLDER]` for this — that draft is stale; `seed-about-api.mts` is the source of truth and carries the real prose.)
 
 **B. Localshoring** _(the coined differentiator; trademarked term)_
 
@@ -87,7 +87,9 @@ Still to capture:
 
 ---
 
-## 4. HubSpot (Chad Coleman, portal admin)
+## 4. HubSpot (Megan, portal admin)
+
+> **Portal ownership changed 2026-07-29:** Megan is now the HubSpot portal admin for `8504846`. Chad Coleman has left the company — his name stays on the dated provisioning notes in `INTEGRATIONS.md §1.2` as a record of who supplied those values, but all new portal requests go to Megan.
 
 - **Contact form GUID — ✅ DONE (PR #76, 2026-06-29).** The live Contact-form GUID is wired; the `/contact` form renders and posts to HubSpot. Workshop Inquiry form GUID was wired earlier (PR #74). _Remaining verify (not a content gap):_ confirm a test submission lands in the HubSpot portal and the inquiry-type dropdown values match.
 - **Book-a-call — interim decision implemented.** Every "Book a Call" CTA (header, footer, in-page service/workshop CTAs) now points at the `/contact` form — the link audit found they previously pointed at `/contact/book-a-call`, which **404s** (no such route). _Still open:_ if we want a true calendar-booking experience, set up a HubSpot Meetings link and repoint the CTAs (the `HubspotMeetings` block already exists). The old site has no booking link to reuse.
@@ -181,7 +183,7 @@ These kept resurfacing; they're closed:
 | **Client logos**     | **Re-opened 2026-06-24** (was "running publicly = sufficient permission"). Megan now owns curating the strip + chasing permission; full audit + the case-study exclusions are in §1.F under "Logos." |
 | **Cherokee Nation**  | **No outreach.** Respectful allusion to a public historical figure needs no permission.                                                                                                              |
 | **Core values**      | 7 pattern/anti-pattern values written; **Hank signed off**.                                                                                                                                          |
-| **Faith framing**    | Approved and calibrated; lives on `/about/our-story` + Hank's bio, with a video cut. Hank holds final sign-off on _altitude_ only.                                                                   |
+| **Faith framing**    | Approved and calibrated; lives on `/our-story` + Hank's bio, with a video cut. Hank holds final sign-off on _altitude_ only.                                                                         |
 | **Blog post bodies** | Written (6 posts). Done.                                                                                                                                                                             |
 
 ---
@@ -195,8 +197,8 @@ Waiting only on placement/loading, not on you:
 - **Four peer service offerings** (Localshoring, AI Integration, Digital Transformation, Workshops) rendered as block Pages by slug, full copy + FAQs. (The old 3-pillar service IA — 9 services across 3 pillars — was retired in the #79–#83 restructure; the `services`/`servicePillars` collections still exist but are no longer publicly routed.)
 - **Touchstone landing**, full copy + CrossCo proof video/photos (cleared).
 - **Hank & Dana bios**, publish-ready.
-- **Sequoyah name story** — written and **live on `/about`** + companion video (the old-feather Sequoyah Technologies logo is the swap-in for its current quill-panel placeholder).
-- **Values** (7 pairs), **Mission/Vision**, **About** founding narrative (name story + "gap nobody would fix" + "through the bust" — through ~2004). Still pending: the 1999→now 25-year timeline — **on tape as of 2026-07-27**, awaiting transcript extraction (§1.C).
+- **Sequoyah name story** — written and **live on `/our-story`** + companion video (the old-feather Sequoyah Technologies logo is the swap-in for its current quill-panel placeholder).
+- **Values** (7 pairs), **Mission/Vision**, **Our Story** founding narrative (name story + "gap nobody would fix" + "through the bust" — through ~2004). Still pending: the 1999→now 25-year timeline — **on tape as of 2026-07-27**, awaiting transcript extraction (§1.C).
 - **8 release-cleared workshop testimonials** (4 with full name + title).
 - **Lead magnet** (the AI Dev Guide PDF) available for the workshop download card.
 - **Founder/brand videos** (Sequoyah origin, value, culture) with captions.
@@ -217,14 +219,14 @@ A crawl of every internal link on staging found **10 routes that are linked in t
 
 | Linked route (was 404)                                       | Interim fix shipped in code   | Real fix needed                                                                                                         | Owner / source | Severity                      |
 | ------------------------------------------------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------- |
-| `/contact/book-a-call` (primary "Book a Call" CTA, sitewide) | Repointed → `/contact` form   | Optional: HubSpot Meetings booking page (§4)                                                                            | Chad           | was a **blocker** (now fixed) |
-| `/about/our-story`                                           | Repointed → `/about`          | none — content lives at `/about`                                                                                        | —              | resolved                      |
+| `/contact/book-a-call` (primary "Book a Call" CTA, sitewide) | Repointed → `/contact` form   | Optional: HubSpot Meetings booking page (§4)                                                                            | Megan          | was a **blocker** (now fixed) |
+| `/about/our-story`                                           | Page renamed → `/our-story`   | none — the page IS `/our-story` now ("About" retired as a label; `/about` 301s)                                         | —              | resolved                      |
 | `/about/team`                                                | Repointed → `/team`           | none — content lives at `/team`                                                                                         | —              | resolved                      |
 | `/tulsa-consulting`                                          | Repointed → `/localshoring`   | **Per-market SEO landing page** (Tulsa) — local copy, proof, contact                                                    | Hank/Megan     | Important (local SEO)         |
 | `/okc-consulting`                                            | Repointed → `/localshoring`   | **Per-market SEO landing page** (Oklahoma City)                                                                         | Hank/Megan     | Important (local SEO)         |
 | `/northwest-arkansas-consulting`                             | Repointed → `/localshoring`   | **Per-market SEO landing page** (NW Arkansas)                                                                           | Hank/Megan     | Important (local SEO)         |
 | `/kansas-city-consulting`                                    | Repointed → `/localshoring`   | **Per-market SEO landing page** (Kansas City)                                                                           | Hank/Megan     | Important (local SEO)         |
-| `/about/careers`                                             | Removed from nav              | **Careers stub page** — even a short "we hire senior practitioners; reach out" page with the localshoring/culture angle | Hank/Megan     | Important                     |
+| `/careers`                                                   | Removed from nav              | **Careers stub page** — even a short "we hire senior practitioners; reach out" page with the localshoring/culture angle | Hank/Megan     | Important                     |
 | `/terms-of-service`                                          | Removed from footer legal nav | **Terms of Service page** — needs reviewed legal copy (privacy-policy already exists as the model)                      | Legal/Brent    | Important (launch)            |
 | `/resources/organizational-maturity-assessment`              | Removed from footer           | **Assessment page** — content unblocked 2026-07-27 (full 40-question instrument recovered, §5); needs a build decision  | Kenn           | Important                     |
 
@@ -240,5 +242,5 @@ Found in the live Payload inventory on 2026-06-30. None require leadership input
 - **`locations` collection is empty** — relevant once the regional pages (§9) are built.
 - **Junk category `ztest-delete-me`** in the `categories` collection — delete.
 - **`navigation` CMS global is empty `{}`** — the live nav/footer is still driven by the hardcoded `src/lib/site-content.ts`, not the CMS. The planned "swap to `payload.findGlobal()`" never happened. Fine for launch, but the CMS global is dead weight until then.
-- **`/about` video embeds** — the founder/brand videos render as large empty dark blocks in a fresh page capture; verify they show a poster frame (not a black box) before launch.
+- **`/our-story` video embeds** — the founder/brand videos render as large empty dark blocks in a fresh page capture; verify they show a poster frame (not a black box) before launch.
 - **Case-study `ogImage` is null** — social-share images missing (SEO nice-to-have).

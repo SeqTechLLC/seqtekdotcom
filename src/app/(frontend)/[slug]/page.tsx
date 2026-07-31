@@ -13,8 +13,8 @@ import type { Page } from '@/payload-types'
 
 // spec 004 US5 (T025). The generic `pages` route (Shape A) — render the page's
 // `layout` blocks array through `RenderBlocks` (the showcase pattern,
-// generalized). `pages` are flat at `/[slug]` (research §D5), so `/about` and
-// `/localshoring` are both `pages` docs served here.
+// generalized). `pages` are flat at `/[slug]` (research §D5), so `/our-story`
+// and `/localshoring` are both `pages` docs served here.
 //
 // Dynamically rendered (no generateStaticParams): the shared layout reads the
 // per-request CSP nonce via `headers()`, which forces dynamic rendering (Next

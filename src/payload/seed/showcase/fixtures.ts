@@ -1174,7 +1174,7 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
             headline: 'Why SEQTEK is named for Sequoyah',
             body: 'The Cherokee scholar who built a writing system from scratch in the early 1800s. The name signals the kind of patient, generation-spanning work we want to be known for.',
             linkLabel: 'Read our story',
-            linkUrl: '/about',
+            linkUrl: '/our-story',
             image: media.illustration,
           },
         },
@@ -1193,7 +1193,7 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
                 title: 'Our story',
                 description: 'A 25-year arc of how SEQTEK got here.',
                 image: media.photo,
-                linkUrl: '/about',
+                linkUrl: '/our-story',
               },
               {
                 title: 'The team',
@@ -1205,7 +1205,8 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
                 title: 'Localshoring',
                 description: 'The delivery model the company is built on.',
                 image: media.photo,
-                linkUrl: '/about/localshoring',
+                // /about/localshoring was never a built route; the page is flat.
+                linkUrl: '/localshoring',
               },
             ],
           },

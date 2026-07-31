@@ -87,7 +87,7 @@ describe('POST /api/revalidate (T125 / contract revalidate-route.md)', () => {
   it('400 when paths contains an empty string', async () => {
     const res = await postRoute(
       { authorization: `Bearer ${SECRET}` },
-      { tags: [], paths: ['', '/about'] },
+      { tags: [], paths: ['', '/our-story'] },
     )
     expect(res.status).toBe(400)
   })
@@ -119,7 +119,7 @@ describe('POST /api/revalidate (T125 / contract revalidate-route.md)', () => {
     vi.mocked(cf.invalidateCloudFrontPaths).mockRejectedValueOnce(new Error('AWS down'))
     const res = await postRoute(
       { authorization: `Bearer ${SECRET}` },
-      { tags: ['x'], paths: ['/about'] },
+      { tags: ['x'], paths: ['/our-story'] },
     )
     expect(res.status).toBe(500)
   })

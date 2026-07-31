@@ -470,7 +470,7 @@ WCAG 2.2 AA minimum across the site, with AAA contrast on specific high-impact s
 ### 12.1 AAA targets (must hit 7:1 body / 4.5:1 large)
 
 - Homepage hero headline + subhead
-- About hero (`/about` is a flat block Page — there is no separate `/about/our-story` route)
+- Our Story hero (`/our-story` is a flat block Page — renamed from `/about`, which 301s to it)
 - Offering page hero headlines (four offering pages)
 - Case study hero metric callouts
 

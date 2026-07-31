@@ -22,7 +22,7 @@ module.exports = {
         // depend on DB content), so only routes that 200 without seeded content
         // are listed: the homepage + the collection listings (which render an
         // empty grid) + the admin login. CONTENT-dependent `pages` routes
-        // (/about, /localshoring, /services + the offering pages) and per-slug
+        // (/our-story, /localshoring, /services + the offering pages) and per-slug
         // detail URLs 404 here — they get LHCI coverage in a SEEDED environment
         // (staging), tracked below, not silently dropped.
         'http://localhost:3200/',
@@ -35,7 +35,7 @@ module.exports = {
         // covers the footer consent-preferences control (present on every page).
         'http://localhost:3200/privacy-policy',
         'http://localhost:3200/admin/login',
-        // Seeded-env-only (404 against the empty CI DB): /about, /localshoring,
+        // Seeded-env-only (404 against the empty CI DB): /our-story, /localshoring,
         // /services + /services/<offering> (feat/services-restructure made these
         // block-composed `pages` records looked up by slug, so they 404 without
         // the services seed), and the per-slug detail URLs (/case-studies/<slug>,
