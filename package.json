@@ -52,12 +52,12 @@
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
     "jose": "6.2.3",
-    "next": "^16.2.6",
+    "next": "^16.2.12",
     "payload": "^3.85.0",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.25",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "sharp": "0.34.2",
+    "sharp": "^0.35.3",
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
@@ -97,13 +97,19 @@
     },
     "happy-dom": {
       "ws": "^8.21.0"
+    },
+    "next": {
+      "postcss": "^8.5.25",
+      "sharp": "^0.35.3"
     }
   },
   "_overridesNotes": {
     "_doc": "Why each security `overrides` entry exists and when it can go. Keyed by the overridden package name. Advisory IDs are NOT hand-maintained here — `npm run check:overrides` reads them live from `npm audit` and flags any override that is no longer load-bearing. A note here with no matching `overrides` entry is reported as 'pending' (e.g. queued for an unmerged PR), not an error.",
     "esbuild": "Pinned (under drizzle-kit) to clear the transitive esbuild dev-server advisory that failed the production audit gate in PR #52. Remove once drizzle-kit's dependency tree resolves esbuild to a fixed version on its own — run `npm run check:overrides` to confirm.",
     "ws": "Pinned to ^8.21.0 (under payload and happy-dom) to clear the transitive ws advisory pulled in via @lexical/headless. Remove once payload and happy-dom resolve ws to a non-vulnerable version on their own. NOTE: the `ws` override itself lands on main with PR #66 (feat/010); until then this note is reported as 'pending' by `npm run check:overrides`.",
-    "undici": "Pinned to ^7.28.0 (under payload) to clear the transitive undici high-severity advisories GHSA-vmh5-mc38-953g + GHSA-pr7r-676h-xcf6 (vulnerable 7.0.0–7.27.2). Remove once payload resolves undici to >=7.28.0 on its own — run `npm run check:overrides` to confirm."
+    "undici": "Pinned to ^7.28.0 (under payload) to clear the transitive undici high-severity advisories GHSA-vmh5-mc38-953g + GHSA-pr7r-676h-xcf6 (vulnerable 7.0.0–7.27.2). Remove once payload resolves undici to >=7.28.0 on its own — run `npm run check:overrides` to confirm.",
+    "postcss": "Pinned to ^8.5.25 (under next, alongside the direct dependency bump) to clear GHSA-r28c-9q8g-f849 (sourceMappingURL path traversal; vulnerable <=8.5.17). next bundles its own postcss, so the direct bump alone left the nested copy vulnerable. Remove once next ships a postcss >=8.5.18.",
+    "sharp": "Pinned to ^0.35.3 (under next, alongside the direct dependency bump) to clear GHSA-f88m-g3jw-g9cj (inherited libvips CVE-2026-33327/33328/35590/35591; vulnerable <0.35.0). Semver-major from 0.34.x; next declares sharp optional and resolved its own 0.34.5 copy, so the override is needed as well as the direct bump. Remove once next requires sharp >=0.35.0."
   },
   "engines": {
     "node": ">=22.0.0"

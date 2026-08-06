@@ -12,9 +12,13 @@ import { upsertBySlug } from '../../../src/payload/seed/upsert'
 import { buildLexical } from '../../../src/payload/seed/showcase/lexical'
 
 // 1x1 transparent PNG — the smallest valid upload (same bytes the e2e seed
-// helper uses) so `photos`/`gallery` fidelity is real.
+// helper uses) so `photos`/`gallery` fidelity is real. It has to be a genuinely
+// well-formed PNG: the previous fixture carried a bad IDAT CRC and a truncated
+// zlib stream, which libpng tolerated until the libvips bundled with sharp 0.35
+// began rejecting it mid-resize (metadata still read fine, so it failed only on
+// the resize path).
 const TINY_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQI12NgYGBgAAAABQABXvMqOgAAAABJRU5ErkJggg==',
   'base64',
 )
 
