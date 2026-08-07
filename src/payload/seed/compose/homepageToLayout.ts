@@ -113,7 +113,7 @@ export function composeHomepageLayout(record: HomepageRecord): LayoutBlock[] {
       headline: bt.headline,
       body: bt.body,
       linkLabel: bt.linkLabel ?? 'Read the story',
-      linkUrl: bt.linkUrl ?? '/about',
+      linkUrl: bt.linkUrl ?? '/our-story',
       ...(image != null ? { image } : {}),
     })
   } else if (bt?.headline) {

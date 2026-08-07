@@ -10,8 +10,8 @@ import type { CaseStudy } from '../../../src/payload-types'
  * 404s render real content. Consumed by US1 (color-contrast sweep, T005) and
  * US2 (full-WCAG sweep + keyboard/landmark/alt, T015–T017).
  *
- * All slugs are namespaced (`a11y-*`) except `/about` + `/localshoring`, whose
- * URLs are fixed by the generic `(frontend)/[slug]` route. Seeding is
+ * All slugs are namespaced (`a11y-*`) except `/our-story` + `/localshoring`,
+ * whose URLs are fixed by the generic `(frontend)/[slug]` route. Seeding is
  * idempotent (delete-by-slug before create) and `cleanupInScopeRoutes` removes
  * everything it created, so the suite never depends on ambient seed state.
  */
@@ -51,7 +51,7 @@ export interface InScopeSeed {
   postSlug: string
   workshopSlug: string
   teamSlug: string
-  aboutSlug: string
+  storySlug: string
   localshoringSlug: string
   industrySlug: string
   mediaAlt: string
@@ -62,7 +62,7 @@ export const IN_SCOPE_SEED: InScopeSeed = {
   postSlug: 'a11y-post',
   workshopSlug: 'a11y-workshop',
   teamSlug: 'a11y-member',
-  aboutSlug: 'about',
+  storySlug: 'our-story',
   localshoringSlug: 'localshoring',
   industrySlug: 'a11y-industry',
   mediaAlt: 'a11y in-scope seed image',
@@ -108,7 +108,7 @@ export function inScopeRoutes(
     { path: '/workshops', label: 'workshops (listing)' },
     { path: `/workshops/${seed.workshopSlug}`, label: 'workshop (detail)' },
     { path: '/privacy-policy', label: 'privacy-policy' },
-    { path: `/${seed.aboutSlug}`, label: 'about' },
+    { path: `/${seed.storySlug}`, label: 'our-story' },
     { path: `/${seed.localshoringSlug}`, label: 'localshoring' },
   ]
 }
@@ -292,13 +292,13 @@ export async function seedInScopeRoutes(
     overrideAccess: true,
   })
 
-  // /about — accent-bearing blocks on a real in-scope route: metric-display
+  // /our-story — accent-bearing blocks on a real in-scope route: metric-display
   // (text-accent-strong number on green-50) + process-steps (step numbers).
   await payload.create({
     collection: 'pages',
     data: {
-      title: 'About SEQTEK',
-      slug: seed.aboutSlug,
+      title: 'Our Story',
+      slug: seed.storySlug,
       layout: [
         {
           blockType: 'metric-display',
@@ -350,7 +350,7 @@ export async function cleanupInScopeRoutes(
   await del(payload, 'posts', 'slug', seed.postSlug)
   await del(payload, 'workshops', 'slug', seed.workshopSlug)
   await del(payload, 'teamMembers', 'slug', seed.teamSlug)
-  await del(payload, 'pages', 'slug', seed.aboutSlug)
+  await del(payload, 'pages', 'slug', seed.storySlug)
   await del(payload, 'pages', 'slug', seed.localshoringSlug)
   // The four block-composed service Pages (feat/services-restructure).
   for (const slug of Object.values(SERVICE_PAGE_SLUGS)) {

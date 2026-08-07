@@ -55,7 +55,7 @@ test.describe('a11y — WCAG 2.2 A/AA, all in-scope routes (T005/T015)', () => {
       expect(res?.status(), `${route.path} did not return 200`).toBe(200)
 
       // Exclude third-party video player frames: a route with a video embed
-      // (e.g. /about) renders YouTube's own player DOM, which axe flags
+      // (e.g. /our-story) renders YouTube's own player DOM, which axe flags
       // (role-less aria-label div, unlabeled buttons) — their markup, not
       // ours. Same scope as the marquee suite (PR #51).
       const results = await new AxeBuilder({ page })

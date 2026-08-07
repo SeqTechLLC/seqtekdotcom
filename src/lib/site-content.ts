@@ -40,13 +40,12 @@ export type SiteSettings = {
 export const navigation: Navigation = {
   mainNav: [
     {
-      label: 'About',
-      url: '/about',
+      // "About" and "Our Story" were the same page under two labels (the parent
+      // and its own first child both pointed at /about). Collapsed to one name,
+      // "Our Story", and the page moved to /our-story (301 from /about).
+      label: 'Our Story',
+      url: '/our-story',
       children: [
-        // 2026-06-30 link audit: /about/our-story and /about/team were never
-        // built — the content lives at /about and /team. Repointed so the nav
-        // no longer 404s.
-        { label: 'Our Story', url: '/about' },
         { label: 'Team', url: '/team' },
         { label: 'Localshoring', url: '/localshoring' },
         // TODO(stub): no Careers page exists yet. Re-add when the stub ships
@@ -74,11 +73,10 @@ export const navigation: Navigation = {
   footerNav: [
     {
       label: 'Company',
-      url: '/about',
+      url: '/our-story',
       children: [
-        { label: 'About', url: '/about' },
-        // 2026-06-30 link audit: repointed off the unbuilt /about/* routes.
-        { label: 'Our Story', url: '/about' },
+        // Was "About" + "Our Story" — the same URL listed twice. One entry now.
+        { label: 'Our Story', url: '/our-story' },
         { label: 'Team', url: '/team' },
         { label: 'Localshoring', url: '/localshoring' },
         // TODO(stub): Careers page not built — re-add when it ships.

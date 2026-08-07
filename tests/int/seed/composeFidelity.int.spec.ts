@@ -633,7 +633,7 @@ describe('homepage global field→layout composer (US5)', () => {
       headline: 'HP-brand-headline-purpose',
       body: 'HP-brand-body-innovate-implement-deliver',
       linkLabel: 'HP-brand-link-read-story',
-      linkUrl: '/about/our-story',
+      linkUrl: '/our-story',
       image: 33,
     },
     clientLogos: [{ logo: 41 }, { logo: 42 }, { logo: 43 }, { logo: 44 }],

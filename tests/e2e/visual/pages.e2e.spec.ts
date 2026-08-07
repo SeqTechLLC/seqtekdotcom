@@ -24,7 +24,7 @@ const VIEWPORTS = [
 
 const ROUTES: { slug: string; path: string }[] = [
   { slug: 'home', path: '/' },
-  { slug: 'about', path: '/about' },
+  { slug: 'our-story', path: '/our-story' },
   { slug: 'services', path: '/services' },
   // feat/services-restructure — the three peer-offering pages (ADR 0009).
   { slug: 'service-localshoring', path: '/services/localshoring' },

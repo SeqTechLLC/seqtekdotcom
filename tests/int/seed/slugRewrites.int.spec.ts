@@ -53,7 +53,7 @@ describe('slug rewrites (T093 / FR-031)', () => {
     expect(applySlugRewrite('case-study-3')).toBe('mobile-apps-remote-operations')
     expect(applySlugRewrite('case-study-4')).toBe('retail-pos-update-experience')
     expect(applySlugRewrite('driving-innovation-case-study')).toBe('healthcare-ux-redesign')
-    expect(applySlugRewrite('about-us-1')).toBe('about')
+    expect(applySlugRewrite('about-us-1')).toBe('our-story')
     expect(applySlugRewrite('workshops')).toBe('touchstone-workshops')
     expect(applySlugRewrite('blog-old')).toBe('insights')
     expect(applySlugRewrite('something-not-in-the-map')).toBe('something-not-in-the-map')
@@ -66,7 +66,7 @@ describe('slug rewrites (T093 / FR-031)', () => {
     for (const target of [
       'mobile-apps-remote-operations',
       'organizational-maturity-assessment',
-      'about',
+      'our-story',
       'touchstone-workshops',
       'insights',
       applySlugRewrite('organizational-strategy-1-5'),
@@ -112,13 +112,13 @@ describe('slug rewrites (T093 / FR-031)', () => {
     })
     expect(oldSlug.totalDocs).toBe(0)
 
-    const about = await payload.find({
+    const ourStory = await payload.find({
       collection: 'pages',
-      where: { slug: { equals: 'about' } },
+      where: { slug: { equals: 'our-story' } },
       overrideAccess: true,
       draft: true,
     })
-    expect(about.totalDocs).toBe(1)
+    expect(ourStory.totalDocs).toBe(1)
 
     const workshops = await payload.find({
       collection: 'pages',

@@ -79,7 +79,7 @@ describe('buildRevalidatePlan — published-state guard', () => {
 
 describe('buildRevalidatePlan — per-collection routing', () => {
   it.each([
-    { collection: 'pages', slug: 'about', detailIncludes: '/about' },
+    { collection: 'pages', slug: 'our-story', detailIncludes: '/our-story' },
     { collection: 'posts', slug: 'first-post', detailIncludes: '/insights/first-post' },
     { collection: 'caseStudies', slug: 'case-1', detailIncludes: '/case-studies/case-1' },
     { collection: 'services', slug: 'svc-1', detailIncludes: '/services/svc-1' },

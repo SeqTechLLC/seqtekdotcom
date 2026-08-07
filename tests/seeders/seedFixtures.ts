@@ -187,7 +187,7 @@ export const FIXTURE_EXPECTED_CASE_SLUGS = [
   'healthcare-ux-redesign',
 ] as const
 export const FIXTURE_EXPECTED_PAGE_SLUGS = [
-  'about',
+  'our-story',
   'touchstone-workshops',
   'contact',
   'privacy-policy',

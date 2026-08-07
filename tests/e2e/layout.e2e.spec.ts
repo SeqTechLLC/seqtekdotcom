@@ -22,7 +22,14 @@ test.describe('Site chrome — desktop viewport', () => {
     const header = page.getByTestId('site-header')
     await expect(header).toBeVisible()
     const primaryNav = header.getByRole('navigation', { name: /primary/i })
-    for (const label of ['About', 'Services', 'Workshops', 'Case Studies', 'Insights', 'Contact']) {
+    for (const label of [
+      'Our Story',
+      'Services',
+      'Workshops',
+      'Case Studies',
+      'Insights',
+      'Contact',
+    ]) {
       await expect(primaryNav.getByRole('link', { name: label })).toBeVisible()
     }
 
@@ -80,7 +87,14 @@ test.describe('Site chrome — mobile viewport', () => {
     await expect(dialog).toHaveJSProperty('open', true)
 
     // Nav items rendered inside the dialog.
-    for (const label of ['About', 'Services', 'Workshops', 'Case Studies', 'Insights', 'Contact']) {
+    for (const label of [
+      'Our Story',
+      'Services',
+      'Workshops',
+      'Case Studies',
+      'Insights',
+      'Contact',
+    ]) {
       await expect(dialog.getByRole('link', { name: label })).toBeVisible()
     }
 

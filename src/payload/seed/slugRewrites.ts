@@ -16,7 +16,7 @@ export const slugRewrites: Readonly<Record<string, string>> = Object.freeze({
   'organizational-strategy-1-1-1-3': 'airline-automation',
   'organizational-strategy-1-1-1-3-1': 'oil-gas-modernization',
   'organizational-strategy-1-1-1-3-1-1': 'banking-integration-platform',
-  'about-us-1': 'about',
+  'about-us-1': 'our-story',
   'our-services': 'services',
   workshops: 'touchstone-workshops',
   'blog-old': 'insights',
