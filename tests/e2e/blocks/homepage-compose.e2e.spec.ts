@@ -27,7 +27,7 @@ const testLayout = [
     headline: BRAND_MARKER,
     body: 'A composed brand teaser block.',
     linkLabel: 'Read the story',
-    linkUrl: '/about',
+    linkUrl: '/our-story',
   },
 ]
 

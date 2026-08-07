@@ -20,8 +20,8 @@ const FOOTER_START = 'Headquarters'
 const SOURCE_KEYS: { url: string; slug: string; title: string; notes: string[] }[] = [
   {
     url: 'https://www.seqtek.com/about-us-1',
-    slug: 'about',
-    title: 'About SEQTEK',
+    slug: 'our-story',
+    title: 'Our Story',
     notes: [
       'editor builds layout: hero, stats-bar (25+/500+/10,000+), comparison-table (Localshoring vs offshore/nearshore), content (10 numbered benefits), cta-section',
     ],

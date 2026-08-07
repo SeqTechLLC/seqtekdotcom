@@ -58,7 +58,7 @@ SEQTEK's forms must look native to the site design, not like HubSpot iframe embe
 | Book a Call      | `/contact/book-a-call`  | HubSpot Meetings embed (see 1.4)                                      | N/A (Meetings widget)                  |
 | Workshop Inquiry | `/workshops/touchstone` | First/last name, email, phone, company, workshop type (free text)     | `66dba2bf-f099-44d5-8c6e-f24292cefe53` |
 
-> **Contact form GUID received 2026-06-22** from Chad Coleman (portal admin). GUID `8dc61ff4-9f95-46c5-b43e-8c82a394de42`, region `na1`, share link `https://52adq.share.hsforms.com/2jcYf9J-VRsW0PoyCo5TeQg`. Chad built it "just like" the Workshop form. Wired into `.env.local`.
+> **Contact form GUID received 2026-06-22** from Chad Coleman (portal admin at the time). GUID `8dc61ff4-9f95-46c5-b43e-8c82a394de42`, region `na1`, share link `https://52adq.share.hsforms.com/2jcYf9J-VRsW0PoyCo5TeQg`. Chad built it "just like" the Workshop form. Wired into `.env.local`.
 >
 > Background: the old site never had a HubSpot Contact form. The current `seqtek.com/contact` form is a native Wix form; HubSpot only ran the site-wide tracking script, so any "Contact Us" entry in the Forms list is just collected (non-HubSpot) submissions with no embeddable GUID. This form is net-new for the relaunch.
 >
@@ -120,7 +120,7 @@ _Verified against the HubSpot Forms API docs + the documented `FORM_HAS_RECAPTCH
 
 #### Workshop Inquiry — provisioned (confirmed with HubSpot admin, 2026-06-02)
 
-First form off the checklist. Values confirmed by Chad Coleman (portal admin):
+First form off the checklist. Values confirmed by Chad Coleman (portal admin at the time):
 
 - **Form GUID:** `66dba2bf-f099-44d5-8c6e-f24292cefe53` (env `NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID`)
 - **Portal / Hub ID:** `8504846` — confirmed
@@ -525,6 +525,59 @@ This is the most important integration detail to get right. Incorrect consent ha
 - "Deny" must actually block all non-essential tracking
 - Consent preferences link should be in the footer for users to change their choice
 
+### 4.1 Portal-side state — the banner is NOT yet wired to this site
+
+The application half is done (ADR 0006): `ConsentDefault` registers the official
+`_hsp addPrivacyConsentListener` bridge, and the footer `ConsentPreferences`
+control pushes `showBanner` / `revokeCookieConsent`. Both are correct and both
+are currently **inert**, because a HubSpot banner only appears on a hostname the
+portal has a **published policy** for. ADR 0006 deferred that portal config to
+Phase 5.5; this is what is actually in portal `8504846` as of **2026-07-29**,
+read from `https://js.hs-banner.com/v2/8504846/banner.js` (`setBannerSettings`,
+keyed by hostname):
+
+| Hostname          | Policy label                      | Enabled | `policy.type`         | Categories |
+| ----------------- | --------------------------------- | ------- | --------------------- | ---------- |
+| `blog.seqtek.com` | Blog Cookie Consent Banner        | yes     | 2 (implied / opt-out) | none       |
+| `info.seqtek.com` | info.seqtek.com Cookie Consent... | yes     | 2 (implied / opt-out) | none       |
+| `www.seqtek.com`  | www.seqtek.com                    | yes     | 0 (notify only)       | none       |
+
+Two consequences:
+
+1. **No policy exists for this site's hostnames.** `seqtek-preview.com` (and
+   `localhost`) match nothing, so HubSpot's banner script loads and shows
+   nothing, and the footer control's `showBanner` / `revokeCookieConsent` are
+   silent no-ops. This is the whole reason the footer links "don't do anything."
+   The three configured hosts are the HubSpot-hosted blog/landing subdomains and
+   the **old Wix** site. (The legacy v1 endpoint additionally shows a disabled
+   `hubspot-analytics-default-policy` and a stale `.filesusr.com` cookie domain,
+   both Wix-era leftovers.)
+2. **No policy defines cookie categories.** Every policy above is notify-only or
+   implied-consent with `policy` keys `['text','type']` only. The bridge maps
+   `consent.categories.{analytics,advertisement,functionality}` (falling back to
+   `consent.allowed`), so a category-less policy gives the visitor no real
+   choice to propagate and nothing meaningful to withdraw.
+
+**To get integrated** (HubSpot portal only, no code change):
+
+1. Settings → **Privacy & Consent** → **Cookies** → **Add policy**.
+2. Add a policy for `seqtek-preview.com` so it can be tested before launch, and
+   one for the launch hostname (`seqtek.com` / `www.seqtek.com`). Matching is by
+   hostname, so staging needs its own entry. If the domain field only offers
+   connected domains, add the host under Settings → Website → **Domains & URLs**
+   first.
+3. Enable **"Display cookies by category"** and **"Require opt-in"** so the
+   policy emits `analytics` / `advertisement` / `functionality` — that is what
+   the bridge consumes and what makes "Deny" actually block.
+4. **Publish**.
+5. Verify on staging: banner on first load; the footer "Cookie preferences"
+   re-opens it; Accept flips the Consent Mode signals via the
+   `hubspotConsentUpdate` event; "Withdraw consent" clears and re-prompts.
+
+Until step 4 ships, treat the footer consent control as **staged, not live** —
+it is wired correctly and starts working the moment a policy is published for
+the host.
+
 ---
 
 ## 5. Payload CMS Webhook (On-Demand ISR)
@@ -737,7 +790,8 @@ All redirects configured in `next.config.ts` `redirects()`. These preserve any S
 
 | Source                                                  | Destination                                     | Permanent |
 | ------------------------------------------------------- | ----------------------------------------------- | --------- |
-| `/about-us-1`                                           | `/about`                                        | Yes       |
+| `/about-us-1`                                           | `/our-story`                                    | Yes       |
+| `/about`                                                | `/our-story`                                    | Yes       |
 | `/our-services`                                         | `/services`                                     | Yes       |
 | `/touchstone-workshops`, `/touchstone-workshops/:slug*` | `/workshops`, `/workshops/:slug*`               | Yes       |
 | `/blog-old`                                             | `/insights`                                     | Yes       |

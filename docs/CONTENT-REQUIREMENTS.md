@@ -79,7 +79,7 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 ```
 /                                                    Homepage
 │
-├── /about                                           About — single flat block Page; Our Story, Mission/Vision/Values, and Careers & Culture are on-page sections (IA corrected: spec 010 block Pages / ADR 0009 — no /about/* sub-routes)
+├── /our-story                                       Our Story — single flat block Page; the origin narrative, Mission/Vision/Values, and Careers & Culture are on-page sections (IA corrected: spec 010 block Pages / ADR 0009 — no sub-routes). Renamed from /about, which 301s here; "About" is retired as a label
 │
 ├── /team                                            Leadership & Team (top-level page; + /team/[slug] member detail)
 │
@@ -137,9 +137,11 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 
 ## 3. About Section — Detailed Content Requirements
 
-The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer (2024): 81% of B2B buyers say trust is a deciding factor in purchase decisions. The About section is where trust is built or lost.
+The Our Story section is a trust funnel, not a brochure. Per Edelman Trust Barometer (2024): 81% of B2B buyers say trust is a deciding factor in purchase decisions. This section is where trust is built or lost.
 
-### 3A. About Landing Page (`/about/`)
+> **Naming note:** "About" is retired as a label and as a URL. The page is **Our Story** at `/our-story` (`/about` and `/about-us-1` 301 there). The `/about/*` sub-route paths referenced in the subsections below were never built — everything is an on-page section of the single flat `/our-story` Page per ADR 0009.
+
+### 3A. Our Story Landing Page (`/our-story`)
 
 **Purpose:** Orient the visitor and route them deeper. Answer "Who are these people?" in 5 seconds (per Nielsen Norman Group: users form first impressions in 0.05 seconds; decide to stay or leave within 10 seconds).
 
@@ -149,7 +151,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
    - Headline: Brand-forward, not generic. Reference the Sequoyah connection or the "since 1999" anchor. Must pass the "grunt test" (StoryBrand): could a caveman look at this and understand what you do, how it helps, and what to do next?
    - Subheadline: 1-2 sentences positioning SEQTEK as a local, people-first consulting partner. Include the word "you" or "your" — buyer-centric language converts 2-3x better than company-centric language (per Unbounce Conversion Benchmark Report).
    - Hero image: Real photo of SEQTEK team (NOT stock). Per Basecamp/37signals and Nielsen Norman Group research: users ignore stock photos but engage with real team imagery. Eye-tracking studies show authentic photos receive 35% more attention than stock.
-   - CTA: "Read Our Story" -> `/about/our-story` or "Meet the Team" -> `/about/team`
+   - CTA: "Meet the Team" -> `/team` (the story itself is on this page, so there is no "Read Our Story" hop)
 
 2. **Snapshot Stats Bar**
    - 25+ years in business
@@ -178,7 +180,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
 5. **Localshoring Preview**
    - 1 paragraph summary of the localshoring model.
    - Visual comparison graphic (Localshoring vs. Offshore vs. Nearshore). Per Venngage/Content Marketing Institute research: content with relevant visuals gets 94% more views than text-only content.
-   - CTA: "Learn about Localshoring" -> `/about/localshoring`
+   - CTA: "Learn about Localshoring" -> `/localshoring`
 
 6. **Client Logo Bar**
    - Logos: GE, QuikTrip, Bank of Oklahoma, ABB, Valero, Oneok, plus any others with permission.
@@ -205,7 +207,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
 
 ---
 
-### 3B. Our Story / Sequoyah Heritage (`/about/our-story`)
+### 3B. Sequoyah Heritage (on-page section of `/our-story`)
 
 **Purpose:** The brand narrative page. This is where SEQTEK becomes a company with a soul instead of another consulting firm with a logo. Per Edelman Trust Barometer (2024): companies with a clear, authentic origin story score 33% higher on trust metrics.
 
@@ -270,7 +272,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
    - 1 paragraph connecting localshoring to the Sequoyah philosophy.
 
 6. **CTAs**
-   - Primary: "Meet the Team" -> `/about/team`
+   - Primary: "Meet the Team" -> `/team`
    - Secondary: "See Our Work" -> `/case-studies/`
 
 **Photography needed:**
@@ -290,7 +292,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
 
 ---
 
-### 3C. Leadership & Team Page (`/about/team`)
+### 3C. Leadership & Team Page (`/team`)
 
 **Purpose:** Put faces to the brand promise. Per Hinge Research Institute (2024 study of professional services firms): firms that prominently feature leadership bios and team photos generate 34% more inquiries than those with generic "about" pages.
 
@@ -362,8 +364,8 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
    - Photos: Candid shots — workshops, team events, office life, community events
 
 6. **CTAs**
-   - Primary: "Work With Us" -> `/contact/book-a-call`
-   - Secondary: "Join Our Team" -> `/about/careers`
+   - Primary: "Work With Us" -> `/contact`
+   - Secondary: "Join Our Team" -> `/careers` (not built; see CONTENT_NEEDS)
 
 **Photography requirements (highest priority on entire site):**
 
@@ -386,7 +388,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
 
 ---
 
-### 3D. The Localshoring Model (`/about/localshoring`)
+### 3D. The Localshoring Model (`/localshoring`)
 
 **Purpose:** Explain the differentiator. "Localshoring" is a coined term that requires education. This page does the heaviest lifting of any page on the site — it must turn an unfamiliar concept into a competitive advantage.
 
@@ -457,7 +459,7 @@ The About section is a trust funnel, not a brochure. Per Edelman Trust Barometer
 
 ---
 
-### 3E. Careers & Culture (`/about/careers`)
+### 3E. Careers & Culture (`/careers` — not built)
 
 **Purpose:** Attract talent and signal growth. Even without open roles, communicates a real, growing company. Per LinkedIn Talent Solutions (2024): 75% of candidates research a company's culture before applying. This page is also a trust signal for prospects — a company that invests in its people is more likely to invest in its clients.
 
@@ -492,7 +494,7 @@ The homepage is not a brochure — it's a routing mechanism. Per Nielsen Norman 
 | Stats bar              | 4 verified, consistent numbers                                     | Specific > round. Same numbers everywhere.                                       |
 | Service offering cards | 4 cards, one per peer offering, 2-sentence summaries               | Routes visitors to the right offering                                            |
 | Featured case study    | 1 highlighted with headline outcome metric                         | Social proof in the consideration zone                                           |
-| Sequoyah brand teaser  | 2-3 sentences + link to /about                                     | Differentiation hook — no other firm has this story                              |
+| Sequoyah brand teaser  | 2-3 sentences + link to /our-story                                 | Differentiation hook — no other firm has this story                              |
 | Client logo bar        | 6-8 logos with "Trusted by" label                                  | Place ABOVE the fold or immediately below hero (per NN/g)                        |
 | Testimonials           | 2-3 with full attribution                                          | Full attribution required — see Section 6                                        |
 | Touchstone teaser      | 3-sentence preview + link                                          | Middle-of-funnel entry point                                                     |

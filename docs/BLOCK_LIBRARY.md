@@ -394,13 +394,13 @@ Frontend emits `FAQPage` JSON-LD automatically.
 
 #### `brand-teaser` — Sequoyah story teaser (homepage)
 
-| Field       | Type     | Required | Notes                                                        |
-| ----------- | -------- | -------- | ------------------------------------------------------------ |
-| `headline`  | text     | yes      |                                                              |
-| `body`      | textarea | yes      | 2-3 sentences                                                |
-| `linkLabel` | text     | yes      |                                                              |
-| `linkUrl`   | text     | yes      | Default `/about` (the story lives on the flat `/about` Page) |
-| `image`     | upload   | no       |                                                              |
+| Field       | Type     | Required | Notes                                                                |
+| ----------- | -------- | -------- | -------------------------------------------------------------------- |
+| `headline`  | text     | yes      |                                                                      |
+| `body`      | textarea | yes      | 2-3 sentences                                                        |
+| `linkLabel` | text     | yes      |                                                                      |
+| `linkUrl`   | text     | yes      | Default `/our-story` (the story lives on the flat `/our-story` Page) |
+| `image`     | upload   | no       |                                                                      |
 
 #### `nav-cards` — 3-up navigation cards (about landing)
 

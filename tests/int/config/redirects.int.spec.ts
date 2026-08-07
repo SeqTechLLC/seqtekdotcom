@@ -13,6 +13,8 @@ import { redirectMap } from '../../../src/lib/redirects'
 // excluded — a self-redirect is a loop, not a redirect).
 const EXPECTED_SOURCES = [
   '/about-us-1',
+  // Internal route→route 301 from the About → Our Story rename.
+  '/about',
   '/our-services',
   '/touchstone-workshops',
   '/touchstone-workshops/:slug*',

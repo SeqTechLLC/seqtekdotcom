@@ -11,7 +11,11 @@ import type { Redirect } from 'next/dist/lib/load-custom-routes'
 // to itself is a loop, not a redirect — those URLs simply don't change.
 
 export const redirectMap: Redirect[] = [
-  { source: '/about-us-1', destination: '/about', permanent: true },
+  { source: '/about-us-1', destination: '/our-story', permanent: true },
+  // "About" and "Our Story" were one page under two names; the page is now
+  // /our-story everywhere (nav, title, slug). Internal route→route 301 so old
+  // /about links, bookmarks, and any indexed URL survive the rename.
+  { source: '/about', destination: '/our-story', permanent: true },
   { source: '/our-services', destination: '/services', permanent: true },
   // Old-Wix `/workshops` is now an identity (the canonical route IS
   // /workshops since the 2026-06-11 IA correction: ONE Touchstone workshop
