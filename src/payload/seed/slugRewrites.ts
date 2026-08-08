@@ -20,10 +20,9 @@ export const slugRewrites: Readonly<Record<string, string>> = Object.freeze({
   'our-services': 'services',
   workshops: 'touchstone-workshops',
   'blog-old': 'insights',
-  // Routing prefix (`/resources/`) is applied by the URL builder; the stored
-  // slug must satisfy `validateSlug` (^[a-z0-9]+(?:-[a-z0-9]+)*$). The
-  // INTEGRATIONS.md §9 redirect still points at `/resources/...`.
-  'organizational-strategy-1-5': 'organizational-maturity-assessment',
+  // No entry for `organizational-strategy-1-5` (the Wix "Assessment" page): the
+  // maturity assessment was retired 2026-08-08, so there is no canonical slug to
+  // rewrite to. Its 301 now lands on /workshops (see src/lib/redirects.ts).
 })
 
 /** Strip scheme, host, leading/trailing slashes from a URL or path. */

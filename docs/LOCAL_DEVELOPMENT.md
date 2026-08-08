@@ -69,7 +69,6 @@ Copy `.env.example` to `.env.local` and fill in the values below. Only two are r
 | `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3100` | Used for canonical URLs and OG meta tags                                                                                                     |
 | `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | _(empty)_               | HubSpot forms won't render without this, which is fine for dev                                                                               |
 | `NEXT_PUBLIC_GTM_ID`            | _(empty)_               | GTM won't load without this, which is fine for dev                                                                                           |
-| `NEXT_PUBLIC_SCOREAPP_URL`      | _(empty)_               | Assessment link won't work, which is fine for dev                                                                                            |
 
 ### What's NOT in .env.local
 

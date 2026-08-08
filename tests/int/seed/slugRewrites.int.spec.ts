@@ -65,7 +65,6 @@ describe('slug rewrites (T093 / FR-031)', () => {
     const slugRe = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
     for (const target of [
       'mobile-apps-remote-operations',
-      'organizational-maturity-assessment',
       'our-story',
       'touchstone-workshops',
       'insights',
