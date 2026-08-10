@@ -7,6 +7,7 @@
 | 1   | [Stand up a fresh AWS account](#1-stand-up-a-fresh-aws-account)                             | New account, nothing exists yet       |
 | 2   | [Migrate an environment to another account](#2-migrate-an-environment-to-another-account)   | Moving a running env to a new account |
 | 3   | [Cut `seqtek.com` over to prod](#3-cut-seqtekcom-over-to-prod)                              | Launch                                |
+| 4   | [Post-change verification](#4-post-change-verification)                                     | After any of the above                |
 | 5   | [Hand-off when you don't own the account](#5-hand-off-when-you-dont-own-the-target-account) | Someone else holds AWS admin          |
 
 Design rationale lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) (§ Promotion model,
@@ -78,9 +79,10 @@ the first prod deploy, because the prod OIDC trust pins that environment name.
 ```sh
 REPO=SeqTechLLC/seqtekdotcom
 
+# -F (not -f) so the booleans are sent as JSON true/false rather than strings.
 gh api -X PUT "repos/$REPO/environments/production" \
-  -f 'deployment_branch_policy[protected_branches]=false' \
-  -f 'deployment_branch_policy[custom_branch_policies]=true'
+  -F 'deployment_branch_policy[protected_branches]=false' \
+  -F 'deployment_branch_policy[custom_branch_policies]=true'
 
 # Who may deploy to production. This is what replaces the git-ref pin that used
 # to live in the OIDC trust policy:
@@ -93,8 +95,23 @@ gh api -X POST "repos/$REPO/environments/production/deployment-branch-policies" 
   -f name='main' -f type=branch
 ```
 
-Consider adding required reviewers on `production` — without them, anyone with
-`write` can dispatch a production deploy.
+Then mark the environment configured, which `deploy.yml` checks before any prod
+deploy and **fails closed** without:
+
+```sh
+gh api -X PATCH "repos/$REPO/environments/production/variables/PROD_ENVIRONMENT_CONFIGURED" \
+  -f name=PROD_ENVIRONMENT_CONFIGURED -f value=true 2>/dev/null \
+  || gh api -X POST "repos/$REPO/environments/production/variables" \
+       -f name=PROD_ENVIRONMENT_CONFIGURED -f value=true
+```
+
+This exists because GitHub **auto-creates** an environment a workflow references
+but that does not exist — with no protection rules at all. Without the flag, the
+first prod deploy would silently self-provision an ungated environment that the
+OIDC trust then happily matches.
+
+Consider adding required reviewers on `production` too — without them, anyone
+with `write` can dispatch a production deploy.
 
 - On **each** environment add a variable `AWS_ACCOUNT_ID` = that environment's
   account id. Environment-scoped, so staging and prod can live in different

@@ -45,9 +45,15 @@ on:
       - README.md
       - CLAUDE.md
       - LICENSE
-  # Production. Fires when Release-Please's release PR is merged and it
-  # publishes the `vX.Y.Z` release. `types: [published]` covers both a normal
-  # release and a draft being published later.
+  # Production, for releases published by a HUMAN from the UI.
+  #
+  # This trigger does NOT catch Release-Please's own releases: that action runs
+  # as the default GITHUB_TOKEN, and GitHub does not create workflow runs from
+  # events raised by GITHUB_TOKEN. Relying on it alone leaves the production
+  # path inert with nothing to show for it — no failed run, no notification.
+  # `release-please.yml` therefore dispatches this workflow explicitly after
+  # cutting a release (workflow_dispatch is one of the two documented exceptions
+  # to the GITHUB_TOKEN rule). Both routes land on the same job.
   release:
     types: [published]
   workflow_dispatch:
@@ -115,6 +121,30 @@ jobs:
         ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'SeqtekProd' ||
         'SeqtekStaging' }}${{ github.event.inputs.stack-filter || '*Compute' }}
     steps:
+      # FAIL CLOSED on an unconfigured production environment.
+      #
+      # GitHub auto-creates an environment that a workflow references but that
+      # does not exist — with no protection rules and no secrets. Since the prod
+      # OIDC trust now pins `environment:production` rather than a git ref, that
+      # auto-created environment would satisfy the trust and deploy completely
+      # ungated. The old ref pin at least failed closed; this restores that
+      # property from inside the repo, where it can't be forgotten.
+      #
+      # Set `PROD_ENVIRONMENT_CONFIGURED=true` as a variable ON the production
+      # environment once its deployment branch/tag policies (and reviewers, if
+      # any) are in place — docs/INFRASTRUCTURE_RUNBOOK.md §1.2.
+      - name: Refuse an unconfigured production environment
+        if: ${{ env.ENV_NAME == 'prod' }}
+        run: |
+          if [ "${{ vars.PROD_ENVIRONMENT_CONFIGURED }}" != "true" ]; then
+            echo "::error::The 'production' GitHub Environment is not configured."
+            echo "::error::Set its deployment branch/tag policies, then set the"
+            echo "::error::variable PROD_ENVIRONMENT_CONFIGURED=true on that"
+            echo "::error::environment. See docs/INFRASTRUCTURE_RUNBOOK.md §1.2."
+            exit 1
+          fi
+          echo "production environment reports configured."
+
       # On a release, build the TAGGED commit, not whatever main has drifted
       # to since the release PR merged.
       - uses: actions/checkout@v4
@@ -164,9 +194,16 @@ jobs:
           platforms: linux/amd64
           push: true
           provenance: false
+          # `:latest-<env>`, never a bare `:latest`. The ECR repository is
+          # SHARED between environments (staging creates it, prod imports it by
+          # name) and the ASG UserData pulls the env-scoped tag — so a bare
+          # moving tag, rewritten by every staging merge, would be picked up by
+          # production on its next instance replacement, scale-out or refresh.
+          # Scoping it is what makes "merging to main does not touch production"
+          # true at the image layer and not only at the trigger layer.
           tags: |
             ${{ steps.img.outputs.image }}:${{ steps.img.outputs.sha-tag }}
-            ${{ steps.img.outputs.image }}:latest
+            ${{ steps.img.outputs.image }}:latest-${{ env.ENV_NAME }}
             ${{ steps.img.outputs.version-tag != '' && format('{0}:{1}', steps.img.outputs.image, steps.img.outputs.version-tag) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

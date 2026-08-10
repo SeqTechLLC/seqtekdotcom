@@ -275,10 +275,15 @@ export class ComputeStack extends Stack {
       `echo "REVALIDATION_SECRET=$REVALIDATION_SECRET" >> /etc/seqtek-website.env`,
       // ----- Pull and run the container image -----
       `aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${this.ecrRepository.repositoryUri}"`,
-      `docker pull "${this.ecrRepository.repositoryUri}:latest"`,
+      // Env-scoped moving tag, NOT bare `:latest`. The ECR repository is shared
+      // (staging creates it, prod imports it by name), so a bare `:latest` is
+      // written by every staging merge — production would then pull a staging
+      // build on its next instance replacement, scale-out, or refresh. That is
+      // silent: nothing fails, prod just quietly starts serving main.
+      `docker pull "${this.ecrRepository.repositoryUri}:latest-${envName}"`,
       // Mount the RDS CA bundle read-only at the same path the env var
       // references. -v /host:/container:ro for read-only.
-      `docker run -d --name seqtek-website --restart=unless-stopped -p ${APP_PORT}:${APP_PORT} --env-file /etc/seqtek-website.env -v /etc/seqtek/certs/rds-ca.pem:/etc/seqtek/certs/rds-ca.pem:ro --log-driver=awslogs --log-opt awslogs-group="${this.appLogGroup.logGroupName}" --log-opt awslogs-region="${this.region}" "${this.ecrRepository.repositoryUri}:latest"`,
+      `docker run -d --name seqtek-website --restart=unless-stopped -p ${APP_PORT}:${APP_PORT} --env-file /etc/seqtek-website.env -v /etc/seqtek/certs/rds-ca.pem:/etc/seqtek/certs/rds-ca.pem:ro --log-driver=awslogs --log-opt awslogs-group="${this.appLogGroup.logGroupName}" --log-opt awslogs-region="${this.region}" "${this.ecrRepository.repositoryUri}:latest-${envName}"`,
     )
 
     // ----- Explicit LaunchTemplate -----

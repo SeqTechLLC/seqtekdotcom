@@ -673,9 +673,13 @@ published**, which is the deliberate human gate on going live.
 | Trigger                         | Deploys to        | Site                 | Stacks           |
 | ------------------------------- | ----------------- | -------------------- | ---------------- |
 | Merge (push) to `main`          | **Staging / UAT** | `seqtek-preview.com` | `SeqtekStaging*` |
-| Publish a `vX.Y.Z` release      | **Production**    | `seqtek.com`         | `SeqtekProd*`    |
+| Publish a `vX.Y.Z` release      | **Production**    | CloudFront URL†      | `SeqtekProd*`    |
 | `workflow_dispatch` (env input) | either — manual   | —                    | either           |
 | Feature branches                | nothing (CI only) | local dev            | —                |
+
+† Production runs on its CloudFront distribution URL until the `seqtek.com`
+cutover — `infra/cdk.json` deliberately has prod `domainName: null` (see
+`docs/INFRASTRUCTURE_RUNBOOK.md` §3).
 
 The release tag is `vX.Y.Z` — `include-v-in-tag: true`,
 `include-component-in-tag: false` in `release-please-config.json`. Release-Please
@@ -694,16 +698,29 @@ deploy without cutting a version.
 
 Each environment is a **complete, independent stack set** — its own VPC, ASG,
 ALB, RDS instance, S3 media bucket, CloudFront distribution and SSM parameter
-tree, named by `stackName()` (`SeqtekStaging*` / `SeqtekProd*`). They share
-nothing. Prod is **not** a logical database on a staging RDS instance, and there
-is no `staging` branch.
+tree, named by `stackName()` (`SeqtekStaging*` / `SeqtekProd*`). Prod is **not**
+a logical database on a staging RDS instance, and there is no `staging` branch.
 
-The two environments may live in **different AWS accounts**. Nothing in the CDK
-hardcodes an account: `stackEnv()` takes it from `CDK_DEFAULT_ACCOUNT`, the
-GitHub OIDC deploy role derives from `stack.account`, and `deploy.yml` resolves
-`vars.AWS_ACCOUNT_ID` from the GitHub **Environment** (`staging` / `production`)
-rather than the repo-level variable. Pointing an environment at a different
-account is a variable change plus a CDK bootstrap, not a code change.
+**Both environments currently live in one AWS account, and two things are
+genuinely shared across them:**
+
+| Shared resource      | How                                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| ECR repository       | staging **creates** `seqtek-website`; prod **imports** it by name (`compute-stack.ts`) |
+| GitHub OIDC provider | prod's NetworkStack **creates** it; staging **imports** it at `${AWS::AccountId}`      |
+
+Because the ECR repository is shared, the image tag is the isolation boundary:
+the ASG pulls `:latest-<env>`, never a bare `:latest`, so a staging build cannot
+reach production. Do not reintroduce an unscoped moving tag.
+
+**Splitting the environments across two AWS accounts is a code change, not just
+configuration.** `stackEnv()` does read `CDK_DEFAULT_ACCOUNT`, the deploy role
+derives from `stack.account`, and `deploy.yml` resolves `vars.AWS_ACCOUNT_ID`
+per GitHub Environment — but both shared resources above resolve in the _stack's
+own_ account. In a separate prod account nothing would create the ECR repository
+(the ASG could not pull), and staging would import an OIDC provider that no stack
+creates. Both fail silently at deploy or assume-role time. Splitting accounts
+requires making that creation conditional on account divergence first.
 
 Local development runs against a local Postgres via Docker Compose — no VPN, no
 RDS credentials, no risk to a deployed environment.

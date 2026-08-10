@@ -87,7 +87,7 @@ permissions:
 **Required**:
 
 - Repository variable `AWS_ACCOUNT_ID`
-- AWS role `SeqtekProdDeploy` (trust policy pinned to `ref:refs/heads/main`)
+- AWS role `SeqtekProdDeploy` (trust policy pinned to `environment:production` — NOT a git ref; a job declaring `environment:` gets the environment in the OIDC `sub` claim in place of the ref, so a ref pin can never match. Which refs may deploy is enforced by the `production` Environment's deployment branch/tag policies.)
 - GitHub Environment `production` with required reviewers gate on the `workflow_dispatch` path for non-compute stacks (CloudFormation change-set acts as the diff; reviewers approve the GitHub environment promotion)
 
 **Concurrency**:
@@ -162,7 +162,8 @@ new iam.Role(this, 'ProdDeployRole', {
       'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
     },
     StringLike: {
-      'token.actions.githubusercontent.com:sub': 'repo:SeqTechLLC/seqtekdotcom:ref:refs/heads/main',
+      'token.actions.githubusercontent.com:sub':
+        'repo:SeqTechLLC/seqtekdotcom:environment:production',
     },
   }),
   maxSessionDuration: cdk.Duration.hours(1),

@@ -196,6 +196,22 @@ describe('ComputeStack', () => {
       t.resourceCountIs('AWS::ECR::Repository', 0)
     })
 
+    it('pulls the env-scoped image tag, never a bare :latest', () => {
+      // The ECR repository is SHARED — staging creates it, prod imports it by
+      // name (asserted directly above). So the image tag is the only thing
+      // isolating the two environments: a bare `:latest` is rewritten by every
+      // staging merge, and production would pull that staging build on its next
+      // instance replacement, scale-out or refresh. Nothing fails; prod just
+      // quietly starts serving main. Guarded here because the regression is
+      // invisible in a diff and invisible at deploy time.
+      const launchTemplates = t.findResources('AWS::EC2::LaunchTemplate')
+      const userData = JSON.stringify(Object.values(launchTemplates))
+      expect(userData).toContain(':latest-prod')
+      // No bare `:latest` immediately followed by a quote/space — that would be
+      // the unscoped tag. `:latest-prod` must not match, hence the boundary.
+      expect(/:latest(?![-\w])/.test(userData)).toBe(false)
+    })
+
     it('ASG min/desired/max = 2/2/3 with min-in-service = 2', () => {
       t.hasResource('AWS::AutoScaling::AutoScalingGroup', {
         Properties: Match.objectLike({
