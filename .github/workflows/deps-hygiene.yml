@@ -1,24 +1,33 @@
 name: Dependency hygiene
 
-# Weekly check for `package.json#overrides` entries that have gone stale — an
-# override is stale once removing it no longer introduces a high+ production
-# advisory beyond the current baseline (i.e. the upstream dependency shipped a
-# fix and the pin is now dead weight). Runs `tools/check-stale-overrides`, then
-# opens / updates / closes a SINGLE tracking issue labelled `deps-hygiene` so
-# the signal surfaces without blocking anyone.
+# This file holds BOTH scheduled dependency reporters:
 #
-# This is a reporter, not a gate: the per-PR audit gate (the `quality` job in
-# ci.yml, `npm audit --omit=dev --audit-level=high`) is what actually blocks
-# merges. This job only nudges us to prune overrides that have outlived their
-# advisory.
+#   check-overrides (weekly) — flag `package.json#overrides` entries that have
+#     gone stale. An override is stale once removing it no longer introduces a
+#     high+ production advisory beyond the current baseline (i.e. upstream
+#     shipped a fix and the pin is now dead weight). Runs
+#     `tools/check-stale-overrides` and drives a `deps-hygiene` tracking issue.
+#   audit-main (daily) — the ABSOLUTE production audit of the default branch.
+#     This is the other half of the per-PR gate in ci.yml. That gate is
+#     differential: it fails a PR only for advisories the PR itself introduces,
+#     so an advisory published against a dependency already on main does not
+#     block unrelated work. Something still has to notice those, loudly, or main
+#     rots silently — this job is that something. If you ever make the PR gate
+#     absolute again, this job becomes redundant; until then it is load-bearing.
+#
+# Both are reporters, not gates: they open / update / close a tracking issue
+# rather than failing anyone's build.
 #
 # Note: `schedule` and `workflow_dispatch` only fire from the default branch, so
 # this stays dormant until merged to `main`.
 
 on:
   schedule:
-    # Mondays 14:00 UTC (~09:00 CT) — start of week, low-noise.
+    # Mondays 14:00 UTC (~09:00 CT) — start of week, low-noise. Overrides only.
     - cron: '0 14 * * 1'
+    # Daily 13:00 UTC (~08:00 CT) — the security audit. Advisories are published
+    # continuously, so this one can't wait for Monday.
+    - cron: '0 13 * * *'
   workflow_dispatch:
 
 # Opt action runtimes into Node 24 ahead of the June 2026 default switch
@@ -39,6 +48,10 @@ jobs:
   check-overrides:
     name: Check stale dependency overrides
     runs-on: ubuntu-latest
+    # Weekly cron + manual only. The daily cron is for the security audit; the
+    # override scan resolves a throwaway lockfile per override and is far too
+    # expensive to run every day for a signal that moves this slowly.
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 14 * * 1'
     steps:
       - uses: actions/checkout@v4
 
@@ -100,5 +113,73 @@ jobs:
               echo "Closed tracking issue #$EXISTING (no stale overrides)"
             else
               echo "No stale overrides and no open tracking issue — nothing to do."
+            fi
+          fi
+
+  audit-main:
+    name: Production audit (default branch)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # No `npm ci` — audit-diff resolves and audits in a throwaway temp dir
+      # seeded from package.json + package-lock.json, so the repo's node_modules
+      # is never read. It just needs npm + registry access.
+      - name: Audit production dependencies
+        # --absolute: report on this tree alone, exit 0. The exit code drives
+        # nothing; the report drives the tracking issue.
+        run: node tools/audit-diff/audit-diff.mjs --absolute --out-dir "$RUNNER_TEMP"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-audit-report
+          path: |
+            ${{ runner.temp }}/audit.json
+            ${{ runner.temp }}/audit.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Open / update / close tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUDIT_JSON: ${{ runner.temp }}/audit.json
+          AUDIT_MD: ${{ runner.temp }}/audit.md
+        run: |
+          set -euo pipefail
+          LABEL="security-audit"
+          COUNT=$(jq '.advisories | length' "$AUDIT_JSON")
+          echo "High+ production advisories on the default branch: $COUNT"
+
+          # Idempotently ensure the tracking label exists.
+          gh label create "$LABEL" \
+            --color B60205 \
+            --description "High+ production advisories on main (deps-hygiene.yml)" \
+            --force
+
+          EXISTING=$(gh issue list --label "$LABEL" --state open --json number --jq '.[0].number // empty')
+
+          if [ "$COUNT" -gt 0 ]; then
+            TITLE="Security: $COUNT high+ production advisory(ies) on main"
+            if [ -n "$EXISTING" ]; then
+              gh issue edit "$EXISTING" --title "$TITLE" --body-file "$AUDIT_MD"
+              echo "Updated tracking issue #$EXISTING"
+            else
+              gh issue create --title "$TITLE" --label "$LABEL" --body-file "$AUDIT_MD"
+              echo "Opened tracking issue"
+            fi
+          else
+            if [ -n "$EXISTING" ]; then
+              gh issue comment "$EXISTING" --body "The production dependency tree is clean again — no high or critical advisories this run. Closing. (deps-hygiene.yml)"
+              gh issue close "$EXISTING"
+              echo "Closed tracking issue #$EXISTING (audit clean)"
+            else
+              echo "Audit clean and no open tracking issue — nothing to do."
             fi
           fi

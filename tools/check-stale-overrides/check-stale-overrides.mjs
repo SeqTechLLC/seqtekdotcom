@@ -55,7 +55,6 @@
  *   --fail-on-stale    exit 1 when any stale override is found (default: exit 0)
  */
 
-import { spawnSync } from 'node:child_process'
 import {
   readFileSync,
   writeFileSync,
@@ -69,12 +68,13 @@ import { dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
+import { npm, extractAdvisories, isHighPlus, AUDIT_GATE } from '../npm-audit/audit.mjs'
+
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(SCRIPT_DIR, '..', '..')
 const PKG_PATH = join(REPO_ROOT, 'package.json')
 const LOCK_PATH = join(REPO_ROOT, 'package-lock.json')
 const NPMRC_PATH = join(REPO_ROOT, '.npmrc')
-const AUDIT_GATE = 'npm audit --omit=dev --audit-level=high'
 
 // ---- args --------------------------------------------------------------
 
@@ -101,12 +101,6 @@ function parseArgs(argv) {
 /** @param {string} msg */
 function log(msg) {
   process.stderr.write(`${msg}\n`)
-}
-
-/** Run npm in `cwd`, capturing output without throwing. */
-function npm(args, cwd) {
-  const res = spawnSync('npm', args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
-  return { status: res.status ?? 1, stdout: res.stdout ?? '', stderr: res.stderr ?? '' }
 }
 
 /**
@@ -144,32 +138,6 @@ function withoutOverrides(overrides, paths) {
   }
   return clone
 }
-
-/** Deduped advisories (any severity) from `npm audit --json`.
- * @returns {Array<{id, name, title, url, severity, range}>} */
-function extractAdvisories(auditJson) {
-  const found = new Map()
-  for (const entry of Object.values(auditJson?.vulnerabilities ?? {})) {
-    for (const via of entry?.via ?? []) {
-      if (via && typeof via === 'object' && via.title) {
-        const id = via.url || `${via.name}:${via.title}`
-        if (!found.has(id)) {
-          found.set(id, {
-            id,
-            name: via.name,
-            title: via.title,
-            url: via.url ?? null,
-            severity: via.severity ?? entry.severity ?? 'unknown',
-            range: via.range ?? null,
-          })
-        }
-      }
-    }
-  }
-  return [...found.values()]
-}
-
-const isHighPlus = (a) => a.severity === 'high' || a.severity === 'critical'
 
 /**
  * Resolve + audit a scenario in an isolated temp dir. `removedPaths` is the set

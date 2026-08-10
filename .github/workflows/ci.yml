@@ -111,8 +111,30 @@ jobs:
       - name: Format check
         run: npm run format:check
 
-      - name: Audit production dependencies (high+ severity)
-        run: npm audit --omit=dev --audit-level=high
+      # The base commit only — `actions/checkout` clones shallow, so the base
+      # ref the differential audit compares against isn't present otherwise.
+      # `git show <sha>:package-lock.json` is all audit-diff needs from it.
+      - name: Fetch PR base commit (for the differential audit)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git fetch --no-tags --depth=1 origin "$BASE_SHA"
+
+      # Differential, NOT absolute: fails only on high+ production advisories
+      # this PR introduces relative to its base. `npm audit` reads LIVE advisory
+      # data, so an absolute gate here failed open PRs whenever an unrelated
+      # advisory was published overnight — three PRs in one week (#88, #89, #90)
+      # were blocked by dependencies they never touched.
+      #
+      # Advisories already on the base branch are reported and allowed through.
+      # They are main's problem, and they are tracked by the scheduled audit in
+      # deps-hygiene.yml, which files an issue. PR CI gates the diff; the
+      # schedule gates the repo. Do not delete one without the other, or main
+      # rots silently. audit-diff fails CLOSED (falls back to the absolute gate)
+      # if the base side can't be established.
+      - name: Audit production dependencies (new advisories only)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node tools/audit-diff/audit-diff.mjs --base "$BASE_SHA"
 
   lint-workflows:
     name: Workflows lint (actionlint)
