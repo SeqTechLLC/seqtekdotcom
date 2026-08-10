@@ -100,8 +100,6 @@ export const navigation: Navigation = {
         { label: 'Case Studies', url: '/case-studies' },
         { label: 'Insights', url: '/insights' },
         { label: 'Workshops', url: '/workshops' },
-        // TODO(stub): /resources/organizational-maturity-assessment (ScoreApp)
-        // is not built — re-add when the assessment page ships (CONTENT_NEEDS §5).
       ],
     },
     {

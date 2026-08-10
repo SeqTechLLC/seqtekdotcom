@@ -585,10 +585,6 @@ The retired `/services/[pillar]/[slug]` pillar→detail IA (the two rows that us
 
 `<Hero>` → `<Prose>` (description) → agenda block → `<Deliverables>` → `<Prose>` (audience) → facilitator bio → `<TestimonialSingle>` → `<CtaSection>`
 
-### Assessment landing (`/resources/organizational-maturity-assessment`)
-
-`<Hero>` → `<Prose>` (what it measures with dimension visual) → `<ProcessSteps>` (what you get back) → `<StatsBar>` (social proof) → privacy note → `<CtaSection>` (external link to ScoreApp)
-
 ### Contact (`pages`)
 
 `<Hero>` → `<HubspotForm>` → office details → `<CtaSection>` (book a call alternative)

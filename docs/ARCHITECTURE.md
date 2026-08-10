@@ -308,27 +308,26 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 
 **Fallback revalidation:** Time-based ISR acts as a safety net in case the on-demand hook fails. Set conservatively — not for freshness, just for resilience.
 
-| Route                                           | Strategy       | Fallback Revalidate | Notes                                                                               |
-| ----------------------------------------------- | -------------- | ------------------- | ----------------------------------------------------------------------------------- |
-| `/`                                             | ISR            | 3600s (1hr)         | Homepage — changes infrequently                                                     |
-| `/[slug]`                                       | ISR            | 3600s               | Catch-all for block-composed `pages` (About, localshoring, etc.)                    |
-| `/services`                                     | ISR            | 3600s               | Overview — `pages` record, slug `service-overview`                                  |
-| `/services/[offering]`                          | ISR            | 3600s               | Four-offering IA — each offering a `pages` record by slug                           |
-| `/case-studies`                                 | ISR            | 3600s               | Listing                                                                             |
-| `/case-studies/[slug]`                          | ISR            | 3600s               | Individual case studies                                                             |
-| `/insights`                                     | ISR            | 3600s               | Blog listing                                                                        |
-| `/insights/[slug]`                              | ISR            | 3600s               | Individual posts                                                                    |
-| `/workshops`                                    | ISR            | 3600s               | Workshop landing                                                                    |
-| `/workshops/[slug]`                             | ISR            | 3600s               | Individual workshops                                                                |
-| `/team`                                         | ISR            | 3600s               | Team listing (spec 004 US3)                                                         |
-| `/team/[slug]`                                  | ISR            | 3600s               | Team member detail (block-composed)                                                 |
-| `/contact`                                      | Static         | N/A                 | Form is client-side (HubSpot)                                                       |
-| `/resources/organizational-maturity-assessment` | —              | N/A                 | ScoreApp — **planned, route not built** (footer link removed; see CONTENT_NEEDS §9) |
-| `/privacy-policy`                               | ISR            | 86400s (24hr)       |                                                                                     |
-| `/admin/[[...segments]]`                        | SSR (no cache) | N/A                 | Payload admin panel — authenticated only                                            |
-| `/api/*`                                        | SSR            | N/A                 | Payload API routes + webhook handlers                                               |
-| `/sitemap.xml`                                  | ISR            | 3600s               | Dynamic from Payload content                                                        |
-| `/robots.txt`                                   | Static         | N/A                 |                                                                                     |
+| Route                    | Strategy       | Fallback Revalidate | Notes                                                            |
+| ------------------------ | -------------- | ------------------- | ---------------------------------------------------------------- |
+| `/`                      | ISR            | 3600s (1hr)         | Homepage — changes infrequently                                  |
+| `/[slug]`                | ISR            | 3600s               | Catch-all for block-composed `pages` (About, localshoring, etc.) |
+| `/services`              | ISR            | 3600s               | Overview — `pages` record, slug `service-overview`               |
+| `/services/[offering]`   | ISR            | 3600s               | Four-offering IA — each offering a `pages` record by slug        |
+| `/case-studies`          | ISR            | 3600s               | Listing                                                          |
+| `/case-studies/[slug]`   | ISR            | 3600s               | Individual case studies                                          |
+| `/insights`              | ISR            | 3600s               | Blog listing                                                     |
+| `/insights/[slug]`       | ISR            | 3600s               | Individual posts                                                 |
+| `/workshops`             | ISR            | 3600s               | Workshop landing                                                 |
+| `/workshops/[slug]`      | ISR            | 3600s               | Individual workshops                                             |
+| `/team`                  | ISR            | 3600s               | Team listing (spec 004 US3)                                      |
+| `/team/[slug]`           | ISR            | 3600s               | Team member detail (block-composed)                              |
+| `/contact`               | Static         | N/A                 | Form is client-side (HubSpot)                                    |
+| `/privacy-policy`        | ISR            | 86400s (24hr)       |                                                                  |
+| `/admin/[[...segments]]` | SSR (no cache) | N/A                 | Payload admin panel — authenticated only                         |
+| `/api/*`                 | SSR            | N/A                 | Payload API routes + webhook handlers                            |
+| `/sitemap.xml`           | ISR            | 3600s               | Dynamic from Payload content                                     |
+| `/robots.txt`            | Static         | N/A                 |                                                                  |
 
 > **"ISR" here means ISR _data_ caching, not static prerender (spec 004 / ADR 0005).** The public render routes are dynamically rendered (`ƒ`) because the shared layout reads the per-request CSP nonce via `headers()`, which forces dynamic rendering. Page DATA still flows through `unstable_cache` readers (`revalidate = 3600` + on-demand tag invalidation), so the 1h fallback + instant-on-publish behavior in the table holds; only the HTML render is per-request (required for the nonce). `generateStaticParams` is intentionally not used on the detail routes.
 
@@ -734,7 +733,6 @@ All secrets and configuration are managed via environment variables, never commi
 | `NEXT_PUBLIC_SITE_URL`          | Client | Public         | Canonical URL (`https://seqtek.com`)                                    |
 | `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | Client | Public         | HubSpot portal (8504846)                                                |
 | `NEXT_PUBLIC_GTM_ID`            | Client | Public         | GTM container ID                                                        |
-| `NEXT_PUBLIC_SCOREAPP_URL`      | Client | Public         | ScoreApp assessment URL                                                 |
 
 **S3 authentication:** No static AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`). The EC2 instance profile provides S3 access via IAM role. The container reaches the instance metadata service (IMDSv2, hop limit 2) to auto-discover and auto-rotate credentials. Payload's S3 storage adapter uses the default AWS credential chain — no configuration needed beyond the bucket name and region.
 

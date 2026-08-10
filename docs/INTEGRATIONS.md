@@ -419,60 +419,39 @@ a coarse placement (`header`, `cta-section`, `contact-cta`, `inline`, …).
 that cannot fire until the placeholder `HubspotMeetings` component loads the real
 embed — mirrors the Meta-pixel deferral.
 
-**Not yet built (out of spec 008 scope):** `assessment_start` (ScoreApp — §3)
-and `newsletter_signup` (no newsletter form yet). Add them through the same
-emitter + union when those surfaces ship.
+**Not yet built (out of spec 008 scope):** `newsletter_signup` (no newsletter
+form yet). Add it through the same emitter + union when that surface ships.
+`assessment_start` was dropped with the maturity assessment (§3).
 
 ---
 
-## 3. ScoreApp Integration
+## 3. Organizational Maturity Assessment — RETIRED (2026-08-08)
 
-**Role:** External assessment/quiz tool replacing the defunct custom business-assessments app.
+**Status: killed. Not rebuilt, not replaced.** No code, route, env var, or GTM
+event remains; nothing below is actionable.
 
-### 3.1 Integration Approach
+**What it was.** The live Wix site exposed an "Assessment | SEQTEK" page at
+`/organizational-strategy-1-5`: a hand-built HTML/JS form injected through a Wix
+HtmlComponent iframe, posting to a **Make.com webhook**. Despite years of docs
+here describing it as ScoreApp, there was never a ScoreApp account behind it (the
+`seqtek.scoreapp.com` / `seqtechllc.scoreapp.com` vanity subdomains are
+unclaimed). The full 40-question instrument was recovered before retirement and
+is preserved in the gitignored `docs/content-drafts/organizational-maturity-assessment.md`,
+so the decision is reversible from a content standpoint.
 
-**Recommended: Dedicated landing page with external link.**
+**What retirement removed:**
 
-The `/resources/organizational-maturity-assessment` page serves as a conversion-optimized landing page that explains the assessment and links out to ScoreApp.
+- The planned `/resources/organizational-maturity-assessment` landing page,
+  along with the `/resources/*` route family (ARCHITECTURE §3) — never built.
+- `NEXT_PUBLIC_SCOREAPP_URL` — never referenced by code; dropped from the env
+  table.
+- The `assessment_start` GTM event (§2) — never emitted.
+- The footer/nav stub in `src/lib/site-content.ts`.
 
-**Page structure:**
-
-1. What the assessment measures
-2. What the user gets back (report format, insights)
-3. How long it takes
-4. Who it's for
-5. Social proof (how many have taken it, any results stats)
-6. CTA button -> ScoreApp URL (opens in new tab)
-
-**Environment variable:** `NEXT_PUBLIC_SCOREAPP_URL` — the ScoreApp assessment URL. Configurable without code changes.
-
-### 3.2 Alternative: ScoreApp Embed
-
-If ScoreApp provides an embed/iframe option:
-
-- Embed below the explanatory content on the landing page
-- Keeps users on-site
-- Trade-off: iframe styling conflicts, additional load time, mobile responsiveness depends on ScoreApp
-
-**Recommendation:** Start with the external link approach (simpler, more reliable). Switch to embed if the user experience warrants it after testing.
-
-### 3.3 ScoreApp + HubSpot Integration
-
-ScoreApp likely has a native HubSpot integration or webhook capability:
-
-- Assessment completions should create/update contacts in HubSpot
-- Assessment scores and results should be synced as contact properties
-- This is configured in ScoreApp's settings, not in the website code
-
-**Action required:** Review ScoreApp's HubSpot integration options and configure the data flow.
-
-### 3.4 Tracking
-
-When the "Take the Assessment" CTA is clicked:
-
-- Push `assessment_start` event to GTM dataLayer
-- GTM can fire conversion events on configured pixels
-- Track outbound click for attribution
+**Redirect.** `/organizational-strategy-1-5` used to 301 into the unbuilt
+`/resources/*` route, i.e. straight into a 404. It now 301s to `/workshops`,
+matching the rest of the organizational-strategy pillar, which already funnels
+there.
 
 ---
 
@@ -693,7 +672,6 @@ If SES is unreachable (network, throttle, regional outage), Payload's mailer log
 | `NEXT_PUBLIC_SITE_URL`                 | Canonical URL, OG tags     | `https://seqtek.com`                   |
 | `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`        | HubSpot portal             | `8504846`                              |
 | `NEXT_PUBLIC_GTM_ID`                   | GTM container              | `GTM-XXXXXXX`                          |
-| `NEXT_PUBLIC_SCOREAPP_URL`             | ScoreApp assessment URL    | `https://app.scoreapp.com/...`         |
 | `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`  | Contact form GUID          | HubSpot form ID                        |
 | `NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID` | Workshop Inquiry form GUID | `66dba2bf-f099-44d5-8c6e-f24292cefe53` |
 
@@ -725,7 +703,6 @@ SES_FROM_ADDRESS=
 NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_HUBSPOT_PORTAL_ID=
 NEXT_PUBLIC_GTM_ID=
-NEXT_PUBLIC_SCOREAPP_URL=
 NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=
 NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=
 ```
@@ -740,15 +717,14 @@ The authoritative CSP policy lives in [ARCHITECTURE.md §6](ARCHITECTURE.md#cont
 
 ### Hostnames Added by Each Integration
 
-| Integration                       | Directive     | Hosts                                                                                | Reason                                                                                           |
-| --------------------------------- | ------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| HubSpot tracking + analytics      | `connect-src` | `*.hubspot.com`, `*.hs-analytics.net`, `*.hs-banner.com`, `*.usemessages.com`        | Analytics beacons, banner config, chat                                                           |
-| HubSpot Forms API                 | `connect-src` | `*.hsforms.net`                                                                      | Custom form submissions                                                                          |
-| HubSpot forms / Meetings embeds   | `frame-src`   | `*.hubspot.com`, `*.hsforms.net`, `meetings.hubspot.com`, `*.hubspotusercontent.com` | Iframe embeds for Meetings (meetings.hubspot.com) + Meetings static assets + fallback form embed |
-| HubSpot form / chat imagery       | `img-src`     | `*.hubspot.com`, `*.hsforms.net`                                                     | Form field icons, chat assets                                                                    |
-| GTM + GA                          | `connect-src` | `*.googletagmanager.com`, `*.google-analytics.com`                                   | Container fetch, analytics beacons                                                               |
-| ScoreApp (only if iframe variant) | `frame-src`   | `*.scoreapp.com`                                                                     | Optional — omit if using outbound link (recommended; see §3.1)                                   |
-| Media (S3 / CloudFront)           | `img-src`     | Value of `S3_BUCKET_HOSTNAME` (or media CloudFront hostname in prod)                 | Payload-uploaded media                                                                           |
+| Integration                     | Directive     | Hosts                                                                                | Reason                                                                                           |
+| ------------------------------- | ------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| HubSpot tracking + analytics    | `connect-src` | `*.hubspot.com`, `*.hs-analytics.net`, `*.hs-banner.com`, `*.usemessages.com`        | Analytics beacons, banner config, chat                                                           |
+| HubSpot Forms API               | `connect-src` | `*.hsforms.net`                                                                      | Custom form submissions                                                                          |
+| HubSpot forms / Meetings embeds | `frame-src`   | `*.hubspot.com`, `*.hsforms.net`, `meetings.hubspot.com`, `*.hubspotusercontent.com` | Iframe embeds for Meetings (meetings.hubspot.com) + Meetings static assets + fallback form embed |
+| HubSpot form / chat imagery     | `img-src`     | `*.hubspot.com`, `*.hsforms.net`                                                     | Form field icons, chat assets                                                                    |
+| GTM + GA                        | `connect-src` | `*.googletagmanager.com`, `*.google-analytics.com`                                   | Container fetch, analytics beacons                                                               |
+| Media (S3 / CloudFront)         | `img-src`     | Value of `S3_BUCKET_HOSTNAME` (or media CloudFront hostname in prod)                 | Payload-uploaded media                                                                           |
 
 ### Implementation Notes
 
@@ -788,26 +764,26 @@ Note: ARCHITECTURE.md §6 CSP table should be kept in sync with this list — if
 
 All redirects configured in `next.config.ts` `redirects()`. These preserve any SEO value from the existing Wix URLs.
 
-| Source                                                  | Destination                                     | Permanent |
-| ------------------------------------------------------- | ----------------------------------------------- | --------- |
-| `/about-us-1`                                           | `/our-story`                                    | Yes       |
-| `/about`                                                | `/our-story`                                    | Yes       |
-| `/our-services`                                         | `/services`                                     | Yes       |
-| `/touchstone-workshops`, `/touchstone-workshops/:slug*` | `/workshops`, `/workshops/:slug*`               | Yes       |
-| `/blog-old`                                             | `/insights`                                     | Yes       |
-| `/blog-old/:path*`                                      | `/insights/:path*`                              | Yes       |
-| `/organizational-strategy-1-5`                          | `/resources/organizational-maturity-assessment` | Yes       |
-| `/organizational-strategy-1-1-1-3`                      | `/case-studies/airline-automation`              | Yes       |
-| `/organizational-strategy-1-1-1-3-1`                    | `/case-studies/oil-gas-modernization`           | Yes       |
-| `/organizational-strategy-1-1-1-3-1-1`                  | `/case-studies/banking-integration-platform`    | Yes       |
-| `/organizational-strategy-1-3-1-1-1`                    | `/case-studies`                                 | Yes       |
-| `/case-study-3`                                         | `/case-studies/mobile-apps-remote-operations`   | Yes       |
-| `/case-study-4`                                         | `/case-studies/retail-pos-update-experience`    | Yes       |
-| `/case-study-5`                                         | `/case-studies/data-warehouse-strategy`         | Yes       |
-| `/driving-innovation-case-study`                        | `/case-studies/healthcare-ux-redesign`          | Yes       |
-| `/modernizing-healthcare-case-study`                    | `/case-studies/healthcare-data-modernization`   | Yes       |
-| `/contact`                                              | `/contact`                                      | Yes       |
-| `/privacy-policy`                                       | `/privacy-policy`                               | Yes       |
+| Source                                                  | Destination                                   | Permanent |
+| ------------------------------------------------------- | --------------------------------------------- | --------- |
+| `/about-us-1`                                           | `/our-story`                                  | Yes       |
+| `/about`                                                | `/our-story`                                  | Yes       |
+| `/our-services`                                         | `/services`                                   | Yes       |
+| `/touchstone-workshops`, `/touchstone-workshops/:slug*` | `/workshops`, `/workshops/:slug*`             | Yes       |
+| `/blog-old`                                             | `/insights`                                   | Yes       |
+| `/blog-old/:path*`                                      | `/insights/:path*`                            | Yes       |
+| `/organizational-strategy-1-5`                          | `/workshops`                                  | Yes       |
+| `/organizational-strategy-1-1-1-3`                      | `/case-studies/airline-automation`            | Yes       |
+| `/organizational-strategy-1-1-1-3-1`                    | `/case-studies/oil-gas-modernization`         | Yes       |
+| `/organizational-strategy-1-1-1-3-1-1`                  | `/case-studies/banking-integration-platform`  | Yes       |
+| `/organizational-strategy-1-3-1-1-1`                    | `/case-studies`                               | Yes       |
+| `/case-study-3`                                         | `/case-studies/mobile-apps-remote-operations` | Yes       |
+| `/case-study-4`                                         | `/case-studies/retail-pos-update-experience`  | Yes       |
+| `/case-study-5`                                         | `/case-studies/data-warehouse-strategy`       | Yes       |
+| `/driving-innovation-case-study`                        | `/case-studies/healthcare-ux-redesign`        | Yes       |
+| `/modernizing-healthcare-case-study`                    | `/case-studies/healthcare-data-modernization` | Yes       |
+| `/contact`                                              | `/contact`                                    | Yes       |
+| `/privacy-policy`                                       | `/privacy-policy`                             | Yes       |
 
 ### 9.1 Internal route→route redirects (services restructure)
 
@@ -887,13 +863,6 @@ The loading order matters for performance and consent compliance.
 - [ ] Set up custom event triggers for dataLayer events
 - [ ] Test: pixels only fire after consent granted
 - [ ] Test: deny all actually blocks all non-essential tracking
-
-### ScoreApp
-
-- [ ] Confirm ScoreApp account and assessment URL
-- [ ] Review ScoreApp-HubSpot integration options
-- [ ] Configure assessment results to sync with HubSpot contacts
-- [ ] Test assessment flow end-to-end
 
 ### DNS & SSL
 
