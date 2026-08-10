@@ -25,6 +25,38 @@ export interface EnvConfig {
 
   ecrRetainCount: number
   logRetentionDays: number
+
+  /**
+   * Whether THIS environment's stacks create the account-wide GitHub OIDC
+   * provider. Exactly one environment per AWS ACCOUNT may own it — IAM allows
+   * a single provider per issuer URL — and every other environment in that
+   * account imports it.
+   *
+   * Same account for both envs (the layout today): prod `true`, staging
+   * `false`.
+   * Separate accounts: `true` on BOTH, because each account needs its own.
+   *
+   * Getting this wrong fails silently-ish in opposite directions: two owners in
+   * one account collide at CreateStack ("provider already exists"), while zero
+   * owners leaves a deploy role trusting a provider that does not exist —
+   * CloudFormation accepts that and every deploy then fails at assume-role.
+   */
+  ownsAccountOidcProvider: boolean
+
+  /**
+   * Whether THIS environment's stacks create the `seqtek-website` ECR
+   * repository. Exactly one environment per AWS ACCOUNT may create it (the name
+   * is unique per account); every other environment in that account imports it.
+   *
+   * Same account for both envs (the layout today): staging `true`, prod
+   * `false` — preserving the original behaviour exactly.
+   * Separate accounts: `true` on BOTH, because each account needs its own.
+   *
+   * Note the deliberate asymmetry with `ownsAccountOidcProvider` (prod owns
+   * that one). It is not tidiness — it is what the account already contains, and
+   * flipping either would mean destroying and recreating a live resource.
+   */
+  ownsAccountEcrRepository: boolean
 }
 
 export type EnvName = 'prod' | 'staging'
@@ -53,7 +85,7 @@ export function validateEnvConfig(env: EnvName, cfg: EnvConfig): void {
   }
   if (cfg.asgMaxCapacity < cfg.asgDesiredCapacity + 1) {
     throw new Error(
-      `${prefix}.asgMaxCapacity (${cfg.asgMaxCapacity}) must be >= asgDesiredCapacity + 1 (${cfg.asgDesiredCapacity + 1}) — required for instance refresh with MinHealthyPercentage=100.`,
+      `${prefix}.asgMaxCapacity (${cfg.asgMaxCapacity}) must be >= asgDesiredCapacity + 1 (${cfg.asgDesiredCapacity + 1}) — required so the rolling update can launch a replacement while holding minInstancesInService.`,
     )
   }
 
@@ -69,6 +101,20 @@ export function validateEnvConfig(env: EnvName, cfg: EnvConfig): void {
         `${prefix}.domainName is set ('${cfg.domainName}') but hostedZoneId is null. Both must be set together so CDK can provision the ACM cert via DNS validation.`,
       )
     }
+  }
+
+  if (typeof cfg.ownsAccountOidcProvider !== 'boolean') {
+    throw new Error(
+      `${prefix}.ownsAccountOidcProvider must be a boolean; got ${typeof cfg.ownsAccountOidcProvider}. ` +
+        'Exactly one env per AWS account owns the GitHub OIDC provider — see the field docs.',
+    )
+  }
+
+  if (typeof cfg.ownsAccountEcrRepository !== 'boolean') {
+    throw new Error(
+      `${prefix}.ownsAccountEcrRepository must be a boolean; got ${typeof cfg.ownsAccountEcrRepository}. ` +
+        'Exactly one env per AWS account creates the ECR repository — see the field docs.',
+    )
   }
 
   if (cfg.logRetentionDays < 1) {

@@ -120,7 +120,10 @@ export class NetworkStack extends Stack {
     // GitHub OIDC + per-env deploy role (account-wide; lives in the
     // rare-change-rate stack so deploy-role rotations don't pull the
     // VPC through a CloudFormation change-set diff).
-    new DeployRoles(this, 'Deploy', { envName: props.envName })
+    new DeployRoles(this, 'Deploy', {
+      envName: props.envName,
+      ownsAccountOidcProvider: props.cfg.ownsAccountOidcProvider,
+    })
 
     // Outputs for cross-stack consumption + human convenience
     new CfnOutput(this, 'VpcId', {

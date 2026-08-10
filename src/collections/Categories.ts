@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin } from '../payload/access/byRole'
+import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 
@@ -12,8 +12,13 @@ export const Categories: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: isAdmin,
-    update: isAdmin,
+    // Editors write categories like every other content collection; only admins
+    // delete, which is the repo-wide rule. This was previously admin-only for
+    // create/update on a "curated taxonomy" rationale, which was inconsistent
+    // with every other collection and blocked an editor from running the
+    // content seed (content-batch.json writes categories).
+    create: isAdminOrEditor,
+    update: isAdminOrEditor,
     delete: isAdmin,
   },
   hooks: {

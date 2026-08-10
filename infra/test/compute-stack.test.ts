@@ -21,6 +21,8 @@ const stagingCfg: EnvConfig = {
   asgMaxCapacity: 2,
   ecrRetainCount: 10,
   logRetentionDays: 14,
+  ownsAccountOidcProvider: false,
+  ownsAccountEcrRepository: true,
 }
 
 const prodCfg: EnvConfig = {
@@ -32,10 +34,14 @@ const prodCfg: EnvConfig = {
   asgDesiredCapacity: 2,
   asgMaxCapacity: 3,
   logRetentionDays: 90,
+  ownsAccountOidcProvider: true,
+  ownsAccountEcrRepository: false,
 }
 
-function synthCompute(envName: 'prod' | 'staging', cfg: EnvConfig): Template {
-  const app = new App()
+function synthCompute(envName: 'prod' | 'staging', cfg: EnvConfig, imageTag?: string): Template {
+  // `imageTag` mirrors what `deploy.yml` passes as `-c imageTag=<vX.Y.Z | sha>`;
+  // omitting it exercises the env-scoped fallback used by a bare local synth.
+  const app = new App({ context: imageTag ? { imageTag } : {} })
   const stackPrefix = envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
   const network = new NetworkStack(app, `${stackPrefix}Network`, {
     env: { account: '123456789012', region: 'us-east-1' },
@@ -146,7 +152,7 @@ describe('ComputeStack', () => {
       })
     })
 
-    it('ASG configured for zero-downtime instance refresh', () => {
+    it('ASG configured for a zero-downtime rolling update', () => {
       t.hasResource('AWS::AutoScaling::AutoScalingGroup', {
         Properties: Match.objectLike({
           MinSize: '1',
@@ -192,8 +198,36 @@ describe('ComputeStack', () => {
   describe('prod (spec-shape config)', () => {
     const t = synthCompute('prod', prodCfg)
 
-    it('imports ECR repository by name (does not create it)', () => {
+    it('imports the ECR repository rather than creating a second one', () => {
+      // Ownership is config (`ownsAccountEcrRepository`), not an env-name
+      // assumption — that is what lets prod live in its own account, where it
+      // would create the repo instead. With both envs in ONE account (this
+      // fixture, matching cdk.json) staging creates it and prod imports it, so
+      // the name never collides.
       t.resourceCountIs('AWS::ECR::Repository', 0)
+    })
+
+    it('never pulls a bare :latest, with or without an imageTag', () => {
+      // Belt and braces alongside the per-env repositories above: even if the
+      // repos were ever shared again, an immutable tag leaves nothing for a
+      // staging build to overwrite. A bare `:latest` would reintroduce exactly
+      // that, and the failure is invisible both in a diff and at deploy time —
+      // prod would simply start serving main after its next instance
+      // replacement.
+      //
+      // Two paths, both asserted: the deploy passes `-c imageTag` (immutable),
+      // and a bare local synth falls back to an env-scoped moving tag.
+      const bare = JSON.stringify(Object.values(t.findResources('AWS::EC2::LaunchTemplate')))
+      expect(bare).toContain(':latest-prod')
+      expect(/:latest(?![-\w])/.test(bare)).toBe(false)
+
+      const pinned = JSON.stringify(
+        Object.values(
+          synthCompute('prod', prodCfg, 'v1.2.3').findResources('AWS::EC2::LaunchTemplate'),
+        ),
+      )
+      expect(pinned).toContain(':v1.2.3')
+      expect(pinned).not.toContain(':latest')
     })
 
     it('ASG min/desired/max = 2/2/3 with min-in-service = 2', () => {
