@@ -7,7 +7,7 @@
 
 **Launch model (decided 2026-06-24, dates updated 2026-07-27):** the launch is **phased**. **Soft launch** goes out with the content already in hand (everything in §8 below, placed) to gather feedback. **Hard launch** follows the All Hands photo/video shoot (§3) — **now September, moved from August** — plus the named case-study sign-offs (§1.F). So the §3 shoot and the §1.F permissions are **hard-launch** gates; the rest of this list should land for the soft launch.
 
-**What changed on 2026-07-27:** the **Hank and Brent interviews are filmed** (with the localshoring content) and are in edit. Everything in §1 and §2 below that read as "we need to get Hank in a room" is now **extraction from a transcript** — we can draft it without the finished cut and without another meeting. What is genuinely still outstanding from people: the **client sign-offs** (§1.F), the **September shoot** (§3), and the **small confirmations** (§6). **§5 is resolved** — the assessment turned out to be fully recoverable from the live site (it was never ScoreApp), so it is a build decision now, not an ask.
+**What changed on 2026-07-27:** the **Hank and Brent interviews are filmed** (with the localshoring content) and are in edit. Everything in §1 and §2 below that read as "we need to get Hank in a room" is now **extraction from a transcript** — we can draft it without the finished cut and without another meeting. What is genuinely still outstanding from people: the **client sign-offs** (§1.F), the **September shoot** (§3), and the **small confirmations** (§6). **§5 is closed** — the maturity assessment was retired outright on 2026-08-08, so it is neither an ask nor a build decision.
 
 ---
 
@@ -96,72 +96,28 @@ Still to capture:
 
 ---
 
-## 5. Organizational Maturity Assessment (was "ScoreApp — Daniel runs it")
+## 5. Organizational Maturity Assessment — RETIRED 2026-08-08
 
-## ✅ RESOLVED 2026-07-27 — this is no longer a content gate
+**Killed, not deferred.** The assessment is not being rebuilt, so this is neither
+a content gap nor a build decision. Nothing is owed by anyone here.
 
-**The live assessment is not ScoreApp, and we have recovered all of it.** The live page `/organizational-strategy-1-5` (title "Assessment | SEQTEK") hosts a **hand-built HTML/JS form** injected via a Wix HtmlComponent iframe, posting to a **Make.com webhook**. There is no ScoreApp, Typeform, Jotform or SurveyMonkey anywhere on the live site (swept all 77 pages in its sitemap), and the vanity subdomains `seqtek.scoreapp.com` / `seqtechllc.scoreapp.com` are unclaimed.
+**What it was:** the live Wix page `/organizational-strategy-1-5` ("Assessment |
+SEQTEK") hosted a hand-built HTML/JS form in a Wix HtmlComponent iframe posting to
+a **Make.com webhook** — never ScoreApp, despite years of docs saying so (both
+scoreapp.com vanity subdomains are unclaimed). The Wix audit's Playwright pass
+timed out on that exact URL (`networkidle` never settles), which is why every
+earlier doc read the assessment as missing content.
 
-**Why every earlier doc thought this was missing:** the Wix content audit's Playwright pass **timed out on this exact URL** (`networkidle` never settles — HubSpot and visitor-analytics keep polling), so `page-content.json` stored an error string instead of the page. It fell out of the pipeline silently.
+**Preserved, in case this ever comes back:** the full instrument — 40 statements
+in 4 sections of 10 (Organizational Strategy & Design · Leadership & Culture ·
+Technology & Data · AI & Automation), 1–5 Likert, required lead fields, intro copy
+and the exact scoring payload — is captured in the gitignored
+`docs/content-drafts/organizational-maturity-assessment.md`. Retirement is a
+routing/docs decision, not a data loss.
 
-**The full instrument is captured in `docs/content-drafts/organizational-maturity-assessment.md`:** 40 statements, 4 sections of 10 (Organizational Strategy & Design · Leadership & Culture · Technology & Data · AI & Automation), 1–5 Likert, required lead fields Name / Organization / Title / Email / Phone, plus the intro copy and the exact scoring payload.
-
-**What is actually left is a decision, not an ask:** rebuild the form natively against HubSpot (consistent with the Workshop and Contact forms, leads land in the CRM) or keep the Make webhook and re-embed. Worth asking whoever owns the Make scenario what it does downstream before choosing. Note also that the shipped form **shows the respondent no score** — the section averages and heatmap are written but commented out; switching them on is the cheapest upgrade to the lead magnet.
-
-**Working plan: rebuild natively against HubSpot** (like the Workshop and Contact forms) so leads land in the CRM, keeping the instrument and dropping the Make plumbing. Before committing to that, ask Daniel the full set below. The answers could reveal downstream automation worth preserving, or that the assessment is dormant and should be cut rather than rebuilt.
-
-**Draft email to Daniel:**
-
-> **Subject: Maturity assessment: ScoreApp, Make, and whether we're keeping it**
->
-> Hey Daniel,
->
-> I'm rebuilding the assessment for the new site and there are a few things I can't work out from the outside. Quick brain dump.
->
-> **ScoreApp**
->
-> 1. Do we have a ScoreApp account, and is there a SEQTEK assessment in it? My notes say you run one, but I can't find any trace of ScoreApp on the current site.
-> 2. If it exists: what's the link, what does it measure, and is it live or parked? Are we paying for it?
->
-> **The assessment running today**
->
-> The page at seqtek.com/organizational-strategy-1-5 runs a custom HTML form that posts to a Make.com webhook. It isn't ScoreApp.
->
-> 3. Do you know who built it, and who owns the Make scenario?
-> 4. What does that scenario do after someone submits? Where do the responses land, and does it create a HubSpot contact or does it sit outside the CRM entirely?
-> 5. Is anyone actually watching it? Roughly how many submissions have come through, and has anyone followed up on them?
->
-> **The promise we're making**
->
-> The form tells people: "we'll review your responses, build a concise results summary with recommendations, and follow up with you."
->
-> 6. Who writes that summary today, and is there a template? If any have gone out, send me one. I want the new page to describe the deliverable accurately instead of guessing at it.
->
-> **The bigger question**
->
-> 7. Do we still want an assessment on the new site at all? If yes, I'd rebuild it natively so leads land in HubSpot with everything else, and I'd probably show people their scores at the end (the current one calculates them but never displays them). If it's been dormant and nobody wants to own the follow-up, I'd rather cut it than launch a form that quietly collects leads nobody works.
->
-> No rush on 1 through 6, and "no idea" is a fine answer to any of them. Number 7 is the one I'd like settled before launch.
->
-> Thanks,
-> Kenn
-
----
-
-**Superseded — the 2026-06-30 ScoreApp-URL framing, kept for context:**
-
-**Correction 2026-06-30:** the "Organizational Maturity Assessment" landing page is **not actually built** — `/resources/organizational-maturity-assessment` returns a **404** (there is no `/resources/*` route, only a redirect target). The footer "Assessment" link has been removed until the page ships. So two things are needed: (a) the live ScoreApp assessment URL + a one-line description and time estimate (below), and (b) a published landing/stub page to host or link it (see §9). Draft email to Daniel:
-
-> **Subject: ScoreApp assessment link for the new site's assessment page**
->
-> Hey Daniel — the new SEQTEK site has a landing page ready for the organizational-maturity assessment, and since you're running ScoreApp I need a few things from you to wire it up:
->
-> 1. The public assessment URL (the link respondents start at).
-> 2. A one-sentence description of what it measures and a rough time-to-complete (e.g. "5 minutes, 12 questions").
-> 3. What a respondent gets at the end (report? score? follow-up?).
-> 4. Whether we should embed it inline or just link out to ScoreApp.
->
-> That's all I need to publish the page. Thanks!
+**Shipped with the retirement:** `/organizational-strategy-1-5` now 301s to
+`/workshops` (it previously redirected into the never-built `/resources/*` route,
+i.e. a 404). See INTEGRATIONS §3 for the full removal list.
 
 ---
 
@@ -217,18 +173,18 @@ A publishable case study record needs: hero image (real, non-stock) · client + 
 
 A crawl of every internal link on staging found **10 routes that are linked in the nav/footer/CTAs but return 404.** The nav/footer is code-driven (`src/lib/site-content.ts`), so as an immediate fix the dead links were either repointed to a live equivalent or removed (the live 404 page is professional, but a launched site should not dead-end). The rows below that need a **real page** are genuine content gaps:
 
-| Linked route (was 404)                                       | Interim fix shipped in code   | Real fix needed                                                                                                         | Owner / source | Severity                      |
-| ------------------------------------------------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------- |
-| `/contact/book-a-call` (primary "Book a Call" CTA, sitewide) | Repointed → `/contact` form   | Optional: HubSpot Meetings booking page (§4)                                                                            | Megan          | was a **blocker** (now fixed) |
-| `/about/our-story`                                           | Page renamed → `/our-story`   | none — the page IS `/our-story` now ("About" retired as a label; `/about` 301s)                                         | —              | resolved                      |
-| `/about/team`                                                | Repointed → `/team`           | none — content lives at `/team`                                                                                         | —              | resolved                      |
-| `/tulsa-consulting`                                          | Repointed → `/localshoring`   | **Per-market SEO landing page** (Tulsa) — local copy, proof, contact                                                    | Hank/Megan     | Important (local SEO)         |
-| `/okc-consulting`                                            | Repointed → `/localshoring`   | **Per-market SEO landing page** (Oklahoma City)                                                                         | Hank/Megan     | Important (local SEO)         |
-| `/northwest-arkansas-consulting`                             | Repointed → `/localshoring`   | **Per-market SEO landing page** (NW Arkansas)                                                                           | Hank/Megan     | Important (local SEO)         |
-| `/kansas-city-consulting`                                    | Repointed → `/localshoring`   | **Per-market SEO landing page** (Kansas City)                                                                           | Hank/Megan     | Important (local SEO)         |
-| `/careers`                                                   | Removed from nav              | **Careers stub page** — even a short "we hire senior practitioners; reach out" page with the localshoring/culture angle | Hank/Megan     | Important                     |
-| `/terms-of-service`                                          | Removed from footer legal nav | **Terms of Service page** — needs reviewed legal copy (privacy-policy already exists as the model)                      | Legal/Brent    | Important (launch)            |
-| `/resources/organizational-maturity-assessment`              | Removed from footer           | **Assessment page** — content unblocked 2026-07-27 (full 40-question instrument recovered, §5); needs a build decision  | Kenn           | Important                     |
+| Linked route (was 404)                                       | Interim fix shipped in code   | Real fix needed                                                                                                             | Owner / source | Severity                      |
+| ------------------------------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------- |
+| `/contact/book-a-call` (primary "Book a Call" CTA, sitewide) | Repointed → `/contact` form   | Optional: HubSpot Meetings booking page (§4)                                                                                | Megan          | was a **blocker** (now fixed) |
+| `/about/our-story`                                           | Page renamed → `/our-story`   | none — the page IS `/our-story` now ("About" retired as a label; `/about` 301s)                                             | —              | resolved                      |
+| `/about/team`                                                | Repointed → `/team`           | none — content lives at `/team`                                                                                             | —              | resolved                      |
+| `/tulsa-consulting`                                          | Repointed → `/localshoring`   | **Per-market SEO landing page** (Tulsa) — local copy, proof, contact                                                        | Hank/Megan     | Important (local SEO)         |
+| `/okc-consulting`                                            | Repointed → `/localshoring`   | **Per-market SEO landing page** (Oklahoma City)                                                                             | Hank/Megan     | Important (local SEO)         |
+| `/northwest-arkansas-consulting`                             | Repointed → `/localshoring`   | **Per-market SEO landing page** (NW Arkansas)                                                                               | Hank/Megan     | Important (local SEO)         |
+| `/kansas-city-consulting`                                    | Repointed → `/localshoring`   | **Per-market SEO landing page** (Kansas City)                                                                               | Hank/Megan     | Important (local SEO)         |
+| `/careers`                                                   | Removed from nav              | **Careers stub page** — even a short "we hire senior practitioners; reach out" page with the localshoring/culture angle     | Hank/Megan     | Important                     |
+| `/terms-of-service`                                          | Removed from footer legal nav | **Terms of Service page** — needs reviewed legal copy (privacy-policy already exists as the model)                          | Legal/Brent    | Important (launch)            |
+| ~~`/resources/organizational-maturity-assessment`~~          | Removed from footer           | **Nothing — retired 2026-08-08 (§5).** The page is not being built; `/organizational-strategy-1-5` now 301s to `/workshops` | —              | closed                        |
 
 **The 4 regional pages are the biggest single content opportunity here.** They were a deliberate local-SEO play (one page per market: Tulsa, OKC, NW Arkansas, Kansas City) and the multi-market positioning is core to the brand. They are all currently parked on `/localshoring`. Each wants: a market-specific headline, why-local-here copy, ideally a local proof point or client, and a contact CTA. The block library can compose these today — the gap is **copy + per-market specifics**, not engineering. (If we'd rather not build four, decide whether to keep them in the footer at all.)
 

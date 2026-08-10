@@ -48,10 +48,12 @@ const EXPECTED_SOURCES = [
 // Top-level segments with a dedicated nested route (data-model §1).
 const ROUTABLE_PREFIXES = new Set(['case-studies', 'insights', 'services', 'workshops', 'team'])
 
-// Destinations whose route is PLANNED but not built in spec 004 — explicitly
-// allowlisted so RM3 doesn't silently pass on a typo, and the deferral is
-// visible (no silent cap). /resources/* is the ScoreApp assessment (ARCH §3).
-const DEFERRED_DESTINATIONS = new Set(['/resources/organizational-maturity-assessment'])
+// Destinations whose route is PLANNED but not built — explicitly allowlisted so
+// RM3 doesn't silently pass on a typo, and the deferral is visible (no silent
+// cap). Empty since the maturity assessment was retired (2026-08-08): its
+// /resources/* destination was the only deferred route, and every destination in
+// the map now resolves to a built route. Keep the mechanism for the next one.
+const DEFERRED_DESTINATIONS = new Set<string>([])
 
 const isRoutable = (destination: string): boolean => {
   if (DEFERRED_DESTINATIONS.has(destination)) return true
