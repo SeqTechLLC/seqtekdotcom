@@ -426,6 +426,31 @@ Then report back three things and **stop**:
 > cannot finish it. Leave the first sign-in to whoever runs Lane B, or expect to
 > promote them afterwards.
 
+### If the account admin also has GitHub access
+
+It removes a round-trip but does **not** move the boundary, because
+`docs/content-drafts/` is **gitignored**. Repo access at any level carries no
+content — the drafts live only on the website owner's machine. Media is
+different: the originals are fetched from the old environment's public URLs, so
+anyone can pull those.
+
+What each GitHub permission actually buys:
+
+| Permission | Can do                                                              |
+| ---------- | ------------------------------------------------------------------- |
+| `read`     | read the code and this runbook. **Cannot** deploy or set variables. |
+| `write`    | run the **Deploy** workflow (Lane B step 2)                         |
+| `admin`    | set `AWS_ACCOUNT_ID` on the environments (Lane B step 1)            |
+
+So the useful grant is **`write`**: the account admin can then finish the infra
+lane himself — set up the account, deploy the app, and confirm the site answers
+on its CloudFront URL — without waiting on anyone. The environment variables are
+set-and-forget and can be done once by any repo admin; full admin for the
+account admin is not required.
+
+The content load (Lane B steps 3-5) stays with whoever holds the drafts, and
+that person must still take the **first** `/admin` sign-in.
+
 ### Lane B — the website owner (no AWS access)
 
 1. GitHub → Settings → Environments → set `AWS_ACCOUNT_ID` on `staging` and
