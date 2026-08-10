@@ -701,43 +701,45 @@ ALB, RDS instance, S3 media bucket, CloudFront distribution and SSM parameter
 tree, named by `stackName()` (`SeqtekStaging*` / `SeqtekProd*`). Prod is **not**
 a logical database on a staging RDS instance, and there is no `staging` branch.
 
-**Both environments currently live in one AWS account, and two things are
-genuinely shared across them:**
+**The two environments may live in one AWS account or in separate accounts.**
+Nothing in the CDK hardcodes an account: `stackEnv()` reads
+`CDK_DEFAULT_ACCOUNT`, the deploy role derives from `stack.account`, and
+`deploy.yml` resolves `vars.AWS_ACCOUNT_ID` from the GitHub **Environment**
+(`staging` / `production`), falling back to the repo-level variable.
 
-| Shared resource      | How                                                                                    |
-| -------------------- | -------------------------------------------------------------------------------------- |
-| ECR repository       | staging **creates** `seqtek-website`; prod **imports** it by name (`compute-stack.ts`) |
-| GitHub OIDC provider | prod's NetworkStack **creates** it; staging **imports** it at `${AWS::AccountId}`      |
+Two resources need care, because each is a singleton in its own way:
 
-Because the ECR repository is shared, **the image tag is the isolation
-boundary**, and the deployed tag is **immutable**. `deploy.yml` passes
-`-c imageTag=<vX.Y.Z | sha>`, which stamps the ASG LaunchTemplate with the exact
-build being deployed. Three consequences:
+| Resource             | How it works                                                                                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ECR repository       | **One per environment** — `seqtek-website-<env>`. Distinct names never collide in one account; in separate accounts each side creates its own. No import, no ordering constraint. |
+| GitHub OIDC provider | Account-wide — IAM permits exactly ONE per issuer URL per account. Ownership is explicit config: `ownsAccountOidcProvider`.                                                       |
 
-- A staging merge has no moving tag to overwrite, so it cannot reach production.
-- An instance replaced months later re-pulls _that_ build, not whatever a
-  floating tag has come to mean — a running production instance is traceable to
-  a CHANGELOG entry.
-- Rollback is redeploying an older tag, not rebuilding.
+Set `ownsAccountOidcProvider` to match the topology:
 
-A synth with no `imageTag` context falls back to `latest-<env>` — still
-env-scoped, never a bare `:latest`. Do not reintroduce an unscoped moving tag;
+- **One account (today):** `prod: true`, `staging: false` — prod owns it, staging
+  imports it. `SeqtekProdNetwork` must then be deployed before
+  `SeqtekStagingNetwork`.
+- **Separate accounts:** `true` on **both** — each account needs its own, and the
+  ordering constraint disappears.
+
+Getting it wrong fails in opposite directions: two owners in one account collide
+at CreateStack, while zero owners leaves a deploy role trusting a provider that
+does not exist — CloudFormation accepts that, and every deploy then fails at
+assume-role time.
+
+**The deployed image tag is immutable.** `deploy.yml` passes
+`-c imageTag=<vX.Y.Z | sha>`, stamping the ASG LaunchTemplate with the exact
+build. An instance replaced months later re-pulls _that_ image, so a running
+production instance traces to a CHANGELOG entry, and rollback is redeploying an
+older tag rather than rebuilding. A synth with no `imageTag` falls back to
+`latest-<env>` — env-scoped, never a bare `:latest`.
 `infra/test/compute-stack.test.ts` asserts both paths.
 
-Because the LaunchTemplate now changes on every new build and the ASG references
-it by `LatestVersionNumber`, CloudFormation performs the rolling instance
-replacement itself and `cdk deploy` blocks until it is healthy. That is why the
-pipeline no longer triggers an explicit instance refresh — doing both would
+Because the LaunchTemplate changes on every new build and the ASG references it
+by `LatestVersionNumber`, CloudFormation performs the rolling instance
+replacement itself and `cdk deploy` blocks until it is healthy — which is why
+the pipeline no longer triggers an explicit instance refresh. Doing both would
 replace every instance twice per deploy.
-
-**Splitting the environments across two AWS accounts is a code change, not just
-configuration.** `stackEnv()` does read `CDK_DEFAULT_ACCOUNT`, the deploy role
-derives from `stack.account`, and `deploy.yml` resolves `vars.AWS_ACCOUNT_ID`
-per GitHub Environment — but both shared resources above resolve in the _stack's
-own_ account. In a separate prod account nothing would create the ECR repository
-(the ASG could not pull), and staging would import an OIDC provider that no stack
-creates. Both fail silently at deploy or assume-role time. Splitting accounts
-requires making that creation conditional on account divergence first.
 
 Local development runs against a local Postgres via Docker Compose — no VPN, no
 RDS credentials, no risk to a deployed environment.

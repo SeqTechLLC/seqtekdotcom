@@ -28,7 +28,9 @@
         "asgDesiredCapacity": 2,
         "asgMaxCapacity": 3,
         "ecrRetainCount": 10,
-        "logRetentionDays": 90
+        "logRetentionDays": 90,
+        "_comment_oidc": "prod owns the account-wide GitHub OIDC provider; staging imports it. If the two envs ever move to SEPARATE accounts, set this true on BOTH.",
+        "ownsAccountOidcProvider": true
       },
       "staging": {
         "_comment_domain": "seqtek-preview.com registered 2026-05-27 (T029a). Hosted zone auto-created by Route 53; CDK provisions ACM cert via DNS validation + A records on next SeqtekStagingEdge deploy.",
@@ -46,7 +48,8 @@
         "asgDesiredCapacity": 1,
         "asgMaxCapacity": 2,
         "ecrRetainCount": 10,
-        "logRetentionDays": 14
+        "logRetentionDays": 14,
+        "ownsAccountOidcProvider": false
       }
     }
   }

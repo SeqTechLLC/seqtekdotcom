@@ -21,6 +21,7 @@ const stagingCfg: EnvConfig = {
   asgMaxCapacity: 2,
   ecrRetainCount: 10,
   logRetentionDays: 14,
+  ownsAccountOidcProvider: false,
 }
 
 const prodCfg: EnvConfig = {
@@ -32,6 +33,7 @@ const prodCfg: EnvConfig = {
   asgDesiredCapacity: 2,
   asgMaxCapacity: 3,
   logRetentionDays: 90,
+  ownsAccountOidcProvider: true,
 }
 
 function synthCompute(envName: 'prod' | 'staging', cfg: EnvConfig, imageTag?: string): Template {
@@ -66,7 +68,7 @@ describe('ComputeStack', () => {
 
     it('creates the ECR repository with lifecycle rules', () => {
       t.hasResourceProperties('AWS::ECR::Repository', {
-        RepositoryName: 'seqtek-website',
+        RepositoryName: 'seqtek-website-staging',
         ImageScanningConfiguration: { ScanOnPush: true },
       })
 
@@ -194,18 +196,26 @@ describe('ComputeStack', () => {
   describe('prod (spec-shape config)', () => {
     const t = synthCompute('prod', prodCfg)
 
-    it('imports ECR repository by name (does not create it)', () => {
-      t.resourceCountIs('AWS::ECR::Repository', 0)
+    it('creates its OWN ECR repository, not a shared one', () => {
+      // Previously prod imported a single `seqtek-website` that staging created.
+      // That blocked a two-account layout outright (the import resolves in the
+      // stack's own account, so nothing would create it on the prod side), and
+      // it let staging's lifecycle churn expire production images. One repo per
+      // environment removes both, and the distinct names never collide when the
+      // two environments share an account.
+      t.resourceCountIs('AWS::ECR::Repository', 1)
+      t.hasResourceProperties('AWS::ECR::Repository', {
+        RepositoryName: 'seqtek-website-prod',
+      })
     })
 
     it('never pulls a bare :latest, with or without an imageTag', () => {
-      // The ECR repository is SHARED — staging creates it, prod imports it by
-      // name (asserted directly above). So the image tag is the only thing
-      // isolating the two environments. A bare `:latest` is rewritten by every
-      // staging merge, and production would pull that staging build on its next
-      // instance replacement or scale-out. Nothing fails; prod just quietly
-      // starts serving main. Guarded because the regression is invisible both
-      // in a diff and at deploy time.
+      // Belt and braces alongside the per-env repositories above: even if the
+      // repos were ever shared again, an immutable tag leaves nothing for a
+      // staging build to overwrite. A bare `:latest` would reintroduce exactly
+      // that, and the failure is invisible both in a diff and at deploy time —
+      // prod would simply start serving main after its next instance
+      // replacement.
       //
       // Two paths, both asserted: the deploy passes `-c imageTag` (immutable),
       // and a bare local synth falls back to an env-scoped moving tag.

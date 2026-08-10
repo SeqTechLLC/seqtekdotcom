@@ -55,27 +55,40 @@ export class ComputeStack extends Stack {
     super(scope, id, props)
     const { envName, cfg, network, data } = props
 
-    // ----- ECR repository (created by staging; imported by prod) -----
-    if (envName === 'staging') {
-      this.ecrRepository = new ecr.Repository(this, 'EcrRepo', {
-        repositoryName: ECR_REPO_NAME,
-        imageScanOnPush: true,
-        lifecycleRules: [
-          {
-            description: 'Expire untagged images after 7 days',
-            tagStatus: ecr.TagStatus.UNTAGGED,
-            maxImageAge: Duration.days(7),
-          },
-          {
-            description: 'Keep at most ecrRetainCount tagged images',
-            tagStatus: ecr.TagStatus.ANY,
-            maxImageCount: cfg.ecrRetainCount,
-          },
-        ],
-      })
-    } else {
-      this.ecrRepository = ecr.Repository.fromRepositoryName(this, 'EcrRepo', ECR_REPO_NAME)
-    }
+    // ----- ECR repository (one PER ENVIRONMENT) -----
+    //
+    // Each environment owns `seqtek-website-<env>`. It used to be a single
+    // shared `seqtek-website` that staging created and prod imported by name,
+    // which was wrong in three separate ways:
+    //
+    //  1. `fromRepositoryName` resolves in the STACK'S OWN account, so putting
+    //     prod in a different account left nothing creating the repo there and
+    //     the ASG unable to pull — silently, at instance boot.
+    //  2. It forced a deploy ordering (staging's compute before prod's) that
+    //     contradicted the OIDC ordering pulling the other way.
+    //  3. The `maxImageCount` lifecycle rule counted BOTH environments' images,
+    //     so staging churn expired production images — roughly ten staging
+    //     merges was enough to evict the release a prod instance would re-pull.
+    //
+    // Per-env repositories make both topologies work with no config and no
+    // ordering constraint: distinct names never collide in one account, and in
+    // separate accounts each side simply creates its own.
+    this.ecrRepository = new ecr.Repository(this, 'EcrRepo', {
+      repositoryName: `${ECR_REPO_NAME}-${envName}`,
+      imageScanOnPush: true,
+      lifecycleRules: [
+        {
+          description: 'Expire untagged images after 7 days',
+          tagStatus: ecr.TagStatus.UNTAGGED,
+          maxImageAge: Duration.days(7),
+        },
+        {
+          description: 'Keep at most ecrRetainCount tagged images',
+          tagStatus: ecr.TagStatus.ANY,
+          maxImageCount: cfg.ecrRetainCount,
+        },
+      ],
+    })
 
     // ----- Application log group (CloudWatch Logs) -----
     this.appLogGroup = new logs.LogGroup(this, 'AppLogGroup', {

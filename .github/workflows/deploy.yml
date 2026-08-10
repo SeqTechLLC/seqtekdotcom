@@ -86,7 +86,10 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: seqtek-website
+  # Per-environment repository — see infra/lib/compute-stack.ts. The suffix is
+  # appended from ENV_NAME in the "Resolve ECR registry" step, since job-level
+  # env is not in scope here.
+  ECR_REPOSITORY_BASE: seqtek-website
 
 # Pairs with CloudFormation's native stack-update lock — a second run started
 # while one is in flight queues rather than racing. Never cancel a deploy
@@ -168,7 +171,7 @@ jobs:
           set -euo pipefail
           REGISTRY="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           SHA_TAG="${GITHUB_SHA::7}"
-          IMAGE="${REGISTRY}/${ECR_REPOSITORY}"
+          IMAGE="${REGISTRY}/${ECR_REPOSITORY_BASE}-${ENV_NAME}"
           # On a release, also tag the image with the version so a running
           # production instance can be traced back to a CHANGELOG entry rather
           # than a bare SHA. Empty on staging; the extra tag line is dropped.

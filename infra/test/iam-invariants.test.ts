@@ -29,6 +29,7 @@ const cfg: EnvConfig = {
   asgMaxCapacity: 3,
   ecrRetainCount: 10,
   logRetentionDays: 90,
+  ownsAccountOidcProvider: true,
 }
 
 interface PolicyDocument {
@@ -59,7 +60,14 @@ function synthStagingNetwork(): Template {
   const stack = new NetworkStack(app, 'SeqtekStagingNetwork', {
     env: { account: '123456789012', region: 'us-east-1' },
     envName: 'staging',
-    cfg: { ...cfg, asgMinCapacity: 1, asgDesiredCapacity: 1, asgMaxCapacity: 2 },
+    cfg: {
+      ...cfg,
+      asgMinCapacity: 1,
+      asgDesiredCapacity: 1,
+      asgMaxCapacity: 2,
+      // staging imports the provider prod owns (same account)
+      ownsAccountOidcProvider: false,
+    },
   })
   return Template.fromStack(stack)
 }

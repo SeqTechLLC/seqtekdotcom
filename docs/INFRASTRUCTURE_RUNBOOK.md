@@ -26,13 +26,22 @@ variable change plus a bootstrap, not a code change.**
 
 Two ordering traps, both of which fail _after_ a successful-looking deploy:
 
-1. **`SeqtekProdNetwork` must be the first stack in any new account.** The
-   GitHub OIDC provider is account-wide and may exist exactly once; prod's
-   NetworkStack **creates** it and staging **imports** it at a deterministic
-   ARN. Deploy staging first into an empty account and CloudFormation happily
-   creates a role trusting a provider that does not exist — every deploy then
-   fails at assume-role. (This is why `SeqtekProdNetwork` is the one prod stack
-   deployed in the current account.)
+1. **Whichever environment owns the OIDC provider must be deployed first.** The
+   GitHub OIDC provider is account-wide and IAM permits exactly one per issuer
+   URL per account, so ownership is explicit config — `ownsAccountOidcProvider`
+   in `infra/cdk.json`. Deploy an importer into an empty account and
+   CloudFormation happily creates a role trusting a provider that does not
+   exist; every deploy then fails at assume-role.
+   - **Both envs in one account** (`prod: true`, `staging: false` — the layout
+     today): deploy `SeqtekProdNetwork` before `SeqtekStagingNetwork`. This is
+     why `SeqtekProdNetwork` is the one prod stack deployed in the current
+     account.
+   - **Envs in separate accounts**: set it `true` on **both** — each account
+     needs its own — and this ordering constraint disappears entirely.
+
+   ECR needs no such care: each environment creates its own
+   `seqtek-website-<env>`, so both topologies work with no configuration.
+
 2. **The prod OIDC trust pins the `production` GitHub Environment, not a git
    ref.** So the `production` Environment must exist in GitHub _before_ the
    first prod deploy, or the claim can't match. See `infra/lib/deploy-role.ts`.

@@ -45,17 +45,22 @@ const STAGING_SUB_CLAIM = `repo:${GITHUB_REPO}:*`
  * Convention: invoke once per env from the network stack so the
  * OIDC provider lives in the rare-change-rate stack.
  *
- * The OIDC provider is account-wide and must exist exactly once.
- * We create it in the prod env's network stack and import it by
- * issuer URL in staging via `OpenIdConnectProvider.fromOpenIdConnectProviderArn`.
+ * The OIDC provider is account-wide and must exist exactly once per ACCOUNT.
+ * Which environment owns it is configuration (`ownsAccountOidcProvider`), not
+ * an assumption about env names — that is what lets the two environments live
+ * in separate AWS accounts, where BOTH must own one.
  */
 export class DeployRoles extends Construct {
   public readonly deployRole: iam.Role
 
-  constructor(scope: Construct, id: string, props: { envName: EnvName }) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: { envName: EnvName; ownsAccountOidcProvider: boolean },
+  ) {
     super(scope, id)
 
-    const provider = this.getOrCreateOidcProvider(props.envName)
+    const provider = this.getOrCreateOidcProvider(props.ownsAccountOidcProvider)
 
     const subClaim = props.envName === 'prod' ? PROD_SUB_CLAIM : STAGING_SUB_CLAIM
     const stackName = props.envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
@@ -79,26 +84,26 @@ export class DeployRoles extends Construct {
   }
 
   /**
-   * Either creates the OIDC provider (prod env, first-time) or imports
-   * the existing one (staging env, references prod's provider).
+   * Creates the account-wide OIDC provider, or imports the one another
+   * environment in the SAME account created.
    *
-   * DEPLOY ORDER, in a fresh account: `SeqtekProdNetwork` must go first. The
-   * provider is account-wide and may exist exactly once, so prod creates it and
-   * staging imports it by its deterministic ARN. Deploying staging into an
-   * empty account first yields a role whose trust policy names a provider that
-   * does not exist — CloudFormation accepts it, and every deploy then fails at
-   * assume-role time. This is why `SeqtekProdNetwork` is deployed even while
-   * the rest of prod is not.
+   * DEPLOY ORDER matters only when an account has an owner and an importer: the
+   * owner's network stack must go first. Deploying the importer into an empty
+   * account yields a role whose trust policy names a provider that does not
+   * exist — CloudFormation accepts it, and every deploy then fails at
+   * assume-role time. With both envs in one account (the layout today) that
+   * means `SeqtekProdNetwork` before `SeqtekStagingNetwork`; with the envs in
+   * separate accounts each owns its own and the ordering disappears.
    */
-  private getOrCreateOidcProvider(envName: EnvName): iam.IOpenIdConnectProvider {
-    if (envName === 'prod') {
+  private getOrCreateOidcProvider(ownsProvider: boolean): iam.IOpenIdConnectProvider {
+    if (ownsProvider) {
       return new iam.OpenIdConnectProvider(this, 'GitHubOidc', {
         url: 'https://token.actions.githubusercontent.com',
         clientIds: ['sts.amazonaws.com'],
       })
     }
 
-    // Staging: import the prod-created provider by ARN. The ARN format
+    // Import the provider another env in this account created. The ARN format
     // is deterministic and depends only on account + issuer URL.
     const stack = Stack.of(this)
     const providerArn = Fn.sub(
@@ -178,7 +183,10 @@ export class DeployRoles extends Construct {
       }),
     )
 
-    // ECR — shared repo named seqtek-website (created by compute stack)
+    // ECR — this environment's own repo, `seqtek-website-<env>` (created by its
+    // compute stack). Scoped per env so the staging deploy role cannot push to
+    // the production repository, which the previous shared `seqtek-website`
+    // grant allowed.
     role.addToPolicy(
       new iam.PolicyStatement({
         sid: 'EcrPushPullSeqtekWebsite',
@@ -195,7 +203,7 @@ export class DeployRoles extends Construct {
           'ecr:DescribeImages',
         ],
         resources: [
-          `arn:aws:ecr:${region}:${account}:repository/seqtek-website`,
+          `arn:aws:ecr:${region}:${account}:repository/seqtek-website-${envName}`,
           `arn:aws:ecr:${region}:${account}:repository/cdk-*`, // CDK image-asset repos
         ],
       }),
