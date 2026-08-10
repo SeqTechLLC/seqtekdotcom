@@ -165,32 +165,58 @@ Verified 2026-08-10: the drafts reproduce the live site's content **exactly** �
 | `services`       | 9    | 9           |
 | `servicePillars` | 3    | 3           |
 
-### 2.1 The one exception: media
+### 2.1 Media must be primed FIRST
 
-Media is **not** reproducible from scripts and must be carried across. Of the 65
-originals, 27 are curated outputs (`homepage-hero.webp`, `culture-1.webp`,
+**Order is not optional.** The drafts reference media 61 times by `$ref`
+(resolve an existing media doc by filename) and only 10 times by `$file`
+(upload-or-reuse). Seed content into an empty media collection and those 61
+references resolve to nothing — you get the whole site with almost no images.
+Prime media, then seed content.
+
+Media is also the one thing genuinely **not** reproducible from scripts. Of the
+65 originals, 27 are curated outputs (`homepage-hero.webp`, `culture-1.webp`,
 `team-lake-annual-meeting.webp`, the headshots) whose source-photo choice was a
-human decision. The ingest manifest is keyed by sha256, so _which_ of the 1,755
-photos in `../photos` became `homepage-hero.webp` is not recorded anywhere
-re-runnable.
+human decision, and `tools/ingest-photos` keys its manifest by sha256 — so
+_which_ of the 1,755 photos in `../photos` became `homepage-hero.webp` is
+recorded nowhere re-runnable. Re-running the ingest will not reproduce them.
 
-Fetch the originals from the environment being replaced — they are served
-publicly, and Payload regenerates every size variant on upload, so only the 65
-originals matter (the ~473 S3 objects are mostly derived sizes):
+So carry the originals across from the environment being replaced. They are
+served publicly, and Payload regenerates every size variant on upload — which is
+why only the 65 originals matter, not the ~473 S3 objects.
 
 ```sh
 SRC=https://seqtek-preview.com
-mkdir -p /tmp/media-originals && cd /tmp/media-originals
-curl -s "$SRC/api/media?limit=300&depth=0" \
-  | jq -r '.docs[].filename' \
-  | while read -r f; do curl -fsS -o "$f" "$SRC/media/$f" || echo "MISSING $f"; done
-ls | wc -l    # expect 65
+DIR=/tmp/media-originals && mkdir -p "$DIR"
+
+# Fetch every original, and build the manifest push-to-payload expects,
+# carrying the ORIGINAL alt text across (alt is required on upload).
+curl -s "$SRC/api/media?limit=300&depth=0" > "$DIR/media.json"
+python3 - "$DIR" "$SRC" <<'PY'
+import json, os, sys, urllib.request
+d, src = sys.argv[1], sys.argv[2]
+docs = json.load(open(os.path.join(d, "media.json")))["docs"]
+man = []
+for m in docs:
+    fn = m.get("filename")
+    if not fn:
+        continue
+    urllib.request.urlretrieve(f"{src}/media/{fn}", os.path.join(d, fn))
+    # push-to-payload reads `curated` (the filename in --dir) and `alt`.
+    man.append({"curated": fn, "source": fn, "kind": "photo", "slot": "",
+                "people": [], "alt": m.get("alt") or fn})
+json.dump(man, open(os.path.join(d, "manifest.json"), "w"), indent=2)
+print(f"{len(man)} originals + manifest.json")
+PY
+
+# Push them into the NEW environment (idempotent — skips filenames already there)
+IMPORT_BASE_URL=https://<new-env> IMPORT_TOKEN=<token> \
+  npx tsx tools/ingest-photos/push-to-payload.ts --dir "$DIR" --dry-run
 ```
 
-Keep the filenames byte-identical. `$file` resolves media by filename, so a
-rename silently breaks every reference that points at it.
+Drop `--dry-run` to write. Keep filenames byte-identical — `$ref` and `$file`
+both key on filename, so a rename silently orphans every reference to it.
 
-### 2.2 Rebuild
+### 2.2 Then rebuild the content
 
 ```sh
 export IMPORT_BASE_URL=https://<new-environment-url>
@@ -207,7 +233,8 @@ npm run payload:seed -- docs/content-drafts/homepage-layout.json
 ```
 
 Run each with `--dry-run` first. Seeding is idempotent by the identity field, so
-a re-run repairs rather than duplicates.
+a re-run repairs rather than duplicates. A `$ref` that cannot resolve is
+reported — if you see those, media priming (§2.1) did not complete.
 
 ### 2.3 Verify against the old environment
 
