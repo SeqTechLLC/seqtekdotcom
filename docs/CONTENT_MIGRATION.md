@@ -142,10 +142,9 @@ Preserve old slugs where they're publishable; rewrite where they're Wix garbage.
 | `organizational-strategy-1-1-1-3`     | `airline-automation`                                   |
 | `organizational-strategy-1-1-1-3-1`   | `oil-gas-modernization`                                |
 | `organizational-strategy-1-1-1-3-1-1` | `banking-integration-platform`                         |
-| `about-us-1`                          | `about`                                                |
+| `about-us-1`                          | `our-story`                                            |
 | `our-services`                        | `services`                                             |
 | `blog-old`                            | `insights`                                             |
-| `organizational-strategy-1-5`         | `resources/organizational-maturity-assessment`         |
 
 These are the canonical destinations; the script reads them from a constant map at the top of `migrateFromAudit.ts` that matches the INTEGRATIONS.md table. When that doc updates, this map updates with it (manual sync — they live in different files for a reason).
 

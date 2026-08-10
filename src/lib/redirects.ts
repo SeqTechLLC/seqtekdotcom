@@ -28,9 +28,11 @@ export const redirectMap: Redirect[] = [
   { source: '/blog-old/:path*', destination: '/insights/:path*', permanent: true },
   {
     source: '/organizational-strategy-1-5',
-    // /resources/* is a planned route (ARCHITECTURE §3, ScoreApp) not built in
-    // spec 004 — a documented deferred destination (see redirects.int.spec.ts).
-    destination: '/resources/organizational-maturity-assessment',
+    // The Wix "Assessment" page. The maturity assessment is retired (2026-08-08),
+    // so /resources/* is never built and this used to 301 into a 404. The page was
+    // a lead-gen entry under the organizational-strategy pillar, which already
+    // funnels to /workshops (see the pillar + leaf rows below).
+    destination: '/workshops',
     permanent: true,
   },
   {

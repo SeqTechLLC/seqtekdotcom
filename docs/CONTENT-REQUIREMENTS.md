@@ -118,9 +118,6 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 │   ├── /insights/[slug]                             Individual posts
 │   └── /insights/category/[category]                Category archives (planned — not yet built)
 │
-├── /resources/                                      Resources & Downloads (planned — not yet built)
-│   └── /resources/organizational-maturity-assessment ScoreApp Assessment Landing
-│
 ├── /contact/                                        Contact
 │   └── /contact/book-a-call                         HubSpot Meetings Embed (planned — not yet built)
 │
@@ -621,19 +618,12 @@ Per Orbit Media Annual Blogging Survey (2024): the average blog post is now 1,42
 
 **Workshop page note:** These pages function as product pages, not content pages. Per Unbounce: product/service pages with clear format + duration + audience + deliverables convert 25% better than vague descriptions. Be specific: "Half-day workshop. 4-12 participants. Delivered on-site or virtually."
 
-### Assessment Landing Page (`/resources/organizational-maturity-assessment`)
+### Assessment Landing Page — RETIRED 2026-08-08
 
-Per Demand Gen Report (2024 Content Preferences Survey): interactive assessments are the #2 most effective B2B lead generation tool (after webinars). They generate 4-5x more leads than static downloadable content.
-
-| Element                      | Content Required                                                                                                                                                                       |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| What the assessment measures | Clear explanation of dimensions (Org Strategy, Leadership, etc.). Use a visual showing the dimensions.                                                                                 |
-| What the user gets back      | Specific: "A personalized maturity scorecard with benchmarks against similar organizations and 3 prioritized recommendations." Not: "Results."                                         |
-| How long it takes            | Time estimate — per Typeform research: stating "Takes 5 minutes" increases completion rates by 25%                                                                                     |
-| Who it's for                 | Target audience (C-suite, VP-level, directors — be specific)                                                                                                                           |
-| Social proof                 | "500+ organizations have taken this assessment" (if true)                                                                                                                              |
-| Privacy note                 | "Your responses are confidential. We'll email your results — no sales call required." Per Demand Gen Report: removing the implied sales obligation increases assessment starts by 40%. |
-| CTA                          | Link to ScoreApp (opens in new tab or embeds)                                                                                                                                          |
+The organizational maturity assessment was killed outright; no landing page is
+being written. The recovered 40-question instrument is preserved in the
+gitignored `docs/content-drafts/organizational-maturity-assessment.md`, and the
+old Wix URL now 301s to `/workshops`. See CONTENT_NEEDS §5 and INTEGRATIONS §3.
 
 ---
 
@@ -758,14 +748,14 @@ Week 4: Service offering pages + case study rewrites begin
 
 ### Tier 3: Write Third (Weeks 7-10) — SEO and Completeness
 
-| #   | Content                        | Status                         | Depends On             | Buyer Journey Stage   |
-| --- | ------------------------------ | ------------------------------ | ---------------------- | --------------------- |
-| 11  | 3 workshop detail pages        | Write from scratch             | Workshop landing       | Decision              |
-| 12  | 6 industry pages               | Write from scratch             | Case studies done      | Awareness             |
-| 13  | 4 market landing pages         | Write from scratch             | —                      | Awareness (local SEO) |
-| 14  | Blog migration (6 posts)       | Migrate, add author/categories | Team page done         | Awareness             |
-| 15  | Contact page rewrite + booking | Rewrite                        | HubSpot Meetings setup | Decision              |
-| 16  | Assessment landing page        | Write from scratch             | ScoreApp setup         | Consideration         |
+| #      | Content                        | Status                                 | Depends On             | Buyer Journey Stage   |
+| ------ | ------------------------------ | -------------------------------------- | ---------------------- | --------------------- |
+| 11     | 3 workshop detail pages        | Write from scratch                     | Workshop landing       | Decision              |
+| 12     | 6 industry pages               | Write from scratch                     | Case studies done      | Awareness             |
+| 13     | 4 market landing pages         | Write from scratch                     | —                      | Awareness (local SEO) |
+| 14     | Blog migration (6 posts)       | Migrate, add author/categories         | Team page done         | Awareness             |
+| 15     | Contact page rewrite + booking | Rewrite                                | HubSpot Meetings setup | Decision              |
+| ~~16~~ | ~~Assessment landing page~~    | Retired 2026-08-08 — not being written | —                      | —                     |
 
 ### Tier 4: Write Fourth (Weeks 10-14) — Growth Engine
 
@@ -777,7 +767,7 @@ Week 4: Service offering pages + case study rewrites begin
 | 20  | FAQ content for service pages | Write from scratch                  | Consideration (+ SEO)     |
 | 21  | 2-4 new blog posts            | Write optimized for target keywords | Awareness                 |
 
-**Lead magnet recommendation:** Per Demand Gen Report (2024): the most effective B2B lead magnets for consulting firms are (in order): assessment tools, benchmark reports, maturity models, and templates. The ScoreApp assessment already covers #1. For #2, consider an "Oklahoma Digital Transformation Benchmark Report" based on anonymized client data — this also creates a PR and backlink opportunity.
+**Lead magnet recommendation:** Per Demand Gen Report (2024): the most effective B2B lead magnets for consulting firms are (in order): assessment tools, benchmark reports, maturity models, and templates. #1 is **open** — the maturity assessment that would have covered it was retired on 2026-08-08 (CONTENT_NEEDS §5) with no replacement. For #2, consider an "Oklahoma Digital Transformation Benchmark Report" based on anonymized client data — this also creates a PR and backlink opportunity.
 
 ### Production Dependencies (Critical Path)
 
@@ -795,7 +785,6 @@ WEEK 2:
 └── Bio drafts from interview transcripts
 
 WEEK 3-4:
-├── ScoreApp account review (blocks: assessment landing page)
 ├── HubSpot Meetings configuration (blocks: booking page)
 └── Homepage and service offering page drafts
 
@@ -823,24 +812,24 @@ Per Google Search Central (2024 site migration guidance) and Moz: **failing to i
 4. Monitor Search Console for 404 errors weekly for 90 days post-launch
 5. Keep redirects in place **permanently** — removing them after a few months loses accumulated link equity
 
-| Old URL (Wix)                          | New URL                                         | Notes                            |
-| -------------------------------------- | ----------------------------------------------- | -------------------------------- |
-| `/about-us-1`                          | `/about`                                        |                                  |
-| `/our-services`                        | `/services`                                     |                                  |
-| `/touchstone-workshops(/[slug])`       | `/workshops(/[slug])`                           | IA corrected 2026-06-11 (PR #49) |
-| `/blog-old`                            | `/insights`                                     |                                  |
-| `/blog-old/[slug]`                     | `/insights/[slug]`                              | Match individual post slugs      |
-| `/organizational-strategy-1-5`         | `/resources/organizational-maturity-assessment` | Assessment                       |
-| `/organizational-strategy-1-1-1-3`     | `/case-studies/airline-automation`              | Verify mapping                   |
-| `/organizational-strategy-1-1-1-3-1`   | `/case-studies/oil-gas-modernization`           | Verify mapping                   |
-| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform`    | Verify mapping                   |
-| `/case-study-3`                        | `/case-studies/mobile-apps-remote-operations`   | Verify mapping                   |
-| `/case-study-4`                        | `/case-studies/retail-pos-update-experience`    | Verify mapping                   |
-| `/case-study-5`                        | `/case-studies/data-warehouse-strategy`         | Verify mapping                   |
-| `/driving-innovation-case-study`       | `/case-studies/healthcare-ux-redesign`          |                                  |
-| `/modernizing-healthcare-case-study`   | `/case-studies/healthcare-data-modernization`   |                                  |
-| `/contact`                             | `/contact`                                      | Verify no trailing differences   |
-| `/privacy-policy`                      | `/privacy-policy`                               | Same path                        |
+| Old URL (Wix)                          | New URL                                       | Notes                            |
+| -------------------------------------- | --------------------------------------------- | -------------------------------- |
+| `/about-us-1`                          | `/about`                                      |                                  |
+| `/our-services`                        | `/services`                                   |                                  |
+| `/touchstone-workshops(/[slug])`       | `/workshops(/[slug])`                         | IA corrected 2026-06-11 (PR #49) |
+| `/blog-old`                            | `/insights`                                   |                                  |
+| `/blog-old/[slug]`                     | `/insights/[slug]`                            | Match individual post slugs      |
+| `/organizational-strategy-1-5`         | `/workshops`                                  | Assessment retired 2026-08-08    |
+| `/organizational-strategy-1-1-1-3`     | `/case-studies/airline-automation`            | Verify mapping                   |
+| `/organizational-strategy-1-1-1-3-1`   | `/case-studies/oil-gas-modernization`         | Verify mapping                   |
+| `/organizational-strategy-1-1-1-3-1-1` | `/case-studies/banking-integration-platform`  | Verify mapping                   |
+| `/case-study-3`                        | `/case-studies/mobile-apps-remote-operations` | Verify mapping                   |
+| `/case-study-4`                        | `/case-studies/retail-pos-update-experience`  | Verify mapping                   |
+| `/case-study-5`                        | `/case-studies/data-warehouse-strategy`       | Verify mapping                   |
+| `/driving-innovation-case-study`       | `/case-studies/healthcare-ux-redesign`        |                                  |
+| `/modernizing-healthcare-case-study`   | `/case-studies/healthcare-data-modernization` |                                  |
+| `/contact`                             | `/contact`                                    | Verify no trailing differences   |
+| `/privacy-policy`                      | `/privacy-policy`                             | Same path                        |
 
 **Action required:**
 
@@ -962,7 +951,7 @@ Per HubSpot (2024) and Unbounce Conversion Benchmark Report: B2B services sites 
 | **Medium** (identified) | Email address          | Assessment results, insights subscription, lead magnet | "Take the Assessment," "Subscribe to Insights," "Download the Benchmark Report"          |
 | **High** (sales-ready)  | Calendar time          | Strategy conversation, workshop consultation           | "Book a 30-Minute Strategy Call," "Schedule a Touchstone Workshop," "Request a Proposal" |
 
-**The critical insight:** Per Gartner B2B buying research: only 5-10% of website visitors are ready for a sales conversation at any given time. If "Book a Call" is your only meaningful CTA, you're losing 90% of your potential pipeline. The ScoreApp assessment and email subscription are essential mid-funnel conversion paths.
+**The critical insight:** Per Gartner B2B buying research: only 5-10% of website visitors are ready for a sales conversation at any given time. If "Book a Call" is your only meaningful CTA, you're losing 90% of your potential pipeline. Email subscription is the remaining mid-funnel conversion path now that the maturity assessment is retired (CONTENT_NEEDS §5); a replacement mid-funnel offer is an open gap.
 
 ### CTA Placement by Page Type
 
@@ -999,15 +988,14 @@ Content without measurement is guesswork. Define success metrics before writing,
 
 ### KPIs by Content Type
 
-| Content Type         | Primary Metric                                 | Secondary Metrics                                    | Measurement Tool       |
-| -------------------- | ---------------------------------------------- | ---------------------------------------------------- | ---------------------- |
-| Homepage             | Bounce rate, CTA click rate                    | Time on page, scroll depth                           | GA4, Hotjar/MS Clarity |
-| Service pages        | Form submissions, CTA clicks                   | Organic traffic, avg. time on page                   | GA4, HubSpot           |
-| Case studies         | PDF downloads, "Book a Call" clicks            | Pageviews from service pages (internal traffic flow) | GA4                    |
-| Blog posts           | Organic sessions, email signups                | Social shares, backlinks acquired                    | GA4, Ahrefs/Semrush    |
-| Market landing pages | Local organic traffic, form submissions        | Google Business Profile actions                      | GA4, GBP insights      |
-| Assessment           | Assessment starts, completions, email captures | Completion rate, lead-to-opportunity rate            | ScoreApp, HubSpot      |
-| Testimonials         | N/A (supporting element)                       | A/B test: pages with vs. without testimonials        | GA4 experiments        |
+| Content Type         | Primary Metric                          | Secondary Metrics                                    | Measurement Tool       |
+| -------------------- | --------------------------------------- | ---------------------------------------------------- | ---------------------- |
+| Homepage             | Bounce rate, CTA click rate             | Time on page, scroll depth                           | GA4, Hotjar/MS Clarity |
+| Service pages        | Form submissions, CTA clicks            | Organic traffic, avg. time on page                   | GA4, HubSpot           |
+| Case studies         | PDF downloads, "Book a Call" clicks     | Pageviews from service pages (internal traffic flow) | GA4                    |
+| Blog posts           | Organic sessions, email signups         | Social shares, backlinks acquired                    | GA4, Ahrefs/Semrush    |
+| Market landing pages | Local organic traffic, form submissions | Google Business Profile actions                      | GA4, GBP insights      |
+| Testimonials         | N/A (supporting element)                | A/B test: pages with vs. without testimonials        | GA4 experiments        |
 
 ### Baseline and Target Setting
 
