@@ -880,14 +880,14 @@ Draft content is never exposed to the public API or rendered on the public site 
 | Schedule publish (future `publishedAt`) | —      | ✓      | ✓     |
 | Delete content                          | —      | —      | ✓     |
 | Manage users                            | —      | —      | ✓     |
-| Manage `categories` (taxonomy)          | —      | —      | ✓     |
+| Manage `categories` (taxonomy)          | —      | ✓      | ✓     |
 | Read `media` / `teamMembers`            | ✓      | ✓      | ✓     |
 | Read `testimonials` where `!isActive`   | —      | ✓      | ✓     |
 | Access `/admin`                         | —      | ✓      | ✓     |
 
 **Per-collection overrides** (the "Create / Update / Delete content" rows above describe the default for the editorial collections — `pages`, `posts`, `caseStudies`, `services`, `servicePillars`, `workshops`, `industries`, `locations`, `media`, `teamMembers`; the overrides below cover the rest):
 
-- `categories` — admin-only `create` / `update` / `delete` (curated taxonomy; editors don't add categories on the fly).
+- `categories` — editors `create` / `update` like any other content collection; `delete` is admin-only, matching every collection. (Was admin-only for create/update on a "curated taxonomy" rationale that contradicted §`categories` above and blocked editors from running the content seed.)
 - `testimonials` — public reads are filtered to `isActive: true`; editors and admins see all rows. Mutations follow the editorial default.
 - `users` — `read` requires any authenticated session; `create` is always denied (auto-provisioning only, via the OAuth hook); `update` / `delete` are admin-only.
 
