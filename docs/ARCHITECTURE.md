@@ -632,6 +632,38 @@ The Instance Refresh process: ASG launches a new instance with the updated launc
 
 **Slack notifications:** Both the deploy and CI workflows report status to the same `#seqtek-website-alerts` channel the CloudWatch alarms use, via the reusable `slack-notify.yml` workflow. This is a separate path from the alarm pipeline (SNS → Lambda → Slack): GitHub runners have no AWS identity, so the webhook URL is a GitHub Actions secret (`SLACK_WEBHOOK_URL`) rather than the SSM parameter the alarm Lambda reads. `deploy.yml` posts every staging deploy outcome (success and failure); `ci.yml` posts every failure on any branch/PR plus successes on `main` only, to keep green PR pushes quiet. If `SLACK_WEBHOOK_URL` is unset the post step is skipped, not failed — so the workflows are safe to run before the secret is provisioned.
 
+### Dependency security gates
+
+The production audit gate is `npm audit --omit=dev --audit-level=high`. It is
+applied in **two** places, deliberately asking different questions:
+
+| Where                                     | Mode             | Question                                                    | On failure                     |
+| ----------------------------------------- | ---------------- | ----------------------------------------------------------- | ------------------------------ |
+| `ci.yml` → `quality` (per PR)             | **differential** | does _this diff_ introduce a high+ advisory the base lacks? | blocks the PR                  |
+| `deps-hygiene.yml` → `audit-main` (daily) | **absolute**     | is the default branch's production tree clean?              | opens a `security-audit` issue |
+
+**Why the split.** `npm audit` reads live advisory data, so an absolute per-PR
+gate answers "is the world clean today?" rather than "is this change safe?" — an
+advisory published overnight against an untouched dependency turned every open
+PR red. Three PRs in one week (#88, #89, #90) were blocked by dependencies they
+never touched, each requiring unrelated dependency work to be grafted onto them.
+`tools/audit-diff` compares HEAD against the PR base and fails only on
+introduced advisories; it **fails closed** (falls back to the absolute gate) if
+the base can't be established.
+
+These two halves are a pair. The differential gate deliberately lets
+pre-existing advisories through, so the daily absolute job is what stops main
+rotting silently. Removing one without restoring the other leaves the repo
+unwatched.
+
+**Dependabot** complements both: security updates auto-open fix PRs, and the
+weekly version updates in `.github/dependabot.yml` keep us current enough to
+miss some advisories entirely (payload 3.87.0 dropping `image-size` is the
+motivating case — that advisory had no patched release at all). It cannot edit
+`package.json#overrides`, so transitive pins against an exact-pinned vulnerable
+version still need a human; `tools/check-stale-overrides` tracks those pins for
+removal once upstream catches up.
+
 ### Branch Strategy & Environments
 
 | Branch           | Deploys To                      | Database                        | Purpose                    |

@@ -5,11 +5,18 @@ Flags `package.json#overrides` entries that have outlived their reason to exist.
 ## Why
 
 We add `overrides` to force a transitive dependency to a patched version when a
-security advisory trips the production audit gate CI enforces
-(`npm audit --omit=dev --audit-level=high`, the `quality` job in
-`.github/workflows/ci.yml`). Once the upstream dependency ships its own fix, the
-override becomes dead weight — but nothing tells us, so it rots in place. JSON
-can't hold comments, so the _reason_ is easy to lose too.
+security advisory trips the production audit gate
+(`npm audit --omit=dev --audit-level=high`). Once the upstream dependency ships
+its own fix, the override becomes dead weight — but nothing tells us, so it rots
+in place. JSON can't hold comments, so the _reason_ is easy to lose too.
+
+That gate is enforced in two places, and this tool measures against the gate
+itself rather than either runner: the `quality` job in
+`.github/workflows/ci.yml` applies it **differentially** per PR (only advisories
+a PR introduces block it — see `tools/audit-diff`), and the daily `audit-main`
+job in `.github/workflows/deps-hygiene.yml` applies it **absolutely** to the
+default branch. An override is judged stale or load-bearing by whether removing
+it reintroduces a high+ advisory, which is independent of that split.
 
 This tool makes the staleness mechanically checkable, and `package.json#_overridesNotes`
 holds the human "why / when to remove it" context.
