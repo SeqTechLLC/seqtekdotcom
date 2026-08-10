@@ -4,15 +4,40 @@ import { Construct } from 'constructs'
 import type { EnvName } from './construct-utils'
 
 /**
- * GitHub Actions OIDC subject-claim patterns. Prod is pinned to the
- * `main` branch (so a feature-branch workflow can never deploy to
- * production); staging accepts any branch (engineers `cdk diff` and
- * deploy staging from feature branches).
+ * GitHub Actions OIDC subject-claim patterns.
+ *
+ * Prod is pinned to the `production` GitHub **Environment**, NOT to a git ref.
+ * Two reasons, and the first one is a hard requirement:
+ *
+ *  1. When a job declares `environment:`, GitHub replaces the ref in the `sub`
+ *     claim with the environment — the token reads
+ *     `repo:<owner>/<repo>:environment:production`, never `...:ref:...`.
+ *     `deploy.yml`'s deploy job declares `environment: production`, so a
+ *     ref-pinned claim can never match and every prod deploy would be denied
+ *     with a `sts:AssumeRoleWithWebIdentity` failure.
+ *  2. Production deploys are triggered by publishing a `vX.Y.Z` release, so the
+ *     ref is `refs/tags/vX.Y.Z` — the old `refs/heads/main` pin was wrong for
+ *     the promotion model regardless (see ARCHITECTURE.md § Promotion model).
+ *
+ * This is not a loosening. Which refs may deploy to production is now enforced
+ * by the `production` GitHub Environment's own protection rules (deployment
+ * branch/tag restrictions + required reviewers), which is the control point
+ * designed for it — and unlike a ref pin, it also gates the manual
+ * `workflow_dispatch` path.
+ *
+ * NOTE (repo age): this repo was created 2026-05-15, before GitHub's
+ * 2026-07-15 switch to immutable ID-based subject claims, so the classic
+ * `repo:<owner>/<repo>:environment:<name>` format applies. A repo created
+ * after that date would need the newer owner-id/repo-id form.
+ *
+ * Staging accepts any subject under the repo — engineers `cdk diff` and deploy
+ * staging from feature branches.
  *
  * Contract: `contracts/github-workflows.md` § OIDC trust policy.
  */
 const GITHUB_REPO = 'SeqTechLLC/seqtekdotcom'
-const PROD_SUB_CLAIM = `repo:${GITHUB_REPO}:ref:refs/heads/main`
+const PROD_ENVIRONMENT = 'production'
+const PROD_SUB_CLAIM = `repo:${GITHUB_REPO}:environment:${PROD_ENVIRONMENT}`
 const STAGING_SUB_CLAIM = `repo:${GITHUB_REPO}:*`
 
 /**
@@ -56,6 +81,14 @@ export class DeployRoles extends Construct {
   /**
    * Either creates the OIDC provider (prod env, first-time) or imports
    * the existing one (staging env, references prod's provider).
+   *
+   * DEPLOY ORDER, in a fresh account: `SeqtekProdNetwork` must go first. The
+   * provider is account-wide and may exist exactly once, so prod creates it and
+   * staging imports it by its deterministic ARN. Deploying staging into an
+   * empty account first yields a role whose trust policy names a provider that
+   * does not exist — CloudFormation accepts it, and every deploy then fails at
+   * assume-role time. This is why `SeqtekProdNetwork` is deployed even while
+   * the rest of prod is not.
    */
   private getOrCreateOidcProvider(envName: EnvName): iam.IOpenIdConnectProvider {
     if (envName === 'prod') {

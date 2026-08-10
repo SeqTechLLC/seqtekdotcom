@@ -191,6 +191,36 @@ describe('IAM invariants — every stack', () => {
         }
       })
 
+      it('prod OIDC trust pins the production ENVIRONMENT, never a git ref', () => {
+        // Regression guard with a silent failure mode. `deploy.yml`'s deploy job
+        // declares `environment: production`, and GitHub then issues the sub
+        // claim as `repo:<owner>/<repo>:environment:production` — the ref is
+        // NOT in the claim. Re-pinning this to `ref:refs/heads/main` (or any
+        // ref) synthesizes and deploys perfectly happily, then denies every
+        // production deploy at assume-role time. Prod also deploys from a
+        // `vX.Y.Z` tag, so a branch pin is wrong twice over.
+        // See infra/lib/deploy-role.ts and ARCHITECTURE.md § Promotion model.
+        if (name !== 'SeqtekProdNetwork') return
+        const t = synth()
+        const roles = t.findResources('AWS::IAM::Role')
+        const subs: string[] = []
+        for (const res of Object.values(roles)) {
+          const trust = (res.Properties as { AssumeRolePolicyDocument?: PolicyDocument })
+            .AssumeRolePolicyDocument
+          for (const stmt of trust?.Statement ?? []) {
+            const sub = ((stmt.Condition as Record<string, Record<string, unknown>> | undefined)
+              ?.StringLike ?? {})['token.actions.githubusercontent.com:sub']
+            if (typeof sub === 'string') subs.push(sub)
+          }
+        }
+        expect(subs, 'prod network stack must declare an OIDC deploy role').not.toHaveLength(0)
+        for (const sub of subs) {
+          expect(sub).toBe('repo:SeqTechLLC/seqtekdotcom:environment:production')
+          expect(sub).not.toContain('refs/heads')
+          expect(sub).not.toContain('refs/tags')
+        }
+      })
+
       it('EC2 instance profile roles attach ONLY allowlisted managed policies', () => {
         // Validation-period carve-out: AmazonSSMManagedInstanceCore is
         // accepted for SSM Session Manager debug access. Phase 5.5 polish

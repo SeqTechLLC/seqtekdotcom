@@ -664,17 +664,57 @@ motivating case — that advisory had no patched release at all). It cannot edit
 version still need a human; `tools/check-stale-overrides` tracks those pins for
 removal once upstream catches up.
 
-### Branch Strategy & Environments
+### Promotion model — what deploys where
 
-| Branch           | Deploys To                      | Database                        | Purpose                    |
-| ---------------- | ------------------------------- | ------------------------------- | -------------------------- |
-| `main`           | Production EC2 (`seqtek.com`)   | `seqtek_prod` on RDS            | Stable, reviewed code only |
-| `staging`        | Staging EC2 (staging subdomain) | `seqtek_staging` on RDS         | Pre-production testing     |
-| feature branches | Local development               | Local Postgres (Docker Compose) | Development                |
+**Merging to `main` does not touch production.** `main` is the preview/UAT
+environment. Production moves only when a **Release-Please release is
+published**, which is the deliberate human gate on going live.
 
-Staging shares the RDS instance with production but uses a separate logical database. Connection limits are enforced per-database (`ALTER ROLE ... CONNECTION LIMIT`) to prevent staging from starving production. Development runs against a local Postgres instance via Docker Compose — no risk to RDS resources, and developers don't need VPN access or RDS credentials to work on features. Each deployed environment has its own S3 bucket to prevent media collisions.
+| Trigger                         | Deploys to        | Site                 | Stacks           |
+| ------------------------------- | ----------------- | -------------------- | ---------------- |
+| Merge (push) to `main`          | **Staging / UAT** | `seqtek-preview.com` | `SeqtekStaging*` |
+| Publish a `vX.Y.Z` release      | **Production**    | `seqtek.com`         | `SeqtekProd*`    |
+| `workflow_dispatch` (env input) | either — manual   | —                    | either           |
+| Feature branches                | nothing (CI only) | local dev            | —                |
 
-Environment variables are stored in AWS Systems Manager Parameter Store and loaded into the EC2 instance environment via the instance profile. They are not in the repo or the CI pipeline.
+The release tag is `vX.Y.Z` — `include-v-in-tag: true`,
+`include-component-in-tag: false` in `release-please-config.json`. Release-Please
+maintains a release PR off the Conventional Commits on `main`; merging that PR
+cuts the tag and publishes the GitHub Release, and `deploy.yml` listens for
+`release: [published]`. A release build checks out the **tagged commit**, not
+`main`, so a merge landing mid-deploy can't leak into production, and it tags
+the image `vX.Y.Z` alongside the SHA so a running instance traces back to a
+CHANGELOG entry.
+
+`workflow_dispatch` covers what the triggers can't: the first deploy into a
+fresh account (no release to replay), a stack-scoped redeploy, or re-running a
+deploy without cutting a version.
+
+### Environments & isolation
+
+Each environment is a **complete, independent stack set** — its own VPC, ASG,
+ALB, RDS instance, S3 media bucket, CloudFront distribution and SSM parameter
+tree, named by `stackName()` (`SeqtekStaging*` / `SeqtekProd*`). They share
+nothing. Prod is **not** a logical database on a staging RDS instance, and there
+is no `staging` branch.
+
+The two environments may live in **different AWS accounts**. Nothing in the CDK
+hardcodes an account: `stackEnv()` takes it from `CDK_DEFAULT_ACCOUNT`, the
+GitHub OIDC deploy role derives from `stack.account`, and `deploy.yml` resolves
+`vars.AWS_ACCOUNT_ID` from the GitHub **Environment** (`staging` / `production`)
+rather than the repo-level variable. Pointing an environment at a different
+account is a variable change plus a CDK bootstrap, not a code change.
+
+Local development runs against a local Postgres via Docker Compose — no VPN, no
+RDS credentials, no risk to a deployed environment.
+
+Environment variables live in SSM Parameter Store per environment
+(`/seqtek/website/<env>/*`) and load into the EC2 instance environment via the
+instance profile; secrets (Payload secret, DB master, revalidation secret) live
+in Secrets Manager. Neither is in the repo or the CI pipeline. The exception is
+the `NEXT_PUBLIC_*` client IDs, which Next.js inlines into the browser bundle at
+**build** time and therefore ride as Docker build args in `deploy.yml` — runtime
+SSM cannot deliver them.
 
 ### Local Development
 
