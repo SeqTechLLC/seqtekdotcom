@@ -1,0 +1,78 @@
+# Dependabot version updates.
+#
+# This is the "keep current" half. The "react to advisories" half is Dependabot
+# SECURITY updates, which are a repository setting rather than config in this
+# file (Settings → Code security → Dependabot security updates), enabled
+# alongside this file landing.
+#
+# Why version updates matter here specifically: the image-size advisory that
+# blocked PR #90 had NO patched release at all. What actually cleared it was
+# payload 3.87.0 dropping the dependency — a routine version bump we simply
+# hadn't taken. Security updates could never have fixed that one; staying
+# current would have meant never being exposed to it. That is the job of this
+# file.
+#
+# Dependabot cannot edit `package.json#overrides`, so transitive pins (the
+# `payload > undici` case in PR #89, where payload pins an exact vulnerable
+# version) still need a human. Expect that and don't be surprised by it.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      # Monday morning, before the weekly override scan at 14:00 UTC.
+      interval: weekly
+      day: monday
+      time: '12:00'
+      timezone: Etc/UTC
+    # Small enough to actually review. Security updates are NOT subject to this
+    # limit, so a real advisory is never queued behind routine bumps.
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Payload ships its packages in lockstep; they must move together or the
+      # admin bundle breaks on mismatched internals.
+      payload:
+        patterns:
+          - payload
+          - '@payloadcms/*'
+      # Next + React are equally coupled in practice.
+      next-react:
+        patterns:
+          - next
+          - eslint-config-next
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
+      # Everything else that is dev-only, batched to keep the noise down.
+      dev-tooling:
+        dependency-type: development
+        patterns:
+          - '*'
+        exclude-patterns:
+          - next
+          - eslint-config-next
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '12:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - '*'
