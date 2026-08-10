@@ -15,7 +15,8 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 
 Defer to these docs before re-deriving anything. Update them when decisions change.
 
-- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment
+- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (main → staging/UAT; `vX.Y.Z` release → prod)
+- `docs/INFRASTRUCTURE_RUNBOOK.md` — step-by-step: fresh AWS account standup, migrating an environment (with data) to another account, `seqtek.com` cutover
 - `docs/ROADMAP.md` — current status, open decisions, phase tracker
 - `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
 - `docs/LOCAL_DEVELOPMENT.md` — running locally

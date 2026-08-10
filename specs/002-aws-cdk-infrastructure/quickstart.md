@@ -1,5 +1,14 @@
 # Quickstart: Deploying SEQTEK Website Infrastructure
 
+> **SUPERSEDED (2026-08-10) — see [`docs/INFRASTRUCTURE_RUNBOOK.md`](../../docs/INFRASTRUCTURE_RUNBOOK.md).**
+>
+> Kept as the spec-002 record of the original first deploy. Two things here are
+> now wrong: §6 says a merge to `main` deploys production — merges deploy
+> **staging/UAT**, and production moves only when a `vX.Y.Z` release is
+> published — and §3's repo-level `AWS_ACCOUNT_ID` is now set per GitHub
+> Environment so the two environments can live in different AWS accounts.
+> The runbook also covers migrating a running environment, which this does not.
+
 **Audience**: An engineer (you, future-you, or a future contributor) standing up the SEQTEK website infrastructure from a fresh clone. The goal is **a deployed staging environment in under 60 minutes** (SC-001 scope-extended to staging — same procedure as prod minus the DNS step).
 
 If you're already past the bootstrap and just deploying changes, skip to §6 "Routine deploys."
