@@ -2,11 +2,18 @@
 
 This directory contains the AWS CDK (TypeScript) source for the SEQTEK website's production and staging environments.
 
+**Operational procedures** — standing up a fresh AWS account, migrating an
+environment to another account (rebuilt from the seeders, not by moving the
+database), and the `seqtek.com` cutover:
+[`../docs/INFRASTRUCTURE_RUNBOOK.md`](../docs/INFRASTRUCTURE_RUNBOOK.md). Start
+there; it is the living doc.
+
 **Design docs**:
 
+- Architecture (promotion model, environment isolation): [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)
 - Spec: [`../specs/002-aws-cdk-infrastructure/spec.md`](../specs/002-aws-cdk-infrastructure/spec.md)
 - Plan: [`../specs/002-aws-cdk-infrastructure/plan.md`](../specs/002-aws-cdk-infrastructure/plan.md)
-- Quickstart (60-min first deploy): [`../specs/002-aws-cdk-infrastructure/quickstart.md`](../specs/002-aws-cdk-infrastructure/quickstart.md)
+- Quickstart: [`../specs/002-aws-cdk-infrastructure/quickstart.md`](../specs/002-aws-cdk-infrastructure/quickstart.md) — the original first-deploy walkthrough, **superseded** by the runbook above (it predates the promotion model and describes merges to `main` deploying prod)
 
 **Layout**:
 
@@ -25,4 +32,13 @@ npm --prefix infra run deploy -- -c env=staging 'SeqtekStaging*'
 npm --prefix infra run test
 ```
 
-See `quickstart.md` for the first-time bootstrap procedure (`cdk bootstrap`, OIDC trust, Parameter Store seeding, domain registration).
+**Two ordering traps** when deploying into an account for the first time — both
+fail _after_ an apparently successful deploy, so they are worth knowing before
+you start. See `docs/INFRASTRUCTURE_RUNBOOK.md` § Facts this runbook assumes:
+
+1. In a ONE-account layout, `SeqtekProdNetwork` must be the **first** stack — it
+   creates the account-wide GitHub OIDC provider that staging imports. With the
+   environments in separate accounts each owns its own and the ordering goes
+   away (`ownsAccountOidcProvider` / `ownsAccountEcrRepository` in `cdk.json`).
+2. The `production` GitHub Environment must exist **before** the first prod
+   deploy — the prod OIDC trust pins that environment, not a git ref.

@@ -4,15 +4,40 @@ import { Construct } from 'constructs'
 import type { EnvName } from './construct-utils'
 
 /**
- * GitHub Actions OIDC subject-claim patterns. Prod is pinned to the
- * `main` branch (so a feature-branch workflow can never deploy to
- * production); staging accepts any branch (engineers `cdk diff` and
- * deploy staging from feature branches).
+ * GitHub Actions OIDC subject-claim patterns.
+ *
+ * Prod is pinned to the `production` GitHub **Environment**, NOT to a git ref.
+ * Two reasons, and the first one is a hard requirement:
+ *
+ *  1. When a job declares `environment:`, GitHub replaces the ref in the `sub`
+ *     claim with the environment — the token reads
+ *     `repo:<owner>/<repo>:environment:production`, never `...:ref:...`.
+ *     `deploy.yml`'s deploy job declares `environment: production`, so a
+ *     ref-pinned claim can never match and every prod deploy would be denied
+ *     with a `sts:AssumeRoleWithWebIdentity` failure.
+ *  2. Production deploys are triggered by publishing a `vX.Y.Z` release, so the
+ *     ref is `refs/tags/vX.Y.Z` — the old `refs/heads/main` pin was wrong for
+ *     the promotion model regardless (see ARCHITECTURE.md § Promotion model).
+ *
+ * This is not a loosening. Which refs may deploy to production is now enforced
+ * by the `production` GitHub Environment's own protection rules (deployment
+ * branch/tag restrictions + required reviewers), which is the control point
+ * designed for it — and unlike a ref pin, it also gates the manual
+ * `workflow_dispatch` path.
+ *
+ * NOTE (repo age): this repo was created 2026-05-15, before GitHub's
+ * 2026-07-15 switch to immutable ID-based subject claims, so the classic
+ * `repo:<owner>/<repo>:environment:<name>` format applies. A repo created
+ * after that date would need the newer owner-id/repo-id form.
+ *
+ * Staging accepts any subject under the repo — engineers `cdk diff` and deploy
+ * staging from feature branches.
  *
  * Contract: `contracts/github-workflows.md` § OIDC trust policy.
  */
 const GITHUB_REPO = 'SeqTechLLC/seqtekdotcom'
-const PROD_SUB_CLAIM = `repo:${GITHUB_REPO}:ref:refs/heads/main`
+const PROD_ENVIRONMENT = 'production'
+const PROD_SUB_CLAIM = `repo:${GITHUB_REPO}:environment:${PROD_ENVIRONMENT}`
 const STAGING_SUB_CLAIM = `repo:${GITHUB_REPO}:*`
 
 /**
@@ -20,17 +45,22 @@ const STAGING_SUB_CLAIM = `repo:${GITHUB_REPO}:*`
  * Convention: invoke once per env from the network stack so the
  * OIDC provider lives in the rare-change-rate stack.
  *
- * The OIDC provider is account-wide and must exist exactly once.
- * We create it in the prod env's network stack and import it by
- * issuer URL in staging via `OpenIdConnectProvider.fromOpenIdConnectProviderArn`.
+ * The OIDC provider is account-wide and must exist exactly once per ACCOUNT.
+ * Which environment owns it is configuration (`ownsAccountOidcProvider`), not
+ * an assumption about env names — that is what lets the two environments live
+ * in separate AWS accounts, where BOTH must own one.
  */
 export class DeployRoles extends Construct {
   public readonly deployRole: iam.Role
 
-  constructor(scope: Construct, id: string, props: { envName: EnvName }) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: { envName: EnvName; ownsAccountOidcProvider: boolean },
+  ) {
     super(scope, id)
 
-    const provider = this.getOrCreateOidcProvider(props.envName)
+    const provider = this.getOrCreateOidcProvider(props.ownsAccountOidcProvider)
 
     const subClaim = props.envName === 'prod' ? PROD_SUB_CLAIM : STAGING_SUB_CLAIM
     const stackName = props.envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
@@ -54,18 +84,26 @@ export class DeployRoles extends Construct {
   }
 
   /**
-   * Either creates the OIDC provider (prod env, first-time) or imports
-   * the existing one (staging env, references prod's provider).
+   * Creates the account-wide OIDC provider, or imports the one another
+   * environment in the SAME account created.
+   *
+   * DEPLOY ORDER matters only when an account has an owner and an importer: the
+   * owner's network stack must go first. Deploying the importer into an empty
+   * account yields a role whose trust policy names a provider that does not
+   * exist — CloudFormation accepts it, and every deploy then fails at
+   * assume-role time. With both envs in one account (the layout today) that
+   * means `SeqtekProdNetwork` before `SeqtekStagingNetwork`; with the envs in
+   * separate accounts each owns its own and the ordering disappears.
    */
-  private getOrCreateOidcProvider(envName: EnvName): iam.IOpenIdConnectProvider {
-    if (envName === 'prod') {
+  private getOrCreateOidcProvider(ownsProvider: boolean): iam.IOpenIdConnectProvider {
+    if (ownsProvider) {
       return new iam.OpenIdConnectProvider(this, 'GitHubOidc', {
         url: 'https://token.actions.githubusercontent.com',
         clientIds: ['sts.amazonaws.com'],
       })
     }
 
-    // Staging: import the prod-created provider by ARN. The ARN format
+    // Import the provider another env in this account created. The ARN format
     // is deterministic and depends only on account + issuer URL.
     const stack = Stack.of(this)
     const providerArn = Fn.sub(
@@ -145,7 +183,9 @@ export class DeployRoles extends Construct {
       }),
     )
 
-    // ECR — shared repo named seqtek-website (created by compute stack)
+    // ECR — the `seqtek-website` repo in THIS account (created by whichever env
+    // owns it; see compute-stack.ts). Same name in every account, so the grant
+    // is account-scoped by the ARN's account field.
     role.addToPolicy(
       new iam.PolicyStatement({
         sid: 'EcrPushPullSeqtekWebsite',

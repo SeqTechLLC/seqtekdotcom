@@ -29,6 +29,8 @@ const cfg: EnvConfig = {
   asgMaxCapacity: 3,
   ecrRetainCount: 10,
   logRetentionDays: 90,
+  ownsAccountOidcProvider: true,
+  ownsAccountEcrRepository: true,
 }
 
 interface PolicyDocument {
@@ -59,7 +61,15 @@ function synthStagingNetwork(): Template {
   const stack = new NetworkStack(app, 'SeqtekStagingNetwork', {
     env: { account: '123456789012', region: 'us-east-1' },
     envName: 'staging',
-    cfg: { ...cfg, asgMinCapacity: 1, asgDesiredCapacity: 1, asgMaxCapacity: 2 },
+    cfg: {
+      ...cfg,
+      asgMinCapacity: 1,
+      asgDesiredCapacity: 1,
+      asgMaxCapacity: 2,
+      // staging imports the provider prod owns (same account)
+      ownsAccountOidcProvider: false,
+      ownsAccountEcrRepository: true,
+    },
   })
   return Template.fromStack(stack)
 }
@@ -189,6 +199,64 @@ describe('IAM invariants — every stack', () => {
             ).toBeDefined()
           }
         }
+      })
+
+      // Regression guard with a silent failure mode. `deploy.yml`'s deploy job
+      // declares `environment: production`, and GitHub then issues the sub
+      // claim as `repo:<owner>/<repo>:environment:production` — the ref is NOT
+      // in the claim. Re-pinning this to `ref:refs/heads/main` (or any ref)
+      // synthesizes and deploys perfectly happily, then denies every production
+      // deploy at assume-role time. Prod also deploys from a `vX.Y.Z` tag, so a
+      // branch pin is wrong twice over.
+      // See infra/lib/deploy-role.ts and ARCHITECTURE.md § Promotion model.
+      //
+      // `skipIf` rather than an early `return`: the guard only applies to the
+      // prod stack, and returning early would register a phantom passing case
+      // for every other stack in the loop.
+      it.skipIf(name !== 'SeqtekProdNetwork')(
+        'prod OIDC trust pins the production ENVIRONMENT, never a git ref',
+        () => {
+          const t = synth()
+          const roles = t.findResources('AWS::IAM::Role')
+          const subs: string[] = []
+          for (const res of Object.values(roles)) {
+            const trust = (res.Properties as { AssumeRolePolicyDocument?: PolicyDocument })
+              .AssumeRolePolicyDocument
+            for (const stmt of trust?.Statement ?? []) {
+              const sub = ((stmt.Condition as Record<string, Record<string, unknown>> | undefined)
+                ?.StringLike ?? {})['token.actions.githubusercontent.com:sub']
+              if (typeof sub === 'string') subs.push(sub)
+            }
+          }
+          expect(subs, 'prod network stack must declare an OIDC deploy role').not.toHaveLength(0)
+          for (const sub of subs) {
+            expect(sub).toBe('repo:SeqTechLLC/seqtekdotcom:environment:production')
+            expect(sub).not.toContain('refs/heads')
+            expect(sub).not.toContain('refs/tags')
+          }
+        },
+      )
+
+      it('exactly one env per account creates the OIDC provider, and the ECR grant is account-scoped', () => {
+        // `ownsAccountOidcProvider` decides create-vs-import. Its own field docs
+        // say getting it wrong "fails silently-ish in opposite directions": two
+        // owners in one account collide at CreateStack, zero owners leave a
+        // deploy role trusting a provider that does not exist — which
+        // CloudFormation accepts, and every deploy then fails at assume-role.
+        // Neither shows up in a diff, so assert the synthesized shape.
+        const t = synth()
+        const providers = Object.values(t.findResources('Custom::AWSCDKOpenIdConnectProvider'))
+        const expected = name === 'SeqtekProdNetwork' ? 1 : 0
+        expect(providers, `${name} should synth ${expected} OIDC provider(s)`).toHaveLength(
+          expected,
+        )
+
+        // The ECR grant must name this account's repo. A per-env rename here
+        // would silently break the deploy: the pipeline pushes BEFORE the cdk
+        // deploy that would create the renamed repo, so the push 403s.
+        const policies = JSON.stringify(collectPolicies(t))
+        expect(policies).toContain('repository/seqtek-website')
+        expect(policies).not.toContain('repository/seqtek-website-')
       })
 
       it('EC2 instance profile roles attach ONLY allowlisted managed policies', () => {

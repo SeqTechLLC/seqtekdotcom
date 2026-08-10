@@ -22,6 +22,8 @@ const stagingCfg: EnvConfig = {
   asgMaxCapacity: 2,
   ecrRetainCount: 10,
   logRetentionDays: 14,
+  ownsAccountOidcProvider: true,
+  ownsAccountEcrRepository: true,
 }
 
 const stagingWithDomainCfg: EnvConfig = {

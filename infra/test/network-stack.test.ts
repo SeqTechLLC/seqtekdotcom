@@ -20,6 +20,8 @@ const prodCfg: EnvConfig = {
   asgMaxCapacity: 3,
   ecrRetainCount: 10,
   logRetentionDays: 90,
+  ownsAccountOidcProvider: true,
+  ownsAccountEcrRepository: false,
 }
 
 const stagingCfg: EnvConfig = {
@@ -28,6 +30,8 @@ const stagingCfg: EnvConfig = {
   asgDesiredCapacity: 1,
   asgMaxCapacity: 2,
   logRetentionDays: 14,
+  ownsAccountOidcProvider: false,
+  ownsAccountEcrRepository: true,
 }
 
 function synthProd(): Template {

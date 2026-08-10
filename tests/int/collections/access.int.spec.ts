@@ -80,13 +80,6 @@ const TIERS: Record<string, TierExpectations> = {
     update: EDITORIAL_MUTATION,
     delete: ADMIN_ONLY,
   },
-  'public-read-admin-mutate': {
-    'read-published': PUBLIC,
-    'read-draft': null,
-    create: ADMIN_ONLY,
-    update: ADMIN_ONLY,
-    delete: ADMIN_ONLY,
-  },
   'active-gated': {
     'read-published': PUBLIC,
     'read-draft': HIDDEN_FROM_PUBLIC,
@@ -384,7 +377,7 @@ const COLLECTION_SPECS: CollectionSpec[] = [
   },
   {
     slug: 'categories',
-    tier: 'public-read-admin-mutate',
+    tier: 'public-read-editorial-mutate',
     visibleData: (s) => ({ title: `AM Category ${s}`, slug: `access-matrix-category-${s}` }),
     updateData: { title: 'AM Category updated' },
   },

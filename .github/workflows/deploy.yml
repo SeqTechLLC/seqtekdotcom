@@ -1,9 +1,38 @@
-name: Deploy (staging)
+name: Deploy
 
-# Staging-only continuous delivery. Production auto-deploy is intentionally
-# deferred until leadership approves the seqtek.com DNS cutover (Phase 6 of
-# the website roadmap). When that happens, this workflow either grows an
-# `env` input or a sibling `deploy-prod.yml` lands alongside it.
+# PROMOTION MODEL — what deploys where, and why.
+#
+#   merge to `main`              →  STAGING / UAT  (seqtek-preview.com)
+#   publish a `vX.Y.Z` release   →  PRODUCTION     (CloudFront URL until cutover)
+#
+# Merging to main is NOT a production deploy. main is the preview/UAT
+# environment: every merged PR lands there immediately so it can be reviewed
+# against real infrastructure. Production moves only when a Release-Please
+# release is published — i.e. when someone merges the release PR, which cuts
+# the `vX.Y.Z` tag and the GitHub Release this workflow listens for. That is
+# the deliberate human gate on going live, and it is why cutting a release is
+# treated as an outward-facing action.
+#
+# Release-Please tags are `vX.Y.Z` (`include-v-in-tag: true`,
+# `include-component-in-tag: false` in release-please-config.json).
+# `release-please.yml` dispatches this workflow after cutting one — see the
+# `release:` trigger below for why the release event alone is not enough.
+#
+# The deployed image is IMMUTABLE: `-c imageTag` stamps the LaunchTemplate with
+# `vX.Y.Z` on a release and the commit SHA otherwise, so an instance replaced
+# later re-pulls that exact build and rollback is a redeploy of an older tag.
+#
+# `workflow_dispatch` exists for the cases a trigger can't cover: the FIRST
+# deploy into a fresh account (no release to replay), a stack-scoped redeploy,
+# or re-running a deploy without cutting a version.
+#
+# Account resolution: `vars.AWS_ACCOUNT_ID` is read from the GitHub *Environment*
+# (Settings → Environments → staging / production), falling back to the
+# repo-level variable — which is why staging keeps working untouched. The two
+# environments MAY live in different AWS accounts; the ECR repository and the
+# account-wide OIDC provider each have an explicit owner in `infra/cdk.json`
+# (`ownsAccountEcrRepository` / `ownsAccountOidcProvider`), set `true` on both
+# envs when they are split. See ARCHITECTURE.md § Environments & isolation.
 
 on:
   push:
@@ -21,11 +50,34 @@ on:
       - README.md
       - CLAUDE.md
       - LICENSE
+  # Production, for releases published by a HUMAN from the UI.
+  #
+  # This trigger does NOT catch Release-Please's own releases: that action runs
+  # as the default GITHUB_TOKEN, and GitHub does not create workflow runs from
+  # events raised by GITHUB_TOKEN. Relying on it alone leaves the production
+  # path inert with nothing to show for it — no failed run, no notification.
+  # `release-please.yml` therefore dispatches this workflow explicitly after
+  # cutting a release (workflow_dispatch is one of the two documented exceptions
+  # to the GITHUB_TOKEN rule). Both routes land on the same job.
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
+      env:
+        description: 'Target environment'
+        default: staging
+        type: choice
+        options:
+          - staging
+          - prod
       stack-filter:
-        description: 'CDK stack glob (e.g., SeqtekStaging*Compute or SeqtekStaging*)'
-        default: 'SeqtekStaging*Compute'
+        description: >-
+          CDK stack glob, WITHOUT the Seqtek<Env> prefix (it is prepended from
+          `env`). Default `*Compute` redeploys just the app tier. Use `*` for a
+          full-environment redeploy. The FIRST deploy into a new account is done
+          locally instead (runbook §1.5) — this workflow cannot bootstrap it,
+          since the deploy role it assumes is created by the Network stack.
+        default: '*Compute'
         type: string
 
 permissions:
@@ -40,29 +92,77 @@ env:
 
 # Pairs with CloudFormation's native stack-update lock — a second run started
 # while one is in flight queues rather than racing. Never cancel a deploy
-# mid-flight (FR-016).
+# mid-flight (FR-016). Keyed per env so a prod deploy never queues behind a
+# staging one.
 concurrency:
-  group: deploy-staging
+  group: deploy-${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'prod' || 'staging' }}
   cancel-in-progress: false
 
 jobs:
   deploy:
     name: Build, push, deploy
     runs-on: ubuntu-latest
-    environment: staging
+    # `production` is the conventional GitHub Environment name and is where a
+    # required-reviewer gate would hang; staging stays `staging`. Job-level
+    # `env:` is not in scope for `environment:`/`concurrency:`, so the
+    # is-this-prod test is spelled out in each of those.
+    environment:
+      ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'production' ||
+      'staging' }}
     outputs:
       site-url: ${{ steps.site.outputs.url }}
     env:
-      STACK_FILTER: ${{ github.event.inputs.stack-filter || 'SeqtekStaging*Compute' }}
+      # A release publish is ALWAYS prod; everything else honours the dispatch
+      # input and defaults to staging. STACK_PREFIX must match `stackName()` in
+      # infra/lib/construct-utils.ts: 'staging' → SeqtekStaging*, 'prod' → SeqtekProd*.
+      ENV_NAME:
+        ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'prod' ||
+        'staging' }}
+      STACK_PREFIX:
+        ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'SeqtekProd' ||
+        'SeqtekStaging' }}
+      ROLE_NAME: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') &&
+        'SeqtekProdDeploy' || 'SeqtekStagingDeploy' }}
+      STACK_FILTER:
+        ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'SeqtekProd' ||
+        'SeqtekStaging' }}${{ github.event.inputs.stack-filter || '*Compute' }}
     steps:
-      - uses: actions/checkout@v4
+      # FAIL CLOSED on an unconfigured production environment.
+      #
+      # GitHub auto-creates an environment that a workflow references but that
+      # does not exist — with no protection rules and no secrets. Since the prod
+      # OIDC trust now pins `environment:production` rather than a git ref, that
+      # auto-created environment would satisfy the trust and deploy completely
+      # ungated. The old ref pin at least failed closed; this restores that
+      # property from inside the repo, where it can't be forgotten.
+      #
+      # Set `PROD_ENVIRONMENT_CONFIGURED=true` as a variable ON the production
+      # environment once its deployment branch/tag policies (and reviewers, if
+      # any) are in place — docs/INFRASTRUCTURE_RUNBOOK.md §1.2.
+      - name: Refuse an unconfigured production environment
+        if: ${{ env.ENV_NAME == 'prod' }}
+        run: |
+          if [ "${{ vars.PROD_ENVIRONMENT_CONFIGURED }}" != "true" ]; then
+            echo "::error::The 'production' GitHub Environment is not configured."
+            echo "::error::Set its deployment branch/tag policies, then set the"
+            echo "::error::variable PROD_ENVIRONMENT_CONFIGURED=true on that"
+            echo "::error::environment. See docs/INFRASTRUCTURE_RUNBOOK.md §1.2."
+            exit 1
+          fi
+          echo "production environment reports configured."
 
-      - name: Configure AWS credentials (staging OIDC role)
+      # On a release, build the TAGGED commit, not whatever main has drifted
+      # to since the release PR merged.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+
+      - name: Configure AWS credentials (${{ env.ENV_NAME }} OIDC role)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/SeqtekStagingDeploy
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/${{ env.ROLE_NAME }}
           aws-region: ${{ env.AWS_REGION }}
-          role-session-name: github-deploy-staging-${{ github.run_id }}
+          role-session-name: github-deploy-${{ env.ENV_NAME }}-${{ github.run_id }}
 
       - name: Resolve ECR registry + image tags
         id: img
@@ -71,10 +171,27 @@ jobs:
           REGISTRY="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE="${REGISTRY}/${ECR_REPOSITORY}"
+          # Version tag, derived from the REF rather than the event name.
+          #
+          # Keying this on `github.event_name == 'release'` looked right but was
+          # dead code on the path that actually deploys production: release-please
+          # runs as GITHUB_TOKEN, so its release never raises a `release` event —
+          # that is the whole reason release-please.yml dispatches this workflow
+          # instead. On that dispatch the event is `workflow_dispatch`, so the
+          # version tag was never applied and prod fell back to a bare SHA.
+          #
+          # The ref is `refs/tags/vX.Y.Z` on BOTH paths (the dispatch passes
+          # `--ref "$TAG"`, a human-published release checks out the tag), so it
+          # is the reliable source.
+          VERSION_TAG=""
+          case "$GITHUB_REF" in
+            refs/tags/v*) VERSION_TAG="${GITHUB_REF#refs/tags/}" ;;
+          esac
           {
             echo "registry=${REGISTRY}"
             echo "image=${IMAGE}"
             echo "sha-tag=${SHA_TAG}"
+            echo "version-tag=${VERSION_TAG}"
           } >> "$GITHUB_OUTPUT"
 
       - name: ECR login
@@ -92,9 +209,17 @@ jobs:
           platforms: linux/amd64
           push: true
           provenance: false
+          # Immutable tags only. When both environments share one account they
+          # share the `seqtek-website` repository, so a bare moving `:latest`
+          # rewritten by every staging merge would be picked up by production on
+          # its next instance replacement. The SHA (or `vX.Y.Z`) tag is what
+          # makes "merging to main does not touch production" true at the image
+          # layer and not only at the trigger layer. `:latest-<env>` remains as
+          # a convenience pointer; nothing deploys from it.
           tags: |
             ${{ steps.img.outputs.image }}:${{ steps.img.outputs.sha-tag }}
-            ${{ steps.img.outputs.image }}:latest
+            ${{ steps.img.outputs.image }}:latest-${{ env.ENV_NAME }}
+            ${{ steps.img.outputs.version-tag != '' && format('{0}:{1}', steps.img.outputs.image, steps.img.outputs.version-tag) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           # NEXT_PUBLIC_* client IDs are build-time-inlined into the browser
@@ -131,80 +256,46 @@ jobs:
         run: npm --prefix infra ci
 
       - name: cdk deploy (${{ env.STACK_FILTER }})
+        # `-c imageTag` stamps the LaunchTemplate with the IMMUTABLE tag just
+        # pushed — `vX.Y.Z` on a release, the commit SHA otherwise. An instance
+        # replaced later re-pulls that exact build rather than whatever a moving
+        # tag has come to point at, so a running production instance is
+        # traceable to a CHANGELOG entry and rollback is a redeploy of an older
+        # tag. It also means a staging merge has no moving tag to overwrite.
+        env:
+          IMAGE_TAG: ${{ steps.img.outputs.version-tag != '' && steps.img.outputs.version-tag ||
+            steps.img.outputs.sha-tag }}
         run: |
-          npm --prefix infra run cdk -- deploy -c env=staging "$STACK_FILTER" \
+          echo "Deploying image tag: $IMAGE_TAG"
+          npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" -c imageTag="$IMAGE_TAG" "$STACK_FILTER" \
             --require-approval never \
             --outputs-file cdk-outputs.json
 
-      - name: Trigger ASG instance refresh
-        # cdk deploy of *Compute does NOT change the LaunchTemplate when the
-        # only effective change is the upstream `:latest` image content
-        # (the UserData is byte-identical from CDK's POV), so the ASG
-        # doesn't auto-refresh. Trigger explicitly so running instances
-        # re-pull the just-pushed image.
-        run: |
-          set -euo pipefail
-          ASG_NAME=$(aws cloudformation describe-stack-resources \
-            --stack-name SeqtekStagingCompute \
-            --query "StackResources[?ResourceType=='AWS::AutoScaling::AutoScalingGroup'].PhysicalResourceId | [0]" \
-            --output text 2>/dev/null || echo None)
-          if [ -z "$ASG_NAME" ] || [ "$ASG_NAME" = "None" ]; then
-            echo "No ASG resource found in SeqtekStagingCompute — skipping refresh trigger."
-            exit 0
-          fi
-          REFRESH_ID=$(aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name "$ASG_NAME" \
-            --strategy Rolling \
-            --preferences '{"MinHealthyPercentage":100,"InstanceWarmup":180,"SkipMatching":false}' \
-            --query 'InstanceRefreshId' \
-            --output text)
-          echo "Started instance refresh $REFRESH_ID on $ASG_NAME"
+      # NO explicit instance refresh.
+      #
+      # It used to be required: with a moving `:latest` tag the UserData was
+      # byte-identical between deploys, so CDK produced no LaunchTemplate change
+      # and the ASG never rolled — the new image had to be forced in.
+      #
+      # With an immutable `-c imageTag`, the UserData now differs on every new
+      # build, so the LaunchTemplate gets a new version, and the ASG references
+      # it by `LatestVersionNumber` — CloudFormation performs the rolling update
+      # itself (MaxBatchSize 1, MinInstancesInService = asgMinCapacity) and
+      # `cdk deploy` blocks until it finishes and the instances are healthy.
+      # Triggering a refresh on top of that would replace every instance a
+      # SECOND time on every deploy. Re-deploying an unchanged tag is correctly
+      # a no-op: same image, nothing to roll.
 
-      - name: Wait for ASG instance refresh
-        # Poll up to 15 min. Pass-through if the stack filter didn't touch
-        # an ASG (e.g. observability-only deploy).
-        run: |
-          set -euo pipefail
-          ASG_NAME=$(aws cloudformation describe-stack-resources \
-            --stack-name SeqtekStagingCompute \
-            --query "StackResources[?ResourceType=='AWS::AutoScaling::AutoScalingGroup'].PhysicalResourceId | [0]" \
-            --output text 2>/dev/null || echo None)
-          if [ -z "$ASG_NAME" ] || [ "$ASG_NAME" = "None" ]; then
-            echo "No ASG resource found in SeqtekStagingCompute — skipping refresh wait."
-            exit 0
-          fi
-          echo "ASG: $ASG_NAME"
-          for i in $(seq 1 90); do
-            STATUS=$(aws autoscaling describe-instance-refreshes \
-              --auto-scaling-group-name "$ASG_NAME" \
-              --max-records 1 \
-              --query "InstanceRefreshes[0].Status" \
-              --output text)
-            echo "[$i] instance refresh status: $STATUS"
-            case "$STATUS" in
-              Successful)
-                exit 0
-                ;;
-              Failed|Cancelled|RollbackFailed|RollbackSuccessful)
-                echo "Instance refresh terminated in non-success state: $STATUS"
-                exit 1
-                ;;
-            esac
-            sleep 10
-          done
-          echo "Timed out after 15 min waiting for ASG instance refresh."
-          exit 1
-
-      - name: Resolve staging site URL (from SeqtekStagingEdge output)
+      - name: Resolve site URL (from ${{ env.STACK_PREFIX }}Edge output)
         id: site
         run: |
           set -euo pipefail
           URL=$(aws cloudformation describe-stacks \
-            --stack-name SeqtekStagingEdge \
+            --stack-name "${STACK_PREFIX}Edge" \
             --query "Stacks[0].Outputs[?OutputKey=='SiteUrl'].OutputValue | [0]" \
             --output text)
           if [ -z "$URL" ] || [ "$URL" = "None" ]; then
-            echo "Could not resolve SeqtekStagingEdge SiteUrl output."
+            echo "Could not resolve ${STACK_PREFIX}Edge SiteUrl output."
             exit 1
           fi
           echo "url=${URL}" >> "$GITHUB_OUTPUT"
@@ -260,7 +351,7 @@ jobs:
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/slack-notify.yml
     with:
-      workflow-name: Deploy (staging)
+      workflow-name: Deploy (${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'production' || 'staging' }})
       status: ${{ (needs.deploy.result == 'success' && needs.smoke.result == 'success') && 'success' || 'failure' }}
       site-url: ${{ needs.deploy.outputs.site-url }}
     secrets: inherit

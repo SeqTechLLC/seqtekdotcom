@@ -21,7 +21,8 @@ const ECR_REPO_NAME = 'seqtek-website'
 const APP_PORT = 3000
 
 /**
- * Compute plane — ECR repo (created in staging, imported in prod), ALB
+ * Compute plane — ECR repo (created by whichever env owns it in this
+ * account; see `ownsAccountEcrRepository`), ALB
  * with port-80 listener, Application Target Group on port 3000, ASG
  * with launch template that pulls the ECR image and reads Parameter
  * Store via the instance profile.
@@ -55,8 +56,30 @@ export class ComputeStack extends Stack {
     super(scope, id, props)
     const { envName, cfg, network, data } = props
 
-    // ----- ECR repository (created by staging; imported by prod) -----
-    if (envName === 'staging') {
+    // ----- ECR repository -----
+    //
+    // Name is SHARED (`seqtek-website`); ownership is config, exactly like the
+    // OIDC provider. One environment per ACCOUNT creates it, any other imports
+    // it by name.
+    //
+    //   one account (today): staging creates, prod imports
+    //   separate accounts:   BOTH create — each account gets its own
+    //
+    // This is what unblocks a separate prod account: the old code keyed
+    // creation on `envName === 'staging'`, so a prod-only account had nothing
+    // creating the repo and `fromRepositoryName` resolved to a repository that
+    // does not exist — the ASG then simply could not pull, silently, at boot.
+    //
+    // Deliberately NOT renamed per environment (`seqtek-website-<env>`), even
+    // though that would additionally stop staging's `maxImageCount` churn from
+    // expiring production images and stop the staging deploy role pushing to
+    // prod's repo. A rename cannot be bootstrapped safely in an account that is
+    // already running: the pipeline pushes the image BEFORE the `cdk deploy`
+    // that would create the renamed repo, and the deploy role's grant names the
+    // old repo — so the first merge would fail on AccessDenied with no
+    // self-recovery. Do the rename in a fresh account, where the runbook
+    // already deploys stacks (§1.5) before the first image push (§1.6).
+    if (cfg.ownsAccountEcrRepository) {
       this.ecrRepository = new ecr.Repository(this, 'EcrRepo', {
         repositoryName: ECR_REPO_NAME,
         imageScanOnPush: true,
@@ -223,6 +246,26 @@ export class ComputeStack extends Stack {
     )
 
     // ----- Launch template + ASG -----
+    // ----- Which image this environment runs -----
+    //
+    // IMMUTABLE by default: `deploy.yml` passes `-c imageTag=<vX.Y.Z | sha>`, so
+    // the LaunchTemplate is stamped with the exact build that was deployed. An
+    // instance replaced months later re-pulls THAT image, not whatever a moving
+    // tag points at by then — which is what makes a production instance
+    // traceable to a CHANGELOG entry, and what makes rollback a redeploy of an
+    // older tag rather than a rebuild.
+    //
+    // It also removes the shared-repository hazard: when both environments live
+    // in ONE account they share the `seqtek-website` repo, so any moving tag is
+    // rewritten by staging merges. With an immutable tag there is nothing for a
+    // staging build to overwrite.
+    //
+    // The fallback is only for a synth/deploy that passes no context (local
+    // `cdk synth`, the assertion tests). It stays ENV-SCOPED — never a bare
+    // `:latest` — so even that path cannot cross environments.
+    const imageTag =
+      (this.node.tryGetContext('imageTag') as string | undefined) || `latest-${envName}`
+
     const userData = ec2.UserData.forLinux()
     userData.addCommands(
       'set -euo pipefail',
@@ -275,10 +318,10 @@ export class ComputeStack extends Stack {
       `echo "REVALIDATION_SECRET=$REVALIDATION_SECRET" >> /etc/seqtek-website.env`,
       // ----- Pull and run the container image -----
       `aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${this.ecrRepository.repositoryUri}"`,
-      `docker pull "${this.ecrRepository.repositoryUri}:latest"`,
+      `docker pull "${this.ecrRepository.repositoryUri}:${imageTag}"`,
       // Mount the RDS CA bundle read-only at the same path the env var
       // references. -v /host:/container:ro for read-only.
-      `docker run -d --name seqtek-website --restart=unless-stopped -p ${APP_PORT}:${APP_PORT} --env-file /etc/seqtek-website.env -v /etc/seqtek/certs/rds-ca.pem:/etc/seqtek/certs/rds-ca.pem:ro --log-driver=awslogs --log-opt awslogs-group="${this.appLogGroup.logGroupName}" --log-opt awslogs-region="${this.region}" "${this.ecrRepository.repositoryUri}:latest"`,
+      `docker run -d --name seqtek-website --restart=unless-stopped -p ${APP_PORT}:${APP_PORT} --env-file /etc/seqtek-website.env -v /etc/seqtek/certs/rds-ca.pem:/etc/seqtek/certs/rds-ca.pem:ro --log-driver=awslogs --log-opt awslogs-group="${this.appLogGroup.logGroupName}" --log-opt awslogs-region="${this.region}" "${this.ecrRepository.repositoryUri}:${imageTag}"`,
     )
 
     // ----- Explicit LaunchTemplate -----
@@ -335,10 +378,32 @@ export class ComputeStack extends Stack {
         // committed migrations) and can shorten this back to 3 min.
         gracePeriod: Duration.minutes(8),
       }),
+      // Rolling update on every LaunchTemplate change. Since the deployed image
+      // tag is immutable, that is every new build — so this, not an explicit
+      // instance refresh, is what rolls a deploy out.
+      //
+      // `pauseTime` is a BLIND wait, not a health check: `waitOnResourceSignals`
+      // is false and the rolling update suspends the `HealthCheck` process, so
+      // CloudFormation launches the replacement, waits, then terminates the old
+      // instance regardless of whether the app came up. The wait therefore has
+      // to cover worst-case boot or a deploy can drop the environment to zero
+      // serving capacity — on staging `minInstancesInService` is 1, so there is
+      // no second instance to cover the gap.
+      //
+      // Budget (see the 8-minute health-check grace above): ~700MB image pull +
+      // dnf install + Payload migrations + Next.js start, then 3 × 30s before
+      // the target group calls the target healthy. 12 minutes covers it with
+      // margin; 5 minutes did not.
+      //
+      // The real fix is `waitOnResourceSignals: true` with `cfn-signal` at the
+      // end of UserData, which gates on the app actually starting instead of on
+      // a timer. It needs `aws-cfn-bootstrap` installed first — Amazon Linux
+      // 2023 does not ship it — otherwise the signal never arrives and every
+      // deploy hangs until the timeout. Worth doing; not worth doing blind.
       updatePolicy: autoscaling.UpdatePolicy.rollingUpdate({
         minInstancesInService: cfg.asgMinCapacity,
         maxBatchSize: 1,
-        pauseTime: Duration.minutes(5),
+        pauseTime: Duration.minutes(12),
         waitOnResourceSignals: false,
       }),
     })
