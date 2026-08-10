@@ -503,7 +503,7 @@ CI/CD (GitHub Actions)
     │
     ├── Build Docker image
     ├── Push to Amazon ECR
-    └── Trigger ASG Instance Refresh (blue-green)
+    └── CloudFormation rolling update (launch template changed)
 
 CloudFront (CDN + SSL termination)
     │  - ACM certificate (auto-renewing, zero maintenance)
@@ -521,8 +521,8 @@ Auto Scaling Group
     │  - Production: min=2, max=3, desired=2 across 2 AZs
     │    (AZ fault-tolerance + SC-010 99.9% post-launch SLA)
     │  - Staging: min=1, max=2, desired=1 (single instance is enough for smoke)
-    │  - Blue-green via Instance Refresh: temporarily scales beyond desired
-    │    capacity, MinHealthyPercentage=100 so the old instance stays in
+    │  - Rolling update: temporarily scales beyond desired capacity,
+    │    minInstancesInService held so existing instances stay in
     │    service until the new one passes /api/health
     │
     └── EC2 (t3.small, private subnet)
@@ -535,10 +535,10 @@ Auto Scaling Group
     │
     ├── RDS PostgreSQL (db.t3.small, private subnet, same VPC)
     │   ├── Production database: all content, users, media metadata, versions/drafts
-    │   └── Staging database: separate logical database in same RDS instance
+    │   └── Staging: its OWN RDS instance in its own stack set (not a logical database here)
     │
     ├── ECR (Elastic Container Registry)
-    │   └── seqtek-website repository (tagged by git SHA + latest)
+    │   └── seqtek-website repository (immutable tags: git SHA, or vX.Y.Z on a release)
     │
     └── S3
         └── Media uploads bucket
@@ -559,7 +559,7 @@ The Dockerfile uses a multi-stage build: a `node:24-alpine` builder stage runs `
 
 **IAM credentials in Docker:** The EC2 instance profile provides S3, Parameter Store, ECR, and CloudWatch access — no static AWS credentials. The launch template sets `HttpPutResponseHopLimit: 2` on the instance metadata options so the container can reach IMDSv2 through Docker's bridge network. The AWS SDK inside the container auto-discovers and auto-rotates credentials from the instance profile.
 
-The EC2 instance runs Docker and pulls the latest image from ECR on launch. The launch template's user data script handles this bootstrapping automatically, making every instance fully self-provisioning.
+The EC2 instance runs Docker and pulls the image tag stamped into its launch template (immutable — a git SHA or `vX.Y.Z`) from ECR on launch. The launch template's user data script handles this bootstrapping automatically, making every instance fully self-provisioning.
 
 ### Media Storage — S3 + CloudFront with Origin Access Control
 
@@ -618,15 +618,15 @@ The `AWS:SourceArn` condition scopes read access to the one specific distributio
 
 ### Deployment Pipeline (GitHub Actions)
 
-On push to `main`:
+On push to `main` (→ **staging**; production moves on a release, see § Promotion model):
 
 1. **Build** the Docker image in GitHub Actions
-2. **Push** the image to ECR, tagged with the git SHA and `latest`
-3. **Update** the ASG launch template to reference the new image tag
-4. **Trigger** an ASG Instance Refresh with `MinHealthyPercentage: 100`
-5. **Post-deploy** — after the new instance is healthy: issue a CloudFront invalidation for `/*` and run the cache warming script
+2. **Push** the image to ECR, tagged with the git SHA (plus `vX.Y.Z` on a release build)
+3. **Deploy** the compute stack with `-c imageTag=<that tag>`, which stamps the ASG launch template with the immutable tag
+4. **CloudFormation rolls the ASG** — the launch template changed, and the ASG references it by `LatestVersionNumber`, so the rolling update replaces instances and `cdk deploy` blocks until it completes. There is no separate instance-refresh step; triggering one on top would replace every instance twice per deploy.
+5. **Post-deploy** — Playwright smoke against the deployed URL
 
-The Instance Refresh process: ASG launches a new instance with the updated launch template → new instance pulls the new Docker image from ECR → container starts, Payload runs migrations, health check passes → ALB routes traffic to the new instance → ASG terminates the old instance. Zero-downtime, zero manual intervention.
+The rolling update replaces one instance at a time, holding `minInstancesInService` in service throughout. Note it waits a fixed `pauseTime` rather than gating on application health — see the comment on `updatePolicy` in `infra/lib/compute-stack.ts` for why, and what upgrading to `cfn-signal` would require.
 
 **Cost of blue-green:** A second `t3.small` runs for ~5-10 minutes during each deploy. At $0.0208/hour, that's ~$0.003 per deploy — fractions of a penny.
 
@@ -684,11 +684,22 @@ cutover — `infra/cdk.json` deliberately has prod `domainName: null` (see
 The release tag is `vX.Y.Z` — `include-v-in-tag: true`,
 `include-component-in-tag: false` in `release-please-config.json`. Release-Please
 maintains a release PR off the Conventional Commits on `main`; merging that PR
-cuts the tag and publishes the GitHub Release, and `deploy.yml` listens for
-`release: [published]`. A release build checks out the **tagged commit**, not
-`main`, so a merge landing mid-deploy can't leak into production, and it tags
-the image `vX.Y.Z` alongside the SHA so a running instance traces back to a
-CHANGELOG entry.
+cuts the tag and publishes the GitHub Release.
+
+**How production is actually triggered.** `release-please.yml` explicitly
+dispatches `deploy.yml` (`gh workflow run deploy.yml --ref "$TAG" -f env=prod`).
+It does **not** rely on `deploy.yml`'s `release: [published]` trigger, because
+Release-Please runs as the default `GITHUB_TOKEN` and GitHub does not create
+workflow runs from events raised by that token — that trigger only fires for a
+release a human publishes from the UI. A release build checks out the **tagged
+commit**, not `main`, so a merge landing mid-deploy can't leak into production,
+and the image is tagged `vX.Y.Z` (derived from the ref, so it applies on both
+paths) so a running instance traces back to a CHANGELOG entry.
+
+**Prerequisites.** Production deploys fail closed unless the `production` GitHub
+Environment exists with `AWS_ACCOUNT_ID`, deployment branch/tag policies, and
+`PROD_ENVIRONMENT_CONFIGURED=true` — see
+[`INFRASTRUCTURE_RUNBOOK.md`](./INFRASTRUCTURE_RUNBOOK.md) §1.2.
 
 `workflow_dispatch` covers what the triggers can't: the first deploy into a
 fresh account (no release to replay), a stack-scoped redeploy, or re-running a
@@ -709,18 +720,31 @@ Nothing in the CDK hardcodes an account: `stackEnv()` reads
 
 Two resources need care, because each is a singleton in its own way:
 
-| Resource             | How it works                                                                                                                                                                      |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ECR repository       | **One per environment** — `seqtek-website-<env>`. Distinct names never collide in one account; in separate accounts each side creates its own. No import, no ordering constraint. |
-| GitHub OIDC provider | Account-wide — IAM permits exactly ONE per issuer URL per account. Ownership is explicit config: `ownsAccountOidcProvider`.                                                       |
+| Resource             | How it works                                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| ECR repository       | Shared name `seqtek-website`; ownership is config (`ownsAccountEcrRepository`). One env per account creates it, others import it. |
+| GitHub OIDC provider | Account-wide — IAM permits exactly ONE per issuer URL per account. Ownership is explicit config: `ownsAccountOidcProvider`.       |
 
-Set `ownsAccountOidcProvider` to match the topology:
+Set both ownership flags to match the topology:
 
-- **One account (today):** `prod: true`, `staging: false` — prod owns it, staging
-  imports it. `SeqtekProdNetwork` must then be deployed before
-  `SeqtekStagingNetwork`.
-- **Separate accounts:** `true` on **both** — each account needs its own, and the
-  ordering constraint disappears.
+| Topology            | `ownsAccountOidcProvider`    | `ownsAccountEcrRepository`   |
+| ------------------- | ---------------------------- | ---------------------------- |
+| One account (today) | prod `true`, staging `false` | staging `true`, prod `false` |
+| Separate accounts   | `true` on **both**           | `true` on **both**           |
+
+The asymmetry in the one-account column is not tidiness — it is what the account
+already contains, and flipping either would destroy and recreate a live
+resource. In the one-account layout the owner's stack must be deployed first
+(`SeqtekProdNetwork` before `SeqtekStagingNetwork`); with separate accounts each
+side owns both and that ordering disappears.
+
+A per-environment ECR repository (`seqtek-website-<env>`) would additionally stop
+staging's `maxImageCount` churn expiring production images and stop the staging
+deploy role pushing to prod's repo. It is deliberately **not** done here: the
+rename cannot be bootstrapped in a running account, because the pipeline pushes
+the image before the `cdk deploy` that would create the renamed repo and the
+deploy role's grant still names the old one. Do it in a fresh account, where the
+runbook deploys stacks (§1.5) before the first image push (§1.6).
 
 Getting it wrong fails in opposite directions: two owners in one account collide
 at CreateStack, while zero owners leaves a deploy role trusting a provider that
@@ -1023,7 +1047,7 @@ RDS automated backups are enabled at instance creation. The backup window should
 
 ### Availability Architecture
 
-The EC2 instances run inside an Auto Scaling Group (ASG). **Production** runs `min=2, max=3, desired=2 across 2 AZs` — losing one AZ leaves one instance still serving, which is the load-bearing assumption behind the SC-010 99.9% post-launch SLA. **Staging** runs `min=1, max=2, desired=1` — single instance is enough for smoke and keeps the cost ratio under the SC-006 ≤ 25% target. The `max` headroom on each accommodates Instance Refresh's temporary over-provisioning and self-healing replacements.
+The EC2 instances run inside an Auto Scaling Group (ASG). **Production** runs `min=2, max=3, desired=2 across 2 AZs` — losing one AZ leaves one instance still serving, which is the load-bearing assumption behind the SC-010 99.9% post-launch SLA. **Staging** runs `min=1, max=2, desired=1` — single instance is enough for smoke and keeps the cost ratio under the SC-006 ≤ 25% target. The `max` headroom on each accommodates the rolling update's temporary over-provisioning and self-healing replacements.
 
 ```
 CloudFront
@@ -1047,16 +1071,16 @@ If an instance fails — hardware issue, OS crash, failed health check — the A
 
 ### Failure Scenarios
 
-| Scenario                    | Impact                                         | Recovery                                                                                                                       | Time                                                      |
-| --------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| **AZ / EC2 failure (prod)** | One instance lost; the other AZ keeps serving  | ASG replaces the lost instance automatically; the surviving AZ instance keeps serving throughout                               | ~3 min to restore full capacity; **zero downtime**        |
-| **EC2 failure (staging)**   | Site down briefly (single instance)            | ASG replaces instance automatically                                                                                            | ~3 minutes                                                |
-| **Application crash**       | Docker restart policy relaunches the container | Automatic (Docker `--restart=unless-stopped`)                                                                                  | ~10 seconds                                               |
-| **Bad deploy**              | New instance fails health check                | ASG Instance Refresh aborts (MinHealthyPercentage=100); old instance stays running                                             | Zero impact — blue-green protects against this            |
-| **RDS failure (single-AZ)** | Site errors on all DB-dependent pages          | RDS restores from automated backup. **Phase 5.5 launch-readiness review flips RDS to multi-AZ** per spec 002 Clarifications Q2 | ~15-30 minutes (single-AZ); ~1-2 min (post-multi-AZ flip) |
-| **RDS failure (multi-AZ)**  | Brief interruption                             | Automatic failover to standby                                                                                                  | ~1-2 minutes                                              |
-| **S3 outage**               | Media images broken, uploads fail              | Wait for AWS resolution (99.999999999% durability)                                                                             | Extremely rare                                            |
-| **CloudFront outage**       | Site unreachable                               | Wait for AWS resolution                                                                                                        | Extremely rare                                            |
+| Scenario                    | Impact                                         | Recovery                                                                                                                                                                                               | Time                                                      |
+| --------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| **AZ / EC2 failure (prod)** | One instance lost; the other AZ keeps serving  | ASG replaces the lost instance automatically; the surviving AZ instance keeps serving throughout                                                                                                       | ~3 min to restore full capacity; **zero downtime**        |
+| **EC2 failure (staging)**   | Site down briefly (single instance)            | ASG replaces instance automatically                                                                                                                                                                    | ~3 minutes                                                |
+| **Application crash**       | Docker restart policy relaunches the container | Automatic (Docker `--restart=unless-stopped`)                                                                                                                                                          | ~10 seconds                                               |
+| **Bad deploy**              | New instance fails health check                | Post-deploy smoke fails the workflow; roll back by redeploying the previous immutable tag. NOTE the rolling update waits a fixed `pauseTime` rather than gating on app health — see `compute-stack.ts` | Brief impact possible; smoke detects it                   |
+| **RDS failure (single-AZ)** | Site errors on all DB-dependent pages          | RDS restores from automated backup. **Phase 5.5 launch-readiness review flips RDS to multi-AZ** per spec 002 Clarifications Q2                                                                         | ~15-30 minutes (single-AZ); ~1-2 min (post-multi-AZ flip) |
+| **RDS failure (multi-AZ)**  | Brief interruption                             | Automatic failover to standby                                                                                                                                                                          | ~1-2 minutes                                              |
+| **S3 outage**               | Media images broken, uploads fail              | Wait for AWS resolution (99.999999999% durability)                                                                                                                                                     | Extremely rare                                            |
+| **CloudFront outage**       | Site unreachable                               | Wait for AWS resolution                                                                                                                                                                                | Extremely rare                                            |
 
 ### RDS Multi-AZ Decision
 
@@ -1184,14 +1208,15 @@ One CDK app deploys both production and staging environments via CDK context. `c
 
 ### CI/CD Integration
 
-| Trigger                        | CDK Step                                                                                | Approval                               |
-| ------------------------------ | --------------------------------------------------------------------------------------- | -------------------------------------- |
-| **PR opened/updated**          | `cdk synth` + `cdk diff --strict` posted as PR comment                                  | None (read-only)                       |
-| **Merge to `main`**            | Docker build/push to ECR, then `cdk deploy SeqtekProd*Compute --require-approval never` | None (compute only)                    |
-| **Network/data stack changes** | `cdk deploy SeqtekProdNetwork` or `SeqtekProdData` via `workflow_dispatch`              | Manual approval in GitHub Environments |
-| **CDK assertion tests**        | `vitest run infra/test/`                                                                | None (gating CI)                       |
+| Trigger                        | CDK Step                                                                                   | Approval                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| **PR opened/updated**          | `cdk synth` + `cdk diff --strict` posted as PR comment                                     | None (read-only)                          |
+| **Merge to `main`**            | Docker build/push to ECR, then `cdk deploy SeqtekStaging*Compute --require-approval never` | None (compute only)                       |
+| **Publish a `vX.Y.Z` release** | Dispatched by `release-please.yml`; same build/deploy against `SeqtekProd*`                | `production` Environment protection rules |
+| **Network/data stack changes** | `cdk deploy <env>Network` or `<env>Data` via `workflow_dispatch` with `stack-filter`       | Manual approval in GitHub Environments    |
+| **CDK assertion tests**        | `vitest run infra/test/`                                                                   | None (gating CI)                          |
 
-Compute stack deploys are fully automated — they happen on every merge to `main` after the Docker build and ECR push. Network and data stack changes require a `workflow_dispatch` trigger with a manual approval gate. This matches the blast-radius split: deploying a new app version is routine, modifying the VPC or RDS instance is a planned operation.
+Compute stack deploys to **staging** are fully automated — they happen on every merge to `main` after the Docker build and ECR push. Production compute deploys on a published release. Network and data stack changes require a `workflow_dispatch` with an explicit `stack-filter`. This matches the blast-radius split: deploying a new app version is routine, modifying the VPC or RDS instance is a planned operation.
 
 ### Secrets and Config
 

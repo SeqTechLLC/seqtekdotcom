@@ -21,7 +21,8 @@ const ECR_REPO_NAME = 'seqtek-website'
 const APP_PORT = 3000
 
 /**
- * Compute plane — ECR repo (created in staging, imported in prod), ALB
+ * Compute plane — ECR repo (created by whichever env owns it in this
+ * account; see `ownsAccountEcrRepository`), ALB
  * with port-80 listener, Application Target Group on port 3000, ASG
  * with launch template that pulls the ECR image and reads Parameter
  * Store via the instance profile.
@@ -55,40 +56,49 @@ export class ComputeStack extends Stack {
     super(scope, id, props)
     const { envName, cfg, network, data } = props
 
-    // ----- ECR repository (one PER ENVIRONMENT) -----
+    // ----- ECR repository -----
     //
-    // Each environment owns `seqtek-website-<env>`. It used to be a single
-    // shared `seqtek-website` that staging created and prod imported by name,
-    // which was wrong in three separate ways:
+    // Name is SHARED (`seqtek-website`); ownership is config, exactly like the
+    // OIDC provider. One environment per ACCOUNT creates it, any other imports
+    // it by name.
     //
-    //  1. `fromRepositoryName` resolves in the STACK'S OWN account, so putting
-    //     prod in a different account left nothing creating the repo there and
-    //     the ASG unable to pull — silently, at instance boot.
-    //  2. It forced a deploy ordering (staging's compute before prod's) that
-    //     contradicted the OIDC ordering pulling the other way.
-    //  3. The `maxImageCount` lifecycle rule counted BOTH environments' images,
-    //     so staging churn expired production images — roughly ten staging
-    //     merges was enough to evict the release a prod instance would re-pull.
+    //   one account (today): staging creates, prod imports
+    //   separate accounts:   BOTH create — each account gets its own
     //
-    // Per-env repositories make both topologies work with no config and no
-    // ordering constraint: distinct names never collide in one account, and in
-    // separate accounts each side simply creates its own.
-    this.ecrRepository = new ecr.Repository(this, 'EcrRepo', {
-      repositoryName: `${ECR_REPO_NAME}-${envName}`,
-      imageScanOnPush: true,
-      lifecycleRules: [
-        {
-          description: 'Expire untagged images after 7 days',
-          tagStatus: ecr.TagStatus.UNTAGGED,
-          maxImageAge: Duration.days(7),
-        },
-        {
-          description: 'Keep at most ecrRetainCount tagged images',
-          tagStatus: ecr.TagStatus.ANY,
-          maxImageCount: cfg.ecrRetainCount,
-        },
-      ],
-    })
+    // This is what unblocks a separate prod account: the old code keyed
+    // creation on `envName === 'staging'`, so a prod-only account had nothing
+    // creating the repo and `fromRepositoryName` resolved to a repository that
+    // does not exist — the ASG then simply could not pull, silently, at boot.
+    //
+    // Deliberately NOT renamed per environment (`seqtek-website-<env>`), even
+    // though that would additionally stop staging's `maxImageCount` churn from
+    // expiring production images and stop the staging deploy role pushing to
+    // prod's repo. A rename cannot be bootstrapped safely in an account that is
+    // already running: the pipeline pushes the image BEFORE the `cdk deploy`
+    // that would create the renamed repo, and the deploy role's grant names the
+    // old repo — so the first merge would fail on AccessDenied with no
+    // self-recovery. Do the rename in a fresh account, where the runbook
+    // already deploys stacks (§1.5) before the first image push (§1.6).
+    if (cfg.ownsAccountEcrRepository) {
+      this.ecrRepository = new ecr.Repository(this, 'EcrRepo', {
+        repositoryName: ECR_REPO_NAME,
+        imageScanOnPush: true,
+        lifecycleRules: [
+          {
+            description: 'Expire untagged images after 7 days',
+            tagStatus: ecr.TagStatus.UNTAGGED,
+            maxImageAge: Duration.days(7),
+          },
+          {
+            description: 'Keep at most ecrRetainCount tagged images',
+            tagStatus: ecr.TagStatus.ANY,
+            maxImageCount: cfg.ecrRetainCount,
+          },
+        ],
+      })
+    } else {
+      this.ecrRepository = ecr.Repository.fromRepositoryName(this, 'EcrRepo', ECR_REPO_NAME)
+    }
 
     // ----- Application log group (CloudWatch Logs) -----
     this.appLogGroup = new logs.LogGroup(this, 'AppLogGroup', {
@@ -245,9 +255,9 @@ export class ComputeStack extends Stack {
     // traceable to a CHANGELOG entry, and what makes rollback a redeploy of an
     // older tag rather than a rebuild.
     //
-    // It also removes the shared-repository hazard outright. The ECR repo is
-    // shared (staging creates it, prod imports it by name), so any moving tag is
-    // rewritten by staging merges; with an immutable tag there is nothing for a
+    // It also removes the shared-repository hazard: when both environments live
+    // in ONE account they share the `seqtek-website` repo, so any moving tag is
+    // rewritten by staging merges. With an immutable tag there is nothing for a
     // staging build to overwrite.
     //
     // The fallback is only for a synth/deploy that passes no context (local
@@ -368,10 +378,32 @@ export class ComputeStack extends Stack {
         // committed migrations) and can shorten this back to 3 min.
         gracePeriod: Duration.minutes(8),
       }),
+      // Rolling update on every LaunchTemplate change. Since the deployed image
+      // tag is immutable, that is every new build — so this, not an explicit
+      // instance refresh, is what rolls a deploy out.
+      //
+      // `pauseTime` is a BLIND wait, not a health check: `waitOnResourceSignals`
+      // is false and the rolling update suspends the `HealthCheck` process, so
+      // CloudFormation launches the replacement, waits, then terminates the old
+      // instance regardless of whether the app came up. The wait therefore has
+      // to cover worst-case boot or a deploy can drop the environment to zero
+      // serving capacity — on staging `minInstancesInService` is 1, so there is
+      // no second instance to cover the gap.
+      //
+      // Budget (see the 8-minute health-check grace above): ~700MB image pull +
+      // dnf install + Payload migrations + Next.js start, then 3 × 30s before
+      // the target group calls the target healthy. 12 minutes covers it with
+      // margin; 5 minutes did not.
+      //
+      // The real fix is `waitOnResourceSignals: true` with `cfn-signal` at the
+      // end of UserData, which gates on the app actually starting instead of on
+      // a timer. It needs `aws-cfn-bootstrap` installed first — Amazon Linux
+      // 2023 does not ship it — otherwise the signal never arrives and every
+      // deploy hangs until the timeout. Worth doing; not worth doing blind.
       updatePolicy: autoscaling.UpdatePolicy.rollingUpdate({
         minInstancesInService: cfg.asgMinCapacity,
         maxBatchSize: 1,
-        pauseTime: Duration.minutes(5),
+        pauseTime: Duration.minutes(12),
         waitOnResourceSignals: false,
       }),
     })

@@ -22,6 +22,7 @@ const stagingCfg: EnvConfig = {
   ecrRetainCount: 10,
   logRetentionDays: 14,
   ownsAccountOidcProvider: false,
+  ownsAccountEcrRepository: true,
 }
 
 const prodCfg: EnvConfig = {
@@ -34,6 +35,7 @@ const prodCfg: EnvConfig = {
   asgMaxCapacity: 3,
   logRetentionDays: 90,
   ownsAccountOidcProvider: true,
+  ownsAccountEcrRepository: false,
 }
 
 function synthCompute(envName: 'prod' | 'staging', cfg: EnvConfig, imageTag?: string): Template {
@@ -68,7 +70,7 @@ describe('ComputeStack', () => {
 
     it('creates the ECR repository with lifecycle rules', () => {
       t.hasResourceProperties('AWS::ECR::Repository', {
-        RepositoryName: 'seqtek-website-staging',
+        RepositoryName: 'seqtek-website',
         ImageScanningConfiguration: { ScanOnPush: true },
       })
 
@@ -150,7 +152,7 @@ describe('ComputeStack', () => {
       })
     })
 
-    it('ASG configured for zero-downtime instance refresh', () => {
+    it('ASG configured for a zero-downtime rolling update', () => {
       t.hasResource('AWS::AutoScaling::AutoScalingGroup', {
         Properties: Match.objectLike({
           MinSize: '1',
@@ -196,17 +198,13 @@ describe('ComputeStack', () => {
   describe('prod (spec-shape config)', () => {
     const t = synthCompute('prod', prodCfg)
 
-    it('creates its OWN ECR repository, not a shared one', () => {
-      // Previously prod imported a single `seqtek-website` that staging created.
-      // That blocked a two-account layout outright (the import resolves in the
-      // stack's own account, so nothing would create it on the prod side), and
-      // it let staging's lifecycle churn expire production images. One repo per
-      // environment removes both, and the distinct names never collide when the
-      // two environments share an account.
-      t.resourceCountIs('AWS::ECR::Repository', 1)
-      t.hasResourceProperties('AWS::ECR::Repository', {
-        RepositoryName: 'seqtek-website-prod',
-      })
+    it('imports the ECR repository rather than creating a second one', () => {
+      // Ownership is config (`ownsAccountEcrRepository`), not an env-name
+      // assumption — that is what lets prod live in its own account, where it
+      // would create the repo instead. With both envs in ONE account (this
+      // fixture, matching cdk.json) staging creates it and prod imports it, so
+      // the name never collides.
+      t.resourceCountIs('AWS::ECR::Repository', 0)
     })
 
     it('never pulls a bare :latest, with or without an imageTag', () => {

@@ -183,10 +183,9 @@ export class DeployRoles extends Construct {
       }),
     )
 
-    // ECR — this environment's own repo, `seqtek-website-<env>` (created by its
-    // compute stack). Scoped per env so the staging deploy role cannot push to
-    // the production repository, which the previous shared `seqtek-website`
-    // grant allowed.
+    // ECR — the `seqtek-website` repo in THIS account (created by whichever env
+    // owns it; see compute-stack.ts). Same name in every account, so the grant
+    // is account-scoped by the ARN's account field.
     role.addToPolicy(
       new iam.PolicyStatement({
         sid: 'EcrPushPullSeqtekWebsite',
@@ -203,7 +202,7 @@ export class DeployRoles extends Construct {
           'ecr:DescribeImages',
         ],
         resources: [
-          `arn:aws:ecr:${region}:${account}:repository/seqtek-website-${envName}`,
+          `arn:aws:ecr:${region}:${account}:repository/seqtek-website`,
           `arn:aws:ecr:${region}:${account}:repository/cdk-*`, // CDK image-asset repos
         ],
       }),

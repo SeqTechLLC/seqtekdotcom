@@ -1,5 +1,13 @@
 # Contract: GitHub Actions Workflows
 
+> **PARTIALLY SUPERSEDED (2026-08-10).** The OIDC trust section below is current.
+> The trigger/pipeline sections are NOT: merges to `main` now deploy
+> STAGING/UAT (production deploys when a `vX.Y.Z` release is published), the
+> image tag is immutable rather than `:latest`, and the explicit ASG
+> instance-refresh steps were removed in favour of CloudFormation's rolling
+> update. See `docs/ARCHITECTURE.md` § Promotion model and
+> `docs/INFRASTRUCTURE_RUNBOOK.md`.
+
 Two new workflows under `.github/workflows/`. The existing `ci.yml` (P1-2 + P1-9) is extended; no changes to its trigger or permission profile.
 
 ---

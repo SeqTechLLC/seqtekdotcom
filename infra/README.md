@@ -3,7 +3,8 @@
 This directory contains the AWS CDK (TypeScript) source for the SEQTEK website's production and staging environments.
 
 **Operational procedures** — standing up a fresh AWS account, migrating an
-environment (with its data) to another account, and the `seqtek.com` cutover:
+environment to another account (rebuilt from the seeders, not by moving the
+database), and the `seqtek.com` cutover:
 [`../docs/INFRASTRUCTURE_RUNBOOK.md`](../docs/INFRASTRUCTURE_RUNBOOK.md). Start
 there; it is the living doc.
 
@@ -35,7 +36,9 @@ npm --prefix infra run test
 fail _after_ an apparently successful deploy, so they are worth knowing before
 you start. See `docs/INFRASTRUCTURE_RUNBOOK.md` § Facts this runbook assumes:
 
-1. `SeqtekProdNetwork` must be the **first** stack in a new account — it creates
-   the account-wide GitHub OIDC provider that staging imports.
+1. In a ONE-account layout, `SeqtekProdNetwork` must be the **first** stack — it
+   creates the account-wide GitHub OIDC provider that staging imports. With the
+   environments in separate accounts each owns its own and the ordering goes
+   away (`ownsAccountOidcProvider` / `ownsAccountEcrRepository` in `cdk.json`).
 2. The `production` GitHub Environment must exist **before** the first prod
    deploy — the prod OIDC trust pins that environment, not a git ref.

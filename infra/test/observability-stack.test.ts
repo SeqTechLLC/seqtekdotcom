@@ -24,6 +24,7 @@ const stagingCfg: EnvConfig = {
   ecrRetainCount: 10,
   logRetentionDays: 14,
   ownsAccountOidcProvider: true,
+  ownsAccountEcrRepository: true,
 }
 
 const prodCfg: EnvConfig = {

@@ -3,7 +3,7 @@ name: Deploy
 # PROMOTION MODEL — what deploys where, and why.
 #
 #   merge to `main`              →  STAGING / UAT  (seqtek-preview.com)
-#   publish a `vX.Y.Z` release   →  PRODUCTION     (seqtek.com)
+#   publish a `vX.Y.Z` release   →  PRODUCTION     (CloudFront URL until cutover)
 #
 # Merging to main is NOT a production deploy. main is the preview/UAT
 # environment: every merged PR lands there immediately so it can be reviewed
@@ -28,10 +28,11 @@ name: Deploy
 #
 # Account resolution: `vars.AWS_ACCOUNT_ID` is read from the GitHub *Environment*
 # (Settings → Environments → staging / production), falling back to the
-# repo-level variable — which is why staging keeps working untouched. NOTE that
-# pointing the two environments at DIFFERENT AWS accounts is not purely
-# configuration: the ECR repository and the OIDC provider are shared and resolve
-# in the stack's own account. See ARCHITECTURE.md § Environments & isolation.
+# repo-level variable — which is why staging keeps working untouched. The two
+# environments MAY live in different AWS accounts; the ECR repository and the
+# account-wide OIDC provider each have an explicit owner in `infra/cdk.json`
+# (`ownsAccountEcrRepository` / `ownsAccountOidcProvider`), set `true` on both
+# envs when they are split. See ARCHITECTURE.md § Environments & isolation.
 
 on:
   push:
@@ -73,8 +74,9 @@ on:
         description: >-
           CDK stack glob, WITHOUT the Seqtek<Env> prefix (it is prepended from
           `env`). Default `*Compute` redeploys just the app tier. Use `*` for a
-          full-environment deploy — required for the first deploy into a new
-          account.
+          full-environment redeploy. The FIRST deploy into a new account is done
+          locally instead (runbook §1.5) — this workflow cannot bootstrap it,
+          since the deploy role it assumes is created by the Network stack.
         default: '*Compute'
         type: string
 
@@ -86,10 +88,7 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   AWS_REGION: us-east-1
-  # Per-environment repository — see infra/lib/compute-stack.ts. The suffix is
-  # appended from ENV_NAME in the "Resolve ECR registry" step, since job-level
-  # env is not in scope here.
-  ECR_REPOSITORY_BASE: seqtek-website
+  ECR_REPOSITORY: seqtek-website
 
 # Pairs with CloudFormation's native stack-update lock — a second run started
 # while one is in flight queues rather than racing. Never cancel a deploy
@@ -171,14 +170,23 @@ jobs:
           set -euo pipefail
           REGISTRY="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           SHA_TAG="${GITHUB_SHA::7}"
-          IMAGE="${REGISTRY}/${ECR_REPOSITORY_BASE}-${ENV_NAME}"
-          # On a release, also tag the image with the version so a running
-          # production instance can be traced back to a CHANGELOG entry rather
-          # than a bare SHA. Empty on staging; the extra tag line is dropped.
+          IMAGE="${REGISTRY}/${ECR_REPOSITORY}"
+          # Version tag, derived from the REF rather than the event name.
+          #
+          # Keying this on `github.event_name == 'release'` looked right but was
+          # dead code on the path that actually deploys production: release-please
+          # runs as GITHUB_TOKEN, so its release never raises a `release` event —
+          # that is the whole reason release-please.yml dispatches this workflow
+          # instead. On that dispatch the event is `workflow_dispatch`, so the
+          # version tag was never applied and prod fell back to a bare SHA.
+          #
+          # The ref is `refs/tags/vX.Y.Z` on BOTH paths (the dispatch passes
+          # `--ref "$TAG"`, a human-published release checks out the tag), so it
+          # is the reliable source.
           VERSION_TAG=""
-          if [ "${{ github.event_name }}" = "release" ]; then
-            VERSION_TAG="${{ github.event.release.tag_name }}"
-          fi
+          case "$GITHUB_REF" in
+            refs/tags/v*) VERSION_TAG="${GITHUB_REF#refs/tags/}" ;;
+          esac
           {
             echo "registry=${REGISTRY}"
             echo "image=${IMAGE}"
@@ -201,13 +209,13 @@ jobs:
           platforms: linux/amd64
           push: true
           provenance: false
-          # `:latest-<env>`, never a bare `:latest`. The ECR repository is
-          # SHARED between environments (staging creates it, prod imports it by
-          # name) and the ASG UserData pulls the env-scoped tag — so a bare
-          # moving tag, rewritten by every staging merge, would be picked up by
-          # production on its next instance replacement, scale-out or refresh.
-          # Scoping it is what makes "merging to main does not touch production"
-          # true at the image layer and not only at the trigger layer.
+          # Immutable tags only. When both environments share one account they
+          # share the `seqtek-website` repository, so a bare moving `:latest`
+          # rewritten by every staging merge would be picked up by production on
+          # its next instance replacement. The SHA (or `vX.Y.Z`) tag is what
+          # makes "merging to main does not touch production" true at the image
+          # layer and not only at the trigger layer. `:latest-<env>` remains as
+          # a convenience pointer; nothing deploys from it.
           tags: |
             ${{ steps.img.outputs.image }}:${{ steps.img.outputs.sha-tag }}
             ${{ steps.img.outputs.image }}:latest-${{ env.ENV_NAME }}

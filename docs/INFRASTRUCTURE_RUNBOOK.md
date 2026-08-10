@@ -1,6 +1,6 @@
 # Infrastructure Runbook
 
-**Living operational doc.** Four procedures:
+**Living operational doc.** Five procedures:
 
 | §   | Procedure                                                                                   | When                                  |
 | --- | ------------------------------------------------------------------------------------------- | ------------------------------------- |
@@ -12,8 +12,10 @@
 
 Design rationale lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) (§ Promotion model,
 § Environments & isolation). `specs/002-aws-cdk-infrastructure/quickstart.md` was
-the original first-deploy walkthrough and is **superseded by this file** — it
-predates the promotion model and describes merges to `main` deploying prod.
+the original first-deploy walkthrough; it is **superseded by this file for the
+first deploy** (it predates the promotion model and describes merges to `main`
+deploying prod), but remains the reference for secret rotation, tear-down, alarm
+verification and troubleshooting.
 
 ---
 
@@ -229,7 +231,7 @@ Media is also the one thing genuinely **not** reproducible from scripts. Of the
 65 originals, 27 are curated outputs (`homepage-hero.webp`, `culture-1.webp`,
 `team-lake-annual-meeting.webp`, the headshots) whose source-photo choice was a
 human decision, and `tools/ingest-photos` keys its manifest by sha256 — so
-_which_ of the 1,755 photos in `../photos` became `homepage-hero.webp` is
+_which_ of the ~900 photos in `../photos` became `homepage-hero.webp` is
 recorded nowhere re-runnable. Re-running the ingest will not reproduce them.
 
 So carry the originals across from the environment being replaced. They are

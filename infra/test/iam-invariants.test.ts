@@ -30,6 +30,7 @@ const cfg: EnvConfig = {
   ecrRetainCount: 10,
   logRetentionDays: 90,
   ownsAccountOidcProvider: true,
+  ownsAccountEcrRepository: true,
 }
 
 interface PolicyDocument {
@@ -67,6 +68,7 @@ function synthStagingNetwork(): Template {
       asgMaxCapacity: 2,
       // staging imports the provider prod owns (same account)
       ownsAccountOidcProvider: false,
+      ownsAccountEcrRepository: true,
     },
   })
   return Template.fromStack(stack)
@@ -234,6 +236,28 @@ describe('IAM invariants — every stack', () => {
           }
         },
       )
+
+      it('exactly one env per account creates the OIDC provider, and the ECR grant is account-scoped', () => {
+        // `ownsAccountOidcProvider` decides create-vs-import. Its own field docs
+        // say getting it wrong "fails silently-ish in opposite directions": two
+        // owners in one account collide at CreateStack, zero owners leave a
+        // deploy role trusting a provider that does not exist — which
+        // CloudFormation accepts, and every deploy then fails at assume-role.
+        // Neither shows up in a diff, so assert the synthesized shape.
+        const t = synth()
+        const providers = Object.values(t.findResources('Custom::AWSCDKOpenIdConnectProvider'))
+        const expected = name === 'SeqtekProdNetwork' ? 1 : 0
+        expect(providers, `${name} should synth ${expected} OIDC provider(s)`).toHaveLength(
+          expected,
+        )
+
+        // The ECR grant must name this account's repo. A per-env rename here
+        // would silently break the deploy: the pipeline pushes BEFORE the cdk
+        // deploy that would create the renamed repo, so the push 403s.
+        const policies = JSON.stringify(collectPolicies(t))
+        expect(policies).toContain('repository/seqtek-website')
+        expect(policies).not.toContain('repository/seqtek-website-')
+      })
 
       it('EC2 instance profile roles attach ONLY allowlisted managed policies', () => {
         // Validation-period carve-out: AmazonSSMManagedInstanceCore is
