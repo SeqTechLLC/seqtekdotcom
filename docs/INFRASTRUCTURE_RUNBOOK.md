@@ -1,12 +1,13 @@
 # Infrastructure Runbook
 
-**Living operational doc.** Three procedures:
+**Living operational doc.** Four procedures:
 
-| §   | Procedure                                                                                 | When                                  |
-| --- | ----------------------------------------------------------------------------------------- | ------------------------------------- |
-| 1   | [Stand up a fresh AWS account](#1-stand-up-a-fresh-aws-account)                           | New account, nothing exists yet       |
-| 2   | [Migrate an environment to another account](#2-migrate-an-environment-to-another-account) | Moving a running env to a new account |
-| 3   | [Cut `seqtek.com` over to prod](#3-cut-seqtekcom-over-to-prod)                            | Launch                                |
+| §   | Procedure                                                                                   | When                                  |
+| --- | ------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 1   | [Stand up a fresh AWS account](#1-stand-up-a-fresh-aws-account)                             | New account, nothing exists yet       |
+| 2   | [Migrate an environment to another account](#2-migrate-an-environment-to-another-account)   | Moving a running env to a new account |
+| 3   | [Cut `seqtek.com` over to prod](#3-cut-seqtekcom-over-to-prod)                              | Launch                                |
+| 5   | [Hand-off when you don't own the account](#5-hand-off-when-you-dont-own-the-target-account) | Someone else holds AWS admin          |
 
 Design rationale lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) (§ Promotion model,
 § Environments & isolation). `specs/002-aws-cdk-infrastructure/quickstart.md` was
@@ -380,3 +381,66 @@ curl -s "$URL/sitemap.xml" | grep -c '<loc>'
 Then sign in to `/admin` (proves OAuth + DB + secrets), load a media-bearing
 page (proves S3 + CloudFront OAC), and submit the contact form (proves the
 HubSpot build args survived).
+
+---
+
+## 5. Hand-off when you don't own the target account
+
+The common case here: the AWS account belongs to someone else (SEQTEK's infra
+admin is **domanick@seqtechllc.com**), and the person who knows the website has
+no credentials in it.
+
+That splits cleanly, because **the entire content half needs no AWS access at
+all.** The seeders write over the REST API with an `/admin` session JWT — which
+is exactly why they were built that way (staging and prod have no direct DB or
+S3 access). So the account admin never has to learn this codebase, and the
+website owner never needs an IAM user.
+
+This repo is public: send the account admin a link to this file rather than a
+copy of it.
+
+### Lane A — the account admin (AWS only)
+
+Everything is under `infra/`; no application knowledge needed. Needs from the
+website owner first: a Google OAuth client id/secret for `@seqtechllc.com` and a
+Slack incoming webhook URL (§1.3).
+
+1. §1.1 — `cdk bootstrap`, then **`SeqtekProdNetwork` first**. It creates the
+   account-wide GitHub OIDC provider; deploying staging first leaves every later
+   deploy failing at assume-role.
+2. §1.3 — put the three manual SSM parameters in place
+3. §1.5 — deploy the remaining stacks
+4. §2.6 — accept the Route 53 domain transfer **within 3 days** of it being
+   initiated from the old account, then apply the new zone's nameservers
+
+Then report back three things and **stop**:
+
+- the **account ID** — for the GitHub environment variable
+- the **CloudFront distribution domain** (`SeqtekProdEdge` / `SeqtekStagingEdge`
+  output `SiteUrl`) — the site is reachable there before any DNS exists
+- confirmation that **nobody has signed in to `/admin` yet**
+
+> **Do not sign in to `/admin`.** The first person to sign in becomes the sole
+> admin; everyone after is provisioned as `editor`. `Categories` is admin-only
+> for create/update and the content load writes 3 categories, so an editor
+> cannot finish it. Leave the first sign-in to whoever runs Lane B, or expect to
+> promote them afterwards.
+
+### Lane B — the website owner (no AWS access)
+
+1. GitHub → Settings → Environments → set `AWS_ACCOUNT_ID` on `staging` and
+   `production` to the new account (§1.2), plus deployment branch/tag
+   restrictions on `production`
+2. Deploy the app: Actions → **Deploy** → choose env, stack-filter `*` (§1.6)
+3. Sign in to `/admin` on the new site **first** — this provisions the bootstrap
+   admin
+4. Prime media (§2.1), seed content (§2.2), verify against the old environment
+   (§2.3) — all over REST with the token from step 3
+5. Add the new callback URL to the Google OAuth client (§2.5)
+
+### What still needs the old account
+
+Only the source side of the domain move:
+`transfer-domain-to-another-aws-account` must run from the account holding
+`seqtek-preview.com` today (§2.6). Keep that account alive until §2.7 step 6 —
+it is the rollback, and it is still the source of the 65 media originals.
