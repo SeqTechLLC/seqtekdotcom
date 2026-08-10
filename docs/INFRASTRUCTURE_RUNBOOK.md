@@ -69,7 +69,32 @@ npm --prefix infra run deploy -- -c env=prod SeqtekProdNetwork
 
 ### 1.2 GitHub setup (before any deploy that uses OIDC)
 
-Settings → Environments → create **`staging`** and **`production`**.
+Settings → Environments → create **`staging`** and **`production`**. Creating an
+environment requires repo **admin**; running a deploy only requires **write**.
+
+As of 2026-08-10 only `staging` exists — `production` has to be created before
+the first prod deploy, because the prod OIDC trust pins that environment name.
+
+```sh
+REPO=SeqTechLLC/seqtekdotcom
+
+gh api -X PUT "repos/$REPO/environments/production" \
+  -f 'deployment_branch_policy[protected_branches]=false' \
+  -f 'deployment_branch_policy[custom_branch_policies]=true'
+
+# Who may deploy to production. This is what replaces the git-ref pin that used
+# to live in the OIDC trust policy:
+#   v*    the release tags — the normal production path
+#   main  the workflow_dispatch escape hatch, needed for the FIRST deploy into a
+#         new account, where no release exists yet to replay
+gh api -X POST "repos/$REPO/environments/production/deployment-branch-policies" \
+  -f name='v*' -f type=tag
+gh api -X POST "repos/$REPO/environments/production/deployment-branch-policies" \
+  -f name='main' -f type=branch
+```
+
+Consider adding required reviewers on `production` — without them, anyone with
+`write` can dispatch a production deploy.
 
 - On **each** environment add a variable `AWS_ACCOUNT_ID` = that environment's
   account id. Environment-scoped, so staging and prod can live in different
