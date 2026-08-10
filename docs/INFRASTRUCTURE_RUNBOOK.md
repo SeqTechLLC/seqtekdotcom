@@ -2,11 +2,11 @@
 
 **Living operational doc.** Three procedures:
 
-| §   | Procedure                                                                                 | When                                |
-| --- | ----------------------------------------------------------------------------------------- | ----------------------------------- |
-| 1   | [Stand up a fresh AWS account](#1-stand-up-a-fresh-aws-account)                           | New account, nothing exists yet     |
-| 2   | [Migrate an environment to another account](#2-migrate-an-environment-to-another-account) | Moving a running env, data included |
-| 3   | [Cut `seqtek.com` over to prod](#3-cut-seqtekcom-over-to-prod)                            | Launch                              |
+| §   | Procedure                                                                                 | When                                  |
+| --- | ----------------------------------------------------------------------------------------- | ------------------------------------- |
+| 1   | [Stand up a fresh AWS account](#1-stand-up-a-fresh-aws-account)                           | New account, nothing exists yet       |
+| 2   | [Migrate an environment to another account](#2-migrate-an-environment-to-another-account) | Moving a running env to a new account |
+| 3   | [Cut `seqtek.com` over to prod](#3-cut-seqtekcom-over-to-prod)                            | Launch                                |
 
 Design rationale lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) (§ Promotion model,
 § Environments & isolation). `specs/002-aws-cdk-infrastructure/quickstart.md` was
@@ -101,7 +101,7 @@ aws ssm put-parameter --name "/seqtek/website/${ENV}/slack_webhook_url" \
 
 Prod intentionally runs on the CloudFront default URL until launch —
 `cdk.json` has `domainName: null` for prod, and that is correct pre-cutover.
-For a vanity domain, register or transfer it (see §2.4), then set both
+For a vanity domain, register or transfer it (see §2.6), then set both
 `domainName` and `hostedZoneId` in `infra/cdk.json` — `validateEnvConfig()`
 rejects one without the other. Leave `certificateArn: null`; CDK provisions ACM
 by DNS validation.
@@ -142,92 +142,115 @@ usually a missing SSM path or a failed image pull.
 
 ## 2. Migrate an environment to another account
 
-The site's **content lives in Postgres and S3, not in the repo** — a deploy
-ships code, never content. So a migration is: stand up the new account (§1),
-move the data, move the domain, cut over.
+**Do not migrate the database.** Rebuild the environment from the committed
+seeders and the gitignored content drafts — that is what they are for, and it is
+both simpler and safer than moving state:
 
-### 2.1 What actually has to move
+- no `pg_dump`, no cross-account snapshot share, no KMS grant
+- no restored RDS instance sitting outside CloudFormation's control
+- the new database is created by the app's own migrations, in a known-good state
+- it **proves** the seed corpus is genuinely the source of truth, which is the
+  standing convention (`CLAUDE.md` § Content loading & deploys)
 
-Snapshot of the source account `600881993295` (`seqtek-kenn`) at 2026-08-10:
+Verified 2026-08-10: the drafts reproduce the live site's content **exactly** —
+41 documents, no gaps.
 
-| Resource      | Identifier                                                                                             | How it moves                                      |
-| ------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| RDS           | `seqtekstagingdata-databaseb269d8bb-a32opdorbpno` — Postgres 18.3, db.t3.micro, 20 GB, **unencrypted** | snapshot share (no KMS grant needed) or `pg_dump` |
-| S3 media      | `seqtek-media-staging` — **473 objects, 78 MB**                                                        | `aws s3 sync`                                     |
-| SSM           | 8 params under `/seqtek/website/staging/`                                                              | recreate (2 are SecureString)                     |
-| Secrets Mgr   | `payload-secret`, `db-master`, `revalidation-secret`                                                   | recreate; new values are fine                     |
-| ECR           | `seqtek-website`                                                                                       | **nothing** — the pipeline rebuilds               |
-| CloudFront    | `E353O1IA36B0IY` (`seqtek-preview.com`)                                                                | recreated by CDK                                  |
-| Route53 zones | `seqtek-preview.com`, `seqtek-assessments.com`                                                         | see §2.4                                          |
-| ACM           | `seqtek-preview.com`                                                                                   | recreated free by DNS validation                  |
+| Collection       | Live | From drafts |
+| ---------------- | ---- | ----------- |
+| `pages`          | 6    | 6           |
+| `posts`          | 5    | 5           |
+| `caseStudies`    | 5    | 5           |
+| `workshops`      | 3    | 3           |
+| `teamMembers`    | 10   | 10          |
+| `services`       | 9    | 9           |
+| `servicePillars` | 3    | 3           |
 
-Being unencrypted makes the RDS move markedly easier — encrypted snapshots
-additionally require sharing the KMS key and re-encrypting on copy.
+### 2.1 The one exception: media
 
-### 2.2 Move the database
+Media is **not** reproducible from scripts and must be carried across. Of the 65
+originals, 27 are curated outputs (`homepage-hero.webp`, `culture-1.webp`,
+`team-lake-annual-meeting.webp`, the headshots) whose source-photo choice was a
+human decision. The ingest manifest is keyed by sha256, so _which_ of the 1,755
+photos in `../photos` became `homepage-hero.webp` is not recorded anywhere
+re-runnable.
 
-Option A — snapshot share (fewer moving parts, keeps exact state):
-
-```sh
-SRC=600881993295 ; DST=<target account id>
-SNAP=seqtek-migration-$(date +%Y%m%d%H%M)
-
-# In the SOURCE account
-aws rds create-db-snapshot --profile seqtek-kenn \
-  --db-instance-identifier seqtekstagingdata-databaseb269d8bb-a32opdorbpno \
-  --db-snapshot-identifier "$SNAP"
-aws rds wait db-snapshot-available --profile seqtek-kenn --db-snapshot-identifier "$SNAP"
-aws rds modify-db-snapshot-attribute --profile seqtek-kenn \
-  --db-snapshot-identifier "$SNAP" \
-  --attribute-name restore --values-to-add "$DST"
-
-# In the TARGET account — copy locally, then restore
-aws rds copy-db-snapshot --profile <target> \
-  --source-db-snapshot-identifier "arn:aws:rds:us-east-1:${SRC}:snapshot:${SNAP}" \
-  --target-db-snapshot-identifier "$SNAP"
-```
-
-Restoring a snapshot creates a **new instance outside CDK's control**. Prefer
-Option B unless you need a byte-exact copy, because a CDK-managed instance that
-CloudFormation created is the thing the rest of the stack expects.
-
-Option B — logical dump into the CDK-created instance (**recommended**):
+Fetch the originals from the environment being replaced — they are served
+publicly, and Payload regenerates every size variant on upload, so only the 65
+originals matter (the ~473 S3 objects are mostly derived sizes):
 
 ```sh
-# Source URL from Secrets Manager; RDS is private, so run from a host in the VPC
-# (SSM Session Manager to an ASG instance) or via an SSM port-forward tunnel.
-pg_dump --no-owner --no-acl -Fc "$SOURCE_DATABASE_URL" -f site.dump
-pg_restore --no-owner --no-acl -d "$TARGET_DATABASE_URL" site.dump
+SRC=https://seqtek-preview.com
+mkdir -p /tmp/media-originals && cd /tmp/media-originals
+curl -s "$SRC/api/media?limit=300&depth=0" \
+  | jq -r '.docs[].filename' \
+  | while read -r f; do curl -fsS -o "$f" "$SRC/media/$f" || echo "MISSING $f"; done
+ls | wc -l    # expect 65
 ```
 
-Payload runs migrations on container start; the schema will already match the
-image being deployed. Verify content survived before cutting over:
+Keep the filenames byte-identical. `$file` resolves media by filename, so a
+rename silently breaks every reference that points at it.
+
+### 2.2 Rebuild
 
 ```sh
-curl -s "$TARGET_URL/api/pages?limit=0"        | jq .totalDocs
-curl -s "$TARGET_URL/api/caseStudies?limit=0"  | jq .totalDocs
-# Compare against the source. As of 2026-08-10: 6 pages, 5 posts,
-# 5 case studies, 3 workshops, 10 team members — all published.
+export IMPORT_BASE_URL=https://<new-environment-url>
+export IMPORT_TOKEN=<payload-token cookie from /admin on the NEW env>
+
+# Order matters — later specs resolve $ref against what earlier ones created.
+npm run payload:seed -- docs/content-drafts/content-batch.json   # taxonomy, posts, case studies
+npm run payload:seed -- docs/content-drafts/team.json
+npm run payload:seed -- docs/content-drafts/workshops.json
+npm run payload:seed -- docs/content-drafts/services.json
+npm run payload:seed -- docs/content-drafts/about.json
+npm run payload:seed -- docs/content-drafts/homepage.json
+npm run payload:seed -- docs/content-drafts/homepage-layout.json
 ```
 
-### 2.3 Move the media
+Run each with `--dry-run` first. Seeding is idempotent by the identity field, so
+a re-run repairs rather than duplicates.
+
+### 2.3 Verify against the old environment
+
+Slug parity is not content parity — a page edited directly in `/admin` that
+never made it back into a draft would seed as the _older_ draft copy. Diff the
+rendered output before trusting the cutover:
 
 ```sh
-aws s3 sync s3://seqtek-media-staging s3://<new-bucket> \
-  --source-region us-east-1 --region us-east-1
-aws s3 ls s3://<new-bucket> --recursive --summarize | tail -2   # expect 473 objects
+for p in / /our-story /services /services/localshoring /workshops /team \
+         /case-studies /insights /contact /localshoring /privacy-policy; do
+  a=$(curl -s "https://seqtek-preview.com$p" | sed 's/<[^>]*>//g' | tr -s '[:space:]' ' ')
+  b=$(curl -s "https://<new-env>$p"          | sed 's/<[^>]*>//g' | tr -s '[:space:]' ' ')
+  [ "$a" = "$b" ] && echo "same  $p" || echo "DIFF  $p"
+done
 ```
 
-Media is served through CloudFront `/media/*` (ADR 0008), so the bucket is
-private and reached by OAC — object URLs do not change as long as filenames
-don't. Filenames are the seeder's identity key, so **do not let anything rename
-them** during the copy.
+Investigate every `DIFF`. Either the draft is stale (fix the draft — it is the
+source of truth) or the new environment is genuinely wrong.
 
-### 2.4 Move the domain
+### 2.4 Everything else that has to move
 
-`seqtek-preview.com` is registered in Route 53 **in the source account**, so it
-moves account-to-account without a registrar transfer — no auth code, no 60-day
-lock:
+| Thing            | How                                                             |
+| ---------------- | --------------------------------------------------------------- |
+| SSM parameters   | recreate per §1.3 (2 of 8 are SecureString)                     |
+| Secrets Manager  | created by the data stack; new values are fine                  |
+| ECR image        | nothing — the pipeline rebuilds it                              |
+| Google OAuth     | add the new callback URL, or `/admin` sign-in breaks (see §2.5) |
+| Domain           | §2.6                                                            |
+| RDS / CloudFront | nothing — CDK creates both                                      |
+
+### 2.5 Google OAuth
+
+Add the new environment's callback to the OAuth client before cutover:
+
+```
+https://<new-cloudfront-domain>/api/auth/oauth/callback/google
+https://seqtek-preview.com/api/auth/oauth/callback/google   (already present)
+```
+
+### 2.6 Move the domain
+
+`seqtek-preview.com` is registered in Route 53 in the source account, so it moves
+account-to-account without a registrar transfer — no auth code, no 60-day lock:
 
 ```sh
 # Source account
@@ -242,42 +265,45 @@ aws route53domains accept-domain-transfer-from-another-aws-account \
 
 The **hosted zone does not travel with the domain.** Let CDK create the zone in
 the target account (set `domainName` + `hostedZoneId` in `cdk.json` once it
-exists), then point the domain's nameservers at the new zone:
+exists), then repoint the registered domain's nameservers at the new zone:
 
 ```sh
 aws route53domains update-domain-nameservers --domain-name seqtek-preview.com \
-  --nameservers Name=ns-1.awsdns-xx.com Name=... # the 4 from the NEW zone
+  --nameservers Name=ns-1.awsdns-xx.com Name=...   # the 4 from the NEW zone
 ```
 
-Cutover is that nameserver update. Keep the old zone alive until propagation
-completes — it is the rollback.
-
-### 2.5 Google OAuth
-
-`/admin` sign-in breaks if the redirect URI isn't registered. Before cutover add
-the new environment's URLs to the OAuth client:
-
-```
-https://<new-cloudfront-domain>/api/auth/oauth/callback/google
-https://seqtek-preview.com/api/auth/oauth/callback/google   (already present)
-```
-
-### 2.6 Order of operations
+### 2.7 Order of operations
 
 1. §1 in the target account, through a green smoke test on the CloudFront URL
-2. Point GitHub's `staging` / `production` environment `AWS_ACCOUNT_ID` at the
+2. Fetch media (§2.1), rebuild content (§2.2), verify (§2.3) — all against the
+   CloudFront URL, before any DNS changes
+3. Point the GitHub `staging` / `production` environment `AWS_ACCOUNT_ID` at the
    new account
-3. Migrate DB (§2.2) + media (§2.3); re-verify content counts
-4. Transfer the domain (§2.4); update nameservers
+4. Transfer the domain and repoint nameservers (§2.6)
 5. Watch both accounts for 24 h
-6. Only then decommission the source: delete stacks, **snapshot RDS before
-   deleting it**, empty and remove buckets, close out Route 53 zones
+6. Only then decommission the source: **take a final RDS snapshot and keep it**,
+   then delete stacks, empty buckets, remove zones
 
-### 2.7 Rollback
+Rollback before step 4 is free — the old environment is still serving. After it,
+revert the nameservers; DNS TTL is the exposure window. Delete nothing in the
+source account until step 6.
 
-Before the nameserver switch, rollback is free — the old account is still
-serving. After it, revert the nameservers; DNS TTL is the exposure window.
-**Do not delete anything in the source account until step 6.**
+### 2.8 If you ever do need the database itself
+
+Only reason: recovering something that exists **only** in the old database and
+never made it into a draft — Payload version history, or a doc hand-edited in
+`/admin`. RDS here is unencrypted, so a cross-account snapshot share needs no KMS
+grant:
+
+```sh
+aws rds create-db-snapshot --db-instance-identifier <id> --db-snapshot-identifier <snap>
+aws rds modify-db-snapshot-attribute --db-snapshot-identifier <snap> \
+  --attribute-name restore --values-to-add "$DST"
+```
+
+Restore it beside the CDK instance and copy out what you need. Do not make a
+restored snapshot the environment's database — CloudFormation would no longer
+own it.
 
 ---
 
