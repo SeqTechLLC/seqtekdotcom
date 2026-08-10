@@ -709,9 +709,26 @@ genuinely shared across them:**
 | ECR repository       | staging **creates** `seqtek-website`; prod **imports** it by name (`compute-stack.ts`) |
 | GitHub OIDC provider | prod's NetworkStack **creates** it; staging **imports** it at `${AWS::AccountId}`      |
 
-Because the ECR repository is shared, the image tag is the isolation boundary:
-the ASG pulls `:latest-<env>`, never a bare `:latest`, so a staging build cannot
-reach production. Do not reintroduce an unscoped moving tag.
+Because the ECR repository is shared, **the image tag is the isolation
+boundary**, and the deployed tag is **immutable**. `deploy.yml` passes
+`-c imageTag=<vX.Y.Z | sha>`, which stamps the ASG LaunchTemplate with the exact
+build being deployed. Three consequences:
+
+- A staging merge has no moving tag to overwrite, so it cannot reach production.
+- An instance replaced months later re-pulls _that_ build, not whatever a
+  floating tag has come to mean — a running production instance is traceable to
+  a CHANGELOG entry.
+- Rollback is redeploying an older tag, not rebuilding.
+
+A synth with no `imageTag` context falls back to `latest-<env>` — still
+env-scoped, never a bare `:latest`. Do not reintroduce an unscoped moving tag;
+`infra/test/compute-stack.test.ts` asserts both paths.
+
+Because the LaunchTemplate now changes on every new build and the ASG references
+it by `LatestVersionNumber`, CloudFormation performs the rolling instance
+replacement itself and `cdk deploy` blocks until it is healthy. That is why the
+pipeline no longer triggers an explicit instance refresh — doing both would
+replace every instance twice per deploy.
 
 **Splitting the environments across two AWS accounts is a code change, not just
 configuration.** `stackEnv()` does read `CDK_DEFAULT_ACCOUNT`, the deploy role

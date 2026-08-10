@@ -14,20 +14,24 @@ name: Deploy
 # treated as an outward-facing action.
 #
 # Release-Please tags are `vX.Y.Z` (`include-v-in-tag: true`,
-# `include-component-in-tag: false` in release-please-config.json), and
-# `release-please.yml` has always named this workflow as the consumer of that
-# release event.
+# `include-component-in-tag: false` in release-please-config.json).
+# `release-please.yml` dispatches this workflow after cutting one — see the
+# `release:` trigger below for why the release event alone is not enough.
+#
+# The deployed image is IMMUTABLE: `-c imageTag` stamps the LaunchTemplate with
+# `vX.Y.Z` on a release and the commit SHA otherwise, so an instance replaced
+# later re-pulls that exact build and rollback is a redeploy of an older tag.
 #
 # `workflow_dispatch` exists for the cases a trigger can't cover: the FIRST
 # deploy into a fresh account (no release to replay), a stack-scoped redeploy,
 # or re-running a deploy without cutting a version.
 #
-# The two environments can live in DIFFERENT AWS accounts. Everything account-
-# specific resolves through `vars.AWS_ACCOUNT_ID`, read from the GitHub
-# *Environment* (Settings → Environments → staging / production) rather than
-# the repo-level variable. Set it per environment and this one workflow targets
-# either account with no code change; an environment that doesn't define it
-# inherits the repo-level value, which is why staging keeps working untouched.
+# Account resolution: `vars.AWS_ACCOUNT_ID` is read from the GitHub *Environment*
+# (Settings → Environments → staging / production), falling back to the
+# repo-level variable — which is why staging keeps working untouched. NOTE that
+# pointing the two environments at DIFFERENT AWS accounts is not purely
+# configuration: the ECR repository and the OIDC provider are shared and resolve
+# in the stack's own account. See ARCHITECTURE.md § Environments & isolation.
 
 on:
   push:
@@ -241,69 +245,35 @@ jobs:
         run: npm --prefix infra ci
 
       - name: cdk deploy (${{ env.STACK_FILTER }})
+        # `-c imageTag` stamps the LaunchTemplate with the IMMUTABLE tag just
+        # pushed — `vX.Y.Z` on a release, the commit SHA otherwise. An instance
+        # replaced later re-pulls that exact build rather than whatever a moving
+        # tag has come to point at, so a running production instance is
+        # traceable to a CHANGELOG entry and rollback is a redeploy of an older
+        # tag. It also means a staging merge has no moving tag to overwrite.
+        env:
+          IMAGE_TAG: ${{ steps.img.outputs.version-tag != '' && steps.img.outputs.version-tag ||
+            steps.img.outputs.sha-tag }}
         run: |
-          npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" "$STACK_FILTER" \
+          echo "Deploying image tag: $IMAGE_TAG"
+          npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" -c imageTag="$IMAGE_TAG" "$STACK_FILTER" \
             --require-approval never \
             --outputs-file cdk-outputs.json
 
-      - name: Trigger ASG instance refresh
-        # cdk deploy of *Compute does NOT change the LaunchTemplate when the
-        # only effective change is the upstream `:latest` image content
-        # (the UserData is byte-identical from CDK's POV), so the ASG
-        # doesn't auto-refresh. Trigger explicitly so running instances
-        # re-pull the just-pushed image.
-        run: |
-          set -euo pipefail
-          ASG_NAME=$(aws cloudformation describe-stack-resources \
-            --stack-name "${STACK_PREFIX}Compute" \
-            --query "StackResources[?ResourceType=='AWS::AutoScaling::AutoScalingGroup'].PhysicalResourceId | [0]" \
-            --output text 2>/dev/null || echo None)
-          if [ -z "$ASG_NAME" ] || [ "$ASG_NAME" = "None" ]; then
-            echo "No ASG resource found in ${STACK_PREFIX}Compute — skipping refresh trigger."
-            exit 0
-          fi
-          REFRESH_ID=$(aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name "$ASG_NAME" \
-            --strategy Rolling \
-            --preferences '{"MinHealthyPercentage":100,"InstanceWarmup":180,"SkipMatching":false}' \
-            --query 'InstanceRefreshId' \
-            --output text)
-          echo "Started instance refresh $REFRESH_ID on $ASG_NAME"
-
-      - name: Wait for ASG instance refresh
-        # Poll up to 15 min. Pass-through if the stack filter didn't touch
-        # an ASG (e.g. observability-only deploy).
-        run: |
-          set -euo pipefail
-          ASG_NAME=$(aws cloudformation describe-stack-resources \
-            --stack-name "${STACK_PREFIX}Compute" \
-            --query "StackResources[?ResourceType=='AWS::AutoScaling::AutoScalingGroup'].PhysicalResourceId | [0]" \
-            --output text 2>/dev/null || echo None)
-          if [ -z "$ASG_NAME" ] || [ "$ASG_NAME" = "None" ]; then
-            echo "No ASG resource found in ${STACK_PREFIX}Compute — skipping refresh wait."
-            exit 0
-          fi
-          echo "ASG: $ASG_NAME"
-          for i in $(seq 1 90); do
-            STATUS=$(aws autoscaling describe-instance-refreshes \
-              --auto-scaling-group-name "$ASG_NAME" \
-              --max-records 1 \
-              --query "InstanceRefreshes[0].Status" \
-              --output text)
-            echo "[$i] instance refresh status: $STATUS"
-            case "$STATUS" in
-              Successful)
-                exit 0
-                ;;
-              Failed|Cancelled|RollbackFailed|RollbackSuccessful)
-                echo "Instance refresh terminated in non-success state: $STATUS"
-                exit 1
-                ;;
-            esac
-            sleep 10
-          done
-          echo "Timed out after 15 min waiting for ASG instance refresh."
-          exit 1
+      # NO explicit instance refresh.
+      #
+      # It used to be required: with a moving `:latest` tag the UserData was
+      # byte-identical between deploys, so CDK produced no LaunchTemplate change
+      # and the ASG never rolled — the new image had to be forced in.
+      #
+      # With an immutable `-c imageTag`, the UserData now differs on every new
+      # build, so the LaunchTemplate gets a new version, and the ASG references
+      # it by `LatestVersionNumber` — CloudFormation performs the rolling update
+      # itself (MaxBatchSize 1, MinInstancesInService = asgMinCapacity) and
+      # `cdk deploy` blocks until it finishes and the instances are healthy.
+      # Triggering a refresh on top of that would replace every instance a
+      # SECOND time on every deploy. Re-deploying an unchanged tag is correctly
+      # a no-op: same image, nothing to roll.
 
       - name: Resolve site URL (from ${{ env.STACK_PREFIX }}Edge output)
         id: site

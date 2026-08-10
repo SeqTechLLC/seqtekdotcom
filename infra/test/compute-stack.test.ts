@@ -34,8 +34,10 @@ const prodCfg: EnvConfig = {
   logRetentionDays: 90,
 }
 
-function synthCompute(envName: 'prod' | 'staging', cfg: EnvConfig): Template {
-  const app = new App()
+function synthCompute(envName: 'prod' | 'staging', cfg: EnvConfig, imageTag?: string): Template {
+  // `imageTag` mirrors what `deploy.yml` passes as `-c imageTag=<vX.Y.Z | sha>`;
+  // omitting it exercises the env-scoped fallback used by a bare local synth.
+  const app = new App({ context: imageTag ? { imageTag } : {} })
   const stackPrefix = envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
   const network = new NetworkStack(app, `${stackPrefix}Network`, {
     env: { account: '123456789012', region: 'us-east-1' },
@@ -196,20 +198,28 @@ describe('ComputeStack', () => {
       t.resourceCountIs('AWS::ECR::Repository', 0)
     })
 
-    it('pulls the env-scoped image tag, never a bare :latest', () => {
+    it('never pulls a bare :latest, with or without an imageTag', () => {
       // The ECR repository is SHARED — staging creates it, prod imports it by
       // name (asserted directly above). So the image tag is the only thing
-      // isolating the two environments: a bare `:latest` is rewritten by every
+      // isolating the two environments. A bare `:latest` is rewritten by every
       // staging merge, and production would pull that staging build on its next
-      // instance replacement, scale-out or refresh. Nothing fails; prod just
-      // quietly starts serving main. Guarded here because the regression is
-      // invisible in a diff and invisible at deploy time.
-      const launchTemplates = t.findResources('AWS::EC2::LaunchTemplate')
-      const userData = JSON.stringify(Object.values(launchTemplates))
-      expect(userData).toContain(':latest-prod')
-      // No bare `:latest` immediately followed by a quote/space — that would be
-      // the unscoped tag. `:latest-prod` must not match, hence the boundary.
-      expect(/:latest(?![-\w])/.test(userData)).toBe(false)
+      // instance replacement or scale-out. Nothing fails; prod just quietly
+      // starts serving main. Guarded because the regression is invisible both
+      // in a diff and at deploy time.
+      //
+      // Two paths, both asserted: the deploy passes `-c imageTag` (immutable),
+      // and a bare local synth falls back to an env-scoped moving tag.
+      const bare = JSON.stringify(Object.values(t.findResources('AWS::EC2::LaunchTemplate')))
+      expect(bare).toContain(':latest-prod')
+      expect(/:latest(?![-\w])/.test(bare)).toBe(false)
+
+      const pinned = JSON.stringify(
+        Object.values(
+          synthCompute('prod', prodCfg, 'v1.2.3').findResources('AWS::EC2::LaunchTemplate'),
+        ),
+      )
+      expect(pinned).toContain(':v1.2.3')
+      expect(pinned).not.toContain(':latest')
     })
 
     it('ASG min/desired/max = 2/2/3 with min-in-service = 2', () => {
