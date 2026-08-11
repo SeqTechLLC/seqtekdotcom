@@ -36,6 +36,9 @@ const SLUGGED_COLLECTIONS = [
   'servicePillars',
   'workshops',
   'teamMembers',
+  // ADR 0009 metadata collection — routed at /partners + /partners/[slug], so
+  // its readers are held to the same tag-parity invariant as every other one.
+  'partners',
 ] as const
 
 const GLOBALS = ['homepage', 'siteSettings', 'navigation'] as const

@@ -16,7 +16,7 @@ export const Categories: CollectionConfig = {
     // delete, which is the repo-wide rule. This was previously admin-only for
     // create/update on a "curated taxonomy" rationale, which was inconsistent
     // with every other collection and blocked an editor from running the
-    // content seed (content-batch.json writes categories).
+    // content seed (docs/content-drafts/categories.json writes categories).
     create: isAdminOrEditor,
     update: isAdminOrEditor,
     delete: isAdmin,

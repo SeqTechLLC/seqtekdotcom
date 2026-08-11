@@ -7,6 +7,7 @@ export type PreviewCollection =
   | 'services'
   | 'workshops'
   | 'teamMembers'
+  | 'partners'
 
 export const PREVIEW_COLLECTIONS: readonly PreviewCollection[] = [
   'pages',
@@ -15,6 +16,7 @@ export const PREVIEW_COLLECTIONS: readonly PreviewCollection[] = [
   'services',
   'workshops',
   'teamMembers',
+  'partners',
 ] as const
 
 type DocLike = { slug?: string; pillar?: { slug?: string } | string | null }
@@ -37,6 +39,7 @@ const PUBLIC_PATH_BUILDERS: Record<PreviewCollection, (doc: DocLike) => string |
   },
   workshops: (doc) => (doc.slug ? `/workshops/${doc.slug}` : null),
   teamMembers: (doc) => (doc.slug ? `/team/${doc.slug}` : null),
+  partners: (doc) => (doc.slug ? `/partners/${doc.slug}` : null),
 }
 
 const SITE_URL = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3100'

@@ -17,6 +17,7 @@ import type {
   ServicePillar,
   Workshop,
   TeamMember,
+  Partner,
 } from '@/payload-types'
 
 // spec 004 Phase 2 (Foundational). The ISR correctness of every public route
@@ -150,6 +151,7 @@ type SluggedCollection =
   | 'servicePillars'
   | 'workshops'
   | 'teamMembers'
+  | 'partners'
 
 // ---------------------------------------------------------------------------
 // Chrome globals — layered React.cache → unstable_cache
@@ -309,13 +311,25 @@ export const getTeamMemberBySlug = withReadTimeout(
     )(),
 )
 
+export const getPartnerBySlug = withReadTimeout(
+  'getPartnerBySlug',
+  (slug: string): Promise<Partner | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('partners', slug)) as Partner | null,
+      ['partners', slug],
+      { tags: detailCacheTags('partners', slug), revalidate: ONE_HOUR },
+    )(),
+)
+
 // ---------------------------------------------------------------------------
 // Listing / static-params readers — published-only, list-tagged
 // ---------------------------------------------------------------------------
 
 export const findPublishedList = async (
   collection: SluggedCollection | 'teamMembers',
-  opts: { sort?: string; depth?: number } = {},
+  // Payload's `Sort` is `string | string[]`; the array form is how a listing
+  // gets a deterministic tiebreaker on a nullable primary sort key.
+  opts: { sort?: string | string[]; depth?: number } = {},
 ) => {
   const payload = await getPayloadInstance()
   const { docs } = await payload.find({
@@ -391,6 +405,21 @@ export const listTeamMembers = withReadTimeout(
       async () => (await findPublishedList('teamMembers', { sort: 'order' })) as TeamMember[],
       ['teamMembers', 'list'],
       { tags: listCacheTags('teamMembers'), revalidate: ONE_HOUR },
+    )(),
+)
+
+// ADR 0009 metadata collection: the `/partners` index is generated from these
+// docs (logo + summary + order), so adding a partner needs no code change.
+// `order` is optional, so `name` is the tiebreaker — otherwise partners that
+// share an order (or leave it blank) come back in whatever order Postgres
+// happens to return, and the cached index shuffles between revalidations.
+export const listPartners = withReadTimeout(
+  'listPartners',
+  (): Promise<Partner[]> =>
+    unstable_cache(
+      async () => (await findPublishedList('partners', { sort: ['order', 'name'] })) as Partner[],
+      ['partners', 'list'],
+      { tags: listCacheTags('partners'), revalidate: ONE_HOUR },
     )(),
 )
 

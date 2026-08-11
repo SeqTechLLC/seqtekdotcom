@@ -28,6 +28,8 @@ const RENDER_BLOCKS_ROUTES = [
   'src/app/(frontend)/services/page.tsx', // services overview (block Page)
   'src/app/(frontend)/services/[offering]/page.tsx', // peer offerings (block Pages)
   'src/app/(frontend)/team/[slug]/page.tsx',
+  // ADR 0009 Option C metadata collection — a partner is a Page + typed metadata.
+  'src/app/(frontend)/partners/[slug]/page.tsx',
 ]
 
 // The ONE sanctioned bespoke richText body (ADR 0009).

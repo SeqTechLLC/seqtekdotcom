@@ -57,6 +57,8 @@ const DRAFTABLE_COLLECTIONS = [
   'workshops',
   'industries',
   'locations',
+  // ADR 0009 metadata collection — draftable, so anon must never see a draft.
+  'partners',
 ] as const
 
 // The three draftable globals (per `data-model.md` §2 — siteSettings,
@@ -127,6 +129,14 @@ const DRAFT_SPECS: DraftSpec[] = [
       slug: `${FIXTURE_SLUG_PREFIX}-location-${s}`,
     }),
     uniqueWhere: (s) => ({ slug: { equals: `${FIXTURE_SLUG_PREFIX}-location-${s}` } }),
+  },
+  {
+    collection: 'partners',
+    data: (s) => ({
+      name: `Draft Leak Partner ${s}`,
+      slug: `${FIXTURE_SLUG_PREFIX}-partner-${s}`,
+    }),
+    uniqueWhere: (s) => ({ slug: { equals: `${FIXTURE_SLUG_PREFIX}-partner-${s}` } }),
   },
 ]
 

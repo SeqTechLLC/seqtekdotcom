@@ -23,21 +23,35 @@ afterEach(() => {
 
 describe('isPreviewCollection', () => {
   // spec 010 (R6): workshops + teamMembers gain live preview alongside the
-  // original four (type-generic cross-cutting wiring).
-  it.each(['pages', 'posts', 'caseStudies', 'services', 'workshops', 'teamMembers'] as const)(
-    'accepts %s',
-    (slug) => {
-      expect(isPreviewCollection(slug)).toBe(true)
-    },
-  )
+  // original four (type-generic cross-cutting wiring). ADR 0009 metadata
+  // collection `partners` joins them.
+  it.each([
+    'pages',
+    'posts',
+    'caseStudies',
+    'services',
+    'workshops',
+    'teamMembers',
+    'partners',
+  ] as const)('accepts %s', (slug) => {
+    expect(isPreviewCollection(slug)).toBe(true)
+  })
 
   it.each(['users', 'media', 'unknown', ''])('rejects %s', (slug) => {
     expect(isPreviewCollection(slug)).toBe(false)
   })
 
-  it('PREVIEW_COLLECTIONS is exactly the six supported collections', () => {
+  it('PREVIEW_COLLECTIONS is exactly the seven supported collections', () => {
     expect(new Set(PREVIEW_COLLECTIONS)).toEqual(
-      new Set(['pages', 'posts', 'caseStudies', 'services', 'workshops', 'teamMembers']),
+      new Set([
+        'pages',
+        'posts',
+        'caseStudies',
+        'services',
+        'workshops',
+        'teamMembers',
+        'partners',
+      ]),
     )
   })
 })
@@ -76,6 +90,10 @@ describe('publicPathFor', () => {
 
   it('workshops → /workshops/<slug> (spec 010)', () => {
     expect(publicPathFor('workshops', { slug: 'touchstone' })).toBe('/workshops/touchstone')
+  })
+
+  it('partners → /partners/<slug> (ADR 0009)', () => {
+    expect(publicPathFor('partners', { slug: 'accesseva' })).toBe('/partners/accesseva')
   })
 
   it('teamMembers → /team/<slug> (spec 010)', () => {

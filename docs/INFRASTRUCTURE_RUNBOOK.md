@@ -277,14 +277,25 @@ export IMPORT_BASE_URL=https://<new-environment-url>
 export IMPORT_TOKEN=<payload-token cookie from /admin on the NEW env>
 
 # Order matters — later specs resolve $ref against what earlier ones created.
-npm run payload:seed -- docs/content-drafts/content-batch.json   # taxonomy, posts, case studies
-npm run payload:seed -- docs/content-drafts/team.json
-npm run payload:seed -- docs/content-drafts/workshops.json
-npm run payload:seed -- docs/content-drafts/services.json
-npm run payload:seed -- docs/content-drafts/about.json
-npm run payload:seed -- docs/content-drafts/homepage.json
-npm run payload:seed -- docs/content-drafts/homepage-layout.json
+for f in categories industries testimonials team service-pillars services \
+         case-studies posts workshops pages partners \
+         global-homepage global-site-settings global-navigation; do
+  npm run payload:seed -- docs/content-drafts/$f.json
+done
 ```
+
+> **Reconciled 2026-08-11.** This list previously named `content-batch.json`,
+> `about.json`, and `homepage.json`. Those predate the spec-010 block migration —
+> they carry the legacy discrete body fields but **no `layout` array**, so seeding
+> them into a fresh environment loads content that renders as an **empty body**,
+> and reports success while doing it. They now live in
+> `docs/content-drafts/_archive/`. The files above are a verified-portable mirror
+> of staging (58 docs, 84 `$ref`s, 0 unresolved) carrying both the legacy fields
+> and the real `layout`. See `docs/content-drafts/README.md`.
+>
+> Load `industries.json` before `case-studies.json`: the five industry records are
+> missing on staging today, which is why every case study there has a dangling
+> `industry` reference. Seeding in this order repairs it.
 
 Run each with `--dry-run` first. Seeding is idempotent by the identity field, so
 a re-run repairs rather than duplicates. A `$ref` that cannot resolve is

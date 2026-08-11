@@ -17,6 +17,7 @@ export type PreviewCollection =
   | 'servicePillars'
   | 'workshops'
   | 'teamMembers'
+  | 'partners'
 
 export const getDraftBySlug = async <T>(
   collection: PreviewCollection,

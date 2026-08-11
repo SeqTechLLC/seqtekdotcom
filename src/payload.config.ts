@@ -10,6 +10,7 @@ import { Industries } from './collections/Industries'
 import { Locations } from './collections/Locations'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
+import { Partners } from './collections/Partners'
 import { Posts } from './collections/Posts'
 import { ServicePillars } from './collections/ServicePillars'
 import { Services } from './collections/Services'
@@ -59,6 +60,7 @@ export default buildConfig({
     TeamMembers,
     Testimonials,
     Workshops,
+    Partners,
     Industries,
     Locations,
     Categories,
