@@ -77,7 +77,16 @@ export default async function PartnerPage({ params }: Props) {
                   className="h-12 w-auto object-contain"
                 />
               ) : null}
-              <Button href={partner.url} variant="ghost" data-testid="partner-site-link">
+              <Button
+                href={partner.url}
+                variant="ghost"
+                // spec 008 US3: every CTA on the site emits `cta_click` through
+                // the shared emitter. An outbound partner click is a conversion
+                // signal like any other, so it routes through TrackedCtaLink
+                // rather than rendering a bare anchor.
+                cta={{ ctaId: 'partner-site', location: 'partner-detail' }}
+                data-testid="partner-site-link"
+              >
                 Visit {partner.name}
               </Button>
             </div>

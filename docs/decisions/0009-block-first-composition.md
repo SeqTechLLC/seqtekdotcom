@@ -4,6 +4,8 @@
 **Date:** 2026-06-14
 
 > **Implementation note (2026-06-30).** Shipped. The two-primitive model landed via **spec 010 (PR #66)** and was applied to services by the four-offering restructure (**PRs #79–#83**): `/services` and `/services/[offering]` now render **Pages by slug**, so the `Services` and `ServicePillars` collections are **vestigial and unrouted** — Option C's "fold them into `pages`" path was effectively taken. Bespoke per-type templates are retired in favor of `RenderBlocks`. The "~34-block library" figure in Context is a point-in-time count and is left as written; the library now stands at ~45 blocks.
+>
+> **Amended (2026-08-11, PR #99).** The services fold above is now recorded as a **partial** application of this ADR, not a completed one. Folding into `pages` retired the bespoke template (the Decision's first half) but dropped the metadata collection (its second half), so `/services/[offering]` resolves through hardcoded slug lists — `OFFERING_TO_SLUG`/`OFFERING_TITLE` in the route, `SERVICE_OFFERING_PATHS`/`SERVICE_PAGE_SLUGS` in `sitemap.ts` — and a fifth offering therefore needs code and a deploy. That contradicts this ADR's own rule that **only creating or fixing a block** may require code. The "(or fold them into `pages`)" phrasing in Consequences describes a migration mechanic, not a licence to drop the collection. `partners` (PR #99) is the reference implementation of the intended shape: typed metadata over a block body, with routing, indexing, sitemap, and JSON-LD all derived from the collection. Reconciling `/services` is tracked as **ROADMAP SVC-2**.
 
 ## Context
 

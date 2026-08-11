@@ -45,7 +45,8 @@ const STATIC_PATHS = [
   ...SERVICE_OFFERING_PATHS,
   '/workshops',
   '/team',
-  '/partners',
+  // NOTE: `/partners` is deliberately NOT static — it is added below only when
+  // the collection has published docs (see the partner loop).
   '/privacy-policy', // spec 006 US5 (T025): static legal route
 ]
 
@@ -86,7 +87,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const slug of teamSlugs) paths.add(`/team/${slug}`)
     // ADR 0009 metadata collection — no exclusion set needed here (unlike the
     // `service-*` Pages): a partner's canonical URL IS `/partners/<slug>`.
-    for (const slug of partnerSlugs) paths.add(`/partners/${slug}`)
+    // The index is listed only once it has cards. Code ships ahead of content
+    // (a deploy never seeds), so between merge and the first `partners.json`
+    // load `/partners` is a heading over an empty grid — not a URL to hand a
+    // crawler. The `${collection}_list` tag busts this the moment one publishes.
+    if (partnerSlugs.length > 0) {
+      paths.add('/partners')
+      for (const slug of partnerSlugs) paths.add(`/partners/${slug}`)
+    }
   } catch (err) {
     console.warn('[sitemap] published-slug read failed; emitting static paths only:', err)
   }

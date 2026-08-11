@@ -40,7 +40,18 @@ export default async function PartnersPage() {
             starting the search from scratch.
           </p>
         </header>
-        <PartnerGrid items={partners} headingLevel="h2" />
+        {partners.length > 0 ? (
+          <PartnerGrid items={partners} headingLevel="h2" />
+        ) : (
+          // Code ships ahead of content (a deploy never seeds), and the footer
+          // links here unconditionally — so the zero-partner state is reachable
+          // on any environment deployed before `partners.json` is loaded.
+          // Without this the page is a claim over an empty grid. Placeholder
+          // copy: the content lead owns the final wording.
+          <p className="text-body text-text-secondary">
+            We are writing up our partner profiles now. Check back soon.
+          </p>
+        )}
       </div>
     </>
   )

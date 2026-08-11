@@ -14,24 +14,26 @@ interface PartnerDoc {
 }
 
 interface PartnerGridProps {
-  heading?: string | null
   items: PartnerDoc[]
   /** Card title level. Defaults to `h3`; a listing page with a page-level `h1`
-   *  and no section heading passes `h2` to keep heading order non-skipping. */
+   *  and no section heading passes `h2` to keep heading order non-skipping.
+   *  There is deliberately no section-`heading` prop: this is not a registered
+   *  block (only `/partners` renders it), and a hardcoded `<h2>` section title
+   *  would collide with `headingLevel="h2"` cards. Add both together if it ever
+   *  becomes a block. */
   headingLevel?: 'h2' | 'h3'
 }
 
 const isFullMedia = (v: unknown): v is MediaLike & { url: string } =>
   typeof v === 'object' && v !== null && 'url' in (v as object) && !!(v as { url: unknown }).url
 
-export function PartnerGrid({ heading, items, headingLevel = 'h3' }: PartnerGridProps) {
+export function PartnerGrid({ items, headingLevel = 'h3' }: PartnerGridProps) {
   const CardHeading = headingLevel
   const docs = items.filter((p) => Boolean(p.slug))
   if (docs.length === 0) return null
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {docs.map((p, i) => (
             <li key={p.id ?? p.slug ?? i}>
