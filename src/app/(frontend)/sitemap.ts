@@ -45,6 +45,7 @@ const STATIC_PATHS = [
   ...SERVICE_OFFERING_PATHS,
   '/workshops',
   '/team',
+  '/partners',
   '/privacy-policy', // spec 006 US5 (T025): static legal route
 ]
 
@@ -58,13 +59,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // and let ISR backfill the dynamic slugs at runtime (revalidate + on-demand
   // `${collection}_list` tag invalidation).
   try {
-    const [pageSlugs, caseStudySlugs, postSlugs, workshopSlugs, teamSlugs] = await Promise.all([
-      publishedSlugsFor('pages'),
-      publishedSlugsFor('caseStudies'),
-      publishedSlugsFor('posts'),
-      publishedSlugsFor('workshops'),
-      publishedSlugsFor('teamMembers'),
-    ])
+    const [pageSlugs, caseStudySlugs, postSlugs, workshopSlugs, teamSlugs, partnerSlugs] =
+      await Promise.all([
+        publishedSlugsFor('pages'),
+        publishedSlugsFor('caseStudies'),
+        publishedSlugsFor('posts'),
+        publishedSlugsFor('workshops'),
+        publishedSlugsFor('teamMembers'),
+        publishedSlugsFor('partners'),
+      ])
 
     // A page slug that collides with a 301 source (e.g. the audit-seeded
     // `touchstone-workshops` doc, if ever published) would put a
@@ -81,6 +84,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const slug of postSlugs) paths.add(`/insights/${slug}`)
     for (const slug of workshopSlugs) paths.add(`/workshops/${slug}`)
     for (const slug of teamSlugs) paths.add(`/team/${slug}`)
+    // ADR 0009 metadata collection — no exclusion set needed here (unlike the
+    // `service-*` Pages): a partner's canonical URL IS `/partners/<slug>`.
+    for (const slug of partnerSlugs) paths.add(`/partners/${slug}`)
   } catch (err) {
     console.warn('[sitemap] published-slug read failed; emitting static paths only:', err)
   }

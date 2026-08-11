@@ -127,6 +127,10 @@ export const buildRevalidatePlan = (
         // spec 010 US2 (Phase E): teamMembers gains a `/team/[slug]` detail route.
         detailPaths.push(`/team/${s}`, '/team')
         break
+      case 'partners':
+        // ADR 0009 metadata collection: the detail route plus the index it feeds.
+        detailPaths.push(`/partners/${s}`, '/partners')
+        break
       case 'industries':
         detailPaths.push(`/industries/${s}`)
         break

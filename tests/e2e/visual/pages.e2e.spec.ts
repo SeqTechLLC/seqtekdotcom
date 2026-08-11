@@ -40,6 +40,9 @@ const ROUTES: { slug: string; path: string }[] = [
   // migrated detail routes (workshops/case-studies/services) use content-specific
   // slugs and are swept ad-hoc; the listings above already cover their grids.
   { slug: 'team-detail', path: '/team/dana-dudley' },
+  // ADR 0009 metadata collection — the partners index + its first detail page.
+  { slug: 'partners', path: '/partners' },
+  { slug: 'partner-detail', path: '/partners/accesseva' },
 ]
 
 test.beforeAll(async () => {

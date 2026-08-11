@@ -15,7 +15,7 @@ import type { User } from '../../../src/payload-types'
 /**
  * T108 + T112 / SC-005 / FR-015–FR-018 / R-17.
  *
- * Data-driven access matrix iterating 13 collections × 3 roles
+ * Data-driven access matrix iterating 14 collections × 3 roles
  * (public/editor/admin) × 5 ops (read-published, read-draft, create,
  * update, delete) against the Payload Local API. The expected outcome
  * per cell is sourced from `docs/ARCHITECTURE.md` §6 (re-stated in
@@ -367,6 +367,20 @@ const COLLECTION_SPECS: CollectionSpec[] = [
     updateData: { title: 'Updated job title' },
   },
   {
+    // ADR 0009 Option C metadata collection — same editorial-draftable tier as
+    // teamMembers/pages. `logo` is required, so the visible fixture supplies it;
+    // the hidden fixture is inserted with `draft: true`, which skips validation.
+    slug: 'partners',
+    tier: 'editorial-draftable',
+    visibleData: (s) => ({
+      name: `AM Partner ${s}`,
+      slug: `access-matrix-partner-${s}`,
+      logo: sharedMediaId,
+    }),
+    hiddenData: (s) => ({ name: `AM Partner ${s}`, slug: `access-matrix-partner-${s}` }),
+    updateData: { summary: 'AM partner summary updated' },
+  },
+  {
     slug: 'media',
     // Media's create/update path runs through the upload pipeline. The
     // helpers below override `visibleData` for media because Payload
@@ -422,6 +436,7 @@ const FIXTURE_COLLECTIONS = [
   'industries',
   'locations',
   'categories',
+  'partners',
 ] as const
 
 const ROLES: Role[] = ['public', 'editor', 'admin']

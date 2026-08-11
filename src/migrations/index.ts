@@ -8,6 +8,8 @@ import * as migration_20260615_103758_add_layout_case_studies from './20260615_1
 import * as migration_20260615_104012_add_layout_services from './20260615_104012_add_layout_services'
 import * as migration_20260615_104531_add_layout_team_members from './20260615_104531_add_layout_team_members'
 import * as migration_20260615_225007_add_layout_homepage from './20260615_225007_add_layout_homepage'
+import * as migration_20260811_141527_fix_brand_teaser_link_default from './20260811_141527_fix_brand_teaser_link_default'
+import * as migration_20260811_141528_add_partners_collection from './20260811_141528_add_partners_collection'
 
 export const migrations = [
   {
@@ -59,5 +61,15 @@ export const migrations = [
     up: migration_20260615_225007_add_layout_homepage.up,
     down: migration_20260615_225007_add_layout_homepage.down,
     name: '20260615_225007_add_layout_homepage',
+  },
+  {
+    up: migration_20260811_141527_fix_brand_teaser_link_default.up,
+    down: migration_20260811_141527_fix_brand_teaser_link_default.down,
+    name: '20260811_141527_fix_brand_teaser_link_default',
+  },
+  {
+    up: migration_20260811_141528_add_partners_collection.up,
+    down: migration_20260811_141528_add_partners_collection.down,
+    name: '20260811_141528_add_partners_collection',
   },
 ]

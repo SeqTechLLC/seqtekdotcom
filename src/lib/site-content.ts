@@ -79,6 +79,7 @@ export const navigation: Navigation = {
         { label: 'Our Story', url: '/our-story' },
         { label: 'Team', url: '/team' },
         { label: 'Localshoring', url: '/localshoring' },
+        { label: 'Partners', url: '/partners' },
         // TODO(stub): Careers page not built — re-add when it ships.
       ],
     },

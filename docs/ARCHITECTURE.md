@@ -51,7 +51,7 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 
 All collections are defined in TypeScript. Payload auto-generates the database schema, REST API, GraphQL API, and admin panel from these definitions.
 
-> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields some tables still list (`problem`/`solution`/`impact`, `bio`, `hero`/`stats`/…) are retained one release (hidden + read-only, expand/contract) and composed into `layout` by `src/payload/seed/compose/*ToLayout.ts`. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `services`/`servicePillars`/`industries`/`locations` stay structured — they are relationship/taxonomy targets, no longer publicly routed (the four `/services` offerings render as block-composed `pages` by slug — PR #79, ADR 0009).
+> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields some tables still list (`problem`/`solution`/`impact`, `bio`, `hero`/`stats`/…) are retained one release (hidden + read-only, expand/contract) and composed into `layout` by `src/payload/seed/compose/*ToLayout.ts`. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `services`/`servicePillars`/`industries`/`locations` stay structured — they are relationship/taxonomy targets, no longer publicly routed (the four `/services` offerings render as block-composed `pages` by slug — PR #79, ADR 0009).
 
 ### Document Collections
 
@@ -158,6 +158,24 @@ Retained grouping records. **No longer publicly routed** — the pre-#79 `/servi
 | `heroImage`   | upload (media) |                       |
 | `seo`         | group          |                       |
 | `order`       | number         | Display ordering      |
+
+#### `partners`
+
+Technology / referral partners, rendered as block-composed pages at `/partners` (listing) and `/partners/[slug]` (detail). The worked example of ADR 0009 Option C: typed metadata drives the index, the sitemap, and the breadcrumb schema; the body is the shared `layout` blocks array. Routing resolves straight off the collection — no slug whitelist, no sitemap edit — so publishing a partner needs no deploy.
+
+The detail route owns no `<h1>` (the `/services/[offering]` shape, not the `/team/[slug]` one) — the h1 is the layout's leading **hero block**, which is why `partnerSkeleton` seeds one. The route does own the trailing outbound-link panel built from `logo` + `url`.
+
+| Field         | Type           | Notes                                            |
+| ------------- | -------------- | ------------------------------------------------ |
+| `name`        | text           | Partner name — required, source of the slug      |
+| `slug`        | text           | Unique, indexed                                  |
+| `summary`     | textarea       | One or two sentences; the `/partners` index card |
+| `logo`        | upload (media) | The partner's own mark — required                |
+| `url`         | text           | Partner website (https), rendered as outbound    |
+| `layout`      | blocks         | The block-composed body (ADR 0009)               |
+| `order`       | number         | Index ordering                                   |
+| `publishedAt` | date           | Sidebar; drives the scheduled-publish hook       |
+| `seo`         | group          | `metaTitle`, `metaDescription`, `ogImage`        |
 
 #### `teamMembers`
 
@@ -885,7 +903,7 @@ Draft content is never exposed to the public API or rendered on the public site 
 | Read `testimonials` where `!isActive`   | —      | ✓      | ✓     |
 | Access `/admin`                         | —      | ✓      | ✓     |
 
-**Per-collection overrides** (the "Create / Update / Delete content" rows above describe the default for the editorial collections — `pages`, `posts`, `caseStudies`, `services`, `servicePillars`, `workshops`, `industries`, `locations`, `media`, `teamMembers`; the overrides below cover the rest):
+**Per-collection overrides** (the "Create / Update / Delete content" rows above describe the default for the editorial collections — `pages`, `posts`, `caseStudies`, `services`, `servicePillars`, `workshops`, `industries`, `locations`, `media`, `teamMembers`, `partners`; the overrides below cover the rest):
 
 - `categories` — editors `create` / `update` like any other content collection; `delete` is admin-only, matching every collection. (Was admin-only for create/update on a "curated taxonomy" rationale that contradicted §`categories` above and blocked editors from running the content seed.)
 - `testimonials` — public reads are filtered to `isActive: true`; editors and admins see all rows. Mutations follow the editorial default.

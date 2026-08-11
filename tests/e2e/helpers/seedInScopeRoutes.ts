@@ -51,6 +51,7 @@ export interface InScopeSeed {
   postSlug: string
   workshopSlug: string
   teamSlug: string
+  partnerSlug: string
   storySlug: string
   localshoringSlug: string
   industrySlug: string
@@ -62,6 +63,7 @@ export const IN_SCOPE_SEED: InScopeSeed = {
   postSlug: 'a11y-post',
   workshopSlug: 'a11y-workshop',
   teamSlug: 'a11y-member',
+  partnerSlug: 'a11y-partner',
   storySlug: 'our-story',
   localshoringSlug: 'localshoring',
   industrySlug: 'a11y-industry',
@@ -107,6 +109,11 @@ export function inScopeRoutes(
     })),
     { path: '/workshops', label: 'workshops (listing)' },
     { path: `/workshops/${seed.workshopSlug}`, label: 'workshop (detail)' },
+    // ADR 0009 metadata collection (feat/partners-accesseva) — the index is new
+    // UI (PartnerGrid) and the detail body is entirely block-composed, so both
+    // ends of the route pair are swept.
+    { path: '/partners', label: 'partners (listing)' },
+    { path: `/partners/${seed.partnerSlug}`, label: 'partner (detail)' },
     { path: '/privacy-policy', label: 'privacy-policy' },
     { path: `/${seed.storySlug}`, label: 'our-story' },
     { path: `/${seed.localshoringSlug}`, label: 'localshoring' },
@@ -279,6 +286,33 @@ export async function seedInScopeRoutes(
     { blockType: 'featured-case-study', heading: 'Featured work', caseStudy: caseStudy.id },
   ])
 
+  // /partners + /partners/<slug>. The body leads with a hero because the detail
+  // route has no route-owned <h1> — the h1 is the hero's (see partnerSkeleton).
+  await payload.create({
+    collection: 'partners',
+    data: {
+      name: 'Northwind Analytics',
+      slug: seed.partnerSlug,
+      summary: 'Document intelligence for regulated industries.',
+      logo: media.id,
+      url: 'https://example.com/',
+      order: 1,
+      layout: [
+        {
+          blockType: 'hero',
+          variant: 'text-only',
+          alignment: 'left',
+          eyebrow: 'SEQTEK partner',
+          headline: 'SEQTEK and Northwind Analytics',
+          subheadline: 'What the partnership gives clients.',
+        },
+        { blockType: 'content', body: lexical('Why we work with them.') },
+      ] as never,
+      _status: 'published',
+    },
+    overrideAccess: true,
+  })
+
   await payload.create({
     collection: 'workshops',
     data: {
@@ -350,6 +384,7 @@ export async function cleanupInScopeRoutes(
   await del(payload, 'posts', 'slug', seed.postSlug)
   await del(payload, 'workshops', 'slug', seed.workshopSlug)
   await del(payload, 'teamMembers', 'slug', seed.teamSlug)
+  await del(payload, 'partners', 'slug', seed.partnerSlug)
   await del(payload, 'pages', 'slug', seed.storySlug)
   await del(payload, 'pages', 'slug', seed.localshoringSlug)
   // The four block-composed service Pages (feat/services-restructure).
