@@ -23,6 +23,7 @@
         "dnsRecordNames": [],
         "existingVpc": null,
         "secondaryLane": null,
+        "cognitoAuthEnabled": false,
         "instanceClass": "t3",
         "instanceSize": "small",
         "rdsInstanceClass": "t3.small",
@@ -49,6 +50,7 @@
         "dnsRecordNames": ["seqtek-preview.com", "www.seqtek-preview.com"],
         "existingVpc": null,
         "secondaryLane": null,
+        "cognitoAuthEnabled": false,
         "instanceClass": "t3",
         "instanceSize": "micro",
         "rdsInstanceClass": "t3.micro",
@@ -63,7 +65,7 @@
         "ownsAccountEcrRepository": true
       },
       "preview": {
-        "_comment_domain": "Account [REDACTED_AWS_ACCOUNT_ID] — NOT a fresh/dedicated account (corrected 2026-08-10 after initial deploy attempt hit the account's 5-VPC-per-region limit): it already runs other real infrastructure (an 'intranet-sequred' ECS/FusionAuth/wiki stack, an RDS 'warehouse' database, and WordPress/SEO-hosting security groups under the Seqtek name in the SeqtekDeploy VPC). Cert covers seqtek.com + *.seqtek.com (reusable for any future subdomain with zero re-validation), but dnsRecordNames creates ONLY preview.seqtek.com — the zone's existing seqtek.com (A -> 89.106.200.1) and www.seqtek.com (CNAME -> client.gushwork.net) records are untouched. Hosted zone ZDNRI358EUS3R confirmed to already live in this same account.",
+        "_comment_domain": "This account is NOT a fresh/dedicated account (corrected 2026-08-10 after initial deploy attempt hit the account's 5-VPC-per-region limit): it already runs other real infrastructure (an 'intranet-sequred' ECS/FusionAuth/wiki stack, an RDS 'warehouse' database, and WordPress/SEO-hosting security groups under the Seqtek name in the SeqtekDeploy VPC). Cert covers seqtek.com + *.seqtek.com (reusable for any future subdomain with zero re-validation), but dnsRecordNames creates ONLY preview.seqtek.com — the zone's existing seqtek.com (A -> 89.106.200.1) and www.seqtek.com (CNAME -> client.gushwork.net) records are untouched. Hosted zone ZDNRI358EUS3R confirmed to already live in this same account.",
         "_comment_sizing": "Mirrors staging's validation-period free-tier-eligible sizing — this is a testing environment, not launch-readiness scale.",
         "region": "us-east-1",
         "domainName": "seqtek.com",
@@ -88,6 +90,8 @@
           "databaseName": "seqtek_prod",
           "dnsRecordNames": ["ww3.seqtek.com"]
         },
+        "_comment_cognitoAuthEnabled": "Gates BOTH preview.seqtek.com and ww3.seqtek.com behind Google Workspace SSO via Cognito (2026-08-12). seqtek.com/www.seqtek.com currently point elsewhere entirely (different distribution) and are untouched by this — cutover onto this same ALB (as another rule, alongside ww3) is a planned FUTURE step, not done here. Google OAuth client + cognito_google_client_id/secret SSM params seeded 2026-08-12.",
+        "cognitoAuthEnabled": true,
         "instanceClass": "t3",
         "instanceSize": "micro",
         "rdsInstanceClass": "t3.micro",

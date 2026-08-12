@@ -23,6 +23,7 @@ const cfg: EnvConfig = {
   dnsRecordNames: [],
   existingVpc: null,
   secondaryLane: null,
+  cognitoAuthEnabled: false,
   instanceClass: 't3',
   instanceSize: 'small',
   rdsInstanceClass: 't3.small',

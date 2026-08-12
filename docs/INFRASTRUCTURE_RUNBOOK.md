@@ -151,6 +151,36 @@ aws ssm put-parameter --name "/seqtek/website/${ENV}/slack_webhook_url" \
   --type SecureString --value 'https://hooks.slack.com/services/...'
 ```
 
+#### 1.3a Cognito perimeter gate (`cognitoAuthEnabled: true` envs only)
+
+A SEPARATE Google OAuth client from 1.3 above — that one is the app's own
+Payload-admin login; this one gates the whole ALB listener (added
+2026-08-12, see `infra/lib/cognito-auth.ts`) via a Cognito User Pool
+federated to Google Workspace. Create it under the SAME Google Cloud
+project so it inherits the same "Internal" (`@seqtechllc.com`-only)
+consent-screen restriction — Cognito itself does not filter by hosted
+domain.
+
+Redirect URI is fixed by the Cognito domain prefix
+(`seqtek-${ENV}-gate`), NOT the site's own domain:
+`https://seqtek-${ENV}-gate.auth.us-east-1.amazoncognito.com/oauth2/idpresponse`
+
+Client ID is a plain SSM parameter, same as everywhere else in this file.
+The SECRET is NOT — `AWS::Cognito::UserPoolIdentityProvider`'s
+`ProviderDetails` map only resolves `{{resolve:secretsmanager:...}}`
+dynamic references, not `{{resolve:ssm-secure:...}}` (confirmed by a real
+deploy failure 2026-08-12: "SSM Secure reference is not supported in:
+[...ProviderDetails/client_secret]"). It goes in Secrets Manager instead,
+matching every OTHER sensitive value data-stack.ts already creates:
+
+```sh
+aws ssm put-parameter --name "/seqtek/website/${ENV}/cognito_google_client_id" \
+  --type String --value '<client id>'
+aws secretsmanager create-secret \
+  --name "seqtek-website/${ENV}/cognito-google-client-secret" \
+  --secret-string '<client secret>'
+```
+
 ### 1.4 Domain (optional per env)
 
 Prod intentionally runs on the CloudFront default URL until launch —

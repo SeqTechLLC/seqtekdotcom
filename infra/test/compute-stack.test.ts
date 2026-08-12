@@ -15,6 +15,7 @@ const stagingCfg: EnvConfig = {
   dnsRecordNames: [],
   existingVpc: null,
   secondaryLane: null,
+  cognitoAuthEnabled: false,
   instanceClass: 't3',
   instanceSize: 'micro',
   rdsInstanceClass: 't3.micro',
@@ -375,6 +376,182 @@ describe('ComputeStack', () => {
       expect(bare).toContain(':abc1234')
       expect(bare).toContain(':v1.2.3')
       expect(bare).not.toContain('latest-staging')
+    })
+  })
+
+  describe('with cognitoAuthEnabled (Google Workspace SSO gate)', () => {
+    const cfg: EnvConfig = {
+      ...stagingCfg,
+      domainName: 'seqtek-preview.com',
+      hostedZoneId: 'Z0000000000000000000A',
+      certificateSans: ['*.seqtek-preview.com'],
+      dnsRecordNames: ['seqtek-preview.com'],
+      secondaryLane: {
+        name: 'prod',
+        databaseName: 'seqtek_prod',
+        dnsRecordNames: ['ww3.seqtek-preview.com'],
+      },
+      cognitoAuthEnabled: true,
+    }
+    const t = synthCompute('staging', cfg)
+
+    it('creates exactly one Cognito User Pool, Client, Domain, and UI customization', () => {
+      t.resourceCountIs('AWS::Cognito::UserPool', 1)
+      t.resourceCountIs('AWS::Cognito::UserPoolClient', 1)
+      t.resourceCountIs('AWS::Cognito::UserPoolDomain', 1)
+      t.resourceCountIs('AWS::Cognito::UserPoolUICustomizationAttachment', 1)
+      t.resourceCountIs('AWS::Cognito::UserPoolIdentityProvider', 1)
+    })
+
+    it('uses an HTTPS (443) listener with a certificate, not the validation-period HTTP/80 one', () => {
+      // ALB's authenticate-oidc action (the Cognito gate) only works on
+      // HTTPS listeners — a real deploy rejection confirmed this
+      // 2026-08-12. No HTTP listener should exist on this ALB at all.
+      t.hasResourceProperties('AWS::ElasticLoadBalancingV2::Listener', {
+        Port: 443,
+        Protocol: 'HTTPS',
+        Certificates: Match.arrayWith([Match.objectLike({ CertificateArn: Match.anyValue() })]),
+      })
+      const listeners = t.findResources('AWS::ElasticLoadBalancingV2::Listener')
+      const httpListeners = Object.entries(listeners).filter(
+        ([, res]) => (res.Properties as { Port?: number }).Port === 80,
+      )
+      expect(httpListeners).toHaveLength(0)
+    })
+
+    it('the App Client is Google-only, with a callback/logout URL per gated hostname', () => {
+      t.hasResourceProperties('AWS::Cognito::UserPoolClient', {
+        SupportedIdentityProviders: ['Google'],
+        GenerateSecret: true,
+        CallbackURLs: Match.arrayWith([
+          'https://seqtek-preview.com/oauth2/idpresponse',
+          'https://ww3.seqtek-preview.com/oauth2/idpresponse',
+        ]),
+      })
+    })
+
+    it('passes COGNITO_LOGOUT_URL and COGNITO_CLIENT_ID to both lanes for the app-level gate-logout route', () => {
+      // src/app/(payload)/api/auth/gate-logout/route.ts needs these to
+      // build the Cognito /logout redirect — ALB has no logout endpoint
+      // of its own, so the app has to drive it.
+      const taskDefs = t.findResources('AWS::ECS::TaskDefinition')
+      const allEnvVars = Object.values(taskDefs).flatMap(
+        (td) =>
+          (
+            td.Properties as {
+              ContainerDefinitions: Array<{ Environment?: Array<{ Name: string }> }>
+            }
+          ).ContainerDefinitions[0]?.Environment ?? [],
+      )
+      const names = allEnvVars.map((e) => e.Name)
+      expect(names.filter((n) => n === 'COGNITO_LOGOUT_URL')).toHaveLength(2)
+      expect(names.filter((n) => n === 'COGNITO_CLIENT_ID')).toHaveLength(2)
+    })
+
+    it('wraps the primary lane default action in authenticate-oidc before forwarding', () => {
+      // OnUnauthenticatedRequest defaults to AUTHENTICATE per CDK's own
+      // docs, but CDK omits the property from the template rather than
+      // writing the literal default — ALB applies it server-side, so
+      // asserting its presence here would fail against correct behavior.
+      t.hasResourceProperties('AWS::ElasticLoadBalancingV2::Listener', {
+        DefaultActions: Match.arrayWith([
+          Match.objectLike({
+            Type: 'authenticate-oidc',
+            Order: 1,
+            AuthenticateOidcConfig: Match.objectLike({
+              Issuer: Match.anyValue(),
+              AuthorizationEndpoint: Match.anyValue(),
+            }),
+          }),
+          Match.objectLike({ Type: 'forward', Order: 2 }),
+        ]),
+      })
+    })
+
+    it('wraps the secondaryLane rule in authenticate-oidc too', () => {
+      t.hasResourceProperties('AWS::ElasticLoadBalancingV2::ListenerRule', {
+        Priority: 10,
+        Actions: Match.arrayWith([
+          Match.objectLike({ Type: 'authenticate-oidc' }),
+          Match.objectLike({ Type: 'forward' }),
+        ]),
+      })
+    })
+
+    it('exempts /api/health, /_next/image, and /api/media/file/* on BOTH lanes with plain forward rules ahead of the gated rules', () => {
+      // /_next/image added 2026-08-12: gating Next.js's image-optimizer
+      // route broke every <Image> on the site (browser got a redirect-to-
+      // login instead of image bytes). /api/media/file/* added the SAME
+      // day — exempting only /_next/image wasn't enough, since the
+      // optimizer's own upstream fetch (next.config.ts's
+      // images.localPatterns) was STILL gated. Scoped to .../file/* so
+      // Payload's collection list/create/delete endpoints at the bare
+      // /api/media stay gated. /api/revalidate deliberately NOT exempted
+      // — nothing calls it over HTTP (content publishes trigger an
+      // in-process hook instead), so there's nothing to unblock yet.
+      const rules = t.findResources('AWS::ElasticLoadBalancingV2::ListenerRule')
+      const byPriority = (p: number) =>
+        Object.values(rules).find((r) => (r.Properties as { Priority: number }).Priority === p)
+      const primaryBypass = byPriority(6)
+      const secondaryBypass = byPriority(5)
+      expect(
+        primaryBypass,
+        'expected a priority-6 rule for the primary health bypass',
+      ).toBeDefined()
+      expect(
+        secondaryBypass,
+        'expected a priority-5 rule for the secondary lane health bypass',
+      ).toBeDefined()
+      for (const rule of [primaryBypass, secondaryBypass]) {
+        const props = rule!.Properties as {
+          Actions: Array<{ Type: string }>
+          Conditions: Array<{ Field: string; PathPatternConfig?: { Values: string[] } }>
+        }
+        expect(props.Actions.every((a) => a.Type === 'forward')).toBe(true)
+        const pathValues = props.Conditions.find((c) => c.Field === 'path-pattern')
+          ?.PathPatternConfig?.Values
+        expect(pathValues).toContain('/api/health')
+        expect(pathValues).toContain('/_next/image')
+        expect(pathValues).toContain('/api/media/file/*')
+        expect(pathValues).not.toContain('/api/revalidate')
+      }
+    })
+
+    it('does NOT create any Cognito resources when cognitoAuthEnabled is false', () => {
+      const withoutGate = synthCompute('staging', { ...cfg, cognitoAuthEnabled: false })
+      withoutGate.resourceCountIs('AWS::Cognito::UserPool', 0)
+      withoutGate.resourceCountIs('AWS::ElasticLoadBalancingV2::ListenerRule', 1) // just SecondaryLaneRule
+    })
+  })
+
+  describe('NEXT_PUBLIC_SITE_URL when domainName differs from dnsRecordNames (the real preview env shape)', () => {
+    // Regression test for a bug found live 2026-08-12: the primary lane's
+    // container set NEXT_PUBLIC_SITE_URL from cfg.domainName instead of
+    // cfg.dnsRecordNames[0]. Every fixture elsewhere in this file uses a
+    // domainName that happens to equal dnsRecordNames[0], so the bug
+    // synthed clean and only showed up against the real preview env's
+    // actual cdk.json shape: domainName is the CERTIFICATE's domain
+    // ('seqtek.com', the real live site, which this env doesn't serve),
+    // dnsRecordNames is what's ACTUALLY reachable ('preview.seqtek.com').
+    // The bug pointed every absolute URL the app built — including every
+    // image src — at https://seqtek.com instead of itself.
+    const t = synthCompute('staging', {
+      ...stagingCfg,
+      domainName: 'seqtek.com',
+      hostedZoneId: 'ZDNRI358EUS3R',
+      certificateSans: ['*.seqtek.com'],
+      dnsRecordNames: ['preview.seqtek.com'],
+    })
+
+    it('uses dnsRecordNames[0], not domainName', () => {
+      const taskDefs = t.findResources('AWS::ECS::TaskDefinition')
+      const envVars = Object.values(taskDefs)[0]!.Properties as {
+        ContainerDefinitions: Array<{ Environment?: Array<{ Name: string; Value?: string }> }>
+      }
+      const siteUrl = envVars.ContainerDefinitions[0]?.Environment?.find(
+        (e) => e.Name === 'NEXT_PUBLIC_SITE_URL',
+      )?.Value
+      expect(siteUrl).toBe('https://preview.seqtek.com')
     })
   })
 })

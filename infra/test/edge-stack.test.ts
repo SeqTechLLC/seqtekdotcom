@@ -16,6 +16,7 @@ const stagingCfg: EnvConfig = {
   dnsRecordNames: [],
   existingVpc: null,
   secondaryLane: null,
+  cognitoAuthEnabled: false,
   instanceClass: 't3',
   instanceSize: 'micro',
   rdsInstanceClass: 't3.micro',
@@ -227,12 +228,12 @@ describe('EdgeStack', () => {
   describe('staging with seqtek-preview.com (post-T029b)', () => {
     const t = synthEdge('staging', stagingWithDomainCfg)
 
-    it('provisions an ACM certificate via DNS validation', () => {
-      t.hasResourceProperties('AWS::CertificateManager::Certificate', {
-        DomainName: 'seqtek-preview.com',
-        ValidationMethod: 'DNS',
-        SubjectAlternativeNames: ['www.seqtek-preview.com'],
-      })
+    it('does NOT create its own ACM certificate — DataStack owns it (moved 2026-08-12)', () => {
+      // See data-stack.test.ts for the "cert actually gets created"
+      // assertion. Owned by DataStack now so ComputeStack's HTTPS
+      // listener (cognitoAuthEnabled envs) can reference the SAME
+      // certificate without an Edge<->Compute dependency cycle.
+      t.resourceCountIs('AWS::CertificateManager::Certificate', 0)
     })
 
     it('distribution aliases include apex + www', () => {
@@ -327,6 +328,46 @@ describe('EdgeStack', () => {
     it('emits a SecondaryLaneSiteUrl output distinct from the primary SiteUrl', () => {
       t.hasOutput('SecondaryLaneSiteUrl', { Value: 'https://ww3.seqtek-preview.com' })
       t.hasOutput('SiteUrl', { Value: 'https://seqtek-preview.com' })
+    })
+
+    it('/_next/static/* forwards viewer headers to the origin (found 2026-08-12: missing this made every request 502)', () => {
+      const dists = t.findResources('AWS::CloudFront::Distribution')
+      const [, dist] = Object.entries(dists)[0]!
+      const behaviors =
+        (
+          dist.Properties as {
+            DistributionConfig: {
+              CacheBehaviors?: Array<{ PathPattern: string; OriginRequestPolicyId?: string }>
+            }
+          }
+        ).DistributionConfig.CacheBehaviors ?? []
+      const staticBehavior = behaviors.find((b) => b.PathPattern === '/_next/static/*')
+      // ALL_VIEWER_AND_CLOUDFRONT_2022 managed policy ID — same one the
+      // other three ALB-backed behaviors already use.
+      expect(staticBehavior?.OriginRequestPolicyId).toBe('33f36d7e-f396-46d9-90e0-52428a34d9dc')
+    })
+  })
+
+  describe('staging with cognitoAuthEnabled', () => {
+    const t = synthEdge('staging', {
+      ...stagingWithDomainCfg,
+      cognitoAuthEnabled: true,
+    })
+
+    it('disables caching on /_next/static/* to avoid caching a login-redirect for everyone', () => {
+      const dists = t.findResources('AWS::CloudFront::Distribution')
+      const [, dist] = Object.entries(dists)[0]!
+      const behaviors =
+        (
+          dist.Properties as {
+            DistributionConfig: {
+              CacheBehaviors?: Array<{ PathPattern: string; CachePolicyId?: string }>
+            }
+          }
+        ).DistributionConfig.CacheBehaviors ?? []
+      const staticBehavior = behaviors.find((b) => b.PathPattern === '/_next/static/*')
+      const cachingDisabledPolicyId = '4135ea2d-6df8-44a3-9df3-4b5a84be39ad'
+      expect(staticBehavior?.CachePolicyId).toBe(cachingDisabledPolicyId)
     })
   })
 })

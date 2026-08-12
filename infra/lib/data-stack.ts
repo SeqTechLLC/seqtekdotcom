@@ -1,6 +1,8 @@
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib'
+import * as acm from 'aws-cdk-lib/aws-certificatemanager'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as rds from 'aws-cdk-lib/aws-rds'
+import * as route53 from 'aws-cdk-lib/aws-route53'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager'
 import * as ssm from 'aws-cdk-lib/aws-ssm'
@@ -38,11 +40,50 @@ export class DataStack extends Stack {
   public readonly revalidationSecret: secretsmanager.ISecret
   public readonly mediaBucket: s3.Bucket
   public readonly parameterPathPrefix: string
+  /** Set when `cfg.domainName` is configured. See the class doc below. */
+  public readonly certificate?: acm.ICertificate
+  public readonly hostedZone?: route53.IHostedZone
 
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props)
     const { envName, cfg, network } = props
     this.parameterPathPrefix = `/seqtek/website/${envName}`
+
+    // ----- Optional: ACM cert + hosted zone when domainName is set -----
+    // Owned HERE (not EdgeStack, where it lived before 2026-08-12) so BOTH
+    // ComputeStack (the ALB's HTTPS listener, needed for Cognito's
+    // authenticate-oidc action — see cognito-auth.ts, ALB only supports it
+    // on HTTPS) and EdgeStack (CloudFront) can reference the SAME
+    // certificate without a circular dependency: Data is already a shared
+    // ancestor of both (ComputeStackProps and EdgeStackProps each take
+    // `data`), whereas Edge → Compute is an existing one-way dependency
+    // (Edge needs the ALB as its origin) that a Compute → Edge reference
+    // for the cert would have turned into a cycle.
+    //
+    // `domainName` is the certificate's primary name and the Route53 zone
+    // to validate DNS in. `certificateSans` adds extra names to the CERT
+    // (e.g. `*.seqtek.com`) — a cert existing doesn't redirect any traffic
+    // by itself. Which names actually get Route53 records (EdgeStack) or
+    // get gated by Cognito (ComputeStack) is controlled independently by
+    // `dnsRecordNames` / `secondaryLane.dnsRecordNames`.
+    if (cfg.domainName !== null) {
+      if (cfg.hostedZoneId === null) {
+        throw new Error(
+          `DataStack[${envName}]: domainName is set but hostedZoneId is null — both must be set together (validated in construct-utils).`,
+        )
+      }
+      this.hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+        hostedZoneId: cfg.hostedZoneId,
+        zoneName: cfg.domainName,
+      })
+      this.certificate = cfg.certificateArn
+        ? acm.Certificate.fromCertificateArn(this, 'Cert', cfg.certificateArn)
+        : new acm.Certificate(this, 'Cert', {
+            domainName: cfg.domainName,
+            subjectAlternativeNames: cfg.certificateSans,
+            validation: acm.CertificateValidation.fromDns(this.hostedZone),
+          })
+    }
 
     // ----- RDS Postgres + auto-attached master credentials -----
     // Using fromGeneratedSecret so CDK creates the secret AND wires up

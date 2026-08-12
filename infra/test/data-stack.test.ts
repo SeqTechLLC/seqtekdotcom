@@ -14,6 +14,7 @@ const stagingCfg: EnvConfig = {
   dnsRecordNames: [],
   existingVpc: null,
   secondaryLane: null,
+  cognitoAuthEnabled: false,
   instanceClass: 't3',
   instanceSize: 'micro',
   rdsInstanceClass: 't3.micro',
@@ -238,6 +239,18 @@ describe('DataStack', () => {
       // the site URL. Still no sensitive values in SSM.
       const params = t.findResources('AWS::SSM::Parameter')
       expect(Object.keys(params)).toHaveLength(5)
+    })
+
+    it('provisions an ACM certificate via DNS validation (moved from EdgeStack 2026-08-12)', () => {
+      // Owned here (not EdgeStack) so ComputeStack's HTTPS listener
+      // (cognitoAuthEnabled envs) can reference the SAME certificate
+      // without an Edge<->Compute dependency cycle — Data is already a
+      // shared ancestor of both stacks.
+      t.hasResourceProperties('AWS::CertificateManager::Certificate', {
+        DomainName: 'seqtek-preview.com',
+        ValidationMethod: 'DNS',
+        SubjectAlternativeNames: ['www.seqtek-preview.com'],
+      })
     })
   })
 
