@@ -2,10 +2,24 @@ name: Deploy
 
 # PROMOTION MODEL — what deploys where, and why.
 #
-#   merge to `main`              →  STAGING / UAT  (seqtek-preview.com)
+#   push to `Preview`            →  PREVIEW        (preview.seqtek.com + the
+#                                                     temporary ww3.seqtek.com
+#                                                     PROD-preview lane —
+#                                                     account [REDACTED_AWS_ACCOUNT_ID])
+#   merge to `main`              →  STAGING / UAT  (seqtek-preview.com —
+#                                                     account 600881993295)
 #   publish a `vX.Y.Z` release   →  PRODUCTION     (CloudFront URL until cutover)
 #
-# Merging to main is NOT a production deploy. main is the preview/UAT
+# `Preview` (account [REDACTED_AWS_ACCOUNT_ID]) and `main`'s STAGING (account 600881993295)
+# are two SEPARATE environments in two SEPARATE AWS accounts, each with its own
+# `infra/cdk.json` block, ECR repo, and OIDC deploy role — this is not a
+# rename, it's a parallel track added 2026-08-11/12 while the Preview branch
+# was stood up by hand (see docs/INFRASTRUCTURE_RUNBOOK.md). PRODUCTION here
+# is still the ORIGINAL release-gated env (`envName: prod` in cdk.json) — it
+# has never had infrastructure deployed and is a separate decision from
+# either preview lane above.
+#
+# Merging to main is NOT a production deploy. main is the staging/UAT
 # environment: every merged PR lands there immediately so it can be reviewed
 # against real infrastructure. Production moves only when a Release-Please
 # release is published — i.e. when someone merges the release PR, which cuts
@@ -18,8 +32,8 @@ name: Deploy
 # `release-please.yml` dispatches this workflow after cutting one — see the
 # `release:` trigger below for why the release event alone is not enough.
 #
-# The deployed image is IMMUTABLE: `-c imageTag` stamps the LaunchTemplate with
-# `vX.Y.Z` on a release and the commit SHA otherwise, so an instance replaced
+# The deployed image is IMMUTABLE: `-c imageTag` stamps the task definition
+# with `vX.Y.Z` on a release and the commit SHA otherwise, so a task replaced
 # later re-pulls that exact build and rollback is a redeploy of an older tag.
 #
 # `workflow_dispatch` exists for the cases a trigger can't cover: the FIRST
@@ -27,21 +41,24 @@ name: Deploy
 # or re-running a deploy without cutting a version.
 #
 # Account resolution: `vars.AWS_ACCOUNT_ID` is read from the GitHub *Environment*
-# (Settings → Environments → staging / production), falling back to the
-# repo-level variable — which is why staging keeps working untouched. The two
-# environments MAY live in different AWS accounts; the ECR repository and the
-# account-wide OIDC provider each have an explicit owner in `infra/cdk.json`
-# (`ownsAccountEcrRepository` / `ownsAccountOidcProvider`), set `true` on both
-# envs when they are split. See ARCHITECTURE.md § Environments & isolation.
+# (Settings → Environments → preview / staging / production), falling back to
+# the repo-level variable — which is why staging keeps working untouched (its
+# account is the repo-level default; preview and production each set their own
+# environment-scoped override). The three environments MAY live in different
+# AWS accounts; the ECR repository and the account-wide OIDC provider each have
+# an explicit owner in `infra/cdk.json` (`ownsAccountEcrRepository` /
+# `ownsAccountOidcProvider`), set `true` on every env that owns one in its own
+# account. See ARCHITECTURE.md § Environments & isolation.
 
 on:
   push:
     branches:
       - main
-    # Skip staging redeploy for changes that can't affect the running
-    # image. Release-Please's PR-merges and docs-only PRs both fall into
-    # this bucket. `paths-ignore` skips the workflow entirely if EVERY
-    # changed path matches — mixed code+docs commits still trigger.
+      - Preview
+    # Skip the redeploy for changes that can't affect the running image.
+    # Release-Please's PR-merges and docs-only PRs both fall into this
+    # bucket. `paths-ignore` skips the workflow entirely if EVERY changed
+    # path matches — mixed code+docs commits still trigger.
     paths-ignore:
       - CHANGELOG.md
       - .release-please-manifest.json
@@ -69,6 +86,7 @@ on:
         type: choice
         options:
           - staging
+          - preview
           - prod
       stack-filter:
         description: >-
@@ -93,9 +111,17 @@ env:
 # Pairs with CloudFormation's native stack-update lock — a second run started
 # while one is in flight queues rather than racing. Never cancel a deploy
 # mid-flight (FR-016). Keyed per env so a prod deploy never queues behind a
-# staging one.
+# staging or preview one, and preview never queues behind staging.
+#
+# The "is this a preview push/dispatch" test is repeated verbatim across
+# `concurrency.group`, `environment:`, and the `env:` block below — job-level
+# `env:` is not in scope for `environment:`/`concurrency:` (they're evaluated
+# before it exists), so there's no single place to define it once.
 concurrency:
-  group: deploy-${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'prod' || 'staging' }}
+  group:
+    deploy-${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'prod' ||
+    ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+    == 'preview') && 'preview' || 'staging' }}
   cancel-in-progress: false
 
 jobs:
@@ -103,29 +129,38 @@ jobs:
     name: Build, push, deploy
     runs-on: ubuntu-latest
     # `production` is the conventional GitHub Environment name and is where a
-    # required-reviewer gate would hang; staging stays `staging`. Job-level
-    # `env:` is not in scope for `environment:`/`concurrency:`, so the
-    # is-this-prod test is spelled out in each of those.
+    # required-reviewer gate would hang; staging stays `staging`; `preview` is
+    # its own environment too (account [REDACTED_AWS_ACCOUNT_ID] — see the promotion-model
+    # comment at the top of this file), just with no protection rules.
     environment:
       ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'production' ||
-      'staging' }}
+      ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+      == 'preview') && 'preview' || 'staging' }}
     outputs:
       site-url: ${{ steps.site.outputs.url }}
     env:
-      # A release publish is ALWAYS prod; everything else honours the dispatch
-      # input and defaults to staging. STACK_PREFIX must match `stackName()` in
-      # infra/lib/construct-utils.ts: 'staging' → SeqtekStaging*, 'prod' → SeqtekProd*.
+      # A release publish is ALWAYS prod; a push to Preview (or a manual
+      # dispatch with env=preview) is ALWAYS preview; everything else honours
+      # the dispatch input and defaults to staging. STACK_PREFIX must match
+      # `stackName()` in infra/lib/construct-utils.ts: 'staging' →
+      # SeqtekStaging*, 'preview' → SeqtekPreview*, 'prod' → SeqtekProd*.
       ENV_NAME:
         ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'prod' ||
-        'staging' }}
+        ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+        == 'preview') && 'preview' || 'staging' }}
       STACK_PREFIX:
         ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'SeqtekProd' ||
-        'SeqtekStaging' }}
+        ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+        == 'preview') && 'SeqtekPreview' || 'SeqtekStaging' }}
       ROLE_NAME: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') &&
-        'SeqtekProdDeploy' || 'SeqtekStagingDeploy' }}
+        'SeqtekProdDeploy' ||
+        ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+        == 'preview') && 'SeqtekPreviewDeploy' || 'SeqtekStagingDeploy' }}
       STACK_FILTER:
         ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'SeqtekProd' ||
-        'SeqtekStaging' }}${{ github.event.inputs.stack-filter || '*Compute' }}
+        ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+        == 'preview') && 'SeqtekPreview' || 'SeqtekStaging'
+        }}${{ github.event.inputs.stack-filter || '*Compute' }}
     steps:
       # FAIL CLOSED on an unconfigured production environment.
       #
@@ -345,13 +380,19 @@ jobs:
   notify:
     name: Notify Slack
     needs: [deploy, smoke]
-    # Report every staging deploy outcome (success and failure), but stay quiet
-    # if the run was cancelled. A failed/skipped `deploy` makes `smoke` skip, so
-    # success requires BOTH jobs green.
+    # Report every deploy outcome (success and failure), but stay quiet if the
+    # run was cancelled. A failed/skipped `deploy` makes `smoke` skip, so
+    # success requires BOTH jobs green. `site-url` (e.g. https://preview.seqtek.com/)
+    # flows straight through from the `deploy` job's `Resolve site URL` step —
+    # slack-notify.yml renders it as a clickable link in the message.
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/slack-notify.yml
     with:
-      workflow-name: Deploy (${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'production' || 'staging' }})
+      workflow-name:
+        Deploy (${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') &&
+        'production' ||
+        ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') ||
+        github.event.inputs.env == 'preview') && 'preview' || 'staging' }})
       status: ${{ (needs.deploy.result == 'success' && needs.smoke.result == 'success') && 'success' || 'failure' }}
       site-url: ${{ needs.deploy.outputs.site-url }}
     secrets: inherit
