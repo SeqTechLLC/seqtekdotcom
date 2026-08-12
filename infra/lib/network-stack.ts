@@ -131,18 +131,24 @@ export class NetworkStack extends Stack {
     // any non-ASCII character — no `->` arrow, no Unicode `→`. Stick to
     // plain words like "to" / "from".
     //
-    // Validation-period topology: only port 80 ingress here. CloudFront
-    // terminates TLS for viewers and uses HTTP_ONLY to the ALB origin
-    // (compute-stack has only a port-80 listener). Each rule with the
-    // CloudFront managed prefix list consumes ~55 of the 60 default
-    // rules-per-SG quota, so we can't keep both 80 and 443 here without
-    // a quota increase. Phase 5.5 swaps this rule for a 443-only rule
-    // when we add the ALB HTTPS listener + ACM cert for defense in
-    // depth between CloudFront and ALB.
+    // Validation-period topology: only ONE port's ingress rule here,
+    // never both. CloudFront normally terminates TLS for viewers and uses
+    // HTTP_ONLY to the ALB origin (compute-stack has only a port-80
+    // listener) — a single rule with the CloudFront managed prefix list
+    // consumes ~55 of the 60 default rules-per-SG quota, so keeping BOTH
+    // 80 and 443 rules simultaneously isn't practical without a quota
+    // increase. `cognitoAuthEnabled` (added 2026-08-12) pulls forward
+    // exactly the swap this comment used to describe as "Phase 5.5":
+    // ALB's authenticate-oidc action (the Cognito gate) only works on
+    // HTTPS listeners, so a gated env needs CloudFront talking to the ALB
+    // over 443 instead of 80 — see compute-stack.ts's listener and
+    // edge-stack.ts's origin protocol, both keyed on the SAME flag.
     this.albSecurityGroup.addIngressRule(
       cloudFrontPrefix,
-      ec2.Port.tcp(80),
-      'CloudFront to ALB on 80 (validation-period; flips to 443 at Phase 5.5)',
+      props.cfg.cognitoAuthEnabled ? ec2.Port.tcp(443) : ec2.Port.tcp(80),
+      props.cfg.cognitoAuthEnabled
+        ? 'CloudFront to ALB on 443 (cognitoAuthEnabled requires HTTPS for the auth action)'
+        : 'CloudFront to ALB on 80 (validation-period; flips to 443 when cognitoAuthEnabled)',
     )
 
     // App — ingress 3000 from AlbSg only.

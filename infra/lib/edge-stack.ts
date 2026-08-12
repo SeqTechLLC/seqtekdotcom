@@ -44,36 +44,23 @@ export class EdgeStack extends Stack {
     super(scope, id, props)
     const { envName, cfg, compute, data } = props
 
-    // ----- Optional: ACM cert + alias when domainName is set -----
+    // ----- Optional: cert/alias when domainName is set -----
     //
-    // `domainName` is the certificate's primary name and the Route53 zone to
-    // validate DNS in. `certificateSans` adds extra names to the CERT (e.g.
-    // `*.seqtek.com` — a cert existing doesn't redirect any traffic).
-    // `dnsRecordNames` controls which names ACTUALLY get a Route53 record
-    // pointed at this distribution — deliberately independent, so a
-    // preview env can request a cert covering `seqtek.com` + `*.seqtek.com`
-    // while creating ONLY a `preview.seqtek.com` record, leaving the zone's
-    // existing `seqtek.com` / `www.seqtek.com` records completely untouched.
+    // The certificate + hosted zone are owned by DataStack (not here —
+    // moved 2026-08-12 so ComputeStack's HTTPS listener can reference the
+    // SAME certificate without an Edge↔Compute cycle; see data-stack.ts's
+    // class doc for why). `certificateSans` adds extra names to the CERT
+    // (e.g. `*.seqtek.com` — a cert existing doesn't redirect any
+    // traffic). `dnsRecordNames` controls which names ACTUALLY get a
+    // Route53 record pointed at this distribution — deliberately
+    // independent, so a preview env can request a cert covering
+    // `seqtek.com` + `*.seqtek.com` while creating ONLY a
+    // `preview.seqtek.com` record, leaving the zone's existing
+    // `seqtek.com` / `www.seqtek.com` records completely untouched.
+    this.certificate = data.certificate
     let aliases: string[] | undefined
-    let hostedZone: route53.IHostedZone | undefined
+    const hostedZone = data.hostedZone
     if (cfg.domainName !== null) {
-      if (cfg.hostedZoneId === null) {
-        throw new Error(
-          `EdgeStack[${envName}]: domainName is set but hostedZoneId is null — both must be set together (validated in construct-utils).`,
-        )
-      }
-      hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-        hostedZoneId: cfg.hostedZoneId,
-        zoneName: cfg.domainName,
-      })
-
-      this.certificate = cfg.certificateArn
-        ? acm.Certificate.fromCertificateArn(this, 'Cert', cfg.certificateArn)
-        : new acm.Certificate(this, 'Cert', {
-            domainName: cfg.domainName,
-            subjectAlternativeNames: cfg.certificateSans,
-            validation: acm.CertificateValidation.fromDns(hostedZone),
-          })
       // CORRECTED 2026-08-10: this used to be [domainName, ...certificateSans]
       // on the theory that a CloudFront alias with no DNS pointing at it is
       // harmless pre-cutover prep. That's true for ACM (multiple certs CAN
@@ -91,9 +78,21 @@ export class EdgeStack extends Stack {
     }
 
     // ----- CloudFront distribution -----
+    // HTTPS to the ALB origin when cognitoAuthEnabled — ALB's
+    // authenticate-oidc action (the Cognito gate) only works on HTTPS
+    // listeners (confirmed by a real deploy rejection 2026-08-12:
+    // "Actions of type 'authenticate-oidc' are supported only on HTTPS
+    // listeners"), so real viewer traffic has to actually reach the ALB
+    // over 443 for the gate to ever trigger — otherwise CloudFront would
+    // keep talking to the (still-present-for-other-envs) port-80 listener
+    // and Cognito would never see a single request. Every other env stays
+    // on the original HTTP_ONLY/80 validation-period topology unchanged.
     const albOrigin = new origins.LoadBalancerV2Origin(compute.loadBalancer, {
-      protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+      protocolPolicy: cfg.cognitoAuthEnabled
+        ? cloudfront.OriginProtocolPolicy.HTTPS_ONLY
+        : cloudfront.OriginProtocolPolicy.HTTP_ONLY,
       httpPort: 80,
+      httpsPort: 443,
       connectionAttempts: 3,
       connectionTimeout: Duration.seconds(10),
       readTimeout: Duration.seconds(60),
@@ -190,12 +189,31 @@ export class EdgeStack extends Stack {
           compress: true,
           functionAssociations: hostForwardingFunctionAssociations,
         },
-        // Next.js static assets — long TTL, immutable.
+        // Next.js static assets — long TTL, immutable (unless gated — see
+        // cachePolicy below).
         '/_next/static/*': {
           origin: albOrigin,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+          // CACHING_DISABLED when cognitoAuthEnabled: CACHING_OPTIMIZED's
+          // cache key ignores cookies, so the FIRST response CloudFront
+          // sees for a given asset URL gets cached and served to
+          // everyone after — if that first request was unauthenticated,
+          // every visitor (including logged-in ones) would get stuck
+          // with a cached login-redirect instead of the real file until
+          // the entry expires. Assets are content-hashed by Next.js
+          // anyway, so losing edge caching here just means every request
+          // reaches the ALB — a fine tradeoff for a low-traffic gated
+          // preview lane, not something to accept for the real site.
+          cachePolicy: cfg.cognitoAuthEnabled
+            ? cloudfront.CachePolicy.CACHING_DISABLED
+            : cloudfront.CachePolicy.CACHING_OPTIMIZED,
+          // Found 2026-08-12: this behavior had NO origin request policy
+          // (unlike the other three ALB-backed behaviors above), which
+          // meant the CloudFront Function's x-forwarded-host header never
+          // reached the ALB for these requests — every /_next/static/*
+          // request 502'd, gated or not. Matches the other behaviors now.
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_AND_CLOUDFRONT_2022,
           compress: true,
           functionAssociations: hostForwardingFunctionAssociations,
         },

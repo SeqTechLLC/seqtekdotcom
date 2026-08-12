@@ -136,6 +136,35 @@ export interface EnvConfig {
     /** Route53 record names for this lane only — e.g. ['ww3.seqtek.com']. */
     dnsRecordNames: string[]
   } | null
+
+  /**
+   * Gates EVERY lane's ALB action (the primary default action, and the
+   * secondaryLane's rule if one exists) behind a Cognito User Pool
+   * federated to Google Workspace — "hide this env from the public
+   * internet" without touching the app. Added 2026-08-12 for
+   * preview.seqtek.com + ww3.seqtek.com specifically: both are non-public
+   * (UAT and a temporary PROD-preview), unlike the real seqtek.com/
+   * www.seqtek.com, which this never touches (a different distribution
+   * entirely, not managed by this env).
+   *
+   * `/api/health` is deliberately EXEMPTED on every gated lane (see
+   * compute-stack.ts) — the ALB's own target-group health check already
+   * bypasses listener rules entirely, but the EXTERNAL health check the
+   * post-deploy smoke test and any uptime monitor relies on goes through
+   * the public URL, and gating it would make every automated health
+   * check indistinguishable from a real outage.
+   *
+   * Requires two manually-seeded SSM parameters (see
+   * INFRASTRUCTURE_RUNBOOK.md §1.3): `${parameterPathPrefix}/
+   * cognito_google_client_id` (String) and `.../cognito_google_client_secret`
+   * (SecureString) — a Google Cloud OAuth client DEDICATED to this gate,
+   * distinct from the app's own `google_client_id`/`google_client_secret`.
+   * Create it under the SAME Google Cloud project as the app's OAuth
+   * client so it inherits the same "Internal" (seqtechllc.com-only)
+   * consent-screen restriction — Cognito itself does not filter by
+   * hosted domain.
+   */
+  cognitoAuthEnabled: boolean
 }
 
 export type EnvName = 'prod' | 'staging' | 'preview'
@@ -230,6 +259,18 @@ export function validateEnvConfig(env: EnvName, cfg: EnvConfig): void {
 
   if (cfg.logRetentionDays < 1) {
     throw new Error(`${prefix}.logRetentionDays must be >= 1; got ${cfg.logRetentionDays}`)
+  }
+
+  if (typeof cfg.cognitoAuthEnabled !== 'boolean') {
+    throw new Error(
+      `${prefix}.cognitoAuthEnabled must be a boolean; got ${typeof cfg.cognitoAuthEnabled}.`,
+    )
+  }
+  if (cfg.cognitoAuthEnabled && (cfg.domainName === null || cfg.hostedZoneId === null)) {
+    throw new Error(
+      `${prefix}.cognitoAuthEnabled requires domainName + hostedZoneId — Cognito's callback URLs ` +
+        'are real HTTPS hostnames, not the CloudFront default domain.',
+    )
   }
 
   if (cfg.secondaryLane !== null) {

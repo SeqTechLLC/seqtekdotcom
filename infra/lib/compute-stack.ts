@@ -7,6 +7,7 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import * as logs from 'aws-cdk-lib/aws-logs'
 import * as ssm from 'aws-cdk-lib/aws-ssm'
 import type { Construct } from 'constructs'
+import { CognitoAuthGate } from './cognito-auth'
 import type { EnvConfig, EnvName } from './construct-utils'
 import type { DataStack } from './data-stack'
 import type { NetworkStack } from './network-stack'
@@ -107,7 +108,7 @@ export class ComputeStack extends Stack {
     // Note: CloudFront managed prefix list ingress rules for AlbSg are
     // defined in NetworkStack (where AlbSg lives).
 
-    // ----- ALB + HTTP listener (target group attached after the service below) -----
+    // ----- ALB + listener (target group attached after the service below) -----
     this.loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
       vpc: network.vpc,
       internetFacing: true,
@@ -116,11 +117,30 @@ export class ComputeStack extends Stack {
       deletionProtection: envName === 'prod',
     })
 
-    this.httpListener = this.loadBalancer.addListener('HttpListener', {
-      port: 80,
-      protocol: elbv2.ApplicationProtocol.HTTP,
-      open: false, // SG ingress managed manually in NetworkStack
-    })
+    // HTTPS (443) instead of the validation-period HTTP (80) listener when
+    // cognitoAuthEnabled: ALB's authenticate-oidc action (the Cognito
+    // gate wired in below) only works on HTTPS listeners — confirmed by a
+    // real deploy rejection 2026-08-12 ("Actions of type 'authenticate-
+    // oidc' are supported only on HTTPS listeners"). `data.certificate`
+    // is guaranteed present here — construct-utils.ts's validation
+    // requires domainName+hostedZoneId whenever cognitoAuthEnabled is
+    // true, and DataStack only creates a certificate when domainName is
+    // set. Every other env keeps the original HTTP/80 listener,
+    // completely unchanged, same construct id either way ('HttpListener')
+    // so nothing downstream that references `this.httpListener` needs to
+    // know which protocol is actually in play.
+    this.httpListener = cfg.cognitoAuthEnabled
+      ? this.loadBalancer.addListener('HttpListener', {
+          port: 443,
+          protocol: elbv2.ApplicationProtocol.HTTPS,
+          certificates: [data.certificate!],
+          open: false, // SG ingress managed manually in NetworkStack
+        })
+      : this.loadBalancer.addListener('HttpListener', {
+          port: 80,
+          protocol: elbv2.ApplicationProtocol.HTTP,
+          open: false, // SG ingress managed manually in NetworkStack
+        })
 
     // ----- ECS cluster -----
     this.cluster = new ecs.Cluster(this, 'Cluster', {
@@ -255,7 +275,18 @@ export class ComputeStack extends Stack {
         S3_BUCKET: data.mediaBucket.bucketName,
         S3_BUCKET_HOSTNAME: data.mediaBucket.bucketRegionalDomainName,
         S3_REGION: this.region,
-        ...(cfg.domainName ? { NEXT_PUBLIC_SITE_URL: `https://${cfg.domainName}` } : {}),
+        // dnsRecordNames[0], NOT domainName — domainName is the
+        // CERTIFICATE's domain (for preview, the zone apex `seqtek.com`,
+        // which this env doesn't actually serve — that's the real live
+        // site). Found 2026-08-12: this line used cfg.domainName, so the
+        // primary lane's own absolute URLs (Payload serverURL, and every
+        // image src Payload/Next.js build from it) pointed at
+        // https://seqtek.com instead of itself — images loaded from the
+        // wrong site entirely. The secondaryLane container below already
+        // gets this right (`lane.dnsRecordNames[0]`); this now matches.
+        ...(cfg.dnsRecordNames.length > 0
+          ? { NEXT_PUBLIC_SITE_URL: `https://${cfg.dnsRecordNames[0]}` }
+          : {}),
         // RDS Postgres requires TLS; the CA bundle path here must match
         // wherever the Dockerfile follow-up (see class doc) bakes it in.
         NODE_EXTRA_CA_CERTS: '/etc/seqtek/certs/rds-ca.pem',
@@ -337,10 +368,36 @@ export class ComputeStack extends Stack {
       healthCheckGracePeriod: Duration.minutes(5),
     })
 
-    // Attach the service as the target for the HTTP listener.
-    this.targetGroup = this.httpListener.addTargets('AppTarget', {
+    // ----- Optional Cognito gate (see EnvConfig.cognitoAuthEnabled doc) -----
+    // Built BEFORE the target groups below because both the primary
+    // default action and the secondaryLane rule need to reference the
+    // SAME User Pool/Client/Domain when gating is on.
+    const gatedHostnames = [...cfg.dnsRecordNames, ...(cfg.secondaryLane?.dnsRecordNames ?? [])]
+    const cognitoGate = cfg.cognitoAuthEnabled
+      ? new CognitoAuthGate(this, 'AuthGate', {
+          envName,
+          gatedHostnames,
+          parameterPathPrefix: data.parameterPathPrefix,
+        })
+      : undefined
+
+    // Primary lane's target group — built explicitly (rather than via the
+    // `addTargets` sugar this used to call directly) so the listener's
+    // DEFAULT action can be wrapped in Cognito auth when gating is on.
+    // Parented under `this.httpListener` (not `this`, the stack) with id
+    // 'AppTargetGroup' — this exactly reproduces the logical ID CDK's
+    // `addTargets('AppTarget', ...)` sugar used to generate internally
+    // (`new ApplicationTargetGroup(listener, id + 'Group', ...)`), so the
+    // ALREADY-DEPLOYED target group is recognized as unchanged rather than
+    // destroyed and recreated. Verified via `cdk diff` against the live
+    // stack before this landed — get this wrong and it's a real outage
+    // (new empty target group takes over the listener's default action
+    // before ECS finishes registering healthy tasks into it).
+    this.targetGroup = new elbv2.ApplicationTargetGroup(this.httpListener, 'AppTargetGroup', {
+      vpc: network.vpc,
       port: APP_PORT,
       protocol: elbv2.ApplicationProtocol.HTTP,
+      targetType: elbv2.TargetType.IP,
       targets: [this.fargateService],
       deregistrationDelay: Duration.seconds(120),
       healthCheck: {
@@ -352,6 +409,62 @@ export class ComputeStack extends Stack {
         unhealthyThresholdCount: 2,
         healthyHttpCodes: '200',
       },
+    })
+
+    if (cognitoGate) {
+      // /api/health MUST stay reachable unauthenticated on every gated
+      // lane: the ALB's OWN target-group health check above bypasses
+      // listener rules entirely and is unaffected either way, but the
+      // EXTERNAL health check the post-deploy smoke test (and any future
+      // uptime monitor) makes over the public URL goes through this
+      // listener — gating it would make a routine automated check
+      // indistinguishable from a real outage. Priority 6 evaluates before
+      // the secondaryLane's own health-bypass (5) and its full rule (10),
+      // and before falling through to the (gated) default action below.
+      //
+      // /_next/image and /api/media/file/* are bundled into the SAME
+      // bypass (found 2026-08-12: gating either broke every <Image> on
+      // the site). Next.js's image optimizer serves /_next/image?url=
+      // %2Fapi%2Fmedia%2Ffile%2F..., and fetches ITS OWN source bytes
+      // back through the public domain at /api/media/file/* (see
+      // next.config.ts's `images.localPatterns`) — exempting only
+      // /_next/image wasn't enough, since the optimizer's own upstream
+      // fetch was STILL gated. Scoped to .../file/* specifically (not the
+      // broader /api/media/*) so this doesn't also expose Payload's
+      // auto-generated collection list/create/delete endpoints at the
+      // bare /api/media — those stay behind both this gate AND Payload's
+      // own access control. Neither exemption loosens what's actually
+      // protected: both only ever serve already-public content — the raw
+      // files under /media/* bypass the ALB entirely via a separate
+      // CloudFront origin (see edge-stack.ts) and are unauthenticated
+      // regardless of this gate.
+      //
+      // /api/revalidate is deliberately NOT exempted, despite having its
+      // own separate Bearer-secret auth that would make doing so just as
+      // safe as the exemptions above: checked 2026-08-12, nothing in this
+      // codebase actually calls it over HTTP. Content publishes trigger
+      // src/payload/hooks/revalidateOnChange.ts, an in-process afterChange
+      // hook that calls revalidateTag()/invalidateCloudFrontPaths()
+      // directly — never through this route. It's a capability for a
+      // future external trigger, not something in active use; add the
+      // exemption if and when something actually needs to call it.
+      this.httpListener.addAction('PrimaryHealthCheckBypass', {
+        priority: 6,
+        conditions: [
+          elbv2.ListenerCondition.pathPatterns([
+            '/api/health',
+            '/_next/image',
+            '/api/media/file/*',
+          ]),
+        ],
+        action: elbv2.ListenerAction.forward([this.targetGroup]),
+      })
+    }
+
+    this.httpListener.addAction('DefaultAction', {
+      action: cognitoGate
+        ? cognitoGate.authenticateAndForward(elbv2.ListenerAction.forward([this.targetGroup]))
+        : elbv2.ListenerAction.forward([this.targetGroup]),
     })
 
     // ----- Optional second app lane (see EnvConfig.secondaryLane doc) -----
@@ -487,13 +600,36 @@ export class ComputeStack extends Stack {
         },
       })
 
+      if (cognitoGate) {
+        // Same reasoning as PrimaryHealthCheckBypass above — this lane's
+        // OWN /api/health, /_next/image, AND /api/media/file/* must stay
+        // reachable unauthenticated (deliberately NOT /api/revalidate —
+        // see that rule's comment). Evaluated before the full rule below
+        // (priority 10) since ALB rules are checked in priority order.
+        this.httpListener.addAction('SecondaryLaneHealthCheckBypass', {
+          priority: 5,
+          conditions: [
+            elbv2.ListenerCondition.httpHeader('x-forwarded-host', lane.dnsRecordNames),
+            elbv2.ListenerCondition.pathPatterns([
+              '/api/health',
+              '/_next/image',
+              '/api/media/file/*',
+            ]),
+          ],
+          action: elbv2.ListenerAction.forward([laneTargetGroup]),
+        })
+      }
+
       // Priority is arbitrary but must be unique on this listener; the
       // primary lane is the listener's DEFAULT action (no priority), so
-      // any value here just needs to not collide with a future third rule.
+      // any value here just needs to not collide with the health-check
+      // bypass rules above (5, 6) or a future fourth rule.
       this.httpListener.addAction('SecondaryLaneRule', {
         priority: 10,
         conditions: [elbv2.ListenerCondition.httpHeader('x-forwarded-host', lane.dnsRecordNames)],
-        action: elbv2.ListenerAction.forward([laneTargetGroup]),
+        action: cognitoGate
+          ? cognitoGate.authenticateAndForward(elbv2.ListenerAction.forward([laneTargetGroup]))
+          : elbv2.ListenerAction.forward([laneTargetGroup]),
       })
     }
 

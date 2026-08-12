@@ -17,6 +17,7 @@ const stagingCfg: EnvConfig = {
   dnsRecordNames: [],
   existingVpc: null,
   secondaryLane: null,
+  cognitoAuthEnabled: false,
   instanceClass: 't3',
   instanceSize: 'micro',
   rdsInstanceClass: 't3.micro',
