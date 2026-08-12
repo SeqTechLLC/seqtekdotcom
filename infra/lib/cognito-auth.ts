@@ -149,7 +149,7 @@ export class CognitoAuthGate {
         background-color: ${BRAND_NAVY_800};
       }
       .banner-customizable {
-        background-color: #ffffff;
+        background-color: ${BRAND_NAVY_800};
         background-image: url('${LOGO_DATA_URI}');
         background-repeat: no-repeat;
         background-position: center;
