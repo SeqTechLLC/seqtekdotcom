@@ -356,5 +356,16 @@ export class EdgeStack extends Stack {
       value: this.siteUrl,
       description: 'Public-facing URL for this environment (CloudFront default OR vanity domain).',
     })
+
+    // Separate output for the secondary lane (see compute-stack.ts) so a
+    // release deploy — which promotes ONLY that lane — can report and smoke-
+    // test the URL that actually changed, instead of the primary SiteUrl
+    // above (which a release deploy never touches).
+    if (cfg.secondaryLane) {
+      new CfnOutput(this, 'SecondaryLaneSiteUrl', {
+        value: `https://${cfg.secondaryLane.dnsRecordNames[0]}`,
+        description: 'Public-facing URL for the secondary (temporary PROD-preview) lane.',
+      })
+    }
   }
 }

@@ -216,6 +216,16 @@ export class ComputeStack extends Stack {
     const imageTag =
       (this.node.tryGetContext('imageTag') as string | undefined) || `latest-${envName}`
 
+    // The secondary lane (see below) can be promoted to a DIFFERENT image
+    // than the primary lane — e.g. a GitHub release deploys a `vX.Y.Z` tag
+    // to ONLY the ww3.seqtek.com lane while the primary preview.seqtek.com
+    // lane keeps whatever the last `Preview`-branch push deployed. Defaults
+    // to `imageTag` so an ordinary `-c imageTag=<sha>` deploy (no
+    // `secondaryImageTag`) still moves both lanes together, unchanged from
+    // before this existed.
+    const secondaryImageTag =
+      (this.node.tryGetContext('secondaryImageTag') as string | undefined) || imageTag
+
     // ----- Fargate task definition -----
     // cpu/memory sizing reuses `instanceSize` from cfg (same field the
     // EC2 version read) mapped to the nearest valid Fargate combo —
@@ -372,7 +382,7 @@ export class ComputeStack extends Stack {
       })
 
       laneTaskDefinition.addContainer('AppContainer', {
-        image: ecs.ContainerImage.fromEcrRepository(this.ecrRepository, imageTag),
+        image: ecs.ContainerImage.fromEcrRepository(this.ecrRepository, secondaryImageTag),
         logging: ecs.LogDrivers.awsLogs({
           streamPrefix: 'app',
           logGroup: laneLogGroup,

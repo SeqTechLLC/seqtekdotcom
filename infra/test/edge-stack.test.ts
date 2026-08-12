@@ -250,6 +250,11 @@ describe('EdgeStack', () => {
     it('does NOT create a CloudFront Function when there is no secondaryLane', () => {
       t.resourceCountIs('AWS::CloudFront::Function', 0)
     })
+
+    it('does NOT emit a SecondaryLaneSiteUrl output when there is no secondaryLane', () => {
+      const outputs = t.findOutputs('*')
+      expect(outputs).not.toHaveProperty('SecondaryLaneSiteUrl')
+    })
   })
 
   describe('staging with a secondaryLane (temporary ww3.seqtek.com PROD-preview lane)', () => {
@@ -317,6 +322,11 @@ describe('EdgeStack', () => {
 
     it('creates a Route53 A record for the secondaryLane on top of the primary records', () => {
       t.resourceCountIs('AWS::Route53::RecordSet', 3)
+    })
+
+    it('emits a SecondaryLaneSiteUrl output distinct from the primary SiteUrl', () => {
+      t.hasOutput('SecondaryLaneSiteUrl', { Value: 'https://ww3.seqtek-preview.com' })
+      t.hasOutput('SiteUrl', { Value: 'https://seqtek-preview.com' })
     })
   })
 })

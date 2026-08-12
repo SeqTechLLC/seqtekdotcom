@@ -325,5 +325,56 @@ describe('ComputeStack', () => {
       withoutLane.resourceCountIs('AWS::ECS::TaskDefinition', 1)
       withoutLane.resourceCountIs('AWS::ElasticLoadBalancingV2::TargetGroup', 1)
     })
+
+    it('secondaryImageTag defaults to imageTag, so an ordinary deploy moves both lanes together', () => {
+      const bare = JSON.stringify(Object.values(t.findResources('AWS::ECS::TaskDefinition')))
+      // Neither `-c imageTag` nor `-c secondaryImageTag` was passed to this
+      // synth, so both fall back to the env-scoped default.
+      expect(bare.match(/latest-staging/g)?.length).toBe(2)
+    })
+
+    it('an explicit secondaryImageTag promotes ONLY the secondary lane, leaving the primary tag untouched', () => {
+      // Mirrors what a GitHub release deploy passes: `-c imageTag=<pinned,
+      // currently-running tag>` (so the primary lane's task def is a no-op)
+      // plus `-c secondaryImageTag=<the release's vX.Y.Z tag>`.
+      const app = new App({
+        context: { imageTag: 'abc1234', secondaryImageTag: 'v1.2.3' },
+      })
+      const cfg = {
+        ...stagingCfg,
+        domainName: 'seqtek-preview.com',
+        hostedZoneId: 'Z0000000000000000000A',
+        certificateSans: ['*.seqtek-preview.com'],
+        dnsRecordNames: ['seqtek-preview.com'],
+        secondaryLane: {
+          name: 'prod',
+          databaseName: 'seqtek_prod',
+          dnsRecordNames: ['ww3.seqtek-preview.com'],
+        },
+      }
+      const network = new NetworkStack(app, 'SeqtekStagingNetwork2', {
+        env: { account: '123456789012', region: 'us-east-1' },
+        envName: 'staging',
+        cfg,
+      })
+      const data = new DataStack(app, 'SeqtekStagingData2', {
+        env: { account: '123456789012', region: 'us-east-1' },
+        envName: 'staging',
+        cfg,
+        network,
+      })
+      const compute = new ComputeStack(app, 'SeqtekStagingCompute2', {
+        env: { account: '123456789012', region: 'us-east-1' },
+        envName: 'staging',
+        cfg,
+        network,
+        data,
+      })
+      const pinned = Template.fromStack(compute)
+      const bare = JSON.stringify(Object.values(pinned.findResources('AWS::ECS::TaskDefinition')))
+      expect(bare).toContain(':abc1234')
+      expect(bare).toContain(':v1.2.3')
+      expect(bare).not.toContain('latest-staging')
+    })
   })
 })
