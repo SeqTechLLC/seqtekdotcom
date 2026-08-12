@@ -10,6 +10,10 @@ const stagingCfg: EnvConfig = {
   domainName: null,
   hostedZoneId: null,
   certificateArn: null,
+  certificateSans: [],
+  dnsRecordNames: [],
+  existingVpc: null,
+  secondaryLane: null,
   instanceClass: 't3',
   instanceSize: 'micro',
   rdsInstanceClass: 't3.micro',
@@ -127,7 +131,7 @@ describe('DataStack', () => {
       })
     })
 
-    it('creates three non-sensitive Parameter Store entries (no sensitive values in SSM)', () => {
+    it('creates four non-sensitive Parameter Store entries (no sensitive values in SSM)', () => {
       t.hasResourceProperties('AWS::SSM::Parameter', {
         Name: '/seqtek/website/staging/s3_bucket',
         Type: 'String',
@@ -142,11 +146,22 @@ describe('DataStack', () => {
         Name: '/seqtek/website/staging/s3_region',
         Type: 'String',
       })
-      // Total SSM params for a domainless config = 3. Anything else means a
+      // cloudfront_distribution_id is a placeholder ('unset') owned HERE
+      // (not EdgeStack) so it exists from the very first deploy, before
+      // Edge has ever run — Compute's Fargate tasks reference it by name
+      // and ECS fails a task outright if a named secret parameter doesn't
+      // exist at all. EdgeStack overwrites the VALUE later via a custom
+      // resource, not a second CDK-owned parameter resource.
+      t.hasResourceProperties('AWS::SSM::Parameter', {
+        Name: '/seqtek/website/staging/cloudfront_distribution_id',
+        Type: 'String',
+        Value: 'unset',
+      })
+      // Total SSM params for a domainless config = 4. Anything else means a
       // regression to the SSM-SecureString-mirror pattern that we
       // explicitly dropped after the failed first deploy.
       const params = t.findResources('AWS::SSM::Parameter')
-      expect(Object.keys(params)).toHaveLength(3)
+      expect(Object.keys(params)).toHaveLength(4)
     })
 
     it('omits next_public_site_url when domainName is null (no stable public host pre-cutover)', () => {
@@ -206,6 +221,8 @@ describe('DataStack', () => {
       domainName: 'seqtek-preview.com',
       hostedZoneId: 'Z0000000000000000000A',
       certificateArn: null,
+      certificateSans: ['www.seqtek-preview.com'],
+      dnsRecordNames: ['seqtek-preview.com', 'www.seqtek-preview.com'],
     })
 
     it('provisions next_public_site_url so serverURL never falls back to localhost (spec 009 FR-001)', () => {
@@ -217,9 +234,10 @@ describe('DataStack', () => {
         Type: 'String',
         Value: 'https://seqtek-preview.com',
       })
-      // 3 storage params + the site URL. Still no sensitive values in SSM.
+      // 3 storage params + the placeholder cloudfront_distribution_id +
+      // the site URL. Still no sensitive values in SSM.
       const params = t.findResources('AWS::SSM::Parameter')
-      expect(Object.keys(params)).toHaveLength(4)
+      expect(Object.keys(params)).toHaveLength(5)
     })
   })
 

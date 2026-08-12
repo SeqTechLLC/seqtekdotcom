@@ -81,6 +81,16 @@ RUN addgroup --system --gid 1001 nodejs \
 # Node process cleanly (avoids 10s SIGKILL on rolling refresh).
 RUN apk add --no-cache tini
 
+# Bake the RDS CA bundle into the image at BUILD time. RDS Postgres
+# requires TLS with a cert AWS issues from its own CA, which isn't in
+# Node's default trust store. The EC2 deployment used to fetch this at
+# instance-launch via UserData; Fargate has no equivalent boot script,
+# so it has to be in the image itself. NODE_EXTRA_CA_CERTS (set in the
+# ECS task definition / EC2 UserData) points at this exact path.
+RUN mkdir -p /etc/seqtek/certs \
+  && wget -qO /etc/seqtek/certs/rds-ca.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem \
+  && chmod 644 /etc/seqtek/certs/rds-ca.pem
+
 # Create the prerender cache dir with the right ownership.
 RUN mkdir .next && chown nextjs:nodejs .next
 

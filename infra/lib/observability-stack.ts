@@ -12,7 +12,7 @@ import * as snsSubs from 'aws-cdk-lib/aws-sns-subscriptions'
 import type { Construct } from 'constructs'
 import { join } from 'node:path'
 import type { ComputeStack } from './compute-stack'
-import type { EnvConfig, EnvName } from './construct-utils'
+import { stackPrefix, type EnvConfig, type EnvName } from './construct-utils'
 import type { DataStack } from './data-stack'
 import type { EdgeStack } from './edge-stack'
 import type { NetworkStack } from './network-stack'
@@ -52,8 +52,7 @@ export class ObservabilityStack extends Stack {
     super(scope, id, props)
 
     const { envName, cfg, data, compute, edge } = props
-    void cfg
-    const envPrefix = envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
+    const envPrefix = stackPrefix(envName)
     const webhookParameterPath = `/seqtek/website/${envName}/slack_webhook_url`
 
     // ---------- SNS topic ----------
@@ -172,15 +171,20 @@ export class ObservabilityStack extends Stack {
       }),
     )
 
-    // 3. EC2 CPU > 80% sustained 10 min (ASG-aggregate average)
+    // 3. ECS service CPU > 80% sustained 10 min. Fargate publishes this
+    // natively per service — no CloudWatch Agent needed (that was an
+    // EC2-only requirement; dropped along with the ASG).
     alarms.push(
-      new cloudwatch.Alarm(this, 'Ec2CpuHigh', {
-        alarmName: `${envPrefix}Observability-Ec2CpuHigh`,
-        alarmDescription: 'EC2 average CPU above 80% sustained 10 minutes',
+      new cloudwatch.Alarm(this, 'EcsCpuHigh', {
+        alarmName: `${envPrefix}Observability-EcsCpuHigh`,
+        alarmDescription: 'ECS service average CPU above 80% sustained 10 minutes',
         metric: new cloudwatch.Metric({
-          namespace: 'AWS/EC2',
+          namespace: 'AWS/ECS',
           metricName: 'CPUUtilization',
-          dimensionsMap: { AutoScalingGroupName: compute.autoScalingGroup.autoScalingGroupName },
+          dimensionsMap: {
+            ClusterName: compute.cluster.clusterName,
+            ServiceName: compute.fargateService.serviceName,
+          },
           period: Duration.minutes(1),
           statistic: 'Average',
         }),
@@ -191,15 +195,19 @@ export class ObservabilityStack extends Stack {
       }),
     )
 
-    // 4. EC2 memory > 85% sustained 10 min (CW Agent metric)
+    // 4. ECS service memory > 85% sustained 10 min — also native, no
+    // CW Agent (Fargate meters container memory directly).
     alarms.push(
-      new cloudwatch.Alarm(this, 'Ec2MemoryHigh', {
-        alarmName: `${envPrefix}Observability-Ec2MemoryHigh`,
-        alarmDescription: 'EC2 memory above 85% sustained 10 minutes (requires CW Agent)',
+      new cloudwatch.Alarm(this, 'EcsMemoryHigh', {
+        alarmName: `${envPrefix}Observability-EcsMemoryHigh`,
+        alarmDescription: 'ECS service average memory above 85% sustained 10 minutes',
         metric: new cloudwatch.Metric({
-          namespace: 'CWAgent',
-          metricName: 'mem_used_percent',
-          dimensionsMap: { AutoScalingGroupName: compute.autoScalingGroup.autoScalingGroupName },
+          namespace: 'AWS/ECS',
+          metricName: 'MemoryUtilization',
+          dimensionsMap: {
+            ClusterName: compute.cluster.clusterName,
+            ServiceName: compute.fargateService.serviceName,
+          },
           period: Duration.minutes(1),
           statistic: 'Average',
         }),
@@ -210,22 +218,29 @@ export class ObservabilityStack extends Stack {
       }),
     )
 
-    // 5. EC2 disk > 80% (CW Agent metric)
+    // 5. ECS running task count below desired for 2 min. Replaces the old
+    // EC2 disk-usage alarm — Fargate's ephemeral storage isn't a
+    // meaningful thing to alarm on per-task; a service short of its
+    // desired count (tasks crash-looping, failing health checks, out of
+    // placement capacity) is the equivalent operational signal.
     alarms.push(
-      new cloudwatch.Alarm(this, 'Ec2DiskHigh', {
-        alarmName: `${envPrefix}Observability-Ec2DiskHigh`,
-        alarmDescription: 'EC2 disk usage above 80% (requires CW Agent)',
+      new cloudwatch.Alarm(this, 'EcsRunningTaskCountLow', {
+        alarmName: `${envPrefix}Observability-EcsRunningTaskCountLow`,
+        alarmDescription: 'ECS running task count below desired count for 2 minutes',
         metric: new cloudwatch.Metric({
-          namespace: 'CWAgent',
-          metricName: 'disk_used_percent',
-          dimensionsMap: { AutoScalingGroupName: compute.autoScalingGroup.autoScalingGroupName },
-          period: Duration.minutes(5),
-          statistic: 'Average',
+          namespace: 'ECS/ContainerInsights',
+          metricName: 'RunningTaskCount',
+          dimensionsMap: {
+            ClusterName: compute.cluster.clusterName,
+            ServiceName: compute.fargateService.serviceName,
+          },
+          period: Duration.minutes(1),
+          statistic: 'Minimum',
         }),
-        threshold: 80,
+        threshold: cfg.asgDesiredCapacity,
         evaluationPeriods: 2,
-        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+        comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
+        treatMissingData: cloudwatch.TreatMissingData.BREACHING,
       }),
     )
 

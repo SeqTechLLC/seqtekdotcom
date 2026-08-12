@@ -47,6 +47,13 @@ export default buildConfig({
         '/components/admin/LoginError#default',
         '/components/admin/BeforeLoginGoogle#default',
       ],
+      // Payload's built-in logout button always reports success regardless
+      // of whether the underlying logout call actually worked, and — for
+      // this app's custom OAuth-issued sessions specifically — it usually
+      // doesn't. See src/lib/auth/revoke-session-cookie.ts.
+      logout: {
+        Button: '/components/admin/CustomLogoutButton#default',
+      },
     },
   },
   collections: [

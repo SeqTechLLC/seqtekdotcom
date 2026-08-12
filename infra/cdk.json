@@ -19,6 +19,10 @@
         "domainName": null,
         "hostedZoneId": null,
         "certificateArn": null,
+        "certificateSans": [],
+        "dnsRecordNames": [],
+        "existingVpc": null,
+        "secondaryLane": null,
         "instanceClass": "t3",
         "instanceSize": "small",
         "rdsInstanceClass": "t3.small",
@@ -35,12 +39,16 @@
         "ownsAccountEcrRepository": false
       },
       "staging": {
-        "_comment_domain": "seqtek-preview.com registered 2026-05-27 (T029a). Hosted zone auto-created by Route 53; CDK provisions ACM cert via DNS validation + A records on next SeqtekStagingEdge deploy.",
+        "_comment_domain": "seqtek-preview.com registered 2026-05-27 (T029a). Hosted zone auto-created by Route 53; CDK provisions ACM cert via DNS validation + A records on next SeqtekStagingEdge deploy. certificateSans/dnsRecordNames set to exactly what the old hardcoded [domainName, www.domainName] behavior produced — this env's already-deployed cert/records are unchanged by the certificateSans/dnsRecordNames split.",
         "_comment_sizing": "Validation-period free-tier-eligible sizes per Clarifications Session 2026-05-26. Flip to t3.small / db.t3.small / 50GB at Phase 5.5 launch-readiness review.",
         "region": "us-east-1",
         "domainName": "seqtek-preview.com",
         "hostedZoneId": "Z00293712Y3ITLM3J388K",
         "certificateArn": null,
+        "certificateSans": ["www.seqtek-preview.com"],
+        "dnsRecordNames": ["seqtek-preview.com", "www.seqtek-preview.com"],
+        "existingVpc": null,
+        "secondaryLane": null,
         "instanceClass": "t3",
         "instanceSize": "micro",
         "rdsInstanceClass": "t3.micro",
@@ -53,6 +61,46 @@
         "logRetentionDays": 14,
         "ownsAccountOidcProvider": false,
         "ownsAccountEcrRepository": true
+      },
+      "preview": {
+        "_comment_domain": "Account [REDACTED_AWS_ACCOUNT_ID] — NOT a fresh/dedicated account (corrected 2026-08-10 after initial deploy attempt hit the account's 5-VPC-per-region limit): it already runs other real infrastructure (an 'intranet-sequred' ECS/FusionAuth/wiki stack, an RDS 'warehouse' database, and WordPress/SEO-hosting security groups under the Seqtek name in the SeqtekDeploy VPC). Cert covers seqtek.com + *.seqtek.com (reusable for any future subdomain with zero re-validation), but dnsRecordNames creates ONLY preview.seqtek.com — the zone's existing seqtek.com (A -> 89.106.200.1) and www.seqtek.com (CNAME -> client.gushwork.net) records are untouched. Hosted zone ZDNRI358EUS3R confirmed to already live in this same account.",
+        "_comment_sizing": "Mirrors staging's validation-period free-tier-eligible sizing — this is a testing environment, not launch-readiness scale.",
+        "region": "us-east-1",
+        "domainName": "seqtek.com",
+        "hostedZoneId": "ZDNRI358EUS3R",
+        "certificateArn": null,
+        "certificateSans": ["*.seqtek.com"],
+        "dnsRecordNames": ["preview.seqtek.com"],
+        "_comment_existingVpc": "Account was already at its 5-VPC/5-IGW-per-region limit, and this VPC (SeqtekDeploy, pre-existing, unrelated to this codebase) is reused rather than requesting a quota increase. Its 3 existing subnets are all in us-east-1f only; ALB and RDS both independently require 2 AZs, so a new public+isolated subnet pair is added in us-east-1a (CIDRs 10.0.2.0/24, 10.0.40.0/26 — verified free against the VPC's existing 10.0.0.0/24, 10.0.1.0/24, 10.0.32.0/26 on 2026-08-10). The existing IGW is reused for the new public subnet's route; nothing existing in this VPC (its other subnets, route tables, default security group, or the WordPress/SEO/NFS security groups already there) is modified.",
+        "existingVpc": {
+          "vpcId": "vpc-00cacecfd614514d0",
+          "igwId": "igw-0207829ee7d2725e8",
+          "publicSubnetId": "subnet-0457c51f9679e3b6e",
+          "isolatedSubnetId": "subnet-064119e8ad87e1119",
+          "primaryAz": "us-east-1f",
+          "secondaryAz": "us-east-1a",
+          "secondaryPublicCidr": "10.0.2.0/24",
+          "secondaryIsolatedCidr": "10.0.40.0/26"
+        },
+        "_comment_secondaryLane": "TEMPORARY PROD-preview lane (added 2026-08-11, remove once seqtek.com cutover is ready): shares this env's cluster/ALB/RDS instance rather than standing up a whole separate env. Reachable at ww3.seqtek.com only — covered by the *.seqtek.com cert SAN above, zero new cert validation needed. New database 'seqtek_prod' on the SAME RDS instance, created by the lane's own container startup command, not a new rds.DatabaseInstance. seqtek.com and www.seqtek.com are NOT touched by this.",
+        "secondaryLane": {
+          "name": "prod",
+          "databaseName": "seqtek_prod",
+          "dnsRecordNames": ["ww3.seqtek.com"]
+        },
+        "instanceClass": "t3",
+        "instanceSize": "micro",
+        "rdsInstanceClass": "t3.micro",
+        "rdsAllocatedStorageGb": 20,
+        "rdsMultiAz": false,
+        "asgMinCapacity": 1,
+        "asgDesiredCapacity": 1,
+        "asgMaxCapacity": 2,
+        "ecrRetainCount": 10,
+        "logRetentionDays": 14,
+        "_comment_oidc": "This env owns the account-wide OIDC provider (nothing else in this account uses GitHub OIDC). ownsAccountEcrRepository is FALSE despite that: the `seqtek-website` ECR repo already exists in this account (created + populated by hand during the first-deploy troubleshooting on 2026-08-10, when the ECS service's circuit-breaker rollback left it behind under ECR's default RETAIN removal policy) — CDK references it by name (ecr.Repository.fromRepositoryName) rather than trying to re-create it. Flip to true only after deleting that repo and starting clean.",
+        "ownsAccountOidcProvider": true,
+        "ownsAccountEcrRepository": false
       }
     }
   }

@@ -11,6 +11,10 @@ const stagingCfg: EnvConfig = {
   domainName: null,
   hostedZoneId: null,
   certificateArn: null,
+  certificateSans: [],
+  dnsRecordNames: [],
+  existingVpc: null,
+  secondaryLane: null,
   instanceClass: 't3',
   instanceSize: 'micro',
   rdsInstanceClass: 't3.micro',
@@ -126,7 +130,9 @@ describe('ComputeStack', () => {
       t.hasResourceProperties('AWS::ElasticLoadBalancingV2::TargetGroup', {
         Port: 3000,
         Protocol: 'HTTP',
-        TargetType: 'instance',
+        // 'ip' (not 'instance') is the awsvpc-mode target type Fargate
+        // services require — there is no EC2 instance to register.
+        TargetType: 'ip',
         HealthCheckPath: '/api/health',
         HealthCheckIntervalSeconds: 30,
         HealthCheckTimeoutSeconds: 10,
@@ -141,40 +147,29 @@ describe('ComputeStack', () => {
       })
     })
 
-    it('LaunchTemplate requires IMDSv2 with hop-limit 2', () => {
-      t.hasResourceProperties('AWS::EC2::LaunchTemplate', {
-        LaunchTemplateData: Match.objectLike({
-          MetadataOptions: {
-            HttpTokens: 'required',
-            HttpPutResponseHopLimit: 2,
-          },
-        }),
-      })
-    })
-
-    it('ASG configured for a zero-downtime rolling update', () => {
-      t.hasResource('AWS::AutoScaling::AutoScalingGroup', {
-        Properties: Match.objectLike({
-          MinSize: '1',
-          MaxSize: '2',
-          DesiredCapacity: '1',
-          HealthCheckType: 'ELB',
-        }),
-        UpdatePolicy: Match.objectLike({
-          AutoScalingRollingUpdate: Match.objectLike({
-            MinInstancesInService: 1,
-            MaxBatchSize: 1,
+    it('Fargate service runs in public subnets with a public IP (validation-period topology)', () => {
+      // Replaces the old LaunchTemplate AssociatePublicIpAddress assertion —
+      // same no-NAT topology, expressed as ECS awsvpc network config instead
+      // of an EC2 LaunchTemplate NetworkInterfaces override.
+      t.hasResourceProperties('AWS::ECS::Service', {
+        LaunchType: 'FARGATE',
+        NetworkConfiguration: Match.objectLike({
+          AwsvpcConfiguration: Match.objectLike({
+            AssignPublicIp: 'ENABLED',
           }),
         }),
       })
     })
 
-    it('LaunchTemplate AssociatePublicIpAddress: true (validation-period topology)', () => {
-      t.hasResourceProperties('AWS::EC2::LaunchTemplate', {
-        LaunchTemplateData: Match.objectLike({
-          NetworkInterfaces: Match.arrayWith([
-            Match.objectLike({ AssociatePublicIpAddress: true }),
-          ]),
+    it('Fargate service has a native rolling deployment with circuit-breaker rollback', () => {
+      // Replaces the old ASG AutoScalingRollingUpdate assertion. ECS checks
+      // ALB target-group health during the deployment itself and rolls back
+      // automatically on failure — no blind pauseTime wait like the ASG
+      // version needed.
+      t.hasResourceProperties('AWS::ECS::Service', {
+        DesiredCount: 1,
+        DeploymentConfiguration: Match.objectLike({
+          DeploymentCircuitBreaker: { Enable: true, Rollback: true },
         }),
       })
     })
@@ -186,11 +181,10 @@ describe('ComputeStack', () => {
       })
     })
 
-    it('LaunchTemplate uses t3.micro for staging', () => {
-      t.hasResourceProperties('AWS::EC2::LaunchTemplate', {
-        LaunchTemplateData: Match.objectLike({
-          InstanceType: 't3.micro',
-        }),
+    it('Fargate task definition uses the cpu/memory mapped from instanceSize=micro', () => {
+      t.hasResourceProperties('AWS::ECS::TaskDefinition', {
+        Cpu: '256',
+        Memory: '512',
       })
     })
   })
@@ -212,35 +206,38 @@ describe('ComputeStack', () => {
       // repos were ever shared again, an immutable tag leaves nothing for a
       // staging build to overwrite. A bare `:latest` would reintroduce exactly
       // that, and the failure is invisible both in a diff and at deploy time —
-      // prod would simply start serving main after its next instance
-      // replacement.
+      // prod would simply start serving main after its next task replacement.
       //
       // Two paths, both asserted: the deploy passes `-c imageTag` (immutable),
-      // and a bare local synth falls back to an env-scoped moving tag.
-      const bare = JSON.stringify(Object.values(t.findResources('AWS::EC2::LaunchTemplate')))
+      // and a bare local synth falls back to an env-scoped moving tag. The
+      // image URI now lives on the ECS TaskDefinition's container image
+      // (was the EC2 LaunchTemplate's UserData docker-pull command).
+      const bare = JSON.stringify(Object.values(t.findResources('AWS::ECS::TaskDefinition')))
       expect(bare).toContain(':latest-prod')
       expect(/:latest(?![-\w])/.test(bare)).toBe(false)
 
       const pinned = JSON.stringify(
         Object.values(
-          synthCompute('prod', prodCfg, 'v1.2.3').findResources('AWS::EC2::LaunchTemplate'),
+          synthCompute('prod', prodCfg, 'v1.2.3').findResources('AWS::ECS::TaskDefinition'),
         ),
       )
       expect(pinned).toContain(':v1.2.3')
       expect(pinned).not.toContain(':latest')
     })
 
-    it('ASG min/desired/max = 2/2/3 with min-in-service = 2', () => {
-      t.hasResource('AWS::AutoScaling::AutoScalingGroup', {
-        Properties: Match.objectLike({
-          MinSize: '2',
-          MaxSize: '3',
-          DesiredCapacity: '2',
-        }),
-        UpdatePolicy: Match.objectLike({
-          AutoScalingRollingUpdate: Match.objectLike({
-            MinInstancesInService: 2,
-          }),
+    it('Fargate service desired count = 2, min/maxHealthyPercent scaled from asgMin/Max', () => {
+      // Replaces the old ASG min/desired/max assertion. ECS expresses the
+      // same "how many can be down / how many extra during a deploy" intent
+      // as healthy-percent ratios rather than absolute instance counts:
+      // minHealthyPercent 100% (= asgMinCapacity/asgDesiredCapacity = 2/2)
+      // keeps min-in-service, maxHealthyPercent 150% (= asgMaxCapacity/
+      // asgDesiredCapacity = 3/2) caps how many extra tasks run during a
+      // rolling deployment.
+      t.hasResourceProperties('AWS::ECS::Service', {
+        DesiredCount: 2,
+        DeploymentConfiguration: Match.objectLike({
+          MinimumHealthyPercent: 100,
+          MaximumPercent: 150,
         }),
       })
     })
@@ -252,11 +249,10 @@ describe('ComputeStack', () => {
       })
     })
 
-    it('prod LaunchTemplate uses t3.small', () => {
-      t.hasResourceProperties('AWS::EC2::LaunchTemplate', {
-        LaunchTemplateData: Match.objectLike({
-          InstanceType: 't3.small',
-        }),
+    it('prod Fargate task definition uses the cpu/memory mapped from instanceSize=small', () => {
+      t.hasResourceProperties('AWS::ECS::TaskDefinition', {
+        Cpu: '512',
+        Memory: '1024',
       })
     })
 
@@ -269,6 +265,65 @@ describe('ComputeStack', () => {
           }),
         ]),
       })
+    })
+  })
+
+  describe('with a secondaryLane (temporary ww3.seqtek.com PROD-preview lane)', () => {
+    const t = synthCompute('staging', {
+      ...stagingCfg,
+      domainName: 'seqtek-preview.com',
+      hostedZoneId: 'Z0000000000000000000A',
+      certificateSans: ['*.seqtek-preview.com'],
+      dnsRecordNames: ['seqtek-preview.com'],
+      secondaryLane: {
+        name: 'prod',
+        databaseName: 'seqtek_prod',
+        dnsRecordNames: ['ww3.seqtek-preview.com'],
+      },
+    })
+
+    it('creates a second Fargate task definition and service sharing the same cluster', () => {
+      t.resourceCountIs('AWS::ECS::TaskDefinition', 2)
+      t.resourceCountIs('AWS::ECS::Service', 2)
+      t.resourceCountIs('AWS::ECS::Cluster', 1)
+    })
+
+    it('second task definition points DB_NAME at the lane database as a literal, not a secret', () => {
+      const containers = t.findResources('AWS::ECS::TaskDefinition')
+      const secondaryDef = Object.values(containers).find((r) => {
+        const envVars = (
+          r.Properties as {
+            ContainerDefinitions: Array<{ Environment?: Array<{ Name: string; Value?: string }> }>
+          }
+        ).ContainerDefinitions[0]?.Environment
+        return envVars?.some((e) => e.Name === 'DB_NAME' && e.Value === 'seqtek_prod')
+      })
+      expect(
+        secondaryDef,
+        'expected one task def with a literal DB_NAME=seqtek_prod env var',
+      ).toBeDefined()
+    })
+
+    it('creates a second target group and a host-header-forwarding ALB rule at a non-default priority', () => {
+      t.resourceCountIs('AWS::ElasticLoadBalancingV2::TargetGroup', 2)
+      t.hasResourceProperties('AWS::ElasticLoadBalancingV2::ListenerRule', {
+        Priority: 10,
+        Conditions: Match.arrayWith([
+          Match.objectLike({
+            Field: 'http-header',
+            HttpHeaderConfig: Match.objectLike({
+              HttpHeaderName: 'x-forwarded-host',
+              Values: ['ww3.seqtek-preview.com'],
+            }),
+          }),
+        ]),
+      })
+    })
+
+    it('does NOT create a second lane when secondaryLane is null', () => {
+      const withoutLane = synthCompute('staging', stagingCfg)
+      withoutLane.resourceCountIs('AWS::ECS::TaskDefinition', 1)
+      withoutLane.resourceCountIs('AWS::ElasticLoadBalancingV2::TargetGroup', 1)
     })
   })
 })

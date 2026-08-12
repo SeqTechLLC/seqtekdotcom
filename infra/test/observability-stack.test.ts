@@ -13,6 +13,10 @@ const stagingCfg: EnvConfig = {
   domainName: null,
   hostedZoneId: null,
   certificateArn: null,
+  certificateSans: [],
+  dnsRecordNames: [],
+  existingVpc: null,
+  secondaryLane: null,
   instanceClass: 't3',
   instanceSize: 'micro',
   rdsInstanceClass: 't3.micro',
@@ -62,9 +66,9 @@ function synthObservability(
 const EXPECTED_ALARM_SHORT_NAMES = [
   'AlbFiveXx',
   'AlbUnhealthyHost',
-  'Ec2CpuHigh',
-  'Ec2MemoryHigh',
-  'Ec2DiskHigh',
+  'EcsCpuHigh',
+  'EcsMemoryHigh',
+  'EcsRunningTaskCountLow',
   'RdsCpuHigh',
   'RdsFreeStorageLow',
   'RdsConnectionsHigh',
@@ -202,7 +206,7 @@ describe('ObservabilityStack', () => {
         check: { Threshold: 0, EvaluationPeriods: 2 },
       },
       {
-        short: 'Ec2CpuHigh',
+        short: 'EcsCpuHigh',
         check: { Threshold: 80, EvaluationPeriods: 10 },
       },
       {
