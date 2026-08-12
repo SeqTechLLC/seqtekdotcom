@@ -6,7 +6,7 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import * as route53 from 'aws-cdk-lib/aws-route53'
 import * as r53targets from 'aws-cdk-lib/aws-route53-targets'
 import * as s3 from 'aws-cdk-lib/aws-s3'
-import * as ssm from 'aws-cdk-lib/aws-ssm'
+import * as cr from 'aws-cdk-lib/custom-resources'
 import type { Construct } from 'constructs'
 import type { EnvConfig, EnvName } from './construct-utils'
 import type { ComputeStack } from './compute-stack'
@@ -45,6 +45,15 @@ export class EdgeStack extends Stack {
     const { envName, cfg, compute, data } = props
 
     // ----- Optional: ACM cert + alias when domainName is set -----
+    //
+    // `domainName` is the certificate's primary name and the Route53 zone to
+    // validate DNS in. `certificateSans` adds extra names to the CERT (e.g.
+    // `*.seqtek.com` — a cert existing doesn't redirect any traffic).
+    // `dnsRecordNames` controls which names ACTUALLY get a Route53 record
+    // pointed at this distribution — deliberately independent, so a
+    // preview env can request a cert covering `seqtek.com` + `*.seqtek.com`
+    // while creating ONLY a `preview.seqtek.com` record, leaving the zone's
+    // existing `seqtek.com` / `www.seqtek.com` records completely untouched.
     let aliases: string[] | undefined
     let hostedZone: route53.IHostedZone | undefined
     if (cfg.domainName !== null) {
@@ -62,10 +71,23 @@ export class EdgeStack extends Stack {
         ? acm.Certificate.fromCertificateArn(this, 'Cert', cfg.certificateArn)
         : new acm.Certificate(this, 'Cert', {
             domainName: cfg.domainName,
-            subjectAlternativeNames: [`www.${cfg.domainName}`],
+            subjectAlternativeNames: cfg.certificateSans,
             validation: acm.CertificateValidation.fromDns(hostedZone),
           })
-      aliases = [cfg.domainName, `www.${cfg.domainName}`]
+      // CORRECTED 2026-08-10: this used to be [domainName, ...certificateSans]
+      // on the theory that a CloudFront alias with no DNS pointing at it is
+      // harmless pre-cutover prep. That's true for ACM (multiple certs CAN
+      // cover the same name), but FALSE for CloudFront aliases — they are
+      // globally unique across every distribution in the account, no
+      // exceptions, and CloudFront refuses to create a distribution that
+      // claims a name another distribution already has. Discovered when
+      // `seqtek.com` + `*.seqtek.com` collided with the account's existing,
+      // live `E2XM0Q4LL51A4Y` distribution (aliases seqtek.com/www.seqtek.com)
+      // and `E22ACPK6N6D2BS` (webassets.seqtek.com). The cert can still cover
+      // broader names for later reuse (harmless, already proven above); the
+      // ALIAS list must be scoped to exactly what dnsRecordNames actually
+      // points here — nothing more.
+      aliases = [...cfg.dnsRecordNames, ...(cfg.secondaryLane?.dnsRecordNames ?? [])]
     }
 
     // ----- CloudFront distribution -----
@@ -77,6 +99,34 @@ export class EdgeStack extends Stack {
       readTimeout: Duration.seconds(60),
       keepaliveTimeout: Duration.seconds(60),
     })
+
+    // ----- Optional: forward the real Host to the ALB (secondaryLane only) -----
+    // CloudFront always overwrites the `Host` header with the ORIGIN's
+    // domain name before forwarding to a custom origin (documented AWS
+    // behavior — not overridable via origin request policy, and `Host`
+    // can't be added to one for a custom origin). With one distribution
+    // and one ALB shared by two lanes, compute-stack's host-based ALB rule
+    // would otherwise never see `preview.seqtek.com` or `ww3.seqtek.com` —
+    // only the ALB's own DNS name, on every request. This CloudFront
+    // Function (viewer-request stage, runs before origin selection) copies
+    // the viewer's real Host into a new `x-forwarded-host` header, which
+    // IS forwarded (covered by the ALL_VIEWER_AND_CLOUDFRONT_2022 origin
+    // request policy below) — the ALB rule matches on that instead.
+    const forwardHostFunction = cfg.secondaryLane
+      ? new cloudfront.Function(this, 'ForwardHostFunction', {
+          comment: `${envName}: copy viewer Host into x-forwarded-host for ALB lane routing`,
+          code: cloudfront.FunctionCode.fromInline(
+            'function handler(event) {\n' +
+              '  var request = event.request;\n' +
+              "  request.headers['x-forwarded-host'] = { value: request.headers.host.value };\n" +
+              '  return request;\n' +
+              '}\n',
+          ),
+        })
+      : undefined
+    const hostForwardingFunctionAssociations = forwardHostFunction
+      ? [{ function: forwardHostFunction, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }]
+      : undefined
 
     // S3 media origin via OAC (Origin Access Control).
     // Import the bucket by attributes (read-only handle) so CDK's
@@ -117,6 +167,7 @@ export class EdgeStack extends Stack {
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
         originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_AND_CLOUDFRONT_2022,
         compress: true,
+        functionAssociations: hostForwardingFunctionAssociations,
       },
       additionalBehaviors: {
         // Admin: never cache; forward everything to the origin.
@@ -127,6 +178,7 @@ export class EdgeStack extends Stack {
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
           originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_AND_CLOUDFRONT_2022,
           compress: true,
+          functionAssociations: hostForwardingFunctionAssociations,
         },
         // API: never cache; full method support.
         '/api/*': {
@@ -136,6 +188,7 @@ export class EdgeStack extends Stack {
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
           originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_AND_CLOUDFRONT_2022,
           compress: true,
+          functionAssociations: hostForwardingFunctionAssociations,
         },
         // Next.js static assets — long TTL, immutable.
         '/_next/static/*': {
@@ -144,6 +197,7 @@ export class EdgeStack extends Stack {
           allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
           compress: true,
+          functionAssociations: hostForwardingFunctionAssociations,
         },
         // Media uploads — served from S3 via OAC, long TTL.
         '/media/*': {
@@ -192,18 +246,54 @@ export class EdgeStack extends Stack {
     // ----- CloudFront invalidation wiring (spec 009 FR-011 follow-up) -----
     // Both invalidation callers (page publishes per R-03 and media
     // replace/delete per spec 009 FR-011) read CLOUDFRONT_DISTRIBUTION_ID
-    // and silently skip without it — and until this landed it was never
-    // provisioned anywhere (staging had zero invalidations ever; page
-    // staleness self-healed via the 60-120s default TTL, but /media/* is
-    // cached for a year). The param lives here, not DataStack, because the
-    // distribution ID is Edge-owned — same cycle-breaking rationale as the
-    // bucket policy above. The user-data loop maps the basename to
-    // CLOUDFRONT_DISTRIBUTION_ID (basename | uppercase).
-    new ssm.StringParameter(this, 'CloudFrontDistributionIdParam', {
-      parameterName: `${data.parameterPathPrefix}/cloudfront_distribution_id`,
-      stringValue: this.distribution.distributionId,
-      description:
-        'CloudFront distribution ID for targeted invalidations (CLOUDFRONT_DISTRIBUTION_ID).',
+    // and silently skip without it.
+    //
+    // The parameter RESOURCE is owned by DataStack (not here) — it must
+    // exist from the very first deploy, before Edge has ever run, because
+    // Compute's Fargate tasks reference it by name and ECS fails a task
+    // outright if a named "secret" parameter doesn't exist at all (not a
+    // graceful skip like a missing/empty value). DataStack seeds it with a
+    // harmless 'unset' placeholder. Here, once the real distribution ID is
+    // known, a custom resource OVERWRITES that same parameter's value via
+    // the SSM SDK directly — this is not a second CDK-owned resource (which
+    // would collide with DataStack's), just a scripted value update.
+    new cr.AwsCustomResource(this, 'CloudFrontDistributionIdParamWriter', {
+      onCreate: {
+        service: 'SSM',
+        action: 'putParameter',
+        parameters: {
+          Name: `${data.parameterPathPrefix}/cloudfront_distribution_id`,
+          Value: this.distribution.distributionId,
+          Type: 'String',
+          Overwrite: true,
+        },
+        physicalResourceId: cr.PhysicalResourceId.of(
+          `${data.parameterPathPrefix}/cloudfront_distribution_id-writer`,
+        ),
+      },
+      onUpdate: {
+        service: 'SSM',
+        action: 'putParameter',
+        parameters: {
+          Name: `${data.parameterPathPrefix}/cloudfront_distribution_id`,
+          Value: this.distribution.distributionId,
+          Type: 'String',
+          Overwrite: true,
+        },
+        physicalResourceId: cr.PhysicalResourceId.of(
+          `${data.parameterPathPrefix}/cloudfront_distribution_id-writer`,
+        ),
+      },
+      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
+        resources: [
+          `arn:aws:ssm:${this.region}:${this.account}:parameter${data.parameterPathPrefix}/cloudfront_distribution_id`,
+        ],
+      }),
+      // Pin to the Lambda runtime's built-in SDK (sufficient for a single
+      // SSM call) rather than downloading the latest AWS SDK on every
+      // invocation — faster, deterministic, and avoids an untracked
+      // moving dependency.
+      installLatestAwsSdk: false,
     })
 
     // The grant needs the distribution ARN (Edge-owned), so the Policy
@@ -223,23 +313,35 @@ export class EdgeStack extends Stack {
       }),
     )
 
-    // ----- Optional: Route53 A-record (when domainName is set) -----
-    if (hostedZone && cfg.domainName) {
-      new route53.ARecord(this, 'ApexAlias', {
-        zone: hostedZone,
-        recordName: cfg.domainName,
-        target: route53.RecordTarget.fromAlias(new r53targets.CloudFrontTarget(this.distribution)),
-      })
-      new route53.ARecord(this, 'WwwAlias', {
-        zone: hostedZone,
-        recordName: `www.${cfg.domainName}`,
-        target: route53.RecordTarget.fromAlias(new r53targets.CloudFrontTarget(this.distribution)),
-      })
+    // ----- Route53 records — ONLY for names in dnsRecordNames -----
+    // This is the one part of the whole domain/cert setup that actually
+    // changes what visitors see. Everything else above (the cert, the
+    // CloudFront alias list) can safely cover more names than this without
+    // affecting live traffic — a record only gets created for names
+    // explicitly listed here. Construct IDs are derived from the record
+    // name (dots stripped) to keep them stable and unique per name.
+    if (hostedZone) {
+      const allRecordNames = [...cfg.dnsRecordNames, ...(cfg.secondaryLane?.dnsRecordNames ?? [])]
+      for (const recordName of allRecordNames) {
+        const idSafeName = recordName.replace(/[^a-zA-Z0-9]/g, '')
+        new route53.ARecord(this, `Alias${idSafeName}`, {
+          zone: hostedZone,
+          recordName,
+          target: route53.RecordTarget.fromAlias(
+            new r53targets.CloudFrontTarget(this.distribution),
+          ),
+        })
+      }
     }
 
-    this.siteUrl = cfg.domainName
-      ? `https://${cfg.domainName}`
-      : `https://${this.distribution.distributionDomainName}`
+    // The reachable URL is the first ACTUAL DNS record, not domainName
+    // (which may be a zone apex with no record pointing here at all, e.g.
+    // the preview env's `seqtek.com`). Falls back to the CloudFront
+    // default domain when there's no custom domain configured yet.
+    this.siteUrl =
+      cfg.dnsRecordNames.length > 0
+        ? `https://${cfg.dnsRecordNames[0]}`
+        : `https://${this.distribution.distributionDomainName}`
 
     // ----- Outputs -----
     new CfnOutput(this, 'DistributionDomainName', {
@@ -254,5 +356,16 @@ export class EdgeStack extends Stack {
       value: this.siteUrl,
       description: 'Public-facing URL for this environment (CloudFront default OR vanity domain).',
     })
+
+    // Separate output for the secondary lane (see compute-stack.ts) so a
+    // release deploy — which promotes ONLY that lane — can report and smoke-
+    // test the URL that actually changed, instead of the primary SiteUrl
+    // above (which a release deploy never touches).
+    if (cfg.secondaryLane) {
+      new CfnOutput(this, 'SecondaryLaneSiteUrl', {
+        value: `https://${cfg.secondaryLane.dnsRecordNames[0]}`,
+        description: 'Public-facing URL for the secondary (temporary PROD-preview) lane.',
+      })
+    }
   }
 }

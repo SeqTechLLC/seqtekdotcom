@@ -2,46 +2,82 @@ name: Deploy
 
 # PROMOTION MODEL — what deploys where, and why.
 #
-#   merge to `main`              →  STAGING / UAT  (seqtek-preview.com)
-#   publish a `vX.Y.Z` release   →  PRODUCTION     (CloudFront URL until cutover)
+#   push to `Preview`            →  preview.seqtek.com   (`-c env=preview`,
+#                                                          account [REDACTED_AWS_ACCOUNT_ID])
+#   merge to `main`              →  seqtek-preview.com   (`-c env=staging`,
+#                                                          account 600881993295)
+#   publish a `vX.Y.Z` release   →  ww3.seqtek.com       (`-c env=preview`,
+#                                                          SAME account/stack
+#                                                          as the Preview push
+#                                                          above — promotes
+#                                                          ONLY the secondary
+#                                                          lane, see below)
 #
-# Merging to main is NOT a production deploy. main is the preview/UAT
-# environment: every merged PR lands there immediately so it can be reviewed
-# against real infrastructure. Production moves only when a Release-Please
-# release is published — i.e. when someone merges the release PR, which cuts
-# the `vX.Y.Z` tag and the GitHub Release this workflow listens for. That is
-# the deliberate human gate on going live, and it is why cutting a release is
-# treated as an outward-facing action.
+# A release does NOT deploy the original, never-provisioned `envName: prod`
+# CDK env (decided 2026-08-12: that env has no AWS account, no infra, and
+# duplicating the whole stack set for a temporary lane made no sense once
+# ww3.seqtek.com — a second ECS task/service/target-group inside the SAME
+# `SeqtekPreviewCompute` stack, see compute-stack.ts `secondaryLane` — was
+# already standing in for it). A release instead re-synths that SAME stack
+# with `-c secondaryImageTag=vX.Y.Z`, which retargets ONLY the secondary
+# lane's task definition. The PRIMARY lane's task definition must not drift
+# just because a release ran, so `-c imageTag` is ALSO passed on a release —
+# pinned to whatever the primary lane is already running (resolved from the
+# live ECS service, see the "Resolve currently-deployed preview image tag"
+# step below), making that part of the synth a no-op. `IS_RELEASE` is the one
+# flag that distinguishes "ordinary preview push, both lanes move together"
+# from "release, only the secondary lane moves" — everything below that
+# affects secondaryImageTag / the pinned-tag step / which SiteUrl output gets
+# read is keyed on it.
+#
+# Merging to main is NOT a production-lane deploy — main is the SEPARATE
+# staging/UAT environment (its own account, its own `infra/cdk.json` block,
+# its own OIDC deploy role), reviewed independently of the two lanes above.
+# Promoting to ww3.seqtek.com happens only when a Release-Please release is
+# published — i.e. when someone merges the release PR, which cuts the
+# `vX.Y.Z` tag and the GitHub Release this workflow listens for. That is the
+# deliberate human gate on going live, and it is why cutting a release is
+# treated as an outward-facing action, gated by the `production` GitHub
+# Environment's protection rules exactly as before this changed what it
+# deploys.
 #
 # Release-Please tags are `vX.Y.Z` (`include-v-in-tag: true`,
 # `include-component-in-tag: false` in release-please-config.json).
 # `release-please.yml` dispatches this workflow after cutting one — see the
 # `release:` trigger below for why the release event alone is not enough.
 #
-# The deployed image is IMMUTABLE: `-c imageTag` stamps the LaunchTemplate with
-# `vX.Y.Z` on a release and the commit SHA otherwise, so an instance replaced
-# later re-pulls that exact build and rollback is a redeploy of an older tag.
+# The deployed image is IMMUTABLE: `-c imageTag`/`-c secondaryImageTag` stamp
+# the task definition with `vX.Y.Z` on a release and the commit SHA
+# otherwise, so a task replaced later re-pulls that exact build and rollback
+# is a redeploy of an older tag.
 #
 # `workflow_dispatch` exists for the cases a trigger can't cover: the FIRST
 # deploy into a fresh account (no release to replay), a stack-scoped redeploy,
-# or re-running a deploy without cutting a version.
+# or re-running a deploy without cutting a version. Its `env: prod` choice
+# takes the SAME release path (IS_RELEASE=true) for a manual promotion
+# without cutting an actual release.
 #
-# Account resolution: `vars.AWS_ACCOUNT_ID` is read from the GitHub *Environment*
-# (Settings → Environments → staging / production), falling back to the
-# repo-level variable — which is why staging keeps working untouched. The two
-# environments MAY live in different AWS accounts; the ECR repository and the
-# account-wide OIDC provider each have an explicit owner in `infra/cdk.json`
-# (`ownsAccountEcrRepository` / `ownsAccountOidcProvider`), set `true` on both
-# envs when they are split. See ARCHITECTURE.md § Environments & isolation.
+# Account resolution: `vars.AWS_ACCOUNT_ID` is read from the GitHub
+# *Environment* (Settings → Environments → preview / staging / production),
+# falling back to the repo-level variable — which is why staging keeps
+# working untouched (its account is the repo-level default; preview and
+# production each set their own environment-scoped override — both point at
+# [REDACTED_AWS_ACCOUNT_ID] today, since a release promotes a lane INSIDE the preview
+# account, not a separate one). The ECR repository and the account-wide OIDC
+# provider each have an explicit owner in `infra/cdk.json`
+# (`ownsAccountEcrRepository` / `ownsAccountOidcProvider`), set `true` on
+# every env that owns one in its own account. See ARCHITECTURE.md §
+# Environments & isolation.
 
 on:
   push:
     branches:
       - main
-    # Skip staging redeploy for changes that can't affect the running
-    # image. Release-Please's PR-merges and docs-only PRs both fall into
-    # this bucket. `paths-ignore` skips the workflow entirely if EVERY
-    # changed path matches — mixed code+docs commits still trigger.
+      - Preview
+    # Skip the redeploy for changes that can't affect the running image.
+    # Release-Please's PR-merges and docs-only PRs both fall into this
+    # bucket. `paths-ignore` skips the workflow entirely if EVERY changed
+    # path matches — mixed code+docs commits still trigger.
     paths-ignore:
       - CHANGELOG.md
       - .release-please-manifest.json
@@ -69,6 +105,7 @@ on:
         type: choice
         options:
           - staging
+          - preview
           - prod
       stack-filter:
         description: >-
@@ -92,40 +129,65 @@ env:
 
 # Pairs with CloudFormation's native stack-update lock — a second run started
 # while one is in flight queues rather than racing. Never cancel a deploy
-# mid-flight (FR-016). Keyed per env so a prod deploy never queues behind a
-# staging one.
+# mid-flight (FR-016). A release and a Preview push now touch the SAME
+# `SeqtekPreviewCompute` stack (see the promotion-model comment above), so
+# they share ONE concurrency group — a release racing a Preview push would
+# otherwise be a genuine CloudFormation concurrent-update conflict, not just
+# wasted queue time. Only `main` (staging, a different account/stack
+# entirely) gets its own group.
+#
+# `IS_TARGETING_PREVIEW_STACK` is repeated verbatim across `concurrency.group`
+# and `environment:` (and, via the same test, the `env:` block below) — job-
+# level `env:` is not in scope for `environment:`/`concurrency:` (they're
+# evaluated before it exists), so there's no single place to define it once.
 concurrency:
-  group: deploy-${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'prod' || 'staging' }}
+  group: deploy-${{ ((github.event_name == 'release' || github.event.inputs.env == 'prod') ||
+    (github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env ==
+    'preview') && 'preview' || 'staging' }}
   cancel-in-progress: false
 
 jobs:
   deploy:
     name: Build, push, deploy
     runs-on: ubuntu-latest
-    # `production` is the conventional GitHub Environment name and is where a
-    # required-reviewer gate would hang; staging stays `staging`. Job-level
-    # `env:` is not in scope for `environment:`/`concurrency:`, so the
-    # is-this-prod test is spelled out in each of those.
+    # THREE GitHub Environments even though there are only TWO CDK/AWS
+    # targets (preview account, staging account) — `production` stays the
+    # human-facing gate for the release path (required reviewers /
+    # tag-restricted deployment branch policy), even though it deploys into
+    # the SAME account/stack as `preview`. Collapsing it into the `preview`
+    # environment would mean an ordinary Preview-branch push could satisfy
+    # whatever protection rules are meant to gate a release.
     environment:
       ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'production' ||
-      'staging' }}
+      ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+      == 'preview') && 'preview' || 'staging' }}
     outputs:
       site-url: ${{ steps.site.outputs.url }}
     env:
-      # A release publish is ALWAYS prod; everything else honours the dispatch
-      # input and defaults to staging. STACK_PREFIX must match `stackName()` in
-      # infra/lib/construct-utils.ts: 'staging' → SeqtekStaging*, 'prod' → SeqtekProd*.
-      ENV_NAME:
-        ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'prod' ||
-        'staging' }}
-      STACK_PREFIX:
-        ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'SeqtekProd' ||
-        'SeqtekStaging' }}
-      ROLE_NAME: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') &&
-        'SeqtekProdDeploy' || 'SeqtekStagingDeploy' }}
-      STACK_FILTER:
-        ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'SeqtekProd' ||
-        'SeqtekStaging' }}${{ github.event.inputs.stack-filter || '*Compute' }}
+      # IS_RELEASE distinguishes "ordinary preview push — both lanes move
+      # together" from "release / manual prod promotion — ONLY the secondary
+      # (ww3) lane moves". Both paths deploy the SAME `env=preview` CDK
+      # stacks in the SAME account; they differ in image-tag wiring below and
+      # in which GitHub Environment gates them above.
+      IS_RELEASE: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'true' || 'false' }}
+      # A release, a Preview push, or a manual dispatch of either all target
+      # the 'preview' CDK env (account [REDACTED_AWS_ACCOUNT_ID]); only a plain `main`
+      # push (or dispatch env=staging) targets 'staging'. STACK_PREFIX must
+      # match `stackName()` in infra/lib/construct-utils.ts: 'staging' →
+      # SeqtekStaging*, 'preview' → SeqtekPreview*.
+      ENV_NAME: ${{ ((github.event_name == 'release' || github.event.inputs.env == 'prod') ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+        == 'preview') && 'preview' || 'staging' }}
+      STACK_PREFIX: ${{ ((github.event_name == 'release' || github.event.inputs.env == 'prod') ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+        == 'preview') && 'SeqtekPreview' || 'SeqtekStaging' }}
+      ROLE_NAME: ${{ ((github.event_name == 'release' || github.event.inputs.env == 'prod') ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+        == 'preview') && 'SeqtekPreviewDeploy' || 'SeqtekStagingDeploy' }}
+      STACK_FILTER: ${{ ((github.event_name == 'release' || github.event.inputs.env == 'prod') ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/Preview') || github.event.inputs.env
+        == 'preview') && 'SeqtekPreview' || 'SeqtekStaging'
+        }}${{ github.event.inputs.stack-filter || '*Compute' }}
     steps:
       # FAIL CLOSED on an unconfigured production environment.
       #
@@ -140,7 +202,7 @@ jobs:
       # environment once its deployment branch/tag policies (and reviewers, if
       # any) are in place — docs/INFRASTRUCTURE_RUNBOOK.md §1.2.
       - name: Refuse an unconfigured production environment
-        if: ${{ env.ENV_NAME == 'prod' }}
+        if: ${{ env.IS_RELEASE == 'true' }}
         run: |
           if [ "${{ vars.PROD_ENVIRONMENT_CONFIGURED }}" != "true" ]; then
             echo "::error::The 'production' GitHub Environment is not configured."
@@ -255,19 +317,63 @@ jobs:
       - name: Install infra dependencies
         run: npm --prefix infra ci
 
-      - name: cdk deploy (${{ env.STACK_FILTER }})
-        # `-c imageTag` stamps the LaunchTemplate with the IMMUTABLE tag just
-        # pushed — `vX.Y.Z` on a release, the commit SHA otherwise. An instance
-        # replaced later re-pulls that exact build rather than whatever a moving
-        # tag has come to point at, so a running production instance is
-        # traceable to a CHANGELOG entry and rollback is a redeploy of an older
-        # tag. It also means a staging merge has no moving tag to overwrite.
-        env:
-          IMAGE_TAG: ${{ steps.img.outputs.version-tag != '' && steps.img.outputs.version-tag ||
-            steps.img.outputs.sha-tag }}
+      # RELEASE PATH ONLY. A release must not drift the PRIMARY lane's task
+      # definition just because it ran — it promotes ONLY the secondary (ww3)
+      # lane. Re-synthing `SeqtekPreviewCompute` touches BOTH lanes' task
+      # definitions, so the primary lane's `-c imageTag` has to be pinned to
+      # whatever it is ALREADY running (read straight from the live ECS
+      # service), making that half of the synth a byte-for-byte no-op.
+      # Falling back to the compute-stack.ts default (`latest-preview`)
+      # instead would silently roll the primary lane back/forward to
+      # whatever that moving tag currently points at — exactly the drift
+      # this whole immutable-tag design exists to prevent.
+      - name: Resolve currently-deployed preview image tag (release path only)
+        id: pin
+        if: ${{ env.IS_RELEASE == 'true' }}
         run: |
-          echo "Deploying image tag: $IMAGE_TAG"
-          npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" -c imageTag="$IMAGE_TAG" "$STACK_FILTER" \
+          set -euo pipefail
+          CLUSTER=$(aws cloudformation describe-stacks \
+            --stack-name "${STACK_PREFIX}Compute" \
+            --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue | [0]" \
+            --output text)
+          SERVICE=$(aws cloudformation describe-stacks \
+            --stack-name "${STACK_PREFIX}Compute" \
+            --query "Stacks[0].Outputs[?OutputKey=='ServiceName'].OutputValue | [0]" \
+            --output text)
+          TASKDEF_ARN=$(aws ecs describe-services \
+            --cluster "$CLUSTER" --services "$SERVICE" \
+            --query 'services[0].taskDefinition' --output text)
+          IMAGE=$(aws ecs describe-task-definition \
+            --task-definition "$TASKDEF_ARN" \
+            --query 'taskDefinition.containerDefinitions[0].image' --output text)
+          PINNED_TAG="${IMAGE##*:}"
+          echo "Primary lane is currently running tag: ${PINNED_TAG}"
+          echo "pinned-image-tag=${PINNED_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: cdk deploy (${{ env.STACK_FILTER }})
+        # `-c imageTag` stamps the task definition with the IMMUTABLE tag just
+        # pushed — `vX.Y.Z` on a release, the commit SHA otherwise — so a task
+        # replaced later re-pulls that exact build rather than whatever a
+        # moving tag has come to point at, and rollback is a redeploy of an
+        # older tag. On a release, IMAGE_TAG is instead the PINNED tag from
+        # the step above (see its comment) and SECONDARY_IMAGE_TAG carries the
+        # new release tag onto ONLY the secondary lane.
+        env:
+          IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.pin.outputs.pinned-image-tag ||
+            (steps.img.outputs.version-tag != '' && steps.img.outputs.version-tag ||
+            steps.img.outputs.sha-tag) }}
+          SECONDARY_IMAGE_TAG:
+            ${{ env.IS_RELEASE == 'true' && (steps.img.outputs.version-tag != '' &&
+            steps.img.outputs.version-tag || steps.img.outputs.sha-tag) || '' }}
+        run: |
+          echo "Deploying primary-lane image tag: $IMAGE_TAG"
+          EXTRA_CONTEXT=()
+          if [ -n "$SECONDARY_IMAGE_TAG" ]; then
+            echo "Promoting secondary (ww3) lane to: $SECONDARY_IMAGE_TAG"
+            EXTRA_CONTEXT=(-c "secondaryImageTag=$SECONDARY_IMAGE_TAG")
+          fi
+          npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" -c imageTag="$IMAGE_TAG" \
+            "${EXTRA_CONTEXT[@]}" "$STACK_FILTER" \
             --require-approval never \
             --outputs-file cdk-outputs.json
 
@@ -288,14 +394,20 @@ jobs:
 
       - name: Resolve site URL (from ${{ env.STACK_PREFIX }}Edge output)
         id: site
+        # A release only ever changed the secondary lane, so it reports (and
+        # the smoke job below tests) SecondaryLaneSiteUrl — e.g.
+        # https://ww3.seqtek.com/ — not the primary SiteUrl, which a release
+        # never touches.
+        env:
+          OUTPUT_KEY: ${{ env.IS_RELEASE == 'true' && 'SecondaryLaneSiteUrl' || 'SiteUrl' }}
         run: |
           set -euo pipefail
           URL=$(aws cloudformation describe-stacks \
             --stack-name "${STACK_PREFIX}Edge" \
-            --query "Stacks[0].Outputs[?OutputKey=='SiteUrl'].OutputValue | [0]" \
+            --query "Stacks[0].Outputs[?OutputKey=='${OUTPUT_KEY}'].OutputValue | [0]" \
             --output text)
           if [ -z "$URL" ] || [ "$URL" = "None" ]; then
-            echo "Could not resolve ${STACK_PREFIX}Edge SiteUrl output."
+            echo "Could not resolve ${STACK_PREFIX}Edge ${OUTPUT_KEY} output."
             exit 1
           fi
           echo "url=${URL}" >> "$GITHUB_OUTPUT"
@@ -345,13 +457,19 @@ jobs:
   notify:
     name: Notify Slack
     needs: [deploy, smoke]
-    # Report every staging deploy outcome (success and failure), but stay quiet
-    # if the run was cancelled. A failed/skipped `deploy` makes `smoke` skip, so
-    # success requires BOTH jobs green.
+    # Report every deploy outcome (success and failure), but stay quiet if the
+    # run was cancelled. A failed/skipped `deploy` makes `smoke` skip, so
+    # success requires BOTH jobs green. `site-url` (e.g. https://preview.seqtek.com/)
+    # flows straight through from the `deploy` job's `Resolve site URL` step —
+    # slack-notify.yml renders it as a clickable link in the message.
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/slack-notify.yml
     with:
-      workflow-name: Deploy (${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'production' || 'staging' }})
+      workflow-name:
+        Deploy (${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') &&
+        'production' ||
+        ((github.event_name == 'push' && github.ref == 'refs/heads/Preview') ||
+        github.event.inputs.env == 'preview') && 'preview' || 'staging' }})
       status: ${{ (needs.deploy.result == 'success' && needs.smoke.result == 'success') && 'success' || 'failure' }}
       site-url: ${{ needs.deploy.outputs.site-url }}
     secrets: inherit

@@ -12,6 +12,10 @@ const stagingCfg: EnvConfig = {
   domainName: null,
   hostedZoneId: null,
   certificateArn: null,
+  certificateSans: [],
+  dnsRecordNames: [],
+  existingVpc: null,
+  secondaryLane: null,
   instanceClass: 't3',
   instanceSize: 'micro',
   rdsInstanceClass: 't3.micro',
@@ -30,6 +34,8 @@ const stagingWithDomainCfg: EnvConfig = {
   ...stagingCfg,
   domainName: 'seqtek-preview.com',
   hostedZoneId: 'Z01234567ABCDEF',
+  certificateSans: ['www.seqtek-preview.com'],
+  dnsRecordNames: ['seqtek-preview.com', 'www.seqtek-preview.com'],
 }
 
 function synthEdge(envName: 'prod' | 'staging', cfg: EnvConfig): Template {
@@ -146,15 +152,26 @@ describe('EdgeStack', () => {
       })
     })
 
-    it('provisions cloudfront_distribution_id so the invalidation hooks actually fire (spec 009 FR-011 follow-up)', () => {
-      // Without this param CLOUDFRONT_DISTRIBUTION_ID never reaches the
-      // container env and BOTH invalidation paths (page publishes per R-03
-      // and media replace/delete per spec 009 FR-011) silently skip —
-      // staging had ZERO invalidations ever before this landed. The
-      // user-data loop maps the basename to CLOUDFRONT_DISTRIBUTION_ID.
-      t.hasResourceProperties('AWS::SSM::Parameter', {
-        Name: '/seqtek/website/staging/cloudfront_distribution_id',
-        Type: 'String',
+    it('writes the real distribution ID into cloudfront_distribution_id so the invalidation hooks actually fire (spec 009 FR-011 follow-up)', () => {
+      // Without this reaching CLOUDFRONT_DISTRIBUTION_ID, both invalidation
+      // paths (page publishes per R-03, media replace/delete per spec 009
+      // FR-011) silently skip — staging had ZERO invalidations ever before
+      // this landed.
+      //
+      // The PARAMETER RESOURCE itself is owned by DataStack (a placeholder
+      // that exists from the very first deploy — see data-stack.test.ts) so
+      // Compute's Fargate tasks never reference a nonexistent named secret.
+      // EdgeStack only WRITES the real value once the distribution exists,
+      // via a custom resource (Custom::AWS) making a direct SSM
+      // putParameter call — not a second CDK-owned ssm.StringParameter,
+      // which would collide with DataStack's.
+      t.hasResourceProperties('Custom::AWS', {
+        Create: {
+          'Fn::Join': [
+            '',
+            Match.arrayWith([Match.stringLikeRegexp('.*cloudfront_distribution_id.*')]),
+          ],
+        },
       })
     })
 
@@ -228,6 +245,88 @@ describe('EdgeStack', () => {
 
     it('creates Route53 A records for apex + www', () => {
       t.resourceCountIs('AWS::Route53::RecordSet', 2)
+    })
+
+    it('does NOT create a CloudFront Function when there is no secondaryLane', () => {
+      t.resourceCountIs('AWS::CloudFront::Function', 0)
+    })
+
+    it('does NOT emit a SecondaryLaneSiteUrl output when there is no secondaryLane', () => {
+      const outputs = t.findOutputs('*')
+      expect(outputs).not.toHaveProperty('SecondaryLaneSiteUrl')
+    })
+  })
+
+  describe('staging with a secondaryLane (temporary ww3.seqtek.com PROD-preview lane)', () => {
+    const t = synthEdge('staging', {
+      ...stagingWithDomainCfg,
+      certificateSans: ['www.seqtek-preview.com', '*.seqtek-preview.com'],
+      secondaryLane: {
+        name: 'prod',
+        databaseName: 'seqtek_prod',
+        dnsRecordNames: ['ww3.seqtek-preview.com'],
+      },
+    })
+
+    it('creates a CloudFront Function that copies Host into x-forwarded-host', () => {
+      t.resourceCountIs('AWS::CloudFront::Function', 1)
+      const fns = t.findResources('AWS::CloudFront::Function')
+      const [, fn] = Object.entries(fns)[0]!
+      const code = (fn.Properties as { FunctionCode: string }).FunctionCode
+      expect(code).toContain('x-forwarded-host')
+      expect(code).toContain('request.headers.host.value')
+    })
+
+    it('attaches the function as a viewer-request association on the default + ALB-backed behaviors', () => {
+      const dists = t.findResources('AWS::CloudFront::Distribution')
+      const [, dist] = Object.entries(dists)[0]!
+      const config = (
+        dist.Properties as {
+          DistributionConfig: {
+            DefaultCacheBehavior: { FunctionAssociations?: Array<{ EventType: string }> }
+            CacheBehaviors?: Array<{
+              PathPattern: string
+              FunctionAssociations?: Array<{ EventType: string }>
+            }>
+          }
+        }
+      ).DistributionConfig
+      expect(config.DefaultCacheBehavior.FunctionAssociations?.[0]?.EventType).toBe(
+        'viewer-request',
+      )
+      const albBackedPaths = ['/admin/*', '/api/*', '/_next/static/*']
+      for (const path of albBackedPaths) {
+        const behavior = config.CacheBehaviors?.find((b) => b.PathPattern === path)
+        expect(
+          behavior?.FunctionAssociations?.[0]?.EventType,
+          `${path} should have the Host-forwarding function attached`,
+        ).toBe('viewer-request')
+      }
+      // /media/* goes to the S3 origin, not the ALB — no Host-header
+      // routing ambiguity there, so no function association expected.
+      const mediaBehavior = config.CacheBehaviors?.find((b) => b.PathPattern === '/media/*')
+      expect(mediaBehavior?.FunctionAssociations).toBeUndefined()
+    })
+
+    it('distribution aliases include the secondaryLane dnsRecordNames on top of the primary ones', () => {
+      t.hasResourceProperties('AWS::CloudFront::Distribution', {
+        DistributionConfig: Match.objectLike({
+          Aliases: Match.arrayWith([
+            'seqtek-preview.com',
+            'www.seqtek-preview.com',
+            'ww3.seqtek-preview.com',
+          ]),
+        }),
+      })
+    })
+
+    it('creates a Route53 A record for the secondaryLane on top of the primary records', () => {
+      t.resourceCountIs('AWS::Route53::RecordSet', 3)
+    })
+
+    it('emits a SecondaryLaneSiteUrl output distinct from the primary SiteUrl', () => {
+      t.hasOutput('SecondaryLaneSiteUrl', { Value: 'https://ww3.seqtek-preview.com' })
+      t.hasOutput('SiteUrl', { Value: 'https://seqtek-preview.com' })
     })
   })
 })

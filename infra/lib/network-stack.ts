@@ -27,30 +27,93 @@ export class NetworkStack extends Stack {
   constructor(scope: Construct, id: string, props: NetworkStackProps) {
     super(scope, id, props)
 
-    // 10.0.0.0/16 per env, 2 AZs, public + isolated tiers only.
-    // No NAT gateway during the validation period (Clarifications Session
-    // 2026-05-26): ASG runs in public subnets with strictly-scoped SGs.
-    // At Phase 5.5 launch readiness, add a PRIVATE_WITH_EGRESS tier + NAT
-    // (or VPC endpoints) and flip the ASG subnet placement — see
-    // ROADMAP §4 Phase 5.5.
-    this.vpc = new ec2.Vpc(this, 'Vpc', {
-      ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
-      maxAzs: 2,
-      natGateways: 0,
-      restrictDefaultSecurityGroup: true,
-      subnetConfiguration: [
-        {
-          name: 'public',
-          subnetType: ec2.SubnetType.PUBLIC,
-          cidrMask: 24,
-        },
-        {
-          name: 'isolated',
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-          cidrMask: 24,
-        },
-      ],
-    })
+    if (props.cfg.existingVpc) {
+      // ----- Import + extend an EXISTING VPC (see EnvConfig.existingVpc doc) -----
+      //
+      // Reuses the account's existing VPC + Internet Gateway (both already at
+      // their account-level quota) instead of creating new ones. Only adds
+      // what's actually missing: one subnet pair in a SECOND az, because the
+      // existing VPC's subnets are all in one AZ, and both the ALB and RDS's
+      // subnet group independently require 2. Nothing about the VPC's
+      // existing subnets, route tables, or default security group is
+      // touched — other infrastructure already lives in this VPC.
+      const ev = props.cfg.existingVpc
+
+      const newPublicSubnet = new ec2.CfnSubnet(this, 'SecondaryPublicSubnet', {
+        vpcId: ev.vpcId,
+        cidrBlock: ev.secondaryPublicCidr,
+        availabilityZone: ev.secondaryAz,
+        mapPublicIpOnLaunch: true,
+        tags: [{ key: 'Name', value: `${this.stackName}-public-${ev.secondaryAz}` }],
+      })
+      const newPublicRouteTable = new ec2.CfnRouteTable(this, 'SecondaryPublicRouteTable', {
+        vpcId: ev.vpcId,
+        tags: [{ key: 'Name', value: `${this.stackName}-public-${ev.secondaryAz}` }],
+      })
+      new ec2.CfnRoute(this, 'SecondaryPublicDefaultRoute', {
+        routeTableId: newPublicRouteTable.ref,
+        destinationCidrBlock: '0.0.0.0/0',
+        gatewayId: ev.igwId,
+      })
+      new ec2.CfnSubnetRouteTableAssociation(this, 'SecondaryPublicRouteTableAssoc', {
+        subnetId: newPublicSubnet.ref,
+        routeTableId: newPublicRouteTable.ref,
+      })
+
+      const newIsolatedSubnet = new ec2.CfnSubnet(this, 'SecondaryIsolatedSubnet', {
+        vpcId: ev.vpcId,
+        cidrBlock: ev.secondaryIsolatedCidr,
+        availabilityZone: ev.secondaryAz,
+        mapPublicIpOnLaunch: false,
+        tags: [{ key: 'Name', value: `${this.stackName}-isolated-${ev.secondaryAz}` }],
+      })
+      const newIsolatedRouteTable = new ec2.CfnRouteTable(this, 'SecondaryIsolatedRouteTable', {
+        vpcId: ev.vpcId,
+        tags: [{ key: 'Name', value: `${this.stackName}-isolated-${ev.secondaryAz}` }],
+      })
+      // No default route on this table — matches PRIVATE_ISOLATED semantics
+      // (RDS has no need to reach the internet).
+      new ec2.CfnSubnetRouteTableAssociation(this, 'SecondaryIsolatedRouteTableAssoc', {
+        subnetId: newIsolatedSubnet.ref,
+        routeTableId: newIsolatedRouteTable.ref,
+      })
+
+      // `fromVpcAttributes` with explicit per-AZ subnet ID arrays makes
+      // `vpcSubnets: { subnetType: PUBLIC | PRIVATE_ISOLATED }` in
+      // data-stack.ts / compute-stack.ts resolve to [existing, new] for
+      // each tier automatically — no changes needed at those call sites.
+      this.vpc = ec2.Vpc.fromVpcAttributes(this, 'Vpc', {
+        vpcId: ev.vpcId,
+        availabilityZones: [ev.primaryAz, ev.secondaryAz],
+        publicSubnetIds: [ev.publicSubnetId, newPublicSubnet.ref],
+        isolatedSubnetIds: [ev.isolatedSubnetId, newIsolatedSubnet.ref],
+      })
+    } else {
+      // 10.0.0.0/16 per env, 2 AZs, public + isolated tiers only.
+      // No NAT gateway during the validation period (Clarifications Session
+      // 2026-05-26): ASG runs in public subnets with strictly-scoped SGs.
+      // At Phase 5.5 launch readiness, add a PRIVATE_WITH_EGRESS tier + NAT
+      // (or VPC endpoints) and flip the ASG subnet placement — see
+      // ROADMAP §4 Phase 5.5.
+      this.vpc = new ec2.Vpc(this, 'Vpc', {
+        ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
+        maxAzs: 2,
+        natGateways: 0,
+        restrictDefaultSecurityGroup: true,
+        subnetConfiguration: [
+          {
+            name: 'public',
+            subnetType: ec2.SubnetType.PUBLIC,
+            cidrMask: 24,
+          },
+          {
+            name: 'isolated',
+            subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+            cidrMask: 24,
+          },
+        ],
+      })
+    }
 
     // ALB — ingress only from the CloudFront managed prefix list. 443
     // is the viewer-facing path (TLS terminates at CloudFront, plaintext

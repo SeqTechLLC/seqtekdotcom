@@ -166,14 +166,41 @@ export class DataStack extends Stack {
     // pre-cutover prod (domainName: null) runs on the CloudFront-default URL
     // and inherits this param when domainName flips at Phase 6 cutover
     // (config-only inheritance, spec 009 FR-008).
-    if (cfg.domainName !== null) {
+    // Uses dnsRecordNames[0], not domainName — domainName is the CERTIFICATE's
+    // domain (may be a zone apex like 'seqtek.com' with no DNS actually
+    // pointing at this environment yet, e.g. the preview env); dnsRecordNames
+    // is what's ACTUALLY reachable. Using domainName here would poison
+    // Payload's serverURL / canonical / OG tags with a hostname that doesn't
+    // resolve to this deployment.
+    if (cfg.dnsRecordNames.length > 0) {
       new ssm.StringParameter(this, 'NextPublicSiteUrlParam', {
         parameterName: `${this.parameterPathPrefix}/next_public_site_url`,
-        stringValue: `https://${cfg.domainName}`,
+        stringValue: `https://${cfg.dnsRecordNames[0]}`,
         description:
           'Public site origin for Payload serverURL + absolute URLs (NEXT_PUBLIC_SITE_URL).',
       })
     }
+
+    // ----- CloudFront distribution ID placeholder -----
+    // Owned HERE (not in EdgeStack) so it exists from the very FIRST
+    // deploy, before EdgeStack has ever run. EdgeStack depends on Compute
+    // (for the ALB origin), and Compute's Fargate task definition
+    // references this parameter's NAME as an ECS "secret" — if the named
+    // parameter doesn't exist at all when a task tries to start, ECS fails
+    // the task outright (ResourceInitializationError), which fails the
+    // whole deploy via the circuit breaker. A placeholder value sidesteps
+    // that: the app already treats an unrecognized CLOUDFRONT_DISTRIBUTION_ID
+    // as "skip invalidations" (fail-open, see spec 009 FR-011), so 'unset'
+    // is a safe placeholder. EdgeStack overwrites this SAME parameter with
+    // the real distribution ID via a custom resource once the distribution
+    // exists — see edge-stack.ts.
+    new ssm.StringParameter(this, 'CloudFrontDistributionIdParam', {
+      parameterName: `${this.parameterPathPrefix}/cloudfront_distribution_id`,
+      stringValue: 'unset',
+      description:
+        'CloudFront distribution ID for targeted invalidations (CLOUDFRONT_DISTRIBUTION_ID). ' +
+        "Placeholder 'unset' until EdgeStack's first deploy overwrites it.",
+    })
 
     // ----- Outputs -----
     new CfnOutput(this, 'DbEndpointHostname', {

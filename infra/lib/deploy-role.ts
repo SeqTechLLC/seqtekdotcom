@@ -1,7 +1,7 @@
 import { Duration, Fn, Stack } from 'aws-cdk-lib'
 import * as iam from 'aws-cdk-lib/aws-iam'
 import { Construct } from 'constructs'
-import type { EnvName } from './construct-utils'
+import { stackPrefix, type EnvName } from './construct-utils'
 
 /**
  * GitHub Actions OIDC subject-claim patterns.
@@ -63,8 +63,7 @@ export class DeployRoles extends Construct {
     const provider = this.getOrCreateOidcProvider(props.ownsAccountOidcProvider)
 
     const subClaim = props.envName === 'prod' ? PROD_SUB_CLAIM : STAGING_SUB_CLAIM
-    const stackName = props.envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
-    const roleName = `${stackName}Deploy`
+    const roleName = `${stackPrefix(props.envName)}Deploy`
 
     this.deployRole = new iam.Role(this, 'DeployRole', {
       roleName,
@@ -125,7 +124,7 @@ export class DeployRoles extends Construct {
     const stack = Stack.of(role)
     const account = stack.account
     const region = stack.region
-    const stackPrefix = envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
+    const envStackPrefix = stackPrefix(envName)
 
     // CloudFormation operations on this env's stacks only
     role.addToPolicy(
@@ -149,7 +148,7 @@ export class DeployRoles extends Construct {
           'cloudformation:ExecuteChangeSet',
           'cloudformation:ListChangeSets',
         ],
-        resources: [`arn:aws:cloudformation:${region}:${account}:stack/${stackPrefix}*`],
+        resources: [`arn:aws:cloudformation:${region}:${account}:stack/${envStackPrefix}*`],
       }),
     )
 
@@ -217,23 +216,45 @@ export class DeployRoles extends Construct {
       }),
     )
 
-    // ASG instance refresh — split into two statements because the
-    // autoscaling:Describe* actions do NOT support resource-level
-    // permissions per AWS docs (must be Resource: "*"), whereas the
-    // mutating Start/Cancel actions CAN be scoped to a specific ASG.
+    // ECS service/task-definition deploy — replaces the old ASG
+    // instance-refresh grant above (there is no ASG on the Fargate
+    // compute stack). Split for the same reason the ASG version was:
+    // ecs:RegisterTaskDefinition authorizes against a revision that
+    // doesn't exist yet, so AWS requires Resource: "*"; Describe/List
+    // actions are likewise not resource-level-scopable per AWS's ECS
+    // action reference. UpdateService and DeregisterTaskDefinition CAN
+    // be scoped, same prefix convention as every other env-scoped grant
+    // in this file — CloudFormation's default physical-name generation
+    // embeds the stack name, same as it did for the ASG.
+    //
+    // FLAG FOR VERIFICATION: unlike the ASG grant it replaces (which
+    // had shipped and been deploy-tested), this exact action list has
+    // NOT been exercised against a real `cdk deploy` yet. Confirm with
+    // a `staging`/`preview` deploy attempt before relying on it for
+    // production; ECS resource-level permission support has enough
+    // action-by-action edge cases that AWS's own docs are the
+    // authoritative check, not this comment.
     role.addToPolicy(
       new iam.PolicyStatement({
-        sid: 'AsgInstanceRefreshMutate',
-        actions: ['autoscaling:StartInstanceRefresh', 'autoscaling:CancelInstanceRefresh'],
+        sid: 'EcsServiceDeployMutate',
+        actions: ['ecs:UpdateService', 'ecs:DeregisterTaskDefinition', 'ecs:TagResource'],
         resources: [
-          `arn:aws:autoscaling:${region}:${account}:autoScalingGroup:*:autoScalingGroupName/${stackPrefix}*`,
+          `arn:aws:ecs:${region}:${account}:service/${envStackPrefix}*/${envStackPrefix}*`,
+          `arn:aws:ecs:${region}:${account}:task-definition/${envStackPrefix}*:*`,
         ],
       }),
     )
     role.addToPolicy(
       new iam.PolicyStatement({
-        sid: 'AsgInstanceRefreshDescribe',
-        actions: ['autoscaling:DescribeInstanceRefreshes', 'autoscaling:DescribeAutoScalingGroups'],
+        sid: 'EcsRegisterAndDescribe',
+        actions: [
+          'ecs:RegisterTaskDefinition',
+          'ecs:DescribeServices',
+          'ecs:DescribeTaskDefinition',
+          'ecs:DescribeTasks',
+          'ecs:ListTasks',
+          'ecs:DescribeClusters',
+        ],
         resources: ['*'],
       }),
     )

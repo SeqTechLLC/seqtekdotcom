@@ -13,6 +13,55 @@ export interface EnvConfig {
   hostedZoneId: string | null
   certificateArn: string | null
 
+  /**
+   * Extra names on the ACM certificate beyond `domainName` itself — e.g.
+   * `['*.seqtek.com']` for a wildcard covering every subdomain, or
+   * `['www.seqtek-preview.com']` for a single explicit name. A certificate
+   * existing does not redirect any traffic by itself; it only lists which
+   * names this AWS distribution is ALLOWED to serve HTTPS for. Ignored
+   * when `domainName` is null.
+   */
+  certificateSans: string[]
+
+  /**
+   * Route53 record names to actually CREATE and point at the CloudFront
+   * distribution — this is the part that changes what visitors see.
+   * Deliberately separate from `certificateSans`: a cert can cover
+   * `seqtek.com` + `*.seqtek.com` while `dnsRecordNames` creates ONLY
+   * `preview.seqtek.com`, leaving the zone's existing `seqtek.com` /
+   * `www.seqtek.com` records (pointing at whatever they point at today)
+   * completely untouched. Every entry must be an exact name the
+   * certificate covers (itself or via a `certificateSans` wildcard/SAN).
+   * Ignored when `domainName` is null.
+   */
+  dnsRecordNames: string[]
+
+  /**
+   * When set, NetworkStack imports this EXISTING VPC instead of creating a
+   * new one, and adds one new subnet pair (public + isolated) in
+   * `secondaryAz` to satisfy the ALB's and RDS's independent 2-AZ
+   * requirements — rather than creating a whole new VPC just for that.
+   * `null` (prod/staging today) creates a fresh dedicated VPC as before;
+   * this is a per-env opt-in, not a behavior change for existing envs.
+   *
+   * `preview` uses this to reuse the account's existing `SeqtekDeploy` VPC
+   * (which pre-dates this codebase — see `cdk.json`'s comment) instead of
+   * requesting a VPC quota increase, since the account was already at its
+   * 5-VPC-per-region limit. The IGW is reused too (also already at its
+   * account limit) — only the two new subnets, their route tables, and the
+   * routes/associations are created.
+   */
+  existingVpc: {
+    vpcId: string
+    igwId: string
+    publicSubnetId: string
+    isolatedSubnetId: string
+    primaryAz: string
+    secondaryAz: string
+    secondaryPublicCidr: string
+    secondaryIsolatedCidr: string
+  } | null
+
   instanceClass: 't3' | 't4g' | 'm5'
   instanceSize: 'micro' | 'small' | 'medium' | 'large'
   asgMinCapacity: number
@@ -57,9 +106,39 @@ export interface EnvConfig {
    * flipping either would mean destroying and recreating a live resource.
    */
   ownsAccountEcrRepository: boolean
+
+  /**
+   * Optional second application lane sharing THIS env's cluster, ALB, and
+   * RDS instance instead of standing up a whole separate env's worth of
+   * stacks. Added for the temporary `ww3.seqtek.com` PROD-preview lane
+   * (2026-08-11): a second ECS task definition/service/target group behind
+   * the same ALB (new host-header-routed listener rule), and a second
+   * Postgres DATABASE on the SAME RDS instance (`databaseName` here, NOT a
+   * new `rds.DatabaseInstance` — Postgres supports multiple isolated
+   * databases per instance). The new database is created by the lane's own
+   * container startup command (`CREATE DATABASE IF NOT EXISTS`-equivalent
+   * check via the `pg` client already in node_modules), not a CDK/CFN
+   * resource — CloudFormation has no native "Postgres database inside an
+   * existing instance" resource type.
+   *
+   * `dnsRecordNames` here work the same as the top-level field: added to
+   * the CloudFront distribution's alias list AND get real Route53 A
+   * records, on top of (not replacing) the top-level `dnsRecordNames`.
+   * Every entry must already be covered by the top-level `certificateSans`
+   * (e.g. `*.seqtek.com` covers `ww3.seqtek.com` with zero new cert
+   * validation). `null` for every env that doesn't need a second lane.
+   */
+  secondaryLane: {
+    /** Short slug used in resource IDs/names — e.g. 'prod'. */
+    name: string
+    /** New database name on the SAME RDS instance — e.g. 'seqtek_prod'. */
+    databaseName: string
+    /** Route53 record names for this lane only — e.g. ['ww3.seqtek.com']. */
+    dnsRecordNames: string[]
+  } | null
 }
 
-export type EnvName = 'prod' | 'staging'
+export type EnvName = 'prod' | 'staging' | 'preview'
 
 /**
  * Validates an `EnvConfig` from `cdk.json`. Throws with a clear message
@@ -101,6 +180,38 @@ export function validateEnvConfig(env: EnvName, cfg: EnvConfig): void {
         `${prefix}.domainName is set ('${cfg.domainName}') but hostedZoneId is null. Both must be set together so CDK can provision the ACM cert via DNS validation.`,
       )
     }
+    if (cfg.dnsRecordNames.length === 0) {
+      throw new Error(
+        `${prefix}.domainName is set but dnsRecordNames is empty. Nothing would actually be reachable — ` +
+          'a cert with no DNS record pointing at the distribution serves no traffic. Set at least one name ' +
+          '(it must be domainName itself or covered by a certificateSans wildcard/SAN).',
+      )
+    }
+  }
+
+  if (cfg.existingVpc !== null) {
+    const ev = cfg.existingVpc
+    const required: Array<[string, string]> = [
+      ['vpcId', ev.vpcId],
+      ['igwId', ev.igwId],
+      ['publicSubnetId', ev.publicSubnetId],
+      ['isolatedSubnetId', ev.isolatedSubnetId],
+      ['primaryAz', ev.primaryAz],
+      ['secondaryAz', ev.secondaryAz],
+      ['secondaryPublicCidr', ev.secondaryPublicCidr],
+      ['secondaryIsolatedCidr', ev.secondaryIsolatedCidr],
+    ]
+    for (const [field, value] of required) {
+      if (!value) {
+        throw new Error(`${prefix}.existingVpc.${field} is required when existingVpc is set.`)
+      }
+    }
+    if (ev.primaryAz === ev.secondaryAz) {
+      throw new Error(
+        `${prefix}.existingVpc.primaryAz and secondaryAz must differ — that is the whole point ` +
+          '(ALB and RDS subnet groups both require 2 distinct AZs).',
+      )
+    }
   }
 
   if (typeof cfg.ownsAccountOidcProvider !== 'boolean') {
@@ -120,6 +231,28 @@ export function validateEnvConfig(env: EnvName, cfg: EnvConfig): void {
   if (cfg.logRetentionDays < 1) {
     throw new Error(`${prefix}.logRetentionDays must be >= 1; got ${cfg.logRetentionDays}`)
   }
+
+  if (cfg.secondaryLane !== null) {
+    const lane = cfg.secondaryLane
+    if (!lane.name) {
+      throw new Error(`${prefix}.secondaryLane.name is required when secondaryLane is set.`)
+    }
+    if (!lane.databaseName) {
+      throw new Error(`${prefix}.secondaryLane.databaseName is required when secondaryLane is set.`)
+    }
+    if (lane.dnsRecordNames.length === 0) {
+      throw new Error(
+        `${prefix}.secondaryLane.dnsRecordNames must be non-empty — a second lane with nothing ` +
+          'routed to it would deploy dead infrastructure.',
+      )
+    }
+    if (cfg.domainName === null || cfg.hostedZoneId === null) {
+      throw new Error(
+        `${prefix}.secondaryLane requires domainName + hostedZoneId to be set — it reuses the ` +
+          "env's existing ACM cert/hosted zone, it doesn't provision its own.",
+      )
+    }
+  }
 }
 
 /**
@@ -129,10 +262,10 @@ export function validateEnvConfig(env: EnvName, cfg: EnvConfig): void {
 export function resolveEnv(app: App): { env: EnvName; cfg: EnvConfig } {
   const envCtx = app.node.tryGetContext('env')
   if (!envCtx) {
-    throw new Error('Required CDK context: -c env=prod|staging (no default).')
+    throw new Error('Required CDK context: -c env=prod|staging|preview (no default).')
   }
-  if (envCtx !== 'prod' && envCtx !== 'staging') {
-    throw new Error(`Unknown env: '${envCtx}'. Expected 'prod' or 'staging'.`)
+  if (envCtx !== 'prod' && envCtx !== 'staging' && envCtx !== 'preview') {
+    throw new Error(`Unknown env: '${envCtx}'. Expected 'prod', 'staging', or 'preview'.`)
   }
   const env = envCtx as EnvName
 
@@ -154,8 +287,21 @@ export function resolveEnv(app: App): { env: EnvName; cfg: EnvConfig } {
  * Examples: stackName('prod', 'Network') → 'SeqtekProdNetwork'.
  */
 export function stackName(env: EnvName, kind: string): string {
-  const envPart = env[0]!.toUpperCase() + env.slice(1)
-  return `Seqtek${envPart}${kind}`
+  return `${stackPrefix(env)}${kind}`
+}
+
+/**
+ * The `Seqtek<Env>` prefix shared by every stack/role/resource name in an
+ * env — e.g. `stackPrefix('preview')` → `'SeqtekPreview'`. Was previously
+ * duplicated as an inline `envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'`
+ * ternary in `deploy-role.ts` and `observability-stack.ts`; that hardcoded
+ * the non-prod branch to `'SeqtekStaging'` specifically, which silently
+ * mis-scoped IAM policies to nonexistent `SeqtekStaging*` ARNs for any
+ * THIRD env name (like `preview`) instead of the real `SeqtekPreview*`
+ * stacks. Centralizing here makes it correct for any `EnvName`.
+ */
+export function stackPrefix(env: EnvName): string {
+  return `Seqtek${env[0]!.toUpperCase()}${env.slice(1)}`
 }
 
 /**
