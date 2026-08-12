@@ -65,7 +65,7 @@
         "ownsAccountEcrRepository": true
       },
       "preview": {
-        "_comment_domain": "Account [REDACTED_AWS_ACCOUNT_ID] — NOT a fresh/dedicated account (corrected 2026-08-10 after initial deploy attempt hit the account's 5-VPC-per-region limit): it already runs other real infrastructure (an 'intranet-sequred' ECS/FusionAuth/wiki stack, an RDS 'warehouse' database, and WordPress/SEO-hosting security groups under the Seqtek name in the SeqtekDeploy VPC). Cert covers seqtek.com + *.seqtek.com (reusable for any future subdomain with zero re-validation), but dnsRecordNames creates ONLY preview.seqtek.com — the zone's existing seqtek.com (A -> 89.106.200.1) and www.seqtek.com (CNAME -> client.gushwork.net) records are untouched. Hosted zone ZDNRI358EUS3R confirmed to already live in this same account.",
+        "_comment_domain": "This account is NOT a fresh/dedicated account (corrected 2026-08-10 after initial deploy attempt hit the account's 5-VPC-per-region limit): it already runs other real infrastructure (an 'intranet-sequred' ECS/FusionAuth/wiki stack, an RDS 'warehouse' database, and WordPress/SEO-hosting security groups under the Seqtek name in the SeqtekDeploy VPC). Cert covers seqtek.com + *.seqtek.com (reusable for any future subdomain with zero re-validation), but dnsRecordNames creates ONLY preview.seqtek.com — the zone's existing seqtek.com (A -> 89.106.200.1) and www.seqtek.com (CNAME -> client.gushwork.net) records are untouched. Hosted zone ZDNRI358EUS3R confirmed to already live in this same account.",
         "_comment_sizing": "Mirrors staging's validation-period free-tier-eligible sizing — this is a testing environment, not launch-readiness scale.",
         "region": "us-east-1",
         "domainName": "seqtek.com",

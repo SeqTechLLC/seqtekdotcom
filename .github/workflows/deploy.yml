@@ -2,10 +2,11 @@ name: Deploy
 
 # PROMOTION MODEL — what deploys where, and why.
 #
-#   push to `Preview`            →  preview.seqtek.com   (`-c env=preview`,
-#                                                          account [REDACTED_AWS_ACCOUNT_ID])
+#   push to `Preview`            →  preview.seqtek.com   (`-c env=preview`)
 #   merge to `main`              →  seqtek-preview.com   (`-c env=staging`,
-#                                                          account 600881993295)
+#                                                          a SEPARATE AWS
+#                                                          account from
+#                                                          preview's)
 #   publish a `vX.Y.Z` release   →  ww3.seqtek.com       (`-c env=preview`,
 #                                                          SAME account/stack
 #                                                          as the Preview push
@@ -62,7 +63,7 @@ name: Deploy
 # falling back to the repo-level variable — which is why staging keeps
 # working untouched (its account is the repo-level default; preview and
 # production each set their own environment-scoped override — both point at
-# [REDACTED_AWS_ACCOUNT_ID] today, since a release promotes a lane INSIDE the preview
+# the SAME account today, since a release promotes a lane INSIDE the preview
 # account, not a separate one). The ECR repository and the account-wide OIDC
 # provider each have an explicit owner in `infra/cdk.json`
 # (`ownsAccountEcrRepository` / `ownsAccountOidcProvider`), set `true` on
@@ -171,8 +172,8 @@ jobs:
       # in which GitHub Environment gates them above.
       IS_RELEASE: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'true' || 'false' }}
       # A release, a Preview push, or a manual dispatch of either all target
-      # the 'preview' CDK env (account [REDACTED_AWS_ACCOUNT_ID]); only a plain `main`
-      # push (or dispatch env=staging) targets 'staging'. STACK_PREFIX must
+      # the 'preview' CDK env; only a plain `main` push (or dispatch
+      # env=staging) targets 'staging'. STACK_PREFIX must
       # match `stackName()` in infra/lib/construct-utils.ts: 'staging' →
       # SeqtekStaging*, 'preview' → SeqtekPreview*.
       ENV_NAME: ${{ ((github.event_name == 'release' || github.event.inputs.env == 'prod') ||
