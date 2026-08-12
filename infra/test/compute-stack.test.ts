@@ -430,6 +430,24 @@ describe('ComputeStack', () => {
       })
     })
 
+    it('passes COGNITO_LOGOUT_URL and COGNITO_CLIENT_ID to both lanes for the app-level gate-logout route', () => {
+      // src/app/(payload)/api/auth/gate-logout/route.ts needs these to
+      // build the Cognito /logout redirect — ALB has no logout endpoint
+      // of its own, so the app has to drive it.
+      const taskDefs = t.findResources('AWS::ECS::TaskDefinition')
+      const allEnvVars = Object.values(taskDefs).flatMap(
+        (td) =>
+          (
+            td.Properties as {
+              ContainerDefinitions: Array<{ Environment?: Array<{ Name: string }> }>
+            }
+          ).ContainerDefinitions[0]?.Environment ?? [],
+      )
+      const names = allEnvVars.map((e) => e.Name)
+      expect(names.filter((n) => n === 'COGNITO_LOGOUT_URL')).toHaveLength(2)
+      expect(names.filter((n) => n === 'COGNITO_CLIENT_ID')).toHaveLength(2)
+    })
+
     it('wraps the primary lane default action in authenticate-oidc before forwarding', () => {
       // OnUnauthenticatedRequest defaults to AUTHENTICATE per CDK's own
       // docs, but CDK omits the property from the template rather than

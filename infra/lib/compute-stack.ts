@@ -74,6 +74,21 @@ export class ComputeStack extends Stack {
     super(scope, id, props)
     const { envName, cfg, network, data } = props
 
+    // ----- Optional Cognito gate (see EnvConfig.cognitoAuthEnabled doc) -----
+    // Built FIRST, before anything else in this constructor references it —
+    // the primary lane's container environment (COGNITO_LOGOUT_URL /
+    // COGNITO_CLIENT_ID, below) and the target-group/listener-action
+    // wiring further down all need the SAME User Pool/Client/Domain when
+    // gating is on.
+    const gatedHostnames = [...cfg.dnsRecordNames, ...(cfg.secondaryLane?.dnsRecordNames ?? [])]
+    const cognitoGate = cfg.cognitoAuthEnabled
+      ? new CognitoAuthGate(this, 'AuthGate', {
+          envName,
+          gatedHostnames,
+          parameterPathPrefix: data.parameterPathPrefix,
+        })
+      : undefined
+
     // ----- ECR repository -----
     // Unchanged from the EC2 version — see the original comment block
     // in git history for the full ownership-model rationale. Name is
@@ -287,6 +302,19 @@ export class ComputeStack extends Stack {
         ...(cfg.dnsRecordNames.length > 0
           ? { NEXT_PUBLIC_SITE_URL: `https://${cfg.dnsRecordNames[0]}` }
           : {}),
+        // Consumed by src/app/(payload)/api/auth/gate-logout/route.ts —
+        // ALB has NO logout endpoint of its own (confirmed against AWS's
+        // docs 2026-08-12: it just cryptographically validates the
+        // session cookie per request, no server-side state to revoke).
+        // The only real fix is the app itself expiring ALB's OWN cookie
+        // names via Set-Cookie, then bouncing through Cognito's /logout
+        // too so both layers actually clear.
+        ...(cognitoGate
+          ? {
+              COGNITO_LOGOUT_URL: `${cognitoGate.userPoolDomain.baseUrl()}/logout`,
+              COGNITO_CLIENT_ID: cognitoGate.userPoolClient.userPoolClientId,
+            }
+          : {}),
         // RDS Postgres requires TLS; the CA bundle path here must match
         // wherever the Dockerfile follow-up (see class doc) bakes it in.
         NODE_EXTRA_CA_CERTS: '/etc/seqtek/certs/rds-ca.pem',
@@ -367,19 +395,6 @@ export class ComputeStack extends Stack {
       // covers worst-case pull + boot with real margin.
       healthCheckGracePeriod: Duration.minutes(5),
     })
-
-    // ----- Optional Cognito gate (see EnvConfig.cognitoAuthEnabled doc) -----
-    // Built BEFORE the target groups below because both the primary
-    // default action and the secondaryLane rule need to reference the
-    // SAME User Pool/Client/Domain when gating is on.
-    const gatedHostnames = [...cfg.dnsRecordNames, ...(cfg.secondaryLane?.dnsRecordNames ?? [])]
-    const cognitoGate = cfg.cognitoAuthEnabled
-      ? new CognitoAuthGate(this, 'AuthGate', {
-          envName,
-          gatedHostnames,
-          parameterPathPrefix: data.parameterPathPrefix,
-        })
-      : undefined
 
     // Primary lane's target group — built explicitly (rather than via the
     // `addTargets` sugar this used to call directly) so the listener's
@@ -512,6 +527,14 @@ export class ComputeStack extends Stack {
           // (seqtek_${envName}); this lane deliberately points at a
           // different database on the same instance.
           DB_NAME: lane.databaseName,
+          // Same reasoning as the primary lane's container — see its
+          // COGNITO_LOGOUT_URL comment above.
+          ...(cognitoGate
+            ? {
+                COGNITO_LOGOUT_URL: `${cognitoGate.userPoolDomain.baseUrl()}/logout`,
+                COGNITO_CLIENT_ID: cognitoGate.userPoolClient.userPoolClientId,
+              }
+            : {}),
         },
         secrets: {
           DB_USER: ecs.Secret.fromSecretsManager(data.databaseSecret, 'username'),
