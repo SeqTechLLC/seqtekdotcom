@@ -57,7 +57,7 @@ async function main(): Promise<number> {
   console.log(
     `target: ${baseUrl} | ${entries.length} curated files | ${args.dryRun ? 'DRY-RUN' : 'LIVE'}`,
   )
-  const client = new PayloadRestClient({ baseUrl, token })
+  const client = new PayloadRestClient({ baseUrl, token, cookie: process.env.IMPORT_COOKIE })
 
   const idMap: Record<string, string | number> = {}
   let uploaded = 0
