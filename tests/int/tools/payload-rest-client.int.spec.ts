@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 
 import { PayloadRestClient, PayloadRestError } from '../../../tools/payload-rest/client'

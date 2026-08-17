@@ -7,6 +7,9 @@
  *   IMPORT_TOKEN=<payload-token> IMPORT_BASE_URL=https://seqtek-preview.com \
  *     npx tsx tools/leonardo-images/push-staging.ts [--dry-run]
  *
+ * Add IMPORT_COOKIE (the auth proxy's session cookie) when the target is gated
+ * — see tools/payload-seed/README.md.
+ *
  * Idempotent: media is reused when insight-<slug>.jpg already exists, and a post
  * that already carries a `figure` block is left untouched. Run generate.ts first
  * so out/<slug>/ holds the candidates.

@@ -4,6 +4,9 @@
  *   IMPORT_TOKEN=<session-jwt> tsx tools/import-case-study/index.ts ./study.json \
  *     [--base-url=https://seqtek-preview.com] [--publish] [--dry-run]
  *
+ * Add IMPORT_COOKIE (the auth proxy's session cookie) when the target is gated
+ * — see tools/payload-seed/README.md.
+ *
  * Auth is the caller's own /admin session JWT (see README). The tool never
  * touches the auth collection and adds no standing secret. See README.md for
  * the JSON shape and how to grab the token.

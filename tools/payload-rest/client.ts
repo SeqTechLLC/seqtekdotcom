@@ -129,32 +129,56 @@ export class PayloadRestClient {
   private async parseJson<T>(res: Response, action: string): Promise<T> {
     const contentType = res.headers.get('content-type') ?? ''
     if (!contentType.includes('json')) {
-      const host = new URL(res.url || this.baseUrl).host
+      // Carry the body through. A gate is the usual cause, but a CloudFront
+      // error page, a maintenance page, or a proxy that sends no content-type
+      // at all lands here too — without the snippet an operator chases a
+      // cookie that was never the problem.
+      const body = await this.readBody(res)
+      const suffix = body ? ` — ${body.slice(0, 500)}` : ''
       throw new PayloadRestError(
-        `Expected JSON from ${action} but got "${contentType || 'unknown'}" from ${host}. ` +
-          `The environment is likely behind an auth proxy — supply its session cookie.`,
+        `Expected JSON from ${action} but got "${contentType || 'unknown'}" from ${this.hostLabel(res)}. ` +
+          `The environment is likely behind an auth proxy — supply its session cookie — ` +
+          `but confirm against the body.${suffix}`,
         res.status,
+        body,
       )
     }
     return (await res.json()) as T
   }
 
-  private async toError(res: Response, action: string): Promise<PayloadRestError> {
-    let body = ''
+  /** Response body as text, never throwing — both callers are error paths. */
+  private async readBody(res: Response): Promise<string> {
     try {
-      body = await res.text()
+      return await res.text()
     } catch {
-      body = ''
+      return ''
     }
+  }
+
+  /**
+   * Host for diagnostics. `new URL` would throw on a scheme-less baseUrl and
+   * mask the real failure, so never let the error path raise its own error.
+   */
+  private hostLabel(res: Response): string {
+    try {
+      return new URL(res.url || this.baseUrl).host
+    } catch {
+      return this.baseUrl
+    }
+  }
+
+  private async toError(res: Response, action: string): Promise<PayloadRestError> {
+    const body = await this.readBody(res)
     // The sibling case to parseJson: a proxy that answers 401/403 with its own
     // HTML rather than redirecting. Without this the operator gets 500
     // characters of markup instead of the reason.
     const contentType = res.headers.get('content-type') ?? ''
     if (contentType.includes('html')) {
-      const host = new URL(res.url || this.baseUrl).host
+      const suffix = body ? ` — ${body.slice(0, 500)}` : ''
       return new PayloadRestError(
-        `Failed to ${action}: ${res.status} ${res.statusText} — got HTML from ${host}. ` +
-          `The environment is likely behind an auth proxy — supply its session cookie.`,
+        `Failed to ${action}: ${res.status} ${res.statusText} — got HTML from ${this.hostLabel(res)}. ` +
+          `The environment is likely behind an auth proxy — supply its session cookie — ` +
+          `but confirm against the body.${suffix}`,
         res.status,
         body,
       )
