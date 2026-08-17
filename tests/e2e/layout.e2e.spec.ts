@@ -46,8 +46,7 @@ test.describe('Site chrome — desktop viewport', () => {
       await expect(footer.getByRole('heading', { name: column, level: 2 })).toBeVisible()
     }
     await expect(footer.getByRole('link', { name: 'Privacy Policy' })).toBeVisible()
-    // Terms of Service was removed from legalNav until the page is drafted
-    // (CONTENT_NEEDS §9); re-add this assertion when the stub ships.
+    await expect(footer.getByRole('link', { name: 'Terms of Service' })).toBeVisible()
 
     // Main landmark is present and skip link targets it.
     await expect(page.locator('main#main')).toBeVisible()

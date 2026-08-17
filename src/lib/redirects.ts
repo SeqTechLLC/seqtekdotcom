@@ -25,7 +25,12 @@ export const redirectMap: Redirect[] = [
   { source: '/touchstone-workshops', destination: '/workshops', permanent: true },
   { source: '/touchstone-workshops/:slug*', destination: '/workshops/:slug*', permanent: true },
   { source: '/blog-old', destination: '/insights', permanent: true },
-  { source: '/blog-old/:path*', destination: '/insights/:path*', permanent: true },
+  // Wix serves blog posts at `/post/<slug>`, NOT `/blog-old/<slug>`. The 18 old
+  // posts are deliberately not carried over (generic SEO copy; the /insights
+  // pieces are original), so both patterns FLATTEN onto the listing. Exempted
+  // from the wildcard rule via FLATTENED_SOURCES in the RM test.
+  { source: '/blog-old/:path*', destination: '/insights', permanent: true },
+  { source: '/post/:slug*', destination: '/insights', permanent: true },
   {
     source: '/organizational-strategy-1-5',
     // The Wix "Assessment" page. The maturity assessment is retired (2026-08-08),
@@ -35,51 +40,142 @@ export const redirectMap: Redirect[] = [
     destination: '/workshops',
     permanent: true,
   },
+  // The old Wix case studies. The new set is a different, NAMED set of clients
+  // (Endurance Lift, Hogan, NovaMud, WellChecked, Taurex ×4), so the old
+  // anonymous industry studies have no one-to-one successor and land on the
+  // listing. Do NOT re-point these at a per-slug study unless that slug actually
+  // exists — RM3 enforces that via KNOWN_DETAIL_DESTINATIONS.
+  { source: '/organizational-strategy-1-1-1-3', destination: '/case-studies', permanent: true },
+  { source: '/organizational-strategy-1-1-1-3-1', destination: '/case-studies', permanent: true },
+  { source: '/organizational-strategy-1-1-1-3-1-1', destination: '/case-studies', permanent: true },
+  { source: '/organizational-strategy-1-3-1-1-1', destination: '/case-studies', permanent: true },
+  { source: '/case-study-3', destination: '/case-studies', permanent: true },
+  { source: '/case-study-4', destination: '/case-studies', permanent: true },
+  { source: '/case-study-5', destination: '/case-studies', permanent: true },
+  { source: '/case-study-6', destination: '/case-studies', permanent: true },
+  { source: '/driving-innovation-case-study', destination: '/case-studies', permanent: true },
+  { source: '/modernizing-healthcare-case-study', destination: '/case-studies', permanent: true },
+
+  // ---- Workshops -----------------------------------------------------------
+  // `/workshops-1` is the live Wix workshops landing. Bare `/workshops` on Wix
+  // is the ABANDONED page titled "Old Workshops Page".
+  { source: '/workshops-1', destination: '/workshops', permanent: true },
+  { source: '/re-align', destination: '/workshops/re-alignment', permanent: true },
+  { source: '/fivedysfunctions-1', destination: '/workshops/five-dysfunctions', permanent: true },
+  { source: '/fivedysfunctions', destination: '/workshops/five-dysfunctions', permanent: true },
+  // "Case Study Workshop" was Touchstone's name on Wix.
+  { source: '/casestudyws', destination: '/workshops/touchstone', permanent: true },
+  // Orphaned "Strategy & Alignment Workshop" (not linked from the Wix workshops
+  // page, which points its Strategy & Alignment card at /re-align). Lands on the
+  // listing rather than guessing which of the three it meant.
+  { source: '/organizational-strategy-1-1-1-4', destination: '/workshops', permanent: true },
+  // Per-market Touchstone landing pages (an a/b variant per city). The four
+  // regional pages are an open content gap (CONTENT_NEEDS §9); until they exist
+  // these land on the workshop itself.
+  { source: '/tulsaacasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
+  { source: '/tulsabcasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
+  { source: '/okcacasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
+  { source: '/okcbcasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
+  { source: '/kcacasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
+  { source: '/kcbcasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
+  { source: '/nwarkacasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
+  { source: '/nwarkbcasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
+
+  // ---- Careers -------------------------------------------------------------
+  // There is no Careers page on the new site (CONTENT_NEEDS §9), so the Wix
+  // careers page and its role descriptions point at the contact form: the ask is
+  // the same either way, start a conversation. Revisit if a Careers page ships.
+  //
+  // "goverment" and "machione" reproduce the Wix misspellings verbatim. The typo
+  // is what is indexed; a corrected slug would match nothing.
+  { source: '/careers-1', destination: '/contact', permanent: true },
+  { source: '/careers', destination: '/contact', permanent: true },
+  { source: '/business-analyst', destination: '/contact', permanent: true },
+  { source: '/database-developer', destination: '/contact', permanent: true },
+  { source: '/front-end-developer', destination: '/contact', permanent: true },
+  { source: '/full-stack-developer', destination: '/contact', permanent: true },
+  { source: '/goverment-contract-specialist', destination: '/contact', permanent: true },
+  { source: '/java-developer', destination: '/contact', permanent: true },
+  { source: '/machione-learning-engineer', destination: '/contact', permanent: true },
+  { source: '/project-management', destination: '/contact', permanent: true },
+  { source: '/software-quality-assurance', destination: '/contact', permanent: true },
+  { source: '/ui-ux-developer', destination: '/contact', permanent: true },
+
+  // ---- AI Dev Guide --------------------------------------------------------
+  // The Wix lead magnet: a landing page and a thank-you page gating a PDF. The
+  // guide's content is published ungated as the insight post instead, so both
+  // URLs land there and the HubSpot form gate is retired with them.
+  { source: '/ai-dev-guide-download', destination: '/insights/the-skill-shift', permanent: true },
   {
-    source: '/organizational-strategy-1-1-1-3',
-    destination: '/case-studies/airline-automation',
+    source: '/thank-you-download-guide',
+    destination: '/insights/the-skill-shift',
+    permanent: true,
+  },
+
+  // ---- The old Wix Services menu -------------------------------------------
+  // The old site's main nav, folded on the same lines as ADR 0009 below:
+  // AI/data leaves → AI Integration, software/cloud/systems leaves → Digital
+  // Transformation, leadership/process/PM leaves → Workshops (the funnel).
+  {
+    source: '/organizational-strategy-1-1-1-2',
+    destination: '/services/ai-integration',
     permanent: true,
   },
   {
-    source: '/organizational-strategy-1-1-1-3-1',
-    destination: '/case-studies/oil-gas-modernization',
+    source: '/organizational-strategy-1-1-1-2-1',
+    destination: '/services/ai-integration',
     permanent: true,
   },
   {
-    source: '/organizational-strategy-1-1-1-3-1-1',
-    destination: '/case-studies/banking-integration-platform',
+    source: '/organizational-strategy-1-1-1-2-1-1',
+    destination: '/services/ai-integration',
     permanent: true,
   },
   {
-    source: '/organizational-strategy-1-3-1-1-1',
-    destination: '/case-studies',
+    source: '/organizational-strategy-1-3-1',
+    destination: '/services/ai-integration',
     permanent: true,
   },
   {
-    source: '/case-study-3',
-    destination: '/case-studies/mobile-apps-remote-operations',
+    source: '/organizational-strategy-1-3-1-1',
+    destination: '/services/ai-integration',
     permanent: true,
   },
   {
-    source: '/case-study-4',
-    destination: '/case-studies/retail-pos-update-experience',
+    source: '/organizational-strategy-1-1-1-1',
+    destination: '/services/digital-transformation',
     permanent: true,
   },
   {
-    source: '/case-study-5',
-    destination: '/case-studies/data-warehouse-strategy',
+    source: '/organizational-strategy-1-1-3',
+    destination: '/services/digital-transformation',
     permanent: true,
   },
   {
-    source: '/driving-innovation-case-study',
-    destination: '/case-studies/healthcare-ux-redesign',
+    source: '/organizational-strategy-1-2-1',
+    destination: '/services/digital-transformation',
     permanent: true,
   },
   {
-    source: '/modernizing-healthcare-case-study',
-    destination: '/case-studies/healthcare-data-modernization',
+    source: '/organizational-strategy-1-3',
+    destination: '/services/digital-transformation',
     permanent: true,
   },
+  {
+    source: '/organizational-strategy-1-4',
+    destination: '/services/digital-transformation',
+    permanent: true,
+  },
+  // The Wix "Technology & Data" pillar page.
+  {
+    source: '/technology-and-data',
+    destination: '/services/digital-transformation',
+    permanent: true,
+  },
+  { source: '/organizational-strategy-1-1', destination: '/workshops', permanent: true },
+  { source: '/organizational-strategy-1-1-1', destination: '/workshops', permanent: true },
+  { source: '/organizational-strategy-1-1-2', destination: '/workshops', permanent: true },
+  { source: '/organizational-strategy-1-2', destination: '/workshops', permanent: true },
 
   // feat/services-restructure — the retired 3-pillar / 9-service IA folds into
   // the four peer offerings (ADR 0009). Pillar slugs and the nine leaf service
