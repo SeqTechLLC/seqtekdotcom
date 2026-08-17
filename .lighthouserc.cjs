@@ -34,6 +34,7 @@ module.exports = {
         // carries the same public a11y/best-practices/SEO >= 0.95 gate, and
         // covers the footer consent-preferences control (present on every page).
         'http://localhost:3200/privacy-policy',
+        'http://localhost:3200/terms-of-service',
         'http://localhost:3200/admin/login',
         // Seeded-env-only (404 against the empty CI DB): /our-story, /localshoring,
         // /services + /services/<offering> (feat/services-restructure made these

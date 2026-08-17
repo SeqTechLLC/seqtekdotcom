@@ -124,22 +124,23 @@ export const navigation: Navigation = {
   ],
   legalNav: [
     { label: 'Privacy Policy', url: '/privacy-policy' },
-    // TODO(stub): /terms-of-service not drafted yet — re-add once legal copy
-    // is reviewed (CONTENT_NEEDS §"Missing pages — linked but 404").
+    { label: 'Terms of Service', url: '/terms-of-service' },
   ],
   // Repoints to the contact form until a HubSpot Meetings route ships
   // (CONTENT_NEEDS §4; matches the not-found.tsx "Book a strategy call" CTA).
   ctaButton: { label: 'Book a Call', url: '/contact' },
 }
 
-// Address left empty pending BR-7 resolution of the canonical office location
-// (project_internal_dynamics notes Sapulpa vs. Cheyenne contention).
+// BR-7 resolved 2026-08-17: the canonical office is the Gradient space on
+// Cheyenne, not Sapulpa. Street/city/zip are formatted exactly as the old Wix
+// footer published them — local search treats name, address and phone as one
+// identity, so reformatting a live NAP costs more than it gains.
 export const siteSettings: SiteSettings = {
   companyName: 'SEQTEK',
   tagline: 'Delivering Transformative Technologies Since 1999',
   phone: '(918) 493-7200',
-  email: '',
-  address: { street: '', city: '', state: '', zip: '' },
+  email: 'contact@seqtek.com',
+  address: { street: '12 N Cheyenne Ave.', city: 'Tulsa', state: 'OK', zip: '74103' },
   socialLinks: {
     linkedinUrl: 'https://www.linkedin.com/company/seqtek',
     twitterUrl: '',
