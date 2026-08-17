@@ -458,6 +458,13 @@ Once DNS is in hand:
    `/services`) — those preserve the Wix-era URLs
 7. Make `seqtek-preview.com` `noindex` so preview never competes with prod in
    search
+8. Seed the office address into the `siteSettings` global so `Organization`
+   JSON-LD emits `address`. The footer NAP is hardcoded in
+   `src/lib/site-content.ts`, but `organizationLd`
+   (`src/lib/structured-data.ts`) reads the Payload global — a code deploy
+   alone leaves the structured-data address empty, which is exactly the
+   local-search signal the visible address was published for. Verify after:
+   `curl -s https://seqtek.com | grep -o '"address":{[^}]*}'`
 
 ---
 

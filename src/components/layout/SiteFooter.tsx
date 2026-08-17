@@ -31,7 +31,7 @@ function YouTubeIcon() {
 
 export function SiteFooter() {
   const { footerNav, legalNav } = navigation
-  const { companyName, tagline, phone, socialLinks, footerText } = siteSettings
+  const { companyName, tagline, phone, email, address, socialLinks, footerText } = siteSettings
   const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : ''
 
   return (
@@ -49,13 +49,32 @@ export function SiteFooter() {
               />
             </Link>
             <p className="mt-4 max-w-xs text-small text-text-inverse opacity-80">{tagline}</p>
-            {telHref ? (
-              <SmartLink
-                href={telHref}
-                className="mt-6 inline-block text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
-              >
-                {phone}
-              </SmartLink>
+            {address.street ? (
+              <address className="mt-6 text-body not-italic text-text-inverse opacity-90">
+                {address.street}
+                <br />
+                {address.city}, {address.state} {address.zip}
+              </address>
+            ) : null}
+            {telHref || email ? (
+              <div className="mt-4 flex flex-col gap-1">
+                {telHref ? (
+                  <SmartLink
+                    href={telHref}
+                    className="text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
+                  >
+                    {phone}
+                  </SmartLink>
+                ) : null}
+                {email ? (
+                  <SmartLink
+                    href={`mailto:${email}`}
+                    className="text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
+                  >
+                    {email}
+                  </SmartLink>
+                ) : null}
+              </div>
             ) : null}
             <ul className="mt-6 flex gap-3">
               {socialLinks.linkedinUrl ? (
