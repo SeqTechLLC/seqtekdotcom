@@ -6,6 +6,10 @@
  *   IMPORT_TOKEN=<payload-token> IMPORT_BASE_URL=https://seqtek-preview.com \
  *     npx tsx tools/ingest-photos/push-to-payload.ts --dir <curated-dir> [--dry-run]
  *
+ * Against a gated environment (prod sits behind an ALB + Cognito rule that
+ * 302s every path, `/api/*` included) also export IMPORT_COOKIE with that
+ * proxy's session cookie — see tools/payload-seed/README.md for how to grab it.
+ *
  * Idempotent: skips a curated file whose filename already exists in media.
  * Writes `<dir>/staging-media-ids.json` (curated filename -> media id) so the
  * page-population step can wire photos by reference.
@@ -57,7 +61,7 @@ async function main(): Promise<number> {
   console.log(
     `target: ${baseUrl} | ${entries.length} curated files | ${args.dryRun ? 'DRY-RUN' : 'LIVE'}`,
   )
-  const client = new PayloadRestClient({ baseUrl, token })
+  const client = new PayloadRestClient({ baseUrl, token, cookie: process.env.IMPORT_COOKIE })
 
   const idMap: Record<string, string | number> = {}
   let uploaded = 0

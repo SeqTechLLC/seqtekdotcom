@@ -7,6 +7,14 @@
  * built-in JWT strategy (registered in src/collections/Users.ts) reads that
  * header, so callers need no new auth surface (no API key, no schema change).
  * `fetch` is injectable so the unit tests can run without a server.
+ *
+ * An environment can also sit behind an authenticating proxy in FRONT of the
+ * app (the pre-launch prod site is gated by an ALB + Cognito rule, so every
+ * path — `/api/*` included — 302s to the IdP before Payload ever sees it).
+ * `cookie` carries that proxy's session cookie, which is a separate concern
+ * from `token`: the proxy decides whether the request reaches the origin, the
+ * JWT decides who you are once it does. Both are needed to write to a gated
+ * environment.
  */
 
 import { readFile } from 'node:fs/promises'
@@ -28,6 +36,12 @@ export interface ClientConfig {
   baseUrl: string
   /** Session JWT. Optional for read-only dry-runs; required to write. */
   token?: string
+  /**
+   * Raw `Cookie` header value for an environment behind an auth proxy, e.g.
+   * `AWSELBAuthSessionCookie-0=...; AWSELBAuthSessionCookie-1=...`. Omit for
+   * ungated environments (local, staging).
+   */
+  cookie?: string
   fetchFn?: FetchFn
 }
 
@@ -84,11 +98,13 @@ interface WriteResponse {
 export class PayloadRestClient {
   private readonly baseUrl: string
   private readonly token?: string
+  private readonly cookie?: string
   private readonly fetchFn: FetchFn
 
   constructor(config: ClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, '')
     this.token = config.token
+    this.cookie = config.cookie
     this.fetchFn = config.fetchFn ?? globalThis.fetch
   }
 
@@ -97,15 +113,75 @@ export class PayloadRestClient {
   }
 
   private authHeaders(): Record<string, string> {
-    return this.hasToken ? { Authorization: `JWT ${this.token ?? ''}` } : {}
+    const headers: Record<string, string> = {}
+    if (this.hasToken) headers.Authorization = `JWT ${this.token ?? ''}`
+    if (this.cookie) headers.Cookie = this.cookie
+    return headers
+  }
+
+  /**
+   * Parse a JSON body, failing loudly when the response is HTML instead.
+   * A gated environment answers an unauthenticated request with a 302 to the
+   * IdP, which `fetch` follows to a 200 sign-in PAGE — so without this the
+   * first symptom of a missing/expired gate cookie is an opaque JSON syntax
+   * error rather than "you are not through the gate".
+   */
+  private async parseJson<T>(res: Response, action: string): Promise<T> {
+    const contentType = res.headers.get('content-type') ?? ''
+    if (!contentType.includes('json')) {
+      // Carry the body through. A gate is the usual cause, but a CloudFront
+      // error page, a maintenance page, or a proxy that sends no content-type
+      // at all lands here too — without the snippet an operator chases a
+      // cookie that was never the problem.
+      const body = await this.readBody(res)
+      const suffix = body ? ` — ${body.slice(0, 500)}` : ''
+      throw new PayloadRestError(
+        `Expected JSON from ${action} but got "${contentType || 'unknown'}" from ${this.hostLabel(res)}. ` +
+          `The environment is likely behind an auth proxy — supply its session cookie — ` +
+          `but confirm against the body.${suffix}`,
+        res.status,
+        body,
+      )
+    }
+    return (await res.json()) as T
+  }
+
+  /** Response body as text, never throwing — both callers are error paths. */
+  private async readBody(res: Response): Promise<string> {
+    try {
+      return await res.text()
+    } catch {
+      return ''
+    }
+  }
+
+  /**
+   * Host for diagnostics. `new URL` would throw on a scheme-less baseUrl and
+   * mask the real failure, so never let the error path raise its own error.
+   */
+  private hostLabel(res: Response): string {
+    try {
+      return new URL(res.url || this.baseUrl).host
+    } catch {
+      return this.baseUrl
+    }
   }
 
   private async toError(res: Response, action: string): Promise<PayloadRestError> {
-    let body = ''
-    try {
-      body = await res.text()
-    } catch {
-      body = ''
+    const body = await this.readBody(res)
+    // The sibling case to parseJson: a proxy that answers 401/403 with its own
+    // HTML rather than redirecting. Without this the operator gets 500
+    // characters of markup instead of the reason.
+    const contentType = res.headers.get('content-type') ?? ''
+    if (contentType.includes('html')) {
+      const suffix = body ? ` — ${body.slice(0, 500)}` : ''
+      return new PayloadRestError(
+        `Failed to ${action}: ${res.status} ${res.statusText} — got HTML from ${this.hostLabel(res)}. ` +
+          `The environment is likely behind an auth proxy — supply its session cookie — ` +
+          `but confirm against the body.${suffix}`,
+        res.status,
+        body,
+      )
     }
     const suffix = body ? ` — ${body.slice(0, 500)}` : ''
     return new PayloadRestError(
@@ -132,7 +208,7 @@ export class PayloadRestClient {
       headers: this.authHeaders(),
     })
     if (!res.ok) throw await this.toError(res, `find ${collection} by ${field}`)
-    const json = (await res.json()) as FindResponse
+    const json = await this.parseJson<FindResponse>(res, `find ${collection} by ${field}`)
     return json.docs && json.docs.length > 0 ? json.docs[0].id : null
   }
 
@@ -182,7 +258,7 @@ export class PayloadRestClient {
       body: form,
     })
     if (!res.ok) throw await this.toError(res, 'upload media')
-    const json = (await res.json()) as WriteResponse
+    const json = await this.parseJson<WriteResponse>(res, 'upload media')
     if (json.doc?.id === undefined)
       throw new PayloadRestError('media upload returned no document id')
     return json.doc.id
@@ -200,7 +276,7 @@ export class PayloadRestClient {
       body: JSON.stringify(data),
     })
     if (!res.ok) throw await this.toError(res, `create ${collection}`)
-    const json = (await res.json()) as WriteResponse
+    const json = await this.parseJson<WriteResponse>(res, `create ${collection}`)
     if (json.doc?.id === undefined)
       throw new PayloadRestError(`create ${collection} returned no document id`)
     return json.doc.id
@@ -219,7 +295,7 @@ export class PayloadRestClient {
       body: JSON.stringify(data),
     })
     if (!res.ok) throw await this.toError(res, `update ${collection}`)
-    const json = (await res.json()) as WriteResponse
+    const json = await this.parseJson<WriteResponse>(res, `update ${collection}`)
     return json.doc?.id ?? id
   }
 
@@ -236,5 +312,11 @@ export class PayloadRestClient {
       body: JSON.stringify(data),
     })
     if (!res.ok) throw await this.toError(res, `update global ${slug}`)
+    // Globals are the one write whose caller needs no id back, so nothing else
+    // would ever touch the body — parse it anyway. A gated environment answers
+    // the unauthenticated POST with a 302 that `fetch` follows to a 200 HTML
+    // sign-in page, which passes `res.ok` and would otherwise report a silent
+    // success for a write that never happened.
+    await this.parseJson<WriteResponse>(res, `update global ${slug}`)
   }
 }
