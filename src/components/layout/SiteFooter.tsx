@@ -56,24 +56,26 @@ export function SiteFooter() {
                 {address.city}, {address.state} {address.zip}
               </address>
             ) : null}
-            <div className="mt-4 flex flex-col gap-1">
-              {telHref ? (
-                <SmartLink
-                  href={telHref}
-                  className="text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
-                >
-                  {phone}
-                </SmartLink>
-              ) : null}
-              {email ? (
-                <SmartLink
-                  href={`mailto:${email}`}
-                  className="text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
-                >
-                  {email}
-                </SmartLink>
-              ) : null}
-            </div>
+            {telHref || email ? (
+              <div className="mt-4 flex flex-col gap-1">
+                {telHref ? (
+                  <SmartLink
+                    href={telHref}
+                    className="text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
+                  >
+                    {phone}
+                  </SmartLink>
+                ) : null}
+                {email ? (
+                  <SmartLink
+                    href={`mailto:${email}`}
+                    className="text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
+                  >
+                    {email}
+                  </SmartLink>
+                ) : null}
+              </div>
+            ) : null}
             <ul className="mt-6 flex gap-3">
               {socialLinks.linkedinUrl ? (
                 <li>

@@ -121,7 +121,7 @@ const KNOWN_DETAIL_DESTINATIONS = new Set<string>([
   '/services/localshoring',
   '/services/ai-integration',
   '/services/digital-transformation',
-  // Verified against docs/content-drafts/posts-content.json.
+  // Verified against docs/content-drafts/posts.json.
   '/insights/the-skill-shift',
 ])
 
