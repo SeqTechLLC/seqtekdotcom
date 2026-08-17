@@ -146,6 +146,19 @@ export class PayloadRestClient {
     } catch {
       body = ''
     }
+    // The sibling case to parseJson: a proxy that answers 401/403 with its own
+    // HTML rather than redirecting. Without this the operator gets 500
+    // characters of markup instead of the reason.
+    const contentType = res.headers.get('content-type') ?? ''
+    if (contentType.includes('html')) {
+      const host = new URL(res.url || this.baseUrl).host
+      return new PayloadRestError(
+        `Failed to ${action}: ${res.status} ${res.statusText} — got HTML from ${host}. ` +
+          `The environment is likely behind an auth proxy — supply its session cookie.`,
+        res.status,
+        body,
+      )
+    }
     const suffix = body ? ` — ${body.slice(0, 500)}` : ''
     return new PayloadRestError(
       `Failed to ${action}: ${res.status} ${res.statusText}${suffix}`,
@@ -275,5 +288,11 @@ export class PayloadRestClient {
       body: JSON.stringify(data),
     })
     if (!res.ok) throw await this.toError(res, `update global ${slug}`)
+    // Globals are the one write whose caller needs no id back, so nothing else
+    // would ever touch the body — parse it anyway. A gated environment answers
+    // the unauthenticated POST with a 302 that `fetch` follows to a 200 HTML
+    // sign-in page, which passes `res.ok` and would otherwise report a silent
+    // success for a write that never happened.
+    await this.parseJson<WriteResponse>(res, `update global ${slug}`)
   }
 }

@@ -59,7 +59,7 @@ async function main(): Promise<number> {
     return 1
   }
   console.log(`target: ${baseUrl} | ${dryRun ? 'DRY-RUN' : 'LIVE'}`)
-  const client = new PayloadRestClient({ baseUrl, token })
+  const client = new PayloadRestClient({ baseUrl, token, cookie: process.env.IMPORT_COOKIE })
 
   let inserted = 0
   let skipped = 0

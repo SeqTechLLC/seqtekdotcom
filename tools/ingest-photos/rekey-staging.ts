@@ -145,7 +145,7 @@ async function main(): Promise<number> {
   if (errors.length > 0 && !args.dryRun) {
     console.error('skipping doc PATCH pass — fix the S3 move failures first (re-run is safe)')
   } else {
-    const client = new PayloadRestClient({ baseUrl, token })
+    const client = new PayloadRestClient({ baseUrl, token, cookie: process.env.IMPORT_COOKIE })
     for (const doc of docs) {
       if (args.dryRun) {
         console.log(

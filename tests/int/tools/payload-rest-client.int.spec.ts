@@ -90,4 +90,49 @@ describe('PayloadRestClient — auth headers', () => {
       client.findIdByField('caseStudies', 'slug', 'acme', { draft: false }),
     ).rejects.toThrow(/behind an auth proxy/)
   })
+
+  it('does not report success for a gated global write that never landed', async () => {
+    // updateGlobal returns void, so the sign-in page's 200 satisfied `res.ok`
+    // and the seeder logged `global:homepage [published]` for a write the
+    // origin never saw. A globals-only seed file could report a fully
+    // successful run against a gate with no cookie at all.
+    const { fetchFn } = recorder(
+      () =>
+        new Response('<html><body>Sign in</body></html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+        }),
+    )
+    const client = new PayloadRestClient({
+      baseUrl: 'https://ww3.example.com',
+      token: 'jwt-123',
+      fetchFn,
+    })
+
+    await expect(client.updateGlobal('homepage', { title: 'x' }, { draft: false })).rejects.toThrow(
+      /behind an auth proxy/,
+    )
+  })
+
+  it('names the auth proxy when a gate rejects outright with an HTML body', async () => {
+    // The sibling case: a proxy that answers 401/403 with its own markup
+    // instead of redirecting, which would otherwise surface as 500 characters
+    // of HTML in the error message.
+    const { fetchFn } = recorder(
+      () =>
+        new Response('<html><body>Access denied</body></html>', {
+          status: 403,
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+        }),
+    )
+    const client = new PayloadRestClient({
+      baseUrl: 'https://ww3.example.com',
+      token: 'jwt-123',
+      fetchFn,
+    })
+
+    await expect(client.updateGlobal('homepage', { title: 'x' }, { draft: false })).rejects.toThrow(
+      /behind an auth proxy/,
+    )
+  })
 })

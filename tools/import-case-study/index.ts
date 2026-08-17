@@ -113,7 +113,11 @@ async function main(): Promise<number> {
     return 2
   }
 
-  const client = new PayloadRestClient({ baseUrl: args.baseUrl, token })
+  const client = new PayloadRestClient({
+    baseUrl: args.baseUrl,
+    token,
+    cookie: process.env.IMPORT_COOKIE,
+  })
   try {
     const result = await importCaseStudy(client, validated.value, {
       publish: args.publish,
