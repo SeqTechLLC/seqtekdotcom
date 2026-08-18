@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { NONCE_HEADER, buildCspPolicy, cspHeaderName, generateNonce, readCspMode } from '@/lib/csp'
+import { GONE_HTML, isRetiredPath } from '@/lib/gone'
 
 const CSP_REPORT_PATH = '/api/csp-report'
 const REQUEST_ID_HEADER = 'x-request-id'
@@ -33,6 +34,20 @@ export function proxy(request: NextRequest) {
         'content-type': 'text/html; charset=utf-8',
         'retry-after': '120',
         'cache-control': 'no-store',
+      },
+    })
+  }
+
+  // Permanently retired URL space (rationale in src/lib/gone.ts). Next's
+  // `redirects()` only emits 3xx, so the 410 is served here rather than from the
+  // redirect map.
+  if (isRetiredPath(pathname)) {
+    return new NextResponse(GONE_HTML, {
+      status: 410,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'x-robots-tag': 'noindex',
+        'cache-control': 'public, max-age=3600',
       },
     })
   }

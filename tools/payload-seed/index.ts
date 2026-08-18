@@ -71,6 +71,9 @@ Environment:
   IMPORT_TOKEN         Your /admin session JWT (payload-token). Required unless
                        --dry-run. Sent as: Authorization: JWT <token>.
   IMPORT_BASE_URL      Alternative to --base-url.
+  IMPORT_COOKIE        Raw Cookie header for a target behind an auth proxy
+                       (e.g. "AWSELBAuthSessionCookie-0=...; ...-1=..."). Only
+                       needed for gated environments; unset for local/staging.
 `
 
 function errln(msg: string): void {
@@ -122,7 +125,11 @@ async function main(): Promise<number> {
     return 2
   }
 
-  const client = new PayloadRestClient({ baseUrl: args.baseUrl, token })
+  const client = new PayloadRestClient({
+    baseUrl: args.baseUrl,
+    token,
+    cookie: process.env.IMPORT_COOKIE,
+  })
   const log = (m: string): void => {
     process.stdout.write(`${m}\n`)
   }

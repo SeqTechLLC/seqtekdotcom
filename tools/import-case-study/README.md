@@ -30,6 +30,7 @@ IMPORT_TOKEN=<session-jwt> tsx tools/import-case-study/index.ts ./study.json \
 | `--publish`        | Publish on import. Default: leave a draft for editor review.          |
 | `--dry-run`        | Resolve relations + assemble the payload, print it, write nothing.    |
 | `IMPORT_TOKEN`     | Your `/admin` session JWT. Required unless `--dry-run`.               |
+| `IMPORT_COOKIE`    | Raw `Cookie` header for a target behind an auth proxy. Unset locally. |
 
 ## Getting `IMPORT_TOKEN`
 

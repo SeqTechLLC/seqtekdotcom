@@ -37,6 +37,7 @@ IMPORT_TOKEN=<session-jwt> npm run payload:seed ./seed.json \
 | `--allow-missing-refs` | Downgrade an unresolved non-omittable `$ref` from error to warn+drop. |
 | `IMPORT_TOKEN`         | Your `/admin` session JWT. Required unless `--dry-run`. Never logged. |
 | `IMPORT_BASE_URL`      | Alternative to `--base-url`.                                          |
+| `IMPORT_COOKIE`        | Raw `Cookie` header for a target behind an auth proxy. Unset locally. |
 
 ### Getting `IMPORT_TOKEN`
 
@@ -44,6 +45,29 @@ Auth is your own Google-SSO session — no API key, no schema change. Log into
 `/admin` on the target environment, then copy the `payload-token` cookie value
 (DevTools → Application → Cookies). Export it: `export IMPORT_TOKEN=<value>`.
 The token expires with your session, so grab a fresh one per run.
+
+### Getting `IMPORT_COOKIE` (gated environments only)
+
+An environment can also sit behind an authenticating proxy in **front** of the
+app. The pre-launch production site is gated by an ALB + Cognito rule, so every
+path — `/api/*` included — 302s to the IdP before Payload ever sees the request,
+and `IMPORT_TOKEN` alone gets you nowhere.
+
+`IMPORT_COOKIE` carries that proxy's session cookie. It is a separate concern
+from the token: **the proxy decides whether the request reaches the origin, the
+JWT decides who you are once it does.** Both are needed to write to a gated
+environment.
+
+Sign in to the gated site in a browser, then copy the ALB session cookies
+(DevTools → Application → Cookies) into one header value:
+
+```sh
+export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
+```
+
+Leave it unset for local and staging, which are ungated. When it is missing or
+expired the gate answers with an HTML sign-in page instead of JSON; the client
+detects that and says so, rather than failing on an opaque JSON parse error.
 
 ## Spec format
 

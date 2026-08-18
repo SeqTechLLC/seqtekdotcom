@@ -115,6 +115,7 @@ export function inScopeRoutes(
     { path: '/partners', label: 'partners (listing)' },
     { path: `/partners/${seed.partnerSlug}`, label: 'partner (detail)' },
     { path: '/privacy-policy', label: 'privacy-policy' },
+    { path: '/terms-of-service', label: 'terms-of-service' },
     { path: `/${seed.storySlug}`, label: 'our-story' },
     { path: `/${seed.localshoringSlug}`, label: 'localshoring' },
   ]
