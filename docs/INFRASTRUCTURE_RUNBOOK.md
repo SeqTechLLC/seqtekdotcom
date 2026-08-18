@@ -297,6 +297,19 @@ IMPORT_BASE_URL=https://<new-env> IMPORT_TOKEN=<token> \
   npx tsx tools/ingest-photos/push-to-payload.ts --dir "$DIR" --dry-run
 ```
 
+**If the target is gated** (`cognitoAuthEnabled: true`, per §1.3a — the prod
+configuration), the ALB 302s every path including `/api/*`, so `IMPORT_TOKEN`
+alone never reaches Payload. Export the proxy's session cookie as well, or the
+push fails with `likely behind an auth proxy`:
+
+```sh
+export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
+```
+
+`tools/payload-seed/README.md` §"Getting `IMPORT_COOKIE`" has the DevTools
+steps. Every REST tool here reads it: `push-to-payload`, `rekey-staging`,
+`push-staging`, `import-case-study` and `payload:seed`.
+
 Drop `--dry-run` to write. Keep filenames byte-identical — `$ref` and `$file`
 both key on filename, so a rename silently orphans every reference to it.
 
@@ -305,6 +318,10 @@ both key on filename, so a rename silently orphans every reference to it.
 ```sh
 export IMPORT_BASE_URL=https://<new-environment-url>
 export IMPORT_TOKEN=<payload-token cookie from /admin on the NEW env>
+# Gated target (cognitoAuthEnabled, §1.3a)? Also export the proxy cookie —
+# see §2.1. Without it the globals at the end of this list are the ones most
+# likely to report success while writing nothing.
+export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
 
 # Order matters — later specs resolve $ref against what earlier ones created.
 for f in categories industries testimonials team service-pillars services \
@@ -458,6 +475,13 @@ Once DNS is in hand:
    `/services`) — those preserve the Wix-era URLs
 7. Make `seqtek-preview.com` `noindex` so preview never competes with prod in
    search
+8. Seed the office address into the `siteSettings` global so `Organization`
+   JSON-LD emits `address`. The footer NAP is hardcoded in
+   `src/lib/site-content.ts`, but `organizationLd`
+   (`src/lib/structured-data.ts`) reads the Payload global — a code deploy
+   alone leaves the structured-data address empty, which is exactly the
+   local-search signal the visible address was published for. Verify after:
+   `curl -s https://seqtek.com | grep -o '"address":{[^}]*}'`
 
 ---
 

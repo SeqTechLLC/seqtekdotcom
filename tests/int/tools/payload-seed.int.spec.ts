@@ -262,7 +262,12 @@ describe('upsertSpec — collection', () => {
 })
 
 describe('upsertSpec — global', () => {
-  it('POSTs the global with no _status injection', async () => {
+  // Globals carry drafts too (homepage, siteSettings, navigation), so a
+  // published run must flip `_status` for them exactly as it does for a
+  // collection doc. This previously asserted the opposite, which is how a
+  // fresh-environment homepage seeded as a draft — rendering an empty body
+  // while the seeder logged `[published]`.
+  it('POSTs the global with _status published', async () => {
     const { fetchFn, calls } = createFakeFetch()
     const client = makeClient(fetchFn)
     const spec = validateSpecs({ global: 'siteSettings', data: { tagline: 'Hi' } })
@@ -286,7 +291,23 @@ describe('upsertSpec — global', () => {
     expect(call).toBeDefined()
     expect(call?.url).not.toContain('draft=true')
     const body = JSON.parse(call?.body as string) as Record<string, unknown>
-    expect(body).toEqual({ tagline: 'Hi' })
+    expect(body).toEqual({ tagline: 'Hi', _status: 'published' })
+  })
+
+  it('POSTs the global with no _status on a draft run', async () => {
+    const { fetchFn, calls } = createFakeFetch()
+    const client = makeClient(fetchFn)
+    const spec = validateSpecs({ global: 'siteSettings', data: { tagline: 'Hi' } })
+    expect(spec.ok).toBe(true)
+    if (!spec.ok) return
+
+    await upsertSpec(client, spec.value[0], { tagline: 'Hi' }, { draft: true, dryRun: false })
+
+    const call = calls.find(
+      (c) => c.method === 'POST' && c.url.includes('/api/globals/siteSettings'),
+    )
+    expect(call?.url).toContain('draft=true')
+    const body = JSON.parse(call?.body as string) as Record<string, unknown>
     expect(body._status).toBeUndefined()
   })
 })

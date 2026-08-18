@@ -8,6 +8,9 @@
  *   AWS_PROFILE=<staging> S3_BUCKET=seqtek-media-staging \
  *     npx tsx tools/ingest-photos/rekey-staging.ts [--dry-run]
  *
+ * Add IMPORT_COOKIE (the auth proxy's session cookie) when the target is gated
+ * — see tools/payload-seed/README.md.
+ *
  * Why in-place instead of delete + re-push (`push-to-payload.ts`): the seeded
  * media docs are referenced (team-member headshots); delete + re-push mints
  * new media IDs and orphans those relations. Moving the S3 objects and
@@ -145,7 +148,7 @@ async function main(): Promise<number> {
   if (errors.length > 0 && !args.dryRun) {
     console.error('skipping doc PATCH pass — fix the S3 move failures first (re-run is safe)')
   } else {
-    const client = new PayloadRestClient({ baseUrl, token })
+    const client = new PayloadRestClient({ baseUrl, token, cookie: process.env.IMPORT_COOKIE })
     for (const doc of docs) {
       if (args.dryRun) {
         console.log(

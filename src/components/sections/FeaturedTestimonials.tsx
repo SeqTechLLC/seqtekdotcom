@@ -27,33 +27,35 @@ export function FeaturedTestimonials({ heading, testimonials }: FeaturedTestimon
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {docs.map((t, i) => (
-            <li
-              key={t.id ?? i}
-              className="flex flex-col gap-4 rounded-md border border-border-subtle bg-surface p-6 shadow-xs"
-            >
-              <blockquote className="text-body">&ldquo;{t.quote}&rdquo;</blockquote>
-              <div className="mt-auto flex items-center gap-3">
-                {isMedia(t.photo) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={t.photo.url}
-                    alt={t.photo.alt ?? t.personName ?? ''}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                ) : null}
-                <div>
-                  <p className="text-small font-semibold">{t.personName}</p>
-                  {t.personTitle || t.company ? (
-                    <p className="text-caption text-text-muted">
-                      {t.personTitle}
-                      {t.company ? `, ${t.company}` : ''}
-                    </p>
+          {docs.map((t, i) => {
+            // Join only the parts that exist. personTitle is optional on the
+            // collection, and interpolating it unconditionally rendered a
+            // stray leading comma (", Cross Precision Measurement") for the
+            // speakers who have a company but no title.
+            const credit = [t.personTitle, t.company].filter(Boolean).join(', ')
+            return (
+              <li
+                key={t.id ?? i}
+                className="flex flex-col gap-4 rounded-md border border-border-subtle bg-surface p-6 shadow-xs"
+              >
+                <blockquote className="text-body">&ldquo;{t.quote}&rdquo;</blockquote>
+                <div className="mt-auto flex items-center gap-3">
+                  {isMedia(t.photo) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={t.photo.url}
+                      alt={t.photo.alt ?? t.personName ?? ''}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
                   ) : null}
+                  <div>
+                    <p className="text-small font-semibold">{t.personName}</p>
+                    {credit ? <p className="text-caption text-text-muted">{credit}</p> : null}
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            )
+          })}
         </ul>
       </div>
     </section>

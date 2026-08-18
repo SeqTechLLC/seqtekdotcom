@@ -48,6 +48,7 @@ const STATIC_PATHS = [
   // NOTE: `/partners` is deliberately NOT static — it is added below only when
   // the collection has published docs (see the partner loop).
   '/privacy-policy', // spec 006 US5 (T025): static legal route
+  '/terms-of-service', // static legal route (same shape as /privacy-policy)
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
