@@ -92,9 +92,9 @@ export class NetworkStack extends Stack {
       // 10.0.0.0/16 per env, 2 AZs, public + isolated tiers only.
       // No NAT gateway during the validation period (Clarifications Session
       // 2026-05-26): ASG runs in public subnets with strictly-scoped SGs.
-      // At Phase 5.5 launch readiness, add a PRIVATE_WITH_EGRESS tier + NAT
-      // (or VPC endpoints) and flip the ASG subnet placement — see
-      // ROADMAP §4 Phase 5.5.
+      // Before public launch, add a PRIVATE_WITH_EGRESS tier + NAT (or VPC
+      // endpoints) and flip the compute subnet placement — see ROADMAP P3,
+      // "Production network posture" (the wording there predates Fargate).
       this.vpc = new ec2.Vpc(this, 'Vpc', {
         ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
         maxAzs: 2,

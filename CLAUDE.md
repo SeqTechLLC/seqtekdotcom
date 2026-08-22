@@ -15,7 +15,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 
 Defer to these docs before re-deriving anything. Update them when decisions change.
 
-- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (main → staging/UAT; `vX.Y.Z` release → prod)
+- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`Preview` → preview.seqtek.com; `main` or a `vX.Y.Z` release → ww3.seqtek.com)
 - `docs/INFRASTRUCTURE_RUNBOOK.md` — step-by-step: fresh AWS account standup, migrating an environment (with data) to another account, `seqtek.com` cutover
 - `docs/ROADMAP.md` — current status, open decisions, phase tracker
 - `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
@@ -32,19 +32,22 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 
 ## Current phase
 
-Phase 2 (content models, spec 003) is closed — US1–US7 + media (S3) shipped across PRs #11/#13/#14/#15/#16/#17/#19. It leaves behind: 13 collections + 3 globals, the full layout + inline block library with React renderers, live preview, an audit-seed pipeline (frozen at its current shape — see ROADMAP §4), and the access-matrix invariant.
+**What the site is.** Two content primitives — a block-composed `Page` and a rich-text `Post` — plus typed
+metadata collections that carry a block-composed body (`caseStudies`, `workshops`, `teamMembers`, `partners`,
+`posts`). There are **no bespoke per-type page templates**; everything renders through the shared
+`RenderBlocks` dispatcher (ADR 0009, spec 010 / PR #66). `partners` (PR #99) is the reference implementation of
+the metadata-collection pattern. Media is served from CloudFront `/media/*` (ADR 0008, spec 009). Services are
+the one exception and a known debt: `/services/[offering]` resolves four bare `Page` slugs through hardcoded
+lookups rather than a collection — tracked as SVC-2.
 
-Phase 3 (spec 004) is **split**. Its _engineering_ scope — the public render foundation + all five marquee page _templates_ (homepage, case studies, team, Touchstone workshops, localshoring) — shipped in PR #21 (cached readers + ISR tag-parity per ADR 0005, error/maintenance pages, 301 redirect map, metadata/JSON-LD, dynamic sitemap; 47/47 tasks). Acceptance was template-scope, so the spec is **done, not blocked**. The marquee _content_ (copy, photos, testimonials) is carved out to a content-lead-gated track (ROADMAP §1 C-\* items) — templates are live and waiting on content, not engineers. The audit seed stays a one-shot migration tool + 301-redirect-map source, not a publish baseline. See ROADMAP §4.
+**Environments.** Nothing is publicly launched. A push to `Preview` deploys `preview.seqtek.com` (primary
+Fargate lane); a push to `main` or a published `vX.Y.Z` release deploys `ww3.seqtek.com` (secondary lane, same
+stack and account) — both behind an ALB + Cognito gate. The separate staging account (`seqtek-preview.com`) was
+retired 2026-08-14. `seqtek.com` still serves the old Wix site.
 
-Phase 5 ("Polish") is shipping in code-owned slices. **Spec 007 (P5-1)** landed the launch-hardening subset — accent-contrast sweep, full-route a11y audit, slow/hung-read timeouts (ADR 0007), and the perf proof. **Spec 008 (P5-2)** landed the GTM code/doc track in PR #31: a single SSR-safe `pushDataLayer` emitter (`src/lib/analytics/dataLayer.ts`) wiring `cta_click` + `case_study_view` conversion signals, a dormant `booking_complete` seam, the `hubspot/submit.ts` refactor onto that shared emitter, and the CAPI consent decision. See ROADMAP §4 and PROJECT_HISTORY P5-1/P5-2.
-
-**Spec 009 (media via CloudFront, ADR 0008)** moved media serving off direct S3 onto a CloudFront `/media/*` path. **Spec 010 (PR #66, ADR 0009)** is the defining structural shift: it collapsed the site to **two content primitives** — a block-composed `Page` and a block-composed `Post`. Workshops, case studies, services, team, and the homepage global are now all block-composed via `RenderBlocks`; only Posts (`insights/[slug]`) keep a rich-text `content` field. There are no bespoke per-type page templates anymore.
-
-The **services section was restructured into four peer offerings** — Localshoring, AI Integration, Digital Transformation, and Workshops — each rendered as a block `Page` by slug at `/services/[offering]` (PRs #79–#83). The `Services` / `ServicePillars` collections still exist but are no longer publicly routed.
-
-Active engineering is content-independent: spec 008's external GTM-UI / staging config tail plus named deferrals, and the remaining Phase 5.5 / 6 launch-readiness gates. The live HubSpot forms (Workshop #74, Contact #76) and the PR #21 review items (#23) have shipped.
-
-Staging runs at `https://seqtek-preview.com` on Postgres 18.3. Production cutover to `seqtek.com` remains deferred to launch readiness.
+**What's active.** Spec 011 (Payload admin UX) is in flight. The bottleneck is content throughput, not
+features. `docs/ROADMAP.md` is the prioritized list of everything open; `docs/PROJECT_HISTORY.md` is the archive
+of what shipped. Don't re-derive status from git history — read those two.
 
 ## Conventions
 
@@ -76,8 +79,8 @@ The expectation: open the PNGs for **every page your change touches**, at both v
 
 Content lives in the **database**, not in committed code, and **CD does not seed content** — a deploy ships code, never copy or media. **Tool is committed; data is gitignored.** The way to (re)load content, local or remote, is the committed generic seeder driving gitignored JSON request files:
 
-- **The tool** — `tools/payload-seed` (`npm run payload:seed -- <file.json>`). Upserts any collection or global from a JSON request file over REST, idempotent by an identity field (default `slug`). Directives resolved at write time: `$ref` (relation by slug/field → id, with array fallback / `createIfMissing` / `omitIfMissing`), `$file` (media upload-or-reuse by filename → id), `$lexical` (prose → editorState). An array of specs runs in order, so earlier docs resolve as later refs. `IMPORT_BASE_URL` (default `http://localhost:3100`; staging `https://seqtek-preview.com`) + `IMPORT_TOKEN` (an `/admin` `payload-token` JWT the site owner mints — staging/prod have no direct DB access, so REST-with-a-token is the only path). `--dry-run` previews; keep the token **out of the repo** (gitleaks blocks it regardless). `tools/import-case-study` is the domain-specific importer for case studies; both share `tools/payload-rest/client.ts`. **Don't commit remote-push scripts** — the runner is committed once and generic; the data is not.
-- **The data** — gitignored `docs/content-drafts/*.json`, **one file per collection or global** (`pages`, `case-studies`, `posts`, `workshops`, `team`, `partners`, `testimonials`, `categories`, `industries`, `services`, `service-pillars`, `global-*`). These are the real marketing content (kept out of the public repo). Local dev and staging use the SAME files via `IMPORT_BASE_URL`. Reconciled against staging 2026-08-11 and verified portable — no row IDs, every relation a `$ref` (58 docs, 84 refs, 0 unresolved). Load order and the three known staging data defects are in `docs/content-drafts/README.md`; the fresh-environment sequence is `INFRASTRUCTURE_RUNBOOK.md` §2.2. Pre-spec-010 files that carried legacy body fields but no `layout` (seeding them renders an empty body and reports success) are in `docs/content-drafts/_archive/`.
+- **The tool** — `tools/payload-seed` (`npm run payload:seed -- <file.json>`). Upserts any collection or global from a JSON request file over REST, idempotent by an identity field (default `slug`). Directives resolved at write time: `$ref` (relation by slug/field → id, with array fallback / `createIfMissing` / `omitIfMissing`), `$file` (media upload-or-reuse by filename → id), `$lexical` (prose → editorState). An array of specs runs in order, so earlier docs resolve as later refs. `IMPORT_BASE_URL` (default `http://localhost:3100`; the deployed lanes are `https://preview.seqtek.com` / `https://ww3.seqtek.com`) + `IMPORT_TOKEN` (an `/admin` `payload-token` JWT the site owner mints — the deployed lanes have no direct DB access, so REST-with-a-token is the only path; a Cognito-gated lane also needs `IMPORT_COOKIE`, PR #102). `--dry-run` previews; keep the token **out of the repo** (gitleaks blocks it regardless). `tools/import-case-study` is the domain-specific importer for case studies; both share `tools/payload-rest/client.ts`. **Don't commit remote-push scripts** — the runner is committed once and generic; the data is not.
+- **The data** — gitignored `docs/content-drafts/*.json`, **one file per collection or global** (`pages`, `case-studies`, `posts`, `workshops`, `team`, `partners`, `testimonials`, `categories`, `industries`, `services`, `service-pillars`, `global-*`). These are the real marketing content (kept out of the public repo). Local dev and the deployed lanes use the SAME files via `IMPORT_BASE_URL`. Reconciled against staging 2026-08-11 and verified portable — no row IDs, every relation a `$ref` (58 docs, 84 refs, 0 unresolved). Load order and the three known staging data defects are in `docs/content-drafts/README.md`; the fresh-environment sequence is `INFRASTRUCTURE_RUNBOOK.md` §2.2. Pre-spec-010 files that carried legacy body fields but no `layout` (seeding them renders an empty body and reports success) are in `docs/content-drafts/_archive/`.
 
 **Test fixtures are committed and generic, separate from real content.** `src/payload/seed/showcase` (`npm run seed:showcase`) builds 1-2 of every block type for the visual/showcase capture; `tests/e2e/helpers/seedInScopeRoutes.ts` seeds minimal generic fixtures for the a11y/in-scope routes. Tests never depend on the gitignored real content. The local dev server (`:3100`) runs different code — don't pull or mutate it mid-session; run your own server on a free port.
 
@@ -85,6 +88,6 @@ Content lives in the **database**, not in committed code, and **CD does not seed
 
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/010-block-page-composition/plan.md`.
+`specs/011-payload-admin-ux/plan.md`.
 
 <!-- SPECKIT END -->
