@@ -166,7 +166,7 @@ An editor landing on the admin home sees content types grouped by purpose, with 
 - **FR-005a**: The cutover step that seeds the site-settings address so the `Organization` JSON-LD emits a postal address (`INFRASTRUCTURE_RUNBOOK.md`, added in PR #105) MUST be retired in the same change, since the values become code-owned and can no longer go dormant by being left unseeded.
 - **FR-006**: Record types that have no public route MUST NOT present a page-composition body or a live-preview affordance, while remaining available as relationship targets for the records and blocks that reference them.
 - **FR-007**: The retained legacy body columns from the block-composition migration MUST be dropped, and no hidden read-only remnant fields may remain in the admin schema.
-- **FR-008**: The system MUST provide an automated check that fails when a field is added to a collection, global, or block without a consumer on the render path, so this class of defect cannot silently return.
+- **FR-008**: ~~The system MUST provide an automated check that fails when a field is added to a collection, global, or block without a consumer on the render path.~~ **NOT MET — deliberately dropped 2026-08-24.** The implementation was a registry mapping every field to a hand-written prose claim, with a test asserting the claim was non-empty. It could not tell whether a claim was true, so it verified that a human typed a sentence. The genuinely stronger version (render every block with every field populated and diff the output per field) was judged disproportionate in research R6 and still is. What actually found the inert fields was reading the code — twice, once in this spec and once in review. Recording that honestly rather than shipping ceremony that reads like a guarantee. The fields the audit found are tracked as ROADMAP **INERT-1**.
 
 **Block selection (US2)**
 
@@ -229,14 +229,14 @@ An editor landing on the admin home sees content types grouped by purpose, with 
 SC-002, SC-004, SC-005, SC-006, SC-007, SC-008 and SC-009 are the **release gates** — each is mechanically verifiable without a human trial. SC-001 and SC-003 are **targets, not gates**: they state the outcome the feature is aiming at, but they are not measured as a condition of shipping, consistent with the walkthrough session staying out of scope.
 
 - **SC-001** _(target, not a gate)_: A marketing editor with no prior training on the panel can create, compose, and publish a new page from a written brief in under 20 minutes without developer assistance.
-- **SC-002**: Zero editable controls remain in the admin whose values have no effect on rendered output, metadata, or an editorial workflow, verified by an automated audit that runs in CI.
+- **SC-002**: Zero editable controls remain in the admin whose values have no effect on rendered output, metadata, or an editorial workflow. **Verified by audit, not by CI** — see FR-008. The 24 fields the audit found on unrouted collections are tracked as ROADMAP INERT-1 rather than removed, because their routes are planned.
 - **SC-003** _(target, not a gate)_: Given a described page section, an editor identifies the correct block on the first attempt in at least 9 of 10 trials, in under 30 seconds each.
 - **SC-004**: Publish state is visible without opening a record for 100% of content lists whose record type supports drafts.
 - **SC-005**: 100% of image records display a visual preview in both the library list and every picker, so images can be chosen by sight rather than by filename.
 - **SC-006**: Every public route renders identically before and after this feature at both mobile and desktop viewports, with no visual differences.
 - **SC-007**: The committed seeding pipeline loads every real content file with zero unresolved references after the change.
 - **SC-008**: Every field presented in the admin either has a self-evident label or carries help text; no label is a mechanically title-cased field name.
-- **SC-009**: Adding a new block or field without its required category, preview, description, or render-path consumer fails CI, so the improvements cannot decay.
+- **SC-009**: Adding a new block without its required category, preview or description fails CI, so the picker improvements cannot decay. The render-path-consumer half is dropped with FR-008.
 
 ## Assumptions
 

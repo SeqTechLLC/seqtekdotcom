@@ -1,12 +1,26 @@
 /**
- * Placeholder site chrome data shaped like the future Payload globals
- * (ARCHITECTURE.md §2 — `siteSettings`, `navigation`). Layout components read
- * from this module in Phase 1; swap to `payload.findGlobal()` in Phase 2.
+ * Site chrome — the canonical source, not a placeholder.
  *
- * Schema drift to reconcile when the globals are built:
- *  - `socialLinks` adds `youtubeUrl` here (brand kit lists YouTube; spec omits it).
- *  - `navigation` adds `legalNav` as a top-level flat list (privacy / terms).
- *    Architecture currently folds these under `siteSettings.footerText`.
+ * This module was written in Phase 1 as stand-in data "to swap to
+ * `payload.findGlobal()` in Phase 2". Spec 011 inverted that: the `siteSettings`
+ * and `navigation` globals were withdrawn and their tables dropped, because
+ * nothing rendered from them and navigation URLs are unvalidated free text
+ * coupled to the route table and the 301 map. See ADR 0010.
+ *
+ * So this file IS the site chrome. Company name, tagline, phone, email, postal
+ * address, social links, footer text and both nav trees live here and change by
+ * deploy, not by publish.
+ *
+ * Seven of these values are also read at render time beyond the chrome:
+ * `tagline` and `companyName` by `lib/metadata.ts`, and `companyName`,
+ * `tagline`, `email`, `phone`, `address` and `socialLinks` by the
+ * `Organization` JSON-LD in `lib/structured-data.ts`. Both are pinned by tests
+ * (`organizationLd.int.spec.ts`, `metadataOutput.int.spec.ts`) — edit the
+ * values here freely, but a shape change will fail those.
+ *
+ * Note `socialLinks.youtubeUrl` is carried here and deliberately NOT emitted in
+ * `sameAs`: the withdrawn global had no column for it, and adding it would be a
+ * change in rendered output rather than a relocation.
  */
 
 export type NavItem = {

@@ -1,9 +1,5 @@
 import type { Block } from 'payload'
 
-import { requiredWhen } from '../conditional'
-
-type StatsSibling = { source?: string }
-
 // Per BLOCK_LIBRARY.md §5.3. `items` is conditionally required when
 // source = 'inline'; the from-site-settings path renders the canonical set
 // at template time and ignores the inline array.
@@ -13,22 +9,19 @@ export const StatsBar: Block = {
   labels: { singular: 'Stats bar', plural: 'Stats bars' },
   fields: [
     { name: 'heading', type: 'text' },
-    {
-      name: 'source',
-      type: 'select',
-      required: true,
-      defaultValue: 'inline',
-      options: [
-        { label: 'Inline', value: 'inline' },
-        { label: 'From site settings', value: 'from-site-settings' },
-      ],
-    },
+    // spec 011: the `source` select is gone. Its only alternative to 'inline'
+    // was 'from-site-settings', which read `siteSettings.stats` — a global
+    // withdrawn by this spec (ADR 0010). The renderer already rendered nothing
+    // for that value ("Phase 3 will resolve via a server helper"), a Phase 3
+    // that can no longer happen, so the option was an editable control that
+    // silently produced an empty section. Stats are always inline now, which
+    // is what every stored row already used.
     {
       name: 'items',
       type: 'array',
       minRows: 3,
       maxRows: 5,
-      ...requiredWhen<StatsSibling>((d) => d?.source === 'inline'),
+      required: true,
       fields: [
         { name: 'number', type: 'text', required: true },
         { name: 'label', type: 'text', required: true },

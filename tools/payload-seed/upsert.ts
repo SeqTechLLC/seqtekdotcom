@@ -2,7 +2,7 @@
  * Write engine: upsert a single resolved spec over the Payload REST API.
  *
  * Collection specs are idempotent by `data[identity]` (find → update | create),
- * mirroring the proven flow in tools/import-case-study/importer.ts. Globals are
+ * mirroring the flow proven by the case-study importer (retired in spec 011). Globals are
  * a straight `updateGlobal`. Data is assumed already directive-resolved.
  */
 

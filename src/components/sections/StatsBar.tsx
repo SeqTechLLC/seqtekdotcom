@@ -7,14 +7,13 @@ interface StatItem {
 
 interface StatsBarProps {
   heading?: string | null
-  source: 'inline' | 'from-site-settings'
   items?: StatItem[] | null
 }
 
-export function StatsBar({ heading, source, items }: StatsBarProps) {
-  // from-site-settings: Phase 3 will resolve via a server helper. For now,
-  // render nothing rather than fabricate stats.
-  const list = source === 'inline' ? (items ?? []) : []
+export function StatsBar({ heading, items }: StatsBarProps) {
+  // spec 011: the `source` discriminator is gone with the siteSettings global
+  // it pointed at (ADR 0010). Stats are always inline.
+  const list = items ?? []
   if (list.length === 0) return null
   // Column count follows the item count: a fixed 5-column grid with three
   // stats clusters them left and leaves dead columns on the right.

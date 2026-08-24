@@ -74,10 +74,6 @@ export interface ParsedPage {
   slug: string
   title: string
   publishedAt: string
-  hero: {
-    headline: string
-    subheadline?: string
-  }
   /** Stored as `layout: []` initially; the lead composes blocks in the admin. */
   layout: never[]
 }
@@ -126,7 +122,10 @@ export function parsePages(options: ParsePagesOptions): ParsedPage[] {
         .split('\n')
         .map((l) => l.trim())
         .find((l) => l.length > 0) ?? title
-    const hero = { headline: firstLine }
+    // spec 011: `Pages.hero` was dropped (FR-002). The first standalone line is
+    // still resolved above because it feeds `title` when the audit has no
+    // explicit one; it is no longer emitted as a hero group.
+    void firstLine
 
     logger.log({
       level: 'INFO',
@@ -163,7 +162,6 @@ export function parsePages(options: ParsePagesOptions): ParsedPage[] {
       slug: canonicalSlug,
       title,
       publishedAt: now,
-      hero,
       layout: [],
     })
   }

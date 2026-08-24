@@ -51,7 +51,7 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 
 All collections are defined in TypeScript. Payload auto-generates the database schema, REST API, GraphQL API, and admin panel from these definitions.
 
-> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields some tables still list (`problem`/`solution`/`impact`, `bio`, `hero`/`stats`/…) are retained one release (hidden + read-only, expand/contract) and composed into `layout` by `src/payload/seed/compose/*ToLayout.ts`. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `services`/`servicePillars`/`industries`/`locations` stay structured — they are relationship/taxonomy targets, no longer publicly routed (the four `/services` offerings render as block-composed `pages` by slug — PR #79, ADR 0009).
+> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011**, which completes the contract half — `layout` is now the only body. The `src/payload/seed/compose/*ToLayout.ts` mappings survive as the `convert-to-blocks` skill's reference for what each legacy shape becomes in blocks; they are no longer a runnable migration path. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `services`/`servicePillars`/`industries`/`locations` stay structured — they are relationship/taxonomy targets, no longer publicly routed (the four `/services` offerings render as block-composed `pages` by slug — PR #79, ADR 0009).
 
 ### Document Collections
 
@@ -76,7 +76,6 @@ Block-composed content pages — the generic primitive (spec 010 / ADR 0009). Th
 | `title`       | text   | Required                                                                            |
 | `slug`        | text   | Required, unique, indexed; auto-generated from title (`slugFromTitle` beforeChange) |
 | `publishedAt` | date   | Sidebar; a future date forces the doc back to `draft` (`enforceDraftWhenScheduled`) |
-| `hero`        | group  | headline, subheadline, backgroundImage, cta — legacy field, retained                |
 | `layout`      | blocks | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks`             |
 | `seo`         | group  | metaTitle, metaDescription, ogImage                                                 |
 
@@ -136,15 +135,16 @@ Structured service records. **No longer publicly routed** — the four-offering 
 | `title`              | text                                  | e.g., "Change Management & Transformation"              |
 | `slug`               | text                                  | Auto-generated                                          |
 | `pillar`             | relationship -> servicePillars        | Legacy grouping relationship (no longer drives routing) |
-| `description`        | richText                              | Detailed service description (800-1200 words target)    |
-| `approach`           | richText                              | Methodology / how SEQTEK delivers this service          |
-| `deliverables`       | array of text                         | Bulleted list of what the client receives               |
 | `icon`               | text                                  | Icon identifier for card displays                       |
 | `relatedCaseStudies` | relationship -> caseStudies (hasMany) |                                                         |
-| `faq`                | array                                 | Objects with `question` (text), `answer` (richText)     |
 | `seo`                | group                                 |                                                         |
 | `order`              | number                                | Display ordering                                        |
 | `status`             | select                                | `draft`, `published`                                    |
+
+Spec 011 dropped `description`, `approach`, `deliverables`, `faq` and the whole
+`layout` blocks array from this collection: `/services/[offering]` renders four
+block-composed `pages` by slug (PR #79), so nothing rendered them. What remains
+is the typed metadata the `service-cards` and `service-pillar-cards` blocks read.
 
 #### `servicePillars`
 
@@ -278,43 +278,36 @@ Access: Public read (no draft status on categories). Create/update requires admi
 
 ### Globals (Singletons)
 
-#### `siteSettings`
+#### ~~`siteSettings`~~ and ~~`navigation`~~ — withdrawn (spec 011, ADR 0010)
 
-Company-wide settings edited in one place, used across the site.
+Both globals were **removed from the Payload config and their tables dropped**.
+Site chrome is code-owned: navigation structure, company name, tagline, phone,
+email, postal address, social links and footer text all live in
+`src/lib/site-content.ts` and change by deploy, not by publish.
 
-| Field         | Type  | Notes                                                                                    |
-| ------------- | ----- | ---------------------------------------------------------------------------------------- |
-| `companyName` | text  | "SEQTEK"                                                                                 |
-| `tagline`     | text  |                                                                                          |
-| `phone`       | text  |                                                                                          |
-| `email`       | text  |                                                                                          |
-| `address`     | group | street, city, state, zip                                                                 |
-| `socialLinks` | group | linkedinUrl, twitterUrl, facebookUrl                                                     |
-| `footerText`  | text  | Copyright line                                                                           |
-| `stats`       | array | Objects with `number` (text), `label` (text), `suffix` (text) — e.g., "25+", "Years", "" |
+Why: navigation URLs are unvalidated free text coupled to the route table and
+the 301 redirect map, so a bad nav edit ships a broken link into the primary
+navigation, while the underlying values change roughly once a decade. ADR 0010
+records the reasoning and the revisit condition.
 
-#### `navigation`
-
-Controls the site navigation structure.
-
-| Field       | Type  | Notes                                                         |
-| ----------- | ----- | ------------------------------------------------------------- |
-| `mainNav`   | array | Objects with `label` (text), `url` (text), `children` (array) |
-| `footerNav` | array | Same structure                                                |
-| `ctaButton` | group | `label` (text), `url` (text) — the nav CTA button             |
+Seven values from `siteSettings` were load-bearing at render time and were
+relocated, not lost — `tagline` and `companyName` feed page metadata, and
+`companyName`, `tagline`, `email`, `phone`, `address` and `socialLinks` feed the
+`Organization` JSON-LD. `tests/int/render/organizationLd.int.spec.ts` pins the
+complete emitted object so the relocation cannot silently regress.
 
 #### `homepage`
 
-Homepage-specific content.
+The only remaining global. Homepage-specific content, block-composed.
 
-| Field                  | Type                                   | Notes                                           |
-| ---------------------- | -------------------------------------- | ----------------------------------------------- |
-| `hero`                 | group                                  | headline, subheadline, backgroundImage, cta     |
-| `stats`                | relationship -> siteSettings.stats     | Or inline                                       |
-| `featuredCaseStudy`    | relationship -> caseStudies            | Highlighted on homepage                         |
-| `brandTeaser`          | group                                  | headline, body (short Sequoyah teaser), linkUrl |
-| `clientLogos`          | array of upload (media)                | Logo bar                                        |
-| `featuredTestimonials` | relationship -> testimonials (hasMany) | Max 3                                           |
+| Field    | Type   | Notes                                                                   |
+| -------- | ------ | ----------------------------------------------------------------------- |
+| `layout` | blocks | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks` |
+
+Its discrete legacy fields (`hero`, `stats`, `featuredCaseStudy`, `brandTeaser`,
+`clientLogos`, `featuredTestimonials`) were dropped in spec 011 — they had been
+retained read-only through the ADR 0009 expand/contract and are now expressed as
+blocks in `layout`.
 
 ---
 
@@ -435,7 +428,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   └── Industries.ts  Locations.ts  Media.ts  Categories.ts
 │   │
 │   ├── globals/                           # Payload global (singleton) configs
-│   │   └── SiteSettings.ts  Navigation.ts  Homepage.ts
+│   │   └── Homepage.ts                  # the only global (spec 011 withdrew the other two)
 │   │
 │   ├── payload/
 │   │   ├── access/                        # Reusable access control
@@ -493,7 +486,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   └── brand/                             # Brand assets (logos, etc.)
 │
 ├── infra/                                 # AWS CDK (see §13)
-├── tools/                                 # Subdir tooling: payload-seed, payload-rest, import-case-study, ingest-photos, leonardo-images, check-stale-overrides, e2e
+├── tools/                                 # Subdir tooling: payload-seed, payload-rest, ingest-photos, leonardo-images, check-stale-overrides, e2e
 ├── tests/                                 # Vitest (int/unit) + Playwright (e2e + visual)
 ├── specs/                                 # Spec-Kit specs
 ├── docs/                                  # This doc + ROADMAP, DESIGN_SYSTEM, BLOCK_LIBRARY, decisions/ (ADRs)

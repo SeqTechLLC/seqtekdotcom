@@ -80,7 +80,6 @@ export function composeHomepageLayout(record: HomepageRecord): LayoutBlock[] {
   if (stats.length >= 3 && stats.length <= 5) {
     blocks.push({
       blockType: 'stats-bar',
-      source: 'inline',
       items: stats.map((s) => ({
         number: s.number,
         label: s.label,
@@ -138,7 +137,6 @@ export function composeHomepageLayout(record: HomepageRecord): LayoutBlock[] {
   } else if (logos.length > 0) {
     blocks.push({
       blockType: 'logo-bar',
-      source: 'inline',
       logos,
       treatment: 'grayscale-on-color-hover',
     })

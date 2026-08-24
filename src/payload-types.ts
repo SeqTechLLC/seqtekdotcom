@@ -595,15 +595,12 @@ export interface TimelineBlock {
  */
 export interface StatsBarBlock {
   heading?: string | null;
-  source: 'inline' | 'from-site-settings';
-  items?:
-    | {
-        number: string;
-        label: string;
-        suffix?: string | null;
-        id?: string | null;
-      }[]
-    | null;
+  items: {
+    number: string;
+    label: string;
+    suffix?: string | null;
+    id?: string | null;
+  }[];
   id?: string | null;
   blockName?: string | null;
   blockType: 'stats-bar';
@@ -2157,7 +2154,6 @@ export interface TimelineBlockSelect<T extends boolean = true> {
  */
 export interface StatsBarBlockSelect<T extends boolean = true> {
   heading?: T;
-  source?: T;
   items?:
     | T
     | {

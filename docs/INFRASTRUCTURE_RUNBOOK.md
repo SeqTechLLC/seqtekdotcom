@@ -308,7 +308,7 @@ export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie
 
 `tools/payload-seed/README.md` §"Getting `IMPORT_COOKIE`" has the DevTools
 steps. Every REST tool here reads it: `push-to-payload`, `rekey-staging`,
-`push-staging`, `import-case-study` and `payload:seed`.
+`push-staging` and `payload:seed`.
 
 Drop `--dry-run` to write. Keep filenames byte-identical — `$ref` and `$file`
 both key on filename, so a rename silently orphans every reference to it.
@@ -324,9 +324,12 @@ export IMPORT_TOKEN=<payload-token cookie from /admin on the NEW env>
 export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
 
 # Order matters — later specs resolve $ref against what earlier ones created.
+# `global-site-settings` and `global-navigation` are deliberately absent: both
+# globals were withdrawn in spec 011 (site chrome is code-owned, ADR 0010), and
+# payload-seed accepts any string as a global slug, so listing them here would
+# PATCH a route that no longer exists and report success.
 for f in categories industries testimonials team service-pillars services \
-         case-studies posts workshops pages partners \
-         global-homepage global-site-settings global-navigation; do
+         case-studies posts workshops pages partners global-homepage; do
   npm run payload:seed -- docs/content-drafts/$f.json
 done
 ```
@@ -449,9 +452,13 @@ own it.
 ## 2.9 Before a destructive migration: snapshot first
 
 Some migrations drop columns and tables — spec 011's expand/contract close is
-the first batch (`drop_pages_hero`, `drop_legacy_body_columns`,
-`drop_services_layout`, `drop_chrome_globals`). Those are not recoverable by
-re-running anything.
+the first batch, shipped as one atomic migration:
+`20260824_201317_spec011_drop_inert_fields`. (Earlier drafts of this section
+named four separate migrations — `drop_pages_hero`, `drop_legacy_body_columns`,
+`drop_services_layout`, `drop_chrome_globals`. `payload migrate:create`
+generates from the whole schema diff in one pass, so those never existed;
+`src/migrations/index.ts` is the register of record.) Those drops are not
+recoverable by re-running anything.
 
 **There is no rehearsal environment.** The separate staging account was retired
 2026-08-14, and `preview.seqtek.com` and `ww3.seqtek.com` are two ECS services
@@ -467,9 +474,9 @@ So, in order, every time:
    ```sh
    aws rds create-db-snapshot \
      --db-instance-identifier <instance> \
-     --db-snapshot-identifier pre-drop-legacy-body-columns
+     --db-snapshot-identifier pre-spec011-drop-inert-fields
    aws rds wait db-snapshot-completed \
-     --db-snapshot-identifier pre-drop-legacy-body-columns
+     --db-snapshot-identifier pre-spec011-drop-inert-fields
    ```
 
 2. **Run the content-equivalence gate against that lane**, not just locally.
@@ -483,6 +490,18 @@ So, in order, every time:
    A green run locally proves nothing about another environment — records there
    may have been composed by an earlier composer version or hand-edited in the
    admin since. Run it where the migration will run.
+
+   Exit codes:
+
+   | Code | Meaning                                                     | Action                                                                                                                                          |
+   | ---- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `0`  | Verified: every legacy value found in its composed `layout` | Proceed                                                                                                                                         |
+   | `1`  | Gaps found, listed per record                               | Fix before migrating — do not proceed                                                                                                           |
+   | `3`  | **Inconclusive — nothing was verified**                     | Stop. Either the lane is already migrated, or it is empty, or you are pointed at the wrong database. A pass that checked nothing is not a pass. |
+
+   The gate reads both published and draft rows, because the migration drops the
+   `_v` version mirrors too — prose living only in an unpublished draft would
+   otherwise be destroyed by a green check.
 
 3. Only then deploy the migration.
 

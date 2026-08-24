@@ -200,7 +200,7 @@ async function main() {
     await upsertBySlug(payload, 'posts', post)
   }
 
-  await payload.updateGlobal({ slug: 'siteSettings', data: parseSiteSettings() })
+  // spec 011: the siteSettings write step was removed with the global (ADR 0010).
 
   console.log('Done. Errors logged to migration-errors.log')
 }

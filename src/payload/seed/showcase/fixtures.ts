@@ -519,7 +519,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
           data: {
             blockType: 'stats-bar',
             heading: 'By the numbers',
-            source: 'inline',
             items: [
               { number: '25', label: 'years operating', suffix: '+' },
               { number: '0.7', label: 'cost vs FTE hire', suffix: 'x' },
@@ -539,7 +538,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
           data: {
             blockType: 'logo-bar',
             heading: 'Trusted by leadership teams',
-            source: 'inline',
             logos: [
               { logo: media.logo },
               { logo: media.logo },

@@ -196,10 +196,10 @@ Gated on the **September** All Hands shoot plus the P2 content. Leadership engag
   before Edge exists, so first-boot tasks never see the Edge-owned `cloudfront_distribution_id` SSM param and
   every CloudFront invalidation silently skips — the exact dormancy found on staging (spec 009 / PR #44).
   Verify after: a media delete produces an entry in `aws cloudfront list-invalidations`.
-- **Spec-010 composer run after `payload migrate`** — only applies to an environment carrying pre-spec-010
-  data. Between migrate and the composer run every migrated record renders an empty body. Run
-  `tsx src/payload/seed/compose/<type>ToLayout.ts` per type (+ `homepageToLayout.ts`); idempotent, safe to
-  re-run. **Drops off this list once spec 011 removes the legacy body columns.**
+- ~~**Spec-010 composer run after `payload migrate`**~~ — **removed: spec 011 dropped the legacy body
+  columns**, so there is nothing left to compose from and the composers' CLI entry points are gone. What
+  replaces it is the pre-migration gate in `INFRASTRUCTURE_RUNBOOK.md` §2.9: snapshot the lane, then run
+  `tools/legacy-equivalence/check.ts` **against that lane** before the drop migration goes anywhere near it.
 - DNS cutover in a low-traffic window (Dom).
 - Post-cutover: submit the sitemap to Search Console and verify redirects, validate CloudFront cache behavior,
   test-restore an RDS snapshot, run a full redirect crawl (Screaming Frog or similar), watch CloudWatch +
@@ -220,6 +220,19 @@ Real work, none of it blocking a launch. Ordered by expected return.
   evaluation criterion at 36.4%**, ahead of relevant experience (32.3%) and talented staff (32.2%). Our own
   taxonomy is **4 of 5 energy/oilfield** — a real vertical concentration that is invisible in the IA. Energy
   first: it already has the case-study proof.
+- **INERT-1 — 24 admin fields on four unrouted collections have no consumer.** Found by audit during spec 011. `industries`, `locations`, `servicePillars` and `services` have no detail route, so nothing calls
+  `buildMetadata` with their `seo` group and nothing renders their longer prose. An editor can fill any of
+  these in and publish to no effect:
+  - `industries` — `description`, `relevantServices`, `clientLogos`, `seo.*` (would be consumed by **IND-1**)
+  - `locations` — `description`, `hasOffice`, `address.*`, `seo.*` (by the four market pages, `CONTENT_NEEDS` §9)
+  - `servicePillars` — `description`, `heroImage`, `seo.*` (by **SVC-2**)
+  - `services` — `seo.*` (by **SVC-2**)
+
+  They were left in place rather than deleted: they are metadata sitting _ahead of_ routes the roadmap intends
+  to build, so deleting them today means re-adding them later. Until then they should be hidden from the admin
+  (`admin.hidden`) so nobody fills in a control that does nothing — a US4 form-legibility task, not a schema
+  change.
+
 - **SVC-2 — put services back on a metadata collection.** _(Blocks SVC-3.)_ The `/services` fold took the wrong
   half of ADR 0009: services became bare `Page` slugs behind hardcoded lookups, so a fifth offering means
   editing `OFFERING_TO_SLUG` + `OFFERING_TITLE` (`services/[offering]/page.tsx`), `SERVICE_OFFERING_PATHS` +
@@ -284,9 +297,12 @@ Real work, none of it blocking a launch. Ordered by expected return.
   The org Actions spending limit was hit 2026-06-16: someone needs to raise it, or take the repo public
   (Actions are free there).
 - **Small stuff.** Backfill the `ws` / `happy-dom` `_overridesNotes` entries now that those overrides are on
-  main (issue #75 tracks the stale ones); `tools/import-case-study` re-uploads the hero on every re-import and
-  orphans the previous `media` row — add hash-based reuse like the audit pipeline (T-1); decide autoplay vs
-  manual-only _if_ a testimonial carousel is ever built (`FeaturedTestimonials` ships a static stack-grid today).
+  main (issue #75 tracks the stale ones); decide autoplay vs manual-only _if_ a testimonial carousel is ever
+  built (`FeaturedTestimonials` ships a static stack-grid today).
+  - ~~**T-1** — hash-based media reuse in `tools/import-case-study`~~ **closed as moot (spec 011).** The tool
+    was superseded by the generic `payload-seed` CLI (P5-15) and had no npm script and no callers; case studies
+    load from `docs/content-drafts/case-studies.json` like every other type. Spec 011's field removals left it
+    writing only dropped columns, so it was deleted rather than repaired.
 
 ---
 

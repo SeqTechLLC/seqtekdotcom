@@ -5,12 +5,11 @@ import { resolve } from 'node:path'
 import { getPayload, type Payload } from 'payload'
 
 import config from '../../payload.config'
-import type { Homepage } from '../../payload-types'
 
 import { createMigrationLogger, type MigrationLogger } from './log'
 import { parseCaseStudies } from './parsers/caseStudies'
-import { parseHomepage } from './parsers/homepage'
 import { parsePages } from './parsers/pages'
+import { parseHomepage } from './parsers/homepage'
 import { parsePosts } from './parsers/posts'
 import { upsertBySlug, type UpsertResult } from './upsert'
 
@@ -280,7 +279,6 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
             slug: doc.slug,
             title: doc.title,
             publishedAt: doc.publishedAt,
-            hero: doc.hero,
             layout: doc.layout,
           },
           dryRun: args.dryRun,
@@ -300,39 +298,7 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
     )
   }
 
-  // Homepage (global)
-  if (!filter || filter === 'homepage') {
-    const path = resolve(auditDir, 'page-content.json')
-    let data: ReturnType<typeof parseHomepage>
-    try {
-      const all = readJson<Record<string, string>>(path)
-      const homeBody = all['/']
-      if (!homeBody) throw new Error('homepage entry "/" missing from page-content.json')
-      data = parseHomepage({ homepageContent: homeBody, logger })
-    } catch (err) {
-      stderr(`homepage parse failed at ${path}: ${(err as Error).message}`)
-      return { exitCode: 3, results, logger, collectionsProcessed }
-    }
-    collectionsProcessed.push('homepage')
-    try {
-      if (args.dryRun) {
-        stdout(JSON.stringify({ collection: 'homepage', operation: 'update', data }))
-      } else {
-        await payload.updateGlobal({
-          slug: 'homepage',
-          data: data as Partial<Homepage>,
-          overrideAccess: true,
-          draft: true,
-        })
-      }
-    } catch (err) {
-      stderr(`homepage update failed: ${(err as Error).message}`)
-      return { exitCode: 4, results, logger, collectionsProcessed }
-    }
-    summary('homepage: 1 processed, 1 updated')
-  }
-
-  // Posts (after homepage so dryRun output groups blog stubs near homepage prose)
+  // Posts (blog stubs)
   if (!filter || filter === 'posts') {
     const path = resolve(auditDir, 'page-content.json')
     let parsed: ReturnType<typeof parsePosts>
@@ -375,6 +341,36 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
     summary(
       `posts: ${parsed.length} processed, ${created} created, ${updated} updated, ${parsed.length - created - updated} skipped`,
     )
+  }
+
+  // Homepage — gap audit only, no write (spec 011).
+  //
+  // The write step was removed: `parseHomepage` assembled { hero, stats,
+  // brandTeaser } and all three were dropped from the global (FR-007), so it
+  // wrote a payload of fields the schema no longer accepts, changed nothing,
+  // and reported "1 processed, 1 updated" — the `data as Partial<Homepage>`
+  // cast hid the mismatch from the compiler. Composing a layout instead was
+  // rejected: this is the one-shot Wix migration tool (P2-4, frozen per
+  // ROADMAP §4), superseded as a content source by docs/content-drafts.
+  //
+  // The parse still RUNS, because writing was only half its job. The other
+  // half is the CONTENT_MIGRATION §11 gap log (SC-011 / FR-032) — including
+  // STATS_CONFLICT, the 20+/411+/8221+ vs 25+/500+/10,000+ discrepancy that
+  // ROADMAP BR-5 reopened. Deleting the parser would have dropped that finding
+  // from the migration log without anyone noticing.
+  if (!filter || filter === 'homepage') {
+    const path = resolve(auditDir, 'page-content.json')
+    try {
+      const all = readJson<Record<string, string>>(path)
+      const homeBody = all['/']
+      if (!homeBody) throw new Error('homepage entry "/" missing from page-content.json')
+      parseHomepage({ homepageContent: homeBody, logger })
+    } catch (err) {
+      stderr(`homepage gap audit failed at ${path}: ${(err as Error).message}`)
+      return { exitCode: 3, results, logger, collectionsProcessed }
+    }
+    collectionsProcessed.push('homepage')
+    summary('homepage: gap audit only (no write — see FR-007)')
   }
 
   // spec 011 T016: the siteSettings write step was removed with the global.

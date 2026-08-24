@@ -20,18 +20,6 @@ const STATS_FALLBACK: { number: string; label: string; suffix: string }[] = [
   { number: '8221', suffix: '+', label: 'Lives changed' },
 ]
 
-export interface ParsedHomepage {
-  hero: {
-    headline: string
-    subheadline: string
-  }
-  stats: { number: string; suffix?: string; label: string }[]
-  brandTeaser: {
-    headline?: string
-    body: string
-  }
-}
-
 export interface ParseHomepageOptions {
   homepageContent: string
   logger: MigrationLogger
@@ -42,7 +30,7 @@ function stripNav(raw: string): string {
   return (idx >= 0 ? raw.slice(idx + NAV_TERMINATOR.length) : raw).trim()
 }
 
-export function parseHomepage(options: ParseHomepageOptions): ParsedHomepage {
+export function parseHomepage(options: ParseHomepageOptions): void {
   const { logger } = options
   const body = stripNav(options.homepageContent)
   const lines = body
@@ -94,12 +82,14 @@ export function parseHomepage(options: ParseHomepageOptions): ParsedHomepage {
       'three homepage quotes (Mike K., Cindy B, Kevin R.) are first-name-plus-initial — NOT imported as testimonials per CONTENT-REQUIREMENTS §6',
   })
 
-  return {
-    hero: { headline, subheadline },
-    stats: finalStats,
-    brandTeaser: {
-      headline: 'Purpose-Driven Business Consulting',
-      body: 'Our purpose is to help people and organizations innovate, implement, and deliver a better tomorrow.',
-    },
-  }
+  // spec 011: this function no longer RETURNS a homepage payload. Every field
+  // it used to assemble — hero, stats, brandTeaser — was dropped from the
+  // global (FR-007), so the audit seeder's write step was removed. Its other
+  // job survives untouched: emitting the CONTENT_MIGRATION §11 gap log
+  // (SC-011 / FR-032), including the STATS_CONFLICT above, which is the exact
+  // conflict ROADMAP BR-5 reopened on 2026-08-19. Deleting the parser outright
+  // would have silently dropped that finding from the migration log.
+  void headline
+  void subheadline
+  void finalStats
 }
