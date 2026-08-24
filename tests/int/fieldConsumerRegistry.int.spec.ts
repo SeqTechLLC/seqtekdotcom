@@ -4,7 +4,12 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import payloadConfig from '../../src/payload.config'
 import { registry } from '../../src/components/sections/registry'
 import { flattenConfig, type FlatField } from './helpers/flattenFields'
-import { CONSUMED_FIELDS, EXEMPT_PREFIXES } from '../../src/payload/admin/consumedFields'
+import {
+  CONSUMED_FIELDS,
+  EXEMPT_PREFIXES,
+  KNOWN_INERT_FIELDS,
+  isGeneratedField,
+} from '../../src/payload/admin/consumedFields'
 
 /**
  * Spec 011 T008 (FR-008, contract C5) — nothing editable may be inert.
@@ -48,9 +53,23 @@ describe('field-consumer registry (FR-008)', () => {
   let keys: string[]
 
   beforeAll(async () => {
-    const resolved = await payloadConfig
+    const resolved = (await payloadConfig) as unknown as {
+      collections: Array<{ slug: string; upload?: unknown; auth?: unknown }>
+    }
     flat = flattenConfig(resolved as never)
-    keys = [...new Set(flat.map((f) => dedupeKey(f.path)))].filter((k) => !isExempt(k)).sort()
+
+    // Collections whose upload / auth machinery Payload injects for them.
+    const uploadEntities = new Set(
+      resolved.collections.filter((c) => Boolean(c.upload)).map((c) => c.slug),
+    )
+    const authEntities = new Set(
+      resolved.collections.filter((c) => Boolean(c.auth)).map((c) => c.slug),
+    )
+
+    keys = [...new Set(flat.map((f) => dedupeKey(f.path)))]
+      .filter((k) => !isExempt(k))
+      .filter((k) => !isGeneratedField(k, uploadEntities, authEntities))
+      .sort()
   })
 
   it('every block field belongs to a block with a registered renderer', () => {
@@ -72,21 +91,47 @@ describe('field-consumer registry (FR-008)', () => {
     ).toEqual([])
   })
 
-  it('every entity-own field carries a written consumer claim', () => {
+  it('every entity-own field is either claimed as consumed or declared inert', () => {
     const ownKeys = keys.filter((k) => !k.startsWith('block:'))
-    const unregistered = ownKeys.filter((k) => !(k in CONSUMED_FIELDS))
+    const unregistered = ownKeys.filter(
+      (k) => !(k in CONSUMED_FIELDS) && !(k in KNOWN_INERT_FIELDS),
+    )
 
     expect(
       unregistered,
       `${unregistered.length} field(s) have no entry in src/payload/admin/consumedFields.ts.\n` +
-        `Either add a one-line claim naming where the value surfaces, or delete the field.\n\n` +
+        `Add a claim naming where the value surfaces, declare it inert with a\n` +
+        `tracker, or delete the field.\n\n` +
         unregistered.map((k) => `  '${k}': '',`).join('\n'),
+    ).toEqual([])
+  })
+
+  it('no field is both claimed as consumed and declared inert', () => {
+    const both = Object.keys(CONSUMED_FIELDS).filter((k) => k in KNOWN_INERT_FIELDS)
+    expect(both, `a field cannot be both consumed and inert:\n${both.join('\n')}`).toEqual([])
+  })
+
+  it('every inert declaration cites a tracker', () => {
+    // Without this, the inert list becomes the place unregistered fields go to
+    // be forgotten — which is the exact failure mode this whole test exists for.
+    const TRACKER = /(ROADMAP [A-Z]+-\d+|CONTENT_NEEDS §\d+|#\d+|spec \d{3})/
+    const untracked = Object.entries(KNOWN_INERT_FIELDS)
+      .filter(([, reason]) => !TRACKER.test(reason))
+      .map(([path]) => path)
+
+    expect(
+      untracked,
+      `these inert fields name no tracked item that would give them a consumer.\n` +
+        `Cite one (e.g. "ROADMAP IND-1"), or delete the field:\n` +
+        untracked.map((k) => `  - ${k}`).join('\n'),
     ).toEqual([])
   })
 
   it('no registry entry names a field that no longer exists', () => {
     const live = new Set(keys)
-    const orphans = Object.keys(CONSUMED_FIELDS).filter((k) => !live.has(k))
+    const orphans = [...Object.keys(CONSUMED_FIELDS), ...Object.keys(KNOWN_INERT_FIELDS)].filter(
+      (k) => !live.has(k),
+    )
 
     expect(
       orphans,
@@ -96,7 +141,7 @@ describe('field-consumer registry (FR-008)', () => {
   })
 
   it('no claim is left blank', () => {
-    const blank = Object.entries(CONSUMED_FIELDS)
+    const blank = Object.entries({ ...CONSUMED_FIELDS, ...KNOWN_INERT_FIELDS })
       .filter(([, claim]) => !claim.trim())
       .map(([path]) => path)
 

@@ -158,21 +158,29 @@ A one-off script (a task deliverable, not shipped code) that must pass before §
 
 ## 4. Migration sequence
 
-Local dev is push-managed; these are authored with `payload migrate:create` and run in staging/prod only (`docs/PAYLOAD_DEVELOPMENT.md`).
+Local dev is push-managed; these are authored with `payload migrate:create` and run on the deployed lanes only (`docs/PAYLOAD_DEVELOPMENT.md`).
 
-| #   | Migration                                                                                            | Depends on                        |
-| --- | ---------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 1   | `promote_team_member_expertise` — no-op on schema; exists as a marker that the field is now editable | —                                 |
-| 2   | `drop_pages_hero`                                                                                    | —                                 |
-| 3   | `drop_legacy_body_columns` — §1.2 scalar columns + array tables + versions counterparts              | §3 gate passing                   |
-| 4   | `drop_services_layout` — `services.layout` + `services_blocks_*`                                     | §3 gate passing                   |
-| 5   | `drop_chrome_globals` — `navigation`, `site_settings` + their versions tables                        | §1.5 relocation shipped and green |
+**Shipped as one migration, not five.** This section originally planned five named migrations for ordering rationale. `payload migrate:create` generates from the whole schema diff in one pass, so producing five would have meant five intermediate config states and five deploys. One atomic migration is also strictly safer: the drops either all land or none do, with no window where the schema is half-migrated.
 
-Ordering rationale: 1 lands before 3 so `expertise` is never simultaneously invisible in the admin and load-bearing for JSON-LD. 2 is independent and can ship first as the smallest possible proof the migration path works. **5 runs last and only after the `organizationLd` golden test is green against the relocated constants** — until that test passes, the global is still the source of the homepage's postal address.
+`20260824_201317_spec011_drop_inert_fields` — verified against the live schema before acceptance:
 
-**Snapshot before the destructive migrations.** The separate staging account was retired 2026-08-14, so there is no isolated environment to rehearse migrations 3, 4 and 5 in — `preview.seqtek.com` and `ww3.seqtek.com` are two services in one stack in one account, both holding real content. Take a DB snapshot of the target lane as an explicit, named step in the deploy sequence; the §3 equivalence gate covers content correctness but not operator error.
+| Check                                                                  | Result |
+| ---------------------------------------------------------------------- | ------ |
+| `pages` hero columns dropped (5), `pages` table itself untouched       | ✅     |
+| All 63 `services_blocks_*` tables dropped                              | ✅     |
+| `site_settings` + `navigation` (and versions counterparts) dropped     | ✅     |
+| `team_members_expertise` **retained** (promoted field, §1.3)           | ✅     |
+| `case_studies_blocks_deliverables` / `_blocks_faq` **retained**        | ✅     |
+| `workshops_blocks_deliverables` / `_blocks_faq` **retained**           | ✅     |
+| `down` migration generated and registered in `src/migrations/index.ts` | ✅     |
 
----
+The retained-table checks are the ones that matter: `<table>_blocks_deliverables` and `<table>_deliverables` differ by one path segment, and dropping the wrong one silently destroys live block content. `services_blocks_*` is the deliberate exception — §1.4 drops that collection's whole layout, and its composed content was exported first (§1.4a).
+
+The ordering rationale that motivated five migrations still holds, it just does not need separate migrations to express:
+
+- `teamMembers.expertise` is promoted to visible in the **same change**, and its promotion is admin-only (no schema delta), so the field is never simultaneously invisible and load-bearing.
+- The equivalence gate (§3) gates the whole migration rather than one of five.
+- The `organizationLd` golden test gates the globals drop specifically — it must be green before this migration runs anywhere.
 
 ## 5. Compatibility surfaces
 

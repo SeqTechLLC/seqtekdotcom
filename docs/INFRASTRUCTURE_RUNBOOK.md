@@ -446,6 +446,52 @@ own it.
 
 ---
 
+## 2.9 Before a destructive migration: snapshot first
+
+Some migrations drop columns and tables — spec 011's expand/contract close is
+the first batch (`drop_pages_hero`, `drop_legacy_body_columns`,
+`drop_services_layout`, `drop_chrome_globals`). Those are not recoverable by
+re-running anything.
+
+**There is no rehearsal environment.** The separate staging account was retired
+2026-08-14, and `preview.seqtek.com` and `ww3.seqtek.com` are two ECS services
+in the same stack in the same account, both holding real content. There is
+nowhere to try a destructive migration first.
+
+So, in order, every time:
+
+1. **Take an RDS snapshot of the target lane's database and wait for it to
+   complete.** Name it after the migration, not the date, so its purpose is
+   obvious six months later:
+
+   ```sh
+   aws rds create-db-snapshot \
+     --db-instance-identifier <instance> \
+     --db-snapshot-identifier pre-drop-legacy-body-columns
+   aws rds wait db-snapshot-completed \
+     --db-snapshot-identifier pre-drop-legacy-body-columns
+   ```
+
+2. **Run the content-equivalence gate against that lane**, not just locally.
+   It compares the text of every legacy prose column against the composed
+   `layout` and exits non-zero on any gap:
+
+   ```sh
+   NODE_OPTIONS=--no-deprecation npx tsx tools/legacy-equivalence/check.ts
+   ```
+
+   A green run locally proves nothing about another environment — records there
+   may have been composed by an earlier composer version or hand-edited in the
+   admin since. Run it where the migration will run.
+
+3. Only then deploy the migration.
+
+The gate covers content correctness. The snapshot covers everything else,
+including operator error, and it is the only one of the two that helps after
+the fact.
+
+---
+
 ## 3. Cut `seqtek.com` over to prod
 
 Prod runs on its CloudFront URL until this happens, which is deliberate: prod
@@ -475,12 +521,12 @@ Once DNS is in hand:
    `/services`) — those preserve the Wix-era URLs
 7. Make `seqtek-preview.com` `noindex` so preview never competes with prod in
    search
-8. Seed the office address into the `siteSettings` global so `Organization`
-   JSON-LD emits `address`. The footer NAP is hardcoded in
-   `src/lib/site-content.ts`, but `organizationLd`
-   (`src/lib/structured-data.ts`) reads the Payload global — a code deploy
-   alone leaves the structured-data address empty, which is exactly the
-   local-search signal the visible address was published for. Verify after:
+8. ~~Seed the office address into the `siteSettings` global~~ — **retired by
+   spec 011 (FR-005a).** `organizationLd` now reads the same hardcoded
+   `src/lib/site-content.ts` constant the footer uses, so the address ships
+   with the code and cannot go dormant by being left unseeded. The step is
+   gone rather than left as a no-op: a cutover instruction that silently does
+   nothing is worse than none. Still worth verifying after cutover:
    `curl -s https://seqtek.com | grep -o '"address":{[^}]*}'`
 
 ---
