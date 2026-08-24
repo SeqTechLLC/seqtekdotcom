@@ -88,9 +88,10 @@ it is per-person content, which is the definition of something that belongs in t
 
 ## R3 — How do 45 block previews get produced and served?
 
-**Decision**: Derive 3:2 thumbnails from the existing showcase captures with a committed
-tool (`tools/block-thumbnails`), and commit the optimised output under
-`public/admin/blocks/<blockType>.webp`.
+**Decision**: Derive thumbnails from the existing showcase captures with a committed tool
+(`tools/block-thumbnails`), and commit the optimised output under
+`public/block-previews/<blockType>.webp`. **Confirmed by the 2026-08-21 clarification**,
+which also pinned the path and rejected the two alternatives on the record.
 
 **Rationale**:
 
@@ -121,7 +122,14 @@ regeneration is an explicit, reviewable command rather than a build side effect.
   work that then needs its own drift guard against the blocks it depicts. Worth revisiting
   for the handful of blocks that photograph badly (see below).
 - _Generate at build time._ Rejected — requires the showcase content seeded in every
-  environment that builds, which production deliberately does not have.
+  environment that builds, which production deliberately does not have. It would also put
+  Playwright and Postgres in the production image build: minutes of build time, a new class
+  of flaky failure, and a silent-failure mode where the admin ships with no previews at all.
+- _A separate S3 bucket served through CloudFront._ Rejected at clarification. It trades
+  340 KB of repo for environment state: previews become something a fresh environment does
+  not have until someone uploads them, so local dev and CI — where the editor experience is
+  actually verified — would show a broken picker. It also adds a deploy step, an
+  invalidation concern, and a cross-origin/CSP wrinkle in the admin.
 - _`data:` URIs inline in the block configs._ Rejected — inflates the server bundle and the
   config diffs become unreadable.
 
@@ -158,28 +166,63 @@ migration as R2's legacy columns. The local mirror has 9 services carrying `desc
 
 ## R5 — Mechanics of withdrawing Navigation and Site Settings
 
-**Decision**: Relocate the two live metadata consumers into `src/lib/site-content.ts` (which
-already holds the hard-coded chrome), then set `admin.hidden: true` on both globals. Do not
-remove them from the Payload config.
+**Decision**: Relocate **all seven** live render-path consumers into `src/lib/site-content.ts`
+(which already holds the hard-coded chrome and already carries every one of those values
+verbatim), then delete both globals from the Payload config and drop their tables.
+
+> **Corrected 2026-08-21.** This section originally said there were **two** consumers and
+> recommended hiding rather than deleting. Both halves were wrong, and the first was a
+> latent production defect — see below.
 
 **Rationale**:
 
 - **What is actually live.** `SiteHeader.tsx:6` and `SiteFooter.tsx:6` already import the
   hard-coded `navigation` / `siteSettings` constants. `getNavigation()` in
-  `src/lib/payload.ts:190` has **zero callers**. `getSiteSettings()` has callers, but the only
-  values consumed are `siteSettings.tagline` (description fallback) and
-  `siteSettings.companyName` (`og:siteName`), both in `src/lib/metadata.ts`. Both values
-  already exist on the hard-coded constant, so relocation is a read-site swap, not new data.
-- **Blast radius**: `buildMetadata` takes `siteSettings` as a fallback argument, threaded
-  through ~10 route files. Removing the parameter is mechanical but touches every public
-  route's `generateMetadata`, so it needs the full metadata assertion suite to run.
-- **Hide, don't delete.** `admin.hidden` withdraws the screens without dropping tables. The
-  globals hold prior content and 50 versions each; deleting the config would drop that with
-  no upside, and keeps the door open if the chrome-ownership decision is revisited.
+  `src/lib/payload.ts:183` has **zero callers**. `getSiteSettings()` has 14 route-file
+  callers, and the CMS global feeds **seven** distinct values into rendered output:
 
-**Alternatives considered**: leaving `getNavigation()` in place as dead code. Rejected under
-FR-005 — a reader with no callers is the same trap one layer down, and the next person to
-find it will reasonably assume the globals are wired.
+  | Value                                        | Consumer                                          |
+  | -------------------------------------------- | ------------------------------------------------- |
+  | `tagline`                                    | `metadata.ts:67` description fallback             |
+  | `companyName`                                | `metadata.ts:79` `og:siteName`                    |
+  | `companyName`, `tagline`, `email`, `phone`   | `structured-data.ts:20-48` `Organization` JSON-LD |
+  | `address` (street / city / state / zip)      | `structured-data.ts:27-38` `PostalAddress`        |
+  | `socialLinks.{linkedin,twitter,facebook}Url` | `structured-data.ts:21-25` `sameAs`               |
+
+  Withdrawing the global while relocating only the two metadata values — which is what this
+  section originally specified — would have silently stripped the postal address, telephone,
+  email and social profiles out of the `Organization` schema on the homepage. It would also
+  have contradicted the cutover step added in PR #105, which exists precisely to seed that
+  address so the JSON-LD emits one.
+
+- **Relocation is still a read-site swap.** Every one of the seven values already exists
+  verbatim on the hard-coded constant at `src/lib/site-content.ts:141-152` — companyName,
+  tagline, phone, email, the full address, and the social links. No new data is authored;
+  the reads move from `getSiteSettings()` to the constant.
+- **Blast radius**: `buildMetadata` takes `siteSettings` as a fallback argument threaded
+  through 14 route files, and `organizationLd(siteSettings)` is called from
+  `app/(frontend)/page.tsx:66`. Removing the parameter is mechanical but touches every public
+  route's `generateMetadata`, so it needs the full metadata assertion suite **plus** a new
+  golden-object test over `organizationLd`.
+- **Delete, don't hide.** `admin.hidden` would leave the tables and a schema remnant, which
+  FR-007 forbids outright ("no hidden read-only remnant fields may remain"). The version
+  history is a real but acceptable loss: only seven values were ever read, all seven already
+  live in code, so the versions record content that never reached a visitor. ADR 0010 carries
+  the reversal path.
+- **FR-005a falls out of this.** Once the values are code-owned, the runbook's
+  seed-the-site-settings-NAP cutover step is not merely unnecessary but misleading, and
+  retires in the same change.
+
+**Alternatives considered**:
+
+- _Leaving `getNavigation()` in place as dead code._ Rejected under FR-005 — a reader with no
+  callers is the same trap one layer down, and the next person to find it will reasonably
+  assume the globals are wired.
+- _Keeping Site Settings editable but trimmed to the seven consumed fields, with the footer
+  reading from it._ A coherent alternative that resolves the code/CMS duplication in the
+  opposite direction, and rejected at clarification: navigation URLs are unvalidated free
+  text coupled to the route table and the 301 map, and the underlying values change roughly
+  once a decade. ADR 0010 records the revisit condition.
 
 ---
 
@@ -213,9 +256,12 @@ time.
 
 ## R7 — Media thumbnails without a 78-row backfill
 
-**Decision**: Use the **function form** of `adminThumbnail`, preferring a new small size when
-present and falling back to the existing `mobile_webp` derivative. Add the small size for new
-uploads. Do not attempt a mass re-derivation.
+**Decision**: Use the **function form** of `adminThumbnail`, returning the existing
+`mobile_webp` derivative. **No new `imageSize` is added and no media is re-processed.**
+
+> **Simplified 2026-08-21.** This section originally also added a small size for new uploads
+> and preferred it in the resolver. The clarification dropped that half — see the measurement
+> below.
 
 **Rationale**: This is the trap in the obvious fix. Payload generates `imageSizes` derivatives
 **at upload time only**. Declaring `adminThumbnail: 'thumbnail'` against a newly added size
@@ -233,18 +279,29 @@ adminThumbnail: ({ doc }) => <thumbnail size url> ?? <mobile_webp url> ?? doc.ur
 
 640px is heavier than a 40px list thumbnail warrants, but it is already generated and already
 served through the long-TTL CloudFront `/media/*` path (ADR 0008), so the marginal cost is a
-cache hit. New uploads get the properly sized derivative and the function prefers it
-automatically, so the library self-heals as media turns over.
+cache hit.
+
+**Measured, to settle whether a dedicated size is worth adding at all** (real photos from the
+915-image library, WebP q80): the existing 640px derivative averages **53 KB**; a 300px
+thumbnail would average **16 KB**. A 20-item picker therefore costs **~1.04 MB** today versus
+**~0.32 MB** with a dedicated size. On an edge-cached, internal-only screen used by one or two
+people, a 3.3× saving does not justify adding a ninth derivative to every upload — including
+the ~915 photos queued for ingest under C-8 — nor the migration to backfill it. **No new size
+is added.**
 
 **Media inventory**: 78 records, all images (50 webp / 23 png / 5 jpeg). No PDFs currently
 stored, though `application/pdf` is an accepted mime type — FR-016's non-image case is
 prospective, not observed, and is satisfied by returning `null` from the function so Payload
 falls back to its file-type icon.
 
-**Alternatives considered**: a re-derivation script that reads each original from S3 and
-re-runs `sharp`. Rejected for this spec — it is a data migration with real failure modes
-(S3 reads, 78 uploads, CloudFront invalidations) to buy a smaller image, when the fallback
-costs one line.
+**Alternatives considered**:
+
+- _A re-derivation script that reads each original from S3 and re-runs `sharp`._ Rejected —
+  a data migration with real failure modes (S3 reads, 78 uploads, CloudFront invalidations)
+  to buy a smaller image, when the fallback costs one line.
+- _Adding a small size for new uploads only, no backfill._ Rejected at clarification: it
+  leaves the library permanently mixed, adds a derivative to every future upload, and buys
+  0.7 MB on a screen that two people open.
 
 ---
 
@@ -306,6 +363,23 @@ and keep rejecting malformed non-empty values.
 Slug immutability on rename is already correct (`slugFromTitle` returns early when a slug
 exists), so FR-024 needs no change beyond a regression test.
 
+**Collisions (FR-024a, added 2026-08-21).** `slug` is `unique: true` with a DB index on every
+collection that has one (`Pages.ts:38-43` is the pattern). Today a duplicate therefore
+surfaces as a raw Postgres uniqueness violation — which is exactly the unexplained wall this
+spec exists to remove, and it gets worse once the slug is auto-derived, because an editor who
+never typed a slug gets an error about a field they never touched.
+
+The clarified behaviour is **reject, do not auto-suffix**: the validator queries for the
+conflicting record and returns a message naming it and offering an available alternative
+(`contact-2`, or the next free variant). Auto-suffixing was rejected because this site's URL
+map is deliberately curated and backed by a 301 redirect table — silently minting `/contact-2`
+and letting an editor publish it produces a junk URL nobody chose, and unpicking it after
+launch costs a redirect.
+
+Implementation note: the check belongs in a field-level `validate` (which receives `req`, so
+it can query) rather than in `slugFromTitle`, so it fires for both derived and hand-typed
+slugs on the same path. The DB unique constraint stays as the backstop.
+
 ---
 
 ## R11 — Scope sizing for the legibility pass
@@ -332,10 +406,10 @@ same treatment for the repeated `cta` group shape.
 
 ## Open items carried to the plan
 
-1. **SC-003 (block-pick accuracy in 9/10 trials under 30s)** is a usability outcome with no
-   CI expression. Handled under the constitution's external-verification carve-out
-   (Principle II) as a recorded walkthrough with the marketing lead; the CI-side proxy is
-   FR-013's metadata completeness check.
+1. ~~**SC-003 needs an external-verification carve-out.**~~ **Closed 2026-08-21.** The
+   clarification demoted SC-001 and SC-003 from release gates to stated targets, so no
+   carve-out is claimed and no walkthrough is scheduled. FR-013's metadata completeness check
+   is the real, CI-covered requirement; block-pick accuracy is the intent behind it.
 2. **The R2 equivalence gate** — a one-off comparison script that, for each record holding
    legacy prose, asserts the same prose is present in the composed `layout` before the drop
    migration is allowed to run. This is a task, not a shipped artifact.

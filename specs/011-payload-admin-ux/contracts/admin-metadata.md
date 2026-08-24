@@ -22,7 +22,7 @@ Without enforcement, this spec is a one-time cleanup that decays over four more 
     description: string,        // MUST be non-empty; MUST disambiguate same-named siblings
     disableBlockName: true,     // MUST be set — the blockName field is unused in this project
     images: {
-      thumbnail: { url: string, alt: string },   // MUST resolve to a file under public/admin/blocks/
+      thumbnail: { url: string, alt: string },   // MUST resolve to a file under public/block-previews/
     },
     components?: { Label?: string },             // SHOULD be set where a content-derived row title helps
   },
@@ -125,21 +125,52 @@ Every path maps to a one-line human claim about where its value surfaces. A fiel
 ```ts
 upload: {
   adminThumbnail: ({ doc }) => string | null,
-  imageSizes: [ /* ..., { name: 'thumbnail', ... } */ ],
+  // imageSizes unchanged — no new derivative is introduced
 }
 ```
 
-Resolution order: the `thumbnail` derivative when present → the existing `mobile_webp` derivative → `null`.
+Resolution order: the existing `mobile_webp` derivative → `null`.
 
-Returning `null` (rather than a broken URL) for non-image uploads is required so Payload falls back to its file-type icon.
+Returning `null` (rather than a broken URL) for non-image uploads, and for any record with no usable derivative, is required so Payload falls back to its file-type icon.
 
-**Enforced by**: `tests/int/adminThumbnail.int.spec.ts`, over three fixtures — a record with the new size, a record with only the legacy derivatives (the state of all 78 existing records), and a non-image record.
+**Enforced by**: `tests/int/adminThumbnail.int.spec.ts`, over three fixtures — a record with `mobile_webp` (the state of all 78 existing records), a record with no derivatives at all, and a non-image record.
 
-**Rationale**: FR-015, FR-016. The fallback clause is the whole point: without it, adding the size fixes thumbnails only for media uploaded after this feature ships (research R7).
+**Rationale**: FR-015, FR-016. Clarified 2026-08-21: **no dedicated thumbnail size is added.** Measured on the real photo library, the existing 640px derivative averages 53 KB against 16 KB for a 300px thumbnail, so a 20-item picker costs ~1.04 MB versus ~0.32 MB — a 3.3× saving on an edge-cached internal screen, which does not justify a ninth derivative on every upload plus a backfill migration (research R7).
 
 ---
 
-## C7 — Non-regression
+## C7 — Slugs derive, and never collide silently
+
+```ts
+{
+  name: 'slug',
+  type: 'text',
+  unique: true,          // retained as the DB backstop, not as the UX
+  index: true,
+  // required: true      // REMOVED — it blocks the form before the hook can fill the value
+  validate: validateSlug, // tolerates empty on create; rejects malformed; rejects collisions
+}
+```
+
+Behaviour the admin form must exhibit:
+
+| Input                                  | Result                                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Title only, no slug                    | Saves; slug derived from the title (FR-022)                                                 |
+| Explicit, well-formed, free slug       | Saves; the entered value is used unchanged (FR-023)                                         |
+| Explicit malformed slug                | Rejected with a plain-language explanation of the required format (FR-023)                  |
+| Title renamed on an existing record    | Existing slug unchanged — links keep working (FR-024)                                       |
+| Derived or entered slug already in use | **Rejected**, naming the conflicting record and offering an available alternative (FR-024a) |
+
+The collision check lives in the field-level `validate` (which receives `req` and can query), not in `slugFromTitle`, so it fires identically for derived and hand-typed slugs. **Auto-suffixing is prohibited** — this site's URL map is curated and backed by a 301 redirect table, so silently minting `/contact-2` produces a junk URL nobody chose and costs a redirect to unpick after launch.
+
+**Enforced by**: the US5 Playwright admin spec (`tests/e2e/admin/`), covering all five rows above.
+
+**Rationale**: FR-022 through FR-024a, research R10.
+
+---
+
+## C8 — Non-regression
 
 Not a code contract, but the gate every change in this feature passes:
 
@@ -157,4 +188,4 @@ Not a code contract, but the gate every change in this feature passes:
 
 The contract in one paragraph, for `docs/PAYLOAD_DEVELOPMENT.md`:
 
-> A new layout block needs a category from `BLOCK_LIBRARY.md` §5, a one-line description that says when to choose it over its neighbours, `disableBlockName: true`, and a thumbnail. Generate the thumbnail by seeding the showcase (`npm run seed:showcase`), capturing it (`npm run visual:capture`), and running `tools/block-thumbnails`; commit the resulting webp under `public/admin/blocks/`. Register every new field in `CONSUMED_FIELDS` with a note on where its value surfaces, or delete the field. CI fails on all of these.
+> A new layout block needs a category from `BLOCK_LIBRARY.md` §5, a one-line description that says when to choose it over its neighbours, `disableBlockName: true`, and a thumbnail. Generate the thumbnail by seeding the showcase (`npm run seed:showcase`), capturing it (`npm run visual:capture`), and running `tools/block-thumbnails`; commit the resulting webp under `public/block-previews/`. Register every new field in `CONSUMED_FIELDS` with a note on where its value surfaces, or delete the field. CI fails on all of these.

@@ -73,14 +73,38 @@ The Services collection keeps its typed metadata (`title`, `slug`, `pillar`, `ic
 
 `servicePillars` has no `layout` field; only its live-preview wiring and admin grouping change.
 
-### 1.5 Unchanged schema, changed visibility
+### 1.5 Dropped — the `navigation` and `siteSettings` globals
 
-| Entity                | Change               | Tables                          |
-| --------------------- | -------------------- | ------------------------------- |
-| `navigation` global   | `admin.hidden: true` | retained, including 50 versions |
-| `siteSettings` global | `admin.hidden: true` | retained, including 50 versions |
+| Entity                | Change                          | Tables                             |
+| --------------------- | ------------------------------- | ---------------------------------- |
+| `navigation` global   | removed from the Payload config | `navigation` + versions dropped    |
+| `siteSettings` global | removed from the Payload config | `site_settings` + versions dropped |
 
-Deliberately not dropped: hiding is reversible (ADR 0010 carries the revisit condition), and dropping would discard version history for no benefit.
+**Precondition — all seven render-path reads relocate first.** Clarified 2026-08-21: the CMS
+`siteSettings` global feeds seven values into rendered output, not the two this document
+originally assumed.
+
+| Value                                        | Consumer                                          | Moves to                   |
+| -------------------------------------------- | ------------------------------------------------- | -------------------------- |
+| `tagline`                                    | `metadata.ts:67` description fallback             | `site-content.ts` constant |
+| `companyName`                                | `metadata.ts:79` `og:siteName`                    | `site-content.ts` constant |
+| `companyName`, `tagline`, `email`, `phone`   | `structured-data.ts:20-48` `Organization` JSON-LD | `site-content.ts` constant |
+| `address.{street,city,state,zip}`            | `structured-data.ts:27-38` `PostalAddress`        | `site-content.ts` constant |
+| `socialLinks.{linkedin,twitter,facebook}Url` | `structured-data.ts:21-25` `sameAs`               | `site-content.ts` constant |
+
+Every one of these already exists verbatim on the hard-coded constant at
+`src/lib/site-content.ts:141-152`, so the relocation authors no new data — it is a read-site
+swap across 14 route files plus `organizationLd`.
+
+**Hidden was considered and rejected.** `admin.hidden: true` leaves the tables and a schema
+remnant, which FR-007 forbids outright. The version history is a deliberate, accepted loss:
+only these seven values were ever read and all seven live in code, so the versions record
+content that never reached a visitor. ADR 0010 carries the reversal path.
+
+**Downstream:** the `INFRASTRUCTURE_RUNBOOK.md` cutover step that seeds the site-settings NAP
+(added in PR #105 so the `Organization` JSON-LD would emit an address) retires with the global
+— FR-005a. Any `docs/content-drafts/global-navigation*.json` or `global-site-settings*.json`
+request file is deleted rather than reconciled.
 
 ---
 
@@ -88,18 +112,18 @@ Deliberately not dropped: hiding is reversible (ADR 0010 carries the revisit con
 
 None of the following touches Postgres. They are config-only and therefore safe to iterate on without migrations.
 
-| Surface               | Added                                                                                              | Count                                             |
-| --------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Layout blocks         | `admin.group`, `admin.images.thumbnail`, description, `disableBlockName`, `admin.components.Label` | 45                                                |
-| Inline blocks         | `admin.images.icon` (20×20, for the Lexical menu)                                                  | 7                                                 |
-| Collections           | `admin.group`, `admin.description`                                                                 | 14                                                |
-| Globals               | `admin.group`, `admin.description`                                                                 | 3 (1 visible after §1.5)                          |
-| Draftable collections | `_status` prepended to `defaultColumns`                                                            | 6 in scope                                        |
-| Media                 | `adminThumbnail` (function form) + a `thumbnail` image size for new uploads                        | 1                                                 |
-| Fields                | `label` overrides                                                                                  | 49 camelCase names                                |
-| Fields                | `admin.description` help text                                                                      | subset of 212 currently undocumented block fields |
-| Blocks                | `requiredWhen` variant conditions                                                                  | audit across 37 blocks not yet using it           |
-| Pages                 | `defaultValue` starter skeleton                                                                    | 1                                                 |
+| Surface               | Added                                                                                                                         | Count                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Layout blocks         | `admin.group`, `admin.images.thumbnail` → `public/block-previews/`, description, `disableBlockName`, `admin.components.Label` | 45                                                |
+| Inline blocks         | `admin.images.icon` (20×20, for the Lexical menu)                                                                             | 7                                                 |
+| Collections           | `admin.group`, `admin.description`                                                                                            | 14                                                |
+| Globals               | `admin.group`, `admin.description`                                                                                            | 1 remaining after §1.5 (`homepage`)               |
+| Draftable collections | `_status` prepended to `defaultColumns`                                                                                       | 6 in scope                                        |
+| Media                 | `adminThumbnail` (function form only — **no new image size**, no backfill)                                                    | 1                                                 |
+| Fields                | `label` overrides                                                                                                             | 49 camelCase names                                |
+| Fields                | `admin.description` help text                                                                                                 | subset of 212 currently undocumented block fields |
+| Blocks                | `requiredWhen` variant conditions                                                                                             | audit across 37 blocks not yet using it           |
+| Pages                 | `defaultValue` starter skeleton                                                                                               | 1                                                 |
 
 ### 2.1 Extracted shared field factories
 
@@ -136,14 +160,17 @@ A one-off script (a task deliverable, not shipped code) that must pass before §
 
 Local dev is push-managed; these are authored with `payload migrate:create` and run in staging/prod only (`docs/PAYLOAD_DEVELOPMENT.md`).
 
-| #   | Migration                                                                                            | Depends on      |
-| --- | ---------------------------------------------------------------------------------------------------- | --------------- |
-| 1   | `promote_team_member_expertise` — no-op on schema; exists as a marker that the field is now editable | —               |
-| 2   | `drop_pages_hero`                                                                                    | —               |
-| 3   | `drop_legacy_body_columns` — §1.2 scalar columns + array tables + versions counterparts              | §3 gate passing |
-| 4   | `drop_services_layout` — `services.layout` + `services_blocks_*`                                     | §3 gate passing |
+| #   | Migration                                                                                            | Depends on                        |
+| --- | ---------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1   | `promote_team_member_expertise` — no-op on schema; exists as a marker that the field is now editable | —                                 |
+| 2   | `drop_pages_hero`                                                                                    | —                                 |
+| 3   | `drop_legacy_body_columns` — §1.2 scalar columns + array tables + versions counterparts              | §3 gate passing                   |
+| 4   | `drop_services_layout` — `services.layout` + `services_blocks_*`                                     | §3 gate passing                   |
+| 5   | `drop_chrome_globals` — `navigation`, `site_settings` + their versions tables                        | §1.5 relocation shipped and green |
 
-Ordering rationale: 1 lands before 3 so `expertise` is never simultaneously invisible in the admin and load-bearing for JSON-LD. 2 is independent and can ship first as the smallest possible proof the migration path works.
+Ordering rationale: 1 lands before 3 so `expertise` is never simultaneously invisible in the admin and load-bearing for JSON-LD. 2 is independent and can ship first as the smallest possible proof the migration path works. **5 runs last and only after the `organizationLd` golden test is green against the relocated constants** — until that test passes, the global is still the source of the homepage's postal address.
+
+**Snapshot before the destructive migrations.** The separate staging account was retired 2026-08-14, so there is no isolated environment to rehearse migrations 3, 4 and 5 in — `preview.seqtek.com` and `ww3.seqtek.com` are two services in one stack in one account, both holding real content. Take a DB snapshot of the target lane as an explicit, named step in the deploy sequence; the §3 equivalence gate covers content correctness but not operator error.
 
 ---
 
@@ -158,3 +185,5 @@ Ordering rationale: 1 lands before 3 so `expertise` is never simultaneously invi
 | `src/payload-types.ts`                    | Regenerated (`npm run generate:types`) after every field change.                                                                                |
 | `src/app/(payload)/admin/importMap.js`    | Regenerated (`npm run generate:importmap`) — required because `admin.components.Label` and the block row label introduce new client components. |
 | Existing drafts                           | Must open, edit, and save after the change (FR-030) — covered by an admin E2E spec against a pre-existing record.                               |
+| `src/lib/structured-data.ts`              | `organizationLd` stops taking the global and reads the constant. Golden-object test asserts all seven relocated values still emit (FR-004).     |
+| `slug` validators                         | Gain a collision branch that queries for the conflicting record (FR-024a). The DB `unique` constraint stays as the backstop, not the UX.        |

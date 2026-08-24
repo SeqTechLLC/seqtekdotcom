@@ -49,14 +49,14 @@ The screens worth looking at: `/admin` (dashboard grouping), `/admin/collections
 
 ---
 
-## 2. Regenerate block thumbnails
+## 2. Regenerate block previews
 
 Needed once during implementation, and again whenever a block's rendered appearance changes materially.
 
 ```bash
 npm run seed:showcase        # builds 1-2 of every block type as pages docs
 npm run visual:capture       # → tests/e2e/visual/screenshots/showcase/ (gitignored)
-npx tsx tools/block-thumbnails/index.ts   # → public/admin/blocks/<blockType>.webp (committed)
+npx tsx tools/block-thumbnails/index.ts   # → public/block-previews/<blockType>.webp (committed)
 ```
 
 The tool crops the desktop capture to 3:2, resizes to 480×320, encodes webp, and fails if the committed total exceeds the 400 KB budget. Blocks that render empty in isolation (`hubspot-form`, `hubspot-meetings`, `embed`, `map`, `related-posts`, `post-list`) are skipped by the tool and carry hand-authored SVGs instead — the tool prints which ones it skipped so the list stays honest.
@@ -69,7 +69,7 @@ Commit the webp output. It ships to every environment; staging and production ha
 
 ```bash
 npm run typecheck && npm run lint && npm run format:check
-npm run test:int                 # includes the three new metadata/registry/thumbnail specs
+npm run test:int                 # metadata, registry, thumbnail + organizationLd specs
 npm run test:e2e                 # full local run — see the note below
 ```
 
