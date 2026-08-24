@@ -89,14 +89,12 @@ import { s3Storage } from '@payloadcms/storage-s3'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 
 // Illustrative snippet — real collections live in `src/collections/` and
-// globals in `src/globals/` (the project has 13 collections + 3 globals, not
+// globals in `src/globals/` (the project has 14 collections + 1 global, not
 // the trimmed set shown here).
 import { Users } from './src/collections/Users'
 import { Posts } from './src/collections/Posts'
 import { CaseStudies } from './src/collections/CaseStudies'
 import { Media } from './src/collections/Media'
-import { SiteSettings } from './src/globals/SiteSettings'
-import { Navigation } from './src/globals/Navigation'
 
 export default buildConfig({
   // Default editor for all richText fields (can be overridden per-field)
@@ -114,7 +112,7 @@ export default buildConfig({
   collections: [Users, Posts, CaseStudies, Media],
 
   // Globals (singletons)
-  globals: [SiteSettings, Navigation],
+  globals: [Homepage],
 
   // Plugins
   plugins: [

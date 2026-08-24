@@ -106,25 +106,21 @@ Versions: Enabled with drafts for preview before publishing.
 
 The most important content type. Each gets a dedicated page at `/case-studies/[slug]`.
 
-| Field                | Type                                  | Notes                                                               |
-| -------------------- | ------------------------------------- | ------------------------------------------------------------------- |
-| `title`              | text                                  | Required                                                            |
-| `slug`               | text                                  | Auto-generated from title                                           |
-| `subtitle`           | text                                  | Short outcome-focused tagline                                       |
-| `industry`           | relationship -> industries            | Required                                                            |
-| `services`           | relationship -> services (hasMany)    | Which SEQTEK services were applied                                  |
-| `client`             | group                                 | `name` (text), `logo` (upload, optional), `isAnonymized` (checkbox) |
-| `heroImage`          | upload (media)                        | Must be project-relevant — not stock                                |
-| `problem`            | richText                              | The challenge the client faced                                      |
-| `solution`           | richText                              | What SEQTEK did                                                     |
-| `impact`             | richText                              | Results and outcomes                                                |
-| `metrics`            | array                                 | Objects with `number` (text), `label` (text), `context` (text)      |
-| `technologies`       | array of text                         | Tag list (e.g., ".NET", "React", "AWS")                             |
-| `testimonial`        | relationship -> testimonials          | Optional — client quote about this engagement                       |
-| `relatedCaseStudies` | relationship -> caseStudies (hasMany) | Max 3                                                               |
-| `seo`                | group                                 | metaTitle, metaDescription, ogImage                                 |
-| `publishedAt`        | date                                  |                                                                     |
-| `status`             | select                                | `draft`, `published`                                                |
+| Field                | Type                                  | Notes                                                                                                                 |
+| -------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `title`              | text                                  | Required                                                                                                              |
+| `slug`               | text                                  | Auto-generated from title                                                                                             |
+| `subtitle`           | text                                  | Short outcome-focused tagline                                                                                         |
+| `industry`           | relationship -> industries            | Required                                                                                                              |
+| `services`           | relationship -> services (hasMany)    | Which SEQTEK services were applied                                                                                    |
+| `client`             | group                                 | `name` (text), `logo` (upload, optional), `isAnonymized` (checkbox)                                                   |
+| `heroImage`          | upload (media)                        | Must be project-relevant — not stock                                                                                  |
+| `testimonial`        | relationship -> testimonials          | Optional — client quote about this engagement                                                                         |
+| `relatedCaseStudies` | relationship -> caseStudies (hasMany) | Max 3                                                                                                                 |
+| `seo`                | group                                 | metaTitle, metaDescription, ogImage                                                                                   |
+| `publishedAt`        | date                                  |                                                                                                                       |
+| `status`             | select                                | `draft`, `published`                                                                                                  |
+| `layout`             | blocks                                | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks` (spec 011: replaced the discrete body fields) |
 
 #### `services`
 
@@ -181,23 +177,19 @@ The detail route owns no `<h1>` (the `/services/[offering]` shape, not the `/tea
 
 Team bios, rendered as block-composed pages at `/team` (listing) and `/team/[slug]` (detail), plus blog post authorship.
 
-| Field            | Type           | Notes                                              |
-| ---------------- | -------------- | -------------------------------------------------- |
-| `name`           | text           | Full name                                          |
-| `slug`           | text           |                                                    |
-| `title`          | text           | Job title (e.g., "CEO")                            |
-| `role`           | text           | 1-sentence role description                        |
-| `photo`          | upload (media) | Professional headshot — required                   |
-| `bio`            | richText       | 200-350 words for leadership, 75-150 for others    |
-| `expertise`      | array of text  | Areas of expertise                                 |
-| `certifications` | array of text  | PMP, AWS, PROSCI, etc.                             |
-| `education`      | array          | Objects with `degree` (text), `institution` (text) |
-| `linkedinUrl`    | text           |                                                    |
-| `email`          | text           | Optional                                           |
-| `personalFacts`  | array of text  | 1-2 humanizing details                             |
-| `quote`          | textarea       | Personal philosophy quote                          |
-| `isLeadership`   | checkbox       | Controls featured display                          |
-| `order`          | number         | Display ordering                                   |
+| Field          | Type           | Notes                                                                                                                 |
+| -------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `name`         | text           | Full name                                                                                                             |
+| `slug`         | text           |                                                                                                                       |
+| `title`        | text           | Job title (e.g., "CEO")                                                                                               |
+| `role`         | text           | 1-sentence role description                                                                                           |
+| `photo`        | upload (media) | Professional headshot — required                                                                                      |
+| `expertise`    | array of text  | Areas of expertise                                                                                                    |
+| `linkedinUrl`  | text           |                                                                                                                       |
+| `email`        | text           | Optional                                                                                                              |
+| `isLeadership` | checkbox       | Controls featured display                                                                                             |
+| `order`        | number         | Display ordering                                                                                                      |
+| `layout`       | blocks         | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks` (spec 011: replaced the discrete body fields) |
 
 #### `testimonials`
 
@@ -217,18 +209,15 @@ Full-attribution testimonials used across the site.
 
 Workshop pages at `/workshops/[slug]` (one Touchstone workshop among three; IA corrected 2026-06-11, PR #49).
 
-| Field          | Type                         | Notes                                  |
-| -------------- | ---------------------------- | -------------------------------------- |
-| `title`        | text                         | e.g., "Five Dysfunctions Workshop"     |
-| `slug`         | text                         |                                        |
-| `description`  | richText                     | Full workshop description              |
-| `format`       | richText                     | Agenda, duration, format details       |
-| `audience`     | richText                     | Who this workshop is for               |
-| `deliverables` | array of text                | What participants leave with           |
-| `facilitator`  | relationship -> teamMembers  |                                        |
-| `testimonial`  | relationship -> testimonials | From a past participant                |
-| `order`        | number                       | Sequence in the 3-workshop progression |
-| `seo`          | group                        |                                        |
+| Field         | Type                         | Notes                                                                                                                 |
+| ------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `title`       | text                         | e.g., "Five Dysfunctions Workshop"                                                                                    |
+| `slug`        | text                         |                                                                                                                       |
+| `facilitator` | relationship -> teamMembers  |                                                                                                                       |
+| `testimonial` | relationship -> testimonials | From a past participant                                                                                               |
+| `order`       | number                       | Sequence in the 3-workshop progression                                                                                |
+| `seo`         | group                        |                                                                                                                       |
+| `layout`      | blocks                       | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks` (spec 011: replaced the discrete body fields) |
 
 #### `industries`
 
@@ -447,7 +436,6 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   │   └── invalidateMediaOnChange.ts # Media replace/delete → CloudFront invalidation
 │   │   ├── livePreview/url.ts             # Live-preview URL builder
 │   │   ├── seed/                          # Audit-migration + seed pipeline
-│   │   │   ├── migrateFromAudit.ts        # Import extracted content from audit/ JSON
 │   │   │   ├── htmlToLexical.ts  upsert.ts  log.ts  slugRewrites.ts
 │   │   │   └── compose/  parsers/  skeletons/  showcase/
 │   │   └── storage/s3.ts                  # S3 adapter + mediaFileURL()

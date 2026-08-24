@@ -93,32 +93,15 @@ admin: {
 
 ---
 
-## C5 — Every field reaches the rendered site
+## C5 — ~~Every field reaches the rendered site~~ (RETRACTED)
 
-**Applies to**: every leaf field path in the Payload config.
+Retracted during PR #107 review. The contract specified a registry mapping every
+field to a written consumer claim, enforced by a test asserting the claim was
+non-empty — which verifies that a human typed a sentence, not that the sentence
+is true. FR-008 is marked NOT MET in the spec rather than satisfied by ceremony.
 
-```ts
-// src/payload/admin/consumedFields.ts
-export const CONSUMED_FIELDS: Record<string, string> = {
-  'pages.title': 'metadata + breadcrumb JSON-LD',
-  'pages.layout': 'RenderBlocks on /[slug]',
-  'teamMembers.expertise': 'structured-data.ts personLd → knowsAbout',
-  // ...
-}
-```
-
-Every path maps to a one-line human claim about where its value surfaces. A field that genuinely has no consumer does not get an entry — it gets deleted.
-
-**Enforced by**: `tests/int/fieldConsumerRegistry.int.spec.ts`
-
-- flattens the full config field tree to leaf paths
-- fails when any path is absent from `CONSUMED_FIELDS`
-- fails when `CONSUMED_FIELDS` names a path that no longer exists (catches stale entries after a removal)
-- exempts Payload's own auth and versioning fields via an explicit prefix list
-
-**Rationale**: FR-001, FR-008, SC-002. This check is deliberately a _human assertion made mandatory_, not static analysis. `RenderBlocks` dispatches by `blockType` through a component map, so a field's consumer sits behind two levels of indirection that a static pass cannot follow (research R6). The registry does not prove a field is consumed; it makes claiming so a reviewable, diffable act, which is precisely what was missing while fields went inert across four specs.
-
----
+The audit it produced was still worth something: 24 fields on four unrouted
+collections have no consumer today. Those are tracked as ROADMAP **INERT-1**.
 
 ## C6 — Media always previews
 

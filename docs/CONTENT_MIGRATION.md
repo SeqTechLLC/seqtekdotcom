@@ -1,5 +1,18 @@
 # SEQTEK Website — Content Migration Specification
 
+> **RETIRED (spec 011, PR #107).** The script this document specifies —
+> `src/payload/seed/migrateFromAudit.ts` and its parsers — has been **deleted**.
+> It was a one-shot Wix migration that had already run, superseded as a content
+> source by `docs/content-drafts/*.json` (`CLAUDE.md` § Content loading &
+> deploys), and by spec 011 its case-study and homepage steps wrote fields the
+> schema no longer has: Payload dropped every key and both reported success.
+>
+> This file is kept as the **historical record** of how the Wix content was
+> mapped — the slug rewrites, the §9 URL map and the §11 gap categories are still
+> the provenance for `src/lib/redirects.ts` and
+> `src/payload/seed/slugRewrites.ts`, both of which live on. Nothing below is a
+> runnable procedure any more.
+
 **Date:** 2026-05-14
 **Status:** Reference — Phase 2 implementation (seed script)
 

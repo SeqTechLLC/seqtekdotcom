@@ -78,7 +78,7 @@ npm run test:e2e                 # full local run — see the note below
 Migrations are authored, never run, locally — local dev is push-managed:
 
 ```bash
-npm run payload migrate:create drop_pages_hero
+npm run payload migrate:create spec011_drop_inert_fields
 ```
 
 Regenerate what the config changes invalidate:
@@ -115,7 +115,7 @@ Replay every file in the load order from `docs/content-drafts/README.md`. Any fi
 **Equivalence gate (FR-031)** — must pass before any drop migration is written:
 
 ```bash
-npx tsx tools/legacy-equivalence/check.ts
+# (the legacy-equivalence gate was deleted during review — see INFRASTRUCTURE_RUNBOOK.md §2.9)
 ```
 
 Reports, per record holding legacy prose, whether that prose appears in the composed `layout`. Any failure blocks the migration. Do not read "has 3 blocks" as "has the content" — that is the trap this check exists for.

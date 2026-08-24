@@ -25,7 +25,7 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 - `docs/DESIGN_SYSTEM.md` — color, type, spacing, motion tokens; logo usage rules
 - `docs/BRAND_STRATEGY_RESEARCH.md` — voice, positioning, narrative direction
 - `docs/CONTENT-REQUIREMENTS.md` — content needs (incl. SEO/AICO under §8)
-- `docs/CONTENT_MIGRATION.md` — Wix audit JSON → Payload migration script spec
+- `docs/CONTENT_MIGRATION.md` — historical: how the Wix audit was mapped into Payload. The script it specified was deleted in spec 011; kept as provenance for the 301 map and slug rewrites
 - `docs/INTEGRATIONS.md` — HubSpot, GTM, ScoreApp, CSP, SES
 - `docs/ERROR_PAGES.md` — 404, 500, maintenance, slow-request handling
 - `docs/decisions/` — Architecture Decision Records (ADRs): non-obvious technical choices, options considered, trade-offs accepted, when to revisit. Read `docs/decisions/README.md` first.

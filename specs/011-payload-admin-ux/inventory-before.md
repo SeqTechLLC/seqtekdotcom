@@ -104,7 +104,7 @@ the entire `services.layout`. The migration must distinguish them: bare
 
 ## 6. Equivalence gate outcome (T010)
 
-**PASS — 2026-08-24.** `tools/legacy-equivalence/check.ts` against the local mirror:
+**PASS — 2026-08-24, but see the caveat below.** `tools/legacy-equivalence/check.ts` against the local mirror:
 
 ```
 Records holding legacy prose : 22
@@ -124,3 +124,11 @@ The extractor was then fixed to walk Lexical `text` nodes only — a naive
 `Object.values()` recursion had been folding node types, versions and format
 integers into the compared text ("root 0 1 paragraph 0 1 …"), poisoning the
 first chunk of every field.
+
+> **The gate was deleted during PR #107 review.** This run was real, but it
+> happened at an intermediate state — the gate was built and run before the
+> fields were removed from the collection configs, and that state exists in no
+> commit. Once the fields left the config, `payload.find()` stopped returning
+> them, so the gate could never find anything again. The control that replaced
+> it is a pre-merge RDS snapshot (`INFRASTRUCTURE_RUNBOOK.md` §2.9), backed by
+> `docs/content-drafts` being the reproducible source of every published doc.

@@ -112,7 +112,7 @@ describe('buildRevalidatePlan — per-collection routing', () => {
     expect(plan.paths).toContain('/insights/old-slug')
   })
 
-  it('homepage / siteSettings / navigation / testimonials all bust /', () => {
+  it('homepage / testimonials all bust /', () => {
     for (const collection of ['homepage', 'testimonials']) {
       const plan = buildRevalidatePlan(collection, { _status: 'published' })
       expect(plan.paths).toContain('/')
@@ -139,7 +139,7 @@ describe('revalidateOnChange hook — safety', () => {
 
   it('global hook routes the homepage global to /', () => {
     // `buildRevalidatePlan` covers the per-collection routing matrix above.
-    // For globals the route is identical — `homepage`/`siteSettings`/etc.
+    // For globals the route is identical — `homepage` is the only one left.
     // map to `/`. Asserted directly against the plan builder rather than
     // observing the SDK mock (the cross-file mock visibility is fragile
     // when this file runs alongside int tests that fire the real hook

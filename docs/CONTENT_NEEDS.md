@@ -197,6 +197,6 @@ Found in the live Payload inventory on 2026-06-30. None require leadership input
 - **`industries` collection is empty** but published case studies reference industry IDs — the references are dangling. Either seed the industries or drop the relationship.
 - **`locations` collection is empty** — relevant once the regional pages (§9) are built.
 - **Junk category `ztest-delete-me`** in the `categories` collection — delete.
-- **`navigation` CMS global is empty `{}`** — the live nav/footer is still driven by the hardcoded `src/lib/site-content.ts`, not the CMS. The planned "swap to `payload.findGlobal()`" never happened. Fine for launch, but the CMS global is dead weight until then.
+- ~~**`navigation` CMS global is empty**~~ — **closed (spec 011).** The global was withdrawn entirely and its table dropped; site chrome is code-owned in `src/lib/site-content.ts` by decision, not by omission. See ADR 0010.
 - **`/our-story` video embeds** — the founder/brand videos render as large empty dark blocks in a fresh page capture; verify they show a poster frame (not a black box) before launch.
 - **Case-study `ogImage` is null** — social-share images missing (SEO nice-to-have).

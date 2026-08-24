@@ -199,7 +199,8 @@ Gated on the **September** All Hands shoot plus the P2 content. Leadership engag
 - ~~**Spec-010 composer run after `payload migrate`**~~ — **removed: spec 011 dropped the legacy body
   columns**, so there is nothing left to compose from and the composers' CLI entry points are gone. What
   replaces it is the pre-migration gate in `INFRASTRUCTURE_RUNBOOK.md` §2.9: snapshot the lane, then run
-  `tools/legacy-equivalence/check.ts` **against that lane** before the drop migration goes anywhere near it.
+  take an RDS snapshot of that lane **before merging** — merging is what deploys, and the container's `CMD` runs
+  `payload migrate` on start.
 - DNS cutover in a low-traffic window (Dom).
 - Post-cutover: submit the sitemap to Search Console and verify redirects, validate CloudFront cache behavior,
   test-restore an RDS snapshot, run a full redirect crawl (Screaming Frog or similar), watch CloudWatch +

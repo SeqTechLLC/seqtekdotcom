@@ -29,7 +29,7 @@ Reads an **existing** page and emits **exactly one** of:
 
 | | Reads the source? | Authors new copy? | Mechanism |
 | --- | --- | --- | --- |
-| **per-type seed composer** (`src/payload/seed/compose/*.ts`, FR-007) | yes — the migrated record's discrete fields | no | **code**: runs over the DB, writes `layout` via `upsertBySlug`, the migration mechanism of record |
+| **per-type seed composer** (`src/payload/seed/compose/*.ts`) | historical — the pre-spec-011 discrete fields | no | **reference only**: spec 011 dropped those fields and deleted the runner, so these no longer execute. They remain as the canonical record of what each legacy shape became in blocks. |
 | **`compose-page`** (FR-010) | no — works from a brief | **yes** — net-new copy | skill |
 | **`convert-to-blocks`** (this, FR-014) | **yes** — any existing page | **no** — reproduces source | skill |
 
@@ -39,7 +39,7 @@ Use `compose-page` to design a *new* page from a brief. Use this skill to re-exp
 
 ### 1. Read the source — do not assume it
 
-- **Migrated Payload record** (`collection/slug`): read the live record via the Local API at depth 0 (`draft:false`, `overrideAccess:true`) and inventory its discrete body fields. For these, **mirror the per-type composer's mapping** in `src/payload/seed/compose/<type>ToLayout.ts` (and data-model.md) so this skill and the migration mechanism of record do not diverge — same block order, same field→block choices.
+- **Migrated Payload record** (`collection/slug`): read the live record via the Local API at depth 0 (`draft:false`, `overrideAccess:true`) and inventory its **`layout`** — since spec 011 that is the only body a record has; the discrete body fields this branch used to read (`problem`/`solution`/`impact`, `bio`, `description`/`audience`/`format`, …) were dropped. A record whose `layout` is already populated needs no conversion; this path now applies only to sources outside Payload.
 - **Wix-audit page**: read the page's JSON under `AUDIT_DIR` and inventory its sections (hero, prose, images, galleries, embeds, CTAs).
 - **Hand-built page**: read the route/markup and inventory the rendered content.
 

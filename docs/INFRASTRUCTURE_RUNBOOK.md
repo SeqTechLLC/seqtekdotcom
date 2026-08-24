@@ -451,63 +451,45 @@ own it.
 
 ## 2.9 Before a destructive migration: snapshot first
 
-Some migrations drop columns and tables — spec 011's expand/contract close is
-the first batch, shipped as one atomic migration:
-`20260824_201317_spec011_drop_inert_fields`. (Earlier drafts of this section
-named four separate migrations — `drop_pages_hero`, `drop_legacy_body_columns`,
-`drop_services_layout`, `drop_chrome_globals`. `payload migrate:create`
-generates from the whole schema diff in one pass, so those never existed;
-`src/migrations/index.ts` is the register of record.) Those drops are not
-recoverable by re-running anything.
+Some migrations drop columns and tables — spec 011's expand/contract close is the
+first, shipped as `20260824_201317_spec011_drop_inert_fields` plus
+`20260824_214311_spec011_drop_stats_bar_source`. Those are not recoverable by
+re-running anything.
 
-**There is no rehearsal environment.** The separate staging account was retired
-2026-08-14, and `preview.seqtek.com` and `ww3.seqtek.com` are two ECS services
-in the same stack in the same account, both holding real content. There is
-nowhere to try a destructive migration first.
+**Merging IS deploying, and deploying IS migrating.** A push to `main` promotes
+the ww3 lane (`deploy.yml`, `IS_RELEASE`), the container's `CMD` is
+`npx payload migrate && node server.js` (`Dockerfile:134`), and the `preview`
+GitHub Environment has no approval rule. There is no manual step between the
+merge button and the migration, and there is no separate staging lane to
+rehearse in — that account was retired 2026-08-14.
 
-So, in order, every time:
+So the one safety step happens **before you press merge**:
 
-1. **Take an RDS snapshot of the target lane's database and wait for it to
-   complete.** Name it after the migration, not the date, so its purpose is
-   obvious six months later:
+```sh
+aws rds create-db-snapshot \
+  --db-instance-identifier <instance> \
+  --db-snapshot-identifier pre-spec011-drop-inert-fields
+aws rds wait db-snapshot-completed \
+  --db-snapshot-identifier pre-spec011-drop-inert-fields
+```
 
-   ```sh
-   aws rds create-db-snapshot \
-     --db-instance-identifier <instance> \
-     --db-snapshot-identifier pre-spec011-drop-inert-fields
-   aws rds wait db-snapshot-completed \
-     --db-snapshot-identifier pre-spec011-drop-inert-fields
-   ```
+That is the whole procedure. Two things make it sufficient rather than thin:
 
-2. **Run the content-equivalence gate against that lane**, not just locally.
-   It compares the text of every legacy prose column against the composed
-   `layout` and exits non-zero on any gap:
+- **The content is reproducible.** `docs/content-drafts/*.json` is the source of
+  truth for every published document (`CLAUDE.md` § Content loading & deploys);
+  a lane can be rebuilt from it with `npm run payload:seed`. The snapshot covers
+  the one thing the drafts do not: edits made directly in the admin since the
+  last seed.
+- **Nothing here is public.** `preview.seqtek.com` and `ww3.seqtek.com` are both
+  Cognito-gated; `seqtek.com` still serves Wix.
 
-   ```sh
-   NODE_OPTIONS=--no-deprecation npx tsx tools/legacy-equivalence/check.ts
-   ```
-
-   A green run locally proves nothing about another environment — records there
-   may have been composed by an earlier composer version or hand-edited in the
-   admin since. Run it where the migration will run.
-
-   Exit codes:
-
-   | Code | Meaning                                                     | Action                                                                                                                                          |
-   | ---- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `0`  | Verified: every legacy value found in its composed `layout` | Proceed                                                                                                                                         |
-   | `1`  | Gaps found, listed per record                               | Fix before migrating — do not proceed                                                                                                           |
-   | `3`  | **Inconclusive — nothing was verified**                     | Stop. Either the lane is already migrated, or it is empty, or you are pointed at the wrong database. A pass that checked nothing is not a pass. |
-
-   The gate reads both published and draft rows, because the migration drops the
-   `_v` version mirrors too — prose living only in an unpublished draft would
-   otherwise be destroyed by a green check.
-
-3. Only then deploy the migration.
-
-The gate covers content correctness. The snapshot covers everything else,
-including operator error, and it is the only one of the two that helps after
-the fact.
+> **Do not run a Payload script against a remote lane to "check" it first.**
+> `payload.config.ts` enables Drizzle push whenever `NODE_ENV !== 'production'`,
+> so a script run from a laptop with `DATABASE_URL` pointed at a deployed lane
+> will **push the local config's schema to it** — applying the drops immediately,
+> outside the migration, with no record. Spec 011 shipped a
+> `tools/legacy-equivalence` gate that fell into exactly this trap and was
+> deleted; the snapshot is the control that actually works.
 
 ---
 

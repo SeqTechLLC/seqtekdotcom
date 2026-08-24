@@ -112,12 +112,27 @@
         }
       },
       "deliverables": [
-        { "label": "A shared decision model your team actually uses" },
-        { "label": "A prioritized list of delivery risks" },
-        { "label": "A 30-day action plan with owners" }
+        {
+          "label": "A shared decision model your team actually uses"
+        },
+        {
+          "label": "A prioritized list of delivery risks"
+        },
+        {
+          "label": "A 30-day action plan with owners"
+        }
       ],
-      "photos": [{ "image": 101, "caption": "Mapping decisions on the wall" }],
-      "video": { "provider": "youtube", "videoId": "k4Touchstone", "title": "Touchstone recap" },
+      "photos": [
+        {
+          "image": 101,
+          "caption": "Mapping decisions on the wall"
+        }
+      ],
+      "video": {
+        "provider": "youtube",
+        "videoId": "k4Touchstone",
+        "title": "Touchstone recap"
+      },
       "testimonial": 7
     }
   },
@@ -291,9 +306,15 @@
       "blockType": "deliverables",
       "heading": "What you leave with",
       "items": [
-        { "label": "A shared decision model your team actually uses" },
-        { "label": "A prioritized list of delivery risks" },
-        { "label": "A 30-day action plan with owners" }
+        {
+          "label": "A shared decision model your team actually uses"
+        },
+        {
+          "label": "A prioritized list of delivery risks"
+        },
+        {
+          "label": "A 30-day action plan with owners"
+        }
       ]
     },
     {
@@ -301,7 +322,12 @@
       "heading": "What a real workshop looks like",
       "layout": "grid",
       "columns": "3",
-      "items": [{ "image": 101, "caption": "Mapping decisions on the wall" }]
+      "items": [
+        {
+          "image": 101,
+          "caption": "Mapping decisions on the wall"
+        }
+      ]
     },
     {
       "blockType": "video-embed",
@@ -320,5 +346,6 @@
       "description": "Tell us about your team and we will follow up with dates and what to expect.",
       "formId": "66dba2bf-f099-44d5-8c6e-f24292cefe53"
     }
-  ]
+  ],
+  "_note": "Historical fixture. The `record` below is shaped from the pre-spec-011 workshop fields (description/format/audience/deliverables/photos/video), all of which spec 011 dropped. Kept because it documents the legacy-shape \u2192 block mapping; it is NOT a live example, and no record in the database looks like this any more."
 }
