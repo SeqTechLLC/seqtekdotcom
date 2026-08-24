@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { getSiteSettings, listWorkshops } from '@/lib/payload'
+import { listWorkshops } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { WorkshopList } from '@/components/sections/WorkshopList'
 
@@ -9,12 +9,10 @@ import { WorkshopList } from '@/components/sections/WorkshopList'
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSettings = await getSiteSettings()
   return buildMetadata(null, {
     title: 'Workshops',
     description:
       'Three facilitated workshops: the Touchstone Workshop for a specific technical problem, Five Dysfunctions and Re-Alignment for the team that has to solve it.',
-    siteSettings,
   })
 }
 

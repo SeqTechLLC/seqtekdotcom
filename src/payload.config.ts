@@ -19,8 +19,6 @@ import { Testimonials } from './collections/Testimonials'
 import { Users } from './collections/Users'
 import { Workshops } from './collections/Workshops'
 import { Homepage } from './globals/Homepage'
-import { Navigation } from './globals/Navigation'
-import { SiteSettings } from './globals/SiteSettings'
 import { editorConfig } from './payload/editor/editorConfig'
 import { s3StoragePlugin } from './payload/storage/s3'
 
@@ -72,7 +70,9 @@ export default buildConfig({
     Locations,
     Categories,
   ],
-  globals: [SiteSettings, Navigation, Homepage],
+  // spec 011 T016 (FR-003/FR-005): `siteSettings` and `navigation` were
+  // withdrawn. Site chrome is code-owned (ADR 0010) — see src/lib/site-content.ts.
+  globals: [Homepage],
   editor: editorConfig,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

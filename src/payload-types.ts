@@ -112,13 +112,9 @@ export interface Config {
   };
   fallbackLocale: null;
   globals: {
-    siteSettings: SiteSetting;
-    navigation: Navigation;
     homepage: Homepage;
   };
   globalsSelect: {
-    siteSettings: SiteSettingsSelect<false> | SiteSettingsSelect<true>;
-    navigation: NavigationSelect<false> | NavigationSelect<true>;
     homepage: HomepageSelect<false> | HomepageSelect<true>;
   };
   locale: null;
@@ -276,15 +272,6 @@ export interface Page {
   title: string;
   slug: string;
   publishedAt?: string | null;
-  hero?: {
-    headline?: string | null;
-    subheadline?: string | null;
-    backgroundImage?: (number | null) | Media;
-    cta?: {
-      label?: string | null;
-      url?: string | null;
-    };
-  };
   layout?:
     | (
         | HeroBlock
@@ -746,65 +733,6 @@ export interface CaseStudy {
         | TechStackBlock
       )[]
     | null;
-  problem?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  solution?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  impact?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  metrics?:
-    | {
-        number: string;
-        label: string;
-        context?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  technologies?:
-    | {
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
   testimonial?: (number | null) | Testimonial;
   relatedCaseStudies?: (number | CaseStudy)[] | null;
   seo?: {
@@ -865,114 +793,8 @@ export interface Service {
   title: string;
   slug: string;
   pillar: number | ServicePillar;
-  layout?:
-    | (
-        | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
-        | ContentBlock
-        | TwoColumnBlock
-        | ImageBlock
-        | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | MissionVisionValuesBlock
-        | TimelineBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | FAQBlock
-        | AccordionBlock
-        | TabsBlock
-        | MapBlock
-        | EmbedBlock
-        | DownloadCardBlock
-        | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
-      )[]
-    | null;
   icon?: string | null;
   relatedCaseStudies?: (number | CaseStudy)[] | null;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  approach?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  deliverables?:
-    | {
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  faq?:
-    | {
-        question: string;
-        answer?: {
-          root: {
-            type: string;
-            children: {
-              type: any;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        id?: string | null;
-      }[]
-    | null;
   seo?: {
     metaTitle?: string | null;
     metaDescription?: string | null;
@@ -1283,52 +1105,20 @@ export interface TeamMember {
   email?: string | null;
   isLeadership?: boolean | null;
   order?: number | null;
-  seo?: {
-    metaTitle?: string | null;
-    metaDescription?: string | null;
-    ogImage?: (number | null) | Media;
-  };
-  bio?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
+  /**
+   * Short skill or subject labels, one per row (for example "Cloud architecture", "Team facilitation"). These do not appear on the page, but search engines and AI assistants read them to understand what this person is known for.
+   */
   expertise?:
     | {
         label: string;
         id?: string | null;
       }[]
     | null;
-  certifications?:
-    | {
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  education?:
-    | {
-        degree: string;
-        institution: string;
-        id?: string | null;
-      }[]
-    | null;
-  personalFacts?:
-    | {
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  quote?: string | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: (number | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1477,69 +1267,6 @@ export interface Workshop {
         | TechStackBlock
       )[]
     | null;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  format?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  audience?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  deliverables?:
-    | {
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  photos?:
-    | {
-        image: number | Media;
-        caption?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  video?: {
-    provider?: ('youtube' | 'vimeo') | null;
-    videoId?: string | null;
-    title?: string | null;
-  };
   facilitator?: (number | null) | TeamMember;
   testimonial?: (number | null) | Testimonial;
   order?: number | null;
@@ -2116,19 +1843,6 @@ export interface PagesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   publishedAt?: T;
-  hero?:
-    | T
-    | {
-        headline?: T;
-        subheadline?: T;
-        backgroundImage?: T;
-        cta?:
-          | T
-          | {
-              label?: T;
-              url?: T;
-            };
-      };
   layout?:
     | T
     | {
@@ -2967,23 +2681,6 @@ export interface CaseStudiesSelect<T extends boolean = true> {
         'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
         'tech-stack'?: T | TechStackBlockSelect<T>;
       };
-  problem?: T;
-  solution?: T;
-  impact?: T;
-  metrics?:
-    | T
-    | {
-        number?: T;
-        label?: T;
-        context?: T;
-        id?: T;
-      };
-  technologies?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
   testimonial?: T;
   relatedCaseStudies?: T;
   seo?:
@@ -3006,72 +2703,8 @@ export interface ServicesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   pillar?: T;
-  layout?:
-    | T
-    | {
-        hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
-        content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
-        image?: T | ImageBlockSelect<T>;
-        gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
-        embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
-        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
-      };
   icon?: T;
   relatedCaseStudies?: T;
-  description?: T;
-  approach?: T;
-  deliverables?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
-  faq?:
-    | T
-    | {
-        question?: T;
-        answer?: T;
-        id?: T;
-      };
   seo?:
     | T
     | {
@@ -3169,6 +2802,12 @@ export interface TeamMembersSelect<T extends boolean = true> {
   email?: T;
   isLeadership?: T;
   order?: T;
+  expertise?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
   seo?:
     | T
     | {
@@ -3176,33 +2815,6 @@ export interface TeamMembersSelect<T extends boolean = true> {
         metaDescription?: T;
         ogImage?: T;
       };
-  bio?: T;
-  expertise?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
-  certifications?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
-  education?:
-    | T
-    | {
-        degree?: T;
-        institution?: T;
-        id?: T;
-      };
-  personalFacts?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
-  quote?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -3277,29 +2889,6 @@ export interface WorkshopsSelect<T extends boolean = true> {
         'nav-cards'?: T | NavCardsBlockSelect<T>;
         'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
         'tech-stack'?: T | TechStackBlockSelect<T>;
-      };
-  description?: T;
-  format?: T;
-  audience?: T;
-  deliverables?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
-  photos?:
-    | T
-    | {
-        image?: T;
-        caption?: T;
-        id?: T;
-      };
-  video?:
-    | T
-    | {
-        provider?: T;
-        videoId?: T;
-        title?: T;
       };
   facilitator?: T;
   testimonial?: T;
@@ -3494,82 +3083,6 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "siteSettings".
- */
-export interface SiteSetting {
-  id: number;
-  companyName?: string | null;
-  tagline?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  address?: {
-    street?: string | null;
-    city?: string | null;
-    state?: string | null;
-    zip?: string | null;
-  };
-  socialLinks?: {
-    linkedinUrl?: string | null;
-    twitterUrl?: string | null;
-    facebookUrl?: string | null;
-  };
-  footerText?: string | null;
-  stats?:
-    | {
-        number: string;
-        label: string;
-        suffix?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  _status?: ('draft' | 'published') | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "navigation".
- */
-export interface Navigation {
-  id: number;
-  mainNav?:
-    | {
-        label: string;
-        url: string;
-        children?:
-          | {
-              label: string;
-              url: string;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  footerNav?:
-    | {
-        label: string;
-        url: string;
-        children?:
-          | {
-              label: string;
-              url: string;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  ctaButton?: {
-    label?: string | null;
-    url?: string | null;
-  };
-  _status?: ('draft' | 'published') | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "homepage".
  */
 export interface Homepage {
@@ -3623,123 +3136,9 @@ export interface Homepage {
         | TechStackBlock
       )[]
     | null;
-  hero?: {
-    headline?: string | null;
-    subheadline?: string | null;
-    backgroundImage?: (number | null) | Media;
-    cta?: {
-      label?: string | null;
-      url?: string | null;
-    };
-  };
-  stats?:
-    | {
-        number: string;
-        label: string;
-        suffix?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  featuredCaseStudy?: (number | null) | CaseStudy;
-  brandTeaser?: {
-    headline?: string | null;
-    body?: string | null;
-    linkLabel?: string | null;
-    linkUrl?: string | null;
-    image?: (number | null) | Media;
-  };
-  clientLogos?:
-    | {
-        logo: number | Media;
-        id?: string | null;
-      }[]
-    | null;
-  featuredTestimonials?: (number | Testimonial)[] | null;
   _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "siteSettings_select".
- */
-export interface SiteSettingsSelect<T extends boolean = true> {
-  companyName?: T;
-  tagline?: T;
-  phone?: T;
-  email?: T;
-  address?:
-    | T
-    | {
-        street?: T;
-        city?: T;
-        state?: T;
-        zip?: T;
-      };
-  socialLinks?:
-    | T
-    | {
-        linkedinUrl?: T;
-        twitterUrl?: T;
-        facebookUrl?: T;
-      };
-  footerText?: T;
-  stats?:
-    | T
-    | {
-        number?: T;
-        label?: T;
-        suffix?: T;
-        id?: T;
-      };
-  _status?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "navigation_select".
- */
-export interface NavigationSelect<T extends boolean = true> {
-  mainNav?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-        children?:
-          | T
-          | {
-              label?: T;
-              url?: T;
-              id?: T;
-            };
-        id?: T;
-      };
-  footerNav?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-        children?:
-          | T
-          | {
-              label?: T;
-              url?: T;
-              id?: T;
-            };
-        id?: T;
-      };
-  ctaButton?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  _status?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3795,44 +3194,6 @@ export interface HomepageSelect<T extends boolean = true> {
         'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
         'tech-stack'?: T | TechStackBlockSelect<T>;
       };
-  hero?:
-    | T
-    | {
-        headline?: T;
-        subheadline?: T;
-        backgroundImage?: T;
-        cta?:
-          | T
-          | {
-              label?: T;
-              url?: T;
-            };
-      };
-  stats?:
-    | T
-    | {
-        number?: T;
-        label?: T;
-        suffix?: T;
-        id?: T;
-      };
-  featuredCaseStudy?: T;
-  brandTeaser?:
-    | T
-    | {
-        headline?: T;
-        body?: T;
-        linkLabel?: T;
-        linkUrl?: T;
-        image?: T;
-      };
-  clientLogos?:
-    | T
-    | {
-        logo?: T;
-        id?: T;
-      };
-  featuredTestimonials?: T;
   _status?: T;
   updatedAt?: T;
   createdAt?: T;

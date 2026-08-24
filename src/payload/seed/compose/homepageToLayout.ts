@@ -1,4 +1,4 @@
-import { relId, runGlobalComposer, textContentBlock, type LayoutBlock } from './shared'
+import { relId, textContentBlock, type LayoutBlock } from './shared'
 
 // spec 010 US5 (Phase F) — homepage GLOBAL field→layout composer. Maps the
 // deprecated structured fields onto the universal `layout` blocks per
@@ -166,18 +166,8 @@ export function composeHomepageLayout(record: HomepageRecord): LayoutBlock[] {
   return blocks
 }
 
-// CLI bootstrap — skipped when imported as a module by tests.
-const invokedDirectly = (() => {
-  const entry = process.argv[1]
-  if (!entry) return false
-  return entry.endsWith('homepageToLayout.ts') || entry.endsWith('homepageToLayout.js')
-})()
-
-if (invokedDirectly) {
-  runGlobalComposer({ global: 'homepage', compose: (record) => composeHomepageLayout(record) })
-    .then((summary) => process.exit(summary.exitCode))
-    .catch((err) => {
-      console.error(err)
-      process.exit(1)
-    })
-}
+// spec 011 T019a: the CLI bootstrap was removed with the migration runner it
+// called (compose/shared.ts). The legacy columns this composer read no longer
+// exist, so running it against a database would compose an empty layout. The
+// pure mapping function above stays — the `convert-to-blocks` skill uses it as
+// its reference for what each legacy shape becomes in blocks.

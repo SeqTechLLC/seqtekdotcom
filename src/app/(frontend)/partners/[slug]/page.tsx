@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getPartnerBySlug, getSiteSettings } from '@/lib/payload'
+import { getPartnerBySlug } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
@@ -32,9 +32,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const [partner, siteSettings] = await Promise.all([getPartnerBySlug(slug), getSiteSettings()])
+  const [partner] = await Promise.all([getPartnerBySlug(slug)])
   if (!partner) return {}
-  return buildMetadata(partner.seo, { title: partner.name, siteSettings })
+  return buildMetadata(partner.seo, { title: partner.name })
 }
 
 export default async function PartnerPage({ params }: Props) {

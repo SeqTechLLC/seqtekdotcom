@@ -1,15 +1,15 @@
-import { resolve } from 'node:path'
-
-import type { CollectionSlug, GlobalSlug, Payload } from 'payload'
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
-import { createMigrationLogger, type MigrationLogger } from '../log'
 import { buildLexical } from '../showcase/lexical'
-import { upsertBySlug, type UpsertResult } from '../upsert'
 
 // ---------------------------------------------------------------------------
-// Field → layout composer shared helpers (spec 010 / ADR 0009, contract
-// migration-fidelity.md). The per-type composers (workshopToLayout.ts etc.)
+// Field → layout composer shared helpers (spec 010 / ADR 0009).
+//
+// spec 011 T019a retired the migration RUNNER that used to live here; what
+// remains are the pure block-building helpers the per-type composers use, and
+// the composers themselves are now reference mappings (used by the
+// `convert-to-blocks` skill) rather than a live migration path.
+// Historical context: the per-type composers (workshopToLayout.ts etc.)
 // are the migration mechanism of record: they read a record's discrete body
 // fields and write an equivalent `layout` blocks array via `upsertBySlug`,
 // idempotent + slug-keyed, with a `--dry-run` JSON-Lines plan.
@@ -111,239 +111,16 @@ export function textContentBlock(text: string | null | undefined): LayoutBlock |
 // CLI runner — shared across every per-type composer
 // ---------------------------------------------------------------------------
 
-export interface ComposeContext {
-  logger: MigrationLogger
-}
-
-export interface RunComposerOptions {
-  /** Collection whose records are composed (e.g. 'workshops'). */
-  collection: CollectionSlug
-  /** Per-record transform: discrete fields → ordered layout blocks. */
-  compose: (record: Record<string, unknown>, ctx: ComposeContext) => LayoutBlock[]
-  argv?: readonly string[]
-  /** Override the Payload instance (tests pass their testcontainer-backed one). */
-  payload?: Payload
-  /** Override process.env for tests. */
-  env?: Record<string, string | undefined>
-  /** Override the migration-errors.log path (defaults to repo root). */
-  logPath?: string
-  stdout?: (line: string) => void
-  stderr?: (line: string) => void
-  /** Stable timestamp for deterministic tests. */
-  now?: Date
-}
-
-export interface ComposeRunSummary {
-  exitCode: number
-  results: UpsertResult[]
-  logger: MigrationLogger
-}
-
-const REQUIRED_ENV_KEYS = ['DATABASE_URL', 'PAYLOAD_SECRET'] as const
-
-/**
- * Run a field→layout composer over every record of a collection. Mirrors
- * `migrateFromAudit.runSeed`'s contract: env-gated, `--dry-run` emits
- * JSON-Lines plans to stdout and performs zero writes, gaps log via the
- * shared migration logger. Published source records keep a published layout
- * (so the `RenderBlocks` route switch is non-breaking); drafts stay drafts.
- */
-export async function runComposer(options: RunComposerOptions): Promise<ComposeRunSummary> {
-  const env = options.env ?? process.env
-  const stdout = options.stdout ?? ((line: string) => console.log(line))
-  const stderr = options.stderr ?? ((line: string) => console.error(line))
-  const argv = options.argv ?? process.argv.slice(2)
-  const dryRun = argv.includes('--dry-run')
-
-  const logger = createMigrationLogger(
-    options.logPath ?? resolve(process.cwd(), 'migration-errors.log'),
-    { dryRun, nowFn: options.now ? () => options.now! : undefined },
-  )
-
-  if (!options.payload) {
-    const missing = REQUIRED_ENV_KEYS.filter((key) => !env[key])
-    if (missing.length > 0) {
-      stderr(`Missing required env var(s): ${missing.join(', ')}`)
-      return { exitCode: 1, results: [], logger }
-    }
-  }
-
-  let payload = options.payload
-  if (!payload) {
-    const { getPayload } = await import('payload')
-    const { default: config } = await import('../../../payload.config')
-    payload = await getPayload({ config: await config })
-  }
-
-  // Read published main rows (draft:false) at depth 0 so media/relations come
-  // back as ids ready to drop straight into block fields. draft:false (not
-  // draft:true) migrates the LIVE published content and — unlike a version-table
-  // read — works for a collection that just had drafts enabled and has no
-  // version snapshots yet (teamMembers, Phase E). Unpublished drafts have no
-  // live body to migrate; the composer is re-runnable when they publish.
-  const { docs } = await payload.find({
-    collection: options.collection,
-    overrideAccess: true,
-    draft: false,
-    depth: 0,
-    limit: 1000,
-    pagination: false,
-  })
-
-  const summary = dryRun ? stderr : stdout
-  const results: UpsertResult[] = []
-  let created = 0
-  let updated = 0
-
-  for (const record of docs as unknown as Array<Record<string, unknown>>) {
-    const slug = typeof record.slug === 'string' ? record.slug : ''
-    if (!slug) {
-      logger.log({
-        level: 'ERROR',
-        kind: 'PARSE_ERROR',
-        collection: options.collection,
-        slug: '<empty>',
-        detail: 'record has no slug; skipped',
-      })
-      continue
-    }
-    const layout = options.compose(record, { logger })
-    const wasPublished = record._status === 'published'
-    let result
-    try {
-      result = await upsertBySlug({
-        payload,
-        collection: options.collection,
-        slug,
-        data: { slug, layout },
-        dryRun,
-        draft: !wasPublished,
-        logger,
-      })
-    } catch (err) {
-      // A single bad record (e.g. a block field that fails validation on
-      // publish) must not abort the whole migration — log and continue.
-      logger.log({
-        level: 'ERROR',
-        kind: 'PARSE_ERROR',
-        collection: options.collection,
-        slug,
-        detail: `compose write failed: ${(err as Error).message}`,
-      })
-      continue
-    }
-    results.push(result)
-    if (result.operation === 'create') created++
-    if (result.operation === 'update') updated++
-    if (dryRun) {
-      stdout(
-        JSON.stringify({
-          collection: options.collection,
-          slug,
-          operation: result.operation,
-          blockTypes: layout.map((b) => b.blockType),
-        }),
-      )
-    }
-  }
-
-  summary(
-    `${options.collection}: ${docs.length} processed, ${created} created, ${updated} updated` +
-      (dryRun ? ' (--dry-run, no writes)' : `, errors logged to ${logger.filePath}`),
-  )
-  return { exitCode: 0, results, logger }
-}
-
-export interface RunGlobalComposerOptions {
-  /** Global whose record is composed (e.g. 'homepage'). */
-  global: GlobalSlug
-  /** Transform the global's discrete fields → ordered layout blocks. */
-  compose: (record: Record<string, unknown>, ctx: ComposeContext) => LayoutBlock[]
-  argv?: readonly string[]
-  payload?: Payload
-  env?: Record<string, string | undefined>
-  logPath?: string
-  stdout?: (line: string) => void
-  stderr?: (line: string) => void
-  now?: Date
-}
-
-/**
- * The global analogue of `runComposer`. A global is a singleton, so there is no
- * collection to iterate or slug to key on: read the published record, compose
- * its `layout`, and write it back via `updateGlobal`. Same env-gating and
- * `--dry-run` (JSON-Lines plan, zero writes) contract. A published global keeps
- * a published layout so the public `/` switch to RenderBlocks is non-breaking.
- */
-export async function runGlobalComposer(
-  options: RunGlobalComposerOptions,
-): Promise<ComposeRunSummary> {
-  const env = options.env ?? process.env
-  const stdout = options.stdout ?? ((line: string) => console.log(line))
-  const stderr = options.stderr ?? ((line: string) => console.error(line))
-  const argv = options.argv ?? process.argv.slice(2)
-  const dryRun = argv.includes('--dry-run')
-
-  const logger = createMigrationLogger(
-    options.logPath ?? resolve(process.cwd(), 'migration-errors.log'),
-    { dryRun, nowFn: options.now ? () => options.now! : undefined },
-  )
-
-  if (!options.payload) {
-    const missing = REQUIRED_ENV_KEYS.filter((key) => !env[key])
-    if (missing.length > 0) {
-      stderr(`Missing required env var(s): ${missing.join(', ')}`)
-      return { exitCode: 1, results: [], logger }
-    }
-  }
-
-  let payload = options.payload
-  if (!payload) {
-    const { getPayload } = await import('payload')
-    const { default: config } = await import('../../../payload.config')
-    payload = await getPayload({ config: await config })
-  }
-
-  const record = (await payload.findGlobal({
-    slug: options.global,
-    overrideAccess: true,
-    draft: false,
-    depth: 0,
-  })) as unknown as Record<string, unknown>
-
-  const layout = options.compose(record, { logger })
-  // A never-published global has no `_status`; treat it as published so the
-  // public `/` (which reads the published global) shows the composed layout.
-  const wasPublished = record._status === 'published' || record._status === undefined
-
-  if (dryRun) {
-    stdout(JSON.stringify({ global: options.global, blockTypes: layout.map((b) => b.blockType) }))
-    stderr(`${options.global}: composed ${layout.length} block(s) (--dry-run, no writes)`)
-    return { exitCode: 0, results: [], logger }
-  }
-
-  // A composed block that fails validation on publish must be logged, not throw
-  // and abort the run — mirrors runComposer's per-record catch-and-continue.
-  try {
-    await payload.updateGlobal({
-      slug: options.global,
-      data: { layout } as never,
-      overrideAccess: true,
-      draft: !wasPublished,
-    })
-  } catch (err) {
-    logger.log({
-      level: 'ERROR',
-      kind: 'PARSE_ERROR',
-      collection: options.global,
-      slug: '<global>',
-      detail: `compose write failed: ${(err as Error).message}`,
-    })
-    stderr(`${options.global}: compose write failed — ${(err as Error).message}`)
-    return { exitCode: 1, results: [], logger }
-  }
-  stdout(
-    `${options.global}: ${layout.length} block(s) composed and written, errors logged to ${logger.filePath}`,
-  )
-  return { exitCode: 0, results: [], logger }
-}
+// spec 011 T019a: `ComposeContext`, `RunComposerOptions`, `runComposer`,
+// `RunGlobalComposerOptions` and `runGlobalComposer` were removed here.
+//
+// They were the spec-010 expand/contract MIGRATION runner: read a record's
+// legacy body columns, compose an equivalent `layout`, write it back. Spec 011
+// dropped those columns (FR-007), so the runner has no input left — it reads
+// fields the schema no longer has and composes an empty layout. Keeping it
+// would be the same looks-wired-but-isn't trap this feature exists to remove,
+// and a deploy step in the runbook that silently no-ops is worse than none.
+//
+// The PURE composers (`composeWorkshopLayout` and friends) survive: they map a
+// plain record shape to blocks with no database involved, and the
+// `convert-to-blocks` skill still uses them as its reference mapping.

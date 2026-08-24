@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { getSiteSettings, listPosts } from '@/lib/payload'
+import { listPosts } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { PostList } from '@/components/sections/PostList'
 
@@ -9,11 +9,9 @@ import { PostList } from '@/components/sections/PostList'
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSettings = await getSiteSettings()
   return buildMetadata(null, {
     title: 'Insights',
     description: 'Practical perspectives on strategy, delivery, and AI from the SEQTEK team.',
-    siteSettings,
   })
 }
 

@@ -146,12 +146,10 @@ export const buildRevalidatePlan = (
     tags.push(`${collection}_${s}`)
   }
 
-  if (
-    collection === 'homepage' ||
-    collection === 'siteSettings' ||
-    collection === 'navigation' ||
-    collection === 'testimonials'
-  ) {
+  // spec 011 T016: `siteSettings` / `navigation` dropped from this list with
+  // the globals themselves — site chrome is code-owned now (ADR 0010), so a
+  // chrome change is a deploy, not a publish, and nothing to revalidate.
+  if (collection === 'homepage' || collection === 'testimonials') {
     detailPaths.push('/')
   }
 

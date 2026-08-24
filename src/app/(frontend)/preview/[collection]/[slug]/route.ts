@@ -54,11 +54,9 @@ export async function GET(
     where: { slug: { equals: slug } },
     draft: true,
     limit: 1,
-    depth: collection === 'services' ? 1 : 0,
+    depth: 0,
   })
-  const doc = result.docs[0] as
-    | { slug?: string; pillar?: { slug?: string } | string | null }
-    | undefined
+  const doc = result.docs[0] as { slug?: string } | undefined
   if (!doc) {
     return NextResponse.json({ error: 'document not found' }, { status: 404 })
   }

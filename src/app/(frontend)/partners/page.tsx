@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { getSiteSettings, listPartners } from '@/lib/payload'
+import { listPartners } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
@@ -12,12 +12,10 @@ import { PartnerGrid } from '@/components/sections/PartnerGrid'
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSettings = await getSiteSettings()
   return buildMetadata(null, {
     title: 'Partners',
     description:
       'Technology partners SEQTEK works with to deliver outcomes for Midwest organizations.',
-    siteSettings,
   })
 }
 

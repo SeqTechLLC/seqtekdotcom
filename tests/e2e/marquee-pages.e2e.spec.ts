@@ -6,10 +6,10 @@ import config from '../../src/payload.config'
 import { attachEditorSessionToContext, cleanupEditorSession } from '../sessions/editorSession'
 import { revalidateDevCache } from './helpers/revalidateDevCache'
 import { warmRoute } from './helpers/warmRoute'
-import type { CaseStudy } from '../../src/payload-types'
+import type { Post } from '../../src/payload-types'
 
 /** Minimal valid Payload/Lexical richText value carrying a single paragraph. */
-const lexical = (text: string): NonNullable<CaseStudy['problem']> =>
+const lexical = (text: string): NonNullable<Post['content']> =>
   ({
     root: {
       type: 'root',
@@ -30,7 +30,7 @@ const lexical = (text: string): NonNullable<CaseStudy['problem']> =>
         },
       ],
     },
-  }) as NonNullable<CaseStudy['problem']>
+  }) as NonNullable<Post['content']>
 
 /**
  * spec 004 marquee-page E2E suite. Each user story appends its own
@@ -253,12 +253,19 @@ test.describe('US2 — case study renders structured fields', () => {
         title: 'Modernizing a Legacy Platform',
         slug: CASE_SLUG,
         subtitle: 'A phased rebuild that cut deploy time in half.',
-        problem: lexical('The legacy system shipped quarterly and broke often.'),
-        solution: lexical('We introduced CI/CD and a strangler-fig migration.'),
-        impact: lexical('Deploys went from quarterly to daily.'),
-        metrics: [
-          { number: '50%', label: 'Faster deploys' },
-          { number: '3x', label: 'Release frequency' },
+        // spec 011: legacy body fields dropped (FR-007) — body is the layout.
+        layout: [
+          {
+            blockType: 'content',
+            body: lexical('The legacy system shipped quarterly and broke often.'),
+          },
+          {
+            blockType: 'content',
+            body: lexical('We introduced CI/CD and a strangler-fig migration.'),
+          },
+          { blockType: 'content', body: lexical('Deploys went from quarterly to daily.') },
+          { blockType: 'metric-display', number: '50%', label: 'Faster deploys' },
+          { blockType: 'metric-display', number: '3x', label: 'Release frequency' },
         ],
         testimonial: testimonial.id,
       },
@@ -339,10 +346,24 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
       data: {
         title: 'Touchstone AI Strategy Workshop',
         slug: WORKSHOP_SLUG,
-        description: lexical('A facilitated working session for leadership teams.'),
-        audience: lexical('For executives accountable for an AI roadmap.'),
-        photos: [{ image: proofPhoto.id, caption: 'Working the plan at the whiteboard.' }],
-        video: { provider: 'youtube', videoId: 'dQw4w9WgXcQ', title: 'Workshop recap' },
+        // spec 011: legacy description/audience/photos/video dropped (FR-007).
+        layout: [
+          {
+            blockType: 'content',
+            body: lexical('A facilitated working session for leadership teams.'),
+          },
+          { blockType: 'content', body: lexical('For executives accountable for an AI roadmap.') },
+          {
+            blockType: 'gallery',
+            items: [{ image: proofPhoto.id, caption: 'Working the plan at the whiteboard.' }],
+          },
+          {
+            blockType: 'video-embed',
+            provider: 'youtube',
+            videoId: 'dQw4w9WgXcQ',
+            title: 'Workshop recap',
+          },
+        ],
         _status: 'published',
       },
       overrideAccess: true,

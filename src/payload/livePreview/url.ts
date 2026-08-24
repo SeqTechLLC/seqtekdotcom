@@ -4,7 +4,6 @@ export type PreviewCollection =
   | 'pages'
   | 'posts'
   | 'caseStudies'
-  | 'services'
   | 'workshops'
   | 'teamMembers'
   | 'partners'
@@ -13,30 +12,22 @@ export const PREVIEW_COLLECTIONS: readonly PreviewCollection[] = [
   'pages',
   'posts',
   'caseStudies',
-  'services',
   'workshops',
   'teamMembers',
   'partners',
 ] as const
 
-type DocLike = { slug?: string; pillar?: { slug?: string } | string | null }
+type DocLike = { slug?: string }
 
 const PUBLIC_PATH_BUILDERS: Record<PreviewCollection, (doc: DocLike) => string | null> = {
   pages: (doc) => (doc.slug ? `/${doc.slug}` : null),
   posts: (doc) => (doc.slug ? `/insights/${doc.slug}` : null),
   caseStudies: (doc) => (doc.slug ? `/case-studies/${doc.slug}` : null),
-  // NOTE: orphaned by feat/services-restructure. The public `/services/[pillar]`
-  // + `/services/[pillar]/[slug]` render routes were retired for the four
-  // block-composed offering Pages, so this still-existing collection now has no
-  // live public route to preview into. The builder is left as-is (its int
-  // coverage pins this shape) pending the services-collection deprecation
-  // decision; the services preview e2e is skipped meanwhile. See
-  // tests/e2e/preview/servicesPreview.e2e.spec.ts.
-  services: (doc) => {
-    if (!doc.slug) return null
-    const pillarSlug = typeof doc.pillar === 'object' && doc.pillar ? doc.pillar.slug : undefined
-    return pillarSlug ? `/services/${pillarSlug}/${doc.slug}` : `/services/${doc.slug}`
-  },
+  // spec 011 T017: the `services` builder was deleted, not left orphaned. PR
+  // #79 retired the `/services/[pillar]` routes it pointed at, so it had been
+  // building preview URLs into 404s. Services keeps its typed metadata (it
+  // still feeds ServiceCards and resolves caseStudies.services) but has no
+  // public page and therefore no preview.
   workshops: (doc) => (doc.slug ? `/workshops/${doc.slug}` : null),
   teamMembers: (doc) => (doc.slug ? `/team/${doc.slug}` : null),
   partners: (doc) => (doc.slug ? `/partners/${doc.slug}` : null),

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getPostBySlug, getSiteSettings } from '@/lib/payload'
+import { getPostBySlug } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { articleLd } from '@/lib/structured-data'
@@ -29,12 +29,11 @@ interface Props {
 // DYNAMIC_SERVER_USAGE bail under ISR; see the page body note).
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const [post, siteSettings] = await Promise.all([getPostBySlug(slug), getSiteSettings()])
+  const [post] = await Promise.all([getPostBySlug(slug)])
   if (!post) return {}
   return buildMetadata(post.seo, {
     title: post.title,
     description: post.excerpt,
-    siteSettings,
   })
 }
 

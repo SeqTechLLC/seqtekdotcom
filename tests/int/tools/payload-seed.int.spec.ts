@@ -270,7 +270,7 @@ describe('upsertSpec — global', () => {
   it('POSTs the global with _status published', async () => {
     const { fetchFn, calls } = createFakeFetch()
     const client = makeClient(fetchFn)
-    const spec = validateSpecs({ global: 'siteSettings', data: { tagline: 'Hi' } })
+    const spec = validateSpecs({ global: 'homepage', data: { tagline: 'Hi' } })
     expect(spec.ok).toBe(true)
     if (!spec.ok) return
 
@@ -285,9 +285,7 @@ describe('upsertSpec — global', () => {
     )
 
     expect(result.operation).toBe('global')
-    const call = calls.find(
-      (c) => c.method === 'POST' && c.url.includes('/api/globals/siteSettings'),
-    )
+    const call = calls.find((c) => c.method === 'POST' && c.url.includes('/api/globals/homepage'))
     expect(call).toBeDefined()
     expect(call?.url).not.toContain('draft=true')
     const body = JSON.parse(call?.body as string) as Record<string, unknown>
@@ -297,15 +295,13 @@ describe('upsertSpec — global', () => {
   it('POSTs the global with no _status on a draft run', async () => {
     const { fetchFn, calls } = createFakeFetch()
     const client = makeClient(fetchFn)
-    const spec = validateSpecs({ global: 'siteSettings', data: { tagline: 'Hi' } })
+    const spec = validateSpecs({ global: 'homepage', data: { tagline: 'Hi' } })
     expect(spec.ok).toBe(true)
     if (!spec.ok) return
 
     await upsertSpec(client, spec.value[0], { tagline: 'Hi' }, { draft: true, dryRun: false })
 
-    const call = calls.find(
-      (c) => c.method === 'POST' && c.url.includes('/api/globals/siteSettings'),
-    )
+    const call = calls.find((c) => c.method === 'POST' && c.url.includes('/api/globals/homepage'))
     expect(call?.url).toContain('draft=true')
     const body = JSON.parse(call?.body as string) as Record<string, unknown>
     expect(body._status).toBeUndefined()

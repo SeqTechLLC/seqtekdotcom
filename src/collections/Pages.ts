@@ -5,7 +5,6 @@ import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { layoutBlocks } from '../payload/blocks/layout'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
-import { safeUrlValidate } from '../payload/fields/url'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 
@@ -48,23 +47,11 @@ export const Pages: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     {
-      name: 'hero',
-      type: 'group',
-      fields: [
-        { name: 'headline', type: 'text' },
-        { name: 'subheadline', type: 'textarea' },
-        { name: 'backgroundImage', type: 'upload', relationTo: 'media' },
-        {
-          name: 'cta',
-          type: 'group',
-          fields: [
-            { name: 'label', type: 'text' },
-            { name: 'url', type: 'text', validate: safeUrlValidate },
-          ],
-        },
-      ],
-    },
-    {
+      // spec 011 T018 (FR-002): the legacy `hero` group was deleted. It sat at
+      // the top of every Page form, five editable inputs, consumed by nothing —
+      // ADR 0009 moved page openers into the block layout below and the group
+      // was never removed. Verified empty across all 57 rows before the drop
+      // (specs/011-payload-admin-ux/inventory-before.md §3).
       name: 'layout',
       type: 'blocks',
       blocks: [...layoutBlocks],

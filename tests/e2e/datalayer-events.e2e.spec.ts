@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { getPayload, type Payload } from 'payload'
 
 import config from '../../src/payload.config'
-import type { CaseStudy } from '../../src/payload-types'
+import type { Post } from '../../src/payload-types'
 
 /**
  * spec 008 US3 (T013) — the conversion-signal surface lands its documented
@@ -27,7 +27,7 @@ const PNG_1x1 = Buffer.from(
   'base64',
 )
 
-const lexical = (text: string): NonNullable<CaseStudy['problem']> =>
+const lexical = (text: string): NonNullable<Post['content']> =>
   ({
     root: {
       type: 'root',
@@ -48,7 +48,7 @@ const lexical = (text: string): NonNullable<CaseStudy['problem']> =>
         },
       ],
     },
-  }) as NonNullable<CaseStudy['problem']>
+  }) as NonNullable<Post['content']>
 
 const CASE_SLUG = 'dl-events-case'
 const CASE_TITLE = 'DataLayer Events Case Study'
@@ -94,7 +94,8 @@ test.beforeAll(async () => {
       subtitle: 'Seeded for the dataLayer case_study_view assertion.',
       industry: industry.id,
       heroImage: media.id,
-      problem: lexical('A seeded problem statement.'),
+      // spec 011: legacy `problem` dropped (FR-007) — body is the block layout.
+      layout: [{ blockType: 'content', body: lexical('A seeded problem statement.') }],
       _status: 'published',
     },
     overrideAccess: true,

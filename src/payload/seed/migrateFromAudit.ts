@@ -5,14 +5,13 @@ import { resolve } from 'node:path'
 import { getPayload, type Payload } from 'payload'
 
 import config from '../../payload.config'
-import type { Homepage, SiteSetting } from '../../payload-types'
+import type { Homepage } from '../../payload-types'
 
 import { createMigrationLogger, type MigrationLogger } from './log'
 import { parseCaseStudies } from './parsers/caseStudies'
 import { parseHomepage } from './parsers/homepage'
 import { parsePages } from './parsers/pages'
 import { parsePosts } from './parsers/posts'
-import { parseSiteSettings } from './parsers/siteSettings'
 import { upsertBySlug, type UpsertResult } from './upsert'
 
 /**
@@ -32,14 +31,13 @@ interface ParsedArgs {
   unknown: string[]
 }
 
-type CollectionFilter = 'caseStudies' | 'pages' | 'posts' | 'homepage' | 'siteSettings'
+type CollectionFilter = 'caseStudies' | 'pages' | 'posts' | 'homepage'
 
 const VALID_COLLECTION_FILTERS: ReadonlyArray<CollectionFilter> = [
   'caseStudies',
   'pages',
   'posts',
   'homepage',
-  'siteSettings',
 ]
 
 function parseArgs(argv: readonly string[]): ParsedArgs {
@@ -379,27 +377,9 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedRunSumm
     )
   }
 
-  // SiteSettings (global) — no audit parse step; values are hardcoded canonical.
-  if (!filter || filter === 'siteSettings') {
-    const data = parseSiteSettings({ logger })
-    collectionsProcessed.push('siteSettings')
-    try {
-      if (args.dryRun) {
-        stdout(JSON.stringify({ collection: 'siteSettings', operation: 'update', data }))
-      } else {
-        await payload.updateGlobal({
-          slug: 'siteSettings',
-          data: data as Partial<SiteSetting>,
-          overrideAccess: true,
-          draft: true,
-        })
-      }
-    } catch (err) {
-      stderr(`siteSettings update failed: ${(err as Error).message}`)
-      return { exitCode: 4, results, logger, collectionsProcessed }
-    }
-    summary('siteSettings: 1 processed, 1 updated')
-  }
+  // spec 011 T016: the siteSettings write step was removed with the global.
+  // Site chrome is code-owned now (ADR 0010) — the canonical company values
+  // live in src/lib/site-content.ts and change by deploy, not by seed.
 
   summary(
     `Done. ${args.dryRun ? 'No writes performed (--dry-run).' : `Errors logged to ${logger.filePath}`}`,

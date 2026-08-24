@@ -113,7 +113,7 @@ describe('buildRevalidatePlan — per-collection routing', () => {
   })
 
   it('homepage / siteSettings / navigation / testimonials all bust /', () => {
-    for (const collection of ['homepage', 'siteSettings', 'navigation', 'testimonials']) {
+    for (const collection of ['homepage', 'testimonials']) {
       const plan = buildRevalidatePlan(collection, { _status: 'published' })
       expect(plan.paths).toContain('/')
     }

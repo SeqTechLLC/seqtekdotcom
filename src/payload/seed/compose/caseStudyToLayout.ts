@@ -1,4 +1,4 @@
-import { contentBlock, relId, runComposer, type LayoutBlock } from './shared'
+import { contentBlock, relId, type LayoutBlock } from './shared'
 
 // spec 010 US2 (Phase C) — case-study field→layout composer. Maps the
 // deprecated body fields onto blocks per data-model.md:
@@ -63,17 +63,8 @@ export function composeCaseStudyLayout(record: CaseStudyRecord): LayoutBlock[] {
   return blocks
 }
 
-const invokedDirectly = (() => {
-  const entry = process.argv[1]
-  if (!entry) return false
-  return entry.endsWith('caseStudyToLayout.ts') || entry.endsWith('caseStudyToLayout.js')
-})()
-
-if (invokedDirectly) {
-  runComposer({ collection: 'caseStudies', compose: (record) => composeCaseStudyLayout(record) })
-    .then((summary) => process.exit(summary.exitCode))
-    .catch((err) => {
-      console.error(err)
-      process.exit(1)
-    })
-}
+// spec 011 T019a: the CLI bootstrap was removed with the migration runner it
+// called (compose/shared.ts). The legacy columns this composer read no longer
+// exist, so running it against a database would compose an empty layout. The
+// pure mapping function above stays — the `convert-to-blocks` skill uses it as
+// its reference for what each legacy shape becomes in blocks.

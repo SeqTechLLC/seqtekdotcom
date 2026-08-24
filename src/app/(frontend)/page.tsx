@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 
-import { getHomepage, getPayloadInstance, getSiteSettings, listPosts } from '@/lib/payload'
+import { getHomepage, getPayloadInstance, listPosts } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
+import { siteSettings } from '@/lib/site-content'
 import { organizationLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
@@ -35,14 +36,11 @@ async function readDraftHomepage(): Promise<Homepage> {
 
 export async function generateMetadata(): Promise<Metadata> {
   // The `homepage` global has no `seo` group (data-model §5) — source metadata
-  // from `siteSettings`.
-  const siteSettings = await getSiteSettings()
-  const companyName = siteSettings?.companyName ?? 'SEQTEK'
-  const tagline = siteSettings?.tagline ?? undefined
+  // from the code-owned site constant (spec 011 T013).
+  const { companyName, tagline } = siteSettings
   return buildMetadata(null, {
     title: tagline ? `${companyName}: ${tagline}` : companyName,
     description: tagline,
-    siteSettings,
     absoluteTitle: true,
   })
 }
@@ -50,11 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   // Cached published reads FIRST, then the dynamic draft check — keeps the
   // unstable_cache reads out of a dynamic scope (DYNAMIC_SERVER_USAGE guard).
-  const [publishedHomepage, siteSettings, latestPosts] = await Promise.all([
-    getHomepage(),
-    getSiteSettings(),
-    listPosts(),
-  ])
+  const [publishedHomepage, latestPosts] = await Promise.all([getHomepage(), listPosts()])
   const { isEnabled: isDraft } = await draftMode()
   const homepage = isDraft ? await readDraftHomepage() : publishedHomepage
 
@@ -63,7 +57,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <JsonLd data={organizationLd(siteSettings)} />
+      <JsonLd data={organizationLd()} />
       {isDraft && <PreviewBanner />}
 
       <div data-testid="homepage" data-homepage="true">

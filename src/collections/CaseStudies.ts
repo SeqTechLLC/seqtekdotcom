@@ -3,7 +3,6 @@ import type { CollectionConfig } from 'payload'
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { layoutBlocks } from '../payload/blocks/layout'
-import { editorConfig } from '../payload/editor/editorConfig'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
@@ -69,40 +68,6 @@ export const CaseStudies: CollectionConfig = {
     // ---- Legacy body fields (expand/contract, R2) ----
     // Composed into `layout` by caseStudyToLayout.ts; hidden + read-only, kept
     // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
-    {
-      name: 'problem',
-      type: 'richText',
-      editor: editorConfig,
-      admin: { hidden: true, readOnly: true },
-    },
-    {
-      name: 'solution',
-      type: 'richText',
-      editor: editorConfig,
-      admin: { hidden: true, readOnly: true },
-    },
-    {
-      name: 'impact',
-      type: 'richText',
-      editor: editorConfig,
-      admin: { hidden: true, readOnly: true },
-    },
-    {
-      name: 'metrics',
-      type: 'array',
-      admin: { hidden: true, readOnly: true },
-      fields: [
-        { name: 'number', type: 'text', required: true },
-        { name: 'label', type: 'text', required: true },
-        { name: 'context', type: 'text' },
-      ],
-    },
-    {
-      name: 'technologies',
-      type: 'array',
-      admin: { hidden: true, readOnly: true },
-      fields: [{ name: 'label', type: 'text', required: true }],
-    },
     { name: 'testimonial', type: 'relationship', relationTo: 'testimonials' },
     {
       name: 'relatedCaseStudies',
