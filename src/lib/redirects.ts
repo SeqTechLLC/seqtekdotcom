@@ -3,8 +3,9 @@ import type { Redirect } from 'next/dist/lib/load-custom-routes'
 // spec 004 T039 (redirect-map.md). 301 map from old Wix URLs → canonical
 // routes. Source of truth: INTEGRATIONS.md §9 — reconciled in the same PR.
 // Extracted to a module so next.config.ts and the RM test (T040) share one
-// definition. Distinct from src/payload/seed/slugRewrites.ts (bare slugs for
-// the seed; this is the HTTP path-level contract with route prefixes).
+// definition. This is the HTTP path-level contract, with route prefixes. The
+// seed-side bare-slug map it used to pair with (`seed/slugRewrites.ts`) went
+// with the audit seeder in spec 011; every mapping it held is represented here.
 //
 // The two INTEGRATIONS §9 identity rows (`/contact` → `/contact`,
 // `/privacy-policy` → `/privacy-policy`) are intentionally OMITTED: a redirect

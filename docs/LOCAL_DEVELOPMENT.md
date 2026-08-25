@@ -180,9 +180,10 @@ wrote fields the schema no longer has, so Payload dropped every key and both
 steps reported success while writing nothing.
 
 The 301 redirect map it once sourced is committed code and unaffected —
-`src/lib/redirects.ts`, with the slug rewrites still at
-`src/payload/seed/slugRewrites.ts`. The dated Wix crawl remains outside the repo
-at `~/projects/seqtek-internal/audit/` as the historical record.
+`src/lib/redirects.ts`, which now carries the slug rewrites too (the seed-side
+`slugRewrites.ts` went with the seeder; every mapping it held is in the 301 map
+and INTEGRATIONS.md §9). The dated Wix crawl remains outside the repo at
+`~/projects/seqtek-internal/audit/` as the historical record.
 
 To populate a local database, use the seeder below.
 

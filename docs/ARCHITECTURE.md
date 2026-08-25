@@ -435,9 +435,9 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   │   ├── revalidateOnChange.ts      # ISR revalidate + CloudFront path invalidation
 │   │   │   └── invalidateMediaOnChange.ts # Media replace/delete → CloudFront invalidation
 │   │   ├── livePreview/url.ts             # Live-preview URL builder
-│   │   ├── seed/                          # Audit-migration + seed pipeline
-│   │   │   ├── htmlToLexical.ts  upsert.ts  log.ts  slugRewrites.ts
-│   │   │   └── compose/  parsers/  skeletons/  showcase/
+│   │   ├── seed/                          # Seed helpers + committed test fixtures
+│   │   │   ├── htmlToLexical.ts
+│   │   │   └── skeletons/  showcase/
 │   │   └── storage/s3.ts                  # S3 adapter + mediaFileURL()
 │   │
 │   ├── components/

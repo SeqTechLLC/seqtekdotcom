@@ -9,8 +9,7 @@
 >
 > This file is kept as the **historical record** of how the Wix content was
 > mapped — the slug rewrites, the §9 URL map and the §11 gap categories are still
-> the provenance for `src/lib/redirects.ts` and
-> `src/payload/seed/slugRewrites.ts`, both of which live on. Nothing below is a
+> the provenance for `src/lib/redirects.ts`, which lives on. Nothing below is a
 > runnable procedure any more.
 
 **Date:** 2026-05-14

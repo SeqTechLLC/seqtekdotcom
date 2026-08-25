@@ -9,10 +9,11 @@ import { siteSettings } from '@/lib/site-content'
 // spec 011 T013: the company name and tagline used as fallbacks come from the
 // code-owned `site-content.ts` constant, not from a CMS global. Site chrome is
 // code-owned (ADR 0010) and these two values changed roughly once a decade —
-// see the Site Settings withdrawal in FR-003/FR-004. The `%s | SEQTEK` title template lives on the
-// root layout's metadata export, so `title` here is the bare page title and
-// the framework wraps it. No em dashes in any emitted public copy (project
-// convention). Research §D7.
+// see the Site Settings withdrawal in FR-003/FR-004.
+//
+// The `%s | SEQTEK` title template lives on the root layout's metadata export,
+// so `title` here is the bare page title and the framework wraps it. No em
+// dashes in any emitted public copy (project convention). Research §D7.
 
 /** The shared `seo` group shape (caseStudies / services / pages / posts / …). */
 export interface SeoGroup {
@@ -35,9 +36,12 @@ export interface MetadataFallbacks {
 }
 
 // Ultimate description fallback so EVERY page emits a meta description (a
-// missing one fails the Lighthouse SEO gate). Used when neither the doc's
-// `seo.metaDescription`, the per-page fallback, nor the site tagline is set.
-// No em dashes (project rule).
+// missing one fails the Lighthouse SEO gate).
+//
+// Unreachable as written: the fallback ahead of it is `siteSettings.tagline`,
+// a non-empty literal in `site-content.ts`. Kept deliberately — that file
+// invites editing the values freely, and blanking the tagline would otherwise
+// drop the description entirely and fail the SEO gate. No em dashes (project rule).
 const DEFAULT_DESCRIPTION =
   'SEQTEK is a Tulsa technology consultancy delivering strategy, software delivery, and localshoring across Oklahoma, Northwest Arkansas, and Kansas City.'
 

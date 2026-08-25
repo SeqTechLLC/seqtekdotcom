@@ -119,11 +119,15 @@ describe('buildMetadata call sites are enumerated', () => {
     'workshops/page.tsx',
   ]
 
+  // Any file Next can emit metadata from, not just `page.tsx` — a
+  // `generateMetadata` in a layout or a route handler counts as a call site.
+  const METADATA_CAPABLE = ['page.tsx', 'layout.tsx', 'route.ts', 'route.tsx']
+
   const walk = (dir: string, out: string[] = []): string[] => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const full = join(dir, entry.name)
       if (entry.isDirectory()) walk(full, out)
-      else if (entry.name === 'page.tsx') out.push(full)
+      else if (METADATA_CAPABLE.includes(entry.name)) out.push(full)
     }
     return out
   }
