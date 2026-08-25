@@ -53,6 +53,7 @@ sign off → **Dom** does the domain swap (he controls the domain; the swap itse
 | **P1** | Spec 011 — Payload admin UX (US1 shipped, US2–US6 open)        | Kenn         |
 |        | A-1 Megan signs in + editor training                           | Kenn         |
 |        | HYG-1 Content data hygiene                                     | Kenn         |
+|        | UI-3 Default skeletons are publishable placeholder copy        | Kenn         |
 | **P2** | K8 Broken-link + broken-image sweep                            | Kenn         |
 |        | CL-1 Load the drafted content                                  | Kenn         |
 |        | C-7 Taurex sign-off                                            | Kenn + Megan |
@@ -86,7 +87,18 @@ before we spend more effort loading content by hand.
 - **HYG-1 — content data hygiene.** No human input needed; see `CONTENT_NEEDS.md` §10.
   `industries` is empty while published case studies reference industry IDs (dangling refs) — seed it or drop
   the relationship; `locations` is empty (needed only if the regional pages get built); delete the
-  `ztest-delete-me` category; case-study `ogImage` is null sitewide. (The missing `teamMembers.title` values were supplied 2026-08-25 and are in `docs/content-drafts/team.json`; they still need seeding to the deployed lanes.)
+  `ztest-delete-me` category; case-study `ogImage` is null sitewide. **The empty `industries` now costs more than dangling refs:** `case-study-grid` resolves `source: by-industry` through `caseStudies.industry` (UI-2), so such a block returns zero rows and renders an empty section rather than a visible placeholder. (The missing `teamMembers.title` values were supplied 2026-08-25 and are in `docs/content-drafts/team.json`; they still need seeding to the deployed lanes.)
+- **UI-3 — a new record's default skeleton is publishable placeholder copy.** `TeamMembers.layout`
+  defaults to `teamMemberSkeleton`, whose body is literally `About` / _"A short professional bio."_ — and
+  seven team members were created and published without anyone overwriting it, so six public
+  `/team/[slug]` pages served that string. Four are fixed (bios written into `team.json`, seeded
+  2026-08-25); **Justine Jones and Kenn Williamson still need bio copy** and are the last two.
+  The underlying flaw is the skeleton design, not the data: the same pattern exists for `caseStudy`,
+  `workshop` and `partner` (_"What the client was up against, in their terms."_, etc.) and only escaped
+  notice because those records had real copy written over them. A default that reads as finished prose can
+  be published by accident. Decide: ship the skeletons as empty blocks, mark skeleton text so a publish
+  check can catch it, or add a "still has placeholder copy" guard to the K8 sweep. Same class as UI-2 —
+  developer text reaching public copy.
 - **UI-1 / UI-2 — both resolved 2026-08-25 (P5-27, P5-28).** Team cards render `title`, not the
   descriptive `role`. The four collection-backed blocks (`team-grid`, `post-list`, `case-study-grid`,
   `service-cards`) now resolve their `source`/`filter` in `src/lib/resolveLayout.ts` instead of printing
