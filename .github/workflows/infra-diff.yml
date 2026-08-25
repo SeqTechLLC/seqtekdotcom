@@ -42,7 +42,7 @@ jobs:
       # Preview account only — staging is retired (deploy.yml, 2026-08-14) and
       # 'prod' is a never-provisioned CDK env with no real infra (see
       # deploy.yml's promotion-model comment), so a diff against it was
-      # always misleading. main and Preview both deploy SeqtekPreview* now,
+      # always misleading. Every trigger deploys SeqtekPreview* now,
       # so this ONE diff is what either push will actually change.
       - name: Configure AWS credentials (preview OIDC role, read-only diff)
         uses: aws-actions/configure-aws-credentials@v4
@@ -78,7 +78,7 @@ jobs:
               `Workflow run: ${runUrl}`,
               `Commit: \`${context.payload.pull_request.head.sha.slice(0, 7)}\``,
               '',
-              'This is what a merge to `main` (→ ww3.seqtek.com) or a push to `Preview` (→ preview.seqtek.com) will change — both deploy the same stacks.',
+              'This is what a merge to `main` (→ preview.seqtek.com, UAT) or a published release (→ ww3.seqtek.com, prod) will change — both lanes live in the same stacks.',
               '',
               '<details><summary><strong>Preview account</strong> (<code>SeqtekPreview*</code>)</summary>',
               '',

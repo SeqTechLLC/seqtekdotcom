@@ -688,16 +688,28 @@ removal once upstream catches up.
 environment. Production moves only when a **Release-Please release is
 published**, which is the deliberate human gate on going live.
 
-| Trigger                         | Deploys to        | Site                 | Stacks           |
-| ------------------------------- | ----------------- | -------------------- | ---------------- |
-| Merge (push) to `main`          | **Staging / UAT** | `seqtek-preview.com` | `SeqtekStaging*` |
-| Publish a `vX.Y.Z` release      | **Production**    | CloudFront URL†      | `SeqtekProd*`    |
-| `workflow_dispatch` (env input) | either — manual   | —                    | either           |
-| Feature branches                | nothing (CI only) | local dev            | —                |
+| Trigger                         | Deploys to        | Site                 | Lane      |
+| ------------------------------- | ----------------- | -------------------- | --------- |
+| Merge (push) to `main`          | **Preview / UAT** | `preview.seqtek.com` | primary   |
+| Publish a `vX.Y.Z` release      | **Production**    | `ww3.seqtek.com`†    | secondary |
+| `workflow_dispatch` (env input) | either — manual   | —                    | either    |
+| Feature branches, `Preview`     | nothing (CI only) | local dev            | —         |
 
-† Production runs on its CloudFront distribution URL until the `seqtek.com`
-cutover — `infra/cdk.json` deliberately has prod `domainName: null` (see
-`docs/INFRASTRUCTURE_RUNBOOK.md` §3).
+† **Both lanes live in the same `SeqtekPreview*` stack and AWS account.**
+`ww3.seqtek.com` is a second ECS task/service/target-group inside
+`SeqtekPreviewCompute` (`compute-stack.ts` `secondaryLane`), standing in for a
+real production environment until the `seqtek.com` cutover. The original
+`envName: prod` CDK env was never provisioned (decided 2026-08-12); duplicating
+the whole stack set for a temporary lane was not worth it. A release re-synths
+that same stack with `-c secondaryImageTag`, moving only the secondary lane.
+
+The separate staging account (`seqtek-preview.com`, `SeqtekStaging*`) was
+**retired 2026-08-14** and no trigger deploys there.
+
+**The `Preview` branch has no deploy trigger.** It briefly did (PR #100/#103,
+2026-08-18), alongside `main` promoting production directly; both were reverted
+because a merge should not reach production. It remains usable for staging
+merges — it simply does not deploy.
 
 The release tag is `vX.Y.Z` — `include-v-in-tag: true`,
 `include-component-in-tag: false` in `release-please-config.json`. Release-Please
