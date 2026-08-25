@@ -1,0 +1,67 @@
+name: Release Please
+
+# Watches the Conventional Commits on `main`, maintains a release PR
+# that bumps `package.json` + `CHANGELOG.md` + `.release-please-manifest.json`,
+# and cuts a tag + GitHub Release when the release PR merges. The release
+# event is what the future Phase 6 `deploy-prod.yml` listens to.
+#
+# Versioning policy:
+# The release is created as a DRAFT. Merging the release PR cuts the tag and
+# prepares the release; NOTHING deploys. Publishing that draft is the single
+# act that promotes production — see `deploy.yml`'s `release:` trigger.
+#
+# - Starts at `0.1.0`. Bumps to `1.0.0` at seqtek.com cutover via an
+#   explicit `release-as: 1.0.0` commit footer.
+# - `bump-minor-pre-major: true` keeps `feat:` -> minor in the 0.x range
+#   so feature commits don't get lost in patch noise.
+# - No major bumps past 1.0 until we ship a public API (e.g., client
+#   portal / AI portal). Avoid `feat!:` / `BREAKING CHANGE:` footers.
+#
+# CHANGELOG scope: `feat`, `fix`, `perf`, `revert` only. `ci` / `docs` /
+# `chore` / `test` / `style` / `refactor` / `build` are dropped so the
+# CHANGELOG reads as a user-facing release log.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          # Bootstrap from the spec-002 closing commit so the first
+          # CHANGELOG starts fresh with the next `feat:` / `fix:`. Spec
+          # 002 itself is already documented in PROJECT_HISTORY.md.
+          # This input is a no-op once the first release tag exists.
+          bootstrap-sha: f311262f6f3b4684df5f771d9729e37b66beece1
+
+      # Production is NOT deployed from here.
+      #
+      # There is exactly ONE promotion event: a GitHub Release published by a
+      # PERSON, which `deploy.yml` listens for. This job only cuts the tag and
+      # creates the release as a DRAFT (`"draft": true` in
+      # release-please-config.json), so nothing reaches production until
+      # someone opens that draft and clicks Publish.
+      #
+      # That also sidesteps the constraint that used to force a dispatch from
+      # here: this action authenticates with the default GITHUB_TOKEN, and
+      # GitHub does not create workflow runs from events raised by that token —
+      # so a release it published itself could never trigger `on: release`. A
+      # release a human publishes is raised by the human and fires normally.
+      #
+      # The previous `gh workflow run deploy.yml -f env=prod` step is gone. It
+      # had never worked: this job does not check out the repo, and `gh` needs
+      # a git context or an explicit `--repo`, so every release cut a tag and
+      # then failed to promote.

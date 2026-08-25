@@ -14,22 +14,29 @@ name: Deploy
 # nothing is compiled, nothing is pushed, a task definition is repointed at a
 # digest that already exists.
 #
-# EXACTLY ONE EVENT PROMOTES PRODUCTION: publishing a GitHub Release. You cut
-# one by hand against `main`, e.g.
+# A VERSION AND A BUILD IDENTITY ARE TWO NAMES FOR ONE RELEASE. `0.3.0` is the
+# human-friendly label, generated automatically by Release-Please from the
+# Conventional Commits on `main`. The commit SHA is the immutable artifact.
+# Production deploys the image tied to the SHA; the version is metadata about
+# it, carried as `RELEASE_VERSION` and as an extra ECR tag on the same digest.
 #
-#     gh release create v0.0.43 --title "v0.0.43" --generate-notes --target main
+# EXACTLY ONE EVENT PROMOTES PRODUCTION: publishing the GitHub Release. It is
+# created as a DRAFT, so a person publishes it — which is also what makes the
+# event fire at all, since GitHub raises no workflow run for a release
+# published by the default GITHUB_TOKEN. `release-please.yml` no longer
+# dispatches this workflow; that dispatch had never worked anyway (the job does
+# not check out the repo and `gh` needs a git context), so every release cut a
+# tag and then failed to promote.
 #
-# `--target main` points the tag at the current tip, which an ordinary merge has
-# already built and deployed to preview — so the release promotes an image that
-# exists and was tested. `--generate-notes` writes the notes from the commits in
-# the range.
-#
-# Creating it yourself is also what makes the event fire: GitHub raises no
-# workflow run for a release published by the default GITHUB_TOKEN, which is why
-# an automated release bot needed a `workflow_dispatch` workaround. Release-
-# Please has been retired — it landed a bookkeeping commit on `main` that
-# triggered a second build and a redundant preview roll for a change that was
-# only a version number.
+# RESOLUTION. The tag points at Release-Please's bookkeeping commit, which is
+# deliberately not built (see the job condition below), so the release path
+# walks back to the nearest ancestor that HAS an image in ECR — the last real
+# code commit, which is what preview has been running and what the release
+# actually describes. If no ancestor within 50 commits has one, the deploy
+# FAILS with `image for SHA xxxxxxx not found in ECR`. Nothing is rebuilt and
+# nothing is guessed. Rollback is the same mechanism in reverse: an older
+# release resolves to its own SHA and production is pointed back at the image
+# that already exists.
 #
 # THE VERSION IS RUNTIME METADATA, NOT A REBUILD. A tested image is never
 # rebuilt merely to bake a version number into it. The commit SHA stays baked
@@ -102,18 +109,18 @@ on:
     # `paths-ignore` skips the workflow entirely only if EVERY changed path
     # matches — a mixed code+docs commit still triggers.
     paths-ignore:
-      # Deliberately NOT package.json / package-lock.json: a dependency bump
-      # changes the lockfile and MUST rebuild and redeploy. Only files that
-      # cannot affect the running image belong here.
+      # Deliberately NOT package.json / package-lock.json. Release-Please's
+      # bookkeeping commit touches both, but so does a dependency bump — and
+      # that one MUST rebuild and redeploy. Paths cannot tell them apart, so
+      # the release commit is skipped by its MESSAGE on the job below instead.
       - CHANGELOG.md
       - docs/**
       - specs/**
       - README.md
       - CLAUDE.md
       - LICENSE
-  # THE production trigger — the only one. Fires when a person publishes a
-  # GitHub Release, e.g.
-  #   gh release create v0.0.43 --title "v0.0.43" --generate-notes --target main
+  # THE production trigger — the only one. Release-Please creates the release as
+  # a DRAFT, so this fires when a person opens that draft and clicks Publish.
   # That the publisher is a human is what makes the event exist: GitHub creates
   # no workflow run for a release published by the default GITHUB_TOKEN.
   release:
@@ -160,6 +167,20 @@ concurrency:
 
 jobs:
   deploy:
+    # Release-Please's bookkeeping commit changes a version number and nothing
+    # else, so building and rolling preview for it is pure waste — that second
+    # build is what made one release look like two deployments. It is matched by
+    # commit message rather than by path because `paths-ignore` cannot
+    # distinguish it from a dependency bump, which touches the same files and
+    # must deploy.
+    #
+    # The commit still lands on `main` and Release-Please still cuts the tag
+    # from it. The release resolves back to the last commit that actually built
+    # (see "Resolve the release to a built image" below), so skipping the build
+    # here costs nothing.
+    if: >-
+      ${{ github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(main): release') }}
     name: Build, push, deploy
     runs-on: ubuntu-latest
     # Two GitHub Environments, ONE CDK/AWS target (the preview account —
@@ -228,6 +249,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          # The release path walks back from the tag to the nearest ancestor
+          # that has an image in ECR, so it needs real history — the default
+          # shallow clone (depth 1) would leave `git rev-list` with a single
+          # commit and every release would resolve to "not found". 60 covers
+          # the 50-commit walk with room to spare.
+          fetch-depth: 60
 
       - name: Configure AWS credentials (${{ env.ENV_NAME }} OIDC role)
         uses: aws-actions/configure-aws-credentials@v4
@@ -357,24 +384,71 @@ jobs:
       # If it is missing, stop. A tag created against a commit that never built
       # — or one whose build is still running — must not silently become a
       # production deploy of something else.
-      - name: Verify the promoted image exists in ECR (release path only)
+      - name: Resolve the release to a built image
+        id: resolve
         if: ${{ env.IS_RELEASE == 'true' }}
         env:
-          PROMOTE_TAG: ${{ steps.img.outputs.sha-tag }}
           VERSION_TAG: ${{ steps.img.outputs.version-tag }}
         run: |
           set -euo pipefail
-          if ! aws ecr describe-images \
-            --repository-name "$ECR_REPOSITORY" \
-            --image-ids imageTag="$PROMOTE_TAG" >/dev/null 2>&1; then
-            echo "::error::No image tagged '${PROMOTE_TAG}' in ${ECR_REPOSITORY}."
-            echo "::error::A release promotes an image that a merge to main already"
-            echo "::error::built and deployed to preview. Either that build has not"
-            echo "::error::finished, or the tag points at a commit that never built."
-            echo "::error::Check the Deploy run for commit ${GITHUB_SHA}."
+          # A release is a human-friendly LABEL (`v0.3.0`) for an immutable
+          # BUILD IDENTITY (a commit SHA). Production deploys the image tied to
+          # that SHA; the label is metadata about it.
+          #
+          # The tag usually points at Release-Please's bookkeeping commit, which
+          # is deliberately not built (see the job condition above), so walk back
+          # to the most recent ancestor that DOES have an image. That ancestor is
+          # the last real code commit — the one preview has been running and the
+          # one this release is actually describing.
+          #
+          # Nothing is rebuilt and nothing is guessed: if no ancestor within
+          # MAX_DEPTH has an image, the deploy fails.
+          MAX_DEPTH=50
+          RESOLVED=""
+          for SHA in $(git rev-list --max-count="$MAX_DEPTH" "$GITHUB_SHA"); do
+            SHORT="${SHA:0:7}"
+            if aws ecr describe-images \
+              --repository-name "$ECR_REPOSITORY" \
+              --image-ids imageTag="$SHORT" >/dev/null 2>&1; then
+              RESOLVED="$SHORT"
+              break
+            fi
+            echo "no image for ${SHORT}, walking back"
+          done
+
+          if [ -z "$RESOLVED" ]; then
+            echo "::error::image for SHA ${GITHUB_SHA:0:7} not found in ECR"
+            echo "::error::(and none of its ${MAX_DEPTH} nearest ancestors have one)"
+            echo "::error::A release promotes an image a merge to main already built."
+            echo "::error::Either that build has not finished, or it failed."
+            echo "::error::Nothing was rebuilt and nothing was guessed."
             exit 1
           fi
-          echo "Promoting existing image: ${PROMOTE_TAG}"
+
+          if [ "$RESOLVED" != "${GITHUB_SHA:0:7}" ]; then
+            echo "Release ${VERSION_TAG:-<untagged>} points at ${GITHUB_SHA:0:7}" \
+              "(not built); resolved to ancestor ${RESOLVED}."
+          else
+            echo "Release ${VERSION_TAG:-<untagged>} resolved to ${RESOLVED}."
+          fi
+          echo "promote-tag=${RESOLVED}" >> "$GITHUB_OUTPUT"
+
+          # Give that SAME digest the release version as an extra ECR tag, so
+          # the label and the build identity name one artifact. put-image
+          # attaches a tag to the existing manifest — no pull, no push, no
+          # rebuild.
+          if [ -n "${VERSION_TAG:-}" ]; then
+            MANIFEST=$(aws ecr batch-get-image \
+              --repository-name "$ECR_REPOSITORY" \
+              --image-ids imageTag="$RESOLVED" \
+              --query 'images[0].imageManifest' --output text)
+            if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
+              --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
+              echo "Tagged ${RESOLVED} as ${VERSION_TAG} in ECR."
+            else
+              echo "::notice::${VERSION_TAG} already tags this digest."
+            fi
+          fi
 
           # Give that SAME digest the release version as an extra ECR tag, so
           # `vX.Y.Z` and the SHA name one artifact. put-image attaches a tag to
@@ -503,7 +577,7 @@ jobs:
           # artifact and travels separately, below.
           IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.pin.outputs.pinned-image-tag ||
             steps.img.outputs.sha-tag }}
-          SECONDARY_IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.img.outputs.sha-tag ||
+          SECONDARY_IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.resolve.outputs.promote-tag ||
             steps.pinprod.outputs.pinned-prod-tag }}
           # Semantic version as RUNTIME metadata on the production lane, so a
           # tested image is never rebuilt just to carry a version number. On a
@@ -619,7 +693,9 @@ jobs:
     # success requires BOTH jobs green. `site-url` (e.g. https://preview.seqtek.com/)
     # flows straight through from the `deploy` job's `Resolve site URL` step —
     # slack-notify.yml renders it as a clickable link in the message.
-    if: ${{ !cancelled() }}
+    # `!cancelled()` alone would report a FAILURE for the deliberately-skipped
+    # release-bookkeeping commit, since a skipped job is not a success.
+    if: ${{ !cancelled() && needs.deploy.result != 'skipped' }}
     uses: ./.github/workflows/slack-notify.yml
     with:
       # Must match IS_RELEASE in the deploy job. A `main` push is a PREVIEW

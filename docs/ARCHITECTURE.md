@@ -679,20 +679,38 @@ racing one CloudFormation stack.
 | Trigger                         | Deploys to        | Site                 | Lane      | Builds? |
 | ------------------------------- | ----------------- | -------------------- | --------- | ------- |
 | Merge (push) to `main`          | **Preview / UAT** | `preview.seqtek.com` | primary   | yes     |
-| **Create** a GitHub Release     | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
+| Merge the **release PR**        | nothing           | —                    | —         | no      |
+| **Publish** the GitHub Release  | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
 | `workflow_dispatch` (env input) | either — manual   | —                    | either    | depends |
 | Feature branches                | nothing (CI only) | local dev            | —         | —       |
 
-Releases are cut by hand against `main`:
+**A version and a build identity are two names for one release.** `0.3.0` is the
+human-friendly label; the commit SHA is the immutable artifact. Release-Please
+generates the label automatically from Conventional Commits; production deploys
+the image tied to the SHA.
+
+Merging the release PR deploys **nothing** — its commit changes a version number
+and nothing else, so `deploy.yml` skips it (matched by commit message, not by
+path, because a dependency bump touches the same files and must deploy). It
+lands on `main` and the tag is cut from it.
+
+Publishing the resulting release is the single event that promotes production.
+The release is created as a **draft** so a person publishes it, which is also
+what makes the event fire at all: GitHub raises no workflow run for a release
+published by the default `GITHUB_TOKEN`.
+
+**Resolution.** The tag points at the bookkeeping commit, which has no image, so
+the deploy walks back to the nearest ancestor that does — the last real code
+commit, which is what preview has been running and what the release actually
+describes. If no ancestor within 50 commits has an image, the deploy **fails**:
 
 ```
-gh release create v0.0.43 --title "v0.0.43" --generate-notes --target main
+image for SHA xxxxxxx not found in ECR
 ```
 
-`--target main` points the tag at the current tip — a commit an ordinary merge
-has already built and deployed to preview — so the release promotes an image
-that exists and was tested. `--generate-notes` writes the notes from the commit
-range. Publishing it is the single event that promotes production.
+Nothing is rebuilt and nothing is guessed. Rollback is the same mechanism in
+reverse: publish or re-run an older release, it resolves to that release's SHA,
+and production is pointed back at the image that already exists.
 
 Both lanes live in the SAME `SeqtekPreview*` stacks in the SAME account —
 production is a second ECS task/service/target-group behind the same ALB, with
@@ -721,12 +739,9 @@ honestly reports the older number rather than claiming a release it never
 received.
 
 **Exactly one event promotes production.** `release: [published]` is the only
-path. That a person creates the release is also what makes the event fire at
-all: GitHub raises no workflow run for a release published by the default
-`GITHUB_TOKEN`, which is why an automated release bot needed a
-`workflow_dispatch` workaround. Release-Please has been retired — it landed a
-bookkeeping commit on `main` that triggered a second build and a redundant
-preview roll for a change that was only a version number.
+path; `release-please.yml` no longer dispatches the deploy workflow. That
+dispatch had also never worked — the job does not check out the repo and `gh`
+needs a git context — so every release cut a tag and then failed to promote.
 
 **Every deploy states BOTH lanes' image tags; exactly one moves.** `cdk deploy`
 re-synthesizes the whole stack, so both task definitions are re-rendered on
