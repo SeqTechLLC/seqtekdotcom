@@ -256,14 +256,26 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: ECR login
+        # Build-only; a release promotes an existing image.
+        if: ${{ env.IS_RELEASE != 'true' }}
         run: |
           aws ecr get-login-password --region "$AWS_REGION" \
             | docker login --username AWS --password-stdin "${{ steps.img.outputs.registry }}"
 
       - name: Set up Docker Buildx
+        # Build-only; a release promotes an existing image.
+        if: ${{ env.IS_RELEASE != 'true' }}
         uses: docker/setup-buildx-action@v3
 
+      # NOT on the release path. A release PROMOTES an image that a `main`
+      # push already built, tested on preview, and pushed to ECR under its
+      # commit SHA — it does not produce a new one. Rebuilding at release
+      # time would ship bits nobody tested: `Dockerfile:12` pins the base by
+      # TAG (`node:24.11.1-alpine`, which Alpine re-pushes on patch) and
+      # `npm ci` fetches tarballs at build time, so an identical source tree
+      # is not guaranteed to yield an identical image.
       - name: Build + push image
+        if: ${{ env.IS_RELEASE != 'true' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -328,6 +340,29 @@ jobs:
       # instead would silently roll the primary lane back/forward to
       # whatever that moving tag currently points at — exactly the drift
       # this whole immutable-tag design exists to prevent.
+      # RELEASE PATH ONLY. With no build above, the image being promoted must
+      # already be in ECR. It normally is: the `main` push that produced this
+      # commit built and deployed it to preview. If it is NOT there, the only
+      # honest outcome is to stop — promoting a tag that was never built (or
+      # racing the build that is still producing it) is exactly the class of
+      # surprise this pipeline exists to prevent.
+      - name: Verify the promoted image exists in ECR (release path only)
+        if: ${{ env.IS_RELEASE == 'true' }}
+        env:
+          PROMOTE_TAG: ${{ steps.img.outputs.sha-tag }}
+        run: |
+          set -euo pipefail
+          if ! aws ecr describe-images \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="$PROMOTE_TAG" >/dev/null 2>&1; then
+            echo "::error::No image tagged '${PROMOTE_TAG}' in ${ECR_REPOSITORY}."
+            echo "::error::A release promotes an image a 'main' push already built."
+            echo "::error::Either that build has not finished, or it failed. Check the"
+            echo "::error::Deploy run for commit ${GITHUB_SHA} before re-running this."
+            exit 1
+          fi
+          echo "Promoting existing image tag: ${PROMOTE_TAG}"
+
       - name: Resolve currently-deployed preview image tag (release path only)
         id: pin
         if: ${{ env.IS_RELEASE == 'true' }}
@@ -351,6 +386,52 @@ jobs:
           echo "Primary lane is currently running tag: ${PINNED_TAG}"
           echo "pinned-image-tag=${PINNED_TAG}" >> "$GITHUB_OUTPUT"
 
+      # NON-RELEASE PATH. Mirror image of the step above, and the reason the
+      # `|| imageTag` fallback could be deleted from compute-stack.ts.
+      #
+      # A `main` push moves ONLY the primary lane, but re-synthing the stack
+      # re-renders BOTH task definitions — so this deploy has to state what
+      # production should keep running. It reads that back from the live ECS
+      # service, making the secondary half of the synth a byte-for-byte no-op.
+      #
+      # The CfnOutput is preferred, but it does not exist in the deployed
+      # stack until the first deploy that carries it, so fall back to
+      # locating the service by name within the cluster. Without either, the
+      # synth fails closed rather than guessing — which is the whole point.
+      - name: Resolve currently-deployed prod image tag (non-release path only)
+        id: pinprod
+        if: ${{ env.IS_RELEASE != 'true' }}
+        run: |
+          set -euo pipefail
+          CLUSTER=$(aws cloudformation describe-stacks \
+            --stack-name "${STACK_PREFIX}Compute" \
+            --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue | [0]" \
+            --output text)
+          SERVICE=$(aws cloudformation describe-stacks \
+            --stack-name "${STACK_PREFIX}Compute" \
+            --query "Stacks[0].Outputs[?OutputKey=='SecondaryLaneServiceName'].OutputValue | [0]" \
+            --output text)
+          if [ -z "$SERVICE" ] || [ "$SERVICE" = "None" ]; then
+            echo "SecondaryLaneServiceName output not present yet; locating by name."
+            SERVICE=$(aws ecs list-services --cluster "$CLUSTER" \
+              --query "serviceArns[?contains(@, 'SecondaryLane')] | [0]" --output text)
+          fi
+          if [ -z "$SERVICE" ] || [ "$SERVICE" = "None" ]; then
+            echo "::error::Could not resolve the secondary (prod) lane's ECS service."
+            echo "::error::Refusing to deploy: this run cannot state what prod should run,"
+            echo "::error::and there is deliberately no fallback (see compute-stack.ts)."
+            exit 1
+          fi
+          TASKDEF_ARN=$(aws ecs describe-services \
+            --cluster "$CLUSTER" --services "$SERVICE" \
+            --query 'services[0].taskDefinition' --output text)
+          IMAGE=$(aws ecs describe-task-definition \
+            --task-definition "$TASKDEF_ARN" \
+            --query 'taskDefinition.containerDefinitions[0].image' --output text)
+          PINNED_TAG="${IMAGE##*:}"
+          echo "Prod lane is currently running tag: ${PINNED_TAG} (holding it there)"
+          echo "pinned-prod-tag=${PINNED_TAG}" >> "$GITHUB_OUTPUT"
+
       - name: cdk deploy (${{ env.STACK_FILTER }})
         # `-c imageTag` stamps the task definition with the IMMUTABLE tag just
         # pushed — `vX.Y.Z` on a release, the commit SHA otherwise — so a task
@@ -360,21 +441,35 @@ jobs:
         # the step above (see its comment) and SECONDARY_IMAGE_TAG carries the
         # new release tag onto ONLY the secondary lane.
         env:
+          # Exactly ONE lane moves per deploy; the other is pinned to what it
+          # is already running. Both are always stated — see the guard in
+          # compute-stack.ts for why there is no fallback.
+          #
+          # The promoted tag is the commit SHA, not `vX.Y.Z`. With no build on
+          # the release path, the SHA is the only tag the image is guaranteed
+          # to carry — it is what the `main` push pushed. The version number
+          # travels in the image itself (BUILD_VERSION, reported by
+          # /api/health), so nothing is lost.
           IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.pin.outputs.pinned-image-tag ||
-            (steps.img.outputs.version-tag != '' && steps.img.outputs.version-tag ||
-            steps.img.outputs.sha-tag) }}
-          SECONDARY_IMAGE_TAG:
-            ${{ env.IS_RELEASE == 'true' && (steps.img.outputs.version-tag != '' &&
-            steps.img.outputs.version-tag || steps.img.outputs.sha-tag) || '' }}
+            steps.img.outputs.sha-tag }}
+          SECONDARY_IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.img.outputs.sha-tag ||
+            steps.pinprod.outputs.pinned-prod-tag }}
         run: |
-          echo "Deploying primary-lane image tag: $IMAGE_TAG"
-          EXTRA_CONTEXT=()
-          if [ -n "$SECONDARY_IMAGE_TAG" ]; then
-            echo "Promoting secondary (ww3) lane to: $SECONDARY_IMAGE_TAG"
-            EXTRA_CONTEXT=(-c "secondaryImageTag=$SECONDARY_IMAGE_TAG")
+          set -euo pipefail
+          if [ -z "$IMAGE_TAG" ] || [ -z "$SECONDARY_IMAGE_TAG" ]; then
+            echo "::error::Both image tags must be resolved before deploying."
+            echo "::error::primary='${IMAGE_TAG}' secondary='${SECONDARY_IMAGE_TAG}'"
+            exit 1
+          fi
+          if [ "${IS_RELEASE}" = "true" ]; then
+            echo "Release: promoting prod (ww3) lane to ${SECONDARY_IMAGE_TAG}"
+            echo "         holding preview lane at ${IMAGE_TAG}"
+          else
+            echo "Main push: moving preview lane to ${IMAGE_TAG}"
+            echo "           holding prod (ww3) lane at ${SECONDARY_IMAGE_TAG}"
           fi
           npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" -c imageTag="$IMAGE_TAG" \
-            "${EXTRA_CONTEXT[@]}" "$STACK_FILTER" \
+            -c "secondaryImageTag=$SECONDARY_IMAGE_TAG" "$STACK_FILTER" \
             --require-approval never \
             --outputs-file cdk-outputs.json
 
