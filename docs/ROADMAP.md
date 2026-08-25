@@ -91,9 +91,10 @@ before we spend more effort loading content by hand.
 - **UI-3 — a new record's default skeleton is publishable placeholder copy.** `TeamMembers.layout`
   defaults to `teamMemberSkeleton`, whose body is literally `About` / _"A short professional bio."_ — and
   seven team members were created and published without anyone overwriting it, so six public
-  `/team/[slug]` pages served that string. Four are fixed (bios written into `team.json`, seeded
-  2026-08-25); **Justine Jones and Kenn Williamson still need bio copy** and are the last two.
-  The underlying flaw is the skeleton design, not the data: the same pattern exists for `caseStudy`,
+  `/team/[slug]` pages served that string. **The copy half is done** (2026-08-25): all nine published
+  members now carry a real bio, and `expertise` — which `personLd` emits as `knowsAbout` — is populated
+  for all nine rather than the three leadership members only. What is left is the code half, because the
+  underlying flaw is the skeleton design, not the data: the same pattern exists for `caseStudy`,
   `workshop` and `partner` (_"What the client was up against, in their terms."_, etc.) and only escaped
   notice because those records had real copy written over them. A default that reads as finished prose can
   be published by accident. Decide: ship the skeletons as empty blocks, mark skeleton text so a publish
