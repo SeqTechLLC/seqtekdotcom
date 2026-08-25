@@ -15,7 +15,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 
 Defer to these docs before re-deriving anything. Update them when decisions change.
 
-- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com; a published `vX.Y.Z` release promotes that same image → ww3.seqtek.com)
+- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com builds once; publishing the GitHub Release promotes that same image → ww3.seqtek.com, no rebuild)
 - `docs/INFRASTRUCTURE_RUNBOOK.md` — step-by-step: fresh AWS account standup, migrating an environment (with data) to another account, `seqtek.com` cutover
 - `docs/ROADMAP.md` — current status, open decisions, phase tracker
 - `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
@@ -41,9 +41,10 @@ the one exception and a known debt: `/services/[offering]` resolves four bare `P
 lookups rather than a collection — tracked as SVC-2.
 
 **Environments.** Nothing is publicly launched. A merge to `main` builds the image and deploys
-`preview.seqtek.com` (UAT, primary Fargate lane); publishing a `vX.Y.Z` release promotes **that same already-built
-image** to `ww3.seqtek.com` (production, secondary lane, same stack and account) without rebuilding. `main` is the
-only deployment branch. Both lanes sit behind an ALB + Cognito gate — the gate is index control, not access
+`preview.seqtek.com` (UAT, primary Fargate lane); **publishing** the GitHub Release that Release-Please prepares (as a
+draft) promotes **that same already-built image** to `ww3.seqtek.com` (production, secondary lane, same stack
+and account) without rebuilding — the release version is the label, the commit SHA is the artifact. Merging the
+release PR itself deploys nothing. `main` is the only deployment branch. Both lanes sit behind an ALB + Cognito gate — the gate is index control, not access
 control: it is what keeps search engines out until cutover. The separate staging account (`seqtek-preview.com`) was
 retired 2026-08-14. `seqtek.com` still serves the old Wix site.
 

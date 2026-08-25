@@ -48,6 +48,7 @@ function synthCompute(
   cfg: EnvConfig,
   imageTag?: string,
   secondaryImageTag?: string,
+  releaseVersion?: string,
 ): Template {
   // `imageTag` mirrors what `deploy.yml` passes as `-c imageTag=<vX.Y.Z | sha>`;
   // omitting it exercises the env-scoped fallback used by a bare local synth.
@@ -57,6 +58,7 @@ function synthCompute(
     context: {
       ...(imageTag ? { imageTag } : {}),
       ...(secondaryImageTag ? { secondaryImageTag } : {}),
+      ...(releaseVersion ? { releaseVersion } : {}),
     },
   })
   const stackPrefix = envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
@@ -368,6 +370,60 @@ describe('ComputeStack', () => {
 
     it('emits SecondaryLaneServiceName so a deploy can read back the tag prod is running', () => {
       t.hasOutput('SecondaryLaneServiceName', {})
+    })
+
+    it('carries RELEASE_VERSION as runtime metadata on the secondary lane only', () => {
+      // The semantic version is attached at PROMOTION time, never baked into
+      // the image — a tested artifact is not rebuilt to carry a version.
+      const withVersion = synthCompute(
+        'staging',
+        {
+          ...stagingCfg,
+          domainName: 'seqtek-preview.com',
+          hostedZoneId: 'Z0000000000000000000A',
+          certificateSans: ['*.seqtek-preview.com'],
+          dnsRecordNames: ['seqtek-preview.com'],
+          secondaryLane: {
+            name: 'prod',
+            databaseName: 'seqtek_prod',
+            dnsRecordNames: ['ww3.seqtek-preview.com'],
+          },
+        },
+        'abc1234',
+        'abc1234',
+        'v9.9.9',
+      )
+      const defs = Object.values(withVersion.findResources('AWS::ECS::TaskDefinition'))
+      const versions = defs.map((r) => {
+        const env = (
+          r.Properties as {
+            ContainerDefinitions: Array<{ Environment?: Array<{ Name: string; Value?: string }> }>
+          }
+        ).ContainerDefinitions[0]?.Environment
+        return env?.find((e) => e.Name === 'RELEASE_VERSION')?.Value
+      })
+      expect(versions).toContain('v9.9.9')
+      expect(versions.filter((v) => v === 'v9.9.9')).toHaveLength(1)
+    })
+
+    it('sets RELEASE_VERSION to empty (not undefined) on a lane never released', () => {
+      // ECS rejects an undefined env value; the app treats empty as "no
+      // release version" and falls back to the baked build version.
+      const defs = Object.values(t.findResources('AWS::ECS::TaskDefinition'))
+      const secondary = defs.find((r) => {
+        const env = (
+          r.Properties as {
+            ContainerDefinitions: Array<{ Environment?: Array<{ Name: string; Value?: string }> }>
+          }
+        ).ContainerDefinitions[0]?.Environment
+        return env?.some((e) => e.Name === 'DB_NAME' && e.Value === 'seqtek_prod')
+      })
+      const env = (
+        secondary!.Properties as {
+          ContainerDefinitions: Array<{ Environment?: Array<{ Name: string; Value?: string }> }>
+        }
+      ).ContainerDefinitions[0]?.Environment
+      expect(env?.find((e) => e.Name === 'RELEASE_VERSION')?.Value).toBe('')
     })
 
     it('an explicit secondaryImageTag promotes ONLY the secondary lane, leaving the primary tag untouched', () => {

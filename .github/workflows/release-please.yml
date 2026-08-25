@@ -6,6 +6,10 @@ name: Release Please
 # event is what the future Phase 6 `deploy-prod.yml` listens to.
 #
 # Versioning policy:
+# The release is created as a DRAFT. Merging the release PR cuts the tag and
+# prepares the release; NOTHING deploys. Publishing that draft is the single
+# act that promotes production — see `deploy.yml`'s `release:` trigger.
+#
 # - Starts at `0.1.0`. Bumps to `1.0.0` at seqtek.com cutover via an
 #   explicit `release-as: 1.0.0` commit footer.
 # - `bump-minor-pre-major: true` keeps `feat:` -> minor in the 0.x range
@@ -24,7 +28,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  actions: write # to dispatch Deploy when a release is cut (see the final step)
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -44,28 +47,21 @@ jobs:
           # This input is a no-op once the first release tag exists.
           bootstrap-sha: f311262f6f3b4684df5f771d9729e37b66beece1
 
-      # Production deploys are dispatched from HERE, not from deploy.yml's
-      # `release: [published]` trigger, and the reason is subtle enough to be
-      # worth stating plainly:
+      # Production is NOT deployed from here.
       #
-      # This action authenticates with the default GITHUB_TOKEN, and GitHub does
-      # not create workflow runs from events raised by GITHUB_TOKEN. So the
-      # release it publishes CANNOT trigger `on: release` — the production path
-      # would be inert, with no failed run and no notification to reveal it.
-      # `workflow_dispatch` is one of the two documented exceptions to that rule
-      # (alongside `repository_dispatch`), so dispatching explicitly is what
-      # actually works without minting a PAT.
+      # There is exactly ONE promotion event: a GitHub Release published by a
+      # PERSON, which `deploy.yml` listens for. This job only cuts the tag and
+      # creates the release as a DRAFT (`"draft": true` in
+      # release-please-config.json), so nothing reaches production until
+      # someone opens that draft and clicks Publish.
       #
-      # deploy.yml keeps its `release: [published]` trigger for releases a HUMAN
-      # publishes from the UI, which do fire normally. If this action is ever
-      # given a PAT, both paths fire and the second is a redundant redeploy of
-      # the same tag — the `deploy-prod` concurrency group serialises them.
-      - name: Deploy the release to production
-        if: ${{ steps.release.outputs.release_created == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.release.outputs.tag_name }}
-        run: |
-          set -euo pipefail
-          echo "Release $TAG created — dispatching Deploy (prod) at that tag."
-          gh workflow run deploy.yml --ref "$TAG" -f env=prod -f stack-filter='*Compute'
+      # That also sidesteps the constraint that used to force a dispatch from
+      # here: this action authenticates with the default GITHUB_TOKEN, and
+      # GitHub does not create workflow runs from events raised by that token —
+      # so a release it published itself could never trigger `on: release`. A
+      # release a human publishes is raised by the human and fires normally.
+      #
+      # The previous `gh workflow run deploy.yml -f env=prod` step is gone. It
+      # had never worked: this job does not check out the repo, and `gh` needs
+      # a git context or an explicit `--repo`, so every release cut a tag and
+      # then failed to promote.
