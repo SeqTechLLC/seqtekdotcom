@@ -2,37 +2,42 @@ name: Deploy
 
 # PROMOTION MODEL — what deploys where, and why.
 #
-#   merge to `main`              →  preview.seqtek.com   (UAT; `-c env=preview`,
-#                                                          primary lane ONLY.
-#                                                          Builds the image.)
-#   publish a `vX.Y.Z` release   →  ww3.seqtek.com       (PROD; same account and
-#                                                          SAME stack, secondary
-#                                                          lane ONLY. Promotes an
-#                                                          existing image; does
-#                                                          NOT build.)
+#   merge to `main`            →  preview.seqtek.com  (UAT, primary lane.
+#                                                       BUILDS the image.)
+#   publish a GitHub Release   →  ww3.seqtek.com      (PROD, secondary lane.
+#                                                       Promotes an existing
+#                                                       image. NO build.)
 #
-# ww3.seqtek.com is production. It is the finished site behind a DNS record —
-# going live is a Route53 change, not a deploy. It is Cognito-gated until then
-# so search engines cannot index it (seqtek-preview.com was indexed when its
-# gate was off, and competed with the real site on our own brand terms).
+# ONE BUILD, ONE UAT DEPLOY, ONE PROMOTION. An ordinary merge to `main` builds
+# the image once, tags it with the commit SHA, and puts it on preview. That is
+# the artifact. Publishing the release points production at THAT SAME image —
+# nothing is compiled, nothing is pushed, a task definition is repointed at a
+# digest that already exists.
 #
-# BUILD ONCE, PROMOTE THE ARTIFACT. A `main` merge builds the image, tags it
-# with the commit SHA, and puts it on preview for testing. Publishing the
-# release points production at THAT SAME image. The release path deliberately
-# does not rebuild: `Dockerfile`'s base is pinned by tag (which Alpine
-# re-pushes on patch) and `npm ci` fetches at build time, so an identical
-# source tree is not guaranteed to yield an identical image — a rebuild would
-# ship bits nobody tested. The promoted tag is therefore the SHA, the only tag
-# the image is guaranteed to carry; the semantic version rides inside the
-# image and is reported by /api/health.
+# Release-Please's bookkeeping commit does NOT build or deploy. It touches only
+# package.json, package-lock.json, CHANGELOG.md and the manifest, all of which
+# are in `paths-ignore` below, so merging the release PR rolls nothing. It cuts
+# a tag and prepares a DRAFT release; that is all.
 #
-# A `main` merge is NOT a release. It was, between 2026-08-14 (#103) and this
-# change, and that is what let a merge reach production unattended: the
-# container runs `payload migrate` on start, so merging became a schema change
-# on `seqtek_prod` with no human in between. On 2026-08-25 a merge applied a
-# 162-table, 74-column destructive migration to production that preview had
-# never seen. Merging is frequent and low-ceremony; promoting production is a
-# decision someone makes.
+# EXACTLY ONE EVENT PROMOTES PRODUCTION: a GitHub Release published by a
+# person. `release-please.yml` no longer dispatches this workflow — having both
+# a dispatch and a `release:` trigger meant two mechanisms for one outcome. The
+# draft exists so the publishing click is a human act, which also makes the
+# event fire at all: a release published by the GITHUB_TOKEN raises no workflow
+# run.
+#
+# THE VERSION IS RUNTIME METADATA, NOT A REBUILD. A tested image is never
+# rebuilt merely to bake a version number into it. The commit SHA stays baked
+# in, because it identifies the actual artifact. The semantic version is
+# attached at release time two ways, neither of which touches the image: the
+# same ECR digest gets `vX.Y.Z` as an additional tag, and the production task
+# definition receives `RELEASE_VERSION`. /api/health reports the release
+# version when present, falling back to the version baked at build time.
+#
+# A `main` merge is NOT a release. It briefly was, and that let a merge reach
+# production unattended — the container applies database migrations on start,
+# so merging became a schema change with no human in between. Merging is
+# frequent and low-ceremony; promoting production is a decision someone makes.
 #
 # ONE deployment branch. `Preview` used to deploy here too and pointed at the
 # same primary lane `main` now owns — two triggers racing one CloudFormation
@@ -42,28 +47,21 @@ name: Deploy
 #
 # BOTH lanes' image tags are stated on EVERY deploy, and exactly one moves.
 # `cdk deploy` re-synthesizes the whole stack, so both task definitions are
-# re-rendered every run; the lane that is not moving is pinned to the tag it
-# is already running, read back from the live ECS service (see the two
-# "Resolve currently-deployed ... tag" steps below), making that half of the
-# synth a byte-for-byte no-op. compute-stack.ts has NO fallback for
-# `secondaryImageTag` — a deploy that cannot say what production should run
-# fails the synth rather than guessing. That fallback is precisely what
-# promoted the untested build above.
+# re-rendered every run; the lane that is not moving is pinned to the value it
+# already carries, read back from its live ECS service, making that half of the
+# synth a no-op. `RELEASE_VERSION` is pinned the same way and for the same
+# reason. compute-stack.ts has NO fallback for `secondaryImageTag` — a deploy
+# that cannot say what production should run fails the synth rather than
+# guessing, because a fallback there once promoted an untested build.
 #
 # Neither path deploys the never-provisioned `envName: prod` CDK env (decided
 # 2026-08-12: no AWS account, no infra, and the account is at its 5-VPC limit).
 # ww3 is a second ECS task/service/target-group inside the SAME
 # `SeqtekPreviewCompute` stack — see compute-stack.ts `secondaryLane`.
 #
-# Release-Please tags are `vX.Y.Z` (`include-v-in-tag: true`,
-# `include-component-in-tag: false` in release-please-config.json).
-# `release-please.yml` dispatches this workflow after cutting one — see the
-# `release:` trigger below for why the release event alone is not enough.
-#
-# The deployed image is IMMUTABLE: `-c imageTag`/`-c secondaryImageTag` stamp
-# the task definition with `vX.Y.Z` on a release and the commit SHA
-# otherwise, so a task replaced later re-pulls that exact build and rollback
-# is a redeploy of an older tag.
+# ww3.seqtek.com is production: the finished site behind a DNS record, so going
+# live is a Route53 change rather than a deploy. Both lanes are Cognito-gated
+# until then, and that gate is index control — it keeps search engines out.
 #
 # `workflow_dispatch` exists for the cases a trigger can't cover: the FIRST
 # deploy into a fresh account (no release to replay), a stack-scoped redeploy,
@@ -100,22 +98,31 @@ on:
     # bucket. `paths-ignore` skips the workflow entirely if EVERY changed
     # path matches — mixed code+docs commits still trigger.
     paths-ignore:
+      # Release-Please's bookkeeping commit touches ONLY these four files.
+      # Ignoring all four means merging the release PR does not build an image
+      # or roll preview — it is version bookkeeping, not a change to the app.
+      # The artifact promoted at release time is the one an ordinary merge
+      # already built and preview has been running.
       - CHANGELOG.md
       - .release-please-manifest.json
+      - package.json
+      - package-lock.json
       - docs/**
       - specs/**
       - README.md
       - CLAUDE.md
       - LICENSE
-  # Production, for releases published by a HUMAN from the UI.
+  # THE production trigger — the only one. Release-Please creates the release
+  # as a DRAFT (`"draft": true`), so this fires when a person opens that draft
+  # and clicks Publish.
   #
-  # This trigger does NOT catch Release-Please's own releases: that action runs
-  # as the default GITHUB_TOKEN, and GitHub does not create workflow runs from
-  # events raised by GITHUB_TOKEN. Relying on it alone leaves the production
-  # path inert with nothing to show for it — no failed run, no notification.
-  # `release-please.yml` therefore dispatches this workflow explicitly after
-  # cutting a release (workflow_dispatch is one of the two documented exceptions
-  # to the GITHUB_TOKEN rule). Both routes land on the same job.
+  # That the publisher is a human is what makes the event exist: GitHub does
+  # not create workflow runs from events raised by the default GITHUB_TOKEN, so
+  # a release Release-Please published itself would never reach this trigger.
+  # The old workaround was an explicit `gh workflow run` dispatch from
+  # release-please.yml; it has been removed, both because it made two
+  # mechanisms for one outcome and because it had never worked (that job does
+  # not check out the repo, and `gh` needs a git context).
   release:
     types: [published]
   workflow_dispatch:
@@ -359,32 +366,11 @@ jobs:
       # instead would silently roll the primary lane back/forward to
       # whatever that moving tag currently points at — exactly the drift
       # this whole immutable-tag design exists to prevent.
-      # RELEASE PATH ONLY. With no build above, the image being promoted must
-      # already be in ECR. It normally is: the `main` push that produced this
-      # commit built and deployed it to preview. If it is NOT there, the only
-      # honest outcome is to stop — promoting a tag that was never built (or
-      # racing the build that is still producing it) is exactly the class of
-      # surprise this pipeline exists to prevent.
-      - name: Verify the promoted image exists in ECR (release path only)
-        if: ${{ env.IS_RELEASE == 'true' }}
-        env:
-          PROMOTE_TAG: ${{ steps.img.outputs.sha-tag }}
-        run: |
-          set -euo pipefail
-          if ! aws ecr describe-images \
-            --repository-name "$ECR_REPOSITORY" \
-            --image-ids imageTag="$PROMOTE_TAG" >/dev/null 2>&1; then
-            echo "::error::No image tagged '${PROMOTE_TAG}' in ${ECR_REPOSITORY}."
-            echo "::error::A release promotes an image a 'main' push already built."
-            echo "::error::Either that build has not finished, or it failed. Check the"
-            echo "::error::Deploy run for commit ${GITHUB_SHA} before re-running this."
-            exit 1
-          fi
-          echo "Promoting existing image tag: ${PROMOTE_TAG}"
-
-      - name: Resolve currently-deployed preview image tag (release path only)
+      - name: Resolve the tested image from the preview lane (release path only)
         id: pin
         if: ${{ env.IS_RELEASE == 'true' }}
+        env:
+          VERSION_TAG: ${{ steps.img.outputs.version-tag }}
         run: |
           set -euo pipefail
           CLUSTER=$(aws cloudformation describe-stacks \
@@ -402,8 +388,29 @@ jobs:
             --task-definition "$TASKDEF_ARN" \
             --query 'taskDefinition.containerDefinitions[0].image' --output text)
           PINNED_TAG="${IMAGE##*:}"
-          echo "Primary lane is currently running tag: ${PINNED_TAG}"
+          if [ -z "$PINNED_TAG" ] || [ "$PINNED_TAG" = "None" ]; then
+            echo "::error::Could not read the image the preview lane is running."
+            echo "::error::That image IS the release artifact; refusing to promote."
+            exit 1
+          fi
+          echo "Preview lane is running ${PINNED_TAG} — this is the release artifact."
           echo "pinned-image-tag=${PINNED_TAG}" >> "$GITHUB_OUTPUT"
+
+          # Give the SAME digest the release version as an additional ECR tag.
+          # No pull, no push, no rebuild — put-image attaches a tag to the
+          # existing manifest, so `vX.Y.Z` and the SHA name one artifact.
+          if [ -n "${VERSION_TAG:-}" ]; then
+            MANIFEST=$(aws ecr batch-get-image \
+              --repository-name "$ECR_REPOSITORY" \
+              --image-ids imageTag="$PINNED_TAG" \
+              --query 'images[0].imageManifest' --output text)
+            if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
+              --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
+              echo "Tagged ${PINNED_TAG} as ${VERSION_TAG} in ECR."
+            else
+              echo "::notice::${VERSION_TAG} already tags this digest in ECR."
+            fi
+          fi
 
       # NON-RELEASE PATH. Mirror image of the step above, and the reason the
       # `|| imageTag` fallback could be deleted from compute-stack.ts.
@@ -496,7 +503,8 @@ jobs:
             echo "           holding prod (ww3) lane at ${SECONDARY_IMAGE_TAG}"
           fi
           npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" -c imageTag="$IMAGE_TAG" \
-            -c "secondaryImageTag=$SECONDARY_IMAGE_TAG" "$STACK_FILTER" \
+            -c "secondaryImageTag=$SECONDARY_IMAGE_TAG" \
+            -c "releaseVersion=$RELEASE_VERSION" "$STACK_FILTER" \
             --require-approval never \
             --outputs-file cdk-outputs.json
 

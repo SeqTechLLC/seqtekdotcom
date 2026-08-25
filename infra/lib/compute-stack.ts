@@ -281,6 +281,19 @@ export class ComputeStack extends Stack {
       }
     }
 
+    // Semantic release version for the secondary (production) lane, supplied
+    // at PROMOTION time rather than baked into the image. A tested artifact is
+    // never rebuilt just to carry a version number: the commit SHA is baked in
+    // and identifies the artifact; this names the release that promoted it.
+    //
+    // Unlike `secondaryImageTag` an absent value is legitimate — a lane that
+    // has never been released has no version — so this is optional. But it is
+    // subject to the same re-render hazard: every deploy re-renders this task
+    // definition, so a deploy that omits it WIPES it. deploy.yml therefore
+    // reads the current value back from the live task definition and restates
+    // it, exactly as it does for the image tag.
+    const releaseVersion = this.node.tryGetContext('releaseVersion') as string | undefined
+
     // ----- Fargate task definition -----
     // cpu/memory sizing reuses `instanceSize` from cfg (same field the
     // EC2 version read) mapped to the nearest valid Fargate combo —
@@ -547,6 +560,10 @@ export class ComputeStack extends Stack {
           // (seqtek_${envName}); this lane deliberately points at a
           // different database on the same instance.
           DB_NAME: lane.databaseName,
+          // Empty string when unreleased — ECS rejects undefined values, and
+          // the app treats empty as "no release version" (see the health
+          // route's fallback to the baked BUILD_VERSION).
+          RELEASE_VERSION: releaseVersion ?? '',
           // Same reasoning as the primary lane's container — see its
           // COGNITO_LOGOUT_URL comment above.
           ...(cognitoGate

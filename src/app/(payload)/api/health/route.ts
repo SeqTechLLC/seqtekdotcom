@@ -6,11 +6,11 @@
  * pg client, no transitive-dep imports. Returns 200 when the round-trip
  * succeeds; 503 when it fails so the ALB can stop routing to the instance.
  *
- * Also reports build provenance (`version` + `commit`), baked into the
- * image at build time via Dockerfile ARGs so the response describes the
- * container that is actually running, not what a task definition claims.
- * `version` is package.json's semantic version, which release-please bumps
- * — between releases it lags the code, so `commit` is what disambiguates.
+ * Also reports provenance. `commit` is baked into the image at build time,
+ * so it describes the container actually running rather than what a task
+ * definition claims. `version` is the release that promoted this image
+ * (`RELEASE_VERSION`, runtime metadata set at promotion time), falling back
+ * to the version baked at build time on a lane that has not been released.
  * This endpoint is deliberately exempt from the Cognito gate, so treat both
  * as public.
  *
@@ -37,10 +37,16 @@ type HealthBody = {
 
 const NO_STORE: HeadersInit = { 'cache-control': 'no-store' }
 
-// Read once at module load — these are baked ENV, they cannot change while
-// the process lives. Empty means a local/dev build with no ARGs passed.
-const VERSION = process.env.BUILD_VERSION || 'dev'
+// Read once at module load — none of these change while the process lives.
+//
+// `commit` is BAKED into the image at build time and identifies the actual
+// artifact. `version` prefers RELEASE_VERSION, which is supplied to the
+// production lane as runtime metadata when a release promotes that image —
+// so a tested artifact never has to be rebuilt merely to carry a version
+// number. A lane that has not been released falls back to the version baked
+// at build time, which lags the released version by design.
 const COMMIT = process.env.BUILD_COMMIT || 'unknown'
+const VERSION = process.env.RELEASE_VERSION || process.env.BUILD_VERSION || 'dev'
 
 export async function GET(): Promise<Response> {
   const start = Date.now()

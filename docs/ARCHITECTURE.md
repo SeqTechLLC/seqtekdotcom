@@ -679,9 +679,16 @@ racing one CloudFormation stack.
 | Trigger                         | Deploys to        | Site                 | Lane      | Builds? |
 | ------------------------------- | ----------------- | -------------------- | --------- | ------- |
 | Merge (push) to `main`          | **Preview / UAT** | `preview.seqtek.com` | primary   | yes     |
-| Publish a `vX.Y.Z` release      | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
+| Merge the **release PR**        | nothing           | —                    | —         | no      |
+| **Publish** the GitHub Release  | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
 | `workflow_dispatch` (env input) | either — manual   | —                    | either    | depends |
 | Feature branches                | nothing (CI only) | local dev            | —         | —       |
+
+Merging the release PR deploys **nothing**. Release-Please's commit touches only
+`package.json`, `package-lock.json`, `CHANGELOG.md` and the manifest — all in
+`deploy.yml`'s `paths-ignore` — so it cuts a tag and prepares a **draft**
+release without rolling any lane. Publishing that draft is the single event that
+promotes production.
 
 Both lanes live in the SAME `SeqtekPreview*` stacks in the SAME account —
 production is a second ECS task/service/target-group behind the same ALB, with
@@ -690,15 +697,30 @@ never-provisioned `SeqtekProd*` stack set is not deployed by any trigger (no
 account, and the account is at its 5-VPC limit); `secondaryLane` in
 `infra/cdk.json` stands in for it until the `seqtek.com` cutover.
 
-**Build once, promote the artifact.** A `main` merge builds the image, tags it
-with the commit SHA, pushes it to ECR, and puts it on preview. Publishing the
-release points production at **that same image** — it does not rebuild. A
-rebuild would ship bits nobody tested: the Dockerfile's base is pinned by tag
-(which Alpine re-pushes on patch) and `npm ci` fetches tarballs at build time,
-so the same source tree is not guaranteed to produce the same image. The
-promoted tag is therefore the commit SHA — the only tag the image is guaranteed
-to carry. The semantic version rides inside the image (`BUILD_VERSION`) and is
-reported alongside the commit by `/api/health`.
+**One build, one UAT deploy, one promotion.** A `main` merge builds the image
+once, tags it with the commit SHA, pushes it to ECR, and puts it on preview.
+That is the artifact. Publishing the release points production at **that same
+image** — nothing is compiled, nothing is pushed, a task definition is
+repointed at a digest that already exists. A rebuild would ship bits nobody
+tested: the Dockerfile's base is pinned by tag (which Alpine re-pushes on
+patch) and `npm ci` fetches tarballs at build time, so the same source tree is
+not guaranteed to produce the same image.
+
+**The version is runtime metadata, not a rebuild.** A tested image is never
+rebuilt merely to bake a version number into it. The commit SHA stays baked in,
+because it identifies the actual artifact. The semantic version is attached at
+promotion time two ways, neither touching the image: the same ECR digest gets
+`vX.Y.Z` as an additional tag, and the production task definition receives
+`RELEASE_VERSION`. `/api/health` reports the release version when present,
+falling back to the version baked at build time — so an unreleased lane
+honestly reports the older number rather than claiming a release it never
+received.
+
+**Exactly one event promotes production.** `release-please.yml` no longer
+dispatches the deploy workflow; `release: [published]` is the only path. The
+release is created as a draft so a person publishes it, which is also what
+makes the event fire at all — GitHub raises no workflow run for a release
+published by the default `GITHUB_TOKEN`.
 
 **Every deploy states BOTH lanes' image tags; exactly one moves.** `cdk deploy`
 re-synthesizes the whole stack, so both task definitions are re-rendered on
