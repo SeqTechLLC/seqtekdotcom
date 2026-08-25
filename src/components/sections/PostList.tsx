@@ -10,7 +10,9 @@ interface PostDoc {
 
 interface PostListProps {
   heading?: string | null
-  source: 'latest' | 'by-category' | 'manual'
+  /** Authoring-time input consumed by `resolveLayout`, not read here — the
+   *  component renders whatever items it is handed (ROADMAP UI-2). */
+  source?: 'latest' | 'by-category' | 'manual'
   manualItems?: Array<PostDoc | string | number> | null
   limit?: number | null
   /** Card title level. Defaults to `h3`; listing pages with a page-level `h1`
@@ -24,24 +26,13 @@ const isDoc = (v: unknown): v is PostDoc =>
 const isMedia = (v: unknown): v is { url: string; alt?: string | null } =>
   typeof v === 'object' && v !== null && 'url' in (v as object) && !!(v as { url: unknown }).url
 
-export function PostList({
-  heading,
-  source,
-  manualItems,
-  limit = 3,
-  headingLevel = 'h3',
-}: PostListProps) {
-  const docs = source === 'manual' ? (manualItems ?? []).filter(isDoc).slice(0, limit ?? 12) : []
+export function PostList({ heading, manualItems, limit = 3, headingLevel = 'h3' }: PostListProps) {
+  const docs = (manualItems ?? []).filter(isDoc).slice(0, limit ?? 12)
   const CardHeading = headingLevel
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading ?? 'Latest insights'}</h2> : null}
-        {source !== 'manual' ? (
-          <p className="mt-2 text-caption text-text-muted">
-            Source: {source} (resolves at template time)
-          </p>
-        ) : null}
         {docs.length > 0 ? (
           <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {docs.map((p) => {

@@ -12,6 +12,7 @@ import * as migration_20260811_141527_fix_brand_teaser_link_default from './2026
 import * as migration_20260811_141528_add_partners_collection from './20260811_141528_add_partners_collection'
 import * as migration_20260824_201317_spec011_drop_inert_fields from './20260824_201317_spec011_drop_inert_fields'
 import * as migration_20260824_214311_spec011_drop_stats_bar_source from './20260824_214311_spec011_drop_stats_bar_source'
+import * as migration_20260825_181054_ui2_drop_team_grid_featured from './20260825_181054_ui2_drop_team_grid_featured'
 
 export const migrations = [
   {
@@ -83,5 +84,10 @@ export const migrations = [
     up: migration_20260824_214311_spec011_drop_stats_bar_source.up,
     down: migration_20260824_214311_spec011_drop_stats_bar_source.down,
     name: '20260824_214311_spec011_drop_stats_bar_source',
+  },
+  {
+    up: migration_20260825_181054_ui2_drop_team_grid_featured.up,
+    down: migration_20260825_181054_ui2_drop_team_grid_featured.down,
+    name: '20260825_181054_ui2_drop_team_grid_featured',
   },
 ]

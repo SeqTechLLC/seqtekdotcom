@@ -9,6 +9,7 @@ import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
+import { resolveLayout } from '@/lib/resolveLayout'
 import type { Workshop } from '@/payload-types'
 
 // spec 004 US4 + spec 010 (ADR 0009): the workshop body is block-composed and
@@ -51,7 +52,10 @@ export default async function WorkshopPage({ params }: Props) {
 
   const facilitator = isRelObject(workshop.facilitator) ? workshop.facilitator : null
   // payload-types Workshop['layout'] is the RenderBlocks-compatible shape.
-  const layout = (workshop.layout ?? []) as never
+  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
+  // case-study-grid, service-cards) get their items filled in here, before
+  // the layout reaches the synchronous RenderBlocks dispatcher.
+  const layout = (await resolveLayout(workshop.layout as never)) as never
 
   return (
     <>

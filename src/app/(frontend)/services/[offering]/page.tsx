@@ -9,6 +9,7 @@ import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
+import { resolveLayout } from '@/lib/resolveLayout'
 import type { Page } from '@/payload-types'
 
 // feat/services-restructure (ADR 0009). The four-offering IA: each peer offering
@@ -67,7 +68,10 @@ export default async function ServiceOfferingPage({ params }: Props) {
   if (!page) notFound()
 
   // payload-types Page['layout'] is the RenderBlocks-compatible shape.
-  const layout = (page.layout ?? []) as never
+  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
+  // case-study-grid, service-cards) get their items filled in here, before
+  // the layout reaches the synchronous RenderBlocks dispatcher.
+  const layout = (await resolveLayout(page.layout as never)) as never
 
   return (
     <>

@@ -9,6 +9,7 @@ import { breadcrumbLd, personLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
+import { resolveLayout } from '@/lib/resolveLayout'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import type { TeamMember } from '@/payload-types'
 
@@ -45,7 +46,10 @@ export default async function TeamMemberPage({ params }: Props) {
 
   const photo = member.photo && typeof member.photo === 'object' ? member.photo : null
   // payload-types TeamMember['layout'] is the RenderBlocks-compatible shape.
-  const layout = (member.layout ?? []) as never
+  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
+  // case-study-grid, service-cards) get their items filled in here, before
+  // the layout reaches the synchronous RenderBlocks dispatcher.
+  const layout = (await resolveLayout(member.layout as never)) as never
 
   return (
     <>

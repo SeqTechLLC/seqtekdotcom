@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { listTeamMembers } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { TeamGrid } from '@/components/sections/TeamGrid'
+import { byLeadershipThenOrder } from '@/lib/resolveLayout'
 
 // spec 004 US3 (T019). `/team` lists `teamMembers` leadership-first, then by
 // `order`. The collection is public-read with NO drafts and NO `seo` group, so
@@ -21,12 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function TeamPage() {
   const members = await listTeamMembers()
 
-  // Leadership first, then by `order` (numeric, undefined last), stable.
-  const ordered = [...members].sort((a, b) => {
-    const lead = Number(Boolean(b.isLeadership)) - Number(Boolean(a.isLeadership))
-    if (lead !== 0) return lead
-    return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
-  })
+  // Leadership first, then by `order` (numeric, undefined last), stable. Shared
+  // with `resolveLayout` so a `team-grid` block set to "All" matches this page.
+  const ordered = [...members].sort(byLeadershipThenOrder)
 
   return (
     <div data-testid="team" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">

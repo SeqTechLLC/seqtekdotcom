@@ -149,13 +149,22 @@ async function seedTeamMembers(payload: Payload, photoId: string | number) {
   // that had the grid rendering the wrong field. One member carries both so the
   // showcase exercises each, one carries the title alone.
   return createBatch(payload, 'teamMembers', [
+    // `_status: 'published'` matters: the `team-grid` manual variant points at
+    // these two, and an anon read drops unpublished relations — so without it
+    // the showcase's manual card grid captured as an empty section.
     {
       name: `${SHOWCASE_TAG}Alex Kim`,
       title: 'Pillar Lead',
       role: 'Leads the platform pillar and owns how the delivery teams are staffed.',
       photo: photoId,
+      _status: 'published',
     },
-    { name: `${SHOWCASE_TAG}Sam Chen`, title: 'Principal Engineer', photo: photoId },
+    {
+      name: `${SHOWCASE_TAG}Sam Chen`,
+      title: 'Principal Engineer',
+      photo: photoId,
+      _status: 'published',
+    },
   ])
 }
 

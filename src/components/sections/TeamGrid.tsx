@@ -23,7 +23,9 @@ interface TeamMemberDoc {
 
 interface TeamGridProps {
   heading?: string | null
-  filter: 'leadership-only' | 'featured' | 'all'
+  /** Authoring-time input consumed by `resolveLayout`, not read here — the
+   *  component renders whatever members it is handed (ROADMAP UI-2). */
+  filter?: 'leadership-only' | 'all'
   layout?: 'cards' | 'compact' | null
   manualItems?: Array<TeamMemberDoc | string | number> | null
   /** Card title level. Defaults to `h3`; listing pages with a page-level `h1`
@@ -39,7 +41,6 @@ const isMedia = (v: unknown): v is PhotoDoc & { url: string } =>
 
 export function TeamGrid({
   heading,
-  filter,
   layout = 'cards',
   manualItems,
   headingLevel = 'h3',
@@ -50,11 +51,7 @@ export function TeamGrid({
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-        {docs.length === 0 ? (
-          <p className="mt-2 text-caption text-text-muted">
-            Filter: {filter} (resolves at template time)
-          </p>
-        ) : (
+        {docs.length === 0 ? null : (
           <ul
             className={`mt-8 grid gap-6 ${layout === 'compact' ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3'}`}
           >

@@ -1289,10 +1289,13 @@ export interface Workshop {
  */
 export interface TeamGridBlock {
   heading?: string | null;
-  filter: 'leadership-only' | 'featured' | 'all';
+  /**
+   * Which team members to show. "Leadership only" shows everyone marked as leadership; "All" shows the whole team, leadership first.
+   */
+  filter: 'leadership-only' | 'all';
   layout?: ('cards' | 'compact') | null;
   /**
-   * Optional manual override — when set, ignores filter and renders these team members in order.
+   * Optional. Leave this empty and the filter above chooses the members. Pick people here only when you want an exact set in an exact order — your picks win over the filter.
    */
   manualItems?: (number | TeamMember)[] | null;
   id?: string | null;

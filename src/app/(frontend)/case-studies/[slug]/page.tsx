@@ -10,6 +10,7 @@ import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
+import { resolveLayout } from '@/lib/resolveLayout'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import { TrackView } from '@/components/analytics/TrackView'
 import type { CaseStudy } from '@/payload-types'
@@ -57,7 +58,10 @@ export default async function CaseStudyPage({ params }: Props) {
   const related = (caseStudy.relatedCaseStudies ?? []).filter(isRelObject).slice(0, 3)
   const industry = isRelObject(caseStudy.industry) ? caseStudy.industry : null
   // payload-types CaseStudy['layout'] is the RenderBlocks-compatible shape.
-  const layout = (caseStudy.layout ?? []) as never
+  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
+  // case-study-grid, service-cards) get their items filled in here, before
+  // the layout reaches the synchronous RenderBlocks dispatcher.
+  const layout = (await resolveLayout(caseStudy.layout as never)) as never
 
   // Reading column for the route-owned header + related footer (DESIGN_SYSTEM
   // §11.4). The body blocks own their own widths/centering (FR-009).

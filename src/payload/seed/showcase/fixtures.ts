@@ -1105,7 +1105,7 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
           data: {
             blockType: 'team-grid',
             heading: 'Featured team',
-            filter: 'featured',
+            filter: 'all',
             layout: 'compact',
           },
         },

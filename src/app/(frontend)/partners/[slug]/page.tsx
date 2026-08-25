@@ -9,6 +9,7 @@ import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
+import { resolveLayout } from '@/lib/resolveLayout'
 import { Button } from '@/components/ui/Button'
 import type { Partner } from '@/payload-types'
 
@@ -48,7 +49,10 @@ export default async function PartnerPage({ params }: Props) {
   if (!partner) notFound()
 
   // payload-types Partner['layout'] is the RenderBlocks-compatible shape.
-  const layout = (partner.layout ?? []) as never
+  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
+  // case-study-grid, service-cards) get their items filled in here, before
+  // the layout reaches the synchronous RenderBlocks dispatcher.
+  const layout = (await resolveLayout(partner.layout as never)) as never
   // `logo` + `url` are the typed metadata the index card uses; this is where
   // they earn their keep on the detail page (Button renders external hrefs as
   // target=_blank + rel="noopener noreferrer").

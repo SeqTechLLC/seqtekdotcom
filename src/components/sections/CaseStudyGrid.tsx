@@ -10,7 +10,9 @@ interface CaseStudyDoc {
 
 interface CaseStudyGridProps {
   heading?: string | null
-  source: 'manual' | 'latest' | 'by-industry' | 'by-service'
+  /** Authoring-time input consumed by `resolveLayout`, not read here — the
+   *  component renders whatever items it is handed (ROADMAP UI-2). */
+  source?: 'manual' | 'latest' | 'by-industry' | 'by-service'
   manualItems?: Array<CaseStudyDoc | string | number> | null
   limit?: number | null
   /** Card title level. Defaults to `h3`; listing pages with a page-level `h1`
@@ -26,24 +28,16 @@ const isMedia = (v: unknown): v is { url: string; alt?: string | null } =>
 
 export function CaseStudyGrid({
   heading,
-  source,
   manualItems,
   limit = 3,
   headingLevel = 'h3',
 }: CaseStudyGridProps) {
-  // Non-manual sources resolve at template time (Phase 3). Showcase renders
-  // the manual path; other sources show the affordance only.
-  const docs = source === 'manual' ? (manualItems ?? []).filter(isDoc).slice(0, limit ?? 9) : []
+  const docs = (manualItems ?? []).filter(isDoc).slice(0, limit ?? 9)
   const CardHeading = headingLevel
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-        {source !== 'manual' ? (
-          <p className="mt-2 text-caption text-text-muted">
-            Source: {source} (resolves at template time)
-          </p>
-        ) : null}
         {docs.length > 0 ? (
           <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {docs.map((d) => {
