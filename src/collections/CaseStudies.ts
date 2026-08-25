@@ -65,9 +65,6 @@ export const CaseStudies: CollectionConfig = {
       blocks: [...layoutBlocks],
       defaultValue: caseStudySkeleton,
     },
-    // ---- Legacy body fields (expand/contract, R2) ----
-    // Composed into `layout` by caseStudyToLayout.ts; hidden + read-only, kept
-    // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
     { name: 'testimonial', type: 'relationship', relationTo: 'testimonials' },
     {
       name: 'relatedCaseStudies',

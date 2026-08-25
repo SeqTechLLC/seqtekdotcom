@@ -18,7 +18,7 @@
 
 > **Status banner (2026-06-30): FROZEN.** This is a historically-accurate spec for a **one-shot Wix→Payload migration tool** and the **source of the 301-redirect map**. It is not a publish baseline and no longer describes the live site. The live IA has moved past what this script produced — superseded by **spec 010 block composition** (ADR 0009, PR #66) and the **`/workshops` IA correction** (commit `fa42926`). Specific rows below are flagged inline as superseded; the document is preserved for migration/redirect provenance.
 
-How content from the existing Wix site gets moved into Payload CMS. The script lives at `src/payload/seed/migrateFromAudit.ts` and runs via `npx tsx`. Idempotent — re-running updates existing records by slug rather than creating duplicates.
+How content from the existing Wix site was moved into Payload CMS. The script lived at `src/payload/seed/migrateFromAudit.ts` and ran via `npx tsx` (deleted in spec 011 — see the banner above). It was idempotent — re-running updated existing records by slug rather than creating duplicates.
 
 The source audit files live **outside this public repo** (SEQTEK marketing IP). By convention they sit at `~/projects/seqtek-internal/audit/` — a sibling of the repo. The seed script reads `process.env.AUDIT_DIR` (defaults to that path). The files were produced by Playwright crawls and are stored as text-extraction (not structured HTML) — every record value is a single newline-delimited string of visible page text with the Wix chrome (`Skip to Main Content`, nav links, footer block) embedded at the top and bottom. Boilerplate stripping is therefore a hard requirement before anything else.
 
@@ -224,7 +224,7 @@ main().catch((err) => {
 })
 ```
 
-Runnable: `npx tsx src/payload/seed/migrateFromAudit.ts` (add `--dry-run` or `--collection=<name>` as needed).
+Was runnable as `npx tsx src/payload/seed/migrateFromAudit.ts` (with `--dry-run` or `--collection=<name>`). The script no longer exists; content now loads via `tools/payload-seed` from `docs/content-drafts/*.json`.
 
 Environment: requires `DATABASE_URL` and `PAYLOAD_SECRET` set in `.env.local`. S3 not required (falls back to local FS — see LOCAL_DEVELOPMENT.md). Run after `payload migrate` so the schema exists.
 

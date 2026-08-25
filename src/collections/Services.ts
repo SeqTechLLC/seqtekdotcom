@@ -42,9 +42,6 @@ export const Services: CollectionConfig = {
       relationTo: 'caseStudies',
       hasMany: true,
     },
-    // ---- Legacy body fields (expand/contract, R2) ----
-    // Composed into `layout` by serviceToLayout.ts; hidden + read-only, kept one
-    // release as an in-DB rollback net, then removed by drop_legacy_body_columns.
     {
       name: 'seo',
       type: 'group',

@@ -17,15 +17,11 @@ export const Homepage: GlobalConfig = {
   },
   fields: [
     {
-      // spec 010 / ADR 0009 (Phase F): the homepage is block-composed. `/`
-      // renders this via RenderBlocks; editors reorder/edit sections with no
-      // deploy. Composed from the legacy fields below by homepageToLayout.ts.
+      // spec 010 / ADR 0009: the homepage is block-composed. `/` renders this
+      // via RenderBlocks; editors reorder/edit sections with no deploy.
       name: 'layout',
       type: 'blocks',
       blocks: [...layoutBlocks],
     },
-    // ---- Legacy structured fields (expand/contract, R2) ----
-    // Composed into `layout` by homepageToLayout.ts; hidden + read-only and kept
-    // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
   ],
 }

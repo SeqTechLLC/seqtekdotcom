@@ -46,9 +46,6 @@ export const Workshops: CollectionConfig = {
       blocks: [...layoutBlocks],
       defaultValue: workshopSkeleton,
     },
-    // ---- Legacy body fields (expand/contract, R2) ----
-    // Composed into `layout` by workshopToLayout.ts; hidden + read-only and kept
-    // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
     { name: 'facilitator', type: 'relationship', relationTo: 'teamMembers' },
     { name: 'testimonial', type: 'relationship', relationTo: 'testimonials' },
     { name: 'order', type: 'number' },

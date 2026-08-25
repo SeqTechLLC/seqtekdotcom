@@ -2,6 +2,11 @@
 
 **Branch**: `feat/010-block-page-composition` | **Date**: 2026-06-14 | **Spec**: [spec.md](./spec.md)
 
+> **Closed.** Two deliverables described below no longer exist: the per-type composers
+> (`src/payload/seed/compose/*ToLayout.ts`) and the `convert-to-blocks` skill were deleted in
+> spec 011 (PR #107) once the legacy body fields they read were dropped. See
+> `specs/011-payload-admin-ux/tasks.md` § Retracted after review. Everything else here shipped.
+
 **Input**: Feature specification from `specs/010-block-page-composition/spec.md`; implements ADR [`docs/decisions/0009-block-first-composition.md`](../../docs/decisions/0009-block-first-composition.md).
 
 ## Summary

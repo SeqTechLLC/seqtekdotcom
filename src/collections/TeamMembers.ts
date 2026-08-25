@@ -86,10 +86,5 @@ export const TeamMembers: CollectionConfig = {
         { name: 'ogImage', type: 'upload', relationTo: 'media' },
       ],
     },
-    // ---- Legacy body fields (expand/contract, R2) ----
-    // Composed into `layout` by teamMemberToLayout.ts; hidden + read-only, kept
-    // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
-    // `expertise` was listed here in error and has been promoted above: it is
-    // NOT legacy, it feeds `knowsAbout` in the Person JSON-LD (spec 011 T011).
   ],
 }

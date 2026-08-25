@@ -27,7 +27,6 @@ Turns a page brief into **exactly one** of:
 
 This is ADR 0009's rule made operational: rearranging or building a page is a content edit; the only thing that needs code is a **new or fixed block type**. This skill never emits React/template code for a page (SC-006).
 
-It is distinct from `convert-to-blocks` (which reproduces an *existing* page's content) — this one authors *net-new* pages from a brief.
 
 ## Procedure
 
@@ -39,7 +38,7 @@ It is distinct from `convert-to-blocks` (which reproduces an *existing* page's c
 
 ### 2. Start from the per-type skeleton (when a target collection is given)
 
-If the brief names one of the collections that has a default skeleton (workshop, case study, service, team), read it under `src/payload/seed/skeletons/<type>.ts` and use it as the starting frame — it encodes the expected block order and the per-type SEO/JSON-LD-bearing blocks (hero, testimonial, contact CTA, etc.). A generic `pages` page and the `homepage` global have **no** skeleton (the homepage is composer-driven, `homepageToLayout.ts`); compose from the brief's sections directly. Specialized collections keep their typed metadata (slug, listing image, order, SEO, relationships) outside the `layout`; only the page **body** is composed here.
+If the brief names one of the collections that has a default skeleton (workshop, case study, team member, partner), read it under `src/payload/seed/skeletons/<type>.ts` and use it as the starting frame — it encodes the expected block order and the per-type SEO/JSON-LD-bearing blocks (hero, testimonial, contact CTA, etc.). A generic `pages` page and the `homepage` global have **no** skeleton; compose from the brief's sections directly. Specialized collections keep their typed metadata (slug, listing image, order, SEO, relationships) outside the `layout`; only the page **body** is composed here.
 
 ### 3. Map each section of the brief to a block
 
