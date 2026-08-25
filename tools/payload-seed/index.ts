@@ -63,6 +63,9 @@ of specs is processed sequentially, so earlier docs resolve as refs for later.
 Flags:
   --base-url=<url>      Target origin (default: ${DEFAULT_BASE_URL}; or IMPORT_BASE_URL).
   --draft              Force every spec to draft instead of publishing.
+                       (Per-spec, "status" also accepts "unpublished", which
+                       takes an already-published document DOWN — plain
+                       "draft" only stages a version and leaves it live.)
   --dry-run            Resolve + print intended ops; no writes or uploads.
   --allow-missing-refs Downgrade an unresolved non-omittable $ref to warn + drop.
   --help, -h           Show this help and exit 0.
@@ -150,14 +153,13 @@ async function main(): Promise<number> {
     const label = isGlobalSpec(spec) ? `global:${spec.global}` : `${spec.collection}`
     try {
       const status: SeedStatus = args.draft ? 'draft' : spec.status
-      const draft = status !== 'published'
       const data = await resolveData(client, spec.data, {
         dryRun: args.dryRun,
         allowMissingRefs: args.allowMissingRefs,
         log,
         warn,
       })
-      const result = await upsertSpec(client, spec, data, { draft, dryRun: args.dryRun })
+      const result = await upsertSpec(client, spec, data, { status, dryRun: args.dryRun })
 
       switch (result.operation) {
         case 'create':

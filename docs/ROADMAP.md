@@ -91,10 +91,10 @@ before we spend more effort loading content by hand.
   descriptive `role`. The four collection-backed blocks (`team-grid`, `post-list`, `case-study-grid`,
   `service-cards`) now resolve their `source`/`filter` in `src/lib/resolveLayout.ts` instead of printing
   `(resolves at template time)` as public body copy; the unbacked `featured` option was withdrawn.
-  Nine of nine published team members now carry a job title. **One residual, needs a hand:** Chad Coleman
-  is set to `draft` in `docs/content-drafts/team.json`, but the seeder cannot unpublish an already-published
-  document — `status: "draft"` stages a draft version and leaves `_status` alone. He is unpublished
-  locally; **on `preview` / `ww3` he must be unpublished in `/admin`** (one click) or he stays on `/team`.
+  Nine of nine published team members now carry a job title. Chad Coleman is retired via the seeder's new
+  `status: "unpublished"` (P5-29) — re-seed `team.json` against a lane and he drops off `/team` there too.
+  The five listing pages no longer double-container their grid, so the page `h1` and the card grid share
+  one left edge and one column width (was 32px out at desktop, 16px at mobile).
 
 ---
 

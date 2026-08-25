@@ -167,6 +167,9 @@ describe('validateSpecs', () => {
 
   it('rejects an invalid status and an empty array, and accepts a valid spec', () => {
     expect(validateSpecs({ collection: 'c', data: { slug: 'a' }, status: 'live' }).ok).toBe(false)
+    expect(validateSpecs({ collection: 'c', data: { slug: 'a' }, status: 'unpublished' }).ok).toBe(
+      true,
+    )
     expect(validateSpecs([]).ok).toBe(false)
     const ok = validateSpecs({ collection: 'c', data: { slug: 'a' } })
     expect(ok.ok).toBe(true)
@@ -195,7 +198,7 @@ describe('upsertSpec — collection', () => {
       spec.value[0],
       { slug: 'acme', title: 'Acme' },
       {
-        draft: false,
+        status: 'published',
         dryRun: false,
       },
     )
@@ -228,7 +231,7 @@ describe('upsertSpec — collection', () => {
       spec.value[0],
       { slug: 'acme' },
       {
-        draft: true,
+        status: 'draft',
         dryRun: false,
       },
     )
@@ -242,6 +245,59 @@ describe('upsertSpec — collection', () => {
     expect((JSON.parse(patch?.body as string) as Record<string, unknown>)._status).toBeUndefined()
   })
 
+  // ROADMAP UI-2 fallout (P5-29): `status: "draft"` writes through Payload's
+  // draft system, which by design leaves the published version live — so it
+  // could stage an edit but never retire a document. `unpublished` writes
+  // `_status` on the document itself, WITHOUT `?draft=true`, which is what
+  // actually flips it out of the published read. Chad Coleman had to be
+  // unpublished by hand because of this gap.
+  it('unpublishes a live document (PATCH, _status draft, NO draft param)', async () => {
+    const { fetchFn, calls } = createFakeFetch({
+      seed: { teamMembers: [{ id: 'tm-1', fields: { slug: 'chad-coleman' } }] },
+    })
+    const client = makeClient(fetchFn)
+    const spec = validateSpecs({
+      collection: 'teamMembers',
+      data: { slug: 'chad-coleman' },
+      status: 'unpublished',
+    })
+    expect(spec.ok).toBe(true)
+    if (!spec.ok) return
+
+    const result = await upsertSpec(
+      client,
+      spec.value[0],
+      { slug: 'chad-coleman' },
+      { status: 'unpublished', dryRun: false },
+    )
+
+    expect(result.operation).toBe('update')
+    const patch = calls.find((c) => c.method === 'PATCH' && c.url.includes('/api/teamMembers/tm-1'))
+    // The whole point: `_status` is written, and `?draft=true` is NOT sent.
+    expect((JSON.parse(patch?.body as string) as Record<string, unknown>)._status).toBe('draft')
+    expect(patch?.url).not.toContain('draft=true')
+  })
+
+  it('creates an unpublished document when none exists', async () => {
+    const { fetchFn, calls } = createFakeFetch()
+    const client = makeClient(fetchFn)
+    const spec = validateSpecs({
+      collection: 'teamMembers',
+      data: { slug: 'newcomer' },
+      status: 'unpublished',
+    })
+    if (!spec.ok) return
+    await upsertSpec(
+      client,
+      spec.value[0],
+      { slug: 'newcomer' },
+      { status: 'unpublished', dryRun: false },
+    )
+    const post = calls.find((c) => c.method === 'POST' && c.url.includes('/api/teamMembers'))
+    expect((JSON.parse(post?.body as string) as Record<string, unknown>)._status).toBe('draft')
+    expect(post?.url).not.toContain('draft=true')
+  })
+
   it('dry-run performs no writes', async () => {
     const { fetchFn, calls } = createFakeFetch()
     const client = makeClient(fetchFn)
@@ -252,7 +308,7 @@ describe('upsertSpec — collection', () => {
       spec.value[0],
       { slug: 'acme' },
       {
-        draft: false,
+        status: 'published',
         dryRun: true,
       },
     )
@@ -279,7 +335,7 @@ describe('upsertSpec — global', () => {
       spec.value[0],
       { tagline: 'Hi' },
       {
-        draft: false,
+        status: 'published',
         dryRun: false,
       },
     )
@@ -299,7 +355,7 @@ describe('upsertSpec — global', () => {
     expect(spec.ok).toBe(true)
     if (!spec.ok) return
 
-    await upsertSpec(client, spec.value[0], { tagline: 'Hi' }, { draft: true, dryRun: false })
+    await upsertSpec(client, spec.value[0], { tagline: 'Hi' }, { status: 'draft', dryRun: false })
 
     const call = calls.find((c) => c.method === 'POST' && c.url.includes('/api/globals/homepage'))
     expect(call?.url).toContain('draft=true')
@@ -510,7 +566,7 @@ describe('sequential array ordering', () => {
     for (const spec of validated.value) {
       const { opts } = resolveOpts()
       const data = await resolveData(client, spec.data, opts)
-      await upsertSpec(client, spec, data, { draft: false, dryRun: false })
+      await upsertSpec(client, spec, data, { status: 'published', dryRun: false })
     }
 
     // The industry was POSTed before the case study referenced it.

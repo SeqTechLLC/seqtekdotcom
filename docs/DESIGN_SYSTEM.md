@@ -461,6 +461,36 @@ Per §4, three section padding tokens (`section-tight`, `section-default`, `sect
 
 **Banned:** `max-w-none` on a `prose`/`Prose` block to "fill the column," and any "left-aligned to the shared edge" wrapper. Both are workarounds for a missing `mx-auto` and were the root of repeated alignment churn. To center a body column, pass `className="mx-auto"` to `<RichText>` (forwarded to `<Prose>`) or wrap the section in `mx-auto max-w-prose`.
 
+### 11.5 Listing pages: never double-container a block
+
+Every grid component (`TeamGrid`, `PartnerGrid`, `PostList`, `CaseStudyGrid`, `WorkshopList`, …) is
+**self-containering**: a full-bleed `<section className="px-4 py-16 md:px-6 lg:px-8">` wrapping an
+`<div className="mx-auto max-w-container-lg">`. That is the block contract — a block renders correctly
+at full page width and needs no help from its caller.
+
+So a listing page must **not** wrap the grid in a second `mx-auto max-w-container-lg px-4 …` container.
+Doing so nests two padded containers and insets the grid from the page's own `h1` by the inner section's
+padding — measured at **32px on desktop, 16px on mobile**, on all five listing routes at once
+(ROADMAP UI-1 follow-up, PROJECT*HISTORY P5-29). Note the two recipes do not commute: padding + max-width
+on the \_same* element lands at a different x than padding on an outer element with the max-width inside it.
+
+**The shape:**
+
+```tsx
+<div data-testid="…">                                     {/* no container, no padding */}
+  <header className="px-4 pt-16 md:px-6 lg:px-8">         {/* the block's own recipe … */}
+    <div className="mx-auto max-w-container-lg">          {/* … both halves of it */}
+      <h1 …/>
+    </div>
+  </header>
+  <TeamGrid … />                                          {/* full width; contains itself */}
+</div>
+```
+
+This is §11.4's "a section's heading travels with its body" applied at page level: the page header and the
+grid resolve to the same x and the same column width. Verify by measuring `getBoundingClientRect().x` on
+the `h1` and the grid `ul` at 1440 and 390 — they must be equal.
+
 ---
 
 ## 12. Accessibility specs

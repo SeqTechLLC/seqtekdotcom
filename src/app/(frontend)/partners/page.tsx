@@ -30,13 +30,21 @@ export default async function PartnersPage() {
           { name: 'Partners', path: '/partners' },
         ])}
       />
-      <div data-testid="partners-listing" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
-        <header className="mb-12">
-          <h1 className="text-h1 font-bold">Partners</h1>
-          <p className="mt-4 text-body-lg text-text-secondary">
-            Platforms we have vetted and stand behind, so our clients get the right tool without
-            starting the search from scratch.
-          </p>
+      <div data-testid="partners-listing">
+        {/* The grid below is a self-containering block section (px-4 md:px-6
+          lg:px-8 around an `mx-auto max-w-container-lg` inner div). Wrapping it
+          in a SECOND padded container inset the grid from this header by 32px
+          at desktop / 16px at mobile. The header therefore uses the block's own
+          container recipe rather than its own, so the two resolve to the same
+          x. */}
+        <header className="px-4 pt-16 md:px-6 lg:px-8">
+          <div className="mx-auto max-w-container-lg">
+            <h1 className="text-h1 font-bold">Partners</h1>
+            <p className="mt-4 text-body-lg text-text-secondary">
+              Platforms we have vetted and stand behind, so our clients get the right tool without
+              starting the search from scratch.
+            </p>
+          </div>
         </header>
         <PartnerGrid items={partners} headingLevel="h2" />
       </div>
