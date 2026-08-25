@@ -2,51 +2,58 @@ name: Deploy
 
 # PROMOTION MODEL — what deploys where, and why.
 #
-#   push to `Preview`            →  preview.seqtek.com   (`-c env=preview`,
-#                                                          primary lane ONLY)
-#   merge to `main`              →  ww3.seqtek.com       (`-c env=preview`,
-#                                                          SAME account/stack
-#                                                          as the Preview push
-#                                                          above — promotes
-#                                                          ONLY the secondary
-#                                                          lane, see below)
-#   publish a `vX.Y.Z` release   →  ww3.seqtek.com       (same as a main
-#                                                          push — kept as an
-#                                                          alternate manual
-#                                                          path, not the
-#                                                          primary trigger)
+#   merge to `main`              →  preview.seqtek.com   (UAT; `-c env=preview`,
+#                                                          primary lane ONLY.
+#                                                          Builds the image.)
+#   publish a `vX.Y.Z` release   →  ww3.seqtek.com       (PROD; same account and
+#                                                          SAME stack, secondary
+#                                                          lane ONLY. Promotes an
+#                                                          existing image; does
+#                                                          NOT build.)
 #
-# staging (seqtek-preview.com, a SEPARATE AWS account from preview's) is
-# RETIRED as of 2026-08-14 — no trigger deploys there anymore. It was the
-# `main`-push target before this change; that account is no longer in use.
+# ww3.seqtek.com is production. It is the finished site behind a DNS record —
+# going live is a Route53 change, not a deploy. It is Cognito-gated until then
+# so search engines cannot index it (seqtek-preview.com was indexed when its
+# gate was off, and competed with the real site on our own brand terms).
 #
-# Neither path deploys the original, never-provisioned `envName: prod` CDK
-# env (decided 2026-08-12: that env has no AWS account, no infra, and
-# duplicating the whole stack set for a temporary lane made no sense once
-# ww3.seqtek.com — a second ECS task/service/target-group inside the SAME
-# `SeqtekPreviewCompute` stack, see compute-stack.ts `secondaryLane` — was
-# already standing in for it). A main push or release instead re-synths that
-# SAME stack with `-c secondaryImageTag=<tag>`, which retargets ONLY the
-# secondary lane's task definition. The PRIMARY lane's task definition must
-# not drift just because a main push or release ran, so `-c imageTag` is
-# ALSO passed — pinned to whatever the primary lane is already running
-# (resolved from the live ECS service, see the "Resolve currently-deployed
-# preview image tag" step below), making that part of the synth a no-op.
-# `IS_RELEASE` is the one flag that distinguishes "Preview push, only the
-# PRIMARY lane moves" from "main push / release / manual prod promotion,
-# only the SECONDARY lane moves" — everything below that affects
-# secondaryImageTag / the pinned-tag step / which SiteUrl output gets read is
-# keyed on it (the name predates the main-push trigger; it really means "the
-# secondary-lane-only promotion path" now, not literally "a GitHub Release").
+# BUILD ONCE, PROMOTE THE ARTIFACT. A `main` merge builds the image, tags it
+# with the commit SHA, and puts it on preview for testing. Publishing the
+# release points production at THAT SAME image. The release path deliberately
+# does not rebuild: `Dockerfile`'s base is pinned by tag (which Alpine
+# re-pushes on patch) and `npm ci` fetches at build time, so an identical
+# source tree is not guaranteed to yield an identical image — a rebuild would
+# ship bits nobody tested. The promoted tag is therefore the SHA, the only tag
+# the image is guaranteed to carry; the semantic version rides inside the
+# image and is reported by /api/health.
 #
-# Merging to `main` now IS the production-lane promotion (2026-08-14 — this
-# used to deploy the separate, now-retired staging account instead). The
-# human gate moved from "cut a release" to "get a PR to `main` approved" —
-# `main`'s branch protection (required PR review) is what stands between a
-# change and ww3.seqtek.com now. Publishing a `vX.Y.Z` release remains a
-# working alternate path to the exact same result (e.g. for an explicit
-# rollback/replay without a new merge), gated the same way via the
-# `production` GitHub Environment's protection rules.
+# A `main` merge is NOT a release. It was, between 2026-08-14 (#103) and this
+# change, and that is what let a merge reach production unattended: the
+# container runs `payload migrate` on start, so merging became a schema change
+# on `seqtek_prod` with no human in between. On 2026-08-25 a merge applied a
+# 162-table, 74-column destructive migration to production that preview had
+# never seen. Merging is frequent and low-ceremony; promoting production is a
+# decision someone makes.
+#
+# ONE deployment branch. `Preview` used to deploy here too and pointed at the
+# same primary lane `main` now owns — two triggers racing one CloudFormation
+# stack (hence the constant concurrency group below). Two long-lived
+# deployment branches also drift, and the drift gets "fixed" by landing
+# hotfixes on one of them.
+#
+# BOTH lanes' image tags are stated on EVERY deploy, and exactly one moves.
+# `cdk deploy` re-synthesizes the whole stack, so both task definitions are
+# re-rendered every run; the lane that is not moving is pinned to the tag it
+# is already running, read back from the live ECS service (see the two
+# "Resolve currently-deployed ... tag" steps below), making that half of the
+# synth a byte-for-byte no-op. compute-stack.ts has NO fallback for
+# `secondaryImageTag` — a deploy that cannot say what production should run
+# fails the synth rather than guessing. That fallback is precisely what
+# promoted the untested build above.
+#
+# Neither path deploys the never-provisioned `envName: prod` CDK env (decided
+# 2026-08-12: no AWS account, no infra, and the account is at its 5-VPC limit).
+# ww3 is a second ECS task/service/target-group inside the SAME
+# `SeqtekPreviewCompute` stack — see compute-stack.ts `secondaryLane`.
 #
 # Release-Please tags are `vX.Y.Z` (`include-v-in-tag: true`,
 # `include-component-in-tag: false` in release-please-config.json).
@@ -81,8 +88,13 @@ name: Deploy
 on:
   push:
     branches:
+      # ONE deployment branch, deliberately. `Preview` used to deploy here
+      # too, and pointed at the same primary lane `main` now owns — two
+      # triggers racing one CloudFormation stack (hence the constant
+      # concurrency group below). Two long-lived deployment branches also
+      # drift, and the drift gets "fixed" by landing hotfixes on one of
+      # them. `Preview` remains a normal branch; it just no longer deploys.
       - main
-      - Preview
     # Skip the redeploy for changes that can't affect the running image.
     # Release-Please's PR-merges and docs-only PRs both fall into this
     # bucket. `paths-ignore` skips the workflow entirely if EVERY changed
@@ -157,21 +169,28 @@ jobs:
     # existing release/`env=prod` dispatch paths — via required reviewers /
     # deployment branch policy on that Environment. `preview` gates the
     # ordinary Preview-branch push, which only ever touches the primary lane.
-    environment: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'production' || 'preview' }}
+    environment:
+      ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'production' ||
+      'preview' }}
     outputs:
       site-url: ${{ steps.site.outputs.url }}
     env:
-      # IS_RELEASE distinguishes "ordinary preview push — only the primary
-      # lane moves" from "release / main push / manual prod promotion — ONLY
-      # the secondary (ww3) lane moves". Both paths deploy the SAME
-      # `env=preview` CDK stacks in the SAME account; they differ in
-      # image-tag wiring below and in which GitHub Environment gates them
-      # above. A plain `main` push is now treated exactly like a release —
-      # merging to `main` IS the promotion to ww3.seqtek.com, no separate
-      # "cut a release" step required.
-      IS_RELEASE: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod' ||
-        (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'true' || 'false' }}
+      # IS_RELEASE distinguishes "merge to `main` — only the PRIMARY
+      # (preview.seqtek.com) lane moves" from "release or manual prod
+      # promotion — only the SECONDARY (ww3.seqtek.com) lane moves". Both
+      # deploy the SAME `env=preview` CDK stacks in the SAME account; they
+      # differ in image-tag wiring below and in which GitHub Environment
+      # gates them above.
+      #
+      # A `main` push is deliberately NOT a release. It was between
+      # 2026-08-14 (#103) and this change, and that is what let a merge
+      # reach production unattended — `Dockerfile`'s CMD runs
+      # `payload migrate` on start, so a merge became a schema change on
+      # `seqtek_prod` with no human in between. Merging is frequent and
+      # low-ceremony; promoting production should not be.
+      IS_RELEASE:
+        ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') && 'true' ||
+        'false' }}
       # Every trigger targets the SAME 'preview' CDK env/account now —
       # staging is retired, so these are constants, not a ternary. STACK_PREFIX
       # must match `stackName()` in infra/lib/construct-utils.ts.
