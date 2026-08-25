@@ -1,4 +1,5 @@
-import type { Post, SiteSetting, TeamMember } from '@/payload-types'
+import type { Post, TeamMember } from '@/payload-types'
+import { siteSettings } from '@/lib/site-content'
 
 // spec 004 Phase 2 (T008). JSON-LD builders (research §D7). These return plain
 // serializable objects; render them through the nonce-safe `<JsonLd>` server
@@ -15,16 +16,32 @@ const absolute = (path: string): string =>
     ? path
     : `${SITE_URL.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
 
-/** Organization schema for the homepage (research §D7). */
-export const organizationLd = (siteSettings?: SiteSetting | null): JsonLdObject => {
-  const name = siteSettings?.companyName ?? 'SEQTEK'
+/**
+ * Organization schema for the homepage (research §D7).
+ *
+ * spec 011 T014: sourced from the code-owned `site-content.ts` constant rather
+ * than the withdrawn `siteSettings` CMS global (FR-003/FR-004, ADR 0010).
+ *
+ * SEVEN values feed this object — name, description, email, telephone, the
+ * full postal address, and the social profiles. The spec originally believed
+ * Site Settings fed only the two metadata values, and withdrawing it on that
+ * basis would have silently stripped the address, phone, email and socials
+ * from every homepage render. `tests/int/render/organizationLd.int.spec.ts`
+ * pins the complete emitted object so that cannot happen unnoticed.
+ *
+ * `sameAs` deliberately reads linkedin/twitter/facebook only. The constant
+ * also carries `youtubeUrl`, which the CMS global had no column for; adding it
+ * here would be an output change, and this task is a relocation.
+ */
+export const organizationLd = (): JsonLdObject => {
+  const name = siteSettings.companyName
   const sameAs = [
-    siteSettings?.socialLinks?.linkedinUrl,
-    siteSettings?.socialLinks?.twitterUrl,
-    siteSettings?.socialLinks?.facebookUrl,
+    siteSettings.socialLinks.linkedinUrl,
+    siteSettings.socialLinks.twitterUrl,
+    siteSettings.socialLinks.facebookUrl,
   ].filter((u): u is string => typeof u === 'string' && u.length > 0)
 
-  const address = siteSettings?.address
+  const address = siteSettings.address
   const postalAddress =
     address && (address.street || address.city)
       ? {
@@ -42,9 +59,9 @@ export const organizationLd = (siteSettings?: SiteSetting | null): JsonLdObject 
     '@type': 'Organization',
     name,
     url: SITE_URL,
-    ...(siteSettings?.tagline ? { description: siteSettings.tagline } : {}),
-    ...(siteSettings?.email ? { email: siteSettings.email } : {}),
-    ...(siteSettings?.phone ? { telephone: siteSettings.phone } : {}),
+    ...(siteSettings.tagline ? { description: siteSettings.tagline } : {}),
+    ...(siteSettings.email ? { email: siteSettings.email } : {}),
+    ...(siteSettings.phone ? { telephone: siteSettings.phone } : {}),
     ...(postalAddress ? { address: postalAddress } : {}),
     ...(sameAs.length ? { sameAs } : {}),
   }

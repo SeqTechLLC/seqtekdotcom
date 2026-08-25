@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getWorkshopBySlug, getSiteSettings } from '@/lib/payload'
+import { getWorkshopBySlug } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
@@ -30,9 +30,9 @@ interface Props {
 // DYNAMIC_SERVER_USAGE bail under ISR; see the page body note).
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const [doc, siteSettings] = await Promise.all([getWorkshopBySlug(slug), getSiteSettings()])
+  const [doc] = await Promise.all([getWorkshopBySlug(slug)])
   if (!doc) return {}
-  return buildMetadata(doc.seo, { title: doc.title, siteSettings })
+  return buildMetadata(doc.seo, { title: doc.title })
 }
 
 const isRelObject = <T,>(value: T | string | number | null | undefined): value is T =>

@@ -25,33 +25,23 @@ describe('isPreviewCollection', () => {
   // spec 010 (R6): workshops + teamMembers gain live preview alongside the
   // original four (type-generic cross-cutting wiring). ADR 0009 metadata
   // collection `partners` joins them.
-  it.each([
-    'pages',
-    'posts',
-    'caseStudies',
-    'services',
-    'workshops',
-    'teamMembers',
-    'partners',
-  ] as const)('accepts %s', (slug) => {
-    expect(isPreviewCollection(slug)).toBe(true)
-  })
+  it.each(['pages', 'posts', 'caseStudies', 'workshops', 'teamMembers', 'partners'] as const)(
+    'accepts %s',
+    (slug) => {
+      expect(isPreviewCollection(slug)).toBe(true)
+    },
+  )
 
-  it.each(['users', 'media', 'unknown', ''])('rejects %s', (slug) => {
+  // spec 011 T017: `services` moved from accepted to rejected — PR #79 retired
+  // the routes its preview URL pointed at.
+  it.each(['users', 'media', 'services', 'unknown', ''])('rejects %s', (slug) => {
     expect(isPreviewCollection(slug)).toBe(false)
   })
 
-  it('PREVIEW_COLLECTIONS is exactly the seven supported collections', () => {
+  it('PREVIEW_COLLECTIONS is exactly the six supported collections', () => {
+    // spec 011 T017: `services` dropped — it has no public route to preview into.
     expect(new Set(PREVIEW_COLLECTIONS)).toEqual(
-      new Set([
-        'pages',
-        'posts',
-        'caseStudies',
-        'services',
-        'workshops',
-        'teamMembers',
-        'partners',
-      ]),
+      new Set(['pages', 'posts', 'caseStudies', 'workshops', 'teamMembers', 'partners']),
     )
   })
 })
@@ -71,21 +61,12 @@ describe('publicPathFor', () => {
     )
   })
 
-  it('services with resolved pillar → /services/<pillar>/<slug>', () => {
-    expect(
-      publicPathFor('services', {
-        slug: 'mobile-engineering',
-        pillar: { slug: 'application-development' },
-      }),
-    ).toBe('/services/application-development/mobile-engineering')
-  })
-
-  it('services without pillar object (e.g. depth=0 fetch) falls back to /services/<slug>', () => {
-    expect(publicPathFor('services', { slug: 'partial-draft' })).toBe('/services/partial-draft')
-    // String ID instead of populated pillar — same fallback applies.
-    expect(publicPathFor('services', { slug: 'partial-draft', pillar: 'pillar-id' })).toBe(
-      '/services/partial-draft',
-    )
+  // spec 011 T017: `services` is no longer a preview collection. PR #79 retired
+  // the `/services/[pillar]` routes, so its builder had been producing preview
+  // URLs into 404s. The collection survives as typed metadata with no public page.
+  it('services is not a preview collection', () => {
+    expect(isPreviewCollection('services')).toBe(false)
+    expect(PREVIEW_COLLECTIONS).not.toContain('services')
   })
 
   it('workshops → /workshops/<slug> (spec 010)', () => {

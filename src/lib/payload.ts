@@ -7,8 +7,6 @@ import { getPayload, type Payload } from 'payload'
 
 import config from '@/payload.config'
 import type {
-  SiteSetting,
-  Navigation,
   Homepage,
   Page,
   CaseStudy,
@@ -165,35 +163,12 @@ type SluggedCollection =
 // or pollutes the published cache. `withReadTimeout` wraps the OUTSIDE of the
 // cache stack (spec 007 — so headers() is legal in its catch).
 
-export const getSiteSettings = withReadTimeout(
-  'getSiteSettings',
-  cache(
-    async (): Promise<SiteSetting> =>
-      unstable_cache(
-        async () => {
-          const payload = await getPayloadInstance()
-          return (await payload.findGlobal({ slug: 'siteSettings', depth: 2 })) as SiteSetting
-        },
-        ['global', 'siteSettings'],
-        { tags: globalCacheTags('siteSettings'), revalidate: ONE_HOUR },
-      )(),
-  ),
-)
-
-export const getNavigation = withReadTimeout(
-  'getNavigation',
-  cache(
-    async (): Promise<Navigation> =>
-      unstable_cache(
-        async () => {
-          const payload = await getPayloadInstance()
-          return (await payload.findGlobal({ slug: 'navigation', depth: 2 })) as Navigation
-        },
-        ['global', 'navigation'],
-        { tags: globalCacheTags('navigation'), revalidate: ONE_HOUR },
-      )(),
-  ),
-)
+// spec 011 T015 (FR-003/FR-005): `getSiteSettings` and `getNavigation` were
+// deleted here. Site chrome is code-owned (ADR 0010) — the header, footer, nav
+// and the seven values the render path used to read from the `siteSettings`
+// global now come from `src/lib/site-content.ts`. `getNavigation` had zero
+// callers even before that; leaving either in place would be the same
+// looks-wired-but-isn't trap one layer down.
 
 export const getHomepage = withReadTimeout(
   'getHomepage',

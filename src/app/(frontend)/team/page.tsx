@@ -1,22 +1,20 @@
 import type { Metadata } from 'next'
 
-import { getSiteSettings, listTeamMembers } from '@/lib/payload'
+import { listTeamMembers } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { TeamGrid } from '@/components/sections/TeamGrid'
 
 // spec 004 US3 (T019). `/team` lists `teamMembers` leadership-first, then by
 // `order`. The collection is public-read with NO drafts and NO `seo` group, so
-// there is no draft branch and metadata is static / siteSettings-sourced
+// there is no draft branch and metadata is static / site-constant-sourced
 // (invariant R6 N/A — research §D7 caveat).
 
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSettings = await getSiteSettings()
   return buildMetadata(null, {
     title: 'Our team',
     description: 'The people behind SEQTEK across Tulsa, OKC, NW Arkansas, and Kansas City.',
-    siteSettings,
   })
 }
 

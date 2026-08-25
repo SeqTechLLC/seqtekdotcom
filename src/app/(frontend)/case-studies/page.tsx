@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { getSiteSettings, listCaseStudies } from '@/lib/payload'
+import { listCaseStudies } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { CaseStudyGrid } from '@/components/sections/CaseStudyGrid'
 
@@ -9,11 +9,9 @@ import { CaseStudyGrid } from '@/components/sections/CaseStudyGrid'
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSettings = await getSiteSettings()
   return buildMetadata(null, {
     title: 'Case studies',
     description: 'Selected client engagements and outcomes.',
-    siteSettings,
   })
 }
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getTeamMemberBySlug, getSiteSettings } from '@/lib/payload'
+import { getTeamMemberBySlug } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd, personLd } from '@/lib/structured-data'
@@ -25,11 +25,10 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const [doc, siteSettings] = await Promise.all([getTeamMemberBySlug(slug), getSiteSettings()])
+  const [doc] = await Promise.all([getTeamMemberBySlug(slug)])
   if (!doc) return {}
   return buildMetadata(doc.seo, {
     title: doc.title ? `${doc.name}, ${doc.title}` : doc.name,
-    siteSettings,
   })
 }
 

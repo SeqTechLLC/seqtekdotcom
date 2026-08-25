@@ -1,210 +1,342 @@
-# SEQTEK Website — Roadmap & Status Tracker
+# SEQTEK Website — Roadmap
 
-**Last updated:** 2026-07-27 (**Interview + Taurex reconciliation 2026-07-27:** three changes from Kenn. (1) **The Hank and Brent interviews are filmed**, along with the **localshoring** content — all three are **in edit now**. That moves C-3 (and the Hank-gated copy hanging off it: the 1999→now timeline, the localshoring definition, "Why Touchstone," Brent's bio, Brent's copy for the two non-Touchstone workshops) from _blocked on a person_ to _blocked on a transcript_. The copy work does **not** need the finished cut — pull a transcript off the raw audio and draft against it while the editor works. (2) **The client is Taurex** (via **Andrew**) — a stray "Torax" in the 2026-06-24 meeting notes was a transcription artifact and has been removed everywhere. That makes C-7's target set **three** clients, not four, and Taurex is the highest-leverage sign-off — one conversation with Andrew clears the soft-launch "one named, signed study" gate, publishes four studies, and lands the three `pendingQuote` slots (all three are Taurex people). (3) **All Hands moved to September**, so the hard-launch shoot gate (BR-7 / C-2 / C-9 / K5) shifts ~a month; the soft launch is unaffected. Also noted: **Well Checked** sign-off is still believed easy, but Kenn is lukewarm on the _content_ — demote it to a logo/permission item rather than spend the chase on a study we don't love. Prior note — **Megan reconciliation 2026-06-24, re-verified against the raw transcript:** the action-item summary the first reconciliation worked from had fabricated timestamps and omissions, so this pass was re-derived directly from `docs/meetings/2026-06-24-megan-website-feedback-transcript.md`. Mapped the meeting against this tracker. Most items were already tracked (case studies, photo shoot, localshoring, blog posts, logos, bios), usually further along than the meeting assumed. Net-new work added: a **phased-launch model** (see "Launch model" below — the roadmap previously modeled a single launch), **A-1** multi-domain admin auth (shipped — `@seqtek.com` editors can now reach `/admin`), **SVC-1** services-page streamlining (the confirmed four-offering direction — **shipped in PR #79**, seed tooling reconciled in #80/#82/#83; full write-up → PROJECT*HISTORY P5-9/P5-15), **SEO-2** Gush Work AI eval (now flagged leaning-decline), and a pre-soft-launch broken-link/image sweep (one instance already fixed: the insight mid-post figures). Megan is now co-owner on the permissions/photo content items; specific client names (Well Checked, Hogan, Taurex, NovaMud) and their internal drivers pinned in C-5/C-7. Prior note — **Content reconciliation 2026-06-19:** audited live staging + the local DB + the `../` source assets against this tracker. Resolved BR-4/BR-5/BR-6 and reframed C-1/C-3/C-6/C-7/C-8 — most content these docs called "missing" is actually drafted-and-ready in `docs/content-drafts/` or already decided. See the locked-decisions block in §1 and the authoritative `docs/CONTENT_NEEDS.md`. Prior note: **Render/IA polish (2026-06-11→14):** the spec-004 templates got their post-content render pass — case-study/insight hero + featured + mid-post images, `TeamGrid` full-bleed 4:3 photo cards, whole-card-clickable listings, the workshop proof section (`photos[]` + recap video), the warm-paper visual system (one grid rail, one card grammar), and the `/touchstone-workshops` → `/workshops` IA fix (one Touchstone workshop among three). Archived as **P3-3** (PRs #47–#51, #54–#60); the staging build-args fix that takes the Workshop Inquiry form live end-to-end + the esbuild-advisory audit-gate fix archived as **P5-7** (PRs #46, #52). Templates stay content-lead-gated, not engineering-blocked. **Spec 010 (2026-06-16):** the site collapsed to **two content primitives** — block-composed Pages + Posts (ADR 0009) — shipped in **PR #66** (P5-8): every bespoke per-type render template retired for the shared `RenderBlocks` dispatcher, `workshops`/`caseStudies`/`services`/`teamMembers`/homepage migrated to `layout` arrays via expand-contract migrations + idempotent composers, two gap-fill blocks (`image`/`gallery`), and the `compose-page`/`convert-to-blocks` skills. Staging rollout is two-step (`payload migrate` then run the composers) and is the release gate on Phases 5.5/6 below. **Spec 009 (2026-06-11):** media now served from CloudFront `/media/*`with correct`serverURL`— the staging media-breakage fix (ADR 0008, Accepted) shipped in **PRs #43/#44** and is archived as **P5-6**:`media/<filename>`keys,`generateFileURL`edge URLs,`next*public_site_url`+`cloudfront_distribution_id`SSM params, FR-011 replace/delete invalidation hooks (the distribution's **first-ever** invalidation — the R-03 page-invalidation path had silently skipped since launch), and the in-place 233-object staging re-key. Verified live:`/team` 12/12, edge cache hits, zero localhost URLs. Prod inherits at Phase 6 by config; the Edge-deploy→instance-refresh ordering is on the Phase 6 checklist. Earlier: Phase 2 closed — spec 003 US1–US7 + media (S3) shipped through PR #19; staging healthy on PG 18.3. **Phase 3 split (2026-06-01):** spec 004's \_engineering\* scope — the public render foundation + all five marquee page \_templates* — shipped in **PR #21** (cached readers + ISR tag-parity per ADR 0005, error/maintenance pages, 301 redirect map, metadata/JSON-LD, dynamic sitemap; 47/47 tasks, 443/443 int tests). Spec 004 acceptance was **template-scope** per its 2026-06-01 clarifications, so the spec is _done_, not blocked. The marquee _content_ is carved out to a content-lead-gated track (C-1/C-3/C-7/C-8) — templates are live and waiting on copy/photos, not on engineers. **Spec 008 (2026-06-06):** the GTM code/doc track — the single `pushDataLayer` emitter + `cta_click`/`case_study_view` conversion signals + CAPI decision — shipped in **PR #31** (P5-2); only the external GTM-UI/staging config tail + named deferrals remain open. Next: deferred-tech follow-ups + Phase 5 polish. **Reconcile (2026-06-08):** specs 005/006 + the case-study importer + the PR #21 review follow-ups (shipped earlier in PRs #23–#27) backfilled to `PROJECT_HISTORY` as P3-2 / P5-3 / P5-4 / P5-5, and their stale "open" bullets pruned below.)
+**Last updated:** 2026-08-21 · **Owner:** Kenn Williamson
 
-> **Convention:** When a Phase implementation item ships, _move_ it out of this file (don't just check it off) and add a `P{N}-*` row to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md). The roadmap stays a short punch list of what's _open_; history carries the audit trail.
+What is still open, in priority order. Nothing else.
 
-**Status:** Phase 3 render foundation (spec 004) shipped (PR #21) and closed; marquee _content_ deferred to the content track (content-lead-gated). Spec 008 GTM code/doc track shipped (PR #31, P5-2) — external GTM-UI/staging config tail remains. Spec 009 media-via-CloudFront fix shipped and verified on staging (PRs #43/#44, P5-6) — media is edge-served end-to-end; no in-repo residual. Post-spec-004 template render/IA/design polish (PRs #47–#60) archived as **P3-3**/**P5-7**. Spec 010 collapsed the site to two block-composed content primitives (PR #66, **P5-8**, ADR 0009). The Workshop Inquiry form is now wired live onto the workshop pages (#46 build-args + #74 block placement) and the Contact form GUID is live (#76). Post-spec-010 launch-prep shipped (**P5-9..P5-15**): the four-offering `/services` restructure (#79), multi-domain admin auth (#77), whole-card-clickable grids (#78), Slack CI/deploy status (#72), deps-override hygiene (#68), and the generic payload-seed CLI + content-as-gitignored-JSON architecture (#80/#82/#83). Active engineering: deferred-tech follow-ups + Phase 5 polish.
+**Rules for this file.** When something ships it leaves — move it to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md)
+with a `P{N}-*` row in the same commit. Don't check items off in place, don't keep the reasoning for a decision
+that's already made, don't restate what shipped. If it isn't listed here, it's done or it isn't happening.
 
-Single source of truth for what's open, what's blocked, what's next on the website rebuild. Keep current. When something moves status, edit this file in the same commit. Completed items are archived in [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) so this file stays focused on active work.
-
-## Launch model (phased — decided at the 2026-06-24 Megan review)
-
-Launch is **two steps**, not one. The roadmap previously modeled only the hard cutover (Phase 6).
-
-- **Soft launch (near-term).** Go live with the **content we already have** (drafted-and-ready copy placed, current photos, existing case-study narratives) to start gathering real feedback. Gate = the **soft-launch checklist** under Phase 5.5 below: content placed, no `[PLACEHOLDER]`/lorem, and a **broken-link + broken-image sweep** across every route (K8). Relational-branding minimum: real faces + at least one named, signed case study (anonymous studies are dropped, not softened).
-- **Hard launch (after the All Hands).** The polished public push, gated on the **All Hands photo/video shoot** (BR-7 / C-2 / K5) plus the marketing updates and the named case-study sign-offs (Taurex / Hogan / NovaMud, C-7). DNS cutover + the Phase 6 infra checklist happen here. **The All Hands moved from August to September (confirmed 2026-07-27)**, so this gate sits ~a month later than the 2026-06-24 plan assumed. That is added runway for the soft launch, not a reason to hold it.
-
-**Sign-off chain (both launches).** Kenn does a broken-link/work-first pass, then hands a polish pass to **Megan**; the approval chain is **Megan + Hank + Brent** sign off, and then **Dom (Domanick)** does the domain swap (he controls the SEQTEK domain). The domain swap itself is expected to be low-effort.
-
-Phase 5.5 / Phase 6 below are the **hard-launch** gates unless a line is tagged _(soft-launch)_.
-
-## Status legend
-
-- 🔴 **Blocked** — waiting on a person or external dependency
-- 🟡 **Open** — defined, not started
-- 🟢 **In progress**
-- ✅ **Done** (moved to `PROJECT_HISTORY.md`)
+**Companion docs.** [`CONTENT_NEEDS.md`](./CONTENT_NEEDS.md) is the authoritative list of what we need _from
+people_ — this file tracks the _work_. [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) is the audit trail.
+[`decisions/`](./decisions/) holds the ADRs.
 
 ---
 
-## 1. Open decisions (waiting on humans)
+## Where things stand
 
-### Branding & narrative
+**Environments** (nothing is publicly launched):
 
-_BR-1, BR-2, BR-3 resolved on 2026-05-20 — see `PROJECT_HISTORY.md`. Items remaining:_
+| Trigger                      | Lands on                                      | Notes                             |
+| ---------------------------- | --------------------------------------------- | --------------------------------- |
+| push to `Preview`            | `preview.seqtek.com` — primary Fargate lane   | Cognito-gated                     |
+| push to `main`, or a release | `ww3.seqtek.com` — secondary lane, same stack | Cognito-gated; stands in for prod |
+| —                            | `seqtek.com`                                  | still the **old Wix site**        |
 
-> **Locked on 2026-06-19 (content reconciliation).** Audited live staging + the local DB + the `../` source assets against this tracker. Statuses are updated here; **where the per-row tables below still read 🟡/🔴, this block governs.** The single authoritative "what we still need from humans" list is **`docs/CONTENT_NEEDS.md`** — keep it current instead of re-deriving gaps.
->
-> | Item                               | Status now                   | Resolution                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-> | ---------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-> | **BR-4** Core values               | ✅ Resolved                  | 7 pattern/anti-pattern values in `VALUES_REWRITE.md`; **Hank signed off 2026-06-19**. Remaining = place the `mission-vision-values` block in the values section of `/our-story` (loading).                                                                                                                                                                                                                                                                                                                                                             |
-> | **BR-5** Canonical stats           | ✅ Resolved                  | **25+ years, 500+ projects.** "Lives touched" is **dropped** (off-brand). Update the seeder/stats-bar to the two-number set; retire the lives metric.                                                                                                                                                                                                                                                                                                                                                                                                  |
-> | **BR-6** Cherokee Nation outreach  | ✅ Decided — **no outreach** | Respectful allusion to a public historical Oklahoma figure (Sequoyah) needs no permission; revisit only if the Nation asks. Supersedes the ADR 0003 deferral.                                                                                                                                                                                                                                                                                                                                                                                          |
-> | **BR-7 / C-2** Photo + video shoot | 🟢 In progress               | **Photo and video shot in one session.** Most studio headshots already exist + catalogued (`photo-catalog/`, mapped in `image-plan.md`). Still to shoot: group-leadership, full-team, Kenn's headshot — **at the All Hands, now September** (moved from August, 2026-07-27). The Hank/Brent/localshoring video did **not** wait for it (see C-3 / C-9).                                                                                                                                                                                                |
-> | **C-1** Testimonials               | 🟢 In hand                   | 8 release-cleared workshop quotes (4 with full person+title attribution) + 2 published video shorts + the CrossCo recap. Loading gap: re-seed the on-staging testimonials with the attribution we already have.                                                                                                                                                                                                                                                                                                                                        |
-> | **C-3** Bios + Sequoyah story      | 🟢 In progress               | Bios drafted — Hank ~95%, **Dana 100%**, Brent ~50%. **Sequoyah name story is written + live on `/our-story`** (Kenn supplied it; old-feather Sequoyah Technologies logo is the swap-in for its quill-panel placeholder). **The Hank + Brent interviews are FILMED (2026-07-27) and in edit** — the 1999→now timeline, localshoring definition, Touchstone naming, Brent's bio, and public client-name permissions now come out of the **transcript**, not out of scheduling. Draft from the raw audio; don't wait on the cut. See `CONTENT_NEEDS.md`. |
-> | **C-6** Blog bodies                | ✅ Resolved                  | Full bodies authored in `posts-content.json` (6 posts). Loading-only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-> | **C-7** Case-study proof           | 🟢 In progress               | **8 narratives drafted** (5 published on staging + 3 Taurex sub-studies staged 2026-07-16); **NovaMud is the flagship** (only one with metrics). Hero/banner art is done for all of them. Need a named client quote per study; fix the legacy drill-bit/healthcare mismatch before republish. **Chase Taurex (Andrew) first (2026-07-27)** — it is the one sign-off that clears the soft-launch gate.                                                                                                                                                  |
-> | **C-8** Photo library              | 🟢 In progress               | Cataloged + curated + slot-mapped (`photo-catalog/catalog.json`, `image-plan.md`, `team-page-picks.md`). Loading gap: ingest the curated picks via `tools/ingest-photos` and place per plan.                                                                                                                                                                                                                                                                                                                                                           |
+The separate staging account (`seqtek-preview.com`) was retired 2026-08-14; no trigger deploys there.
 
-| ID   | Decision                                              | Status | Owner        | Notes                                                                                                                                                                                                                                                                                                                                                                                       |
-| ---- | ----------------------------------------------------- | ------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| BR-4 | Core values — behavioral + marketing-friendly rewrite | 🟢     | Content lead | Pattern / anti-pattern rewrite for all 7 values in `docs/VALUES_REWRITE.md` (2026-05-20), ordered for marketing arc (Trust → Respect), keyed against brand-kit verbatim. Kenn-approved as dev placeholder. Leadership sign-off deferred to Phase 5.5 launch readiness review (per `project_internal_dynamics.md`). Voice pass + page integration spec are the only pre-launch active items. |
-| BR-5 | Canonical company stats (years / projects / lives)    | 🟢     | Leadership   | Years resolved: **25+** (founded 1999, per leadership 2026-05-20). Projects and lives-touched counts remain placeholder; Kenn following up on canonical numbers. Migration script keeps source-of-truth flags on both stat sets until projects/lives close.                                                                                                                                 |
-| BR-6 | Cherokee Nation courtesy outreach (optional)          | 🟡     | Leadership   | Deferred to pre-launch. Sequoyah is a public historical figure honored across Oklahoma without controversy; outreach is a goodwill gesture, not a permission gate. Reasoning recorded in ADR 0003. Decision happens at Phase 5.5 launch readiness review.                                                                                                                                   |
-| BR-7 | Photo shoot scope — leadership + extended team        | 🟢     | Kenn         | Kenn coordinating: image library access in progress; managing-partner + leadership headshots still to schedule. Extended team coverage per Hinge research (firms with visible team pages convert better). Ties into long-lead content item C-2.                                                                                                                                             |
+**The build is essentially done.** Two content primitives (a block-composed `Page`, a rich-text `Post`) plus
+typed metadata collections — `partners` (#99) is the reference implementation of ADR 0009 Option C. 45 blocks,
+drafts + versioning, live preview, CloudFront media, a generic REST seeder that can write through the Cognito
+gate (#102). Remaining engineering is IA, hardening and cutover — not features.
 
-### Content collection (long lead time — start now)
+**The bottleneck is content throughput, not code.** Every content change is still a developer task. That is
+what P1 exists to fix.
 
-| ID  | Item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Status | Owner                |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------- |
-| C-1 | Testimonial re-collection with full attribution (target 12-15). Podcast/channel mining (2026-06-12) found 5 starting points: 3 on-tape leads + 2 published named-client workshop shorts — names and timestamps in the private `../podcast/episodes/CLIP_CANDIDATES.md` §4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | 🟡     | Content lead + Megan |
-| C-2 | Professional photo shoot (headshots + candids + office) — rides the **All Hands, now September** (moved from August, 2026-07-27)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | 🟡     | Content lead         |
-| C-3 | Leadership interviews (Hank, Dana, Brent) — bios + story + timeline. **Filmed 2026-07-27; in edit.** Hank + Brent are captured on video along with the localshoring content. The remaining work is **extraction, not scheduling**: transcribe the raw audio (local `faster-whisper` pipeline, same as the podcast mining) and draft the Hank-gated copy — 1999→now timeline, localshoring definition, Touchstone naming, Brent's bio, Brent's two-workshop copy — **without waiting on the finished cut**. The edited video is a separate deliverable (C-9).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | 🟢     | Content lead         |
-| C-4 | Founder video — shipped 2026-06-12: four podcast cuts uploaded to the SEQTEK channel (videoIds in `../podcast/cuts/README-upload.md`) and three wired into `/our-story` as `video-embed` blocks via the story seeder (value 72s after Who We Are, founding story after origin, faith/stewardship after foundation); verified playing on staging. The fourth cut (`seqtek-culture-45s`) is held for social/alternate use                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | ✅     | Kenn                 |
-| C-5 | Client logos — the current Industry Leaders strip was copied as-is from the live seqtek.com site; the meeting **re-opened the permission question** (Megan: "do we even have permission to put these up here?"). Working assumption: if no client has objected to the marks already running publicly, they're likely fine — but Megan owns **curating the showcase list and chasing logo permission** with Hank/Brent before launch. Full meeting audit of the strip: **keep/current = Hogan, BOK, QuickTrip** (all current clients); **stale, drop or refresh = GE** (the Lovekin project, ~10 yr ago), **AVB** (last work ~5 yr ago), **Change Health** (~6 yr ago); **ONEOK / ONE Gas = verify SEQTEK ever did work with them** (Kenn doesn't recall any). Note: **ONEOK + QuickTrip are a hard NO for _case studies_** (their logos may still be fine to show). The CrossCo workshop client cleared separately for the Touchstone proof section (PR #50). **Added 2026-07-27: Well Checked** — its sign-off is believed easy but Kenn is lukewarm on the case-study content, so take it here as a **logo/permission** rather than as a C-7 study chase.                                                                                                                                                       | 🟢     | Megan + Kenn         |
-| C-6 | Blog post bodies — not in audit (only titles + dates + truncated excerpts). Decide: re-crawl current Wix site for full bodies, re-write from scratch, or import as stubs and rewrite during Tier 3                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 🟡     | Content lead         |
-| C-7 | Case study hero images, testimonials, and metrics arrays — all missing from audit; every imported case study needs editor follow-up before publish. **Named-study target set (three clients, corrected 2026-07-27):** **Taurex** (via **Andrew**) is now the **highest-leverage** chase — we already have **four written studies** (`taurex` live on staging + `taurex-partnership` / `taurex-eticketing` / `taurex-repair` staged in `content-drafts/case-studies-content.json` with banner art done), and all three outstanding `pendingQuote` slots are Taurex people (Dustin, a field rep/district manager, Chad), so one conversation clears the soft-launch gate, publishes four studies, and lands three quotes. **Hogan** (via **Ryan**) is a case study _and_ a logo (current client). **NovaMud** (via **Sam**) is the **flagship** (the only one with metrics — needs the write-up made specifically about them + permission to name them). **Well Checked** (via **Mike**) is still believed an easy sign-off but Kenn is lukewarm on the content (2026-07-27) — treat it as a **logo/permission item (C-5), not a study chase**. Kenn has sign-off on _nobody_ yet; secure client sign-offs for website use (Megan tracks histories + permissions). **ONEOK + QuickTrip are a NO for case studies.** | 🟡     | Content lead + Megan |
-| C-8 | Ingest existing photo library (~915 images, 7.4 GB at `../photos`) into Media collection — HEIC→WebP conversion, downscale of >25 MB originals, batch upload script, cap revisit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | 🟡     | Kenn                 |
-| C-9 | New marketing videos for the team/localshoring pages (from the 2026-06-24 review) — **(1) Localshoring explainer video and (2) the Hank + Brent partner videos are FILMED and in edit as of 2026-07-27** (they were shot with the interviews, ahead of the All Hands rather than at it). Remaining: take delivery of the cuts, upload to the SEQTEK channel, and place them as `video-embed` blocks (localshoring page + the two team pages) the same way C-4's founder cuts were placed. Still to shoot at the **September** All Hands: possibly **Sam** and others to fill out the team pages with folksy, real-people content. **Bio-video either/or for Megan:** she is not strong on camera, so either **script a bio for her to deliver** or **omit her bio video** — no condemnation, her call. (This is separate from C-4's already-shipped founder/brand cuts.)                                                                                                                                                                                                                                                                                                                                                                                                                                          | 🟡     | Content lead + Megan |
+**Launch is two steps.** _Soft launch_ — go live with the content already in hand and gather real feedback.
+_Hard launch_ — the polished public push, gated on the **September** All Hands photo/video shoot.
+Sign-off chain for both: Kenn does a work-first pass → **Megan** does a polish pass → **Megan + Hank + Brent**
+sign off → **Dom** does the domain swap (he controls the domain; the swap itself is low-effort).
+
+> **LM-1 — open question, answer before scheduling the soft launch.** "Soft launch" has never been pinned to a
+> mechanism. The DNS cutover sits on the hard-launch checklist, so a soft launch means either (a) ungating
+> `ww3.seqtek.com` for a named audience, or (b) cutting DNS early and treating the hard launch as a content
+> refresh. (b) pulls most of P3 forward. Kenn decides.
 
 ---
 
-## 2. Design & engineering open work
+## Priority at a glance
 
-| ID    | Task                                                                                 | Status | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ----- | ------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DS-1  | TestimonialCarousel — autoplay vs manual-only decision                               | 🟡     | Confirm during D-3 wireframe pass; accessibility implications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| DS-2  | Homepage hero size — `text-display-xl` (61px) vs `text-display` (49px)               | 🟡     | Depends on hero copy draft (CONTENT-REQUIREMENTS §4)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| DS-3  | Lexical rich-text styling — validate `@tailwindcss/typography` matches design system | 🟡     | Validate during Phase 1; may need a `prose-seqtek` override class                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| D-3   | 5 archetype wireframes (Home, About, Service Offering, Workshop, Case Study)         | 🟡     | Excalidraw or Figma; block-order sketches                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| T-1   | Case-study importer — media dedup                                                    | 🟡     | `tools/import-case-study` (PR #27) re-uploads the hero on every re-import, orphaning the previous `media` row. Add hash-based reuse like the audit pipeline (`CONTENT_MIGRATION.md` §8) and optionally prune the superseded hero on update.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| A-1   | Multi-domain admin auth — accept `@seqtek.com` alongside `@seqtechllc.com`           | 🟢     | **Code shipped (2026-06-24).** SEQTEK runs two live Workspace domains; the `/admin` allowlist was hardcoded to `seqtechllc.com`, so `@seqtek.com` editors (e.g. Megan) were domain-rejected at sign-in. Widened the shared allowlist (`src/lib/auth/allowed-domains.ts`), the OAuth `hd` hint (`*`), and the callback `hd`-claim check; first sign-in auto-provisions an `editor`. Implementation note added to ADR 0002. **Remaining:** deploy to staging/prod; Megan signs in once; then **editor training** (short CMS quickstart) — the "training" half of meeting item K9.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| SVC-1 | Services page — slim to four peer offerings, funnel to workshops (meeting K3)        | ✅     | **Shipped — PR #79** (seed tooling reconciled in #80/#82/#83). `/services` slimmed to **four peer offerings** — **Localshoring**, **AI Integration**, **Digital Transformation**, **Workshops** — as block-composed Pages via the shared `RenderBlocks` dispatcher (no schema change; ADR 0009 completed for `/services`), all nine old service/pillar URLs kept alive with **301s**, and Workshops wired as the primary funnel. Substantive write-up moved to PROJECT_HISTORY **P5-9** (restructure) / **P5-15** (content-loading architecture). **Residual is not SVC-1:** the two non-Touchstone workshops still need **Brent's copy** (tracked at the Touchstone-landing bullet + C-7) and the Localshoring definition still ships as a clearly-marked placeholder — **both interviews are filmed as of 2026-07-27**, so both are now transcript-extraction work (C-3).                                                                                                                                                                                                                                                                                                                                                                                         |
-| SVC-2 | Services back onto a metadata collection — restore automatic routing + indexing      | 🟡     | **The `/services` fold took the wrong half of ADR 0009.** Option C is "two primitives **+ metadata collections**" — specialized types stay collections that attach typed metadata over a block-composed body, so routing, indexing, sitemap, and JSON-LD derive from the collection and adding content needs no deploy. Every other type does this (`teamMembers`, `caseStudies`, `workshops`, `posts`). Services instead became bare `Page` slugs behind hardcoded lookups, so a fifth offering means editing `OFFERING_TO_SLUG` + `OFFERING_TITLE` (`services/[offering]/page.tsx`), `SERVICE_OFFERING_PATHS` + `SERVICE_PAGE_SLUGS` (`sitemap.ts`), and the footer nav, then deploying — contradicting the ADR's own rule that only creating or fixing a **block** requires code. `Services`/`ServicePillars` still exist unrouted, and `livePreview/url.ts` carries an orphaned `services` path builder. **Fix:** give `Services` (or a fresh `offerings` collection) the `layout` body + listing metadata, resolve `/services/[offering]` off the collection, delete the four hardcoded lists, migrate the four `service-*` Pages in, hold the 301s. The `partners` collection (branch `feat/partners-accesseva`) is the reference implementation. Owner Kenn. |
-| SEO-2 | Evaluate Gush Work AI (AI SEO tool) — **leaning decline** (meeting K10)              | 🟡     | A marketing vendor (Megan's first demo was 2026-06-23; second meeting Friday) that targets being surfaced in AI search results (ChatGPT / Gemini / Google AI overview) for chosen terms, working from a dedicated spot / landing page on our site. **Leaning decline:** it overlaps the in-house AICO / AI-SEO work already underway (F-6) — Kenn "won't pay them to just do what we're already doing." **Next:** Megan takes Friday's follow-up for intel and sends Kenn the demo's Fireflies transcript; decide after. Owner Kenn + Megan.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-
----
-
-## 3. Doc fixes
-
-| ID  | Fix                                                                                                                                                                                                                                                 | Status | Notes                                                                                                                                                                                                                                       |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F-6 | AICO baseline — `llms.txt` + `llms-full.txt` route, `.md` alternatives for content pages, differentiated `robots.txt` per AI crawler, CloudFront cache rules tuned for crawler traffic, byline + last-updated metadata on Insights and Case Studies | 🟡     | Spec lives in ARCHITECTURE.md §14 (crawl mechanics) and CONTENT-REQUIREMENTS.md §8 (citation/schema layer). Implement in Phase 2 alongside structured data. AICO is treated as a sub-discipline of SEO — no new term being coined publicly. |
+| #      | Item                                                           | Owner        |
+| ------ | -------------------------------------------------------------- | ------------ |
+| **P1** | Spec 011 — Payload admin UX (in flight)                        | Kenn         |
+|        | A-1 Megan signs in + editor training                           | Kenn         |
+|        | HYG-1 Content data hygiene                                     | Kenn         |
+|        | UI-1 `TeamGrid` renders `role`, never `title`                  | Kenn         |
+| **P2** | K8 Broken-link + broken-image sweep                            | Kenn         |
+|        | CL-1 Load the drafted content                                  | Kenn         |
+|        | C-7 Taurex sign-off                                            | Kenn + Megan |
+|        | BR-5 Stats bar                                                 | Leadership   |
+|        | COPY-1 Tagline ↔ hero reconciliation                           | Kenn + Megan |
+|        | HS-1 HubSpot cookie policy for this site's hostnames           | Megan        |
+|        | VID-1 `/our-story` video embeds render as black boxes          | Kenn         |
+| **P3** | Cutover checklist — CSP, QA, a11y sign-off, infra posture, DNS | Kenn + infra |
+| **P4** | SVC-2 / SVC-3 / IND-1 / SEC-1 / F-6 and the campaign content   | Kenn + Megan |
 
 ---
 
-## 4. Implementation phases
+## P1 — Unblock content throughput
 
-Carrying over the structure from ARCHITECTURE.md §11 with refinements from this planning pass.
+Content is the project bottleneck and every content change is still a developer task. This tier fixes that
+before we spend more effort loading content by hand.
 
-### Phase 1 — Foundation (1-2 weeks)
-
-Completed items live in [`PROJECT_HISTORY.md` § Phase 1 implementation (P1)](./PROJECT_HISTORY.md). Phase 1 is closed — every roadmap-level Phase 1 item has shipped. Production cutover to `seqtek.com` (Phase 6) plus the multi-AZ RDS + private-subnet ASG flips (Phase 5.5) carry the remaining infra polish.
-
-### Phase 2 — Content models (spec 003) — closed
-
-All shipped — completed items live in [`PROJECT_HISTORY.md` § Phase 2 implementation (P2)](./PROJECT_HISTORY.md). US1–US5 (PRs #11/#13/#14/#15/#16), DB migration collapse + PG 18 bump (#17), and **US6 (media via S3) + US7 (scheduled-publish wire-up) + Polish (PR #19, P2-7)**. No open carry-over. (The US7 cron trigger `/api/cron/publish-scheduled` stays intentionally deferred — see Phase 5.5; only the Payload-side invariant was in scope.)
-
-### Phase 3 — Public render foundation (spec 004) — closed (engineering)
-
-The pivot, tech half. Spec 004's engineering scope shipped in **PR #21** (2026-06-01): cached Payload readers with ISR tag-parity (ADR 0005), all five marquee page _templates_ (homepage, case studies, team, Touchstone workshops, localshoring) plus the remaining in-scope routes (insights, services pillar/detail, listings), error/maintenance pages, the 301 redirect map, metadata + JSON-LD, and the dynamic sitemap. All 47 spec tasks (T001–T047) done; 443/443 int tests green. Acceptance was **template-scope** per the spec's 2026-06-01 clarifications — templates render against drafted content; the named, published marquee content is a separately-tracked content-lead deliverable. Implementation detail moved to [`PROJECT_HISTORY.md` § Phase 3 implementation (P3)](./PROJECT_HISTORY.md).
-
-> **The split (2026-06-01):** spec 004 is the _engineering_ deliverable and it is done, not blocked — its acceptance was always template-scope. The marquee _content_ is the second half, carved out below into a content-lead-gated track so the engineering spec can close cleanly. Remaining engineering work is content-independent and lives in the Phase 5 "Deferred from spec 004" subsection.
-
-### Phase 3 content — marquee content population (deferred — content-lead-gated, NOT engineering-blocked)
-
-The content half of the original Phase 3. The templates are **live and waiting**; these items are gated on the C-\* content collection items in §1 (copy, photos, testimonials, logo permissions), not on any further engineering. Kenn is tracking down the source content.
-
-- [ ] 🟢 **Homepage content** — stats bar unblocked (BR-5 locked: 25+ years / 500+ projects). Below-the-fold sections (stats, pillars, featured case study, logos, testimonials, final CTA) are loading work off drafted content. The Sequoyah **brand teaser** copy was gated on the Hank interview — **that interview is filmed (2026-07-27)**, so it is now transcript work (C-3). Hero copy decision (DS-2) still open.
-- [ ] 🟢 **One flagship case study** — **NovaMud** remains the editorial pick (the only study with metrics: 30% less labor, 25%+ billing time returned; narrative drafted). Needs a non-stock hero image + one named client quote + permission to name NovaMud (C-7). One great study beats 8 generic ones. **But for clearing the soft-launch "one named, signed study" gate, chase Taurex/Andrew first** (2026-07-27): four studies are already written and one sign-off covers all of them.
-- [ ] 🟢 **Team page content** — Hank + Dana bios ready to load; Brent's needs his bio call. Studio headshots catalogued + slot-mapped (`team-page-picks.md`). Loading work; **Brent's interview is filmed (2026-07-27)**, so his bio is transcript work now, not a scheduling gate.
-- [ ] 🟢 **Localshoring story content** — the differentiator narrative vs. nearshore / offshore. **Filmed 2026-07-27 and in edit** (C-9), and Hank's on-tape definition is in the same interview package (C-3). Write the page copy off the transcript now; drop the explainer video in as a `video-embed` when the cut lands. Supersedes the earlier "rewrite from existing audit content" plan and retires the clearly-marked placeholder definition that shipped with the `/services/localshoring` restructure (SVC-1).
-- [ ] 🟢 **Touchstone workshop landing** — full copy drafted + CrossCo proof cleared (`touchstone-landing.md`, C-5). The **Workshop** HubSpot Inquiry form is now wired onto the workshop pages (PR #74, P5-10) and the recap video + photos render — form placement is done. One section ("Why Touchstone?" naming) was gated on the Hank interview — **filmed 2026-07-27**, so it is transcript work now. Fastest-ROI item — the active paid-campaign destination. The other two workshops need the same treatment and were gated on **Brent's copy**; **his interview is filmed too**, so draft those off the same transcript package and confirm with him (see SVC-1).
-- [ ] 🟡 **Pages double as standalone campaign landing pages (Megan's idea, 2026-06-24)** — the **workshop** pages (and, by extension, the **case-study** pages) should read as self-contained **LinkedIn / email / direct campaign landing pages**, not only as in-site pages. The current Touchstone page is already close; design the others so a cold visitor arriving from an ad has full context + a clear CTA without needing the rest of the site. Workshop pages may want a bit more guiding copy toward the form. Informs the SVC-1 workshop pages and the C-7 case-study builds.
-
-### Phase 4 — Campaign content expansion (2-3 weeks)
-
-The supporting content for the active AI workshop marketing push, plus filling out the case study library in batches.
-
-- [ ] **3-5 supporting blog posts** for the AI workshop campaign (insights / thought-leadership pieces that map to workshop topics)
-- [ ] **Lead magnet** — downloadable resource for the AI campaign (one-pager, assessment, framework brief — TBD with content lead)
-- [ ] **Additional case studies (4-6)** — batched, each one specifically rewritten with real outcomes + testimonials (C-1, C-7)
-- [ ] **Service pillar pages (3)** — rewrite from existing audit content; less marquee than homepage but core to the buyer journey
-- [ ] **Mission/Vision/Values + About landing** — leadership-alignment-dependent (BR-4, BR-5)
-- [ ] **Insights blog listing + categories + author pages** (uses `posts` + `teamMembers` + `categories`)
-
-### Phase 5 — Polish (1-2 weeks)
-
-- [ ] SEO: deeper structured data + per-page OG images **→ deferred to spec 008** (per the 2026-06-05 spec-007 clarification; SEO ≥ 0.95 kept only as a regression guard in 007). _Baseline shipped in spec 004 (PR #21): `Organization`/`Article`/`BreadcrumbList` JSON-LD, dynamic sitemap, metadata helper with OG defaults._
-- [ ] AICO baseline (F-6) — `llms.txt` + `llms-full.txt`, `.md` alternatives, crawler-aware caching (the `llms-full` body needs published page content — partly content-gated)
-- [x] ~~Accessibility audit (axe + manual screen reader pass) on the marquee + campaign pages~~ — **shipped in spec 007 (P5-1):** automated WCAG 2.2 A/AA across the 14-route in-scope set + landmark/heading/keyboard/alt/reduced-motion, SR test script + best-effort pass (`specs/007-launch-hardening-polish/sr-pass.md`). **Residual → Phase 5.5:** the formal _blocking_ screen-reader sign-off across the AT/browser matrix.
-- [x] ~~Performance optimization until Lighthouse CI passes ARCHITECTURE.md §7 thresholds~~ — **proven + recorded in spec 007 (P5-1, `perf-results.md`):** a11y 1.00 / SEO 1.00 / CLS 0.000, Performance 0.95–0.96 on tuned routes. **Residual → Phase 5.5:** re-take against CloudFront staging (consent-gated third-party) + flip the `performance`/LCP/TBT/CLS budgets from `warn` → `error`.
-- [x] ~~Cookie consent flow end-to-end test (HubSpot ↔ GTM bridge)~~ — **shipped in spec 006 (P5-4):** `consent-flows.e2e` + `privacy-consent-ui.e2e`; the keystone fix moved the HubSpot→GTM bridge onto the official `addPrivacyConsentListener` API. **Residual → gated tail:** live returning-visitor fire-matrix on the real GTM container + cross-browser pass.
-- [ ] _(launch blocker)_ **Publish a HubSpot cookie policy for this site's hostnames** — audited 2026-07-29: portal `8504846` has three enabled banners, attached to `blog.seqtek.com`, `info.seqtek.com`, and the **old Wix** `www.seqtek.com`, and **none** define cookie categories. Nothing matches `seqtek-preview.com` or `localhost`, so HubSpot's banner never renders on this site and the footer "Cookie preferences" / "Withdraw consent" controls are silent no-ops. The code side is complete (ADR 0006) — this is portal config only. Steps + the audited table are in **INTEGRATIONS.md §4.1**. Owner: Megan/Kenn (HubSpot admin).
-- [ ] CSP promoted from report-only to enforcing
-- [ ] Cross-browser/device QA (Chrome, Safari, Firefox; iOS, Android)
-- [ ] Long-tail content — industry pages (6) and market landing pages (4) per the original Phase 4 list, if leadership/SEO priorities still call for them at this point
-
-**Deferred from spec 004 (Phase 3) — explicitly tracked, not dropped:**
-
-- [x] ~~**Slow-request / hung-request handling** (ERROR_PAGES.md §5)~~ — **shipped in spec 007 (P5-1):** `withReadTimeout` 5s `Promise.race` as the outermost layer of the 16 cached readers → branded `error.tsx` + correlated warn log; `/api/health` exempt by construction (ADR 0007).
-- [x] ~~**Live HubSpot Forms API integration** (research §D10)~~ — **shipped in spec 005 (P5-3):** live custom React form engine → `api.hsforms.com`, `idle→submitting→success|error` state machine, `form_submission_*` dataLayer events, CSP-nonce + consent wiring; Workshop Inquiry Form live (native validation — no Zod). **Residual: Contact form go-live** — `/contact` + `ContactForm` are half-wired, gated on the Contact form's own HubSpot GUID (INTEGRATIONS.md §1.2).
-- [ ] **CSP enforce, cross-browser/device QA, performance warn→error** — already listed above (Phase 5 / 5.5 gates); spec 004 keeps CSP report-only and Lighthouse Performance at `warn` (a11y/best-practices/SEO gate now). (Cookie-consent E2E shipped in spec 006 / P5-4.)
-- [x] ~~**Block-library accent-contrast sweep**~~ — **shipped in spec 007 (P5-1):** per-usage remediation of the remaining ~40 meaning-bearing green-500 accents to the green-700 `accent-strong` family (foreground text, solid fills, blockquote/metric rules, hover borders); navy-surface accents and the decorative `Content` wash left as-is; the `text-accent` naming trap documented in DESIGN_SYSTEM §2.4. axe `color-contrast` is clean across the seeded in-scope routes (inventory: `specs/007-launch-hardening-polish/accent-audit.md`).
-      **Spec 008 — GTM pixel activation (code/doc track shipped → P5-2; external-config tail + deferrals open):**
-
-The in-repo code + doc track (US3 conversion-signal surface, US4 CAPI consent decision) shipped in **PR #31** (2026-06-06) and is archived in [`PROJECT_HISTORY.md` § Phase 5 implementation (P5-2)](./PROJECT_HISTORY.md). Remaining open work is **external-config** (GTM-UI / staging, not code) plus the named deferrals:
-
-- [ ] **US1/US2 — external-config tail (🔶 verify, not code)** — build the LinkedIn Insight Tag + Google Ads conversion tag in container `GTM-54KBJ2Z3` (require `ad_storage`, fire on Page View + `hubspotConsentUpdate`), deploy to staging, run the Accept/Deny/Customize fire-matrix (G4, SC-001/002/003/007), then export → commit `infra/gtm/container.json` and confirm zero drift (SC-004). Gated on GTM-UI admin work + a staging deploy.
-- [ ] **Deferred — 8 Meta browser pixels' live triggers** — staged in the container without a trigger; bind each to its per-market `/…casestudyworkshop` path trigger when the **content / paid-landing-page track** ships those routes, then re-run G4 for those tags (INTEGRATIONS.md §2.3).
-- [ ] **Deferred — CAPI consent enforcement at source** — owners Megan/Domanick confirm whether server-side CAPI continues after the `seqtek.com` cutover; if it does, enforce consent at the CAPI source (off-site). Not an in-repo path (INTEGRATIONS.md §2.3 / research R2).
-- [ ] **Deferred — `booking_complete` live emission** — the listener seam (`BookingCompleteSeam`) lights up when the real **HubSpot Meetings embed** replaces the `HubspotMeetings` placeholder (gated with the live-Meetings work, INTEGRATIONS.md §1.4).
-
-### Phase 5.5 — Launch readiness review (1 week)
-
-The content-and-copy gate before DNS cutover. Per `project_internal_dynamics.md`, leadership engages here, not during dev. Precondition: Phase 5 complete; staging fully rendered with final content in place (no lorem ipsum, no `[PLACEHOLDER]` tags); content lead has already done a voice-consistency pass against `BRAND_STRATEGY_RESEARCH.md` §5+§8.
-
-- [ ] _(soft-launch)_ **Broken-link + broken-image sweep** (meeting K8) — crawl every route at both viewports for dead links and non-painting images before the soft launch, then re-run after each content load. Kenn flagged this as the **number-one** soft-launch requirement ("everything has to go somewhere"). **Specific broken footer links named in the meeting: team, localshoring, careers.** One image instance already found + fixed (2026-06-24): the insight mid-post Leonardo figures had been stripped from post `content` by a re-seed and were re-inserted on local + staging. The figures live only in the DB (not in seed source), so this class of regression recurs on any post re-seed — see `tools/leonardo-images`.
-- [x] **Core values** (`BR-4`) — **Hank signed off 2026-06-19.** Remaining: place the values block in the `/our-story` values section (loading); Dana/Brent can confirm on the rendered page.
-- [ ] **Sequoyah acknowledgement** (`BR-1`) — leadership reads the homepage trust-block sentence, the `/our-story` narrative, and the cultural-acknowledgement line on the rendered pages; signs off or iterates (suggested copy in ADR 0003)
-- [x] **Stats confirmation** (`BR-5`) — **locked 2026-06-19: 25+ years, 500+ projects; "lives touched" dropped.** Remaining: update seeder/stats-bar to the two-number set.
-- [x] **Cherokee Nation courtesy outreach** (`BR-6`) — **decided 2026-06-19: skip.** Respectful allusion to a public historical figure needs no permission; revisit only if the Nation asks.
-- [ ] **Faith framing decision** — leadership reviews whether and how the brand-kit faith elements ("biblical principles," "grace and trust") surface on `/our-story` (flagged in `docs/VALUES_REWRITE.md` adjacent findings)
-- [ ] **Mission, vision, hero copy** pass in context across homepage, Our Story, service pillar heroes, case study heroes
-- [ ] **Testimonial attribution** (`C-1`) — every quoted testimonial confirmed with named attribution
-- [ ] **Leadership bios and headshots** (`C-3`, `BR-7`) — Hank, Dana, Brent (and extended team if scope expanded) approve their own bio copy and photos
-- [ ] **Case study copy** (`C-7`) — each of 8 case studies has hero image, named client testimonial, and metrics array; client confirmation where possible
-- [ ] **Legal / privacy** — privacy policy uses canonical Cheyenne address (no Sapulpa references anywhere); terms and cookie banner reviewed
-- [ ] **RDS multi-AZ flip** _(infra, spec 002)_ — flip production RDS from single-AZ to multi-AZ before public launch. Small CDK property change; required for the SC-010 99.9% post-launch SLA to be mathematically achievable (AWS only SLAs single-AZ RDS at 99.5%). Deferred from spec 002 to keep pre-launch cost down.
-- [ ] **ASG flip to private subnets + NAT (or VPC endpoints)** _(infra, spec 002)_ — flip the ASG from public-subnet validation posture to private-subnet production posture. Add NAT Gateway (or VPC endpoints) for outbound. Restore staging sizing from `t3.micro` / `db.t3.micro` / 20GB to spec-shape (`t3.small` / `db.t3.small` / 50GB). Bundle with the multi-AZ RDS flip into a single CFN deploy + change window. Deferred from spec 002 per Clarifications Session 2026-05-26.
-- [ ] **Spec 003 US7 — scheduled-publish hook** — verify `enforceDraftWhenScheduled` is wired on every draftable collection with `publishedAt`; ship the integration test. The hook itself shipped in spec 003 foundational (T008); only the wire-up audit + test remain. Cron trigger (`/api/cron/publish-scheduled`) intentionally stays deferred — only the Payload-side invariant is needed today.
-- [ ] **Schema-drift CI guard** — fail CI if `payload migrate:create --dry-run` would produce a diff vs. what's on disk. Systemic fix so the schema-vs-code desync that caused the P2-6 migration collapse can't recur. One-line process note in `PAYLOAD_DEVELOPMENT.md` to codify "schema change → `migrate:create` before merge to main."
-- [ ] **CI e2e stability under the spec-010 schema** — the block-composition migrations ~5×'d the Payload schema, so the cold drizzle push now outruns CI timeouts: the int `hookTimeout` bump (60s→180s) shipped on the spec-010 PR (#66), but the Playwright e2e job still races the dev-server schema push (`relation … does not exist` → cascade). Single-source the e2e schema setup — push once before the webServer + test process, or have the test process reuse the dev server's schema — so e2e is deterministically green. (Surfaced during PR #66 CI; partially addressed there.)
-- [ ] **Portfolio-readiness polish** — add a live staging link + a few screenshots to `README.md`; replace the `(record.layout ?? []) as never` casts in the block-rendered detail routes with a typed `BlockLike[]` adapter (flagged in the #66 review, deferred for cross-route consistency); a one-line README note framing the engineering depth (invariant tests + full AWS infra + block engine) as deliberate, not gold-plating.
-- [ ] **CI Actions cost** — `push`+`pull_request` double-run fixed (PR #69 → PRs-only); follow-up: gate the ~11-min Playwright + axe + Lighthouse job behind ready-for-review PRs (skip on draft pushes), the biggest remaining per-run cost. Org Actions spending limit / payment was hit 2026-06-16 — needs an owner to raise the limit or take the repo public (free Actions).
-- [x] ~~**Audit & prune dependency overrides** — tooling parked on `chore/deps-override-hygiene`~~ — **shipped in PR #68 (→ PROJECT_HISTORY P5-14):** `tools/check-stale-overrides` (an override is stale iff removing it introduces no new high+ prod advisory beyond the baseline) + `.github/workflows/deps-hygiene.yml` (weekly, opens/updates a single `deps-hygiene` tracking issue) + `package.json#_overridesNotes` annotations; merged once the `ws` override landed in #71. Same shape as the schema-drift CI guard above: an automated check for a hygiene problem that otherwise rots silently. **Remaining nit:** backfill the `ws` / `happy-dom` `_overridesNotes` entries now that those overrides are on main.
-- [ ] **Sign-off captured in writing** — leadership approvals recorded (Google Doc, signed email, or equivalent) so decisions don't get re-litigated post-launch
-
-### Phase 6 — Hard launch (1 week)
-
-The polished public push, gated on the August All Hands shoot + marketing updates (see "Launch model"). The soft launch precedes this with the content already in hand.
-
-- [ ] DNS cutover (low-traffic window)
-- [ ] **Prod instance refresh AFTER the Edge stack deploys** — on a fresh environment Compute boots before Edge exists, so first-boot instances can never see the Edge-owned `cloudfront_distribution_id` SSM param; without the post-Edge refresh, CloudFront invalidations (page publish + media replace/delete) silently skip — the exact dormancy found on staging (spec 009 / PR #44). Verify post-refresh: a media delete produces an entry in `aws cloudfront list-invalidations`.
-- [ ] **Run the spec-010 field→layout composers immediately AFTER `payload migrate` (release-blocking; spec 010 / ADR 0009)** — the block-composition migrations add empty `layout` tables but do **not** backfill, and the detail routes + `/` now render `layout` via `RenderBlocks`. Between migrate and the composer run, every migrated workshop/case-study/service/team page and the homepage render an **empty body**. Run `tsx src/payload/seed/compose/<type>ToLayout.ts` for each type (+ `homepageToLayout.ts`) against the target DB — idempotent, so safe to re-run — and confirm no published, migrated record has a null `layout` before opening traffic. Legacy body columns are retained (expand/contract) so the window is recoverable, but the composer run is a mandatory, ordered deploy step, not optional. Applies to the staging deploy too (this gate runs on every environment this feature lands on).
-- [ ] Monitor errors/performance (CloudWatch + Search Console)
-- [ ] Google Search Console: submit sitemap, verify redirects
-- [ ] CloudFront cache behavior validation
-- [ ] Backup verification (RDS snapshot test restore)
-- [ ] Post-launch redirect crawl (Screaming Frog or similar)
+- **Spec 011 — Payload admin UX** _(in flight, branch `feat/011-payload-admin-ux`, 60 tasks)_. Make the admin
+  panel usable by a marketing lead without a developer next to them: remove controls that do nothing, make the
+  45-block picker pickable, add guidance. Also finishes the spec-010 expand/contract by dropping the retained
+  legacy body columns, and settles the dead `Navigation` / `SiteSettings` globals.
+  → `specs/011-payload-admin-ux/spec.md`
+- **A-1 residual — Megan signs in, then editor training.** The multi-domain admin auth code shipped (#77,
+  P5-11); what's left is a deploy, Megan's first sign-in (auto-provisions an `editor`), and a short CMS
+  quickstart. Do the training **after** 011 lands so she learns the fixed panel, not the current one.
+- **HYG-1 — content data hygiene.** No human input needed; see `CONTENT_NEEDS.md` §10.
+  `industries` is empty while published case studies reference industry IDs (dangling refs) — seed it or drop
+  the relationship; `locations` is empty (needed only if the regional pages get built); delete the
+  `ztest-delete-me` category; case-study `ogImage` is null sitewide.
+- **UI-1 — `TeamGrid` renders `role`, never `title`.** `TeamMembers` has two overlapping text fields —
+  `title` (the job title) and `role` (a full descriptive sentence) — and `TeamGrid.tsx:87` renders `role`, so
+  cards show prose where a job title belongs and the **members with neither field populated render as a face
+  and a name with nothing underneath**. Team pages are the top credibility element in the research and this one
+  is half-broken. Decide: render `title` (recommended), collapse the two fields, or render both. Hours of work.
 
 ---
 
-## 5. Risks to watch
+## P2 — Soft launch
 
-1. **Content production lag.** Engineering can build with placeholder content; launch requires real content. Per CONTENT-REQUIREMENTS §7, this is the bottleneck. Marquee-first pivot (2026-05-31) front-loads the highest-leverage content (homepage + 1 flagship case study + team page + AI workshop + localshoring) and accepts that long-tail content (industry / market / remaining case studies) lands incrementally — possibly post-launch.
-2. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+. Tailwind v4 was evaluated and rejected during the spike — see ADR `docs/decisions/0001-tailwind-v3.md`. The combo is now validated end-to-end (D-13 ✅); if a future minor-version bump breaks the combo, downgrade Next first (don't downgrade Payload — that's the constraint). Postgres 18.3 confirmed compatible with `@payloadcms/db-postgres ^3.85` (P2-6).
-3. **Schema drift between code and migrations.** Caused the staging 500s on PRs #13/#14/#15 — collections were added to the code without corresponding `payload migrate:create` runs. P2-6 collapsed everything into a single `init`. Phase 5.5 carries a CI guard to prevent recurrence; in the meantime, treat "added a collection or field → ran `migrate:create`" as the merge-to-main checklist line.
-4. **CSP report-only oversight.** Easy to leave running in report-only past launch and never enforce. Calendar a hard date to flip enforce in Phase 5.
+- **K8 — broken-link + broken-image sweep.** Kenn's stated **number-one** soft-launch requirement ("everything
+  has to go somewhere"). Crawl every route at both viewports for dead links and non-painting images, then
+  re-run after each content load. Individual fixes have shipped (#84 site chrome, #90 the assessment redirect,
+  #105 nine 301s that landed on 404s) but the sweep itself has never been run end-to-end. Note the recurring
+  class: Leonardo mid-post figures live only in the DB, so any post re-seed strips them — see `tools/leonardo-images`.
+- **CL-1 — load the drafted content.** All of this is written and waiting; it is a seeder run, not authoring:
+  the values block onto `/our-story` (BR-4 — Hank signed off 2026-06-19), testimonial re-seed with the
+  attribution we already hold (C-1), the curated photo picks via `tools/ingest-photos` (C-8), the six blog
+  bodies (C-6), and the three staged Taurex studies. Run `npm run payload:seed` against the gated environment
+  with `IMPORT_TOKEN` + `IMPORT_COOKIE` (#102). Load order and known defects: `docs/content-drafts/README.md`.
+- **C-7 — Taurex sign-off (via Andrew).** The single highest-leverage content conversation: four written
+  studies become publishable, all three outstanding `pendingQuote` slots are Taurex people, and it clears the
+  soft-launch "one named, signed case study" gate in one call. **NovaMud** stays the editorial flagship (the
+  only study with metrics) but needs its own write-up + naming permission. **ONEOK and QuickTrip are a hard no
+  for case studies.** Details and the rest of the target set: `CONTENT_NEEDS.md`.
+- **BR-5 — stats bar.** **25+ years (founded 1999) is the only sourced number.** The projects count is
+  **unsourceable — do not publish it**: the old Wix site ran two contradictory sets at once (homepage
+  20+/411+/8,221+; About 25+/500+/10,000+), so the earlier "500+" resolution picked the rounder pair rather
+  than counting anything. "Lives touched" stays dropped. The current bar (25+ years / 4 markets / 1999) states
+  the founding year twice — replace the third slot or drop to two stats. Reinstate a projects figure **only**
+  if the PSA/invoicing history can produce one from a system of record.
+- **COPY-1 — reconcile the tagline and the homepage hero.** Brent's tagline change ("Delivering Successful
+  Software since 1999" → "Delivering Transformative Technologies since 1999") and the homepage hero
+  ("Technology that fits how you work") currently make different claims. Settles the long-open hero-size
+  question (DS-2) at the same time.
+- **HS-1 — publish a HubSpot cookie policy for this site's hostnames** _(launch blocker, portal config only)_.
+  Audited 2026-07-29: portal `8504846` has three enabled banners attached to `blog.seqtek.com`,
+  `info.seqtek.com` and the **old Wix** `www.seqtek.com`, and **none** define cookie categories. Nothing
+  matches this site's hostnames, so HubSpot's banner never renders and the footer "Cookie preferences" /
+  "Withdraw consent" controls are silent no-ops. The code side is complete (ADR 0006). Steps + the audited
+  table: `INTEGRATIONS.md` §4.1.
+- **VID-1 — `/our-story` video embeds.** The founder/brand cuts render as large empty dark blocks in a fresh
+  page capture. Verify they show a poster frame, not a black box, before anyone reviews the page.
+- **Soft-launch sign-off.** Kenn's work-first pass → Megan's polish pass → Megan + Hank + Brent.
+  Relational-branding minimum: real faces + at least one named, signed case study (anonymous studies are
+  dropped, not softened). No `[PLACEHOLDER]`, no lorem.
+
+---
+
+## P3 — Hard launch and cutover
+
+Gated on the **September** All Hands shoot plus the P2 content. Leadership engages here, not during dev.
+
+**Content and copy gate**
+
+- Mission, vision and hero copy read in context across the homepage, `/our-story`, service and case-study heroes.
+- Sequoyah acknowledgement (BR-1) — leadership reads the rendered homepage trust block, the `/our-story`
+  narrative and the cultural-acknowledgement line, then signs off or iterates (copy in ADR 0003).
+- Faith framing — leadership decides whether and how the brand-kit faith elements ("biblical principles",
+  "grace and trust") surface on `/our-story` (flagged in `VALUES_REWRITE.md`).
+- Testimonial attribution (C-1) — every quoted testimonial confirmed with a named attribution.
+- Leadership bios and headshots (C-3, BR-7) — each person approves their own copy and photo.
+- Case-study copy (C-7) — each of the 7 studies has a hero image, a named client testimonial and a metrics
+  array. **Only 2 of 7 carry a quantified outcome today**; the competitor teardown ranked "a hard number in
+  every study" the single highest-impact fix.
+- Cookie banner reviewed (the canonical Cheyenne address and Terms of Service shipped in #105).
+- **Sign-off captured in writing** — Google Doc, signed email or equivalent, so decisions don't get
+  re-litigated post-launch.
+
+**Quality gates**
+
+- **CSP promoted from report-only to enforcing** (`src/lib/csp.ts` still defaults to `report-only`).
+  Calendar a hard date — this is the easiest thing on the list to forget.
+- Cross-browser / device QA — Chrome, Safari, Firefox; iOS, Android.
+- **Blocking screen-reader sign-off** across the AT/browser matrix (spec 007 shipped the automated WCAG 2.2 A/AA
+  sweep and a best-effort SR pass; the formal blocking pass is the residual).
+- Re-take Lighthouse against CloudFront with the consent-gated third parties live, then flip the
+  `performance` / LCP / TBT / CLS budgets from `warn` → `error`.
+- Live returning-visitor consent fire-matrix on the real GTM container, cross-browser (the E2E half shipped in
+  spec 006).
+- **Schema-drift CI guard** — fail CI if `payload migrate:create --dry-run` would produce a diff against what's
+  on disk. Systemic fix for the desync that forced the P2-6 migration collapse; add the one-line
+  "schema change → `migrate:create` before merge" note to `PAYLOAD_DEVELOPMENT.md`.
+- **CI e2e stability under the spec-010 schema** — the Playwright job still races the dev-server schema push
+  (`relation … does not exist` → cascade). Push once before the webServer + test process, or have the test
+  process reuse the dev server's schema.
+- **Spec 003 US7** — verify `enforceDraftWhenScheduled` is wired on every draftable collection with
+  `publishedAt` and ship the integration test. The cron trigger (`/api/cron/publish-scheduled`) stays
+  deliberately deferred; only the Payload-side invariant is needed.
+
+**GTM external config** (GTM-UI work, not code — the in-repo track shipped as P5-2)
+
+- **US1/US2 tail** — build the LinkedIn Insight Tag + Google Ads conversion tag in container `GTM-54KBJ2Z3`
+  (require `ad_storage`, fire on Page View + `hubspotConsentUpdate`), deploy, run the Accept/Deny/Customize
+  fire-matrix (SC-001/002/003/007), then export → commit `infra/gtm/container.json` and confirm zero drift.
+- **Deferred, unblock when their content ships** — the 8 Meta browser pixels are staged without triggers; bind
+  each to its per-market `/…casestudyworkshop` path trigger when those routes exist (INTEGRATIONS §2.3).
+- **Deferred** — CAPI consent enforcement at source (Megan/Domanick confirm whether server-side CAPI continues
+  after cutover; off-site, not an in-repo path), and `booking_complete` live emission (the `BookingCompleteSeam`
+  listener lights up when the real HubSpot Meetings embed replaces the placeholder).
+
+**Infrastructure** _(the Fargate migration is owned by the infra engineer — reconcile docs after, don't port)_
+
+- **RDS multi-AZ flip** before public launch. Small CDK property change, required for the SC-010 99.9% SLA to be
+  mathematically achievable (AWS SLAs single-AZ RDS at 99.5% only). Deferred from spec 002 to keep pre-launch
+  cost down.
+- **Production network posture** — tasks on private subnets with NAT or VPC endpoints, and restore
+  production-shape sizing. Bundle with the multi-AZ flip into one change window. _(The spec-002 wording for this
+  item predates the EC2→Fargate move; re-derive it against the current stack.)_
+- **Force a new service deployment AFTER the Edge stack deploys.** On a fresh environment Compute comes up
+  before Edge exists, so first-boot tasks never see the Edge-owned `cloudfront_distribution_id` SSM param and
+  every CloudFront invalidation silently skips — the exact dormancy found on staging (spec 009 / PR #44).
+  Verify after: a media delete produces an entry in `aws cloudfront list-invalidations`.
+- ~~**Spec-010 composer run after `payload migrate`**~~ — **removed: spec 011 dropped the legacy body
+  columns**, so there is nothing left to compose from and the composers' CLI entry points are gone. What
+  replaces it is the pre-migration gate in `INFRASTRUCTURE_RUNBOOK.md` §2.9: snapshot the lane, then run
+  take an RDS snapshot of that lane **before merging** — merging is what deploys, and the container's `CMD` runs
+  `payload migrate` on start.
+- DNS cutover in a low-traffic window (Dom).
+- Post-cutover: submit the sitemap to Search Console and verify redirects, validate CloudFront cache behavior,
+  test-restore an RDS snapshot, run a full redirect crawl (Screaming Frog or similar), watch CloudWatch +
+  Search Console for errors and regressions.
+
+---
+
+## P4 — After the cutover
+
+Real work, none of it blocking a launch. Ordered by expected return.
+
+- **SEC-1 — security / compliance page.** The one addition with a _measured_ commercial gate behind it. G2
+  (n=1,002): **83% of companies require a security or privacy assessment** to purchase (75% SMB, 82% mid-market,
+  **88% enterprise**), and **39% overall / 50% of enterprise** buyers name IT security review as their single
+  biggest source of evaluation delay. We have no such page.
+- **IND-1 — industry pages, Energy first.** We publish **zero**; the Momentum3 competitor publishes four in its
+  nav. Hinge _Inside the Buyer's Brain_ 4th ed. (n=1,914) ranks **industry / subject-matter expertise the #1
+  evaluation criterion at 36.4%**, ahead of relevant experience (32.3%) and talented staff (32.2%). Our own
+  taxonomy is **4 of 5 energy/oilfield** — a real vertical concentration that is invisible in the IA. Energy
+  first: it already has the case-study proof.
+- **INERT-1 — 24 admin fields on four unrouted collections have no consumer.** Found by audit during spec 011. `industries`, `locations`, `servicePillars` and `services` have no detail route, so nothing calls
+  `buildMetadata` with their `seo` group and nothing renders their longer prose. An editor can fill any of
+  these in and publish to no effect:
+  - `industries` — `description`, `relevantServices`, `clientLogos`, `seo.*` (would be consumed by **IND-1**)
+  - `locations` — `description`, `hasOffice`, `address.*`, `seo.*` (by the four market pages, `CONTENT_NEEDS` §9)
+  - `servicePillars` — `description`, `heroImage`, `seo.*` (by **SVC-2**)
+  - `services` — `seo.*` (by **SVC-2**)
+
+  They were left in place rather than deleted: they are metadata sitting _ahead of_ routes the roadmap intends
+  to build, so deleting them today means re-adding them later. Until then they should be hidden from the admin
+  (`admin.hidden`) so nobody fills in a control that does nothing — a US4 form-legibility task, not a schema
+  change.
+
+- **SVC-2 — put services back on a metadata collection.** _(Blocks SVC-3.)_ The `/services` fold took the wrong
+  half of ADR 0009: services became bare `Page` slugs behind hardcoded lookups, so a fifth offering means
+  editing `OFFERING_TO_SLUG` + `OFFERING_TITLE` (`services/[offering]/page.tsx`), `SERVICE_OFFERING_PATHS` +
+  `SERVICE_PAGE_SLUGS` (`sitemap.ts`) and the footer nav, then deploying — contradicting the ADR's own rule
+  that only creating or fixing a _block_ requires code. Every other type derives routing, indexing, sitemap and
+  JSON-LD from its collection. **Fix:** give `Services` (or a fresh `offerings` collection) the `layout` body +
+  listing metadata, resolve `/services/[offering]` off the collection, delete the four hardcoded lists, migrate
+  the four `service-*` Pages in, hold the 301s. `partners` (#99) is the reference implementation. Also clean up
+  the orphaned `services` path builder in `livePreview/url.ts`.
+- **SVC-3 — services IA restructure.** Direction decided, not built; blocked on SVC-2.
+  <details><summary>The measured case and the target shape</summary>
+
+  The four peer offerings sit on **four different axes** — Localshoring (delivery model), Workshops (format),
+  Digital Transformation (outcome), AI Integration (technology) — which is why **Data has no home** and got
+  absorbed into Digital Transformation. Measured: the 4 offering pages average **327 words** against **348** for
+  the nine archived service pages, so the consolidation happened **without deepening**; `/services` itself is
+  **169 words**.
+
+  Target shape — **flat 6-item top nav, no mega/multi-layer menu (Kenn ruled that out):**
+  `Services · Industries · Case Studies · Insights · About · Contact`, with the axis split expressed **on the
+  `/services` page** where it can be explained: "What we build" (Software · Data · AI) / "How we work with you"
+  (Localshoring · Workshops) / "Full capabilities" (**one index page, not 47 pages**). The footer carries the
+  full flat capability list. **Digital Transformation is demoted from a service door to the brand narrative** —
+  Brent's tagline change already puts transformation at the brand level, so this is a promotion, not a cut.
+
+  **The nine capability pages are already written** — `docs/content-drafts/_archive/content-batch.json`,
+  ~4,000–4,800 chars each, in current voice, including Cloud & Data Engineering — so this is a seeding job, not
+  a writing job. Five are distinct enough for their own page (Custom Software, Application Modernization,
+  Cloud & Data Engineering, ML Solutions, Process Automation); four fold in (AI-Assisted Modernization → App
+  Modernization; Fractional Product Ownership → a delivery model; Strategy & Roadmap Alignment → the
+  engagement-process block; Discovery & Team Workshops → a `/workshops` section).
+
+  ⚠️ **Cheaper before the DNS cutover.** Nothing has launched, so PR #79's nine internal 301s are _replaced,
+  not layered_, and the Wix→new 301s get **retargeted and become more accurate** (`/technology-and-data` → the
+  data page rather than digital-transformation). If SVC-3 is happening at all, seed it while it still costs one
+  seed run.
+
+  </details>
+
+- **Regional landing pages (4) + a careers stub.** `/tulsa-consulting`, `/okc-consulting`,
+  `/northwest-arkansas-consulting`, `/kansas-city-consulting` are all currently parked on `/localshoring`, and
+  `/careers` was removed from the nav. The four regional pages were a deliberate local-SEO play and
+  multi-market positioning is core to the brand. Each wants market-specific copy, proof and contact.
+  See `CONTENT_NEEDS.md` §9.
+- **F-6 — AICO baseline.** `llms.txt` + `llms-full.txt` routes, `.md` alternatives for content pages,
+  differentiated `robots.txt` per AI crawler, CloudFront cache rules tuned for crawler traffic, byline +
+  last-updated metadata on Insights and Case Studies. Spec in `ARCHITECTURE.md` §14 + `CONTENT-REQUIREMENTS.md`
+  §8. Partly content-gated — the `llms-full` body needs published page content.
+- **Campaign content expansion.** 3–5 supporting blog posts for the AI workshop push; a lead magnet
+  (one-pager, assessment or framework brief); 4–6 more case studies in batches, each with real outcomes and a
+  testimonial. **Megan's ask (2026-06-24):** the workshop and case-study pages should also read as
+  self-contained **LinkedIn / email / direct campaign landing pages** — a cold visitor arriving from an ad
+  needs full context and a clear CTA without the rest of the site. The Touchstone page is already close.
+- **Deeper SEO** — per-page OG images and structured data beyond the spec-004 baseline
+  (`Organization` / `Article` / `BreadcrumbList` JSON-LD, dynamic sitemap, metadata helper with OG defaults).
+- **Portfolio-readiness polish.** A live link + screenshots in `README.md`; a one-line note framing the
+  engineering depth (invariant tests, full AWS infra, the block engine) as deliberate rather than gold-plating;
+  replace the `(record.layout ?? []) as never` casts in the block-rendered detail routes with a typed
+  `BlockLike[]` adapter (#66 review follow-up).
+- **CI Actions cost.** The `push`+`pull_request` double-run is fixed (#69); the remaining per-run cost is the
+  ~11-minute Playwright + axe + Lighthouse job — gate it behind ready-for-review PRs so draft pushes skip it.
+  The org Actions spending limit was hit 2026-06-16: someone needs to raise it, or take the repo public
+  (Actions are free there).
+- **Small stuff.** Backfill the `ws` / `happy-dom` `_overridesNotes` entries now that those overrides are on
+  main (issue #75 tracks the stale ones); decide autoplay vs manual-only _if_ a testimonial carousel is ever
+  built (`FeaturedTestimonials` ships a static stack-grid today).
+  - ~~**T-1** — hash-based media reuse in `tools/import-case-study`~~ **closed as moot (spec 011).** The tool
+    was superseded by the generic `payload-seed` CLI (P5-15) and had no npm script and no callers; case studies
+    load from `docs/content-drafts/case-studies.json` like every other type. Spec 011's field removals left it
+    writing only dropped columns, so it was deleted rather than repaired.
+
+---
+
+## Waiting on people
+
+`CONTENT_NEEDS.md` is the authoritative list — hand _that_ to Hank, Justin and Megan, not this file. Summary of
+what's outstanding and who owns it:
+
+| Item                            | Owner        | State                                                                                                                                                                                                                                                                        |
+| ------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C-3 Hank + Brent interview copy | Kenn         | **Filmed and in edit** — extraction from the transcript, not a scheduling gate. Covers the 1999→now timeline, the localshoring definition, "Why Touchstone", Brent's bio and his copy for the two non-Touchstone workshops. Draft off the raw audio; don't wait for the cut. |
+| BR-7 / C-2 Photo shoot          | Kenn         | Studio headshots exist and are catalogued. Still to shoot at the **September** All Hands: group leadership, full team, Kenn's headshot.                                                                                                                                      |
+| C-9 Video delivery + placement  | Kenn + Megan | The localshoring explainer and the Hank + Brent partner videos are filmed and in edit. Take delivery, upload to the SEQTEK channel, place as `video-embed` blocks. Megan's bio video is her call — script one for her or omit it.                                            |
+| C-5 Client logo permissions     | Megan + Kenn | Keep: Hogan, BOK, QuickTrip. Drop or refresh: GE, AVB, Change Health. Verify we ever worked with ONEOK / ONE Gas. Well Checked is a logo/permission item, not a case study.                                                                                                  |
+| C-7 Case-study sign-offs        | Kenn + Megan | Taurex (Andrew) first — see P2. Then Hogan (Ryan) and NovaMud (Sam).                                                                                                                                                                                                         |
+| BR-5 A sourced projects count   | Leadership   | Or we ship years + markets only — see P2.                                                                                                                                                                                                                                    |
+| BR-6 Cherokee Nation outreach   | —            | **Decided 2026-06-19: no outreach.** Listed only because it keeps getting re-asked. Revisit only if the Nation asks.                                                                                                                                                         |
+| HS-1 HubSpot portal config      | Megan        | See P2.                                                                                                                                                                                                                                                                      |
+| Written leadership sign-off     | Leadership   | See P3.                                                                                                                                                                                                                                                                      |
+
+---
+
+## Risks
+
+1. **Content production lag.** Engineering can build against placeholders; launch cannot. This has been the
+   bottleneck for the whole project. The mitigation is P1 — make content changes stop requiring a developer.
+2. **CSP report-only drifts past launch.** Easy to leave running and never enforce. Set a hard date.
+3. **Schema drift between code and migrations.** Caused the staging 500s on #13/#14/#15 and forced the P2-6
+   migration collapse. Until the CI guard in P3 ships, "added a collection or field → ran `migrate:create`" is
+   a merge-to-main checklist line.
+4. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+ on Postgres 18.3. Validated end-to-end. If a
+   future minor bump breaks the combo, **downgrade Next first** — not Payload; that's the constraint.
+   Tailwind v4 was evaluated and rejected (ADR 0001).
+5. **One AWS account runs both lanes.** `preview.seqtek.com` and `ww3.seqtek.com` are two services in the same
+   stack in the same account, and the separate staging account is gone. There is no isolated environment left
+   to rehearse a destructive change in.

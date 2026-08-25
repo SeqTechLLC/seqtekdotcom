@@ -1,7 +1,7 @@
 import { getPayload, type Payload } from 'payload'
 
 import config from '../../../src/payload.config'
-import type { CaseStudy } from '../../../src/payload-types'
+import type { Post } from '../../../src/payload-types'
 
 /**
  * spec 007 T004 — shared seeded-route fixture for the full in-scope route set
@@ -23,7 +23,7 @@ export const PNG_1x1 = Buffer.from(
 )
 
 /** Minimal valid Payload/Lexical richText value carrying a single paragraph. */
-export const lexical = (text: string): NonNullable<CaseStudy['problem']> =>
+export const lexical = (text: string): NonNullable<Post['content']> =>
   ({
     root: {
       type: 'root',
@@ -44,7 +44,7 @@ export const lexical = (text: string): NonNullable<CaseStudy['problem']> =>
         },
       ],
     },
-  }) as NonNullable<CaseStudy['problem']>
+  }) as NonNullable<Post['content']>
 
 export interface InScopeSeed {
   caseStudySlug: string
@@ -190,12 +190,23 @@ export async function seedInScopeRoutes(
       subtitle: 'A phased rebuild that cut deploy time in half.',
       industry: industry.id,
       heroImage: media.id,
-      problem: lexical('The legacy system shipped quarterly and broke often.'),
-      solution: lexical('We introduced CI/CD and a strangler-fig migration.'),
-      impact: lexical('Deploys went from quarterly to daily.'),
-      metrics: [
-        { number: '50%', label: 'Faster deploys' },
-        { number: '3x', label: 'Release frequency' },
+      // spec 011: the legacy problem/solution/impact/metrics fields were
+      // dropped (FR-007). The body is the block layout, same as production.
+      layout: [
+        {
+          blockType: 'content',
+          body: lexical('The legacy system shipped quarterly and broke often.'),
+        },
+        {
+          blockType: 'content',
+          body: lexical('We introduced CI/CD and a strangler-fig migration.'),
+        },
+        {
+          blockType: 'content',
+          body: lexical('Deploys went from quarterly to daily.'),
+        },
+        { blockType: 'metric-display', number: '50%', label: 'Faster deploys' },
+        { blockType: 'metric-display', number: '3x', label: 'Release frequency' },
       ],
       testimonial: testimonial.id,
       _status: 'published',
@@ -319,8 +330,17 @@ export async function seedInScopeRoutes(
     data: {
       title: 'Touchstone AI Strategy Workshop',
       slug: seed.workshopSlug,
-      description: lexical('A facilitated working session for leadership teams.'),
-      audience: lexical('For executives accountable for an AI roadmap.'),
+      // spec 011: legacy description/audience dropped (FR-007) — body is blocks.
+      layout: [
+        {
+          blockType: 'content',
+          body: lexical('A facilitated working session for leadership teams.'),
+        },
+        {
+          blockType: 'content',
+          body: lexical('For executives accountable for an AI roadmap.'),
+        },
+      ],
       testimonial: testimonial.id,
       _status: 'published',
     },

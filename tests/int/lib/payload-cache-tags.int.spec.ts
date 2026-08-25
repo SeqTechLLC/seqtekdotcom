@@ -41,7 +41,9 @@ const SLUGGED_COLLECTIONS = [
   'partners',
 ] as const
 
-const GLOBALS = ['homepage', 'siteSettings', 'navigation'] as const
+// spec 011 T016: siteSettings + navigation withdrawn (ADR 0010) — homepage
+// is the only remaining global.
+const GLOBALS = ['homepage'] as const
 
 const asSet = (a: string[]) => new Set(a)
 

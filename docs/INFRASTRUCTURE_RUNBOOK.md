@@ -308,7 +308,7 @@ export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie
 
 `tools/payload-seed/README.md` §"Getting `IMPORT_COOKIE`" has the DevTools
 steps. Every REST tool here reads it: `push-to-payload`, `rekey-staging`,
-`push-staging`, `import-case-study` and `payload:seed`.
+`push-staging` and `payload:seed`.
 
 Drop `--dry-run` to write. Keep filenames byte-identical — `$ref` and `$file`
 both key on filename, so a rename silently orphans every reference to it.
@@ -324,9 +324,12 @@ export IMPORT_TOKEN=<payload-token cookie from /admin on the NEW env>
 export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
 
 # Order matters — later specs resolve $ref against what earlier ones created.
+# `global-site-settings` and `global-navigation` are deliberately absent: both
+# globals were withdrawn in spec 011 (site chrome is code-owned, ADR 0010), and
+# payload-seed accepts any string as a global slug, so listing them here would
+# PATCH a route that no longer exists and report success.
 for f in categories industries testimonials team service-pillars services \
-         case-studies posts workshops pages partners \
-         global-homepage global-site-settings global-navigation; do
+         case-studies posts workshops pages partners global-homepage; do
   npm run payload:seed -- docs/content-drafts/$f.json
 done
 ```
@@ -446,6 +449,50 @@ own it.
 
 ---
 
+## 2.9 Before a destructive migration: snapshot first
+
+Some migrations drop columns and tables — spec 011's expand/contract close is the
+first, shipped as `20260824_201317_spec011_drop_inert_fields` plus
+`20260824_214311_spec011_drop_stats_bar_source`. Those are not recoverable by
+re-running anything.
+
+**Merging IS deploying, and deploying IS migrating.** A push to `main` promotes
+the ww3 lane (`deploy.yml`, `IS_RELEASE`), the container's `CMD` is
+`npx payload migrate && node server.js` (`Dockerfile:134`), and the `preview`
+GitHub Environment has no approval rule. There is no manual step between the
+merge button and the migration, and there is no separate staging lane to
+rehearse in — that account was retired 2026-08-14.
+
+So the one safety step happens **before you press merge**:
+
+```sh
+aws rds create-db-snapshot \
+  --db-instance-identifier <instance> \
+  --db-snapshot-identifier pre-spec011-drop-inert-fields
+aws rds wait db-snapshot-completed \
+  --db-snapshot-identifier pre-spec011-drop-inert-fields
+```
+
+That is the whole procedure. Two things make it sufficient rather than thin:
+
+- **The content is reproducible.** `docs/content-drafts/*.json` is the source of
+  truth for every published document (`CLAUDE.md` § Content loading & deploys);
+  a lane can be rebuilt from it with `npm run payload:seed`. The snapshot covers
+  the one thing the drafts do not: edits made directly in the admin since the
+  last seed.
+- **Nothing here is public.** `preview.seqtek.com` and `ww3.seqtek.com` are both
+  Cognito-gated; `seqtek.com` still serves Wix.
+
+> **Do not run a Payload script against a remote lane to "check" it first.**
+> `payload.config.ts` enables Drizzle push whenever `NODE_ENV !== 'production'`,
+> so a script run from a laptop with `DATABASE_URL` pointed at a deployed lane
+> will **push the local config's schema to it** — applying the drops immediately,
+> outside the migration, with no record. Spec 011 shipped a
+> `tools/legacy-equivalence` gate that fell into exactly this trap and was
+> deleted; the snapshot is the control that actually works.
+
+---
+
 ## 3. Cut `seqtek.com` over to prod
 
 Prod runs on its CloudFront URL until this happens, which is deliberate: prod
@@ -475,12 +522,12 @@ Once DNS is in hand:
    `/services`) — those preserve the Wix-era URLs
 7. Make `seqtek-preview.com` `noindex` so preview never competes with prod in
    search
-8. Seed the office address into the `siteSettings` global so `Organization`
-   JSON-LD emits `address`. The footer NAP is hardcoded in
-   `src/lib/site-content.ts`, but `organizationLd`
-   (`src/lib/structured-data.ts`) reads the Payload global — a code deploy
-   alone leaves the structured-data address empty, which is exactly the
-   local-search signal the visible address was published for. Verify after:
+8. ~~Seed the office address into the `siteSettings` global~~ — **retired by
+   spec 011 (FR-005a).** `organizationLd` now reads the same hardcoded
+   `src/lib/site-content.ts` constant the footer uses, so the address ships
+   with the code and cannot go dormant by being left unseeded. The step is
+   gone rather than left as a no-op: a cutover instruction that silently does
+   nothing is worse than none. Still worth verifying after cutover:
    `curl -s https://seqtek.com | grep -o '"address":{[^}]*}'`
 
 ---

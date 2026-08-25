@@ -3,7 +3,6 @@ import type { CollectionConfig } from 'payload'
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { layoutBlocks } from '../payload/blocks/layout'
-import { editorConfig } from '../payload/editor/editorConfig'
 import { httpsUrlValidate } from '../payload/fields/url'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
@@ -61,6 +60,23 @@ export const TeamMembers: CollectionConfig = {
     { name: 'isLeadership', type: 'checkbox', defaultValue: false },
     { name: 'order', type: 'number' },
     {
+      // spec 011 T011 (FR-001): NOT a legacy field. `expertise` is read by
+      // `personLd` in src/lib/structured-data.ts and emitted as `knowsAbout`
+      // in each member's Person JSON-LD, so it affects how search engines and
+      // AI assistants describe this person. The spec-010 cleanup listed it
+      // among the retained legacy body fields by mistake, which left it
+      // hidden and read-only while still being load-bearing — precisely the
+      // inert-control failure this feature exists to remove.
+      name: 'expertise',
+      type: 'array',
+      label: 'Areas of expertise',
+      admin: {
+        description:
+          'Short skill or subject labels, one per row (for example "Cloud architecture", "Team facilitation"). These do not appear on the page, but search engines and AI assistants read them to understand what this person is known for.',
+      },
+      fields: [{ name: 'label', type: 'text', required: true, label: 'Area' }],
+    },
+    {
       // spec 010 US2: per-member metadata for the new detail route (AICO).
       name: 'seo',
       type: 'group',
@@ -70,43 +86,5 @@ export const TeamMembers: CollectionConfig = {
         { name: 'ogImage', type: 'upload', relationTo: 'media' },
       ],
     },
-    // ---- Legacy body fields (expand/contract, R2) ----
-    // Composed into `layout` by teamMemberToLayout.ts; hidden + read-only, kept
-    // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
-    // (`expertise` is still read by personLd for knowsAbout until the drop.)
-    {
-      name: 'bio',
-      type: 'richText',
-      editor: editorConfig,
-      admin: { hidden: true, readOnly: true },
-    },
-    {
-      name: 'expertise',
-      type: 'array',
-      admin: { hidden: true, readOnly: true },
-      fields: [{ name: 'label', type: 'text', required: true }],
-    },
-    {
-      name: 'certifications',
-      type: 'array',
-      admin: { hidden: true, readOnly: true },
-      fields: [{ name: 'label', type: 'text', required: true }],
-    },
-    {
-      name: 'education',
-      type: 'array',
-      admin: { hidden: true, readOnly: true },
-      fields: [
-        { name: 'degree', type: 'text', required: true },
-        { name: 'institution', type: 'text', required: true },
-      ],
-    },
-    {
-      name: 'personalFacts',
-      type: 'array',
-      admin: { hidden: true, readOnly: true },
-      fields: [{ name: 'label', type: 'text', required: true }],
-    },
-    { name: 'quote', type: 'textarea', admin: { hidden: true, readOnly: true } },
   ],
 }

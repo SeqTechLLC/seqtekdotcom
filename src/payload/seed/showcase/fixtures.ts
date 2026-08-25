@@ -8,13 +8,11 @@ export interface MediaIdMap {
   illustration: string | number
 }
 
-export type BlockCategory =
-  | 'hero'
-  | 'content'
-  | 'social-proof'
-  | 'cta'
-  | 'content-collection'
-  | 'specialty'
+// Sourced from the canonical taxonomy (spec 011) so the showcase harness and
+// the admin block picker cannot drift apart. Re-exported for existing callers.
+import type { BlockCategory } from '../../blocks/categories'
+
+export type { BlockCategory }
 
 export interface BlockVariant {
   /** Slug-safe variant id, used in the per-block page slug suffix. */
@@ -521,7 +519,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
           data: {
             blockType: 'stats-bar',
             heading: 'By the numbers',
-            source: 'inline',
             items: [
               { number: '25', label: 'years operating', suffix: '+' },
               { number: '0.7', label: 'cost vs FTE hire', suffix: 'x' },
@@ -541,7 +538,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
           data: {
             blockType: 'logo-bar',
             heading: 'Trusted by leadership teams',
-            source: 'inline',
             logos: [
               { logo: media.logo },
               { logo: media.logo },

@@ -63,7 +63,8 @@ const DRAFTABLE_COLLECTIONS = [
 
 // The three draftable globals (per `data-model.md` §2 — siteSettings,
 // homepage, navigation all set `versions: { drafts: true }`).
-const DRAFTABLE_GLOBALS = ['siteSettings', 'homepage', 'navigation'] as const
+// spec 011 T016: siteSettings + navigation withdrawn (ADR 0010).
+const DRAFTABLE_GLOBALS = ['homepage'] as const
 
 interface DraftSpec {
   collection: string

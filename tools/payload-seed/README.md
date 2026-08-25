@@ -5,7 +5,7 @@ JSON request file, over the REST API — no admin UI clicking, no DB access. It
 resolves relations, images, and rich text at write time via directives.
 
 This is the committed, generic counterpart to the per-type importers
-(`tools/import-case-study/`). It shares the same REST client
+(the case-study importer retired in spec 011). It shares the same REST client
 (`tools/payload-rest/client.ts`) and the same text→Lexical converter
 (`src/payload/seed/htmlToLexical.ts`), so content lands in the exact shape the
 admin and the audit-seed pipeline produce.
@@ -95,7 +95,7 @@ A **global** spec updates one global (it has a `global` key instead of
 
 ```jsonc
 {
-  "global": "siteSettings",
+  "global": "homepage",
   "status": "published",
   "data": {
     /* ...global fields... */

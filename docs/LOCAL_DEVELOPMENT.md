@@ -169,17 +169,23 @@ If you need to test S3 uploads specifically (e.g., working on the storage adapte
 
 The default setup starts with an empty database. Payload creates the schema on first startup. Visit `/admin` to create your admin user and start adding content manually. This is the simplest path for working on UI components or layout changes.
 
-### Seeding from Audit Data
+### ~~Seeding from Audit Data~~ — removed (spec 011)
 
-The `src/payload/seed/migrateFromAudit.ts` script imports extracted content from a private audit directory (Playwright crawl of the current Wix site). The directory is **kept outside this repo** and is only available to SEQTEK team members. By convention it lives at `~/projects/seqtek-internal/audit/` (a sibling of the repo); set the `AUDIT_DIR` env var if you keep it elsewhere.
+The `migrateFromAudit.ts` script and its parsers were deleted. It was a one-shot
+Wix migration that had already run, and `docs/content-drafts/*.json` superseded it
+as the content source (see below, and `CLAUDE.md` § Content loading & deploys).
 
-If you have the audit directory:
+By spec 011 it had also gone quietly inert: its case-study and homepage steps
+wrote fields the schema no longer has, so Payload dropped every key and both
+steps reported success while writing nothing.
 
-```bash
-AUDIT_DIR=/path/to/audit npx tsx src/payload/seed/migrateFromAudit.ts
-```
+The 301 redirect map it once sourced is committed code and unaffected —
+`src/lib/redirects.ts`, which now carries the slug rewrites too (the seed-side
+`slugRewrites.ts` went with the seeder; every mapping it held is in the 301 map
+and INTEGRATIONS.md §9). The dated Wix crawl remains outside the repo at
+`~/projects/seqtek-internal/audit/` as the historical record.
 
-This populates all collections with extracted Wix content: case studies, services, team members, blog posts, etc. It is a **one-shot migration tool** (and the source for the 301 redirect map), not the live-content publish baseline — for hand-authored content use the seeder below. Useful for testing the full site experience with realistic data.
+To populate a local database, use the seeder below.
 
 If you don't have the audit directory, you can still develop against the full site — you'll just need to create sample content manually in the admin panel.
 

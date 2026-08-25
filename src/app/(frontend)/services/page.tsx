@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getPageBySlug, getSiteSettings } from '@/lib/payload'
+import { getPageBySlug } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
@@ -19,16 +19,15 @@ export const revalidate = 3600
 const OVERVIEW_SLUG = 'service-overview'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [page, siteSettings] = await Promise.all([getPageBySlug(OVERVIEW_SLUG), getSiteSettings()])
+  const [page] = await Promise.all([getPageBySlug(OVERVIEW_SLUG)])
   if (!page) {
     return buildMetadata(null, {
       title: 'Services',
       description:
         'How we help: workshops, localshoring, AI integration, and digital transformation.',
-      siteSettings,
     })
   }
-  return buildMetadata(page.seo, { title: page.title, siteSettings })
+  return buildMetadata(page.seo, { title: page.title })
 }
 
 export default async function ServicesPage() {

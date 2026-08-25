@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getPageBySlug, getSiteSettings } from '@/lib/payload'
+import { getPageBySlug } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
@@ -50,9 +50,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { offering } = await params
   const pageSlug = OFFERING_TO_SLUG[offering]
   if (!pageSlug) return {}
-  const [page, siteSettings] = await Promise.all([getPageBySlug(pageSlug), getSiteSettings()])
+  const [page] = await Promise.all([getPageBySlug(pageSlug)])
   if (!page) return {}
-  return buildMetadata(page.seo, { title: page.title, siteSettings })
+  return buildMetadata(page.seo, { title: page.title })
 }
 
 export default async function ServiceOfferingPage({ params }: Props) {

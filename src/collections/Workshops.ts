@@ -3,7 +3,6 @@ import type { CollectionConfig } from 'payload'
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { layoutBlocks } from '../payload/blocks/layout'
-import { editorConfig } from '../payload/editor/editorConfig'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
@@ -46,65 +45,6 @@ export const Workshops: CollectionConfig = {
       type: 'blocks',
       blocks: [...layoutBlocks],
       defaultValue: workshopSkeleton,
-    },
-    // ---- Legacy body fields (expand/contract, R2) ----
-    // Composed into `layout` by workshopToLayout.ts; hidden + read-only and kept
-    // one release as an in-DB rollback net, then removed by drop_legacy_body_columns.
-    {
-      name: 'description',
-      type: 'richText',
-      editor: editorConfig,
-      admin: { hidden: true, readOnly: true },
-    },
-    {
-      name: 'format',
-      type: 'richText',
-      editor: editorConfig,
-      admin: { hidden: true, readOnly: true },
-    },
-    {
-      name: 'audience',
-      type: 'richText',
-      editor: editorConfig,
-      admin: { hidden: true, readOnly: true },
-    },
-    {
-      name: 'deliverables',
-      type: 'array',
-      admin: { hidden: true, readOnly: true },
-      fields: [{ name: 'label', type: 'text', required: true }],
-    },
-    {
-      // Proof section: real photos from delivered workshops (spec ref:
-      // touchstone-landing.md §5; CrossCo C-5 marketing release signed
-      // 2026-06-11). Rendered as a captioned gallery on the detail page.
-      name: 'photos',
-      type: 'array',
-      admin: { hidden: true, readOnly: true },
-      fields: [
-        { name: 'image', type: 'upload', relationTo: 'media', required: true },
-        { name: 'caption', type: 'text' },
-      ],
-    },
-    {
-      // Recap/promo video, rendered via the VideoEmbed section
-      // (youtube-nocookie / vimeo player; CSP frame-src allows both).
-      name: 'video',
-      type: 'group',
-      admin: { hidden: true, readOnly: true },
-      fields: [
-        {
-          name: 'provider',
-          type: 'select',
-          defaultValue: 'youtube',
-          options: [
-            { label: 'YouTube', value: 'youtube' },
-            { label: 'Vimeo', value: 'vimeo' },
-          ],
-        },
-        { name: 'videoId', type: 'text' },
-        { name: 'title', type: 'text' },
-      ],
     },
     { name: 'facilitator', type: 'relationship', relationTo: 'teamMembers' },
     { name: 'testimonial', type: 'relationship', relationTo: 'testimonials' },

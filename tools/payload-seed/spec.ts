@@ -7,7 +7,7 @@
  * resolved at write time — directive shapes are validated lazily in
  * `resolve.ts`, since `data` is free-form per collection. This module only
  * validates the spec envelope, collecting every problem in one pass (mirrors
- * `validateInput` in tools/import-case-study/types.ts).
+ * `validateInput` in the case-study importer, retired in spec 011).
  */
 
 export type SeedStatus = 'published' | 'draft'

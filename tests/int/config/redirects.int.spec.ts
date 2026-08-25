@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest'
 import { redirectMap } from '../../../src/lib/redirects'
 
 /**
- * spec 004 T040 (redirect-map.md). The 301 map from old Wix URLs. Distinct
- * from src/payload/seed/slugRewrites.ts (bare slugs for the seed).
+ * spec 004 T040 (redirect-map.md). The 301 map from old Wix URLs, at the HTTP
+ * path level. Since spec 011 this is the only slug-rewrite record in code.
  */
 
 // The non-identity sources from INTEGRATIONS.md §9 (the two identity rows

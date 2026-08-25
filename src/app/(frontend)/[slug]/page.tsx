@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { getPageBySlug, getSiteSettings } from '@/lib/payload'
+import { getPageBySlug } from '@/lib/payload'
 import { getDraftBySlug } from '@/lib/preview'
 import { buildMetadata } from '@/lib/metadata'
 import { JsonLd } from '@/components/seo/JsonLd'
@@ -33,9 +33,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const [page, siteSettings] = await Promise.all([getPageBySlug(slug), getSiteSettings()])
+  const [page] = await Promise.all([getPageBySlug(slug)])
   if (!page) return {}
-  return buildMetadata(page.seo, { title: page.title, siteSettings })
+  return buildMetadata(page.seo, { title: page.title })
 }
 
 export default async function GenericPage({ params }: Props) {

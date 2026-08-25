@@ -51,7 +51,7 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 
 All collections are defined in TypeScript. Payload auto-generates the database schema, REST API, GraphQL API, and admin panel from these definitions.
 
-> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields some tables still list (`problem`/`solution`/`impact`, `bio`, `hero`/`stats`/…) are retained one release (hidden + read-only, expand/contract) and composed into `layout` by `src/payload/seed/compose/*ToLayout.ts`. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `services`/`servicePillars`/`industries`/`locations` stay structured — they are relationship/taxonomy targets, no longer publicly routed (the four `/services` offerings render as block-composed `pages` by slug — PR #79, ADR 0009).
+> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011**, which completes the contract half — `layout` is now the only body. The per-type `*ToLayout.ts` composers that performed that migration were deleted with the fields they read; the conversion they existed for is complete, and git history holds them if the mapping is ever needed again. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `services`/`servicePillars`/`industries`/`locations` stay structured — they are relationship/taxonomy targets, no longer publicly routed (the four `/services` offerings render as block-composed `pages` by slug — PR #79, ADR 0009).
 
 ### Document Collections
 
@@ -76,7 +76,6 @@ Block-composed content pages — the generic primitive (spec 010 / ADR 0009). Th
 | `title`       | text   | Required                                                                            |
 | `slug`        | text   | Required, unique, indexed; auto-generated from title (`slugFromTitle` beforeChange) |
 | `publishedAt` | date   | Sidebar; a future date forces the doc back to `draft` (`enforceDraftWhenScheduled`) |
-| `hero`        | group  | headline, subheadline, backgroundImage, cta — legacy field, retained                |
 | `layout`      | blocks | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks`             |
 | `seo`         | group  | metaTitle, metaDescription, ogImage                                                 |
 
@@ -107,25 +106,21 @@ Versions: Enabled with drafts for preview before publishing.
 
 The most important content type. Each gets a dedicated page at `/case-studies/[slug]`.
 
-| Field                | Type                                  | Notes                                                               |
-| -------------------- | ------------------------------------- | ------------------------------------------------------------------- |
-| `title`              | text                                  | Required                                                            |
-| `slug`               | text                                  | Auto-generated from title                                           |
-| `subtitle`           | text                                  | Short outcome-focused tagline                                       |
-| `industry`           | relationship -> industries            | Required                                                            |
-| `services`           | relationship -> services (hasMany)    | Which SEQTEK services were applied                                  |
-| `client`             | group                                 | `name` (text), `logo` (upload, optional), `isAnonymized` (checkbox) |
-| `heroImage`          | upload (media)                        | Must be project-relevant — not stock                                |
-| `problem`            | richText                              | The challenge the client faced                                      |
-| `solution`           | richText                              | What SEQTEK did                                                     |
-| `impact`             | richText                              | Results and outcomes                                                |
-| `metrics`            | array                                 | Objects with `number` (text), `label` (text), `context` (text)      |
-| `technologies`       | array of text                         | Tag list (e.g., ".NET", "React", "AWS")                             |
-| `testimonial`        | relationship -> testimonials          | Optional — client quote about this engagement                       |
-| `relatedCaseStudies` | relationship -> caseStudies (hasMany) | Max 3                                                               |
-| `seo`                | group                                 | metaTitle, metaDescription, ogImage                                 |
-| `publishedAt`        | date                                  |                                                                     |
-| `status`             | select                                | `draft`, `published`                                                |
+| Field                | Type                                  | Notes                                                                                                                 |
+| -------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `title`              | text                                  | Required                                                                                                              |
+| `slug`               | text                                  | Auto-generated from title                                                                                             |
+| `subtitle`           | text                                  | Short outcome-focused tagline                                                                                         |
+| `industry`           | relationship -> industries            | Required                                                                                                              |
+| `services`           | relationship -> services (hasMany)    | Which SEQTEK services were applied                                                                                    |
+| `client`             | group                                 | `name` (text), `logo` (upload, optional), `isAnonymized` (checkbox)                                                   |
+| `heroImage`          | upload (media)                        | Must be project-relevant — not stock                                                                                  |
+| `testimonial`        | relationship -> testimonials          | Optional — client quote about this engagement                                                                         |
+| `relatedCaseStudies` | relationship -> caseStudies (hasMany) | Max 3                                                                                                                 |
+| `seo`                | group                                 | metaTitle, metaDescription, ogImage                                                                                   |
+| `publishedAt`        | date                                  |                                                                                                                       |
+| `status`             | select                                | `draft`, `published`                                                                                                  |
+| `layout`             | blocks                                | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks` (spec 011: replaced the discrete body fields) |
 
 #### `services`
 
@@ -136,15 +131,16 @@ Structured service records. **No longer publicly routed** — the four-offering 
 | `title`              | text                                  | e.g., "Change Management & Transformation"              |
 | `slug`               | text                                  | Auto-generated                                          |
 | `pillar`             | relationship -> servicePillars        | Legacy grouping relationship (no longer drives routing) |
-| `description`        | richText                              | Detailed service description (800-1200 words target)    |
-| `approach`           | richText                              | Methodology / how SEQTEK delivers this service          |
-| `deliverables`       | array of text                         | Bulleted list of what the client receives               |
 | `icon`               | text                                  | Icon identifier for card displays                       |
 | `relatedCaseStudies` | relationship -> caseStudies (hasMany) |                                                         |
-| `faq`                | array                                 | Objects with `question` (text), `answer` (richText)     |
 | `seo`                | group                                 |                                                         |
 | `order`              | number                                | Display ordering                                        |
 | `status`             | select                                | `draft`, `published`                                    |
+
+Spec 011 dropped `description`, `approach`, `deliverables`, `faq` and the whole
+`layout` blocks array from this collection: `/services/[offering]` renders four
+block-composed `pages` by slug (PR #79), so nothing rendered them. What remains
+is the typed metadata the `service-cards` and `service-pillar-cards` blocks read.
 
 #### `servicePillars`
 
@@ -181,23 +177,19 @@ The detail route owns no `<h1>` (the `/services/[offering]` shape, not the `/tea
 
 Team bios, rendered as block-composed pages at `/team` (listing) and `/team/[slug]` (detail), plus blog post authorship.
 
-| Field            | Type           | Notes                                              |
-| ---------------- | -------------- | -------------------------------------------------- |
-| `name`           | text           | Full name                                          |
-| `slug`           | text           |                                                    |
-| `title`          | text           | Job title (e.g., "CEO")                            |
-| `role`           | text           | 1-sentence role description                        |
-| `photo`          | upload (media) | Professional headshot — required                   |
-| `bio`            | richText       | 200-350 words for leadership, 75-150 for others    |
-| `expertise`      | array of text  | Areas of expertise                                 |
-| `certifications` | array of text  | PMP, AWS, PROSCI, etc.                             |
-| `education`      | array          | Objects with `degree` (text), `institution` (text) |
-| `linkedinUrl`    | text           |                                                    |
-| `email`          | text           | Optional                                           |
-| `personalFacts`  | array of text  | 1-2 humanizing details                             |
-| `quote`          | textarea       | Personal philosophy quote                          |
-| `isLeadership`   | checkbox       | Controls featured display                          |
-| `order`          | number         | Display ordering                                   |
+| Field          | Type           | Notes                                                                                                                 |
+| -------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `name`         | text           | Full name                                                                                                             |
+| `slug`         | text           |                                                                                                                       |
+| `title`        | text           | Job title (e.g., "CEO")                                                                                               |
+| `role`         | text           | 1-sentence role description                                                                                           |
+| `photo`        | upload (media) | Professional headshot — required                                                                                      |
+| `expertise`    | array of text  | Areas of expertise                                                                                                    |
+| `linkedinUrl`  | text           |                                                                                                                       |
+| `email`        | text           | Optional                                                                                                              |
+| `isLeadership` | checkbox       | Controls featured display                                                                                             |
+| `order`        | number         | Display ordering                                                                                                      |
+| `layout`       | blocks         | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks` (spec 011: replaced the discrete body fields) |
 
 #### `testimonials`
 
@@ -217,18 +209,15 @@ Full-attribution testimonials used across the site.
 
 Workshop pages at `/workshops/[slug]` (one Touchstone workshop among three; IA corrected 2026-06-11, PR #49).
 
-| Field          | Type                         | Notes                                  |
-| -------------- | ---------------------------- | -------------------------------------- |
-| `title`        | text                         | e.g., "Five Dysfunctions Workshop"     |
-| `slug`         | text                         |                                        |
-| `description`  | richText                     | Full workshop description              |
-| `format`       | richText                     | Agenda, duration, format details       |
-| `audience`     | richText                     | Who this workshop is for               |
-| `deliverables` | array of text                | What participants leave with           |
-| `facilitator`  | relationship -> teamMembers  |                                        |
-| `testimonial`  | relationship -> testimonials | From a past participant                |
-| `order`        | number                       | Sequence in the 3-workshop progression |
-| `seo`          | group                        |                                        |
+| Field         | Type                         | Notes                                                                                                                 |
+| ------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `title`       | text                         | e.g., "Five Dysfunctions Workshop"                                                                                    |
+| `slug`        | text                         |                                                                                                                       |
+| `facilitator` | relationship -> teamMembers  |                                                                                                                       |
+| `testimonial` | relationship -> testimonials | From a past participant                                                                                               |
+| `order`       | number                       | Sequence in the 3-workshop progression                                                                                |
+| `seo`         | group                        |                                                                                                                       |
+| `layout`      | blocks                       | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks` (spec 011: replaced the discrete body fields) |
 
 #### `industries`
 
@@ -278,43 +267,36 @@ Access: Public read (no draft status on categories). Create/update requires admi
 
 ### Globals (Singletons)
 
-#### `siteSettings`
+#### ~~`siteSettings`~~ and ~~`navigation`~~ — withdrawn (spec 011, ADR 0010)
 
-Company-wide settings edited in one place, used across the site.
+Both globals were **removed from the Payload config and their tables dropped**.
+Site chrome is code-owned: navigation structure, company name, tagline, phone,
+email, postal address, social links and footer text all live in
+`src/lib/site-content.ts` and change by deploy, not by publish.
 
-| Field         | Type  | Notes                                                                                    |
-| ------------- | ----- | ---------------------------------------------------------------------------------------- |
-| `companyName` | text  | "SEQTEK"                                                                                 |
-| `tagline`     | text  |                                                                                          |
-| `phone`       | text  |                                                                                          |
-| `email`       | text  |                                                                                          |
-| `address`     | group | street, city, state, zip                                                                 |
-| `socialLinks` | group | linkedinUrl, twitterUrl, facebookUrl                                                     |
-| `footerText`  | text  | Copyright line                                                                           |
-| `stats`       | array | Objects with `number` (text), `label` (text), `suffix` (text) — e.g., "25+", "Years", "" |
+Why: navigation URLs are unvalidated free text coupled to the route table and
+the 301 redirect map, so a bad nav edit ships a broken link into the primary
+navigation, while the underlying values change roughly once a decade. ADR 0010
+records the reasoning and the revisit condition.
 
-#### `navigation`
-
-Controls the site navigation structure.
-
-| Field       | Type  | Notes                                                         |
-| ----------- | ----- | ------------------------------------------------------------- |
-| `mainNav`   | array | Objects with `label` (text), `url` (text), `children` (array) |
-| `footerNav` | array | Same structure                                                |
-| `ctaButton` | group | `label` (text), `url` (text) — the nav CTA button             |
+Seven values from `siteSettings` were load-bearing at render time and were
+relocated, not lost — `tagline` and `companyName` feed page metadata, and
+`companyName`, `tagline`, `email`, `phone`, `address` and `socialLinks` feed the
+`Organization` JSON-LD. `tests/int/render/organizationLd.int.spec.ts` pins the
+complete emitted object so the relocation cannot silently regress.
 
 #### `homepage`
 
-Homepage-specific content.
+The only remaining global. Homepage-specific content, block-composed.
 
-| Field                  | Type                                   | Notes                                           |
-| ---------------------- | -------------------------------------- | ----------------------------------------------- |
-| `hero`                 | group                                  | headline, subheadline, backgroundImage, cta     |
-| `stats`                | relationship -> siteSettings.stats     | Or inline                                       |
-| `featuredCaseStudy`    | relationship -> caseStudies            | Highlighted on homepage                         |
-| `brandTeaser`          | group                                  | headline, body (short Sequoyah teaser), linkUrl |
-| `clientLogos`          | array of upload (media)                | Logo bar                                        |
-| `featuredTestimonials` | relationship -> testimonials (hasMany) | Max 3                                           |
+| Field    | Type   | Notes                                                                   |
+| -------- | ------ | ----------------------------------------------------------------------- |
+| `layout` | blocks | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks` |
+
+Its discrete legacy fields (`hero`, `stats`, `featuredCaseStudy`, `brandTeaser`,
+`clientLogos`, `featuredTestimonials`) were dropped in spec 011 — they had been
+retained read-only through the ADR 0009 expand/contract and are now expressed as
+blocks in `layout`.
 
 ---
 
@@ -435,7 +417,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   └── Industries.ts  Locations.ts  Media.ts  Categories.ts
 │   │
 │   ├── globals/                           # Payload global (singleton) configs
-│   │   └── SiteSettings.ts  Navigation.ts  Homepage.ts
+│   │   └── Homepage.ts                  # the only global (spec 011 withdrew the other two)
 │   │
 │   ├── payload/
 │   │   ├── access/                        # Reusable access control
@@ -453,10 +435,9 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   │   ├── revalidateOnChange.ts      # ISR revalidate + CloudFront path invalidation
 │   │   │   └── invalidateMediaOnChange.ts # Media replace/delete → CloudFront invalidation
 │   │   ├── livePreview/url.ts             # Live-preview URL builder
-│   │   ├── seed/                          # Audit-migration + seed pipeline
-│   │   │   ├── migrateFromAudit.ts        # Import extracted content from audit/ JSON
-│   │   │   ├── htmlToLexical.ts  upsert.ts  log.ts  slugRewrites.ts
-│   │   │   └── compose/  parsers/  skeletons/  showcase/
+│   │   ├── seed/                          # Seed helpers + committed test fixtures
+│   │   │   ├── htmlToLexical.ts
+│   │   │   └── skeletons/  showcase/
 │   │   └── storage/s3.ts                  # S3 adapter + mediaFileURL()
 │   │
 │   ├── components/
@@ -493,7 +474,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   └── brand/                             # Brand assets (logos, etc.)
 │
 ├── infra/                                 # AWS CDK (see §13)
-├── tools/                                 # Subdir tooling: payload-seed, payload-rest, import-case-study, ingest-photos, leonardo-images, check-stale-overrides, e2e
+├── tools/                                 # Subdir tooling: payload-seed, payload-rest, ingest-photos, leonardo-images, check-stale-overrides, e2e
 ├── tests/                                 # Vitest (int/unit) + Playwright (e2e + visual)
 ├── specs/                                 # Spec-Kit specs
 ├── docs/                                  # This doc + ROADMAP, DESIGN_SYSTEM, BLOCK_LIBRARY, decisions/ (ADRs)
