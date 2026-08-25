@@ -14,17 +14,22 @@ name: Deploy
 # nothing is compiled, nothing is pushed, a task definition is repointed at a
 # digest that already exists.
 #
-# Release-Please's bookkeeping commit does NOT build or deploy. It touches only
-# package.json, package-lock.json, CHANGELOG.md and the manifest, all of which
-# are in `paths-ignore` below, so merging the release PR rolls nothing. It cuts
-# a tag and prepares a DRAFT release; that is all.
+# EXACTLY ONE EVENT PROMOTES PRODUCTION: publishing a GitHub Release. You cut
+# one by hand against `main`, e.g.
 #
-# EXACTLY ONE EVENT PROMOTES PRODUCTION: a GitHub Release published by a
-# person. `release-please.yml` no longer dispatches this workflow — having both
-# a dispatch and a `release:` trigger meant two mechanisms for one outcome. The
-# draft exists so the publishing click is a human act, which also makes the
-# event fire at all: a release published by the GITHUB_TOKEN raises no workflow
-# run.
+#     gh release create v0.0.43 --title "v0.0.43" --generate-notes --target main
+#
+# `--target main` points the tag at the current tip, which an ordinary merge has
+# already built and deployed to preview — so the release promotes an image that
+# exists and was tested. `--generate-notes` writes the notes from the commits in
+# the range.
+#
+# Creating it yourself is also what makes the event fire: GitHub raises no
+# workflow run for a release published by the default GITHUB_TOKEN, which is why
+# an automated release bot needed a `workflow_dispatch` workaround. Release-
+# Please has been retired — it landed a bookkeeping commit on `main` that
+# triggered a second build and a redundant preview roll for a change that was
+# only a version number.
 #
 # THE VERSION IS RUNTIME METADATA, NOT A REBUILD. A tested image is never
 # rebuilt merely to bake a version number into it. The commit SHA stays baked
@@ -94,35 +99,23 @@ on:
       # them. `Preview` remains a normal branch; it just no longer deploys.
       - main
     # Skip the redeploy for changes that can't affect the running image.
-    # Release-Please's PR-merges and docs-only PRs both fall into this
-    # bucket. `paths-ignore` skips the workflow entirely if EVERY changed
-    # path matches — mixed code+docs commits still trigger.
+    # `paths-ignore` skips the workflow entirely only if EVERY changed path
+    # matches — a mixed code+docs commit still triggers.
     paths-ignore:
-      # Release-Please's bookkeeping commit touches ONLY these four files.
-      # Ignoring all four means merging the release PR does not build an image
-      # or roll preview — it is version bookkeeping, not a change to the app.
-      # The artifact promoted at release time is the one an ordinary merge
-      # already built and preview has been running.
+      # Deliberately NOT package.json / package-lock.json: a dependency bump
+      # changes the lockfile and MUST rebuild and redeploy. Only files that
+      # cannot affect the running image belong here.
       - CHANGELOG.md
-      - .release-please-manifest.json
-      - package.json
-      - package-lock.json
       - docs/**
       - specs/**
       - README.md
       - CLAUDE.md
       - LICENSE
-  # THE production trigger — the only one. Release-Please creates the release
-  # as a DRAFT (`"draft": true`), so this fires when a person opens that draft
-  # and clicks Publish.
-  #
-  # That the publisher is a human is what makes the event exist: GitHub does
-  # not create workflow runs from events raised by the default GITHUB_TOKEN, so
-  # a release Release-Please published itself would never reach this trigger.
-  # The old workaround was an explicit `gh workflow run` dispatch from
-  # release-please.yml; it has been removed, both because it made two
-  # mechanisms for one outcome and because it had never worked (that job does
-  # not check out the repo, and `gh` needs a git context).
+  # THE production trigger — the only one. Fires when a person publishes a
+  # GitHub Release, e.g.
+  #   gh release create v0.0.43 --title "v0.0.43" --generate-notes --target main
+  # That the publisher is a human is what makes the event exist: GitHub creates
+  # no workflow run for a release published by the default GITHUB_TOKEN.
   release:
     types: [published]
   workflow_dispatch:
@@ -250,28 +243,18 @@ jobs:
           REGISTRY="${{ secrets.AWS_ACCOUNT_ID || vars.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE="${REGISTRY}/${ECR_REPOSITORY}"
-          # Version tag, derived from the REF rather than the event name.
-          #
-          # Keying this on `github.event_name == 'release'` looked right but was
-          # dead code on the path that actually deploys production: release-please
-          # runs as GITHUB_TOKEN, so its release never raises a `release` event —
-          # that is the whole reason release-please.yml dispatches this workflow
-          # instead. On that dispatch the event is `workflow_dispatch`, so the
-          # version tag was never applied and prod fell back to a bare SHA.
-          #
-          # The ref is `refs/tags/vX.Y.Z` on BOTH paths (the dispatch passes
-          # `--ref "$TAG"`, a human-published release checks out the tag), so it
-          # is the reliable source.
+          # Release version, derived from the REF rather than the event name,
+          # so it works on both the `release` event and a `workflow_dispatch`
+          # run against a tag. Empty on an ordinary merge to `main`; that is
+          # correct — an unreleased build has no release version.
           VERSION_TAG=""
           case "$GITHUB_REF" in
             refs/tags/v*) VERSION_TAG="${GITHUB_REF#refs/tags/}" ;;
           esac
-          # Semantic version from package.json — what release-please
-          # maintains. Distinct from VERSION_TAG: this is present on EVERY
-          # build (a main push mid-cycle still reports the last released
-          # version), whereas VERSION_TAG is only set when the ref is a tag.
-          # Baked into the image so /api/health can report both it and the
-          # commit.
+          # Version from package.json, baked into the image as a FALLBACK for
+          # /api/health on a lane that has never been released. The real
+          # release version arrives as runtime metadata at promotion time, so
+          # this is not what a released lane reports.
           PKG_VERSION="$(node -p "require('./package.json').version")"
           {
             echo "registry=${REGISTRY}"
@@ -366,11 +349,52 @@ jobs:
       # instead would silently roll the primary lane back/forward to
       # whatever that moving tag currently points at — exactly the drift
       # this whole immutable-tag design exists to prevent.
+      # RELEASE PATH ONLY. The release is created against `main`
+      # (`gh release create vX.Y.Z --target main`), so the tag points at a real
+      # commit that an ordinary merge already built, pushed, and deployed to
+      # preview. That image is the release artifact; nothing is built here.
+      #
+      # If it is missing, stop. A tag created against a commit that never built
+      # — or one whose build is still running — must not silently become a
+      # production deploy of something else.
+      - name: Verify the promoted image exists in ECR (release path only)
+        if: ${{ env.IS_RELEASE == 'true' }}
+        env:
+          PROMOTE_TAG: ${{ steps.img.outputs.sha-tag }}
+          VERSION_TAG: ${{ steps.img.outputs.version-tag }}
+        run: |
+          set -euo pipefail
+          if ! aws ecr describe-images \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="$PROMOTE_TAG" >/dev/null 2>&1; then
+            echo "::error::No image tagged '${PROMOTE_TAG}' in ${ECR_REPOSITORY}."
+            echo "::error::A release promotes an image that a merge to main already"
+            echo "::error::built and deployed to preview. Either that build has not"
+            echo "::error::finished, or the tag points at a commit that never built."
+            echo "::error::Check the Deploy run for commit ${GITHUB_SHA}."
+            exit 1
+          fi
+          echo "Promoting existing image: ${PROMOTE_TAG}"
+
+          # Give that SAME digest the release version as an extra ECR tag, so
+          # `vX.Y.Z` and the SHA name one artifact. put-image attaches a tag to
+          # the existing manifest — no pull, no push, no rebuild.
+          if [ -n "${VERSION_TAG:-}" ]; then
+            MANIFEST=$(aws ecr batch-get-image \
+              --repository-name "$ECR_REPOSITORY" \
+              --image-ids imageTag="$PROMOTE_TAG" \
+              --query 'images[0].imageManifest' --output text)
+            if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
+              --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
+              echo "Tagged ${PROMOTE_TAG} as ${VERSION_TAG} in ECR."
+            else
+              echo "::notice::${VERSION_TAG} already tags this digest."
+            fi
+          fi
+
       - name: Resolve the tested image from the preview lane (release path only)
         id: pin
         if: ${{ env.IS_RELEASE == 'true' }}
-        env:
-          VERSION_TAG: ${{ steps.img.outputs.version-tag }}
         run: |
           set -euo pipefail
           CLUSTER=$(aws cloudformation describe-stacks \
@@ -389,28 +413,13 @@ jobs:
             --query 'taskDefinition.containerDefinitions[0].image' --output text)
           PINNED_TAG="${IMAGE##*:}"
           if [ -z "$PINNED_TAG" ] || [ "$PINNED_TAG" = "None" ]; then
-            echo "::error::Could not read the image the preview lane is running."
-            echo "::error::That image IS the release artifact; refusing to promote."
+            echo "::error::Could not read the tag the preview lane is running."
+            echo "::error::Refusing to deploy: this run cannot state what preview"
+            echo "::error::should keep running, and there is no fallback."
             exit 1
           fi
-          echo "Preview lane is running ${PINNED_TAG} — this is the release artifact."
+          echo "Preview lane is running ${PINNED_TAG} (holding it there)."
           echo "pinned-image-tag=${PINNED_TAG}" >> "$GITHUB_OUTPUT"
-
-          # Give the SAME digest the release version as an additional ECR tag.
-          # No pull, no push, no rebuild — put-image attaches a tag to the
-          # existing manifest, so `vX.Y.Z` and the SHA name one artifact.
-          if [ -n "${VERSION_TAG:-}" ]; then
-            MANIFEST=$(aws ecr batch-get-image \
-              --repository-name "$ECR_REPOSITORY" \
-              --image-ids imageTag="$PINNED_TAG" \
-              --query 'images[0].imageManifest' --output text)
-            if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
-              --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
-              echo "Tagged ${PINNED_TAG} as ${VERSION_TAG} in ECR."
-            else
-              echo "::notice::${VERSION_TAG} already tags this digest in ECR."
-            fi
-          fi
 
       # NON-RELEASE PATH. Mirror image of the step above, and the reason the
       # `|| imageTag` fallback could be deleted from compute-stack.ts.
@@ -465,6 +474,16 @@ jobs:
           PINNED_TAG="${IMAGE##*:}"
           echo "Prod lane is currently running tag: ${PINNED_TAG} (holding it there)"
           echo "pinned-prod-tag=${PINNED_TAG}" >> "$GITHUB_OUTPUT"
+          # Same reasoning as the image tag: re-synthing re-renders this task
+          # definition, so the release version it already carries has to be
+          # restated or it is wiped. Empty on a lane never released.
+          PINNED_VERSION=$(aws ecs describe-task-definition \
+            --task-definition "$TASKDEF_ARN" \
+            --query "taskDefinition.containerDefinitions[0].environment[?name=='RELEASE_VERSION'].value | [0]" \
+            --output text)
+          [ "$PINNED_VERSION" = "None" ] && PINNED_VERSION=""
+          echo "Prod lane release version: ${PINNED_VERSION:-<none>} (holding it there)"
+          echo "pinned-release-version=${PINNED_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: cdk deploy (${{ env.STACK_FILTER }})
         # `-c imageTag` stamps the task definition with the IMMUTABLE tag just
@@ -479,15 +498,22 @@ jobs:
           # is already running. Both are always stated — see the guard in
           # compute-stack.ts for why there is no fallback.
           #
-          # The promoted tag is the commit SHA, not `vX.Y.Z`. With no build on
-          # the release path, the SHA is the only tag the image is guaranteed
-          # to carry — it is what the `main` push pushed. The version number
-          # travels in the image itself (BUILD_VERSION, reported by
-          # /api/health), so nothing is lost.
+          # The deployed tag is always the commit SHA, never `vX.Y.Z`. The SHA
+          # identifies the artifact; the release version is metadata ABOUT that
+          # artifact and travels separately, below.
           IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.pin.outputs.pinned-image-tag ||
             steps.img.outputs.sha-tag }}
           SECONDARY_IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.img.outputs.sha-tag ||
             steps.pinprod.outputs.pinned-prod-tag }}
+          # Semantic version as RUNTIME metadata on the production lane, so a
+          # tested image is never rebuilt just to carry a version number. On a
+          # release this is the tag being published; otherwise it is whatever
+          # production already carries, read back from its live task definition
+          # — the same pinning discipline as the image tag, and for the same
+          # reason: re-synthing re-renders that task definition, so a deploy
+          # that omitted it would wipe it.
+          RELEASE_VERSION: ${{ env.IS_RELEASE == 'true' && steps.img.outputs.version-tag ||
+            steps.pinprod.outputs.pinned-release-version }}
         run: |
           set -euo pipefail
           if [ -z "$IMAGE_TAG" ] || [ -z "$SECONDARY_IMAGE_TAG" ]; then

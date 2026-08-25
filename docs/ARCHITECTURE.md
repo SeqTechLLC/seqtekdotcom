@@ -679,16 +679,20 @@ racing one CloudFormation stack.
 | Trigger                         | Deploys to        | Site                 | Lane      | Builds? |
 | ------------------------------- | ----------------- | -------------------- | --------- | ------- |
 | Merge (push) to `main`          | **Preview / UAT** | `preview.seqtek.com` | primary   | yes     |
-| Merge the **release PR**        | nothing           | —                    | —         | no      |
-| **Publish** the GitHub Release  | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
+| **Create** a GitHub Release     | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
 | `workflow_dispatch` (env input) | either — manual   | —                    | either    | depends |
 | Feature branches                | nothing (CI only) | local dev            | —         | —       |
 
-Merging the release PR deploys **nothing**. Release-Please's commit touches only
-`package.json`, `package-lock.json`, `CHANGELOG.md` and the manifest — all in
-`deploy.yml`'s `paths-ignore` — so it cuts a tag and prepares a **draft**
-release without rolling any lane. Publishing that draft is the single event that
-promotes production.
+Releases are cut by hand against `main`:
+
+```
+gh release create v0.0.43 --title "v0.0.43" --generate-notes --target main
+```
+
+`--target main` points the tag at the current tip — a commit an ordinary merge
+has already built and deployed to preview — so the release promotes an image
+that exists and was tested. `--generate-notes` writes the notes from the commit
+range. Publishing it is the single event that promotes production.
 
 Both lanes live in the SAME `SeqtekPreview*` stacks in the SAME account —
 production is a second ECS task/service/target-group behind the same ALB, with
@@ -716,11 +720,13 @@ falling back to the version baked at build time — so an unreleased lane
 honestly reports the older number rather than claiming a release it never
 received.
 
-**Exactly one event promotes production.** `release-please.yml` no longer
-dispatches the deploy workflow; `release: [published]` is the only path. The
-release is created as a draft so a person publishes it, which is also what
-makes the event fire at all — GitHub raises no workflow run for a release
-published by the default `GITHUB_TOKEN`.
+**Exactly one event promotes production.** `release: [published]` is the only
+path. That a person creates the release is also what makes the event fire at
+all: GitHub raises no workflow run for a release published by the default
+`GITHUB_TOKEN`, which is why an automated release bot needed a
+`workflow_dispatch` workaround. Release-Please has been retired — it landed a
+bookkeeping commit on `main` that triggered a second build and a redundant
+preview roll for a change that was only a version number.
 
 **Every deploy states BOTH lanes' image tags; exactly one moves.** `cdk deploy`
 re-synthesizes the whole stack, so both task definitions are re-rendered on
