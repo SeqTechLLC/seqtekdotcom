@@ -1,6 +1,6 @@
 {
   "name": "seqtek-website",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "SEQTEK marketing website — Next.js + Payload CMS",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,

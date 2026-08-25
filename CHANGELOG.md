@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.3.0...v0.3.1) (2026-08-25)
+
+
+### Bug Fixes
+
+* **deploy:** a release labels an existing image, it does not build one ([#112](https://github.com/SeqTechLLC/seqtekdotcom/issues/112)) ([1b7155f](https://github.com/SeqTechLLC/seqtekdotcom/commit/1b7155fc9fc87663a62fb4458c90b4433c7c7f87))
+
 ## [0.3.0](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.2.0...v0.3.0) (2026-08-25)
 
 
