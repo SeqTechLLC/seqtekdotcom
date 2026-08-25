@@ -431,9 +431,17 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='SecondaryLaneServiceName'].OutputValue | [0]" \
             --output text)
           if [ -z "$SERVICE" ] || [ "$SERVICE" = "None" ]; then
-            echo "SecondaryLaneServiceName output not present yet; locating by name."
-            SERVICE=$(aws ecs list-services --cluster "$CLUSTER" \
-              --query "serviceArns[?contains(@, 'SecondaryLane')] | [0]" --output text)
+            # The CfnOutput only exists once a deploy carrying it has run, so
+            # the FIRST deploy after it was added has to find the service
+            # another way. Resolved from the stack's own resources rather than
+            # `ecs:ListServices`, which the deploy role deliberately does not
+            # grant (it scopes ECS reads to describe-style calls). The
+            # PhysicalResourceId of an AWS::ECS::Service is its ARN.
+            echo "SecondaryLaneServiceName output not present yet; resolving from stack resources."
+            SERVICE=$(aws cloudformation describe-stack-resources \
+              --stack-name "${STACK_PREFIX}Compute" \
+              --query "StackResources[?ResourceType=='AWS::ECS::Service' && contains(LogicalResourceId, 'SecondaryLane')].PhysicalResourceId | [0]" \
+              --output text)
           fi
           if [ -z "$SERVICE" ] || [ "$SERVICE" = "None" ]; then
             echo "::error::Could not resolve the secondary (prod) lane's ECS service."
@@ -580,9 +588,12 @@ jobs:
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/slack-notify.yml
     with:
+      # Must match IS_RELEASE in the deploy job. A `main` push is a PREVIEW
+      # deploy now; labelling it "production" made the first run under the
+      # new model report the wrong environment.
       workflow-name:
-        Deploy (${{ (github.event_name == 'release' || github.event.inputs.env == 'prod' ||
-        (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'production' || 'preview' }})
+        Deploy (${{ (github.event_name == 'release' || github.event.inputs.env == 'prod') &&
+        'production' || 'preview' }})
       status: ${{ (needs.deploy.result == 'success' && needs.smoke.result == 'success') && 'success' || 'failure' }}
       site-url: ${{ needs.deploy.outputs.site-url }}
     secrets: inherit
