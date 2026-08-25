@@ -450,22 +450,6 @@ jobs:
             fi
           fi
 
-          # Give that SAME digest the release version as an extra ECR tag, so
-          # `vX.Y.Z` and the SHA name one artifact. put-image attaches a tag to
-          # the existing manifest — no pull, no push, no rebuild.
-          if [ -n "${VERSION_TAG:-}" ]; then
-            MANIFEST=$(aws ecr batch-get-image \
-              --repository-name "$ECR_REPOSITORY" \
-              --image-ids imageTag="$PROMOTE_TAG" \
-              --query 'images[0].imageManifest' --output text)
-            if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
-              --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
-              echo "Tagged ${PROMOTE_TAG} as ${VERSION_TAG} in ECR."
-            else
-              echo "::notice::${VERSION_TAG} already tags this digest."
-            fi
-          fi
-
       - name: Resolve the tested image from the preview lane (release path only)
         id: pin
         if: ${{ env.IS_RELEASE == 'true' }}
