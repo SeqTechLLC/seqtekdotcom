@@ -693,7 +693,8 @@ published**, which is the deliberate human gate on going live.
 | Merge (push) to `main`          | **Preview / UAT** | `preview.seqtek.com` | primary   |
 | Publish a `vX.Y.Z` release      | **Production**    | `ww3.seqtek.com`†    | secondary |
 | `workflow_dispatch` (env input) | either — manual   | —                    | either    |
-| Feature branches, `Preview`     | nothing (CI only) | local dev            | —         |
+| Feature branches                | nothing (CI only) | local dev            | —         |
+| `Preview` branch                | nothing (CI only) | —                    | —         |
 
 † **Both lanes live in the same `SeqtekPreview*` stack and AWS account.**
 `ww3.seqtek.com` is a second ECS task/service/target-group inside

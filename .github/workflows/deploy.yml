@@ -111,27 +111,27 @@ jobs:
     runs-on: ubuntu-latest
     # Two GitHub Environments, ONE CDK/AWS target (the preview account —
     # staging's separate account is retired, nothing deploys there anymore).
-    # `production` is still the human-facing gate for whatever promotes the
-    # secondary (ww3) lane — a `main` push now included, alongside the
-    # existing release/`env=prod` dispatch paths — via required reviewers /
-    # deployment branch policy on that Environment. `preview` gates the
-    # ordinary Preview-branch push, which only ever touches the primary lane.
-    # A `main` push is UAT and gates on `preview`; only a release or an explicit
-    # prod dispatch gates on `production`, where the reviewer/branch policies
-    # live. Restores merge-is-not-release after PR #103.
+    # `production` is the gate on whatever promotes the secondary (ww3) lane:
+    # a release, or an explicit `env=prod` dispatch. A `main` push is UAT and
+    # gates on `preview`. Restores merge-is-not-release after PR #103.
+    #
+    # NOTE: `production` currently carries only a deployment-branch policy,
+    # which restricts WHICH branches may deploy but does not pause for a human.
+    # Adding `required_reviewers` to that Environment is what would make a
+    # release wait for approval; it is a repo setting, not code.
     environment: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod')
       && 'production' || 'preview' }}
     outputs:
       site-url: ${{ steps.site.outputs.url }}
     env:
-      # IS_RELEASE distinguishes "ordinary preview push — only the primary
-      # lane moves" from "release / main push / manual prod promotion — ONLY
-      # the secondary (ww3) lane moves". Both paths deploy the SAME
-      # `env=preview` CDK stacks in the SAME account; they differ in
-      # image-tag wiring below and in which GitHub Environment gates them
-      # above. A plain `main` push is now treated exactly like a release —
-      # merging to `main` IS the promotion to ww3.seqtek.com, no separate
-      # "cut a release" step required.
+      # IS_RELEASE distinguishes the two paths:
+      #   false — `main` push. Only the PRIMARY (UAT) lane moves; the
+      #           secondary lane is pinned to the tag it already runs.
+      #   true  — release or `env=prod` dispatch. Only the SECONDARY (prod)
+      #           lane moves; the primary lane is pinned to what it runs.
+      # Both deploy the SAME `env=preview` CDK stacks in the SAME account and
+      # differ only in image-tag wiring below and which Environment gates them.
+      # Each path pins the lane it is NOT moving — see the two pin steps.
       IS_RELEASE: ${{ (github.event_name == 'release' || github.event.inputs.env == 'prod')
         && 'true' || 'false' }}
       # Every trigger targets the SAME 'preview' CDK env/account now —
@@ -303,6 +303,49 @@ jobs:
           echo "Primary lane is currently running tag: ${PINNED_TAG}"
           echo "pinned-image-tag=${PINNED_TAG}" >> "$GITHUB_OUTPUT"
 
+      # The mirror of the step above, for the other lane and the other path.
+      #
+      # `secondaryImageTag` defaults to `imageTag` inside the stack
+      # (compute-stack.ts), so a synth that OMITS it restamps the production
+      # (ww3) lane with whatever the primary lane is deploying — and that task
+      # boots `npx payload migrate && node server.js` against `seqtek_prod`.
+      # A `main` push would therefore migrate production content, which is the
+      # exact thing this workflow's promotion model says cannot happen.
+      #
+      # So on every non-release deploy we resolve the tag the ww3 service is
+      # ALREADY running and pass it back unchanged, making that half of the
+      # synth a no-op.
+      - name: Resolve currently-deployed ww3 image tag (non-release path only)
+        id: pin-secondary
+        if: ${{ env.IS_RELEASE != 'true' }}
+        run: |
+          set -euo pipefail
+          CLUSTER=$(aws cloudformation describe-stacks \
+            --stack-name "${STACK_PREFIX}Compute" \
+            --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue | [0]" \
+            --output text)
+          SERVICE=$(aws cloudformation describe-stacks \
+            --stack-name "${STACK_PREFIX}Compute" \
+            --query "Stacks[0].Outputs[?OutputKey=='SecondaryLaneServiceName'].OutputValue | [0]" \
+            --output text)
+          if [ -z "$SERVICE" ] || [ "$SERVICE" = "None" ]; then
+            # First deploy after this change: the output does not exist yet.
+            # Fail closed rather than let the fallback roll production.
+            echo "::error::SecondaryLaneServiceName output not found on ${STACK_PREFIX}Compute."
+            echo "::error::Deploy this stack once via a release (or a manual"
+            echo "::error::env=prod dispatch) to publish the output, then retry."
+            exit 1
+          fi
+          TASKDEF_ARN=$(aws ecs describe-services \
+            --cluster "$CLUSTER" --services "$SERVICE" \
+            --query 'services[0].taskDefinition' --output text)
+          IMAGE=$(aws ecs describe-task-definition \
+            --task-definition "$TASKDEF_ARN" \
+            --query 'taskDefinition.containerDefinitions[0].image' --output text)
+          PINNED_TAG="${IMAGE##*:}"
+          echo "ww3 (prod) lane stays on tag: ${PINNED_TAG}"
+          echo "pinned-secondary-tag=${PINNED_TAG}" >> "$GITHUB_OUTPUT"
+
       - name: cdk deploy (${{ env.STACK_FILTER }})
         # `-c imageTag` stamps the task definition with the IMMUTABLE tag just
         # pushed — `vX.Y.Z` on a release, the commit SHA otherwise — so a task
@@ -315,16 +358,25 @@ jobs:
           IMAGE_TAG: ${{ env.IS_RELEASE == 'true' && steps.pin.outputs.pinned-image-tag ||
             (steps.img.outputs.version-tag != '' && steps.img.outputs.version-tag ||
             steps.img.outputs.sha-tag) }}
+          # ALWAYS set — see the pin-secondary step. On a release this is the
+          # new tag being promoted; otherwise it is the tag ww3 already runs,
+          # so the production lane does not move.
           SECONDARY_IMAGE_TAG:
             ${{ env.IS_RELEASE == 'true' && (steps.img.outputs.version-tag != '' &&
-            steps.img.outputs.version-tag || steps.img.outputs.sha-tag) || '' }}
+            steps.img.outputs.version-tag || steps.img.outputs.sha-tag) ||
+            steps.pin-secondary.outputs.pinned-secondary-tag }}
         run: |
           echo "Deploying primary-lane image tag: $IMAGE_TAG"
-          EXTRA_CONTEXT=()
-          if [ -n "$SECONDARY_IMAGE_TAG" ]; then
-            echo "Promoting secondary (ww3) lane to: $SECONDARY_IMAGE_TAG"
-            EXTRA_CONTEXT=(-c "secondaryImageTag=$SECONDARY_IMAGE_TAG")
+          # Never omit secondaryImageTag: the stack falls back to imageTag,
+          # which would roll the production lane onto this build.
+          if [ -z "$SECONDARY_IMAGE_TAG" ]; then
+            echo "::error::SECONDARY_IMAGE_TAG is empty — refusing to deploy."
+            echo "::error::Omitting it lets the ww3 lane inherit imageTag and"
+            echo "::error::run migrations against seqtek_prod."
+            exit 1
           fi
+          echo "Secondary (ww3) lane image tag: $SECONDARY_IMAGE_TAG"
+          EXTRA_CONTEXT=(-c "secondaryImageTag=$SECONDARY_IMAGE_TAG")
           npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" -c imageTag="$IMAGE_TAG" \
             "${EXTRA_CONTEXT[@]}" "$STACK_FILTER" \
             --require-approval never \

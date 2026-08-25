@@ -252,12 +252,19 @@ export class ComputeStack extends Stack {
       (this.node.tryGetContext('imageTag') as string | undefined) || `latest-${envName}`
 
     // The secondary lane (see below) can be promoted to a DIFFERENT image
-    // than the primary lane — e.g. a GitHub release deploys a `vX.Y.Z` tag
-    // to ONLY the ww3.seqtek.com lane while the primary preview.seqtek.com
-    // lane keeps whatever the last `Preview`-branch push deployed. Defaults
-    // to `imageTag` so an ordinary `-c imageTag=<sha>` deploy (no
-    // `secondaryImageTag`) still moves both lanes together, unchanged from
-    // before this existed.
+    // than the primary lane — a GitHub release deploys a `vX.Y.Z` tag to ONLY
+    // the ww3.seqtek.com lane while the primary preview.seqtek.com lane keeps
+    // whatever it is already running.
+    //
+    // The `|| imageTag` fallback is a HAZARD, not a convenience: it means any
+    // synth that omits `-c secondaryImageTag` restamps the production lane
+    // with the primary lane's image, which then boots
+    // `payload migrate && node server.js` (Dockerfile) against `seqtek_prod`.
+    // The fallback is retained so a synth can never produce an undefined
+    // image, but `deploy.yml` MUST always pass `secondaryImageTag` — on a
+    // release it is the new tag, and on every other path it is the tag this
+    // lane is already running, resolved from `SecondaryLaneServiceName` below.
+    // If you add a new deploy path, pass it there too.
     const secondaryImageTag =
       (this.node.tryGetContext('secondaryImageTag') as string | undefined) || imageTag
 
@@ -653,6 +660,18 @@ export class ComputeStack extends Stack {
         action: cognitoGate
           ? cognitoGate.authenticateAndForward(elbv2.ListenerAction.forward([laneTargetGroup]))
           : elbv2.ListenerAction.forward([laneTargetGroup]),
+      })
+
+      // Exported so the deploy workflow can read the tag this lane is
+      // CURRENTLY running and pin it on a non-release deploy. Without that pin
+      // an ordinary `main` push omits `-c secondaryImageTag`, the fallback
+      // below inherits `imageTag`, and the production lane silently rolls onto
+      // main's build — running `payload migrate` against `seqtek_prod`.
+      // Symmetric with `ServiceName`, which the release path uses to pin the
+      // primary lane.
+      new CfnOutput(this, 'SecondaryLaneServiceName', {
+        value: laneService.serviceName,
+        exportName: `${this.stackName}-SecondaryLaneServiceName`,
       })
     }
 
