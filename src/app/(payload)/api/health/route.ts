@@ -6,13 +6,19 @@
  * pg client, no transitive-dep imports. Returns 200 when the round-trip
  * succeeds; 503 when it fails so the ALB can stop routing to the instance.
  *
- * Also reports provenance. `commit` is baked into the image at build time,
- * so it describes the container actually running rather than what a task
- * definition claims. `version` is the release that promoted this image
- * (`RELEASE_VERSION`, runtime metadata set at promotion time), falling back
- * to the version baked at build time on a lane that has not been released.
- * This endpoint is deliberately exempt from the Cognito gate, so treat both
- * as public.
+ * Also reports the two identities of whatever is running. `commit` is BAKED
+ * into the image at build time, so it describes the container actually running
+ * rather than what a task definition claims. `release` is the version label
+ * attached when that image was promoted (`RELEASE_VERSION`, runtime metadata),
+ * and is null on a lane that has not been released — notably the UAT lane,
+ * which normally runs AHEAD of any release.
+ *
+ * They are two names for one artifact, not two build mechanisms: the same ECR
+ * digest carries both the commit SHA and the `vX.Y.Z` tag. Deliberately no
+ * fallback between them — reporting a build-time version number on an
+ * unreleased lane claims a release it never received.
+ *
+ * This endpoint is exempt from the Cognito gate, so treat both as public.
  *
  * Per ERROR_PAGES.md §4 this endpoint must keep returning 200 in
  * maintenance mode so the ALB doesn't start replacing instances during a
@@ -27,7 +33,7 @@ export const dynamic = 'force-dynamic'
 
 type HealthBody = {
   status: 'ok' | 'unhealthy'
-  version: string
+  release: string | null
   commit: string
   uptime: number
   db: 'ok' | 'unreachable'
@@ -37,16 +43,9 @@ type HealthBody = {
 
 const NO_STORE: HeadersInit = { 'cache-control': 'no-store' }
 
-// Read once at module load — none of these change while the process lives.
-//
-// `commit` is BAKED into the image at build time and identifies the actual
-// artifact. `version` prefers RELEASE_VERSION, which is supplied to the
-// production lane as runtime metadata when a release promotes that image —
-// so a tested artifact never has to be rebuilt merely to carry a version
-// number. A lane that has not been released falls back to the version baked
-// at build time, which lags the released version by design.
+// Read once at module load — neither changes while the process lives.
 const COMMIT = process.env.BUILD_COMMIT || 'unknown'
-const VERSION = process.env.RELEASE_VERSION || process.env.BUILD_VERSION || 'dev'
+const RELEASE = process.env.RELEASE_VERSION || null
 
 export async function GET(): Promise<Response> {
   const start = Date.now()
@@ -70,7 +69,7 @@ export async function GET(): Promise<Response> {
 
   const body: HealthBody = {
     status: db === 'ok' ? 'ok' : 'unhealthy',
-    version: VERSION,
+    release: RELEASE,
     commit: COMMIT,
     uptime: process.uptime(),
     db,

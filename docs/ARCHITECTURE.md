@@ -728,14 +728,26 @@ tested: the Dockerfile's base is pinned by tag (which Alpine re-pushes on
 patch) and `npm ci` fetches tarballs at build time, so the same source tree is
 not guaranteed to produce the same image.
 
-**The version is runtime metadata, not a rebuild.** A tested image is never
-rebuilt merely to bake a version number into it. The commit SHA stays baked in,
-because it identifies the actual artifact. The semantic version is attached at
-promotion time two ways, neither touching the image: the same ECR digest gets
-`vX.Y.Z` as an additional tag, and the production task definition receives
-`RELEASE_VERSION`. `/api/health` reports the release version when present,
-falling back to the version baked at build time — so an unreleased lane
-honestly reports the older number rather than claiming a release it never
+**The version is a label on an image, not a reason to rebuild.** One ECR digest
+carries both identities:
+
+```
+sha256:9c1b3e66...
+  |-- 1b7155f   <- build identity (the commit)
+  \-- v0.3.1    <- release label (added by put-image, no rebuild)
+```
+
+The commit SHA is baked into the image because it identifies the artifact. The
+release version is attached at promotion time — as that extra ECR tag, and as
+`RELEASE_VERSION` on the production task definition. `/api/health` reports both:
+
+```json
+{ "release": "v0.3.1", "commit": "1b7155f" }
+```
+
+`release` is **null** on a lane that has not been released — notably UAT, which
+normally runs ahead of any release. There is deliberately no fallback to a
+build-time version: reporting one would claim a release the lane never
 received.
 
 **Exactly one event promotes production.** `release: [published]` is the only
