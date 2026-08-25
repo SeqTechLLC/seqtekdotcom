@@ -278,17 +278,11 @@ jobs:
           case "$GITHUB_REF" in
             refs/tags/v*) VERSION_TAG="${GITHUB_REF#refs/tags/}" ;;
           esac
-          # Version from package.json, baked into the image as a FALLBACK for
-          # /api/health on a lane that has never been released. The real
-          # release version arrives as runtime metadata at promotion time, so
-          # this is not what a released lane reports.
-          PKG_VERSION="$(node -p "require('./package.json').version")"
           {
             echo "registry=${REGISTRY}"
             echo "image=${IMAGE}"
             echo "sha-tag=${SHA_TAG}"
             echo "version-tag=${VERSION_TAG}"
-            echo "pkg-version=${PKG_VERSION}"
           } >> "$GITHUB_OUTPUT"
 
       - name: ECR login
@@ -352,7 +346,6 @@ jobs:
             NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=66dba2bf-f099-44d5-8c6e-f24292cefe53
             NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=8dc61ff4-9f95-46c5-b43e-8c82a394de42
             NEXT_PUBLIC_GTM_ID=
-            BUILD_VERSION=${{ steps.img.outputs.pkg-version }}
             BUILD_COMMIT=${{ steps.img.outputs.sha-tag }}
 
       - uses: actions/setup-node@v4
@@ -445,22 +438,6 @@ jobs:
             if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
               --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
               echo "Tagged ${RESOLVED} as ${VERSION_TAG} in ECR."
-            else
-              echo "::notice::${VERSION_TAG} already tags this digest."
-            fi
-          fi
-
-          # Give that SAME digest the release version as an extra ECR tag, so
-          # `vX.Y.Z` and the SHA name one artifact. put-image attaches a tag to
-          # the existing manifest — no pull, no push, no rebuild.
-          if [ -n "${VERSION_TAG:-}" ]; then
-            MANIFEST=$(aws ecr batch-get-image \
-              --repository-name "$ECR_REPOSITORY" \
-              --image-ids imageTag="$PROMOTE_TAG" \
-              --query 'images[0].imageManifest' --output text)
-            if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
-              --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
-              echo "Tagged ${PROMOTE_TAG} as ${VERSION_TAG} in ECR."
             else
               echo "::notice::${VERSION_TAG} already tags this digest."
             fi

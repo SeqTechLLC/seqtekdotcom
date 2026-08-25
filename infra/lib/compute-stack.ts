@@ -561,8 +561,8 @@ export class ComputeStack extends Stack {
           // different database on the same instance.
           DB_NAME: lane.databaseName,
           // Empty string when unreleased — ECS rejects undefined values, and
-          // the app treats empty as "no release version" (see the health
-          // route's fallback to the baked BUILD_VERSION).
+          // the app reports `release: null` for an empty one rather than
+          // substituting a build-time number.
           RELEASE_VERSION: releaseVersion ?? '',
           // Same reasoning as the primary lane's container — see its
           // COGNITO_LOGOUT_URL comment above.
