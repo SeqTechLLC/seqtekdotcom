@@ -728,27 +728,53 @@ tested: the Dockerfile's base is pinned by tag (which Alpine re-pushes on
 patch) and `npm ci` fetches tarballs at build time, so the same source tree is
 not guaranteed to produce the same image.
 
-**The version is a label on an image, not a reason to rebuild.** One ECR digest
-carries both identities:
+**Every build gets a number, so you can choose by number.** A lane should be
+identifiable without remembering which SHA someone tested. Each `main` build is
+tagged with a human-friendly build version alongside its commit SHA:
 
 ```
-sha256:9c1b3e66...
-  |-- 1b7155f   <- build identity (the commit)
-  \-- v0.3.1    <- release label (added by put-image, no rebuild)
+main builds:
+  1b7155f  ->  ECR: [ 1b7155f, 0.4.0-build.1 ]
+  ede1ba4  ->  ECR: [ ede1ba4, 0.4.0-build.2 ]
+  82ac771  ->  ECR: [ 82ac771, 0.4.0-build.3 ]
+
+UAT runs 0.4.0-build.3
 ```
 
-The commit SHA is baked into the image because it identifies the artifact. The
-release version is attached at promotion time — as that extra ECR tag, and as
-`RELEASE_VERSION` on the production task definition. `/api/health` reports both:
+`0.4.0` is the version this work is heading toward, derived the way
+Release-Please derives it: a `feat:` since the last release bumps the MINOR in
+the 0.x range (`bump-minor-pre-major`), otherwise the PATCH. `build.N` counts
+commits since the last release tag, so it is monotonic and needs no stored
+state. Release-Please still owns the _released_ version; this only names the
+builds in between.
+
+**A release promotes an existing build; it does not create one.** Publishing
+`v0.4.0` adds that tag to the digest already chosen, and points production at
+it:
+
+```
+"0.4.0-build.2 looks good, release that"
+  -> publish v0.4.0
+  -> PROD runs ede1ba4
+  -> digest now: [ ede1ba4, 0.4.0-build.2, v0.4.0 ]
+```
+
+One digest, three tags, no rebuild. `/api/health` reports all three, because
+they name one artifact:
 
 ```json
-{ "release": "v0.3.1", "commit": "1b7155f" }
+{ "version": "0.4.0-build.2", "release": "v0.4.0", "commit": "ede1ba4" }
 ```
 
-`release` is **null** on a lane that has not been released — notably UAT, which
-normally runs ahead of any release. There is deliberately no fallback to a
-build-time version: reporting one would claim a release the lane never
-received.
+`version` and `commit` are baked into the image. `release` is runtime metadata
+applied at promotion, and is **null** on a lane that has not been released —
+notably UAT, which normally runs ahead of any release. It deliberately does not
+fall back to `version`: claiming a release a lane never received is worse than
+reporting none.
+
+**The lanes are meant to drift.** UAT can be many builds ahead of production;
+that is the point. Each lane simply points at a specific immutable image, and
+every deploy states both explicitly so moving one never rewrites the other.
 
 **Exactly one event promotes production.** `release: [published]` is the only
 path; `release-please.yml` no longer dispatches the deploy workflow. That

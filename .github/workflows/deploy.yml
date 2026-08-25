@@ -255,6 +255,10 @@ jobs:
           # commit and every release would resolve to "not found". 60 covers
           # the 50-commit walk with room to spare.
           fetch-depth: 60
+          # `git describe --tags` needs the tags themselves; fetch-depth alone
+          # does not bring them, and without them every build would compute its
+          # version from the v0.0.0 fallback.
+          fetch-tags: true
 
       - name: Configure AWS credentials (${{ env.ENV_NAME }} OIDC role)
         uses: aws-actions/configure-aws-credentials@v4
@@ -278,11 +282,49 @@ jobs:
           case "$GITHUB_REF" in
             refs/tags/v*) VERSION_TAG="${GITHUB_REF#refs/tags/}" ;;
           esac
+
+          # BUILD VERSION — a human-friendly number for EVERY build, so a lane
+          # can be identified and chosen by number rather than by SHA.
+          #
+          #   0.4.0-build.3
+          #   ^^^^^        the semantic version this work is heading toward,
+          #                derived the way Release-Please derives it: a `feat:`
+          #                since the last release bumps the MINOR in the 0.x
+          #                range (`bump-minor-pre-major`), otherwise the PATCH.
+          #         ^^^^^  which build within that range — commits since the
+          #                last release tag, so it is monotonic and needs no
+          #                stored state.
+          #
+          # The number is a LABEL on an artifact, not a reason to rebuild: the
+          # image is tagged with both this and the commit SHA, and a release
+          # later adds `vX.Y.Z` to that same digest. Release-Please still owns
+          # the released version; this only names the builds in between.
+          LAST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo "v0.0.0")
+          BASE="${LAST_TAG#v}"
+          MAJOR="${BASE%%.*}"
+          REST="${BASE#*.}"
+          MINOR="${REST%%.*}"
+          PATCH="${BASE##*.}"
+          if git rev-parse "$LAST_TAG" >/dev/null 2>&1; then
+            RANGE="${LAST_TAG}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+          BUILD_N=$(git rev-list --count "$RANGE")
+          if git log --format='%s' "$RANGE" | grep -qE '^feat(\(.+\))?!?:'; then
+            NEXT_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          else
+            NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+          BUILD_VERSION="${NEXT_VERSION}-build.${BUILD_N}"
+          echo "Build version: ${BUILD_VERSION} (since ${LAST_TAG}, ${BUILD_N} commits)"
+
           {
             echo "registry=${REGISTRY}"
             echo "image=${IMAGE}"
             echo "sha-tag=${SHA_TAG}"
             echo "version-tag=${VERSION_TAG}"
+            echo "build-version=${BUILD_VERSION}"
           } >> "$GITHUB_OUTPUT"
 
       - name: ECR login
@@ -321,6 +363,7 @@ jobs:
           # a convenience pointer; nothing deploys from it.
           tags: |
             ${{ steps.img.outputs.image }}:${{ steps.img.outputs.sha-tag }}
+            ${{ steps.img.outputs.image }}:${{ steps.img.outputs.build-version }}
             ${{ steps.img.outputs.image }}:latest-${{ env.ENV_NAME }}
             ${{ steps.img.outputs.version-tag != '' && format('{0}:{1}', steps.img.outputs.image, steps.img.outputs.version-tag) || '' }}
           cache-from: type=gha
@@ -347,6 +390,7 @@ jobs:
             NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=8dc61ff4-9f95-46c5-b43e-8c82a394de42
             NEXT_PUBLIC_GTM_ID=
             BUILD_COMMIT=${{ steps.img.outputs.sha-tag }}
+            BUILD_VERSION=${{ steps.img.outputs.build-version }}
 
       - uses: actions/setup-node@v4
         with:

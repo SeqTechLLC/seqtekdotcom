@@ -76,12 +76,19 @@ ENV NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
 # is rather than what a task definition claims. Surfaced by /api/health, so
 # "what is on prod right now" is a curl instead of an ECS console dig.
 #
-# The commit SHA only. The release version is NOT baked: it is a label
-# applied to this image at promotion time (RELEASE_VERSION on the task
-# definition, plus a `vX.Y.Z` tag on the same ECR digest), so a tested
-# artifact never has to be rebuilt to carry a version number.
+# BUILD_COMMIT is the exact commit. BUILD_VERSION is that build's
+# human-friendly number (e.g. `0.4.0-build.3`) — the same string the image
+# carries as an ECR tag, so a lane can be identified and chosen by number
+# rather than by SHA.
+#
+# The RELEASE version is deliberately NOT baked. It is a label applied to
+# this image at promotion time (RELEASE_VERSION on the task definition, plus
+# a `vX.Y.Z` tag on the same ECR digest), so a tested artifact never has to
+# be rebuilt to carry one.
 ARG BUILD_COMMIT=""
+ARG BUILD_VERSION=""
 ENV BUILD_COMMIT=$BUILD_COMMIT
+ENV BUILD_VERSION=$BUILD_VERSION
 
 # Non-root user matching the spike convention (uid/gid 1001).
 RUN addgroup --system --gid 1001 nodejs \

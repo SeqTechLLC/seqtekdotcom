@@ -15,14 +15,17 @@ test.describe('GET /api/health', () => {
     expect(body.responseTimeMs).toBeGreaterThanOrEqual(0)
     expect(new Date(body.timestamp).toString()).not.toBe('Invalid Date')
 
-    // `commit` is baked at image build time; a local/dev run passes no ARG,
-    // so assert the shape and the documented fallback rather than a build.
+    // `commit` and `version` are baked at image build time; a local/dev run
+    // passes no ARGs, so assert the shape and documented fallbacks rather
+    // than a specific build.
     expect(typeof body.commit).toBe('string')
     expect(body.commit).not.toBe('')
+    expect(typeof body.version).toBe('string')
+    expect(body.version).not.toBe('')
 
-    // `release` is runtime metadata applied at promotion. It is null on any
-    // lane that has not been released, which includes every local/dev run —
-    // deliberately NOT falling back to a build-time version number.
+    // `release` is runtime metadata applied at promotion. Null on any lane
+    // that has not been released, which includes every local/dev run —
+    // deliberately NOT falling back to the build version.
     expect(body.release === null || typeof body.release === 'string').toBe(true)
   })
 
