@@ -14,6 +14,9 @@ interface TeamMemberDoc {
   id?: string | number
   name?: string | null
   slug?: string | null
+  /** The job title ("CTO"). Cards show this — see the `title` vs `role` note
+   *  on the render below. */
+  title?: string | null
   role?: string | null
   photo?: PhotoDoc | string | number | null
 }
@@ -84,8 +87,14 @@ export function TeamGrid({
                     >
                       {m.name}
                     </CardHeading>
-                    {m.role ? (
-                      <p className="mt-1 text-small text-text-secondary">{m.role}</p>
+                    {/* ROADMAP UI-1: cards show `title` (the job title), NOT
+                        `role`. `role` is a full descriptive sentence and reads
+                        as prose in a card; it belongs to the `/team/[slug]`
+                        detail header, which renders both. Deliberately no
+                        `role` fallback — a card with no job title shows the
+                        name alone rather than a paragraph. */}
+                    {m.title ? (
+                      <p className="mt-1 text-small text-text-secondary">{m.title}</p>
                     ) : null}
                   </div>
                 </>

@@ -302,11 +302,15 @@ Frontend emits `FAQPage` JSON-LD automatically.
 
 #### `team-grid` — team members display
 
-| Field     | Type   | Required | Notes                                  |
-| --------- | ------ | -------- | -------------------------------------- |
-| `heading` | text   | no       |                                        |
-| `filter`  | select | yes      | `leadership-only` / `featured` / `all` |
-| `layout`  | select | no       | `cards` / `compact`                    |
+| Field         | Type                                 | Required | Notes                                                                                          |
+| ------------- | ------------------------------------ | -------- | ---------------------------------------------------------------------------------------------- |
+| `heading`     | text                                 | no       |                                                                                                |
+| `filter`      | select                               | yes      | `leadership-only` / `featured` / `all` — **not resolved on the render path; see ROADMAP UI-2** |
+| `layout`      | select                               | no       | `cards` / `compact`                                                                            |
+| `manualItems` | relationship → teamMembers (hasMany) | no       | In practice the only path that renders anyone                                                  |
+
+Cards show `teamMembers.title` (the job title), never `role` (the one-sentence description) — `role`
+belongs to the `/team/[slug]` header, which renders both. See ROADMAP UI-1 / PROJECT_HISTORY P5-27.
 
 #### `latest-insights` — blog post cards
 

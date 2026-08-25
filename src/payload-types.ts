@@ -1046,7 +1046,13 @@ export interface TeamMember {
   id: number;
   name: string;
   slug: string;
+  /**
+   * The short job title, as it appears on the team cards — for example "CTO" or "Enterprise Architect". Leave it blank and the card shows only the name.
+   */
   title?: string | null;
+  /**
+   * A full sentence describing what this person owns. It appears only on their own /team page, under the job title — never on the cards. Leave it blank if the job title says enough.
+   */
   role?: string | null;
   photo: number | Media;
   layout?:

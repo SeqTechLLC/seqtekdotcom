@@ -53,7 +53,7 @@ sign off → **Dom** does the domain swap (he controls the domain; the swap itse
 | **P1** | Spec 011 — Payload admin UX (US1 shipped, US2–US6 open)        | Kenn         |
 |        | A-1 Megan signs in + editor training                           | Kenn         |
 |        | HYG-1 Content data hygiene                                     | Kenn         |
-|        | UI-1 `TeamGrid` renders `role`, never `title`                  | Kenn         |
+|        | UI-2 `team-grid`'s `filter` renders a placeholder, not people  | Kenn         |
 | **P2** | K8 Broken-link + broken-image sweep                            | Kenn         |
 |        | CL-1 Load the drafted content                                  | Kenn         |
 |        | C-7 Taurex sign-off                                            | Kenn + Megan |
@@ -87,12 +87,19 @@ before we spend more effort loading content by hand.
 - **HYG-1 — content data hygiene.** No human input needed; see `CONTENT_NEEDS.md` §10.
   `industries` is empty while published case studies reference industry IDs (dangling refs) — seed it or drop
   the relationship; `locations` is empty (needed only if the regional pages get built); delete the
-  `ztest-delete-me` category; case-study `ogImage` is null sitewide.
-- **UI-1 — `TeamGrid` renders `role`, never `title`.** `TeamMembers` has two overlapping text fields —
-  `title` (the job title) and `role` (a full descriptive sentence) — and `TeamGrid.tsx:87` renders `role`, so
-  cards show prose where a job title belongs and the **members with neither field populated render as a face
-  and a name with nothing underneath**. Team pages are the top credibility element in the research and this one
-  is half-broken. Decide: render `title` (recommended), collapse the two fields, or render both. Hours of work.
+  `ztest-delete-me` category; case-study `ogImage` is null sitewide; **seven of ten published `teamMembers` have no `title`** (Chad Coleman, Daniel Miller, Gregg Wonderly, Jocie Heller, Justine Jones, Trevor Staub — plus any member added since), so their `/team` cards render a face and a name with nothing underneath (UI-1 / P5-27 fixed which field the card reads; it cannot invent the values). Note Chad Coleman has left the company — decide whether he stays on the page at all.
+- **UI-2 — the `team-grid` block's `filter` renders a placeholder, not people.** `TeamGrid` only
+  renders members passed as `manualItems`; when a block sets `filter` and leaves `manualItems` empty it
+  renders the literal string **"Filter: leadership-only (resolves at template time)"** as public body copy.
+  The showcase page `/showcase-block-team-grid` is two headings over two of those strings and no team
+  members — that is what an editor gets from the natural path, because `filter` is the block's one
+  **required** field and `manualItems` is described as an "optional manual override". Worse, the `featured`
+  option has **no backing field**: `teamMembers` has `isLeadership` and `order`, and nothing else to select
+  on. Decide: resolve the filter server-side (`leadership-only` → `isLeadership`, `all` → the list; drop
+  `featured` or add a field for it), or drop `filter` and make `manualItems` required. Same inert-control
+  class as spec 011 US1, but on the render path rather than in the admin. Surfaced by UI-1 (P5-27).
+- **UI-1 — resolved 2026-08-25 (P5-27).** Cards render `title`; `role` stays on `/team/[slug]`. The residual
+  is content: seven of ten published members have no `title`, so they render name-only — folded into HYG-1.
 
 ---
 
