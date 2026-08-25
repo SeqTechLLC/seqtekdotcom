@@ -50,7 +50,7 @@ sign off → **Dom** does the domain swap (he controls the domain; the swap itse
 
 | #      | Item                                                           | Owner        |
 | ------ | -------------------------------------------------------------- | ------------ |
-| **P1** | Spec 011 — Payload admin UX (in flight)                        | Kenn         |
+| **P1** | Spec 011 — Payload admin UX (US1 shipped, US2–US6 open)        | Kenn         |
 |        | A-1 Megan signs in + editor training                           | Kenn         |
 |        | HYG-1 Content data hygiene                                     | Kenn         |
 |        | UI-1 `TeamGrid` renders `role`, never `title`                  | Kenn         |
@@ -71,10 +71,15 @@ sign off → **Dom** does the domain swap (he controls the domain; the swap itse
 Content is the project bottleneck and every content change is still a developer task. This tier fixes that
 before we spend more effort loading content by hand.
 
-- **Spec 011 — Payload admin UX** _(in flight, branch `feat/011-payload-admin-ux`, 60 tasks)_. Make the admin
-  panel usable by a marketing lead without a developer next to them: remove controls that do nothing, make the
-  45-block picker pickable, add guidance. Also finishes the spec-010 expand/contract by dropping the retained
-  legacy body columns, and settles the dead `Navigation` / `SiteSettings` globals.
+- **Spec 011 — Payload admin UX** _(US1 shipped, US2–US6 open)_. Make the admin panel usable by a marketing
+  lead without a developer next to them.
+  **US1 landed in PR #107** (PROJECT_HISTORY P5-26): every inert control withdrawn, the spec-010
+  expand/contract finished by dropping the retained legacy body columns, and the dead `Navigation` /
+  `SiteSettings` globals settled — site chrome is code-owned now (ADR 0010). FR-008 is recorded **NOT MET**;
+  its one real finding is **INERT-1** below.
+  **Still open:** US2 the 45-block picker (categories, thumbnails, descriptions), US3 media thumbnails +
+  `_status` columns, US4 form legibility (labels, help text, conditional fields — INERT-1 lands here), US5
+  slug-from-title with collision handling, US6 collection grouping. Tasks T026–T065.
   → `specs/011-payload-admin-ux/spec.md`
 - **A-1 residual — Megan signs in, then editor training.** The multi-domain admin auth code shipped (#77,
   P5-11); what's left is a deploy, Megan's first sign-in (auto-provisions an `editor`), and a short CMS
