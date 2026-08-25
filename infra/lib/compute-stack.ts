@@ -251,15 +251,35 @@ export class ComputeStack extends Stack {
     const imageTag =
       (this.node.tryGetContext('imageTag') as string | undefined) || `latest-${envName}`
 
-    // The secondary lane (see below) can be promoted to a DIFFERENT image
-    // than the primary lane — e.g. a GitHub release deploys a `vX.Y.Z` tag
-    // to ONLY the ww3.seqtek.com lane while the primary preview.seqtek.com
-    // lane keeps whatever the last `Preview`-branch push deployed. Defaults
-    // to `imageTag` so an ordinary `-c imageTag=<sha>` deploy (no
-    // `secondaryImageTag`) still moves both lanes together, unchanged from
-    // before this existed.
-    const secondaryImageTag =
-      (this.node.tryGetContext('secondaryImageTag') as string | undefined) || imageTag
+    // The secondary lane's image is ALWAYS stated explicitly. There is
+    // deliberately NO fallback to `imageTag`.
+    //
+    // A `|| imageTag` fallback used to live here, and it is what put an
+    // untested build onto the production lane on 2026-08-25. `cdk deploy`
+    // re-synthesizes the WHOLE stack every time, so both lanes' task
+    // definitions are re-rendered on every deploy — including deploys that
+    // are only meant to move the primary lane. Any such deploy that omitted
+    // `-c secondaryImageTag` silently restamped production with the primary
+    // lane's image, which then ran `payload migrate` against `seqtek_prod`
+    // on container start.
+    //
+    // Failing the synth is the correct behaviour: a deploy that cannot say
+    // what production should run must not guess. Callers that are not
+    // promoting the lane pass the tag it is ALREADY running (deploy.yml
+    // reads it back from the live ECS service), making that half of the
+    // synth a byte-for-byte no-op.
+    let secondaryImageTag: string | undefined
+    if (cfg.secondaryLane) {
+      secondaryImageTag = this.node.tryGetContext('secondaryImageTag') as string | undefined
+      if (!secondaryImageTag) {
+        throw new Error(
+          `Required CDK context: -c secondaryImageTag=<tag>. Env '${envName}' has a ` +
+            `secondaryLane ('${cfg.secondaryLane.name}'), every deploy re-synthesizes it, ` +
+            'and there is no fallback by design — pass the tag the lane should KEEP ' +
+            'running when you are not deliberately promoting it.',
+        )
+      }
+    }
 
     // ----- Fargate task definition -----
     // cpu/memory sizing reuses `instanceSize` from cfg (same field the
@@ -653,6 +673,18 @@ export class ComputeStack extends Stack {
         action: cognitoGate
           ? cognitoGate.authenticateAndForward(elbv2.ListenerAction.forward([laneTargetGroup]))
           : elbv2.ListenerAction.forward([laneTargetGroup]),
+      })
+
+      // Exported so a deploy can read back the tag this lane is CURRENTLY
+      // running and pass it as `-c secondaryImageTag` when it is NOT
+      // promoting production. Required because the synth has no fallback
+      // (see the secondaryImageTag guard above) — this output is how a
+      // primary-lane-only deploy learns what to hold production at.
+      // Symmetric with `ServiceName`, which the release path reads to pin
+      // the primary lane.
+      new CfnOutput(this, 'SecondaryLaneServiceName', {
+        value: laneService.serviceName,
+        exportName: `${this.stackName}-SecondaryLaneServiceName`,
       })
     }
 

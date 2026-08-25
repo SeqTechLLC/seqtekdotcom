@@ -14,6 +14,14 @@ test.describe('GET /api/health', () => {
     expect(typeof body.responseTimeMs).toBe('number')
     expect(body.responseTimeMs).toBeGreaterThanOrEqual(0)
     expect(new Date(body.timestamp).toString()).not.toBe('Invalid Date')
+
+    // Build provenance is baked in at image build time; a local/dev run
+    // has no ARGs, so assert the shape and the documented fallbacks
+    // rather than a specific build.
+    expect(typeof body.version).toBe('string')
+    expect(body.version).not.toBe('')
+    expect(typeof body.commit).toBe('string')
+    expect(body.commit).not.toBe('')
   })
 
   test('non-GET methods return 405', async ({ request }) => {

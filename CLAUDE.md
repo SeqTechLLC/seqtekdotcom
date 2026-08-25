@@ -15,7 +15,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 
 Defer to these docs before re-deriving anything. Update them when decisions change.
 
-- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`Preview` → preview.seqtek.com; `main` or a `vX.Y.Z` release → ww3.seqtek.com)
+- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com; a published `vX.Y.Z` release promotes that same image → ww3.seqtek.com)
 - `docs/INFRASTRUCTURE_RUNBOOK.md` — step-by-step: fresh AWS account standup, migrating an environment (with data) to another account, `seqtek.com` cutover
 - `docs/ROADMAP.md` — current status, open decisions, phase tracker
 - `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
@@ -40,9 +40,11 @@ the metadata-collection pattern. Media is served from CloudFront `/media/*` (ADR
 the one exception and a known debt: `/services/[offering]` resolves four bare `Page` slugs through hardcoded
 lookups rather than a collection — tracked as SVC-2.
 
-**Environments.** Nothing is publicly launched. A push to `Preview` deploys `preview.seqtek.com` (primary
-Fargate lane); a push to `main` or a published `vX.Y.Z` release deploys `ww3.seqtek.com` (secondary lane, same
-stack and account) — both behind an ALB + Cognito gate. The separate staging account (`seqtek-preview.com`) was
+**Environments.** Nothing is publicly launched. A merge to `main` builds the image and deploys
+`preview.seqtek.com` (UAT, primary Fargate lane); publishing a `vX.Y.Z` release promotes **that same already-built
+image** to `ww3.seqtek.com` (production, secondary lane, same stack and account) without rebuilding. `main` is the
+only deployment branch. Both lanes sit behind an ALB + Cognito gate — the gate is index control, not access
+control: it is what keeps search engines out until cutover. The separate staging account (`seqtek-preview.com`) was
 retired 2026-08-14. `seqtek.com` still serves the old Wix site.
 
 **What's active.** Spec 011 (Payload admin UX) is in flight. The bottleneck is content throughput, not

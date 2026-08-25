@@ -43,10 +43,22 @@ const prodCfg: EnvConfig = {
   ownsAccountEcrRepository: false,
 }
 
-function synthCompute(envName: 'prod' | 'staging', cfg: EnvConfig, imageTag?: string): Template {
+function synthCompute(
+  envName: 'prod' | 'staging',
+  cfg: EnvConfig,
+  imageTag?: string,
+  secondaryImageTag?: string,
+): Template {
   // `imageTag` mirrors what `deploy.yml` passes as `-c imageTag=<vX.Y.Z | sha>`;
   // omitting it exercises the env-scoped fallback used by a bare local synth.
-  const app = new App({ context: imageTag ? { imageTag } : {} })
+  // `secondaryImageTag` has NO such fallback — any cfg with a secondaryLane
+  // must pass it or the synth throws by design (see compute-stack.ts).
+  const app = new App({
+    context: {
+      ...(imageTag ? { imageTag } : {}),
+      ...(secondaryImageTag ? { secondaryImageTag } : {}),
+    },
+  })
   const stackPrefix = envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
   const network = new NetworkStack(app, `${stackPrefix}Network`, {
     env: { account: '123456789012', region: 'us-east-1' },
@@ -270,18 +282,23 @@ describe('ComputeStack', () => {
   })
 
   describe('with a secondaryLane (temporary ww3.seqtek.com PROD-preview lane)', () => {
-    const t = synthCompute('staging', {
-      ...stagingCfg,
-      domainName: 'seqtek-preview.com',
-      hostedZoneId: 'Z0000000000000000000A',
-      certificateSans: ['*.seqtek-preview.com'],
-      dnsRecordNames: ['seqtek-preview.com'],
-      secondaryLane: {
-        name: 'prod',
-        databaseName: 'seqtek_prod',
-        dnsRecordNames: ['ww3.seqtek-preview.com'],
+    const t = synthCompute(
+      'staging',
+      {
+        ...stagingCfg,
+        domainName: 'seqtek-preview.com',
+        hostedZoneId: 'Z0000000000000000000A',
+        certificateSans: ['*.seqtek-preview.com'],
+        dnsRecordNames: ['seqtek-preview.com'],
+        secondaryLane: {
+          name: 'prod',
+          databaseName: 'seqtek_prod',
+          dnsRecordNames: ['ww3.seqtek-preview.com'],
+        },
       },
-    })
+      undefined,
+      'latest-staging',
+    )
 
     it('creates a second Fargate task definition and service sharing the same cluster', () => {
       t.resourceCountIs('AWS::ECS::TaskDefinition', 2)
@@ -327,11 +344,30 @@ describe('ComputeStack', () => {
       withoutLane.resourceCountIs('AWS::ElasticLoadBalancingV2::TargetGroup', 1)
     })
 
-    it('secondaryImageTag defaults to imageTag, so an ordinary deploy moves both lanes together', () => {
-      const bare = JSON.stringify(Object.values(t.findResources('AWS::ECS::TaskDefinition')))
-      // Neither `-c imageTag` nor `-c secondaryImageTag` was passed to this
-      // synth, so both fall back to the env-scoped default.
-      expect(bare.match(/latest-staging/g)?.length).toBe(2)
+    it('THROWS when secondaryImageTag is omitted, rather than inheriting the primary tag', () => {
+      // Regression guard for 2026-08-25: the old `|| imageTag` fallback meant
+      // a primary-lane-only deploy silently restamped the production lane
+      // with preview's image, which then ran `payload migrate` against
+      // `seqtek_prod`. A deploy that cannot say what production should run
+      // must fail, not guess.
+      expect(() =>
+        synthCompute('staging', {
+          ...stagingCfg,
+          domainName: 'seqtek-preview.com',
+          hostedZoneId: 'Z0000000000000000000A',
+          certificateSans: ['*.seqtek-preview.com'],
+          dnsRecordNames: ['seqtek-preview.com'],
+          secondaryLane: {
+            name: 'prod',
+            databaseName: 'seqtek_prod',
+            dnsRecordNames: ['ww3.seqtek-preview.com'],
+          },
+        }),
+      ).toThrow(/secondaryImageTag/)
+    })
+
+    it('emits SecondaryLaneServiceName so a deploy can read back the tag prod is running', () => {
+      t.hasOutput('SecondaryLaneServiceName', {})
     })
 
     it('an explicit secondaryImageTag promotes ONLY the secondary lane, leaving the primary tag untouched', () => {
@@ -393,7 +429,7 @@ describe('ComputeStack', () => {
       },
       cognitoAuthEnabled: true,
     }
-    const t = synthCompute('staging', cfg)
+    const t = synthCompute('staging', cfg, undefined, 'latest-staging')
 
     it('creates exactly one Cognito User Pool, Client, Domain, and UI customization', () => {
       t.resourceCountIs('AWS::Cognito::UserPool', 1)
@@ -518,7 +554,12 @@ describe('ComputeStack', () => {
     })
 
     it('does NOT create any Cognito resources when cognitoAuthEnabled is false', () => {
-      const withoutGate = synthCompute('staging', { ...cfg, cognitoAuthEnabled: false })
+      const withoutGate = synthCompute(
+        'staging',
+        { ...cfg, cognitoAuthEnabled: false },
+        undefined,
+        'latest-staging',
+      )
       withoutGate.resourceCountIs('AWS::Cognito::UserPool', 0)
       withoutGate.resourceCountIs('AWS::ElasticLoadBalancingV2::ListenerRule', 1) // just SecondaryLaneRule
     })

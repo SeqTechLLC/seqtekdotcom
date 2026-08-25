@@ -40,7 +40,11 @@ const stagingWithDomainCfg: EnvConfig = {
 }
 
 function synthEdge(envName: 'prod' | 'staging', cfg: EnvConfig): Template {
-  const app = new App()
+  // EdgeStack needs a synthesized ComputeStack, and a cfg with a
+  // secondaryLane requires an explicit secondaryImageTag (no fallback by
+  // design — see compute-stack.ts). The value is irrelevant to Edge's
+  // assertions; it just has to be present.
+  const app = new App({ context: { secondaryImageTag: 'latest-staging' } })
   const stackPrefix = envName === 'prod' ? 'SeqtekProd' : 'SeqtekStaging'
   const network = new NetworkStack(app, `${stackPrefix}Network`, {
     env: { account: '123456789012', region: 'us-east-1' },
