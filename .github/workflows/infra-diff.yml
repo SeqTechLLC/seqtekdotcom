@@ -78,7 +78,7 @@ jobs:
               `Workflow run: ${runUrl}`,
               `Commit: \`${context.payload.pull_request.head.sha.slice(0, 7)}\``,
               '',
-              'This is what a merge to `main` (→ ww3.seqtek.com) or a push to `Preview` (→ preview.seqtek.com) will change — both deploy the same stacks.',
+              'This is what a merge to `main` (→ preview.seqtek.com, UAT) will change. A published release promotes the same image to ww3.seqtek.com (prod) from the same stacks.',
               '',
               '<details><summary><strong>Preview account</strong> (<code>SeqtekPreview*</code>)</summary>',
               '',

@@ -666,19 +666,54 @@ removal once upstream catches up.
 ### Promotion model — what deploys where
 
 **Merging to `main` does not touch production.** `main` is the preview/UAT
-environment. Production moves only when a **Release-Please release is
-published**, which is the deliberate human gate on going live.
+environment, and it is the ONLY deployment branch. Production moves only when a
+**release is published**, which is the deliberate human gate on going live.
 
-| Trigger                         | Deploys to        | Site                 | Stacks           |
-| ------------------------------- | ----------------- | -------------------- | ---------------- |
-| Merge (push) to `main`          | **Staging / UAT** | `seqtek-preview.com` | `SeqtekStaging*` |
-| Publish a `vX.Y.Z` release      | **Production**    | CloudFront URL†      | `SeqtekProd*`    |
-| `workflow_dispatch` (env input) | either — manual   | —                    | either           |
-| Feature branches                | nothing (CI only) | local dev            | —                |
+This mattered between 2026-08-14 (#103) and 2026-08-25: `main` promoted
+production directly during that window, and because the container runs
+`payload migrate` on start, a merge became an unattended schema change on
+`seqtek_prod`. `Preview` was also a deployment branch until then; it pointed at
+the same primary lane `main` now owns, so keeping both meant two triggers
+racing one CloudFormation stack.
 
-† Production runs on its CloudFront distribution URL until the `seqtek.com`
-cutover — `infra/cdk.json` deliberately has prod `domainName: null` (see
-`docs/INFRASTRUCTURE_RUNBOOK.md` §3).
+| Trigger                         | Deploys to        | Site                 | Lane      | Builds? |
+| ------------------------------- | ----------------- | -------------------- | --------- | ------- |
+| Merge (push) to `main`          | **Preview / UAT** | `preview.seqtek.com` | primary   | yes     |
+| Publish a `vX.Y.Z` release      | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
+| `workflow_dispatch` (env input) | either — manual   | —                    | either    | depends |
+| Feature branches                | nothing (CI only) | local dev            | —         | —       |
+
+Both lanes live in the SAME `SeqtekPreview*` stacks in the SAME account —
+production is a second ECS task/service/target-group behind the same ALB, with
+its own database (`seqtek_prod`) on the shared RDS instance. The
+never-provisioned `SeqtekProd*` stack set is not deployed by any trigger (no
+account, and the account is at its 5-VPC limit); `secondaryLane` in
+`infra/cdk.json` stands in for it until the `seqtek.com` cutover.
+
+**Build once, promote the artifact.** A `main` merge builds the image, tags it
+with the commit SHA, pushes it to ECR, and puts it on preview. Publishing the
+release points production at **that same image** — it does not rebuild. A
+rebuild would ship bits nobody tested: the Dockerfile's base is pinned by tag
+(which Alpine re-pushes on patch) and `npm ci` fetches tarballs at build time,
+so the same source tree is not guaranteed to produce the same image. The
+promoted tag is therefore the commit SHA — the only tag the image is guaranteed
+to carry. The semantic version rides inside the image (`BUILD_VERSION`) and is
+reported alongside the commit by `/api/health`.
+
+**Every deploy states BOTH lanes' image tags; exactly one moves.** `cdk deploy`
+re-synthesizes the whole stack, so both task definitions are re-rendered on
+every run. The lane that is not moving is pinned to the tag it is already
+running, read back from the live ECS service, making that half of the synth a
+no-op. `compute-stack.ts` has **no fallback** for `secondaryImageTag`: a deploy
+that cannot say what production should run fails the synth. That fallback is
+what silently promoted an untested build — including a destructive migration —
+to production on 2026-08-25.
+
+† `ww3.seqtek.com` **is** production: the finished site behind a DNS record, so
+going live is a Route53 change rather than a deploy. Both lanes sit behind a
+Cognito gate until then, and that gate is **index control, not access
+control** — `seqtek-preview.com` was indexed by Google while its gate was off
+and competed with the real site on our own brand terms.
 
 The release tag is `vX.Y.Z` — `include-v-in-tag: true`,
 `include-component-in-tag: false` in `release-please-config.json`. Release-Please
