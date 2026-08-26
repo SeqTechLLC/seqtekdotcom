@@ -436,33 +436,6 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 | `heading` | text                                                      | no       |       |
 | `items`   | relationship (polymorphic → posts, caseStudies, services) | yes      | Max 3 |
 
-### 5.7 Collection-backed blocks resolve at template time (ROADMAP UI-2)
-
-Four blocks let an author pick a **source** instead of hand-picking rows:
-
-| Block             | Field    | Non-manual values                     | Resolved from     |
-| ----------------- | -------- | ------------------------------------- | ----------------- |
-| `team-grid`       | `filter` | `leadership-only`, `all`              | `listTeamMembers` |
-| `post-list`       | `source` | `latest`, `by-category`               | `listPosts`       |
-| `case-study-grid` | `source` | `latest`, `by-industry`, `by-service` | `listCaseStudies` |
-| `service-cards`   | `source` | `by-pillar`                           | `listServices`    |
-
-**`src/lib/resolveLayout.ts` is where those selects are consumed.** Every route that renders a
-`layout` awaits `resolveLayout(doc.layout)` before handing it to `RenderBlocks`, and the resolver fills
-each block's `manualItems` from the cached readers in `lib/payload.ts` (so the reads inherit the cache
-tags, the hourly revalidation and the `withReadTimeout` guard). An explicit manual pick always wins over
-the source, and a read that times out throws rather than degrading to a silently empty section.
-
-**The render components never read `source`/`filter`.** They draw whatever `manualItems` they are handed
-and nothing else, which is what keeps them pure, synchronous and renderable by React Testing Library —
-`RenderBlocks` stays synchronous, and blocks never touch the database. Adding a new collection-backed
-block means adding a case to `resolveLayout`, not making the component async.
-
-Before UI-2 nothing consumed these selects: a block set to any non-manual source rendered the literal
-string `Source: latest (resolves at template time)` as public body copy. `team-grid` was the worst,
-because `filter` is its one **required** field while `manualItems` is optional — the natural authoring
-path produced the broken page. Pinned by `tests/int/lib/resolveLayout.int.spec.ts`.
-
 ### 5.7 Phase 2 implementation status
 
 Spec 003 Phase 2 (T050–T056) shipped 32 layout blocks. The mapping below reconciles the §5.1–§5.6 catalog above with the implementation in `src/payload/blocks/layout/`. Per Constitution III, this section is authoritative until the catalog tables themselves are rewritten in a follow-up doc pass.
@@ -541,6 +514,35 @@ Under ADR 0009 every non-blog page is `RenderBlocks(layout)`. Rearranging, enric
 5. **Available everywhere, no per-type code.** Every collection's `layout` field spreads the **same** `layoutBlocks` array and every page renders through the **one** `RenderBlocks` dispatcher, so the new block is immediately usable on pages, workshops, case studies, services, and team with zero per-type code. This reuse property is pinned by `tests/int/blocks/blockReuseAcrossTypes.int.spec.tsx` (the `gallery` worked example renders identically on page + case study + workshop from one definition).
 
 The loop is deliberately the **only** exception to "no code for layout" (SC-006): if a change is not "add or fix a block type," it should not require a deploy.
+
+---
+
+### 5.10 Collection-backed blocks resolve at template time (ROADMAP UI-2)
+
+Four blocks let an author pick a **source** instead of hand-picking rows:
+
+| Block             | Field    | Non-manual values                     | Resolved from     |
+| ----------------- | -------- | ------------------------------------- | ----------------- |
+| `team-grid`       | `filter` | `leadership-only`, `all`              | `listTeamMembers` |
+| `post-list`       | `source` | `latest`, `by-category`               | `listPosts`       |
+| `case-study-grid` | `source` | `latest`, `by-industry`, `by-service` | `listCaseStudies` |
+| `service-cards`   | `source` | `by-pillar`                           | `listServices`    |
+
+**`src/lib/resolveLayout.ts` is where those selects are consumed.** Every route that renders a
+`layout` awaits `resolveLayout(doc.layout)` before handing it to `RenderBlocks`, and the resolver fills
+each block's `manualItems` from the cached readers in `lib/payload.ts` (so the reads inherit the cache
+tags, the hourly revalidation and the `withReadTimeout` guard). An explicit manual pick always wins over
+the source, and a read that times out throws rather than degrading to a silently empty section.
+
+**The render components never read `source`/`filter`.** They draw whatever `manualItems` they are handed
+and nothing else, which is what keeps them pure, synchronous and renderable by React Testing Library —
+`RenderBlocks` stays synchronous, and blocks never touch the database. Adding a new collection-backed
+block means adding a case to `resolveLayout`, not making the component async.
+
+Before UI-2 nothing consumed these selects: a block set to any non-manual source rendered the literal
+string `Source: latest (resolves at template time)` as public body copy. `team-grid` was the worst,
+because `filter` is its one **required** field while `manualItems` is optional — the natural authoring
+path produced the broken page. Pinned by `tests/int/lib/resolveLayout.int.spec.ts`.
 
 ---
 

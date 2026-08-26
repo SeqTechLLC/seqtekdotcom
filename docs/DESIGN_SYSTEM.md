@@ -471,8 +471,8 @@ at full page width and needs no help from its caller.
 So a listing page must **not** wrap the grid in a second `mx-auto max-w-container-lg px-4 …` container.
 Doing so nests two padded containers and insets the grid from the page's own `h1` by the inner section's
 padding — measured at **32px on desktop, 16px on mobile**, on all five listing routes at once
-(ROADMAP UI-1 follow-up, PROJECT*HISTORY P5-29). Note the two recipes do not commute: padding + max-width
-on the \_same* element lands at a different x than padding on an outer element with the max-width inside it.
+(ROADMAP UI-1 follow-up, `PROJECT_HISTORY` P5-29). Note the two recipes do not commute: padding + max-width
+on the **same** element lands at a different x than padding on an outer element with the max-width inside it.
 
 **The shape:**
 

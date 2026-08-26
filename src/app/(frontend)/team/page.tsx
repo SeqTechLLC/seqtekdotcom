@@ -42,7 +42,7 @@ export default async function TeamPage() {
           </p>
         </div>
       </header>
-      <TeamGrid filter="all" layout="cards" manualItems={ordered} headingLevel="h2" />
+      <TeamGrid layout="cards" manualItems={ordered} headingLevel="h2" />
     </div>
   )
 }

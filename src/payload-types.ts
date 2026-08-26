@@ -930,6 +930,9 @@ export interface ContactCtaBlock {
  */
 export interface CaseStudyGridBlock {
   heading?: string | null;
+  /**
+   * How this block picks its case studies. "Latest", "By industry" and "By service" fill themselves in and stay current as you publish; "Manual" uses exactly the studies you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
+   */
   source: 'manual' | 'latest' | 'by-industry' | 'by-service';
   manualItems?: (number | CaseStudy)[] | null;
   industry?: (number | null) | Industry;
@@ -945,6 +948,9 @@ export interface CaseStudyGridBlock {
  */
 export interface ServiceCardsBlock {
   heading?: string | null;
+  /**
+   * How this block picks its services. "By pillar" fills itself in and stays current as you publish; "Manual" uses exactly the services you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
+   */
   source: 'by-pillar' | 'manual';
   pillar?: (number | null) | ServicePillar;
   manualItems?: (number | Service)[] | null;
@@ -980,6 +986,9 @@ export interface FeaturedCaseStudyBlock {
  */
 export interface PostListBlock {
   heading?: string | null;
+  /**
+   * How this block picks its posts. "Latest" and "By category" fill themselves in and stay current as you publish; "Manual" uses exactly the posts you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
+   */
   source: 'latest' | 'by-category' | 'manual';
   category?: (number | null) | Category;
   manualItems?: (number | Post)[] | null;

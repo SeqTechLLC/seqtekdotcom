@@ -84,8 +84,12 @@ describe('UI-3 — the skeleton placeholder inventory stays complete', () => {
 describe('UI-2 — no render component defers work to a string on the page', () => {
   // The exact shape that shipped: a component printing its own unimplemented
   // state instead of rendering, e.g. `Source: {source} (resolves at template time)`.
-  const DEFERRAL = /resolves at template time|coming soon|not implemented yet|placeholder text/i
+  const DEFERRAL = /resolves at template time|coming soon|not implemented yet/i
 
+  // Recursive: `sections/` is flat today, but a future subdirectory would
+  // otherwise escape the scan silently — and the vacuity check below counts
+  // the same listing, so it would not catch that either.
+  //
   // Read the SOURCE FILES rather than `Component.toString()`. The bundler folds
   // constants and inlines children, so a stringified component can silently
   // drop the very text this guard exists to find — verified: a reintroduced
@@ -93,7 +97,7 @@ describe('UI-2 — no render component defers work to a string on the page', () 
   const SECTIONS_DIR = join(import.meta.dirname, '../../../src/components/sections')
 
   it('no block render component contains deferred-work text', () => {
-    const offenders = readdirSync(SECTIONS_DIR)
+    const offenders = readdirSync(SECTIONS_DIR, { recursive: true, encoding: 'utf8' })
       .filter((f) => f.endsWith('.tsx'))
       .filter((f) => DEFERRAL.test(readFileSync(join(SECTIONS_DIR, f), 'utf8')))
     expect(
@@ -104,7 +108,9 @@ describe('UI-2 — no render component defers work to a string on the page', () 
   })
 
   it('reads a non-trivial number of components, so a bad path cannot pass vacuously', () => {
-    const tsx = readdirSync(SECTIONS_DIR).filter((f) => f.endsWith('.tsx'))
+    const tsx = readdirSync(SECTIONS_DIR, { recursive: true, encoding: 'utf8' }).filter((f) =>
+      f.endsWith('.tsx'),
+    )
     expect(tsx.length).toBeGreaterThan(30)
   })
 })

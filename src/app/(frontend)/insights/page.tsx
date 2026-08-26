@@ -34,7 +34,7 @@ export default async function InsightsPage() {
           </p>
         </div>
       </header>
-      <PostList source="manual" manualItems={posts} limit={posts.length} headingLevel="h2" />
+      <PostList manualItems={posts} limit={posts.length} headingLevel="h2" />
     </div>
   )
 }

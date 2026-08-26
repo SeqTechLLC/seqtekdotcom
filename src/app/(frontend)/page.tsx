@@ -78,12 +78,7 @@ export default async function HomePage() {
 
         {latestPosts.length ? (
           <section data-testid="latest-insights">
-            <PostList
-              heading="Latest insights"
-              source="manual"
-              manualItems={latestPosts.slice(0, 3)}
-              limit={3}
-            />
+            <PostList heading="Latest insights" manualItems={latestPosts.slice(0, 3)} limit={3} />
           </section>
         ) : null}
       </div>
