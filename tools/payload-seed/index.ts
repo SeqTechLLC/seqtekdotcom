@@ -15,7 +15,7 @@ import { readFile } from 'node:fs/promises'
 import { PayloadRestClient } from '../payload-rest/client'
 
 import { resolveData } from './resolve'
-import { isGlobalSpec, validateSpecs, type SeedStatus } from './spec'
+import { isGlobalSpec, validateSpecs, type SeedStatus, resolveStatus } from './spec'
 import { upsertSpec } from './upsert'
 
 const DEFAULT_BASE_URL = 'http://localhost:3100'
@@ -65,7 +65,10 @@ Flags:
   --draft              Force every spec to draft instead of publishing.
                        (Per-spec, "status" also accepts "unpublished", which
                        takes an already-published document DOWN — plain
-                       "draft" only stages a version and leaves it live.)
+                       "draft" only stages a version and leaves it live.
+                       --draft does NOT override "unpublished": forcing it to
+                       "draft" would leave that document live, which is the
+                       thing "unpublished" exists to prevent.)
   --dry-run            Resolve + print intended ops; no writes or uploads.
   --allow-missing-refs Downgrade an unresolved non-omittable $ref to warn + drop.
   --help, -h           Show this help and exit 0.
@@ -152,7 +155,7 @@ async function main(): Promise<number> {
     const spec = validated.value[i]
     const label = isGlobalSpec(spec) ? `global:${spec.global}` : `${spec.collection}`
     try {
-      const status: SeedStatus = args.draft ? 'draft' : spec.status
+      const status: SeedStatus = resolveStatus(args.draft, spec.status)
       const data = await resolveData(client, spec.data, {
         dryRun: args.dryRun,
         allowMissingRefs: args.allowMissingRefs,

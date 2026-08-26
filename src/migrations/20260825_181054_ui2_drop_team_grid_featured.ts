@@ -12,6 +12,16 @@ import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 // The `UPDATE ... SET "filter" = 'all'` lines below run while the column is
 // still `text` and re-home those rows first. Do not regenerate this file
 // without re-adding them.
+//
+// NO AUTOMATED GATE EXERCISES THIS FILE. No workflow in .github/workflows runs
+// `payload migrate`, and the testcontainers-backed Vitest job builds its schema
+// with a drizzle PUSH, not the migration chain — so a green CI says nothing
+// about whether this migration applies. It was verified by hand instead, on a
+// scratch Postgres: applied from empty; rolled back; re-applied against a
+// planted `'featured'` row (re-homed to `'all'`, enum value dropped, column
+// default preserved); and the UNEDITED generated SQL confirmed to fail on that
+// same state with `invalid input value for enum ... "featured"`. Any future
+// hand-edited migration needs the same treatment — do not assume CI covers it.
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`

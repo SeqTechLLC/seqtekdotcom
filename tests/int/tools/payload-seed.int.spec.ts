@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import { PayloadRestClient, type FetchFn } from '../../../tools/payload-rest/client'
 import { resolveData, type ResolveOptions } from '../../../tools/payload-seed/resolve'
-import { validateSpecs } from '../../../tools/payload-seed/spec'
+import { resolveStatus, validateSpecs } from '../../../tools/payload-seed/spec'
 import { upsertSpec } from '../../../tools/payload-seed/upsert'
 
 /**
@@ -587,5 +587,29 @@ describe('sequential array ordering', () => {
       .at(-1)
     expect(refLookup && refLookup.i).toBeGreaterThan(industryPostIdx)
     expect(caseStudyRefLookupIdx).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('resolveStatus — `--draft` must not resurrect a retired document', () => {
+  // ROADMAP UI-2 review round 2: `--draft` forces publishing OFF, but collapsing
+  // an `unpublished` spec into `draft` writes with `?draft=true`, which stages a
+  // version and leaves the live document UP — the exact failure the third state
+  // exists to close, reached through the flag instead of the file.
+  it('forces `published` down to `draft`', () => {
+    expect(resolveStatus(true, 'published')).toBe('draft')
+  })
+
+  it('leaves `draft` alone', () => {
+    expect(resolveStatus(true, 'draft')).toBe('draft')
+  })
+
+  it('PRESERVES `unpublished` — the whole point', () => {
+    expect(resolveStatus(true, 'unpublished')).toBe('unpublished')
+  })
+
+  it('is a no-op without the flag', () => {
+    expect(resolveStatus(false, 'published')).toBe('published')
+    expect(resolveStatus(false, 'draft')).toBe('draft')
+    expect(resolveStatus(false, 'unpublished')).toBe('unpublished')
   })
 })

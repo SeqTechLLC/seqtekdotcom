@@ -129,3 +129,16 @@ export function validateSpecs(raw: unknown): ValidationResult {
   if (errors.length > 0) return { ok: false, errors }
   return { ok: true, value: specs }
 }
+
+/**
+ * Resolve a spec's publish state against the global `--draft` flag.
+ *
+ * `--draft` forces publishing OFF. It must NOT also force UNPUBLISHING off.
+ * Collapsing an `unpublished` spec into `draft` writes with `?draft=true`,
+ * which stages a version and leaves the live document UP — the exact failure
+ * the third state exists to close (P5-29), reached through the flag instead of
+ * the file. An `unpublished` spec is already not publishing anything, so
+ * `--draft` has nothing to force there.
+ */
+export const resolveStatus = (forceDraft: boolean, specStatus: SeedStatus): SeedStatus =>
+  forceDraft && specStatus !== 'unpublished' ? 'draft' : specStatus
