@@ -14,42 +14,33 @@ name: Deploy
 # nothing is compiled, nothing is pushed, a task definition is repointed at a
 # digest that already exists.
 #
-# A VERSION AND A BUILD IDENTITY ARE TWO NAMES FOR ONE RELEASE. `0.3.0` is the
-# human-friendly label, generated automatically by Release-Please from the
-# Conventional Commits on `main`. The commit SHA is the immutable artifact.
-# Production deploys the image tied to the SHA; the version is metadata about
-# it, carried as `RELEASE_VERSION` and as an extra ECR tag on the same digest.
+# EVERY BUILD GETS A VERSION; A RELEASE PROMOTES ONE. Each successful `main`
+# build takes the next patch number and tags its image with it:
+#
+#   0.4.0 -> 0.4.1 -> 0.4.2 -> 0.4.3
+#
+# Each names exactly one image, which UAT runs and you test. "0.4.2 looks
+# good" is then a complete instruction: publish `v0.4.2` and production runs
+# that same container. The leading `v` is the only difference between built
+# and released.
+#
+# MAJOR.MINOR come from the last release tag; PATCH is that tag's patch plus
+# commits since it — deterministic from git, monotonic, no stored state.
 #
 # EXACTLY ONE EVENT PROMOTES PRODUCTION: publishing the GitHub Release. It is
 # created as a DRAFT, so a person publishes it — which is also what makes the
 # event fire at all, since GitHub raises no workflow run for a release
-# published by the default GITHUB_TOKEN. `release-please.yml` no longer
-# dispatches this workflow; that dispatch had never worked anyway (the job does
-# not check out the repo and `gh` needs a git context), so every release cut a
-# tag and then failed to promote.
+# published by the default GITHUB_TOKEN.
 #
-# RESOLUTION. The tag points at Release-Please's bookkeeping commit, which is
-# deliberately not built (see the job condition below), so the release path
-# walks back to the nearest ancestor that HAS an image in ECR — the last real
-# code commit, which is what preview has been running and what the release
-# actually describes. If no ancestor within 50 commits has one, the deploy
-# FAILS with `image for SHA xxxxxxx not found in ECR`. Nothing is rebuilt and
-# nothing is guessed. Rollback is the same mechanism in reverse: an older
-# release resolves to its own SHA and production is pointed back at the image
-# that already exists.
+# RESOLUTION. `v0.4.2` resolves to the image tagged `0.4.2`, and production is
+# deployed by that image's COMMIT tag — both name one digest, but the SHA is
+# the identity that cannot be reassigned. If no image carries that version the
+# deploy FAILS with `image for version 0.4.2 not found in ECR`. Nothing is
+# rebuilt and nothing is guessed. Rollback is the same mechanism: publish or
+# re-run an older release and production returns to that existing image.
 #
-# THE VERSION IS RUNTIME METADATA, NOT A REBUILD. A tested image is never
-# rebuilt merely to bake a version number into it. The commit SHA stays baked
-# in, because it identifies the actual artifact. The semantic version is
-# attached at release time two ways, neither of which touches the image: the
-# same ECR digest gets `vX.Y.Z` as an additional tag, and the production task
-# definition receives `RELEASE_VERSION`. /api/health reports the release
-# version when present, falling back to the version baked at build time.
-#
-# A `main` merge is NOT a release. It briefly was, and that let a merge reach
-# production unattended — the container applies database migrations on start,
-# so merging became a schema change with no human in between. Merging is
-# frequent and low-ceremony; promoting production is a decision someone makes.
+# THE LANES ARE MEANT TO DRIFT. UAT can be many builds ahead of production;
+# each lane simply points at one immutable image.
 #
 # ONE deployment branch. `Preview` used to deploy here too and pointed at the
 # same primary lane `main` now owns — two triggers racing one CloudFormation
@@ -254,7 +245,11 @@ jobs:
           # shallow clone (depth 1) would leave `git rev-list` with a single
           # commit and every release would resolve to "not found". 60 covers
           # the 50-commit walk with room to spare.
+          # `git describe --tags` (build-version computation) needs the tags
+          # AND enough history to count commits since the last release. Tags do
+          # not come with fetch-depth, hence fetch-tags.
           fetch-depth: 60
+          fetch-tags: true
 
       - name: Configure AWS credentials (${{ env.ENV_NAME }} OIDC role)
         uses: aws-actions/configure-aws-credentials@v4
@@ -278,11 +273,39 @@ jobs:
           case "$GITHUB_REF" in
             refs/tags/v*) VERSION_TAG="${GITHUB_REF#refs/tags/}" ;;
           esac
+
+          # BUILD VERSION — every successful `main` build gets the next patch
+          # number, and that number IS the thing you choose to release:
+          #
+          #   0.4.0 -> 0.4.1 -> 0.4.2 -> 0.4.3
+          #
+          # Each one names exactly one image. "0.4.2 looks good" is a complete
+          # instruction: publish `v0.4.2` and production runs that container.
+          # The leading `v` is what distinguishes "released" from "built".
+          #
+          # MAJOR.MINOR come from the last release tag; PATCH is that tag's
+          # patch plus the number of commits since it. Deterministic from git
+          # alone, monotonic, and needs no stored state.
+          LAST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo "v0.0.0")
+          BASE="${LAST_TAG#v}"
+          MAJOR="${BASE%%.*}"
+          REST="${BASE#*.}"
+          MINOR="${REST%%.*}"
+          PATCH="${BASE##*.}"
+          if git rev-parse "$LAST_TAG" >/dev/null 2>&1; then
+            BUILD_N=$(git rev-list --count "${LAST_TAG}..HEAD")
+          else
+            BUILD_N=$(git rev-list --count HEAD)
+          fi
+          BUILD_VERSION="${MAJOR}.${MINOR}.$((PATCH + BUILD_N))"
+          echo "Build version: ${BUILD_VERSION} (since ${LAST_TAG}, ${BUILD_N} commits)"
+
           {
             echo "registry=${REGISTRY}"
             echo "image=${IMAGE}"
             echo "sha-tag=${SHA_TAG}"
             echo "version-tag=${VERSION_TAG}"
+            echo "build-version=${BUILD_VERSION}"
           } >> "$GITHUB_OUTPUT"
 
       - name: ECR login
@@ -321,6 +344,7 @@ jobs:
           # a convenience pointer; nothing deploys from it.
           tags: |
             ${{ steps.img.outputs.image }}:${{ steps.img.outputs.sha-tag }}
+            ${{ steps.img.outputs.image }}:${{ steps.img.outputs.build-version }}
             ${{ steps.img.outputs.image }}:latest-${{ env.ENV_NAME }}
             ${{ steps.img.outputs.version-tag != '' && format('{0}:{1}', steps.img.outputs.image, steps.img.outputs.version-tag) || '' }}
           cache-from: type=gha
@@ -347,6 +371,7 @@ jobs:
             NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=8dc61ff4-9f95-46c5-b43e-8c82a394de42
             NEXT_PUBLIC_GTM_ID=
             BUILD_COMMIT=${{ steps.img.outputs.sha-tag }}
+            BUILD_VERSION=${{ steps.img.outputs.build-version }}
 
       - uses: actions/setup-node@v4
         with:
@@ -377,70 +402,65 @@ jobs:
       # If it is missing, stop. A tag created against a commit that never built
       # — or one whose build is still running — must not silently become a
       # production deploy of something else.
-      - name: Resolve the release to a built image
+      - name: Resolve the release to its built image
         id: resolve
         if: ${{ env.IS_RELEASE == 'true' }}
         env:
           VERSION_TAG: ${{ steps.img.outputs.version-tag }}
         run: |
           set -euo pipefail
-          # A release is a human-friendly LABEL (`v0.3.0`) for an immutable
-          # BUILD IDENTITY (a commit SHA). Production deploys the image tied to
-          # that SHA; the label is metadata about it.
+          # A release names a build that already exists. `v0.4.2` promotes the
+          # image tagged `0.4.2` — the one a `main` build produced and UAT has
+          # been running. The `v` is the only difference between "built" and
+          # "released", and it is added to that same digest below.
           #
-          # The tag usually points at Release-Please's bookkeeping commit, which
-          # is deliberately not built (see the job condition above), so walk back
-          # to the most recent ancestor that DOES have an image. That ancestor is
-          # the last real code commit — the one preview has been running and the
-          # one this release is actually describing.
-          #
-          # Nothing is rebuilt and nothing is guessed: if no ancestor within
-          # MAX_DEPTH has an image, the deploy fails.
-          MAX_DEPTH=50
-          RESOLVED=""
-          for SHA in $(git rev-list --max-count="$MAX_DEPTH" "$GITHUB_SHA"); do
-            SHORT="${SHA:0:7}"
-            if aws ecr describe-images \
-              --repository-name "$ECR_REPOSITORY" \
-              --image-ids imageTag="$SHORT" >/dev/null 2>&1; then
-              RESOLVED="$SHORT"
-              break
-            fi
-            echo "no image for ${SHORT}, walking back"
-          done
-
-          if [ -z "$RESOLVED" ]; then
-            echo "::error::image for SHA ${GITHUB_SHA:0:7} not found in ECR"
-            echo "::error::(and none of its ${MAX_DEPTH} nearest ancestors have one)"
-            echo "::error::A release promotes an image a merge to main already built."
-            echo "::error::Either that build has not finished, or it failed."
-            echo "::error::Nothing was rebuilt and nothing was guessed."
+          # Nothing is rebuilt and nothing is guessed: if no image carries that
+          # version, the deploy fails.
+          VERSION="${VERSION_TAG#v}"
+          if [ -z "$VERSION" ]; then
+            echo "::error::This release has no version tag; cannot resolve an image."
             exit 1
           fi
 
-          if [ "$RESOLVED" != "${GITHUB_SHA:0:7}" ]; then
-            echo "Release ${VERSION_TAG:-<untagged>} points at ${GITHUB_SHA:0:7}" \
-              "(not built); resolved to ancestor ${RESOLVED}."
-          else
-            echo "Release ${VERSION_TAG:-<untagged>} resolved to ${RESOLVED}."
+          DIGEST=$(aws ecr describe-images \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="$VERSION" \
+            --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+          if [ -z "$DIGEST" ] || [ "$DIGEST" = "None" ]; then
+            echo "::error::image for version ${VERSION} not found in ECR"
+            echo "::error::A release promotes a build that already exists. Either that"
+            echo "::error::build has not finished, or it failed, or ${VERSION} was never built."
+            exit 1
           fi
-          echo "promote-tag=${RESOLVED}" >> "$GITHUB_OUTPUT"
 
-          # Give that SAME digest the release version as an extra ECR tag, so
-          # the label and the build identity name one artifact. put-image
-          # attaches a tag to the existing manifest — no pull, no push, no
-          # rebuild.
-          if [ -n "${VERSION_TAG:-}" ]; then
-            MANIFEST=$(aws ecr batch-get-image \
-              --repository-name "$ECR_REPOSITORY" \
-              --image-ids imageTag="$RESOLVED" \
-              --query 'images[0].imageManifest' --output text)
-            if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
-              --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
-              echo "Tagged ${RESOLVED} as ${VERSION_TAG} in ECR."
-            else
-              echo "::notice::${VERSION_TAG} already tags this digest."
-            fi
+          # Deploy by the COMMIT tag, not the version tag. Both name this same
+          # digest, but the SHA is the identity that cannot be reassigned.
+          PROMOTE_TAG=$(aws ecr describe-images \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageDigest="$DIGEST" \
+            --query 'imageDetails[0].imageTags' --output json \
+            | python3 -c 'import json,sys,re; print(next((t for t in json.load(sys.stdin) if re.fullmatch(r"[0-9a-f]{7}", t)), ""))')
+          if [ -z "$PROMOTE_TAG" ]; then
+            echo "::error::No commit tag on the digest for version ${VERSION}."
+            echo "::error::Expected a 7-character SHA tag alongside it."
+            exit 1
+          fi
+
+          echo "Release ${VERSION_TAG} -> version ${VERSION} -> commit ${PROMOTE_TAG}"
+          echo "promote-tag=${PROMOTE_TAG}" >> "$GITHUB_OUTPUT"
+
+          # Add the release tag to that SAME digest, so one image carries the
+          # build number, the commit, and the release. put-image attaches a tag
+          # to the existing manifest — no pull, no push, no rebuild.
+          MANIFEST=$(aws ecr batch-get-image \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageDigest="$DIGEST" \
+            --query 'images[0].imageManifest' --output text)
+          if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
+            --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
+            echo "Tagged ${VERSION} as ${VERSION_TAG} in ECR."
+          else
+            echo "::notice::${VERSION_TAG} already tags this digest."
           fi
 
       - name: Resolve the tested image from the preview lane (release path only)

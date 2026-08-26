@@ -728,27 +728,68 @@ tested: the Dockerfile's base is pinned by tag (which Alpine re-pushes on
 patch) and `npm ci` fetches tarballs at build time, so the same source tree is
 not guaranteed to produce the same image.
 
-**The version is a label on an image, not a reason to rebuild.** One ECR digest
-carries both identities:
+**Every build gets a version; a release promotes one.** Each successful `main`
+build takes the next patch number and tags its image with it:
 
 ```
-sha256:9c1b3e66...
-  |-- 1b7155f   <- build identity (the commit)
-  \-- v0.3.1    <- release label (added by put-image, no rebuild)
+0.4.0  ->  0.4.1  ->  0.4.2  ->  0.4.3
 ```
 
-The commit SHA is baked into the image because it identifies the artifact. The
-release version is attached at promotion time — as that extra ECR tag, and as
-`RELEASE_VERSION` on the production task definition. `/api/health` reports both:
+Each names exactly one image, which UAT runs and you test. `MAJOR.MINOR` come
+from the last release tag; `PATCH` is that tag's patch plus the commits since
+it — deterministic from git, monotonic, no stored state.
+
+**"0.4.2 looks good" is then a complete instruction.** Publish `v0.4.2` and
+production runs that same container. The leading `v` is the only difference
+between built and released:
+
+```
+main build      0.4.2   ->  ECR: [ ede1ba4, 0.4.2 ]   ->  UAT
+publish release v0.4.2   ->  ECR: [ ede1ba4, 0.4.2, v0.4.2 ]  ->  PROD
+```
+
+One digest, three tags, no second build. Production is deployed by the _commit_
+tag rather than the version tag — both name the same digest, but the SHA is the
+identity that cannot be reassigned.
+
+If no image carries the released version, the deploy **fails**:
+
+```
+image for version 0.4.2 not found in ECR
+```
+
+Nothing is rebuilt and nothing is guessed. Rollback is the same mechanism:
+publish or re-run an older release and production returns to that existing
+image.
+
+`/api/health` reports all three names:
 
 ```json
-{ "release": "v0.3.1", "commit": "1b7155f" }
+{ "version": "0.4.2", "release": "v0.4.2", "commit": "ede1ba4" }
 ```
 
-`release` is **null** on a lane that has not been released — notably UAT, which
-normally runs ahead of any release. There is deliberately no fallback to a
-build-time version: reporting one would claim a release the lane never
-received.
+`version` and `commit` are baked into the image. `release` is runtime metadata
+applied at promotion, and is **null** on a lane that has not been released —
+notably UAT, which normally runs ahead of any release. It deliberately does not
+fall back to `version`: claiming a release a lane never received is worse than
+reporting none.
+
+**You choose which build to release.** Release-Please does the paperwork — tag,
+CHANGELOG, GitHub Release — but the version must name a build that exists,
+because that is how the deploy finds the image. Tell it which one with a
+`Release-As:` footer:
+
+```
+git commit --allow-empty -m "chore: release 0.4.2" -m "Release-As: 0.4.2"
+```
+
+Left to itself it proposes a number derived from `feat:`/`fix:` since the last
+release, which will not generally match any build — publishing that would fail
+resolution with `image for version X not found in ECR`.
+
+**The lanes are meant to drift.** UAT can be many builds ahead of production;
+that is the point. Each lane points at one immutable image, and every deploy
+states both explicitly so moving one never rewrites the other.
 
 **Exactly one event promotes production.** `release: [published]` is the only
 path; `release-please.yml` no longer dispatches the deploy workflow. That
