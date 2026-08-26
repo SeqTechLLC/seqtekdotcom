@@ -10,10 +10,26 @@ name: Release Please
 # prepares the release; NOTHING deploys. Publishing that draft is the single
 # act that promotes production — see `deploy.yml`'s `release:` trigger.
 #
-# - Starts at `0.1.0`. Bumps to `1.0.0` at seqtek.com cutover via an
-#   explicit `release-as: 1.0.0` commit footer.
-# - `bump-minor-pre-major: true` keeps `feat:` -> minor in the 0.x range
-#   so feature commits don't get lost in patch noise.
+# YOU CHOOSE THE VERSION; THIS ACTION DOES THE PAPERWORK. Every `main` build
+# is already tagged with its own version (0.4.0, 0.4.1, 0.4.2 ... — see
+# deploy.yml), and a release must name a build that EXISTS in ECR, because
+# that is how the deploy locates the image to promote. So the release version
+# is not something to be computed after the fact; it is the build you tested.
+#
+# Tell this action which one with a `Release-As:` footer:
+#
+#     git commit --allow-empty -m "chore: release 0.4.2" -m "Release-As: 0.4.2"
+#
+# It then produces the tag, CHANGELOG and release for exactly that version
+# instead of deriving one from commit types. Left to itself it would propose a
+# number based on `feat:`/`fix:` since the last release, which will not
+# generally match any build — and publishing that would fail resolution with
+# `image for version X not found in ECR`.
+#
+# - Starts at `0.1.0`. Bumps to `1.0.0` at seqtek.com cutover via the same
+#   `Release-As: 1.0.0` footer.
+# - `bump-minor-pre-major: true` still governs the number it SUGGESTS when no
+#   footer is given.
 # - No major bumps past 1.0 until we ship a public API (e.g., client
 #   portal / AI portal). Avoid `feat!:` / `BREAKING CHANGE:` footers.
 #
