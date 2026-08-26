@@ -728,42 +728,44 @@ tested: the Dockerfile's base is pinned by tag (which Alpine re-pushes on
 patch) and `npm ci` fetches tarballs at build time, so the same source tree is
 not guaranteed to produce the same image.
 
-**Every build gets a number, so you can choose by number.** A lane should be
-identifiable without remembering which SHA someone tested. Each `main` build is
-tagged with a human-friendly build version alongside its commit SHA:
+**Every build gets a version; a release promotes one.** Each successful `main`
+build takes the next patch number and tags its image with it:
 
 ```
-main builds:
-  1b7155f  ->  ECR: [ 1b7155f, 0.4.0-build.1 ]
-  ede1ba4  ->  ECR: [ ede1ba4, 0.4.0-build.2 ]
-  82ac771  ->  ECR: [ 82ac771, 0.4.0-build.3 ]
-
-UAT runs 0.4.0-build.3
+0.4.0  ->  0.4.1  ->  0.4.2  ->  0.4.3
 ```
 
-`0.4.0` is the version this work is heading toward, derived the way
-Release-Please derives it: a `feat:` since the last release bumps the MINOR in
-the 0.x range (`bump-minor-pre-major`), otherwise the PATCH. `build.N` counts
-commits since the last release tag, so it is monotonic and needs no stored
-state. Release-Please still owns the _released_ version; this only names the
-builds in between.
+Each names exactly one image, which UAT runs and you test. `MAJOR.MINOR` come
+from the last release tag; `PATCH` is that tag's patch plus the commits since
+it — deterministic from git, monotonic, no stored state.
 
-**A release promotes an existing build; it does not create one.** Publishing
-`v0.4.0` adds that tag to the digest already chosen, and points production at
-it:
+**"0.4.2 looks good" is then a complete instruction.** Publish `v0.4.2` and
+production runs that same container. The leading `v` is the only difference
+between built and released:
 
 ```
-"0.4.0-build.2 looks good, release that"
-  -> publish v0.4.0
-  -> PROD runs ede1ba4
-  -> digest now: [ ede1ba4, 0.4.0-build.2, v0.4.0 ]
+main build      0.4.2   ->  ECR: [ ede1ba4, 0.4.2 ]   ->  UAT
+publish release v0.4.2   ->  ECR: [ ede1ba4, 0.4.2, v0.4.2 ]  ->  PROD
 ```
 
-One digest, three tags, no rebuild. `/api/health` reports all three, because
-they name one artifact:
+One digest, three tags, no second build. Production is deployed by the _commit_
+tag rather than the version tag — both name the same digest, but the SHA is the
+identity that cannot be reassigned.
+
+If no image carries the released version, the deploy **fails**:
+
+```
+image for version 0.4.2 not found in ECR
+```
+
+Nothing is rebuilt and nothing is guessed. Rollback is the same mechanism:
+publish or re-run an older release and production returns to that existing
+image.
+
+`/api/health` reports all three names:
 
 ```json
-{ "version": "0.4.0-build.2", "release": "v0.4.0", "commit": "ede1ba4" }
+{ "version": "0.4.2", "release": "v0.4.2", "commit": "ede1ba4" }
 ```
 
 `version` and `commit` are baked into the image. `release` is runtime metadata
@@ -773,8 +775,8 @@ fall back to `version`: claiming a release a lane never received is worse than
 reporting none.
 
 **The lanes are meant to drift.** UAT can be many builds ahead of production;
-that is the point. Each lane simply points at a specific immutable image, and
-every deploy states both explicitly so moving one never rewrites the other.
+that is the point. Each lane points at one immutable image, and every deploy
+states both explicitly so moving one never rewrites the other.
 
 **Exactly one event promotes production.** `release: [published]` is the only
 path; `release-please.yml` no longer dispatches the deploy workflow. That
