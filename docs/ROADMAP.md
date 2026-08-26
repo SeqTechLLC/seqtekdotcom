@@ -18,13 +18,18 @@ people_ — this file tracks the _work_. [`PROJECT_HISTORY.md`](./PROJECT_HISTOR
 
 **Environments** (nothing is publicly launched):
 
-| Trigger                      | Lands on                                      | Notes                             |
-| ---------------------------- | --------------------------------------------- | --------------------------------- |
-| push to `Preview`            | `preview.seqtek.com` — primary Fargate lane   | Cognito-gated                     |
-| push to `main`, or a release | `ww3.seqtek.com` — secondary lane, same stack | Cognito-gated; stands in for prod |
-| —                            | `seqtek.com`                                  | still the **old Wix site**        |
+| Trigger                        | Lands on                                         | Notes                                      |
+| ------------------------------ | ------------------------------------------------ | ------------------------------------------ |
+| merge to `main`                | `preview.seqtek.com` — UAT, primary Fargate lane | Cognito-gated. The ONLY deployment branch. |
+| merge the **release PR**       | nothing                                          | Version bump only; `deploy.yml` skips it   |
+| **publish** the GitHub Release | `ww3.seqtek.com` — production, secondary lane    | Promotes the already-built image; no build |
+| —                              | `seqtek.com`                                     | still the **old Wix site**                 |
 
-The separate staging account (`seqtek-preview.com`) was retired 2026-08-14; no trigger deploys there.
+**Merging to `main` does not touch production** (#110/#111, 2026-08-25). Publishing a release is the
+deliberate human gate, which matters because the container runs `payload migrate` on start — under the
+previous model a merge was an unattended schema change on `seqtek_prod`. `Preview` is no longer a
+deployment branch. The separate staging account (`seqtek-preview.com`) was retired 2026-08-14; no
+trigger deploys there. Authoritative version: `ARCHITECTURE.md` §"Promotion model".
 
 **The build is essentially done.** Two content primitives (a block-composed `Page`, a rich-text `Post`) plus
 typed metadata collections — `partners` (#99) is the reference implementation of ADR 0009 Option C. 45 blocks,
