@@ -143,9 +143,28 @@ async function seedLocations(payload: Payload) {
 
 async function seedTeamMembers(payload: Payload, photoId: string | number) {
   await clearTagged(payload, 'teamMembers', 'name')
+  // ROADMAP UI-1: `title` is the job title the cards render; `role` is the
+  // one-sentence description the /team/[slug] header renders under it. These
+  // fixtures used to put the job title in `role`, which is the same confusion
+  // that had the grid rendering the wrong field. One member carries both so the
+  // showcase exercises each, one carries the title alone.
   return createBatch(payload, 'teamMembers', [
-    { name: `${SHOWCASE_TAG}Alex Kim`, role: 'Pillar Lead', photo: photoId },
-    { name: `${SHOWCASE_TAG}Sam Chen`, role: 'Principal Engineer', photo: photoId },
+    // `_status: 'published'` matters: the `team-grid` manual variant points at
+    // these two, and an anon read drops unpublished relations — so without it
+    // the showcase's manual card grid captured as an empty section.
+    {
+      name: `${SHOWCASE_TAG}Alex Kim`,
+      title: 'Pillar Lead',
+      role: 'Leads the platform pillar and owns how the delivery teams are staffed.',
+      photo: photoId,
+      _status: 'published',
+    },
+    {
+      name: `${SHOWCASE_TAG}Sam Chen`,
+      title: 'Principal Engineer',
+      photo: photoId,
+      _status: 'published',
+    },
   ])
 }
 

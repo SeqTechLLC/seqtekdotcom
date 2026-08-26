@@ -18,13 +18,18 @@ people_ — this file tracks the _work_. [`PROJECT_HISTORY.md`](./PROJECT_HISTOR
 
 **Environments** (nothing is publicly launched):
 
-| Trigger                      | Lands on                                      | Notes                             |
-| ---------------------------- | --------------------------------------------- | --------------------------------- |
-| push to `Preview`            | `preview.seqtek.com` — primary Fargate lane   | Cognito-gated                     |
-| push to `main`, or a release | `ww3.seqtek.com` — secondary lane, same stack | Cognito-gated; stands in for prod |
-| —                            | `seqtek.com`                                  | still the **old Wix site**        |
+| Trigger                        | Lands on                                         | Notes                                      |
+| ------------------------------ | ------------------------------------------------ | ------------------------------------------ |
+| merge to `main`                | `preview.seqtek.com` — UAT, primary Fargate lane | Cognito-gated. The ONLY deployment branch. |
+| merge the **release PR**       | nothing                                          | Version bump only; `deploy.yml` skips it   |
+| **publish** the GitHub Release | `ww3.seqtek.com` — production, secondary lane    | Promotes the already-built image; no build |
+| —                              | `seqtek.com`                                     | still the **old Wix site**                 |
 
-The separate staging account (`seqtek-preview.com`) was retired 2026-08-14; no trigger deploys there.
+**Merging to `main` does not touch production** (#110/#111, 2026-08-25). Publishing a release is the
+deliberate human gate, which matters because the container runs `payload migrate` on start — under the
+previous model a merge was an unattended schema change on `seqtek_prod`. `Preview` is no longer a
+deployment branch. The separate staging account (`seqtek-preview.com`) was retired 2026-08-14; no
+trigger deploys there. Authoritative version: `ARCHITECTURE.md` §"Promotion model".
 
 **The build is essentially done.** Two content primitives (a block-composed `Page`, a rich-text `Post`) plus
 typed metadata collections — `partners` (#99) is the reference implementation of ADR 0009 Option C. 45 blocks,
@@ -50,10 +55,10 @@ sign off → **Dom** does the domain swap (he controls the domain; the swap itse
 
 | #      | Item                                                           | Owner        |
 | ------ | -------------------------------------------------------------- | ------------ |
-| **P1** | Spec 011 — Payload admin UX (in flight)                        | Kenn         |
+| **P1** | Spec 011 — Payload admin UX (US1 shipped, US2–US6 open)        | Kenn         |
 |        | A-1 Megan signs in + editor training                           | Kenn         |
 |        | HYG-1 Content data hygiene                                     | Kenn         |
-|        | UI-1 `TeamGrid` renders `role`, never `title`                  | Kenn         |
+|        | UI-3 Default skeletons are publishable placeholder copy        | Kenn         |
 | **P2** | K8 Broken-link + broken-image sweep                            | Kenn         |
 |        | CL-1 Load the drafted content                                  | Kenn         |
 |        | C-7 Taurex sign-off                                            | Kenn + Megan |
@@ -71,10 +76,15 @@ sign off → **Dom** does the domain swap (he controls the domain; the swap itse
 Content is the project bottleneck and every content change is still a developer task. This tier fixes that
 before we spend more effort loading content by hand.
 
-- **Spec 011 — Payload admin UX** _(in flight, branch `feat/011-payload-admin-ux`, 60 tasks)_. Make the admin
-  panel usable by a marketing lead without a developer next to them: remove controls that do nothing, make the
-  45-block picker pickable, add guidance. Also finishes the spec-010 expand/contract by dropping the retained
-  legacy body columns, and settles the dead `Navigation` / `SiteSettings` globals.
+- **Spec 011 — Payload admin UX** _(US1 shipped, US2–US6 open)_. Make the admin panel usable by a marketing
+  lead without a developer next to them.
+  **US1 landed in PR #107** (PROJECT_HISTORY P5-26): every inert control withdrawn, the spec-010
+  expand/contract finished by dropping the retained legacy body columns, and the dead `Navigation` /
+  `SiteSettings` globals settled — site chrome is code-owned now (ADR 0010). FR-008 is recorded **NOT MET**;
+  its one real finding is **INERT-1** below.
+  **Still open:** US2 the 45-block picker (categories, thumbnails, descriptions), US3 media thumbnails +
+  `_status` columns, US4 form legibility (labels, help text, conditional fields — INERT-1 lands here), US5
+  slug-from-title with collision handling, US6 collection grouping. Tasks T026–T065.
   → `specs/011-payload-admin-ux/spec.md`
 - **A-1 residual — Megan signs in, then editor training.** The multi-domain admin auth code shipped (#77,
   P5-11); what's left is a deploy, Megan's first sign-in (auto-provisions an `editor`), and a short CMS
@@ -82,12 +92,27 @@ before we spend more effort loading content by hand.
 - **HYG-1 — content data hygiene.** No human input needed; see `CONTENT_NEEDS.md` §10.
   `industries` is empty while published case studies reference industry IDs (dangling refs) — seed it or drop
   the relationship; `locations` is empty (needed only if the regional pages get built); delete the
-  `ztest-delete-me` category; case-study `ogImage` is null sitewide.
-- **UI-1 — `TeamGrid` renders `role`, never `title`.** `TeamMembers` has two overlapping text fields —
-  `title` (the job title) and `role` (a full descriptive sentence) — and `TeamGrid.tsx:87` renders `role`, so
-  cards show prose where a job title belongs and the **members with neither field populated render as a face
-  and a name with nothing underneath**. Team pages are the top credibility element in the research and this one
-  is half-broken. Decide: render `title` (recommended), collapse the two fields, or render both. Hours of work.
+  `ztest-delete-me` category; case-study `ogImage` is null sitewide. **The empty `industries` now costs more than dangling refs:** `case-study-grid` resolves `source: by-industry` through `caseStudies.industry` (UI-2), so such a block returns zero rows and renders an empty section rather than a visible placeholder. (The missing `teamMembers.title` values were supplied 2026-08-25 and are in `docs/content-drafts/team.json`; they still need seeding to the deployed lanes.)
+- **UI-3 — a new record's default skeleton is publishable placeholder copy.** `TeamMembers.layout`
+  defaults to `teamMemberSkeleton`, whose body is literally `About` / _"A short professional bio."_ — and
+  seven team members were created and published without anyone overwriting it, so six public
+  `/team/[slug]` pages served that string. **The copy half is done** (2026-08-25): all nine published
+  members now carry a real bio, and `expertise` — which `personLd` emits as `knowsAbout` — is populated
+  for all nine rather than the three leadership members only. What is left is the code half, because the
+  underlying flaw is the skeleton design, not the data: the same pattern exists for `caseStudy`,
+  `workshop` and `partner` (_"What the client was up against, in their terms."_, etc.) and only escaped
+  notice because those records had real copy written over them. A default that reads as finished prose can
+  be published by accident. Decide: ship the skeletons as empty blocks, mark skeleton text so a publish
+  check can catch it, or add a "still has placeholder copy" guard to the K8 sweep. Same class as UI-2 —
+  developer text reaching public copy.
+- **UI-1 / UI-2 — both resolved 2026-08-25 (P5-27, P5-28).** Team cards render `title`, not the
+  descriptive `role`. The four collection-backed blocks (`team-grid`, `post-list`, `case-study-grid`,
+  `service-cards`) now resolve their `source`/`filter` in `src/lib/resolveLayout.ts` instead of printing
+  `(resolves at template time)` as public body copy; the unbacked `featured` option was withdrawn.
+  Nine of nine published team members now carry a job title. Chad Coleman is retired via the seeder's new
+  `status: "unpublished"` (P5-29) — re-seed `team.json` against a lane and he drops off `/team` there too.
+  The five listing pages no longer double-container their grid, so the page `h1` and the card grid share
+  one left edge and one column width (was 32px out at desktop, 16px at mobile).
 
 ---
 

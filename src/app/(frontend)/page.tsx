@@ -8,6 +8,7 @@ import { organizationLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
+import { resolveLayout } from '@/lib/resolveLayout'
 import { PostList } from '@/components/sections/PostList'
 import { CtaSection } from '@/components/sections/CtaSection'
 import type { Homepage } from '@/payload-types'
@@ -53,7 +54,10 @@ export default async function HomePage() {
   const homepage = isDraft ? await readDraftHomepage() : publishedHomepage
 
   // payload-types Homepage['layout'] is the RenderBlocks-compatible shape.
-  const layout = (homepage?.layout ?? []) as never
+  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
+  // case-study-grid, service-cards) get their items filled in here, before
+  // the layout reaches the synchronous RenderBlocks dispatcher.
+  const layout = (await resolveLayout(homepage?.layout as never)) as never
 
   return (
     <>
@@ -74,12 +78,7 @@ export default async function HomePage() {
 
         {latestPosts.length ? (
           <section data-testid="latest-insights">
-            <PostList
-              heading="Latest insights"
-              source="manual"
-              manualItems={latestPosts.slice(0, 3)}
-              limit={3}
-            />
+            <PostList heading="Latest insights" manualItems={latestPosts.slice(0, 3)} limit={3} />
           </section>
         ) : null}
       </div>

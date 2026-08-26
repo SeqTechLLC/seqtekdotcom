@@ -183,6 +183,11 @@ test.describe('US3 — team page renders members with photos', () => {
     expect(res?.status()).toBe(200)
     await expect(page.getByTestId('team')).toBeVisible()
     await expect(page.getByText(TEAM_NAME)).toBeVisible()
+    // ROADMAP UI-1: the card subtitle is the job title (`title`), never the
+    // descriptive `role`. The fixture above sets both so this can tell them
+    // apart.
+    await expect(page.getByText('Principal Consultant')).toBeVisible()
+    await expect(page.getByTestId('team').getByText('Engineering', { exact: true })).toHaveCount(0)
 
     const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
     expect(

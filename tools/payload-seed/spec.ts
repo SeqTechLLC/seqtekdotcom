@@ -10,7 +10,15 @@
  * `validateInput` in the case-study importer, retired in spec 011).
  */
 
-export type SeedStatus = 'published' | 'draft'
+/**
+ * `published`   — write and publish (the default).
+ * `draft`       — write with `?draft=true`: stages a draft VERSION and leaves an
+ *                 already-published document live. Use to stage an edit for review.
+ * `unpublished` — write `_status: 'draft'` WITHOUT `?draft=true`: takes a live
+ *                 document down (and creates a new one unpublished). The seeder
+ *                 could not do this before — see PROJECT_HISTORY P5-29.
+ */
+export type SeedStatus = 'published' | 'draft' | 'unpublished'
 
 /** Upsert one collection document, idempotent by `data[identity]`. */
 export interface CollectionSpec {
@@ -47,8 +55,8 @@ function isNonEmptyString(value: unknown): value is string {
 
 function parseStatus(value: unknown, path: string, errors: string[]): SeedStatus {
   if (value === undefined || value === null) return 'published'
-  if (value === 'published' || value === 'draft') return value
-  errors.push(`${path}.status must be "published" or "draft"`)
+  if (value === 'published' || value === 'draft' || value === 'unpublished') return value
+  errors.push(`${path}.status must be "published", "draft" or "unpublished"`)
   return 'published'
 }
 
@@ -121,3 +129,16 @@ export function validateSpecs(raw: unknown): ValidationResult {
   if (errors.length > 0) return { ok: false, errors }
   return { ok: true, value: specs }
 }
+
+/**
+ * Resolve a spec's publish state against the global `--draft` flag.
+ *
+ * `--draft` forces publishing OFF. It must NOT also force UNPUBLISHING off.
+ * Collapsing an `unpublished` spec into `draft` writes with `?draft=true`,
+ * which stages a version and leaves the live document UP — the exact failure
+ * the third state exists to close (P5-29), reached through the flag instead of
+ * the file. An `unpublished` spec is already not publishing anything, so
+ * `--draft` has nothing to force there.
+ */
+export const resolveStatus = (forceDraft: boolean, specStatus: SeedStatus): SeedStatus =>
+  forceDraft && specStatus !== 'unpublished' ? 'draft' : specStatus

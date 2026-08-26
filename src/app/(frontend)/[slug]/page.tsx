@@ -9,6 +9,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbLd } from '@/lib/structured-data'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
+import { resolveLayout } from '@/lib/resolveLayout'
 import type { Page } from '@/payload-types'
 
 // spec 004 US5 (T025). The generic `pages` route (Shape A) — render the page's
@@ -47,7 +48,10 @@ export default async function GenericPage({ params }: Props) {
   if (!page) notFound()
 
   // payload-types Page['layout'] is the RenderBlocks-compatible shape.
-  const layout = (page.layout ?? []) as never
+  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
+  // case-study-grid, service-cards) get their items filled in here, before
+  // the layout reaches the synchronous RenderBlocks dispatcher.
+  const layout = (await resolveLayout(page.layout as never)) as never
 
   return (
     <>

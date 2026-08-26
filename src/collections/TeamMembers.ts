@@ -44,8 +44,28 @@ export const TeamMembers: CollectionConfig = {
       index: true,
       validate: validateSlug,
     },
-    { name: 'title', type: 'text' },
-    { name: 'role', type: 'text' },
+    {
+      // ROADMAP UI-1: `title` and `role` overlap enough that the grid was
+      // rendering the wrong one and the showcase fixtures filled `role` with a
+      // job title. Neither field had a label or help text, so there was nothing
+      // in the panel to tell them apart. Same failure class as spec 011 US4.
+      name: 'title',
+      type: 'text',
+      label: 'Job title',
+      admin: {
+        description:
+          'The short job title, as it appears on the team cards — for example "CTO" or "Enterprise Architect". Leave it blank and the card shows only the name.',
+      },
+    },
+    {
+      name: 'role',
+      type: 'text',
+      label: 'What they do (one sentence)',
+      admin: {
+        description:
+          'A full sentence describing what this person owns. It appears only on their own /team page, under the job title — never on the cards. Leave it blank if the job title says enough.',
+      },
+    },
     { name: 'photo', type: 'upload', relationTo: 'media', required: true },
     {
       // spec 010 / ADR 0009: the block-composed body for the `/team/[slug]`

@@ -8,13 +8,13 @@
 
 import type { PayloadRestClient } from '../payload-rest/client'
 
-import { isGlobalSpec, type SeedSpec } from './spec'
+import { isGlobalSpec, type SeedSpec, type SeedStatus } from './spec'
 
 type DocId = string | number
 
 export interface UpsertOptions {
-  /** Write as a draft (`?draft=true`). When false, publish. */
-  draft: boolean
+  /** Resolved publish state for this spec. */
+  status: SeedStatus
   /** Report intended op without any write. */
   dryRun: boolean
 }
@@ -31,8 +31,19 @@ export async function upsertSpec(
   data: Record<string, unknown>,
   opts: UpsertOptions,
 ): Promise<UpsertResult> {
-  // When publishing, flip `_status` and write without `?draft=true`; a draft
-  // run keeps the record unpublished and leaves `_status` to Payload.
+  // Two independent knobs, and conflating them into one boolean is what made
+  // the seeder unable to UNPUBLISH (P5-29):
+  //
+  //   status        ?draft=true   _status written   effect
+  //   published     no            'published'       publish
+  //   draft         YES           (untouched)       stage a draft version; a
+  //                                                 live document stays live
+  //   unpublished   no            'draft'           take a live document down
+  //
+  // `draft` writes through Payload's draft system, which by design does not
+  // disturb the published version — so it can stage an edit but can never
+  // retire a document. `unpublished` writes `_status` on the document itself,
+  // which is what actually flips it out of the published read.
   //
   // This MUST be computed before the global branch below. It used to live after
   // it, so a drafts-enabled GLOBAL (homepage, siteSettings, navigation — all
@@ -43,12 +54,14 @@ export async function upsertSpec(
   // body, with the seeder reporting success — caught by runbook §2.3 on the
   // preview.seqtek.com rebuild, 2026-08-11.
   const writeData: Record<string, unknown> = { ...data }
-  if (!opts.draft) writeData._status = 'published'
+  if (opts.status === 'published') writeData._status = 'published'
+  else if (opts.status === 'unpublished') writeData._status = 'draft'
+  const asDraft = opts.status === 'draft'
 
   if (isGlobalSpec(spec)) {
     const target = `global:${spec.global}`
     if (opts.dryRun) return { target, operation: 'dry-run' }
-    await client.updateGlobal(spec.global, writeData, { draft: opts.draft })
+    await client.updateGlobal(spec.global, writeData, { draft: asDraft })
     return { target, operation: 'global' }
   }
 
@@ -60,9 +73,9 @@ export async function upsertSpec(
     draft: true,
   })
   if (existingId !== null) {
-    const id = await client.updateDoc(spec.collection, existingId, writeData, { draft: opts.draft })
+    const id = await client.updateDoc(spec.collection, existingId, writeData, { draft: asDraft })
     return { target, operation: 'update', id }
   }
-  const id = await client.createDoc(spec.collection, writeData, { draft: opts.draft })
+  const id = await client.createDoc(spec.collection, writeData, { draft: asDraft })
   return { target, operation: 'create', id }
 }

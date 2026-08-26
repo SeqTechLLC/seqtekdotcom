@@ -930,6 +930,9 @@ export interface ContactCtaBlock {
  */
 export interface CaseStudyGridBlock {
   heading?: string | null;
+  /**
+   * How this block picks its case studies. "Latest", "By industry" and "By service" fill themselves in and stay current as you publish; "Manual" uses exactly the studies you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
+   */
   source: 'manual' | 'latest' | 'by-industry' | 'by-service';
   manualItems?: (number | CaseStudy)[] | null;
   industry?: (number | null) | Industry;
@@ -945,6 +948,9 @@ export interface CaseStudyGridBlock {
  */
 export interface ServiceCardsBlock {
   heading?: string | null;
+  /**
+   * How this block picks its services. "By pillar" fills itself in and stays current as you publish; "Manual" uses exactly the services you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
+   */
   source: 'by-pillar' | 'manual';
   pillar?: (number | null) | ServicePillar;
   manualItems?: (number | Service)[] | null;
@@ -980,6 +986,9 @@ export interface FeaturedCaseStudyBlock {
  */
 export interface PostListBlock {
   heading?: string | null;
+  /**
+   * How this block picks its posts. "Latest" and "By category" fill themselves in and stay current as you publish; "Manual" uses exactly the posts you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
+   */
   source: 'latest' | 'by-category' | 'manual';
   category?: (number | null) | Category;
   manualItems?: (number | Post)[] | null;
@@ -1046,7 +1055,13 @@ export interface TeamMember {
   id: number;
   name: string;
   slug: string;
+  /**
+   * The short job title, as it appears on the team cards — for example "CTO" or "Enterprise Architect". Leave it blank and the card shows only the name.
+   */
   title?: string | null;
+  /**
+   * A full sentence describing what this person owns. It appears only on their own /team page, under the job title — never on the cards. Leave it blank if the job title says enough.
+   */
   role?: string | null;
   photo: number | Media;
   layout?:
@@ -1283,10 +1298,13 @@ export interface Workshop {
  */
 export interface TeamGridBlock {
   heading?: string | null;
-  filter: 'leadership-only' | 'featured' | 'all';
+  /**
+   * Which team members to show. "Leadership only" shows everyone marked as leadership; "All" shows the whole team, leadership first.
+   */
+  filter: 'leadership-only' | 'all';
   layout?: ('cards' | 'compact') | null;
   /**
-   * Optional manual override — when set, ignores filter and renders these team members in order.
+   * Optional. Leave this empty and the filter above chooses the members. Pick people here only when you want an exact set in an exact order — your picks win over the filter.
    */
   manualItems?: (number | TeamMember)[] | null;
   id?: string | null;

@@ -48,7 +48,15 @@ release PR itself deploys nothing. `main` is the only deployment branch. Both la
 control: it is what keeps search engines out until cutover. The separate staging account (`seqtek-preview.com`) was
 retired 2026-08-14. `seqtek.com` still serves the old Wix site.
 
-**What's active.** Spec 011 (Payload admin UX) is in flight. The bottleneck is content throughput, not
+**Site chrome is code-owned.** Company name, tagline, phone, email, postal address, social links and both nav
+trees live in `src/lib/site-content.ts` and change by deploy, not by publish (ADR 0010, spec 011 / PR #107). The
+`siteSettings` and `navigation` globals were withdrawn and their tables dropped. Seven of those values are read on
+the render path — two by `lib/metadata.ts`, six by the Organization JSON-LD in `lib/structured-data.ts` — and both
+are pinned by tests, so edit the values freely but expect a shape change to fail `organizationLd.int.spec.ts` /
+`metadataOutput.int.spec.ts`.
+
+**What's active.** Spec 011 (Payload admin UX) US1 shipped in PR #107; US2–US6 (block picker, media thumbnails,
+form legibility, slug-from-title, collection grouping) are open. The bottleneck is content throughput, not
 features. `docs/ROADMAP.md` is the prioritized list of everything open; `docs/PROJECT_HISTORY.md` is the archive
 of what shipped. Don't re-derive status from git history — read those two.
 

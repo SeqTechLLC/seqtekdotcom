@@ -15,6 +15,13 @@ export const CaseStudyGrid: Block = {
       name: 'source',
       type: 'select',
       required: true,
+      admin: {
+        // ROADMAP UI-2 review: `source` decides, and manual picks are
+        // silently ignored unless it says so. Stated here because
+        // `manualItems` is hidden in precisely that case.
+        description:
+          'How this block picks its case studies. "Latest", "By industry" and "By service" fill themselves in and stay current as you publish; "Manual" uses exactly the studies you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".',
+      },
       defaultValue: 'manual',
       options: [
         { label: 'Manual', value: 'manual' },

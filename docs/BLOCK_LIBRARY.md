@@ -302,11 +302,18 @@ Frontend emits `FAQPage` JSON-LD automatically.
 
 #### `team-grid` — team members display
 
-| Field     | Type   | Required | Notes                                  |
-| --------- | ------ | -------- | -------------------------------------- |
-| `heading` | text   | no       |                                        |
-| `filter`  | select | yes      | `leadership-only` / `featured` / `all` |
-| `layout`  | select | no       | `cards` / `compact`                    |
+| Field         | Type                                 | Required | Notes                                                              |
+| ------------- | ------------------------------------ | -------- | ------------------------------------------------------------------ |
+| `heading`     | text                                 | no       |                                                                    |
+| `filter`      | select                               | yes      | `leadership-only` / `all`, resolved by `resolveLayout` (see below) |
+| `layout`      | select                               | no       | `cards` / `compact`                                                |
+| `manualItems` | relationship → teamMembers (hasMany) | no       | In practice the only path that renders anyone                      |
+
+Cards show `teamMembers.title` (the job title), never `role` (the one-sentence description) — `role`
+belongs to the `/team/[slug]` header, which renders both. See ROADMAP UI-1 / PROJECT_HISTORY P5-27.
+
+The `featured` option was **withdrawn** (UI-2): `teamMembers` carries `isLeadership` and `order` and
+nothing else to select on, so it had no backing field and rendered an empty section.
 
 #### `latest-insights` — blog post cards
 
@@ -510,6 +517,35 @@ The loop is deliberately the **only** exception to "no code for layout" (SC-006)
 
 ---
 
+### 5.10 Collection-backed blocks resolve at template time (ROADMAP UI-2)
+
+Four blocks let an author pick a **source** instead of hand-picking rows:
+
+| Block             | Field    | Non-manual values                     | Resolved from     |
+| ----------------- | -------- | ------------------------------------- | ----------------- |
+| `team-grid`       | `filter` | `leadership-only`, `all`              | `listTeamMembers` |
+| `post-list`       | `source` | `latest`, `by-category`               | `listPosts`       |
+| `case-study-grid` | `source` | `latest`, `by-industry`, `by-service` | `listCaseStudies` |
+| `service-cards`   | `source` | `by-pillar`                           | `listServices`    |
+
+**`src/lib/resolveLayout.ts` is where those selects are consumed.** Every route that renders a
+`layout` awaits `resolveLayout(doc.layout)` before handing it to `RenderBlocks`, and the resolver fills
+each block's `manualItems` from the cached readers in `lib/payload.ts` (so the reads inherit the cache
+tags, the hourly revalidation and the `withReadTimeout` guard). An explicit manual pick always wins over
+the source, and a read that times out throws rather than degrading to a silently empty section.
+
+**The render components never read `source`/`filter`.** They draw whatever `manualItems` they are handed
+and nothing else, which is what keeps them pure, synchronous and renderable by React Testing Library —
+`RenderBlocks` stays synchronous, and blocks never touch the database. Adding a new collection-backed
+block means adding a case to `resolveLayout`, not making the component async.
+
+Before UI-2 nothing consumed these selects: a block set to any non-manual source rendered the literal
+string `Source: latest (resolves at template time)` as public body copy. `team-grid` was the worst,
+because `filter` is its one **required** field while `manualItems` is optional — the natural authoring
+path produced the broken page. Pinned by `tests/int/lib/resolveLayout.int.spec.ts`.
+
+---
+
 ## 6. Page composition matrix
 
 Block order per page type. This is the canonical reference — content layouts should follow these unless there's a documented reason to vary.
@@ -541,7 +577,7 @@ Spec 010 moved the homepage off structured fields onto an editor-reorderable `la
 
 ### Team (`pages` — `layout` blocks)
 
-`hero` → `team-grid` (filter: leadership-only) → `content` (collective expertise narrative) → `team-grid` (filter: featured) → `content` (culture) → `cta-section`
+`hero` → `team-grid` (filter: leadership-only) → `content` (collective expertise narrative) → `team-grid` (filter: all) → `content` (culture) → `cta-section`
 
 ### Localshoring (`pages` — `layout` blocks)
 

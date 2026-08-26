@@ -9,7 +9,9 @@ interface ServiceDoc {
 
 interface ServiceCardsProps {
   heading?: string | null
-  source: 'by-pillar' | 'manual'
+  /** Authoring-time input consumed by `resolveLayout`, not read here — the
+   *  component renders whatever items it is handed (ROADMAP UI-2). */
+  source?: 'by-pillar' | 'manual'
   manualItems?: Array<ServiceDoc | string | number> | null
   /** Card title level. Defaults to `h3`; the pillar page (page-level `h1`, no
    *  section heading) passes `h2` to keep heading order non-skipping. */
@@ -19,23 +21,13 @@ interface ServiceCardsProps {
 const isDoc = (v: unknown): v is ServiceDoc =>
   typeof v === 'object' && v !== null && 'title' in (v as object)
 
-export function ServiceCards({
-  heading,
-  source,
-  manualItems,
-  headingLevel = 'h3',
-}: ServiceCardsProps) {
-  const docs = source === 'manual' ? (manualItems ?? []).filter(isDoc) : []
+export function ServiceCards({ heading, manualItems, headingLevel = 'h3' }: ServiceCardsProps) {
+  const docs = (manualItems ?? []).filter(isDoc)
   const CardHeading = headingLevel
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-        {source !== 'manual' ? (
-          <p className="mt-2 text-caption text-text-muted">
-            Source: {source} (resolves at template time)
-          </p>
-        ) : null}
         {docs.length > 0 ? (
           <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {docs.map((s) => {

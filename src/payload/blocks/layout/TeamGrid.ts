@@ -1,7 +1,8 @@
 import type { Block } from 'payload'
 
-// Per BLOCK_LIBRARY.md §5.5. Renderer queries the teamMembers collection by
-// the chosen filter at template time (Phase 3).
+// Per BLOCK_LIBRARY.md §5.5. `filter` is resolved by `src/lib/resolveLayout.ts`
+// before the layout reaches RenderBlocks (ROADMAP UI-2) — the render component
+// only ever draws the items it is handed.
 export const TeamGrid: Block = {
   slug: 'team-grid',
   interfaceName: 'TeamGridBlock',
@@ -15,9 +16,12 @@ export const TeamGrid: Block = {
       defaultValue: 'all',
       options: [
         { label: 'Leadership only', value: 'leadership-only' },
-        { label: 'Featured', value: 'featured' },
         { label: 'All', value: 'all' },
       ],
+      admin: {
+        description:
+          'Which team members to show. "Leadership only" shows everyone marked as leadership; "All" shows the whole team, leadership first.',
+      },
     },
     {
       name: 'layout',
@@ -35,7 +39,7 @@ export const TeamGrid: Block = {
       hasMany: true,
       admin: {
         description:
-          'Optional manual override — when set, ignores filter and renders these team members in order.',
+          'Optional. Leave this empty and the filter above chooses the members. Pick people here only when you want an exact set in an exact order — your picks win over the filter.',
       },
     },
   ],

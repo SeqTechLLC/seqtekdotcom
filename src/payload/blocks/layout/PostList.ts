@@ -17,6 +17,13 @@ export const PostList: Block = {
       name: 'source',
       type: 'select',
       required: true,
+      admin: {
+        // ROADMAP UI-2 review: `source` decides, and manual picks are
+        // silently ignored unless it says so. Stated here because
+        // `manualItems` is hidden in precisely that case.
+        description:
+          'How this block picks its posts. "Latest" and "By category" fill themselves in and stay current as you publish; "Manual" uses exactly the posts you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".',
+      },
       defaultValue: 'latest',
       options: [
         { label: 'Latest', value: 'latest' },
