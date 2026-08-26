@@ -72,16 +72,23 @@ ENV NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=$NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID
 ENV NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=$NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID
 ENV NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
 
-# Build provenance, baked into the image so a running container reports
-# what it ACTUALLY is rather than what a task definition claims. Surfaced
-# by /api/health, so "what is on prod right now" is a curl instead of an
-# ECS console dig. BUILD_VERSION is package.json's semantic version at
-# build time — release-please bumps it, so between releases it lags the
-# code and BUILD_COMMIT is what disambiguates. Both empty on local builds.
-ARG BUILD_VERSION=""
+# Build identity, baked in so a running container reports what it ACTUALLY
+# is rather than what a task definition claims. Surfaced by /api/health, so
+# "what is on prod right now" is a curl instead of an ECS console dig.
+#
+# BUILD_COMMIT is the exact commit. BUILD_VERSION is that build's
+# human-friendly number (e.g. `0.4.0-build.3`) — the same string the image
+# carries as an ECR tag, so a lane can be identified and chosen by number
+# rather than by SHA.
+#
+# The RELEASE version is deliberately NOT baked. It is a label applied to
+# this image at promotion time (RELEASE_VERSION on the task definition, plus
+# a `vX.Y.Z` tag on the same ECR digest), so a tested artifact never has to
+# be rebuilt to carry one.
 ARG BUILD_COMMIT=""
-ENV BUILD_VERSION=$BUILD_VERSION
+ARG BUILD_VERSION=""
 ENV BUILD_COMMIT=$BUILD_COMMIT
+ENV BUILD_VERSION=$BUILD_VERSION
 
 # Non-root user matching the spike convention (uid/gid 1001).
 RUN addgroup --system --gid 1001 nodejs \

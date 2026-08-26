@@ -6,13 +6,22 @@
  * pg client, no transitive-dep imports. Returns 200 when the round-trip
  * succeeds; 503 when it fails so the ALB can stop routing to the instance.
  *
- * Also reports build provenance (`version` + `commit`), baked into the
- * image at build time via Dockerfile ARGs so the response describes the
- * container that is actually running, not what a task definition claims.
- * `version` is package.json's semantic version, which release-please bumps
- * — between releases it lags the code, so `commit` is what disambiguates.
- * This endpoint is deliberately exempt from the Cognito gate, so treat both
- * as public.
+ * Also reports what is running, by all three of its names. They describe ONE
+ * artifact — the same ECR digest carries every one of them as a tag:
+ *
+ *   version  `0.4.0-build.3`  this build's number, BAKED at build time. The
+ *                             number you pick from when choosing what to
+ *                             release; present on every build.
+ *   commit   `ede1ba4`        the exact commit, BAKED. Immutable identity.
+ *   release  `v0.4.0`         the release that promoted this image, applied at
+ *                             promotion as RUNTIME metadata. Null on a lane
+ *                             that has not been released — notably UAT, which
+ *                             normally runs ahead of any release.
+ *
+ * `release` deliberately does not fall back to `version`: claiming a release a
+ * lane never received is worse than reporting none.
+ *
+ * This endpoint is exempt from the Cognito gate, so treat all three as public.
  *
  * Per ERROR_PAGES.md §4 this endpoint must keep returning 200 in
  * maintenance mode so the ALB doesn't start replacing instances during a
@@ -28,6 +37,7 @@ export const dynamic = 'force-dynamic'
 type HealthBody = {
   status: 'ok' | 'unhealthy'
   version: string
+  release: string | null
   commit: string
   uptime: number
   db: 'ok' | 'unreachable'
@@ -37,10 +47,10 @@ type HealthBody = {
 
 const NO_STORE: HeadersInit = { 'cache-control': 'no-store' }
 
-// Read once at module load — these are baked ENV, they cannot change while
-// the process lives. Empty means a local/dev build with no ARGs passed.
-const VERSION = process.env.BUILD_VERSION || 'dev'
+// Read once at module load — neither changes while the process lives.
 const COMMIT = process.env.BUILD_COMMIT || 'unknown'
+const VERSION = process.env.BUILD_VERSION || 'dev'
+const RELEASE = process.env.RELEASE_VERSION || null
 
 export async function GET(): Promise<Response> {
   const start = Date.now()
@@ -65,6 +75,7 @@ export async function GET(): Promise<Response> {
   const body: HealthBody = {
     status: db === 'ok' ? 'ok' : 'unhealthy',
     version: VERSION,
+    release: RELEASE,
     commit: COMMIT,
     uptime: process.uptime(),
     db,

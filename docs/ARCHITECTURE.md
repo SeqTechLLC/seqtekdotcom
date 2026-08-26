@@ -679,9 +679,38 @@ racing one CloudFormation stack.
 | Trigger                         | Deploys to        | Site                 | Lane      | Builds? |
 | ------------------------------- | ----------------- | -------------------- | --------- | ------- |
 | Merge (push) to `main`          | **Preview / UAT** | `preview.seqtek.com` | primary   | yes     |
-| Publish a `vX.Y.Z` release      | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
+| Merge the **release PR**        | nothing           | —                    | —         | no      |
+| **Publish** the GitHub Release  | **Production**    | `ww3.seqtek.com`†    | secondary | **no**  |
 | `workflow_dispatch` (env input) | either — manual   | —                    | either    | depends |
 | Feature branches                | nothing (CI only) | local dev            | —         | —       |
+
+**A version and a build identity are two names for one release.** `0.3.0` is the
+human-friendly label; the commit SHA is the immutable artifact. Release-Please
+generates the label automatically from Conventional Commits; production deploys
+the image tied to the SHA.
+
+Merging the release PR deploys **nothing** — its commit changes a version number
+and nothing else, so `deploy.yml` skips it (matched by commit message, not by
+path, because a dependency bump touches the same files and must deploy). It
+lands on `main` and the tag is cut from it.
+
+Publishing the resulting release is the single event that promotes production.
+The release is created as a **draft** so a person publishes it, which is also
+what makes the event fire at all: GitHub raises no workflow run for a release
+published by the default `GITHUB_TOKEN`.
+
+**Resolution.** The tag points at the bookkeeping commit, which has no image, so
+the deploy walks back to the nearest ancestor that does — the last real code
+commit, which is what preview has been running and what the release actually
+describes. If no ancestor within 50 commits has an image, the deploy **fails**:
+
+```
+image for SHA xxxxxxx not found in ECR
+```
+
+Nothing is rebuilt and nothing is guessed. Rollback is the same mechanism in
+reverse: publish or re-run an older release, it resolves to that release's SHA,
+and production is pointed back at the image that already exists.
 
 Both lanes live in the SAME `SeqtekPreview*` stacks in the SAME account —
 production is a second ECS task/service/target-group behind the same ALB, with
@@ -690,15 +719,82 @@ never-provisioned `SeqtekProd*` stack set is not deployed by any trigger (no
 account, and the account is at its 5-VPC limit); `secondaryLane` in
 `infra/cdk.json` stands in for it until the `seqtek.com` cutover.
 
-**Build once, promote the artifact.** A `main` merge builds the image, tags it
-with the commit SHA, pushes it to ECR, and puts it on preview. Publishing the
-release points production at **that same image** — it does not rebuild. A
-rebuild would ship bits nobody tested: the Dockerfile's base is pinned by tag
-(which Alpine re-pushes on patch) and `npm ci` fetches tarballs at build time,
-so the same source tree is not guaranteed to produce the same image. The
-promoted tag is therefore the commit SHA — the only tag the image is guaranteed
-to carry. The semantic version rides inside the image (`BUILD_VERSION`) and is
-reported alongside the commit by `/api/health`.
+**One build, one UAT deploy, one promotion.** A `main` merge builds the image
+once, tags it with the commit SHA, pushes it to ECR, and puts it on preview.
+That is the artifact. Publishing the release points production at **that same
+image** — nothing is compiled, nothing is pushed, a task definition is
+repointed at a digest that already exists. A rebuild would ship bits nobody
+tested: the Dockerfile's base is pinned by tag (which Alpine re-pushes on
+patch) and `npm ci` fetches tarballs at build time, so the same source tree is
+not guaranteed to produce the same image.
+
+**Every build gets a version; a release promotes one.** Each successful `main`
+build takes the next patch number and tags its image with it:
+
+```
+0.4.0  ->  0.4.1  ->  0.4.2  ->  0.4.3
+```
+
+Each names exactly one image, which UAT runs and you test. `MAJOR.MINOR` come
+from the last release tag; `PATCH` is that tag's patch plus the commits since
+it — deterministic from git, monotonic, no stored state.
+
+**"0.4.2 looks good" is then a complete instruction.** Publish `v0.4.2` and
+production runs that same container. The leading `v` is the only difference
+between built and released:
+
+```
+main build      0.4.2   ->  ECR: [ ede1ba4, 0.4.2 ]   ->  UAT
+publish release v0.4.2   ->  ECR: [ ede1ba4, 0.4.2, v0.4.2 ]  ->  PROD
+```
+
+One digest, three tags, no second build. Production is deployed by the _commit_
+tag rather than the version tag — both name the same digest, but the SHA is the
+identity that cannot be reassigned.
+
+If no image carries the released version, the deploy **fails**:
+
+```
+image for version 0.4.2 not found in ECR
+```
+
+Nothing is rebuilt and nothing is guessed. Rollback is the same mechanism:
+publish or re-run an older release and production returns to that existing
+image.
+
+`/api/health` reports all three names:
+
+```json
+{ "version": "0.4.2", "release": "v0.4.2", "commit": "ede1ba4" }
+```
+
+`version` and `commit` are baked into the image. `release` is runtime metadata
+applied at promotion, and is **null** on a lane that has not been released —
+notably UAT, which normally runs ahead of any release. It deliberately does not
+fall back to `version`: claiming a release a lane never received is worse than
+reporting none.
+
+**You choose which build to release.** Release-Please does the paperwork — tag,
+CHANGELOG, GitHub Release — but the version must name a build that exists,
+because that is how the deploy finds the image. Tell it which one with a
+`Release-As:` footer:
+
+```
+git commit --allow-empty -m "chore: release 0.4.2" -m "Release-As: 0.4.2"
+```
+
+Left to itself it proposes a number derived from `feat:`/`fix:` since the last
+release, which will not generally match any build — publishing that would fail
+resolution with `image for version X not found in ECR`.
+
+**The lanes are meant to drift.** UAT can be many builds ahead of production;
+that is the point. Each lane points at one immutable image, and every deploy
+states both explicitly so moving one never rewrites the other.
+
+**Exactly one event promotes production.** `release: [published]` is the only
+path; `release-please.yml` no longer dispatches the deploy workflow. That
+dispatch had also never worked — the job does not check out the repo and `gh`
+needs a git context — so every release cut a tag and then failed to promote.
 
 **Every deploy states BOTH lanes' image tags; exactly one moves.** `cdk deploy`
 re-synthesizes the whole stack, so both task definitions are re-rendered on
