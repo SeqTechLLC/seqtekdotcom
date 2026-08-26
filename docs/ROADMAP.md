@@ -126,7 +126,12 @@ before we spend more effort loading content by hand.
 - **CL-1 — load the drafted content.** All of this is written and waiting; it is a seeder run, not authoring:
   the values block onto `/our-story` (BR-4 — Hank signed off 2026-06-19), testimonial re-seed with the
   attribution we already hold (C-1), the curated photo picks via `tools/ingest-photos` (C-8), the six blog
-  bodies (C-6), and the three staged Taurex studies. Run `npm run payload:seed` against the gated environment
+  bodies (C-6), and the three staged Taurex studies.
+  **The `teamMembers` slice is DONE on preview (2026-08-26):** all nine published members carry a job title, a
+  real bio and `expertise` (which `personLd` emits as `knowsAbout`), and Chad Coleman is retired via the new
+  `status: "unpublished"`. Verified on the lane — `/team` renders nine titled cards, `/team/chad-coleman` 404s,
+  no placeholder copy anywhere, `h1` and grid share one x. **Not yet on production** — that moves on the next
+  published release, and the seeder must be re-run against `ww3` separately. Run `npm run payload:seed` against the gated environment
   with `IMPORT_TOKEN` + `IMPORT_COOKIE` (#102). Load order and known defects: `docs/content-drafts/README.md`.
 - **C-7 — Taurex sign-off (via Andrew).** The single highest-leverage content conversation: four written
   studies become publishable, all three outstanding `pendingQuote` slots are Taurex people, and it clears the
@@ -188,7 +193,7 @@ Gated on the **September** All Hands shoot plus the P2 content. Leadership engag
   `performance` / LCP / TBT / CLS budgets from `warn` → `error`.
 - Live returning-visitor consent fire-matrix on the real GTM container, cross-browser (the E2E half shipped in
   spec 006).
-- **Schema-drift CI guard** — fail CI if `payload migrate:create --dry-run` would produce a diff against what's
+- **Schema-drift CI guard** _(now also: no CI gate runs migrations at all — P5-30)_ — fail CI if `payload migrate:create --dry-run` would produce a diff against what's
   on disk. Systemic fix for the desync that forced the P2-6 migration collapse; add the one-line
   "schema change → `migrate:create` before merge" note to `PAYLOAD_DEVELOPMENT.md`.
 - **CI e2e stability under the spec-010 schema** — the Playwright job still races the dev-server schema push
