@@ -1,9 +1,12 @@
 import type { Block } from 'payload'
 
+import { inlineBlockAdmin } from '../blockAdmin'
+
 export const Callout: Block = {
   slug: 'callout',
   interfaceName: 'CalloutBlock',
   labels: { singular: 'Callout', plural: 'Callouts' },
+  admin: inlineBlockAdmin('callout', 'Callout icon'),
   fields: [
     {
       name: 'tone',

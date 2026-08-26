@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { requiredWhen } from '../conditional'
 
 type CaseStudyGridSibling = { source?: string }
@@ -9,6 +11,7 @@ export const CaseStudyGrid: Block = {
   slug: 'case-study-grid',
   interfaceName: 'CaseStudyGridBlock',
   labels: { singular: 'Case study grid', plural: 'Case study grids' },
+  admin: blockAdmin('content-collection', 'case-study-grid', 'Case study grid block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

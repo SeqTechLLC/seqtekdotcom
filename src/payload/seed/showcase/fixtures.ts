@@ -10,7 +10,8 @@ export interface MediaIdMap {
 
 // Sourced from the canonical taxonomy (spec 011) so the showcase harness and
 // the admin block picker cannot drift apart. Re-exported for existing callers.
-import type { BlockCategory } from '../../blocks/categories'
+import { blockCategoryFromGroupLabel, type BlockCategory } from '../../blocks/categories'
+import { layoutBlocks } from '../../blocks/layout'
 
 export type { BlockCategory }
 
@@ -21,11 +22,22 @@ export interface BlockVariant {
   data: Record<string, unknown>
 }
 
-export interface BlockFixture {
+interface AuthoredBlockFixture {
   blockType: string
-  category: BlockCategory
   /** One entry per visually-distinct variant. */
   variants: BlockVariant[]
+}
+
+export interface BlockFixture extends AuthoredBlockFixture {
+  /**
+   * Derived from the block's own `admin.group`, never authored here. The
+   * assignment lives in one place — the block config — so the showcase
+   * harness and the admin picker cannot disagree about what a block is.
+   * (They did before spec 011 US2: fixtures had `faq` under content and
+   * `mission-vision-values` under specialty, the reverse of
+   * BLOCK_LIBRARY.md §5.)
+   */
+  category: BlockCategory
 }
 
 /**
@@ -35,11 +47,10 @@ export interface BlockFixture {
  * Per-block showcase pages stack every variant of the block. Per-category
  * showcase pages stack the first variant of every block in that category.
  */
-export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): BlockFixture[] {
+function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): AuthoredBlockFixture[] {
   return [
     {
       blockType: 'hero',
-      category: 'hero',
       variants: [
         {
           name: 'text-only-left',
@@ -108,7 +119,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'case-study-hero',
-      category: 'hero',
       variants: [
         {
           name: 'default',
@@ -128,7 +138,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'service-pillar-hero',
-      category: 'hero',
       variants: [
         {
           name: 'with-cta',
@@ -156,7 +165,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'homepage-hero',
-      category: 'hero',
       variants: [
         {
           name: 'with-background',
@@ -175,7 +183,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'content',
-      category: 'content',
       variants: [
         {
           name: 'standard',
@@ -251,7 +258,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'two-column',
-      category: 'content',
       variants: [
         {
           name: 'media-left',
@@ -285,7 +291,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'image',
-      category: 'content',
       variants: [
         {
           name: 'standard-center',
@@ -320,7 +325,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'gallery',
-      category: 'content',
       variants: [
         {
           name: 'grid-three',
@@ -354,7 +358,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'process-steps',
-      category: 'content',
       variants: [
         {
           name: 'three-steps',
@@ -399,7 +402,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'comparison-table',
-      category: 'content',
       variants: [
         {
           name: 'localshoring',
@@ -440,7 +442,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'mission-vision-values',
-      category: 'content',
       variants: [
         {
           name: 'grid',
@@ -477,7 +478,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'timeline',
-      category: 'content',
       variants: [
         {
           name: 'company-milestones',
@@ -512,7 +512,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'stats-bar',
-      category: 'social-proof',
       variants: [
         {
           name: 'inline',
@@ -531,7 +530,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'logo-bar',
-      category: 'social-proof',
       variants: [
         {
           name: 'inline-grayscale',
@@ -552,7 +550,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'featured-testimonials',
-      category: 'social-proof',
       variants: [
         {
           name: 'three-up',
@@ -567,7 +564,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'testimonial-block',
-      category: 'social-proof',
       variants: [
         {
           name: 'centered',
@@ -597,7 +593,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'client-logo-grid',
-      category: 'social-proof',
       variants: [
         {
           name: 'four-col',
@@ -621,7 +616,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'cta-section',
-      category: 'cta',
       variants: [
         {
           name: 'centered',
@@ -673,7 +667,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'newsletter-cta',
-      category: 'cta',
       variants: [
         {
           name: 'with-body',
@@ -696,7 +689,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'contact-cta',
-      category: 'cta',
       variants: [
         {
           name: 'with-meeting-url',
@@ -722,7 +714,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'case-study-grid',
-      category: 'content-collection',
       variants: [
         {
           name: 'manual',
@@ -748,7 +739,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'service-cards',
-      category: 'content-collection',
       variants: [
         {
           name: 'manual',
@@ -772,7 +762,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'featured-case-study',
-      category: 'content-collection',
       variants: [
         {
           name: 'default',
@@ -786,7 +775,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'post-list',
-      category: 'content-collection',
       variants: [
         {
           name: 'manual',
@@ -811,7 +799,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'related-posts',
-      category: 'content-collection',
       variants: [
         {
           name: 'manual',
@@ -832,7 +819,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'industry-grid',
-      category: 'content-collection',
       variants: [
         {
           name: 'four-up',
@@ -846,7 +832,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'locations-list',
-      category: 'content-collection',
       variants: [
         {
           name: 'all-markets',
@@ -860,7 +845,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'workshop-list',
-      category: 'content-collection',
       variants: [
         {
           name: 'touchstone-progression',
@@ -874,7 +858,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'video-embed',
-      category: 'specialty',
       variants: [
         {
           name: 'youtube',
@@ -899,7 +882,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'faq',
-      category: 'specialty',
       variants: [
         {
           name: 'three-questions',
@@ -941,7 +923,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'accordion',
-      category: 'specialty',
       variants: [
         {
           name: 'generic-disclosure',
@@ -968,7 +949,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'tabs',
-      category: 'specialty',
       variants: [
         {
           name: 'engagement-models',
@@ -995,7 +975,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'map',
-      category: 'specialty',
       variants: [
         {
           name: 'tulsa-osm',
@@ -1012,7 +991,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'embed',
-      category: 'specialty',
       variants: [
         {
           name: 'placeholder-iframe',
@@ -1029,7 +1007,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     // ---- Deferred catalog blocks (BLOCK_LIBRARY.md §5.7) ----
     {
       blockType: 'deliverables',
-      category: 'content',
       variants: [
         {
           name: 'four-deliverables',
@@ -1048,7 +1025,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'metric-display',
-      category: 'social-proof',
       variants: [
         {
           name: 'accent',
@@ -1074,7 +1050,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'service-pillar-cards',
-      category: 'content-collection',
       variants: [
         {
           name: 'three-pillars',
@@ -1088,7 +1063,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'team-grid',
-      category: 'content-collection',
       variants: [
         {
           name: 'manual-cards',
@@ -1113,7 +1087,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'download-card',
-      category: 'specialty',
       variants: [
         {
           name: 'with-cover',
@@ -1131,7 +1104,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'hubspot-form',
-      category: 'specialty',
       variants: [
         {
           name: 'with-redirect',
@@ -1147,7 +1119,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'hubspot-meetings',
-      category: 'specialty',
       variants: [
         {
           name: 'intro-call',
@@ -1161,7 +1132,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'brand-teaser',
-      category: 'specialty',
       variants: [
         {
           name: 'sequoyah',
@@ -1178,7 +1148,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'nav-cards',
-      category: 'specialty',
       variants: [
         {
           name: 'three-cards',
@@ -1211,7 +1180,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'key-takeaways',
-      category: 'specialty',
       variants: [
         {
           name: 'three-takeaways',
@@ -1237,7 +1205,6 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
     },
     {
       blockType: 'tech-stack',
-      category: 'specialty',
       variants: [
         {
           name: 'web-platform',
@@ -1257,4 +1224,33 @@ export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): 
       ],
     },
   ]
+}
+
+/**
+ * Returns the canonical fixture set, each entry carrying the category its
+ * block declares in `admin.group`. Add entries to `getAuthoredFixtures` as
+ * new blocks land — the seed script picks them up automatically.
+ *
+ * Per-block showcase pages stack every variant of the block. Per-category
+ * showcase pages stack the first variant of every block in that category.
+ */
+export function getBlockFixtures(media: MediaIdMap, supporting: SupportingIds): BlockFixture[] {
+  const categoryBySlug = new Map<string, BlockCategory>()
+  for (const block of layoutBlocks) {
+    const category = blockCategoryFromGroupLabel(block.admin?.group)
+    if (category) categoryBySlug.set(block.slug, category)
+  }
+
+  return getAuthoredFixtures(media, supporting).map((fixture) => {
+    const category = categoryBySlug.get(fixture.blockType)
+    if (!category) {
+      // A fixture for a block that is not registered, or a block with no
+      // admin.group. adminMetadata.int.spec.ts fails on the second case; this
+      // guard keeps the seed from silently filing it under a wrong heading.
+      throw new Error(
+        `showcase fixture "${fixture.blockType}" has no registered block with an admin.group`,
+      )
+    }
+    return { ...fixture, category }
+  })
 }

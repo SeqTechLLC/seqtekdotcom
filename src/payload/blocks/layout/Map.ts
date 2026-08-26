@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { httpsUrlValidate } from '../../fields/url'
 
 // Static map affordance for office locations or service-area visuals. The
@@ -9,6 +11,7 @@ export const Map: Block = {
   slug: 'map',
   interfaceName: 'MapBlock',
   labels: { singular: 'Map', plural: 'Maps' },
+  admin: blockAdmin('specialty', 'map', 'Map block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     { name: 'embedUrl', type: 'text', required: true, validate: httpsUrlValidate },

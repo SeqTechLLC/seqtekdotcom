@@ -6,6 +6,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "block:thumbnails": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/block-thumbnails/index.ts",
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
     "check:overrides": "node tools/check-stale-overrides/check-stale-overrides.mjs",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --port 3100",
@@ -14,8 +15,8 @@
     "format:check": "prettier --check .",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
-    "ingest:photos": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/ingest-photos/index.ts",
     "ingest:curated": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/ingest-photos/ingest-curated.ts",
+    "ingest:photos": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/ingest-photos/index.ts",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "payload:seed": "cross-env NODE_OPTIONS=--no-deprecation tsx tools/payload-seed/index.ts",

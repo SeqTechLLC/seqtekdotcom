@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Per BLOCK_LIBRARY.md §5.1: client/industry eyebrow, outcome-focused
 // headline, the headline metric (number + label + context), and a project-
 // relevant hero image. All required.
@@ -7,6 +9,7 @@ export const CaseStudyHero: Block = {
   slug: 'case-study-hero',
   interfaceName: 'CaseStudyHeroBlock',
   labels: { singular: 'Case study hero', plural: 'Case study heroes' },
+  admin: blockAdmin('hero', 'case-study-hero', 'Case study hero block preview'),
   fields: [
     { name: 'eyebrow', type: 'text', required: true },
     { name: 'headline', type: 'text', required: true },

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { requiredWhen } from '../conditional'
 
 type PostListSibling = { source?: string }
@@ -11,6 +13,7 @@ export const PostList: Block = {
   slug: 'post-list',
   interfaceName: 'PostListBlock',
   labels: { singular: 'Post list', plural: 'Post lists' },
+  admin: blockAdmin('content-collection', 'post-list', 'Post list block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

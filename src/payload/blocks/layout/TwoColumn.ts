@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { editorConfig } from '../../editor/editorConfig'
 import { safeUrlValidate } from '../../fields/url'
 
@@ -8,6 +10,7 @@ export const TwoColumn: Block = {
   slug: 'two-column',
   interfaceName: 'TwoColumnBlock',
   labels: { singular: 'Two-column', plural: 'Two-column blocks' },
+  admin: blockAdmin('content', 'two-column', 'Two-column block preview'),
   fields: [
     {
       name: 'mediaPosition',

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Per BLOCK_LIBRARY.md §5.6 newsletter-signup. Renders as a HubSpot form
 // embed in production; the showcase renderer uses a static placeholder so
 // no third-party script loads in dev.
@@ -7,6 +9,7 @@ export const NewsletterCta: Block = {
   slug: 'newsletter-cta',
   interfaceName: 'NewsletterCtaBlock',
   labels: { singular: 'Newsletter CTA', plural: 'Newsletter CTAs' },
+  admin: blockAdmin('cta', 'newsletter-cta', 'Newsletter CTA block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     { name: 'body', type: 'textarea' },

@@ -464,8 +464,8 @@ const HeroBlock: Block = {
   slug: 'hero',
   interfaceName: 'HeroBlock',
   labels: { singular: 'Hero Section', plural: 'Hero Sections' },
-  imageURL: '/images/blocks/hero-preview.png',
-  imageAltText: 'Hero section preview',
+  // In this project, always via blockAdmin() — see "Required block metadata" below.
+  admin: blockAdmin('hero', 'hero', 'Hero section preview'),
   fields: [
     { name: 'heading', type: 'text', required: true },
     { name: 'subheading', type: 'textarea' },
@@ -603,14 +603,50 @@ When queried, a blocks field returns:
 
 ### Block Properties
 
-| Property                    | Purpose                                                        |
-| --------------------------- | -------------------------------------------------------------- |
-| `slug`                      | Stored as `blockType` in the data — the discriminator          |
-| `interfaceName`             | Name of the generated TypeScript type                          |
-| `labels`                    | Human-readable names in the admin block picker                 |
-| `imageURL` / `imageAltText` | Thumbnail preview in the block selector                        |
-| `fields`                    | Array of field configs specific to this block type             |
-| `minRows` / `maxRows`       | On the parent `blocks` field — constrain how many blocks total |
+| Property                 | Purpose                                                        |
+| ------------------------ | -------------------------------------------------------------- |
+| `slug`                   | Stored as `blockType` in the data — the discriminator          |
+| `interfaceName`          | Name of the generated TypeScript type                          |
+| `labels`                 | Human-readable names in the admin block picker                 |
+| `admin.group`            | Category heading the block appears under in the picker         |
+| `admin.images.thumbnail` | Preview image in the block selector (3:2)                      |
+| `admin.images.icon`      | 20×20 glyph in the Lexical insertion menu                      |
+| `admin.disableBlockName` | Hides the unused per-row "block name" field                    |
+| `fields`                 | Array of field configs specific to this block type             |
+| `minRows` / `maxRows`    | On the parent `blocks` field — constrain how many blocks total |
+
+`imageURL` / `imageAltText` are **deprecated** in favour of `admin.images` and are not
+used here.
+
+**There is no `admin.description` on a block.** A `Block`'s `admin` is exactly
+`{ components, custom, disableBlockName, group, images, jsx }`, and neither the picker
+nor the Lexical menu renders descriptive text — the picker card is a group heading, a
+thumbnail and `labels.singular`, and its search matches `labels.singular` alone. Do not
+add one; put the disambiguation in the label. (ADR 0011.)
+
+### Required block metadata
+
+Every layout block in this project declares its admin presentation through
+`blockAdmin()` (`src/payload/blocks/blockAdmin.ts`), and every rich-text block through
+`inlineBlockAdmin()`. `tests/int/adminMetadata.int.spec.ts` fails CI otherwise. The
+checklist when adding a block:
+
+1. `admin: blockAdmin('<category>', '<slug>', '<Label> block preview')` — the category
+   must be one of the six in `src/payload/blocks/categories.ts`.
+2. Register it in the right run of `layoutBlocks` — that array is sorted by category,
+   and the picker draws its headings in registration order.
+3. Give it a label that is unique, and not a substring of any sibling's label, within
+   its own picker. Qualify it if it collides (`Hero (standard page)`).
+4. Build its preview and commit the result:
+
+   ```bash
+   npm run seed:showcase      # fixtures for every block
+   npm run visual:capture     # element captures per block
+   npm run block:thumbnails   # 480x320 WebP into public/block-previews/
+   ```
+
+   A block that cannot be captured deterministically gets a hand-authored SVG instead;
+   add it to `HAND_AUTHORED` in `tools/block-thumbnails/index.ts` (ADR 0011).
 
 ---
 

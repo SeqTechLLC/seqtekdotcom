@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { safeUrlValidate } from '../../fields/url'
 import { requiredWhen } from '../conditional'
 
@@ -9,6 +11,7 @@ export const CtaSection: Block = {
   slug: 'cta-section',
   interfaceName: 'CtaSectionBlock',
   labels: { singular: 'CTA section', plural: 'CTA sections' },
+  admin: blockAdmin('cta', 'cta-section', 'CTA section block preview'),
   fields: [
     {
       name: 'variant',

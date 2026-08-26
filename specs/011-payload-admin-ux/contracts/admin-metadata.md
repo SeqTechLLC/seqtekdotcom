@@ -16,10 +16,9 @@ Without enforcement, this spec is a one-time cleanup that decays over four more 
 {
   slug: string,
   interfaceName: string,
-  labels: { singular: string, plural: string },
+  labels: { singular: string, plural: string },   // singular is the ONLY text the picker renders and searches
   admin: {
-    group: string,              // MUST be one of the BLOCK_LIBRARY.md §5 categories
-    description: string,        // MUST be non-empty; MUST disambiguate same-named siblings
+    group: string,              // MUST be a BLOCK_CATEGORY_LABELS heading (BLOCK_LIBRARY.md §5 categories)
     disableBlockName: true,     // MUST be set — the blockName field is unused in this project
     images: {
       thumbnail: { url: string, alt: string },   // MUST resolve to a file under public/block-previews/
@@ -32,26 +31,77 @@ Without enforcement, this spec is a one-time cleanup that decays over four more 
 
 **Enforced by**: `tests/int/adminMetadata.int.spec.ts`
 
-- fails when any block lacks `admin.group`, `admin.description`, or `admin.images.thumbnail`
-- fails when `admin.group` is not a known category
+- fails when any block lacks `admin.group`, `admin.images.thumbnail`, or `disableBlockName: true`
+- fails when `admin.group` is not a known category heading
 - fails when the thumbnail path does not exist on disk
 - fails when two blocks share a thumbnail path
-- fails when any block whose `labels.singular` shares a word with another block's has an empty or non-disambiguating description
+- fails when two blocks reachable from the same picker share a `labels.singular`, **or when one block's label is a substring of another's** — the mechanical form of "similar names must be disambiguated" (see the amendment below)
 
-**Rationale**: FR-009 through FR-013. The four hero blocks are the motivating case — a category and a preview alone do not separate them, so the description clause is not decorative.
+**Rationale**: FR-009, FR-010, FR-012, FR-013.
+
+### Amendment 2026-08-26 — `admin.description` does not exist, so disambiguation lives in the label
+
+The original contract required `admin.description` on every block, and FR-011 required
+a description that says "when to choose it". **Payload has no such property**, on this
+version or any other, and there is nowhere on the picker card for that text to appear.
+Verified three ways before amending:
+
+1. `payload@3.85.0`'s `Block` type (`payload/dist/fields/config/types.d.ts`) declares
+   `admin` as exactly `{ components, custom, disableBlockName, group, images, jsx }`.
+   `admin.description` is a type error, not a silently-ignored extra.
+2. `@payloadcms/ui`'s `BlockSelector` (`dist/fields/Blocks/BlockSelector/index.js`)
+   renders a block card as three things and no more: the `admin.group` heading, the
+   `admin.images.thumbnail` image, and `getTranslation(labels.singular)`. Its search
+   box filters on `labels.singular` alone.
+3. `@payloadcms/richtext-lexical`'s block menu (`features/blocks/client/index.js` via
+   `getBlockImageComponent`) renders an icon plus a label, with keywords fixed to
+   `['block', 'blocks', slug]`. Same shape: no description.
+4. Upstream `docs/fields/blocks.mdx` enumerates the same six admin options.
+
+So a block `description` would be a field the compiler rejects, holding prose no editor
+can ever read — the "assert a human typed a sentence" failure that retired C5 in PR #107.
+
+**What replaces it.** `labels.singular` is the only editor-visible, editor-searchable
+text on a block, so it is where disambiguation has to live, and the check is mechanical
+rather than prose-quality:
+
+> No two blocks offered by the same picker may share a `labels.singular`, and no label
+> may be a substring of another label in the same picker.
+
+Both pickers are checked independently: the layout drawer is populated from
+`layoutBlocks`, the Lexical menu from `richTextBlocks ∪ richTextInlineBlocks`.
+
+The substring clause is what carries the original intent. It is what forces bare `Hero`
+to become `Hero (standard page)` when `Case study hero`, `Homepage hero` and
+`Service pillar hero` are on the same screen, `Embed` to become `Embed (iframe)` beside
+`Video embed`, and `Testimonial` to become `Testimonial (single)` beside
+`Featured testimonials`. Those three were the entire real-world ambiguity in the
+45-block set.
+
+**FR-011 is therefore NOT MET as written** and is amended in `spec.md` rather than
+declared satisfied. The long-form "what it produces and when to choose it" prose stays
+in `docs/BLOCK_LIBRARY.md` §5, which is where it was already maintained.
 
 ---
 
 ## C2 — Inline blocks declare an icon
 
-**Applies to**: every entry in `richTextBlocks` and `richTextInlineBlocks` (`src/payload/blocks/inline/index.ts`).
+**Applies to**: every entry in `richTextBlocks` and `richTextInlineBlocks`
+(`src/payload/blocks/inline/index.ts`).
 
 ```ts
 admin: {
   images: { icon: { url: string, alt: string } },   // 20×20, for the Lexical insertion menu
-  description: string,
 }
 ```
+
+Payload renders the icon at `maxWidth: 20, maxHeight: 20` and falls back to
+`images.thumbnail`, then to the generic block glyph, when `icon` is absent. Committed
+SVGs under `public/block-previews/inline/` are used rather than rasters — at 20px a
+screenshot crop is unreadable, and an SVG costs well under a kilobyte.
+
+The `description` clause of this contract is withdrawn for the same reason as C1's:
+the Lexical menu renders an icon and a label, nothing else.
 
 **Enforced by**: same spec as C1. **Rationale**: FR-012.
 

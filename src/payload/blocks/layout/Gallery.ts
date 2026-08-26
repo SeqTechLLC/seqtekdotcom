@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // 1..N image gallery block (spec 010 / ADR 0009 gap-fill, FR-005) — the
 // "add a one-to-many picture section to any page layout" block. Workshop
 // `photos[]` migrates here; one-off figures use `image`. Captions + alt come
@@ -8,6 +10,7 @@ export const Gallery: Block = {
   slug: 'gallery',
   interfaceName: 'GalleryBlock',
   labels: { singular: 'Gallery', plural: 'Galleries' },
+  admin: blockAdmin('content', 'gallery', 'Gallery block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

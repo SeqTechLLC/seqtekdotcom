@@ -88,6 +88,33 @@ The complete list of `Block` configs. Each gets:
 
 Field-type shorthand below maps to PAYLOAD_DEVELOPMENT.md §5.
 
+**The §5.1–§5.6 categories are load-bearing (spec 011 US2).** They are not a docs
+convention any more: each is a heading in the admin block picker, and the assignment
+lives in exactly one place — the block's own `admin.group`, set through
+`blockAdmin()` in `src/payload/blocks/blockAdmin.ts`. The showcase harness derives its
+category from there rather than restating it, `src/payload/blocks/categories.ts` holds
+the canonical slugs and their editor-facing headings, and
+`tests/int/adminMetadata.int.spec.ts` fails CI when a block has no category, no
+preview, or a name it shares with a neighbour.
+
+| §   | Category             | Picker heading        |
+| --- | -------------------- | --------------------- |
+| 5.1 | `hero`               | Page openers          |
+| 5.2 | `content`            | Body content          |
+| 5.3 | `social-proof`       | Proof and credibility |
+| 5.4 | `cta`                | Calls to action       |
+| 5.5 | `content-collection` | Lists and collections |
+| 5.6 | `specialty`          | Specialty             |
+
+The picker draws these headings in the order `layoutBlocks` registers its blocks, so
+that array is kept sorted by category and a test pins it.
+
+**Three labels carry a qualifier they would not otherwise need**, because Payload
+renders no block description and `labels.singular` is the only text the picker shows or
+searches: `Hero (standard page)`, `Embed (iframe)` and `Testimonial (single)`. Each was
+otherwise a substring of a sibling's name. See ADR 0011 and
+`specs/011-payload-admin-ux/contracts/admin-metadata.md` C1.
+
 ### 5.1 Hero blocks
 
 #### `hero` — generic hero
@@ -510,7 +537,12 @@ Under ADR 0009 every non-blog page is `RenderBlocks(layout)`. Rearranging, enric
    - Run `npm run generate:types` and `npm run generate:importmap`.
    - Add the Payload migration for the new block tables (`<collection>_blocks_<slug>*` live **and** `_<collection>_v_blocks_<slug>*` version tables) — never `drizzle-kit push` (Constitution V). Because `layout` is the same `[...layoutBlocks]` array on every collection, the generated migration adds the block's tables for **every** collection at once.
    - Add a showcase fixture (`src/payload/seed/showcase/fixtures.ts`) and visually verify per CLAUDE.md.
-4. **Document it.** Add the block to the §5 catalog (category + field table) and bump the count in §5.7. The registry↔library coupling is guarded by `tests/int/render/registryCoverage.int.spec.ts` (every layout export has a registry entry and vice-versa — no orphans).
+     The fixture no longer declares a category — it is read from the block's `admin.group`.
+   - Give the block its admin presentation: `admin: blockAdmin('<category>', '<slug>', '<Label> block preview')`.
+     Then build its picker preview — `npm run seed:showcase`, `npm run visual:capture`,
+     `npm run block:thumbnails` — and commit the generated `public/block-previews/<slug>.webp`.
+     `tests/int/adminMetadata.int.spec.ts` fails without it (ADR 0011).
+4. **Document it.** Add the block to the §5 catalog (category + field table) and bump the count in §5.7. The §5 category you file it under and the `admin.group` you gave it in step 3 must agree — the picker heading is what an editor actually sees. The registry↔library coupling is guarded by `tests/int/render/registryCoverage.int.spec.ts` (every layout export has a registry entry and vice-versa — no orphans).
 5. **Available everywhere, no per-type code.** Every collection's `layout` field spreads the **same** `layoutBlocks` array and every page renders through the **one** `RenderBlocks` dispatcher, so the new block is immediately usable on pages, workshops, case studies, services, and team with zero per-type code. This reuse property is pinned by `tests/int/blocks/blockReuseAcrossTypes.int.spec.tsx` (the `gallery` worked example renders identically on page + case study + workshop from one definition).
 
 The loop is deliberately the **only** exception to "no code for layout" (SC-006): if a change is not "add or fix a block type," it should not require a deploy.
@@ -859,6 +891,10 @@ For inline rich-text blocks, the same pattern applies inside the Lexical `RichTe
 4. **Inline blocks for _in-flow_ content; layout blocks for _full-width_ sections.** A `pull-quote` inside an article is inline; a `testimonial-single` between sections is a layout block.
 5. **No business logic in blocks.** Blocks render. Data shaping (filtering case studies by industry, sorting posts) happens in the page component or a server-side helper.
 6. **One file per block config.** Easier diffs, easier discovery, no 2,000-line `blocks.ts`.
+7. **A block's name must stand alone in its picker.** Payload draws no description, so `labels.singular`
+   is the whole of what tells two cards apart — and it is also the only thing the picker's search
+   matches. No label may duplicate or be contained in another label offered by the same picker;
+   qualify it instead (`Hero (standard page)`, not `Hero`). Enforced by `adminMetadata.int.spec.ts`.
 
 ---
 

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="Video embed block preview">
+  <!--
+    Spec 011 US2 / ADR 0011 — hand-authored wireframe.
+
+    The other 44 previews are derived rasters of the showcase capture. This one
+    is drawn because the video-embed block renders a facade around a REMOTE
+    YouTube poster frame: the capture is non-deterministic (it failed outright
+    on one run when the thumbnail did not load) and it would bake a third
+    party's video still into a committed asset in a public repository.
+
+    Palette is the design system's, from src/app/(frontend)/styles.css.
+  -->
+  <rect width="480" height="320" fill="#faf8f4"/>
+  <rect x="60" y="52" width="360" height="202" rx="8" fill="#1c1c31"/>
+  <circle cx="240" cy="153" r="34" fill="#46792f"/>
+  <path d="M230 138 l24 15 -24 15 z" fill="#ffffff"/>
+  <rect x="60" y="274" width="212" height="9" rx="4.5" fill="#d8d3c6"/>
+  <rect x="60" y="293" width="132" height="9" rx="4.5" fill="#e7e3da"/>
+</svg>

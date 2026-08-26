@@ -172,9 +172,22 @@ An editor landing on the admin home sees content types grouped by purpose, with 
 
 - **FR-009**: Blocks in the block picker MUST be organized into named categories aligned with the documented block-library categories.
 - **FR-010**: Every block MUST present a visual preview representative of what it renders, distinct from every other block's preview. Previews are committed WebP images under `public/block-previews/`, one per block, produced from the showcase capture harness by a committed regeneration script. They are static assets served by the app, not media-collection uploads, not environment state, and not generated during the build.
-- **FR-011**: Every block MUST carry a description stating what it produces and when to choose it; blocks with similar names MUST be disambiguated explicitly in their descriptions.
-- **FR-012**: Blocks insertable within rich text MUST be distinguishable in the inline insertion menu.
-- **FR-013**: An automated check MUST fail when a block is added without a category, preview, and description. The preview half of the check asserts a committed file exists for every registered block and that each file is within a size budget, so it runs without a browser, a database, or a capture run.
+- **FR-011**: ~~Every block MUST carry a description stating what it produces and when to choose it; blocks
+  with similar names MUST be disambiguated explicitly in their descriptions.~~ **AMENDED 2026-08-26 —
+  NOT MET as written, and unmeetable.** Payload's `Block` type has no `admin.description`, and the block
+  picker renders only a group heading, a thumbnail and `labels.singular` (which is also the only text its
+  search matches). A description would be a compile error holding prose no editor could read. **Replaced
+  by**: no two blocks offered by the same picker may share a `labels.singular`, and no label may be a
+  substring of another label in the same picker — the mechanical form of "similar names must be
+  disambiguated". The long-form "when to choose it" prose stays in `docs/BLOCK_LIBRARY.md` §5. Evidence
+  and the three labels this forces are recorded in `contracts/admin-metadata.md` C1.
+- **FR-012**: Blocks insertable within rich text MUST be distinguishable in the inline insertion menu — via a
+  committed 20×20 SVG on `admin.images.icon` plus a label unique within that menu. (The Lexical menu renders
+  an icon and a label only; see FR-011's amendment.)
+- **FR-013**: An automated check MUST fail when a block is added without a category, a preview, or a label that
+  is unique and non-substring within its picker (FR-011 as amended). The preview half of the check asserts a
+  committed file exists for every registered block and that the set is within a size budget, so it runs
+  without a browser, a database, or a capture run.
 
 **List views and media (US3)**
 

@@ -83,6 +83,12 @@ This captures, into `tests/e2e/visual/screenshots/` (gitignored, overwritten eac
 
 - **Every real public page** — `tests/e2e/visual/pages.e2e.spec.ts` → `screenshots/pages/<route>-<desktop|mobile>.png`. Add new routes to its `ROUTES` list as pages ship.
 - **Every block in isolation** — `showcase.e2e.spec.ts` → `screenshots/showcase/` (needs `npm run seed:showcase` first).
+- **Every block as a bare element** — `blockPreviews.e2e.spec.ts` → `screenshots/block-previews/`. These are the
+  source for the committed admin block-picker previews; `npm run block:thumbnails` turns them into
+  `public/block-previews/*.webp` (ADR 0011). Only needed when a block's design changes.
+
+The seeded showcase renders media through `serverURL`, which defaults to `http://localhost:3100` — capture from a
+server on **that** port or every image in the capture is a broken-image alt string.
 
 The expectation: open the PNGs for **every page your change touches**, at both viewports, and judge them like the live site — legibility, sizing, spacing, alignment, against the old seqtek.com where a reference exists. For pixel-level layout complaints, also measure boxes (`getBoundingClientRect`) at the reported viewport rather than reasoning from CSS classes.
 

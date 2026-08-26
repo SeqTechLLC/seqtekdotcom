@@ -285,8 +285,8 @@ export interface Page {
         | ProcessStepsBlock
         | DeliverablesBlock
         | ComparisonTableBlock
-        | MissionVisionValuesBlock
         | TimelineBlock
+        | FAQBlock
         | StatsBarBlock
         | MetricDisplayBlock
         | LogoBarBlock
@@ -307,7 +307,7 @@ export interface Page {
         | WorkshopListBlock
         | TeamGridBlock
         | VideoEmbedBlock
-        | FAQBlock
+        | MissionVisionValuesBlock
         | AccordionBlock
         | TabsBlock
         | MapBlock
@@ -557,23 +557,6 @@ export interface ComparisonTableBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MissionVisionValuesBlock".
- */
-export interface MissionVisionValuesBlock {
-  mission: string;
-  vision: string;
-  values: {
-    name: string;
-    description: string;
-    id?: string | null;
-  }[];
-  layout?: ('tabs' | 'grid' | 'stacked') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'mission-vision-values';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "TimelineBlock".
  */
 export interface TimelineBlock {
@@ -588,6 +571,35 @@ export interface TimelineBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'timeline';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FAQBlock".
+ */
+export interface FAQBlock {
+  heading?: string | null;
+  items: {
+    question: string;
+    answer: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'faq';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -694,8 +706,8 @@ export interface CaseStudy {
         | ProcessStepsBlock
         | DeliverablesBlock
         | ComparisonTableBlock
-        | MissionVisionValuesBlock
         | TimelineBlock
+        | FAQBlock
         | StatsBarBlock
         | MetricDisplayBlock
         | LogoBarBlock
@@ -716,7 +728,7 @@ export interface CaseStudy {
         | WorkshopListBlock
         | TeamGridBlock
         | VideoEmbedBlock
-        | FAQBlock
+        | MissionVisionValuesBlock
         | AccordionBlock
         | TabsBlock
         | MapBlock
@@ -1077,8 +1089,8 @@ export interface TeamMember {
         | ProcessStepsBlock
         | DeliverablesBlock
         | ComparisonTableBlock
-        | MissionVisionValuesBlock
         | TimelineBlock
+        | FAQBlock
         | StatsBarBlock
         | MetricDisplayBlock
         | LogoBarBlock
@@ -1099,7 +1111,7 @@ export interface TeamMember {
         | WorkshopListBlock
         | TeamGridBlock
         | VideoEmbedBlock
-        | FAQBlock
+        | MissionVisionValuesBlock
         | AccordionBlock
         | TabsBlock
         | MapBlock
@@ -1243,8 +1255,8 @@ export interface Workshop {
         | ProcessStepsBlock
         | DeliverablesBlock
         | ComparisonTableBlock
-        | MissionVisionValuesBlock
         | TimelineBlock
+        | FAQBlock
         | StatsBarBlock
         | MetricDisplayBlock
         | LogoBarBlock
@@ -1265,7 +1277,7 @@ export interface Workshop {
         | WorkshopListBlock
         | TeamGridBlock
         | VideoEmbedBlock
-        | FAQBlock
+        | MissionVisionValuesBlock
         | AccordionBlock
         | TabsBlock
         | MapBlock
@@ -1327,32 +1339,20 @@ export interface VideoEmbedBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FAQBlock".
+ * via the `definition` "MissionVisionValuesBlock".
  */
-export interface FAQBlock {
-  heading?: string | null;
-  items: {
-    question: string;
-    answer: {
-      root: {
-        type: string;
-        children: {
-          type: any;
-          version: number;
-          [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    };
+export interface MissionVisionValuesBlock {
+  mission: string;
+  vision: string;
+  values: {
+    name: string;
+    description: string;
     id?: string | null;
   }[];
+  layout?: ('tabs' | 'grid' | 'stacked') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'faq';
+  blockType: 'mission-vision-values';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1552,8 +1552,8 @@ export interface Partner {
         | ProcessStepsBlock
         | DeliverablesBlock
         | ComparisonTableBlock
-        | MissionVisionValuesBlock
         | TimelineBlock
+        | FAQBlock
         | StatsBarBlock
         | MetricDisplayBlock
         | LogoBarBlock
@@ -1574,7 +1574,7 @@ export interface Partner {
         | WorkshopListBlock
         | TeamGridBlock
         | VideoEmbedBlock
-        | FAQBlock
+        | MissionVisionValuesBlock
         | AccordionBlock
         | TabsBlock
         | MapBlock
@@ -1872,8 +1872,8 @@ export interface PagesSelect<T extends boolean = true> {
         'process-steps'?: T | ProcessStepsBlockSelect<T>;
         deliverables?: T | DeliverablesBlockSelect<T>;
         'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
         'stats-bar'?: T | StatsBarBlockSelect<T>;
         'metric-display'?: T | MetricDisplayBlockSelect<T>;
         'logo-bar'?: T | LogoBarBlockSelect<T>;
@@ -1894,7 +1894,7 @@ export interface PagesSelect<T extends boolean = true> {
         'workshop-list'?: T | WorkshopListBlockSelect<T>;
         'team-grid'?: T | TeamGridBlockSelect<T>;
         'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
         tabs?: T | TabsBlockSelect<T>;
         map?: T | MapBlockSelect<T>;
@@ -2132,24 +2132,6 @@ export interface ComparisonTableBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MissionVisionValuesBlock_select".
- */
-export interface MissionVisionValuesBlockSelect<T extends boolean = true> {
-  mission?: T;
-  vision?: T;
-  values?:
-    | T
-    | {
-        name?: T;
-        description?: T;
-        id?: T;
-      };
-  layout?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "TimelineBlock_select".
  */
 export interface TimelineBlockSelect<T extends boolean = true> {
@@ -2161,6 +2143,22 @@ export interface TimelineBlockSelect<T extends boolean = true> {
         title?: T;
         body?: T;
         image?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FAQBlock_select".
+ */
+export interface FAQBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
         id?: T;
       };
   id?: T;
@@ -2436,17 +2434,19 @@ export interface VideoEmbedBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FAQBlock_select".
+ * via the `definition` "MissionVisionValuesBlock_select".
  */
-export interface FAQBlockSelect<T extends boolean = true> {
-  heading?: T;
-  items?:
+export interface MissionVisionValuesBlockSelect<T extends boolean = true> {
+  mission?: T;
+  vision?: T;
+  values?:
     | T
     | {
-        question?: T;
-        answer?: T;
+        name?: T;
+        description?: T;
         id?: T;
       };
+  layout?: T;
   id?: T;
   blockName?: T;
 }
@@ -2660,8 +2660,8 @@ export interface CaseStudiesSelect<T extends boolean = true> {
         'process-steps'?: T | ProcessStepsBlockSelect<T>;
         deliverables?: T | DeliverablesBlockSelect<T>;
         'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
         'stats-bar'?: T | StatsBarBlockSelect<T>;
         'metric-display'?: T | MetricDisplayBlockSelect<T>;
         'logo-bar'?: T | LogoBarBlockSelect<T>;
@@ -2682,7 +2682,7 @@ export interface CaseStudiesSelect<T extends boolean = true> {
         'workshop-list'?: T | WorkshopListBlockSelect<T>;
         'team-grid'?: T | TeamGridBlockSelect<T>;
         'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
         tabs?: T | TabsBlockSelect<T>;
         map?: T | MapBlockSelect<T>;
@@ -2777,8 +2777,8 @@ export interface TeamMembersSelect<T extends boolean = true> {
         'process-steps'?: T | ProcessStepsBlockSelect<T>;
         deliverables?: T | DeliverablesBlockSelect<T>;
         'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
         'stats-bar'?: T | StatsBarBlockSelect<T>;
         'metric-display'?: T | MetricDisplayBlockSelect<T>;
         'logo-bar'?: T | LogoBarBlockSelect<T>;
@@ -2799,7 +2799,7 @@ export interface TeamMembersSelect<T extends boolean = true> {
         'workshop-list'?: T | WorkshopListBlockSelect<T>;
         'team-grid'?: T | TeamGridBlockSelect<T>;
         'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
         tabs?: T | TabsBlockSelect<T>;
         map?: T | MapBlockSelect<T>;
@@ -2869,8 +2869,8 @@ export interface WorkshopsSelect<T extends boolean = true> {
         'process-steps'?: T | ProcessStepsBlockSelect<T>;
         deliverables?: T | DeliverablesBlockSelect<T>;
         'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
         'stats-bar'?: T | StatsBarBlockSelect<T>;
         'metric-display'?: T | MetricDisplayBlockSelect<T>;
         'logo-bar'?: T | LogoBarBlockSelect<T>;
@@ -2891,7 +2891,7 @@ export interface WorkshopsSelect<T extends boolean = true> {
         'workshop-list'?: T | WorkshopListBlockSelect<T>;
         'team-grid'?: T | TeamGridBlockSelect<T>;
         'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
         tabs?: T | TabsBlockSelect<T>;
         map?: T | MapBlockSelect<T>;
@@ -2943,8 +2943,8 @@ export interface PartnersSelect<T extends boolean = true> {
         'process-steps'?: T | ProcessStepsBlockSelect<T>;
         deliverables?: T | DeliverablesBlockSelect<T>;
         'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
         'stats-bar'?: T | StatsBarBlockSelect<T>;
         'metric-display'?: T | MetricDisplayBlockSelect<T>;
         'logo-bar'?: T | LogoBarBlockSelect<T>;
@@ -2965,7 +2965,7 @@ export interface PartnersSelect<T extends boolean = true> {
         'workshop-list'?: T | WorkshopListBlockSelect<T>;
         'team-grid'?: T | TeamGridBlockSelect<T>;
         'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
         tabs?: T | TabsBlockSelect<T>;
         map?: T | MapBlockSelect<T>;
@@ -3114,8 +3114,8 @@ export interface Homepage {
         | ProcessStepsBlock
         | DeliverablesBlock
         | ComparisonTableBlock
-        | MissionVisionValuesBlock
         | TimelineBlock
+        | FAQBlock
         | StatsBarBlock
         | MetricDisplayBlock
         | LogoBarBlock
@@ -3136,7 +3136,7 @@ export interface Homepage {
         | WorkshopListBlock
         | TeamGridBlock
         | VideoEmbedBlock
-        | FAQBlock
+        | MissionVisionValuesBlock
         | AccordionBlock
         | TabsBlock
         | MapBlock
@@ -3173,8 +3173,8 @@ export interface HomepageSelect<T extends boolean = true> {
         'process-steps'?: T | ProcessStepsBlockSelect<T>;
         deliverables?: T | DeliverablesBlockSelect<T>;
         'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
         'stats-bar'?: T | StatsBarBlockSelect<T>;
         'metric-display'?: T | MetricDisplayBlockSelect<T>;
         'logo-bar'?: T | LogoBarBlockSelect<T>;
@@ -3195,7 +3195,7 @@ export interface HomepageSelect<T extends boolean = true> {
         'workshop-list'?: T | WorkshopListBlockSelect<T>;
         'team-grid'?: T | TeamGridBlockSelect<T>;
         'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
         tabs?: T | TabsBlockSelect<T>;
         map?: T | MapBlockSelect<T>;

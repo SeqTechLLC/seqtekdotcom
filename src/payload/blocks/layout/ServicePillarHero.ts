@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { safeUrlValidate } from '../../fields/url'
 
 // Per BLOCK_LIBRARY.md §5.1: pillar landings reuse the hero shape with a
@@ -10,6 +12,7 @@ export const ServicePillarHero: Block = {
   slug: 'service-pillar-hero',
   interfaceName: 'ServicePillarHeroBlock',
   labels: { singular: 'Service pillar hero', plural: 'Service pillar heroes' },
+  admin: blockAdmin('hero', 'service-pillar-hero', 'Service pillar hero block preview'),
   fields: [
     { name: 'pillarName', type: 'text', required: true },
     { name: 'headline', type: 'text', required: true },

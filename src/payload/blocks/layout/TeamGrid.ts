@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Per BLOCK_LIBRARY.md §5.5. `filter` is resolved by `src/lib/resolveLayout.ts`
 // before the layout reaches RenderBlocks (ROADMAP UI-2) — the render component
 // only ever draws the items it is handed.
@@ -7,6 +9,7 @@ export const TeamGrid: Block = {
   slug: 'team-grid',
   interfaceName: 'TeamGridBlock',
   labels: { singular: 'Team grid', plural: 'Team grids' },
+  admin: blockAdmin('content-collection', 'team-grid', 'Team grid block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

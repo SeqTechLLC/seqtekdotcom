@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Per BLOCK_LIBRARY.md §5.3. `items` is conditionally required when
 // source = 'inline'; the from-site-settings path renders the canonical set
 // at template time and ignores the inline array.
@@ -7,6 +9,7 @@ export const StatsBar: Block = {
   slug: 'stats-bar',
   interfaceName: 'StatsBarBlock',
   labels: { singular: 'Stats bar', plural: 'Stats bars' },
+  admin: blockAdmin('social-proof', 'stats-bar', 'Stats bar block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     // spec 011: the `source` select is gone. Its only alternative to 'inline'

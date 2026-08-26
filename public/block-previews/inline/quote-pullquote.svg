@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" role="img" aria-label="Pull quote">
+  <path d="M2.5 4v12" stroke="#46792f" stroke-width="2" stroke-linecap="round"/>
+  <path d="M7 6.5c-1.6 0-2.6 1-2.6 2.4 0 1.2.8 2 1.9 2 .3 0 .6 0 .8-.2-.2 1-1 1.8-2 2.2l.5 1.1c1.9-.7 3.1-2.3 3.1-4.4 0-1.9-.9-3.1-1.7-3.1z" fill="#1c1c31" transform="translate(2.5 0)"/>
+  <path d="M7 6.5c-1.6 0-2.6 1-2.6 2.4 0 1.2.8 2 1.9 2 .3 0 .6 0 .8-.2-.2 1-1 1.8-2 2.2l.5 1.1c1.9-.7 3.1-2.3 3.1-4.4 0-1.9-.9-3.1-1.7-3.1z" fill="#1c1c31" transform="translate(8.5 0)"/>
+</svg>

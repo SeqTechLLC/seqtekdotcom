@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { httpsUrlValidate, hubspotFormIdValidate } from '../../fields/url'
 
 // Per BLOCK_LIBRARY.md §5.6. Lead-magnet CTA: HubSpot-gated download card.
@@ -7,6 +9,7 @@ export const DownloadCard: Block = {
   slug: 'download-card',
   interfaceName: 'DownloadCardBlock',
   labels: { singular: 'Download card', plural: 'Download cards' },
+  admin: blockAdmin('specialty', 'download-card', 'Download card block preview'),
   fields: [
     { name: 'title', type: 'text', required: true },
     { name: 'description', type: 'textarea', required: true },

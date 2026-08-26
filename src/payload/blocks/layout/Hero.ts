@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { httpsUrlValidate, safeUrlValidate } from '../../fields/url'
 import { requiredWhen } from '../conditional'
 
@@ -8,7 +10,8 @@ type HeroSibling = { variant?: string }
 export const Hero: Block = {
   slug: 'hero',
   interfaceName: 'HeroBlock',
-  labels: { singular: 'Hero', plural: 'Heroes' },
+  labels: { singular: 'Hero (standard page)', plural: 'Heroes (standard page)' },
+  admin: blockAdmin('hero', 'hero', 'Hero (standard page) block preview'),
   fields: [
     {
       name: 'variant',

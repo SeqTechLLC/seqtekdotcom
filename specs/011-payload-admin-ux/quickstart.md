@@ -55,13 +55,40 @@ Needed once during implementation, and again whenever a block's rendered appeara
 
 ```bash
 npm run seed:showcase        # builds 1-2 of every block type as pages docs
-npm run visual:capture       # → tests/e2e/visual/screenshots/showcase/ (gitignored)
-npx tsx tools/block-thumbnails/index.ts   # → public/block-previews/<blockType>.webp (committed)
+
+# Capture from a server on port 3100. This is not optional: the seeded showcase
+# renders media through Payload's serverURL, which falls back to
+# http://localhost:3100, so capturing from any other port yields previews in
+# which every image is a broken-image alt string.
+PAYLOAD_DISABLE_PUSH=true npx next dev --port 3100 &
+PLAYWRIGHT_BASE_URL=http://localhost:3100 npm run visual:capture
+
+npm run block:thumbnails     # → public/block-previews/<slug>.webp (committed)
 ```
 
-The tool crops the desktop capture to 3:2, resizes to 480×320, encodes webp, and fails if the committed total exceeds the 400 KB budget. Blocks that render empty in isolation (`hubspot-form`, `hubspot-meetings`, `embed`, `map`, `related-posts`, `post-list`) are skipped by the tool and carry hand-authored SVGs instead — the tool prints which ones it skipped so the list stays honest.
+`visual:capture` writes two sets: the full-page showcase shots (`screenshots/showcase/`)
+and the per-block element shots (`screenshots/block-previews/`, one PNG per variant).
+The thumbnail tool reads the second. It letterboxes each capture to exactly 480×320 on
+the block's own background colour — sampled from the capture's top-left pixel, so an
+inverse or accent block keeps its background rather than sitting on a white slab — and
+fails if the committed total exceeds the 400 KB budget. Current: **141 KB for 45**.
 
-Commit the webp output. It ships to every environment; staging and production have no showcase fixtures and cannot generate it.
+Payload draws the thumbnail into an `aspect-ratio: 3/2` box with `object-fit: cover`,
+which is why the tool produces 3:2 itself: anything else gets centre-cropped by the
+browser, and the block's content is what gets cropped away.
+
+**Hand-authored previews.** One block ships a drawn SVG instead of a capture:
+`video-embed`, whose facade pulls a _remote_ YouTube poster frame — non-deterministic
+to capture, and not something to commit into a public repo. Add any similar block to
+`HAND_AUTHORED` in `tools/block-thumbnails/index.ts` and drop an SVG beside it; the
+tool prints what it skipped so the list stays honest. (The original plan predicted six
+such blocks — `hubspot-form`, `hubspot-meetings`, `embed`, `map`, `related-posts`,
+`post-list`. All six capture fine; the prediction was wrong.)
+
+**Then look at the output.** A green `block:thumbnails` only proves the files exist.
+
+Commit the webp output. It ships to every environment; the deployed lanes have no
+showcase fixtures and cannot generate it (ADR 0011).
 
 ---
 

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { safeUrlValidate } from '../../fields/url'
 
 // Per BLOCK_LIBRARY.md §5.6. Technology tag display (case-study pattern).
@@ -7,6 +9,7 @@ export const TechStack: Block = {
   slug: 'tech-stack',
   interfaceName: 'TechStackBlock',
   labels: { singular: 'Tech stack', plural: 'Tech stack blocks' },
+  admin: blockAdmin('specialty', 'tech-stack', 'Tech stack block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {
