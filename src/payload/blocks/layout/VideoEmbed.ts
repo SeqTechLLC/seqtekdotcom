@@ -1,10 +1,13 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Per BLOCK_LIBRARY.md §5.6.
 export const VideoEmbed: Block = {
   slug: 'video-embed',
   interfaceName: 'VideoEmbedBlock',
   labels: { singular: 'Video embed', plural: 'Video embeds' },
+  admin: blockAdmin('specialty', 'video-embed', 'Video embed block preview', 'svg'),
   fields: [
     {
       name: 'provider',

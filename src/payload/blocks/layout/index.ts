@@ -95,6 +95,12 @@ export {
   WorkshopList,
 }
 
+/**
+ * Registration order, and therefore the order the admin block picker draws its
+ * category headings (Payload's BlockSelector groups by first encounter). Keep
+ * this array sorted by BLOCK_CATEGORIES — `adminMetadata.int.spec.ts` fails if
+ * a block lands outside its category's run.
+ */
 export const layoutBlocks = [
   Hero,
   CaseStudyHero,
@@ -107,8 +113,8 @@ export const layoutBlocks = [
   ProcessSteps,
   Deliverables,
   ComparisonTable,
-  MissionVisionValues,
   Timeline,
+  FAQ,
   StatsBar,
   MetricDisplay,
   LogoBar,
@@ -129,7 +135,7 @@ export const layoutBlocks = [
   WorkshopList,
   TeamGrid,
   VideoEmbed,
-  FAQ,
+  MissionVisionValues,
   Accordion,
   Tabs,
   Map,

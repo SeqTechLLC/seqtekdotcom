@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { requiredWhen } from '../conditional'
 
 type ServiceCardsSibling = { source?: string }
@@ -9,6 +11,7 @@ export const ServiceCards: Block = {
   slug: 'service-cards',
   interfaceName: 'ServiceCardsBlock',
   labels: { singular: 'Service cards', plural: 'Service cards blocks' },
+  admin: blockAdmin('content-collection', 'service-cards', 'Service cards block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

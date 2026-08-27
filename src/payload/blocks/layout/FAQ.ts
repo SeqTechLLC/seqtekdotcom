@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { editorConfig } from '../../editor/editorConfig'
 
 // Per BLOCK_LIBRARY.md §5.2. Emits FAQPage JSON-LD at render time.
@@ -7,6 +9,7 @@ export const FAQ: Block = {
   slug: 'faq',
   interfaceName: 'FAQBlock',
   labels: { singular: 'FAQ', plural: 'FAQs' },
+  admin: blockAdmin('content', 'faq', 'FAQ block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

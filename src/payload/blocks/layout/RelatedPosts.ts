@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Specialty post-list variant for the bottom of post detail pages.
 // Distinct from PostList because the source is always "related" — the
 // renderer queries posts sharing a category/tag with the current doc.
@@ -7,6 +9,7 @@ export const RelatedPosts: Block = {
   slug: 'related-posts',
   interfaceName: 'RelatedPostsBlock',
   labels: { singular: 'Related posts', plural: 'Related posts blocks' },
+  admin: blockAdmin('content-collection', 'related-posts', 'Related posts block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

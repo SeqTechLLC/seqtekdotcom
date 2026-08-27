@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { httpsUrlValidate } from '../../fields/url'
 
 // Generic third-party iframe embed (calculators, dashboards, etc.). The
@@ -8,7 +10,8 @@ import { httpsUrlValidate } from '../../fields/url'
 export const Embed: Block = {
   slug: 'embed',
   interfaceName: 'EmbedBlock',
-  labels: { singular: 'Embed', plural: 'Embeds' },
+  labels: { singular: 'Embed (iframe)', plural: 'Embeds (iframe)' },
+  admin: blockAdmin('specialty', 'embed', 'Embed (iframe) block preview'),
   fields: [
     { name: 'title', type: 'text', required: true },
     { name: 'url', type: 'text', required: true, validate: httpsUrlValidate },

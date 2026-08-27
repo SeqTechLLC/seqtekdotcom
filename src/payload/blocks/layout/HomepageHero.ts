@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { safeUrlValidate } from '../../fields/url'
 
 // Per BLOCK_LIBRARY.md §6 (Homepage composition row 1): hero block above the
@@ -10,6 +12,7 @@ export const HomepageHero: Block = {
   slug: 'homepage-hero',
   interfaceName: 'HomepageHeroBlock',
   labels: { singular: 'Homepage hero', plural: 'Homepage heroes' },
+  admin: blockAdmin('hero', 'homepage-hero', 'Homepage hero block preview'),
   fields: [
     { name: 'eyebrow', type: 'text' },
     { name: 'headline', type: 'text', required: true },

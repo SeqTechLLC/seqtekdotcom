@@ -1,10 +1,13 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Per BLOCK_LIBRARY.md §5.2.
 export const Timeline: Block = {
   slug: 'timeline',
   interfaceName: 'TimelineBlock',
   labels: { singular: 'Timeline', plural: 'Timelines' },
+  admin: blockAdmin('content', 'timeline', 'Timeline block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

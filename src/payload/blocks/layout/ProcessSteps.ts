@@ -1,11 +1,14 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Per BLOCK_LIBRARY.md §5.2. `number` is auto-derived from array order at
 // render time; not exposed as a field.
 export const ProcessSteps: Block = {
   slug: 'process-steps',
   interfaceName: 'ProcessStepsBlock',
   labels: { singular: 'Process steps', plural: 'Process steps blocks' },
+  admin: blockAdmin('content', 'process-steps', 'Process steps block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

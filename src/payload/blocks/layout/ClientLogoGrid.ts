@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Variant of LogoBar that renders client logos in a denser grid (per
 // BLOCK_LIBRARY.md §5.3 — modeled as a separate block per tasks.md T052
 // since the layout intent differs from the linear bar treatment).
@@ -7,6 +9,7 @@ export const ClientLogoGrid: Block = {
   slug: 'client-logo-grid',
   interfaceName: 'ClientLogoGridBlock',
   labels: { singular: 'Client logo grid', plural: 'Client logo grids' },
+  admin: blockAdmin('social-proof', 'client-logo-grid', 'Client logo grid block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {

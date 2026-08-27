@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { httpsUrlValidate, safeUrlValidate } from '../../fields/url'
 
 // Tasks.md T053 specialty: a CTA pointing at the contact path (book a call,
@@ -10,6 +12,7 @@ export const ContactCta: Block = {
   slug: 'contact-cta',
   interfaceName: 'ContactCtaBlock',
   labels: { singular: 'Contact CTA', plural: 'Contact CTAs' },
+  admin: blockAdmin('cta', 'contact-cta', 'Contact CTA block preview'),
   fields: [
     { name: 'heading', type: 'text', required: true },
     { name: 'body', type: 'textarea' },

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 // Single-figure image block (spec 010 / ADR 0009 gap-fill, FR-005). The
 // one-off counterpart to `gallery`: a plain captioned figure droppable into
 // any page layout. Honors the reading-column rule (DESIGN_SYSTEM §11.4) in
@@ -8,6 +10,7 @@ export const Image: Block = {
   slug: 'image',
   interfaceName: 'ImageBlock',
   labels: { singular: 'Image', plural: 'Images' },
+  admin: blockAdmin('content', 'image', 'Image block preview'),
   fields: [
     { name: 'image', type: 'upload', relationTo: 'media', required: true },
     { name: 'caption', type: 'text' },

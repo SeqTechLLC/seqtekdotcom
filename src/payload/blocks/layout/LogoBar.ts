@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockAdmin } from '../blockAdmin'
+
 import { requiredWhen } from '../conditional'
 
 type LogoBarSibling = { source?: string }
@@ -9,6 +11,7 @@ export const LogoBar: Block = {
   slug: 'logo-bar',
   interfaceName: 'LogoBarBlock',
   labels: { singular: 'Logo bar', plural: 'Logo bars' },
+  admin: blockAdmin('social-proof', 'logo-bar', 'Logo bar block preview'),
   fields: [
     { name: 'heading', type: 'text' },
     {
