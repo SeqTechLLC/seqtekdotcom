@@ -102,6 +102,13 @@ npm run test:int                 # metadata, registry, thumbnail + organizationL
 npm run test:e2e                 # full local run — see the note below
 ```
 
+**Admin E2E on a second dev server needs `NEXT_PUBLIC_SITE_URL` set to its port.** Payload pushes `config.serverURL` onto `config.csrf` and `extractJWT` drops the session cookie when a request's `Origin` is not on that list. Page loads send no `Origin` and still authenticate; every server action (`form-state` — what adds a block row, populates an upload preview, and re-evaluates a conditional field) returns `UnauthorizedError`, so the admin looks signed in and silently does nothing:
+
+```bash
+NEXT_PUBLIC_SITE_URL=http://localhost:3111 npx next dev --port 3111
+PLAYWRIGHT_BASE_URL=http://localhost:3111 npx playwright test tests/e2e/admin/
+```
+
 **Route-adjacent changes need a full local E2E run before push.** CI reseeds a fresh database, so content Pages that exist only in your local mirror 404 there. This feature removes fields and hides globals, which is exactly the class of change that has caused this before (PR #79).
 
 Migrations are authored, never run, locally — local dev is push-managed:
