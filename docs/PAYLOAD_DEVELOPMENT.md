@@ -460,6 +460,8 @@ Blocks are polymorphic, repeatable content structures. An editor picks from a me
 ```typescript
 import type { Block } from 'payload'
 
+import { blockAdmin } from '@/payload/blocks/blockAdmin'
+
 const HeroBlock: Block = {
   slug: 'hero',
   interfaceName: 'HeroBlock',
@@ -645,8 +647,11 @@ checklist when adding a block:
    npm run block:thumbnails   # 480x320 WebP into public/block-previews/
    ```
 
-   A block that cannot be captured deterministically gets a hand-authored SVG instead;
-   add it to `HAND_AUTHORED` in `tools/block-thumbnails/index.ts` (ADR 0011).
+   A block that cannot be captured deterministically gets a hand-authored SVG instead.
+   Declare it by passing `'svg'` as `blockAdmin()`'s fourth argument and dropping the
+   file at `public/block-previews/<slug>.svg`; the generator reads the extension off
+   the block's own `admin.images.thumbnail` and leaves hand-authored previews alone.
+   There is no separate list to update (ADR 0011).
 
 ---
 

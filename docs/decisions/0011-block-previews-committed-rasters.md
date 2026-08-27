@@ -33,7 +33,9 @@ explicit command (`npm run block:thumbnails`) that is never part of a build.**
   command and no workflow invokes it, so it gates the author's run and nothing else.
   Measured at 45 blocks: **141 KB**.
 - Blocks that cannot be photographed deterministically ship a hand-authored SVG
-  wireframe instead, listed in the generator's `HAND_AUTHORED` set.
+  wireframe instead, declared by giving that block an `.svg` thumbnail in
+  `blockAdmin()`. The generator reads the extension off the block's own
+  `admin.images.thumbnail`, so the format is stated once, in the config.
 
 The 3:2 letterbox is not cosmetic. Payload draws the thumbnail into an
 `aspect-ratio: 3/2` box with `object-fit: cover`, so an image of any other shape is

@@ -68,10 +68,14 @@ for (const fixture of fixtures) {
     // into a committed preview (PR #118 review). These previews are shipped
     // assets in a public repo, so the overlay is suppressed at the source
     // rather than caught per-block by eye.
-    await page.addStyleTag({
-      content:
-        'nextjs-portal, [data-nextjs-toast], #__next-build-watcher { display: none !important; }',
-    })
+    // `nextjs-portal` is the whole of it. The other two selectors an earlier
+    // draft carried were theatre: `#__next-build-watcher` is a Next 12 relic
+    // with zero occurrences in next@16.2.12, and `[data-nextjs-toast]` lives
+    // inside the portal's shadow root, which a document stylesheet cannot
+    // reach anyway. Hiding the light-DOM host takes its shadow content with
+    // it, and matching by tag name also catches a portal injected after this
+    // style tag.
+    await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' })
 
     const article = page.getByTestId('page')
     await expect(article).toBeVisible()

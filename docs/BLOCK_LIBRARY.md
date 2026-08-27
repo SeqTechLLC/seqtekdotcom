@@ -370,12 +370,16 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 
 #### `markets-map` — 4-market visual
 
+> **Category note (spec 011 US2):** Ships as **`locations-list`**, category **`content-collection`** (§5.5 — "Lists and collections" in the picker), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
+
 | Field     | Type                               | Required | Notes |
 | --------- | ---------------------------------- | -------- | ----- |
 | `heading` | text                               | no       |       |
 | `markets` | relationship → locations (hasMany) | yes      |       |
 
 #### `workshop-progression` — 3-workshop sequence visual
+
+> **Category note (spec 011 US2):** Ships as **`workshop-list`**, category **`content-collection`** (§5.5), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
 
 | Field       | Type                               | Required | Notes |
 | ----------- | ---------------------------------- | -------- | ----- |
@@ -401,6 +405,8 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 | `fileUrl`     | text     | yes      | S3 URL to the asset                  |
 
 #### `newsletter-signup` — inline email capture
+
+> **Category note (spec 011 US2):** Ships as **`newsletter-cta`**, category **`cta`** (§5.4 — "Calls to action"), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
 
 > **Dormant (spec 005, 2026-06-02):** no newsletter program exists and the old site had none, so this block is unused in templates and `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID` was removed. The definition stays in the library; wire it only if a newsletter program starts.
 
@@ -457,6 +463,8 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 | `items`   | array | yes      | `label`, `linkUrl` (optional — to service page) |
 
 #### `related-content` — related case studies / posts / services
+
+> **Category note (spec 011 US2):** Ships as **`related-posts`**, category **`content-collection`** (§5.5), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
 
 | Field     | Type                                                      | Required | Notes |
 | --------- | --------------------------------------------------------- | -------- | ----- |

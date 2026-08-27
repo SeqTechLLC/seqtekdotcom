@@ -33,9 +33,9 @@ export interface BlockFixture extends AuthoredBlockFixture {
    * Derived from the block's own `admin.group`, never authored here. The
    * assignment lives in one place — the block config — so the showcase
    * harness and the admin picker cannot disagree about what a block is.
-   * (They did before spec 011 US2: fixtures had `faq` under content and
-   * `mission-vision-values` under specialty, the reverse of
-   * BLOCK_LIBRARY.md §5.)
+   * (They did before spec 011 US2: fixtures had `faq` under specialty and
+   * `mission-vision-values` under content, each the reverse of the section it
+   * sits in in BLOCK_LIBRARY.md §5.)
    */
   category: BlockCategory
 }

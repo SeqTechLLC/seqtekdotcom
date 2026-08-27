@@ -82,7 +82,7 @@ before we spend more effort loading content by hand.
   expand/contract finished by dropping the retained legacy body columns, and the dead `Navigation` /
   `SiteSettings` globals settled — site chrome is code-owned now (ADR 0010). FR-008 is recorded **NOT MET**;
   its one real finding is **INERT-1** below.
-  **Still open:** US2 the 45-block picker (categories, thumbnails, descriptions), US3 media thumbnails +
+  **Still open:** US2 the 45-block picker (categories, thumbnails, disambiguating labels), US3 media thumbnails +
   `_status` columns, US4 form legibility (labels, help text, conditional fields — INERT-1 lands here), US5
   slug-from-title with collision handling, US6 collection grouping. Tasks T026–T065.
   → `specs/011-payload-admin-ux/spec.md`

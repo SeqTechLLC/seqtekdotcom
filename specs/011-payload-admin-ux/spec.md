@@ -58,13 +58,13 @@ An editor composing a page opens the block picker, scans grouped and visually di
 
 **Why this priority**: Composing a layout is the primary act of self-serve content work under the two-primitive model. The picker is the gateway to it, and today it presents 45 visually identical cards. This is the single screen most responsible for "I don't know how to use this."
 
-**Independent Test**: Verify in the rendered picker that every block shows a distinct preview, a category, and a description, and that the four hero-named blocks are disambiguated in their descriptions. First-try selection accuracy is the intent behind this story (SC-003) but is a target rather than a measured gate.
+**Independent Test**: Verify in the rendered picker that every block shows a distinct preview and sits under a category heading, and that the four hero-named blocks are told apart by their labels. (Amended 2026-08-26 — the picker renders no description; see FR-011.) First-try selection accuracy is the intent behind this story (SC-003) but is a target rather than a measured gate.
 
 **Acceptance Scenarios**:
 
 1. **Given** an editor opening the block picker, **When** the drawer renders, **Then** blocks are organized into named categories rather than one flat list of 45.
 2. **Given** an editor scanning the picker, **When** they look at any block card, **Then** it shows a preview representative of what that block actually renders, not a shared placeholder.
-3. **Given** the four blocks whose names all contain "hero", **When** an editor compares them, **Then** each carries a description stating what it is for and when to use it instead of the others.
+3. **Given** the four blocks whose names all contain "hero", **When** an editor compares them, **Then** each is identifiable by its own label and preview, no label being a substring of another. (Amended 2026-08-26 — originally "each carries a description"; Payload renders none. See FR-011.)
 4. **Given** an editor inserting a block inside rich text, **When** the inline block menu opens, **Then** each option is distinguishable there as well.
 5. **Given** a new block is added to the library later, **When** it ships without a category or preview, **Then** an automated check fails.
 
@@ -232,7 +232,7 @@ An editor landing on the admin home sees content types grouped by purpose, with 
 - **Media**: The upload library. Gains visual previews in list and picker views.
 - **Navigation / Site Settings**: Globals presenting code-owned site chrome. Withdrawn from the admin entirely — schema and table included — after all seven render-path consumers (page metadata plus the `Organization` JSON-LD) are relocated into the site content constants.
 - **Homepage**: The block-composed home global. Loses its retained legacy fields; gains block row identification.
-- **Layout Block**: The 45 composable page sections. Each gains a category, a visual preview, and a description.
+- **Layout Block**: The 45 composable page sections. Each gains a category and a visual preview, plus a label unique within its picker (amended 2026-08-26 — originally "and a description"; see FR-011).
 - **Industry / Location / Category / Testimonial**: Supporting reference data, reachable only as relationship targets. Grouped separately in the dashboard.
 
 ## Success Criteria _(mandatory)_
@@ -249,14 +249,14 @@ SC-002, SC-004, SC-005, SC-006, SC-007, SC-008 and SC-009 are the **release gate
 - **SC-006**: Every public route renders identically before and after this feature at both mobile and desktop viewports, with no visual differences.
 - **SC-007**: The committed seeding pipeline loads every real content file with zero unresolved references after the change.
 - **SC-008**: Every field presented in the admin either has a self-evident label or carries help text; no label is a mechanically title-cased field name.
-- **SC-009**: Adding a new block without its required category, preview or description fails CI, so the picker improvements cannot decay. The render-path-consumer half is dropped with FR-008.
+- **SC-009**: Adding a new block without its required category or preview, or with a label that duplicates or is contained in a sibling's, fails CI — so the picker improvements cannot decay. Amended 2026-08-26: the original wording said "or description", which CI cannot check because Payload has no block description (FR-011). The label rule is what replaced it, and `tests/int/adminMetadata.int.spec.ts` does enforce all three. The render-path-consumer half is dropped with FR-008.
 
 ## Assumptions
 
 - **Site chrome stays code-owned.** Decided 2026-08-21: navigation structure, office address, phone, social links, and footer text remain code changes. Rationale: navigation URLs are unvalidated free text coupled to the route table and the 301 redirect map, so a bad nav edit would ship a broken link into the primary navigation, while the underlying values change roughly once a decade. Revisit if that frequency changes.
 - **The editor role is the target persona.** Improvements are scoped to what a non-admin editorial user sees. Administrative surfaces (user management) need orientation grouping but not the full legibility pass.
 - **The existing block library is stable.** This feature adds presentation metadata to the 45 existing blocks; it does not add, remove, or redesign blocks.
-- **Block previews are committed WebP screenshots** derived from the existing showcase capture harness, which already renders every block in isolation. Measured 2026-08-21: at 480px wide, WebP q78 averages ~7.8 KB per block, so the full set of 45 is ~340 KB. Committing them keeps the picker working identically in local dev, CI, and every deployed lane, and keeps Playwright and Postgres out of the image build. Unlike the gitignored capture directories, these change only when a block's design changes.
+- **Block previews are committed rasters** derived from the existing showcase capture harness, which already renders every block in isolation — WebP for 44 of them, with a hand-authored SVG for any block that cannot be captured deterministically (one today: `video-embed`). Estimated 2026-08-21 at ~7.8 KB per block / ~340 KB for 45; **measured on delivery: 3.1 KB mean, 140.8 KB total**, because the previews are single block sections rather than full-page captures. Committing them keeps the picker working identically in local dev, CI, and every deployed lane, and keeps Playwright and Postgres out of the image build. Unlike the gitignored capture directories, these change only when a block's design changes.
 - **Writing the editor guide and running the walkthrough session are out of scope** for this spec. Both depend on the panel settling first and are tracked separately.
 - **No public-facing copy, photography, or content is authored here.** This is an admin-only change; the content track is unaffected.
 - **Staging is currently torn down** (2026-08-14), so verification runs against a local mirror and CI rather than a deployed staging environment.

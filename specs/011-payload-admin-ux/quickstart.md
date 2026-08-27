@@ -79,9 +79,11 @@ browser, and the block's content is what gets cropped away.
 
 **Hand-authored previews.** One block ships a drawn SVG instead of a capture:
 `video-embed`, whose facade pulls a _remote_ YouTube poster frame — non-deterministic
-to capture, and not something to commit into a public repo. Add any similar block to
-`HAND_AUTHORED` in `tools/block-thumbnails/index.ts` and drop an SVG beside it; the
-tool prints what it skipped so the list stays honest. (The original plan predicted six
+to capture, and not something to commit into a public repo. Declare any similar block
+by passing `'svg'` as `blockAdmin()`'s fourth argument and dropping the SVG at
+`public/block-previews/<slug>.svg` — the generator reads the extension off the block's
+own thumbnail URL, so there is no second list to keep in sync. The tool prints what it
+skipped so the set stays honest. (The original plan predicted six
 such blocks — `hubspot-form`, `hubspot-meetings`, `embed`, `map`, `related-posts`,
 `post-list`. All six capture fine; the prediction was wrong.)
 
@@ -154,7 +156,7 @@ Reports, per record holding legacy prose, whether that prose appears in the comp
 Walk the admin as an editor would, and check the six story outcomes:
 
 1. Nothing you can type into is inert — no Hero group on a Page, no Navigation or Site Settings screens.
-2. The block picker shows grouped, visually distinct blocks with descriptions; the four heroes are tellable apart.
+2. The block picker shows grouped, visually distinct blocks; the four heroes are tellable apart by label (there are no block descriptions — Payload renders none; see FR-011).
 3. Every content list shows publish state; every image shows itself.
 4. Labels read like English; variant-irrelevant fields are hidden; collapsed blocks name themselves.
 5. Creating a page needs a title, nothing else, and opens with a starting structure.
