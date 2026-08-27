@@ -354,7 +354,7 @@ export interface Page {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this page's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
      */
     metaDescription?: string | null;
     /**
@@ -408,12 +408,12 @@ export interface HeroBlock {
      */
     url?: string | null;
     /**
-     * How the button is drawn. Use the solid one for the action you most want.
+     * Not wired up: the hero draws a solid accent button whichever of these is chosen (ROADMAP INERT-2).
      */
     variant?: ('primary' | 'secondary' | 'ghost') | null;
   };
   /**
-   * Optional. Only appears when the main button is filled in too.
+   * Optional, and independent of the main button: fill in only this one and it is the only button the hero draws.
    */
   secondaryCta?: {
     /**
@@ -426,7 +426,7 @@ export interface HeroBlock {
     url?: string | null;
   };
   /**
-   * Left is the default and easiest to read. Centre suits a short headline with no image.
+   * Left is the default and easiest to read. Center suits a short headline with no image.
    */
   alignment?: ('left' | 'center') | null;
   id?: string | null;
@@ -464,7 +464,7 @@ export interface CaseStudyHeroBlock {
     context?: string | null;
   };
   /**
-   * The image behind the top of the case study. Landscape, at least 1600px wide.
+   * Sits beside the headline as the right-hand half of the opening band, not behind it. Landscape, at least 1600px wide.
    */
   heroImage: number | Media;
   id?: string | null;
@@ -661,7 +661,7 @@ export interface ImageBlock {
    */
   width?: ('narrow' | 'standard' | 'wide' | 'full') | null;
   /**
-   * Where a narrower image sits across the page. Centre keeps it on the reading axis.
+   * Where a narrower image sits across the page. Center keeps it on the reading axis.
    */
   alignment?: ('center' | 'left' | 'right') | null;
   id?: string | null;
@@ -1155,7 +1155,7 @@ export interface CaseStudy {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this case study's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and the summary line above is used instead.
      */
     metaDescription?: string | null;
     /**
@@ -1216,7 +1216,7 @@ export interface Industry {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this industry's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
      */
     metaDescription?: string | null;
     /**
@@ -1263,7 +1263,7 @@ export interface Service {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this service's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
      */
     metaDescription?: string | null;
     /**
@@ -1322,7 +1322,7 @@ export interface ServicePillar {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this pillar's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
      */
     metaDescription?: string | null;
     /**
@@ -1330,6 +1330,9 @@ export interface ServicePillar {
      */
     ogImage?: (number | null) | Media;
   };
+  /**
+   * Lowest number first in a pillar list. Records left without a number come after the numbered ones, newest first.
+   */
   order?: number | null;
   updatedAt: string;
   createdAt: string;
@@ -1709,7 +1712,7 @@ export interface Post {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this post's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and the summary above is used instead.
      */
     metaDescription?: string | null;
     /**
@@ -1837,7 +1840,7 @@ export interface TeamMember {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this profile's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
      */
     metaDescription?: string | null;
     /**
@@ -1949,7 +1952,7 @@ export interface Location {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this location's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
      */
     metaDescription?: string | null;
     /**
@@ -2065,7 +2068,7 @@ export interface Workshop {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this workshop's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
      */
     metaDescription?: string | null;
     /**
@@ -2550,7 +2553,7 @@ export interface Partner {
      */
     metaTitle?: string | null;
     /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this partner's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
      */
     metaDescription?: string | null;
     /**

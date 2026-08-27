@@ -452,8 +452,32 @@ describe('C4 — every field is legible without schema knowledge', () => {
     Youtube: 'YouTube',
   }
 
-  /** The same lexicon, matched against the field NAME for clause (2). */
-  const JARGON_NAMES = /(^|[a-z])(cta|seo|og|url|id|faq|api|cms|html)([A-Z]|$)/
+  /**
+   * The same lexicon, matched against the field NAME for clause (2).
+   *
+   * Split on camelCase humps rather than pattern-matching the raw name: the
+   * first version of this was `/(^|[a-z])(cta|seo|og|url|id|…)([A-Z]|$)/`,
+   * which is case-sensitive on a lowercase token and so only ever fired on a
+   * LEADING acronym. It bound 26 fields and silently skipped 22 with trailing
+   * ones — `videoUrl`, `embedUrl`, `meetingUrl`, `fileUrl`, `linkUrl`,
+   * `formId`, `videoId`, `linkedinUrl`, every `primaryCta`/`secondaryCta` —
+   * i.e. roughly half of what the contract says clause (2) covers.
+   */
+  const JARGON_TOKENS = new Set([
+    'api',
+    'cms',
+    'cta',
+    'faq',
+    'html',
+    'id',
+    'og',
+    'seo',
+    'ui',
+    'url',
+  ])
+
+  const hasJargonName = (name: string): boolean =>
+    name.split(/(?=[A-Z])/).some((word) => JARGON_TOKENS.has(word.toLowerCase()))
 
   const labelOf = (field: FlatField['field']): string => {
     const declared = (field as { label?: unknown }).label
@@ -466,8 +490,22 @@ describe('C4 — every field is legible without schema knowledge', () => {
 
   it('the walk covers the whole config', () => {
     // Guards the two suites below from passing vacuously if the flattener
-    // stops descending into something.
-    expect(fields.length).toBeGreaterThan(300)
+    // stops descending into something. The margin is deliberately tight:
+    // at 300 against an actual 339, dropping `array` recursion loses exactly
+    // 38 fields and still passed.
+    expect(fields.length).toBeGreaterThan(330)
+    // And name the container classes explicitly, so losing one is a named
+    // failure rather than a headcount that happens to stay above the line.
+    for (const path of [
+      'seo.metaTitle', // group
+      'expertise.label', // array
+      'client.name', // group on a collection
+    ]) {
+      expect(
+        fields.some((f) => f.path.endsWith(path)),
+        `the flattener stopped descending: nothing matched ${path}`,
+      ).toBe(true)
+    }
     expect(new Set(fields.map((f) => f.entity)).size).toBeGreaterThan(50)
   })
 
@@ -503,7 +541,7 @@ describe('C4 — every field is legible without schema knowledge', () => {
       }
       const conditional = Boolean(field.admin?.condition)
       const isSelect = field.type === 'select'
-      const jargonName = JARGON_NAMES.test(field.name ?? '')
+      const jargonName = hasJargonName(field.name ?? '')
       if (!conditional && !isSelect && !jargonName) continue
       if (typeof field.admin?.description === 'string' && field.admin.description.trim()) continue
       const why = conditional

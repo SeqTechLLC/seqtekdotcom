@@ -11,7 +11,8 @@ export const Locations: CollectionConfig = {
   slug: 'locations',
   admin: {
     useAsTitle: 'city',
-    defaultColumns: ['city', '_status', 'slug', 'hasOffice'],
+    // `hasOffice` is admin.hidden (ROADMAP INERT-1), so it cannot be a column.
+    defaultColumns: ['city', '_status', 'slug'],
   },
   access: {
     read: publishedOrAuthed,

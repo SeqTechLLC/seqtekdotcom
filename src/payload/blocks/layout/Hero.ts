@@ -85,7 +85,8 @@ export const Hero: Block = {
     ctaField({
       name: 'secondaryCta',
       label: 'Second button',
-      description: 'Optional. Only appears when the main button is filled in too.',
+      description:
+        'Optional, and independent of the main button: fill in only this one and it is the only button the hero draws.',
     }),
     {
       name: 'alignment',
@@ -94,7 +95,7 @@ export const Hero: Block = {
       defaultValue: 'left',
       admin: {
         description:
-          'Left is the default and easiest to read. Centre suits a short headline with no image.',
+          'Left is the default and easiest to read. Center suits a short headline with no image.',
       },
       options: [
         { label: 'Left', value: 'left' },

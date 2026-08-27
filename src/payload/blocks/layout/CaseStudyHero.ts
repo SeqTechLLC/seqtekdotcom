@@ -58,7 +58,8 @@ export const CaseStudyHero: Block = {
       label: 'Header image',
       required: true,
       admin: {
-        description: 'The image behind the top of the case study. Landscape, at least 1600px wide.',
+        description:
+          'Sits beside the headline as the right-hand half of the opening band, not behind it. Landscape, at least 1600px wide.',
       },
     },
   ],

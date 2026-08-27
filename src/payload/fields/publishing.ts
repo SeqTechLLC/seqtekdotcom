@@ -41,13 +41,22 @@ interface OrderOptions {
   what: string
   /** How records with no number sort, where the query defines it. */
   unnumbered?: string
+  /**
+   * Hide the control without touching the schema, for a collection nothing
+   * sorts by. Passed here rather than spread over afterwards: `{ ...orderField(),
+   * admin: { hidden: true } }` replaces the whole `admin` object and silently
+   * drops the description — the same footgun `requiredWhen` was rewritten to
+   * make impossible.
+   */
+  hidden?: boolean
 }
 
-export const orderField = ({ what, unnumbered }: OrderOptions): NumberField => ({
+export const orderField = ({ what, unnumbered, hidden = false }: OrderOptions): NumberField => ({
   name: 'order',
   type: 'number',
   label: 'Sort position',
   admin: {
+    ...(hidden ? { hidden: true } : {}),
     description: `Lowest number first in ${what}. ${
       unnumbered ?? 'Records left without a number come after the numbered ones, newest first.'
     }`,

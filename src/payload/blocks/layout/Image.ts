@@ -63,7 +63,7 @@ export const Image: Block = {
       admin: {
         condition: (_, siblingData) => siblingData?.width !== 'full',
         description:
-          'Where a narrower image sits across the page. Centre keeps it on the reading axis.',
+          'Where a narrower image sits across the page. Center keeps it on the reading axis.',
       },
     },
   ],

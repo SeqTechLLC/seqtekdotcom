@@ -127,7 +127,7 @@ export const Posts: CollectionConfig = {
           'Used to connect the post to the work it describes. Not shown on the post itself.',
       },
     },
-    seoField({ noun: 'post' }),
+    seoField({ noun: 'post', summaryFallback: 'summary above' }),
     publishedAtField({
       effect:
         'Orders the insights index, newest first, and is the date shown on the post itself. Leave it blank and the post sorts to the TOP of that index, ahead of everything dated.',

@@ -38,6 +38,11 @@ let pageId: number | string
 
 test.use({ viewport: { width: 1400, height: 1200 } })
 
+// Each test loads the same 24-block-row edit view, which is the heaviest page
+// in the admin. The default 30s local budget (playwright.config.ts) is tight
+// against a cold dev server; CI already allows 120s.
+test.describe.configure({ timeout: 90_000 })
+
 const FIXTURE_SLUG = 'us4-variant-fields'
 
 type Sibling = Record<string, unknown>
@@ -212,6 +217,15 @@ test.describe('variant-only fields are hidden, not shown blank', () => {
       // viewport, so on a page this long everything below the fold is absent
       // rather than hidden — which reads exactly like a failing condition.
       await page.locator('.blocks-field__row').nth(variant.row).scrollIntoViewIfNeeded()
+
+      // Anchor first. Eight of these cases expect nothing to be visible, so
+      // their only assertions are absences — and an absence passes just as
+      // well against a row Payload has not rendered yet. The select being
+      // varied is always present, so it proves the row is really on screen.
+      await expect(
+        fieldControl(page, variant.row, variant.selectName),
+        `${where}: the row itself did not render`,
+      ).toBeVisible()
 
       // The visible half matters as much as the hidden half: without it a
       // locator-convention change would leave every absence assertion passing

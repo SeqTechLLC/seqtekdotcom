@@ -148,6 +148,7 @@ export const TeamMembers: CollectionConfig = {
       // inert-control failure this feature exists to remove.
       name: 'expertise',
       type: 'array',
+      label: 'Areas of expertise',
       labels: { singular: 'Area', plural: 'Areas' },
       admin: {
         description:

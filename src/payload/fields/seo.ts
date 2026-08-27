@@ -25,6 +25,17 @@ interface SeoFieldOptions {
    */
   noun?: string
   /**
+   * The field this collection's route passes to `buildMetadata` as the
+   * description fallback, in the editor's words ("the summary line").
+   *
+   * Only `posts` (`excerpt`) and `caseStudies` (`subtitle`) pass one; the
+   * other four routes call `buildMetadata(doc.seo, { title })` and fall
+   * straight through to the company tagline. Saying "falls back to this
+   * page's own summary" on those four was false — check the route before
+   * passing this.
+   */
+  summaryFallback?: string
+  /**
    * Hide the whole group from the admin (ROADMAP INERT-1). Four collections —
    * `services`, `servicePillars`, `industries`, `locations` — have no detail
    * route, so nothing ever calls `buildMetadata` with their `seo` group. The
@@ -37,7 +48,11 @@ interface SeoFieldOptions {
   hidden?: boolean
 }
 
-export const seoField = ({ noun = 'page', hidden = false }: SeoFieldOptions = {}): GroupField => ({
+export const seoField = ({
+  noun = 'page',
+  hidden = false,
+  summaryFallback,
+}: SeoFieldOptions = {}): GroupField => ({
   name: 'seo',
   type: 'group',
   label: 'Search result and link preview',
@@ -59,7 +74,11 @@ export const seoField = ({ noun = 'page', hidden = false }: SeoFieldOptions = {}
       type: 'textarea',
       label: 'Search result summary',
       admin: {
-        description: `The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this ${noun}'s own summary, then the company tagline.`,
+        description: `The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. ${
+          summaryFallback
+            ? `Leave blank and the ${summaryFallback} is used instead.`
+            : 'Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.'
+        }`,
       },
     },
     {

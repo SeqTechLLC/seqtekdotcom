@@ -13,7 +13,8 @@ export const ServicePillars: CollectionConfig = {
   labels: { singular: 'Service pillar', plural: 'Service pillars' },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', '_status', 'slug', 'order'],
+    // `order` is admin.hidden (nothing sorts pillars by it), so it cannot be a column.
+    defaultColumns: ['title', '_status', 'slug'],
   },
   access: {
     read: publishedOrAuthed,
@@ -65,14 +66,9 @@ export const ServicePillars: CollectionConfig = {
       },
     },
     seoField({ noun: 'pillar', hidden: true }),
-    {
-      ...orderField({ what: 'a pillar list' }),
-      admin: {
-        // ROADMAP INERT-1/INERT-2: `listServicePillars` has no callers, and the
-        // `service-pillar-cards` block renders its `hasMany` relationship in the
-        // order an editor picked. Nothing sorts pillars by this.
-        hidden: true,
-      },
-    },
+    // ROADMAP INERT-1/INERT-2: `listServicePillars` has no callers, and the
+    // `service-pillar-cards` block renders its `hasMany` relationship in the
+    // order an editor picked. Nothing sorts pillars by this.
+    orderField({ what: 'a pillar list', hidden: true }),
   ],
 }

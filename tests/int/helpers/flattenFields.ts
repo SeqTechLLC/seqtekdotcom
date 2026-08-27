@@ -55,7 +55,7 @@ export const isContainer = (field: Field): boolean => CONTAINER_TYPES.has(field.
  * whether some earlier test in the same Vitest process built a Payload config.
  * Left out, this file passes alone and fails in the full suite.
  */
-const PAYLOAD_OWNED = new Set([
+const AUTH_OWNED = new Set([
   'email',
   'resetPasswordToken',
   'resetPasswordExpiration',
@@ -69,10 +69,18 @@ const PAYLOAD_OWNED = new Set([
   'apiKeyIndex',
   '_verified',
   '_verificationToken',
-  '_status',
-  'updatedAt',
-  'createdAt',
 ])
+
+/** Injected on every collection regardless of auth. */
+const ALWAYS_OWNED = new Set(['_status', 'updatedAt', 'createdAt'])
+
+/**
+ * Auth names are only Payload's on the auth collection. Matching them
+ * everywhere excluded `teamMembers.email`, an authored field, from the
+ * contract — silently, because the walk skipped the whole subtree.
+ */
+const isPayloadOwned = (name: string, entity: string): boolean =>
+  ALWAYS_OWNED.has(name) || (entity === 'collection:users' && AUTH_OWNED.has(name))
 
 interface WalkOptions {
   /**
@@ -98,7 +106,7 @@ function walk(
   for (const raw of fields ?? []) {
     const field = raw as AnyField
     const name = 'name' in field ? field.name : undefined
-    if (name && PAYLOAD_OWNED.has(name)) continue
+    if (name && isPayloadOwned(name, entity)) continue
     const here = name ? (path ? `${path}.${name}` : name) : path
 
     const hiddenHere = hidden || isHidden(raw)

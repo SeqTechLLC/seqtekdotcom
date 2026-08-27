@@ -166,7 +166,7 @@ export const CaseStudies: CollectionConfig = {
       maxRows: 3,
       admin: { description: 'Up to three other studies to offer at the end of this one.' },
     },
-    seoField({ noun: 'case study' }),
+    seoField({ noun: 'case study', summaryFallback: 'summary line above' }),
     publishedAtField({
       effect:
         'Orders the case study index, newest first, though it is not shown on the study itself. Leave it blank and the study sorts to the TOP of that index, ahead of everything dated.',
