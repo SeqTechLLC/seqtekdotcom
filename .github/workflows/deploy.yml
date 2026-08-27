@@ -700,7 +700,12 @@ jobs:
           # — the same pinning discipline as the image tag, and for the same
           # reason: re-synthing re-renders that task definition, so a deploy
           # that omitted it would wipe it.
-          RELEASE_VERSION: ${{ env.IS_RELEASE == 'true' && steps.img.outputs.version-tag ||
+          # From the RESOLVER, not from the ref. A published release carries its
+          # version in the ref, but a promotion dispatched from the Actions UI
+          # has no tag — the version comes from the image that was resolved. The
+          # resolver handles both and emits the answer; reading the ref directly
+          # left production with an empty RELEASE_VERSION on every dispatch.
+          RELEASE_VERSION: ${{ env.IS_RELEASE == 'true' && steps.resolve.outputs.release-tag ||
             steps.pinprod.outputs.pinned-release-version }}
         run: |
           set -euo pipefail
