@@ -9,6 +9,7 @@ import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { caseStudySkeleton } from '../payload/seed/skeletons/caseStudy'
 import { seoField } from '../payload/fields/seo'
+import { publishedAtField } from '../payload/fields/publishing'
 
 export const CaseStudies: CollectionConfig = {
   slug: 'caseStudies',
@@ -166,15 +167,8 @@ export const CaseStudies: CollectionConfig = {
       admin: { description: 'Up to three other studies to offer at the end of this one.' },
     },
     seoField({ noun: 'case study' }),
-    {
-      name: 'publishedAt',
-      type: 'date',
-      label: 'Publish date',
-      admin: {
-        position: 'sidebar',
-        description:
-          'The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.',
-      },
-    },
+    publishedAtField({
+      effect: 'Orders the case study index, newest first. It is not shown on the study.',
+    }),
   ],
 }

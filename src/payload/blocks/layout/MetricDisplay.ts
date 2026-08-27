@@ -43,7 +43,7 @@ export const MetricDisplay: Block = {
       ],
       admin: {
         description:
-          'The colour of the band this number sits in. Alternate it from the section above.',
+          'The color of the band this number sits in. Alternate it from the section above.',
       },
     },
   ],

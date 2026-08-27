@@ -6,6 +6,7 @@ import { editorConfig } from '../payload/editor/editorConfig'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { seoField } from '../payload/fields/seo'
+import { orderField } from '../payload/fields/publishing'
 
 export const ServicePillars: CollectionConfig = {
   slug: 'servicePillars',
@@ -64,14 +65,6 @@ export const ServicePillars: CollectionConfig = {
       },
     },
     seoField({ noun: 'pillar', hidden: true }),
-    {
-      name: 'order',
-      type: 'number',
-      label: 'Sort position',
-      admin: {
-        description:
-          'Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.',
-      },
-    },
+    orderField({ what: 'the pillar cards' }),
   ],
 }

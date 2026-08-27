@@ -39,7 +39,7 @@ export const HubspotForm: Block = {
       validate: safeUrlValidate,
       admin: {
         description:
-          'Where to send someone after they submit, e.g. "/thank-you". Leave blank to keep them on this page with the form\'s own confirmation message.',
+          'Not wired up: nothing reads this yet, so a path typed here changes nothing. Set the redirect on the form in HubSpot instead (ROADMAP INERT-2).',
       },
     },
   ],

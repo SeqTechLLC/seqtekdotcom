@@ -44,7 +44,7 @@ export const ProcessSteps: Block = {
           label: 'Icon name',
           admin: {
             description:
-              'Optional short icon keyword. Leave blank unless a developer has given you one.',
+              'Leave this blank. There is no icon set behind it yet, so whatever you type is printed on the page as small text (ROADMAP INERT-2).',
           },
         },
       ],

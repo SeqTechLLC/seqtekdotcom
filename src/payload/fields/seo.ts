@@ -59,7 +59,7 @@ export const seoField = ({ noun = 'page', hidden = false }: SeoFieldOptions = {}
       type: 'textarea',
       label: 'Search result summary',
       admin: {
-        description: `The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this ${noun}'s own summary, then the company tagline.`,
+        description: `The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this ${noun}'s own summary, then the company tagline.`,
       },
     },
     {

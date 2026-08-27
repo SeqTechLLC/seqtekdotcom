@@ -8,6 +8,7 @@ import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { seoField } from '../payload/fields/seo'
+import { publishedAtField } from '../payload/fields/publishing'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
@@ -52,16 +53,7 @@ export const Pages: CollectionConfig = {
           'The last part of the web address for this page, for example "about-us". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
       },
     },
-    {
-      name: 'publishedAt',
-      type: 'date',
-      label: 'Publish date',
-      admin: {
-        position: 'sidebar',
-        description:
-          'The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.',
-      },
-    },
+    publishedAtField(),
     {
       // spec 011 T018 (FR-002): the legacy `hero` group was deleted. It sat at
       // the top of every Page form, five editable inputs, consumed by nothing —

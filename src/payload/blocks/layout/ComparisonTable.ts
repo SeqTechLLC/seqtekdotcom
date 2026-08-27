@@ -66,7 +66,7 @@ export const ComparisonTable: Block = {
           // Cells per row must match column count; validated at render time.
           admin: {
             description:
-              'One answer per option, in the same order as the options above. Add exactly as many as there are options or the row will not render.',
+              'One answer per option, in the same order as the options above. Nothing checks the count, so a row with too few or too many answers renders a misaligned table.',
           },
           fields: [
             {

@@ -167,7 +167,7 @@ export const Media: CollectionConfig = {
       label: 'Caption',
       admin: {
         description:
-          'Optional visible caption. Only some blocks draw it, and it never replaces the alt text.',
+          'A note for whoever picks this image later. Blocks draw their own caption field, not this one, so nothing here reaches the page.',
       },
     },
   ],

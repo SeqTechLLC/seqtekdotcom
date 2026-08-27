@@ -10,6 +10,7 @@ import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { teamMemberSkeleton } from '../payload/seed/skeletons/teamMember'
 import { seoField } from '../payload/fields/seo'
+import { orderField } from '../payload/fields/publishing'
 
 export const TeamMembers: CollectionConfig = {
   slug: 'teamMembers',
@@ -86,7 +87,10 @@ export const TeamMembers: CollectionConfig = {
       relationTo: 'media',
       label: 'Headshot',
       required: true,
-      admin: { description: 'Square or close to it. Cropped to a circle on the team cards.' },
+      admin: {
+        description:
+          'Landscape reads best: the cards crop it to 4:3 and the photo fills the top of the card. The compact team layout crops the same file to a circle instead.',
+      },
     },
     {
       // spec 010 / ADR 0009: the block-composed body for the `/team/[slug]`
@@ -131,15 +135,9 @@ export const TeamMembers: CollectionConfig = {
           'Tick to include this person when a team block is set to show leadership only.',
       },
     },
-    {
-      name: 'order',
-      type: 'number',
-      label: 'Sort position',
-      admin: {
-        description:
-          'Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.',
-      },
-    },
+    orderField({
+      what: 'the team grid, after the leadership members',
+    }),
     {
       // spec 011 T011 (FR-001): NOT a legacy field. `expertise` is read by
       // `personLd` in src/lib/structured-data.ts and emitted as `knowsAbout`

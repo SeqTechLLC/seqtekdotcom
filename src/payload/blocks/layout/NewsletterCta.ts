@@ -25,7 +25,7 @@ export const NewsletterCta: Block = {
       label: 'HubSpot form ID',
       admin: {
         description:
-          'Only needed to use a different form here than the site-wide newsletter one. Leave it blank and the standard newsletter form is used.',
+          'This block does not collect anything yet: it draws a disabled form and prints a note about production either way, so publishing it puts developer text on the page. Use a HubSpot form block instead (ROADMAP INERT-2).',
       },
     },
   ],

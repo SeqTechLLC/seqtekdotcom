@@ -63,7 +63,7 @@ export const VideoEmbed: Block = {
       label: 'Poster image',
       admin: {
         description:
-          "Optional still shown before the video plays. Leave it blank to use the host's own thumbnail.",
+          'Leave this blank. Filling it in replaces the player with a still image and a Play badge that cannot be clicked, so the video becomes unwatchable (ROADMAP INERT-2).',
       },
     },
   ],

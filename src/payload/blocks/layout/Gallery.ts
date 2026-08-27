@@ -62,7 +62,7 @@ export const Gallery: Block = {
       defaultValue: 'grid',
       admin: {
         description:
-          'A grid shows every image at once. A carousel shows one at a time and the reader swipes, which suits a long set.',
+          'A grid shows every image at once. A carousel puts them in one swipeable row, roughly one image wide on a phone and three on a desktop, which suits a long set.',
       },
       options: [
         { label: 'Grid', value: 'grid' },

@@ -54,7 +54,7 @@ export const Users: CollectionConfig = {
       hasMany: true,
       admin: {
         description:
-          'Editors can create, edit and publish content. Admins can do that and also add or remove accounts and delete records.',
+          'Editors can create, edit and publish content. Admins can do that, and can also delete records and change access here. Accounts themselves are created by signing in with Google, never in this panel.',
       },
       options: [
         { label: 'Admin', value: 'admin' },

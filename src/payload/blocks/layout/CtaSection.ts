@@ -26,7 +26,7 @@ export const CtaSection: Block = {
       ],
       admin: {
         description:
-          'Centred stacks the text and buttons in the middle. Split puts the text left and the buttons right. Inverse reverses the colours to make it the loudest thing on the page.',
+          'Centered centers the text and buttons. Split and inverse both left-align them; inverse also reverses the colors to make the section the loudest thing on the page.',
       },
     },
     {

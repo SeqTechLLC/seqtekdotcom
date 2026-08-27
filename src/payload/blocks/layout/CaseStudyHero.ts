@@ -26,7 +26,7 @@ export const CaseStudyHero: Block = {
       label: 'Headline number',
       admin: {
         description:
-          'The one number this study is remembered for. It is set in large type beside the headline.',
+          'The one number this study is remembered for. It is set in large type under the headline, against a rule.',
       },
       fields: [
         {

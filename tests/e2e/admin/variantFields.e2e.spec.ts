@@ -231,6 +231,26 @@ test.describe('variant-only fields are hidden, not shown blank', () => {
     }
   })
 
+  test('a collapsed block row names itself by its content', async ({ page }) => {
+    // FR-021. `adminMetadata.int.spec.ts` proves the Label component is
+    // DECLARED with the right name; only the browser proves it renders, and
+    // BlockRowLabel re-creates Payload's own header markup, so a class rename
+    // upstream would degrade all 45 rows with a green suite.
+    const heroCase = CASES.find((c) => c.blockSlug === 'hero')
+    expect(heroCase, 'the hero fixture row moved').toBeDefined()
+
+    await page.goto(`/admin/collections/pages/${pageId}`)
+    await expect(page.locator('#field-layout')).toBeVisible({ timeout: 25_000 })
+
+    const header = page.locator('.blocks-field__block-header').nth(heroCase!.row)
+    await header.scrollIntoViewIfNeeded()
+    await expect(header.locator('.blocks-field__block-number')).toHaveText('01')
+    await expect(header, 'the row must still say which block it is').toContainText(
+      'Hero (standard page)',
+    )
+    await expect(header, 'and what it is about').toContainText('Variant fixture hero')
+  })
+
   test('changing the selection changes the form, without a save', async ({ page }) => {
     // The seeded cases above assert the rendered result; this asserts the live
     // path an editor actually takes. One block is enough: the mechanism
@@ -244,8 +264,14 @@ test.describe('variant-only fields are hidden, not shown blank', () => {
     await expect(fieldControl(page, row, 'media')).toHaveCount(0)
 
     const select = page.locator(`#field-layout__${row}__variant`)
+    await select.scrollIntoViewIfNeeded()
     await select.locator('.rs__control').click()
+    // Wait for the menu rather than racing it: react-select mounts the options
+    // asynchronously, and clicking into a menu that is not open yet silently
+    // does nothing and leaves the control on its previous value.
+    await expect(select.locator('.rs__menu')).toBeVisible()
     await select.locator('.rs__option', { hasText: /^With image$/ }).click()
+    await expect(select.locator('.rs__single-value')).toHaveText('With image')
 
     await expect(
       fieldControl(page, row, 'media'),

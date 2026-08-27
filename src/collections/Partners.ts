@@ -10,6 +10,7 @@ import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { partnerSkeleton } from '../payload/seed/skeletons/partner'
 import { seoField } from '../payload/fields/seo'
+import { orderField, publishedAtField } from '../payload/fields/publishing'
 
 // ADR 0009 Option C ("two primitives + metadata collections"): a partner is a
 // Page + typed metadata. The metadata below is what the `/partners` index card
@@ -67,7 +68,7 @@ export const Partners: CollectionConfig = {
       label: 'Summary',
       admin: {
         description:
-          'One or two sentences on what we do together. Shown on the partners index card and used as the search result summary when the SEO section below is left blank.',
+          'One or two sentences on what we do together, shown on the partners index card. It does not reach search results: fill in the summary below for that.',
       },
     },
     {
@@ -103,25 +104,11 @@ export const Partners: CollectionConfig = {
           'The partner page, built from blocks. A new partner starts from a standard outline; replace the placeholder text in each block.',
       },
     },
-    {
-      name: 'order',
-      type: 'number',
-      label: 'Sort position',
-      admin: {
-        description:
-          'Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.',
-      },
-    },
-    {
-      name: 'publishedAt',
-      type: 'date',
-      label: 'Publish date',
-      admin: {
-        position: 'sidebar',
-        description:
-          'The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.',
-      },
-    },
+    orderField({
+      what: 'the partner list',
+      unnumbered: 'Partners without a number come after the numbered ones, in alphabetical order.',
+    }),
+    publishedAtField(),
     seoField({ noun: 'partner' }),
   ],
 }

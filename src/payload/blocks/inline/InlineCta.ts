@@ -35,7 +35,7 @@ export const InlineCta: Block = {
       defaultValue: 'primary',
       admin: {
         description:
-          'How the button is drawn. "Link" is the quietest and suits a button set inside a paragraph.',
+          'How the link is drawn. All four are underlined: primary is bold and accent-colored, secondary is muted, and ghost and link are plain body text.',
       },
       options: [
         { label: 'Primary', value: 'primary' },

@@ -8,6 +8,7 @@ import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { seoField } from '../payload/fields/seo'
+import { publishedAtField } from '../payload/fields/publishing'
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -112,7 +113,7 @@ export const Posts: CollectionConfig = {
       maxRows: 3,
       admin: {
         description:
-          'Up to three other posts to offer at the end of this one. Leave empty to show the newest instead.',
+          'Not wired up: no route reads this yet, so picks here change nothing on the published post (ROADMAP INERT-2).',
       },
     },
     {
@@ -127,15 +128,8 @@ export const Posts: CollectionConfig = {
       },
     },
     seoField({ noun: 'post' }),
-    {
-      name: 'publishedAt',
-      type: 'date',
-      label: 'Publish date',
-      admin: {
-        position: 'sidebar',
-        description:
-          'The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.',
-      },
-    },
+    publishedAtField({
+      effect: 'Orders the insights index, newest first, and is the date shown on the post itself.',
+    }),
   ],
 }

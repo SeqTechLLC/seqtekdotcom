@@ -34,7 +34,7 @@ export const FeaturedTestimonials: Block = {
       defaultValue: false,
       admin: {
         description:
-          'Rotates the quotes without the reader clicking. Leave it off unless the section is purely decorative, since moving text is hard to read.',
+          'Not wired up: the carousel has not shipped, so the quotes render as a static set whichever way this is left (ROADMAP INERT-2).',
       },
     },
   ],

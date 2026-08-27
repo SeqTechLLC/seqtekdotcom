@@ -6,6 +6,7 @@ import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenSche
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { seoField } from '../payload/fields/seo'
+import { orderField, publishedAtField } from '../payload/fields/publishing'
 
 export const Services: CollectionConfig = {
   slug: 'services',
@@ -63,7 +64,7 @@ export const Services: CollectionConfig = {
       label: 'Icon name',
       admin: {
         description:
-          'Optional short icon keyword used by service cards. Leave blank unless a developer has given you one.',
+          'Leave this blank. There is no icon set behind it yet, so whatever you type is printed on the card as text (ROADMAP INERT-2).',
       },
     },
     {
@@ -75,24 +76,7 @@ export const Services: CollectionConfig = {
       admin: { description: 'Case studies that show this service delivered.' },
     },
     seoField({ noun: 'service', hidden: true }),
-    {
-      name: 'order',
-      type: 'number',
-      label: 'Sort position',
-      admin: {
-        description:
-          'Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.',
-      },
-    },
-    {
-      name: 'publishedAt',
-      type: 'date',
-      label: 'Publish date',
-      admin: {
-        position: 'sidebar',
-        description:
-          'The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.',
-      },
-    },
+    orderField({ what: 'a service list' }),
+    publishedAtField(),
   ],
 }

@@ -69,12 +69,12 @@ export const LogoBar: Block = {
       label: 'How the logos are drawn',
       defaultValue: 'grayscale-on-color-hover',
       options: [
-        { label: 'Grey, colour on hover', value: 'grayscale-on-color-hover' },
-        { label: 'Always in colour', value: 'color' },
+        { label: 'Gray, color on hover', value: 'grayscale-on-color-hover' },
+        { label: 'Always in color', value: 'color' },
       ],
       admin: {
         description:
-          'Grey keeps a wall of mismatched brand colours calm and is the usual choice. Full colour suits a short row of two or three.',
+          'Gray keeps a wall of mismatched brand colors calm and is the usual choice. Full color suits a short row of two or three.',
       },
     },
   ],

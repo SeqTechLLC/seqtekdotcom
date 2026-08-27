@@ -24,7 +24,7 @@ export const TwoColumn: Block = {
       ],
       admin: {
         description:
-          'On a phone the image always comes first and the text follows, whichever side you pick. Alternate the side down a page of these so it does not read as a ladder.',
+          'On a phone the columns stack in this order, so "Left" puts the image first and "Right" puts the text first. Alternate the side down a page of these so it does not read as a ladder.',
       },
     },
     {

@@ -34,7 +34,7 @@ export const TestimonialBlock: Block = {
       ],
       admin: {
         description:
-          'The photo comes from the testimonial itself, so the two photo layouts fall back to centred when that person has no photo on file.',
+          'The photo comes from the testimonial itself, so the two photo layouts simply omit it when that person has no photo on file; the quote stays left-aligned.',
       },
     },
   ],

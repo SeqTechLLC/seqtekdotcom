@@ -156,7 +156,7 @@ export interface User {
    */
   name: string;
   /**
-   * Editors can create, edit and publish content. Admins can do that and also add or remove accounts and delete records.
+   * Editors can create, edit and publish content. Admins can do that, and can also delete records and change access here. Accounts themselves are created by signing in with Google, never in this panel.
    */
   roles: ('admin' | 'editor')[];
   /**
@@ -193,7 +193,7 @@ export interface Media {
    */
   alt: string;
   /**
-   * Optional visible caption. Only some blocks draw it, and it never replaces the alt text.
+   * A note for whoever picks this image later. Blocks draw their own caption field, not this one, so nothing here reaches the page.
    */
   caption?: string | null;
   prefix?: string | null;
@@ -290,7 +290,7 @@ export interface Page {
    */
   slug: string;
   /**
-   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   * Scheduling only. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
   /**
@@ -354,7 +354,7 @@ export interface Page {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this page's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this page's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -392,7 +392,7 @@ export interface HeroBlock {
    */
   media?: (number | null) | Media;
   /**
-   * Shown only by the "With video" style. Paste the full https:// address of the YouTube or Vimeo page.
+   * Shown only by the "With video" style. Paste the player's EMBED address, not the page you watch on: https://www.youtube.com/embed/ID, https://player.vimeo.com/video/ID, or a Wistia embed address. Anything else is dropped at render time and the hero shows no video at all.
    */
   videoUrl?: string | null;
   /**
@@ -447,7 +447,7 @@ export interface CaseStudyHeroBlock {
    */
   headline: string;
   /**
-   * The one number this study is remembered for. It is set in large type beside the headline.
+   * The one number this study is remembered for. It is set in large type under the headline, against a rule.
    */
   metric: {
     /**
@@ -601,7 +601,7 @@ export interface ContentBlock {
  */
 export interface TwoColumnBlock {
   /**
-   * On a phone the image always comes first and the text follows, whichever side you pick. Alternate the side down a page of these so it does not read as a ladder.
+   * On a phone the columns stack in this order, so "Left" puts the image first and "Right" puts the text first. Alternate the side down a page of these so it does not read as a ladder.
    */
   mediaPosition: 'left' | 'right';
   /**
@@ -692,7 +692,7 @@ export interface GalleryBlock {
     id?: string | null;
   }[];
   /**
-   * A grid shows every image at once. A carousel shows one at a time and the reader swipes, which suits a long set.
+   * A grid shows every image at once. A carousel puts them in one swipeable row, roughly one image wide on a phone and three on a desktop, which suits a long set.
    */
   layout?: ('grid' | 'carousel') | null;
   /**
@@ -725,7 +725,7 @@ export interface ProcessStepsBlock {
      */
     body: string;
     /**
-     * Optional short icon keyword. Leave blank unless a developer has given you one.
+     * Leave this blank. There is no icon set behind it yet, so whatever you type is printed on the page as small text (ROADMAP INERT-2).
      */
     icon?: string | null;
     id?: string | null;
@@ -789,7 +789,7 @@ export interface ComparisonTableBlock {
      */
     dimension: string;
     /**
-     * One answer per option, in the same order as the options above. Add exactly as many as there are options or the row will not render.
+     * One answer per option, in the same order as the options above. Nothing checks the count, so a row with too few or too many answers renders a misaligned table.
      */
     cells: {
       /**
@@ -861,7 +861,7 @@ export interface FAQBlock {
    */
   heading?: string | null;
   /**
-   * At least two. Write the question the way a prospect would actually ask it; search engines read these and can show them directly in results.
+   * At least two. Write the question the way a prospect would actually ask it, so the answer reads as an answer on the page.
    */
   items: {
     /**
@@ -941,7 +941,7 @@ export interface MetricDisplayBlock {
    */
   context?: string | null;
   /**
-   * The colour of the band this number sits in. Alternate it from the section above.
+   * The color of the band this number sits in. Alternate it from the section above.
    */
   background?: ('accent' | 'inverse') | null;
   id?: string | null;
@@ -974,7 +974,7 @@ export interface LogoBarBlock {
       }[]
     | null;
   /**
-   * Grey keeps a wall of mismatched brand colours calm and is the usual choice. Full colour suits a short row of two or three.
+   * Gray keeps a wall of mismatched brand colors calm and is the usual choice. Full color suits a short row of two or three.
    */
   treatment?: ('grayscale-on-color-hover' | 'color') | null;
   id?: string | null;
@@ -995,7 +995,7 @@ export interface FeaturedTestimonialsBlock {
    */
   testimonials: (number | Testimonial)[];
   /**
-   * Rotates the quotes without the reader clicking. Leave it off unless the section is purely decorative, since moving text is hard to read.
+   * Not wired up: the carousel has not shipped, so the quotes render as a static set whichever way this is left (ROADMAP INERT-2).
    */
   autoplay?: boolean | null;
   id?: string | null;
@@ -1155,7 +1155,7 @@ export interface CaseStudy {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this case study's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this case study's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -1164,7 +1164,7 @@ export interface CaseStudy {
     ogImage?: (number | null) | Media;
   };
   /**
-   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   * Orders the case study index, newest first. It is not shown on the study. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
   updatedAt: string;
@@ -1216,7 +1216,7 @@ export interface Industry {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this industry's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this industry's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -1247,7 +1247,7 @@ export interface Service {
    */
   pillar: number | ServicePillar;
   /**
-   * Optional short icon keyword used by service cards. Leave blank unless a developer has given you one.
+   * Leave this blank. There is no icon set behind it yet, so whatever you type is printed on the card as text (ROADMAP INERT-2).
    */
   icon?: string | null;
   /**
@@ -1263,7 +1263,7 @@ export interface Service {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this service's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this service's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -1272,11 +1272,11 @@ export interface Service {
     ogImage?: (number | null) | Media;
   };
   /**
-   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   * Lowest number first in a service list. Give every record a number: the sequence of records without one is not defined.
    */
   order?: number | null;
   /**
-   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   * Scheduling only. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
   updatedAt: string;
@@ -1322,7 +1322,7 @@ export interface ServicePillar {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this pillar's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this pillar's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -1331,7 +1331,7 @@ export interface ServicePillar {
     ogImage?: (number | null) | Media;
   };
   /**
-   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   * Lowest number first in the pillar cards. Give every record a number: the sequence of records without one is not defined.
    */
   order?: number | null;
   updatedAt: string;
@@ -1348,7 +1348,7 @@ export interface TestimonialBlock {
    */
   testimonial: number | Testimonial;
   /**
-   * The photo comes from the testimonial itself, so the two photo layouts fall back to centred when that person has no photo on file.
+   * The photo comes from the testimonial itself, so the two photo layouts simply omit it when that person has no photo on file; the quote stays left-aligned.
    */
   layout?: ('centered' | 'with-photo-left' | 'with-photo-right') | null;
   id?: string | null;
@@ -1379,7 +1379,7 @@ export interface ClientLogoGridBlock {
     id?: string | null;
   }[];
   /**
-   * How many fit across on a wide screen. Fewer columns means bigger logos. Phones always stack.
+   * How many fit across on a wide screen. Fewer columns means bigger logos. Phones show two or three across, never one.
    */
   columns?: ('3' | '4' | '6') | null;
   id?: string | null;
@@ -1392,7 +1392,7 @@ export interface ClientLogoGridBlock {
  */
 export interface CtaSectionBlock {
   /**
-   * Centred stacks the text and buttons in the middle. Split puts the text left and the buttons right. Inverse reverses the colours to make it the loudest thing on the page.
+   * Centered centers the text and buttons. Split and inverse both left-align them; inverse also reverses the colors to make the section the loudest thing on the page.
    */
   variant: 'centered' | 'split' | 'inverse';
   /**
@@ -1455,7 +1455,7 @@ export interface NewsletterCtaBlock {
    */
   body?: string | null;
   /**
-   * Only needed to use a different form here than the site-wide newsletter one. Leave it blank and the standard newsletter form is used.
+   * This block does not collect anything yet: it draws a disabled form and prints a note about production either way, so publishing it puts developer text on the page. Use a HubSpot form block instead (ROADMAP INERT-2).
    */
   formId?: string | null;
   id?: string | null;
@@ -1502,7 +1502,7 @@ export interface ContactCtaBlock {
     url?: string | null;
   };
   /**
-   * Optional. Paste a HubSpot meetings address (https://meetings.hubspot.com/name) to embed that person's live calendar under the buttons.
+   * Optional HubSpot meetings address (https://meetings.hubspot.com/name). It appears in a panel beside the text, and the live calendar is not embedded yet: the panel shows the address (ROADMAP INERT-2).
    */
   meetingUrl?: string | null;
   id?: string | null;
@@ -1696,7 +1696,7 @@ export interface Post {
    */
   categories?: (number | Category)[] | null;
   /**
-   * Up to three other posts to offer at the end of this one. Leave empty to show the newest instead.
+   * Not wired up: no route reads this yet, so picks here change nothing on the published post (ROADMAP INERT-2).
    */
   relatedPosts?: (number | Post)[] | null;
   /**
@@ -1712,7 +1712,7 @@ export interface Post {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this post's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this post's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -1721,7 +1721,7 @@ export interface Post {
     ogImage?: (number | null) | Media;
   };
   /**
-   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   * Orders the insights index, newest first, and is the date shown on the post itself. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
   updatedAt: string;
@@ -1751,7 +1751,7 @@ export interface TeamMember {
    */
   role?: string | null;
   /**
-   * Square or close to it. Cropped to a circle on the team cards.
+   * Landscape reads best: the cards crop it to 4:3 and the photo fills the top of the card. The compact team layout crops the same file to a circle instead.
    */
   photo: number | Media;
   /**
@@ -1819,7 +1819,7 @@ export interface TeamMember {
    */
   isLeadership?: boolean | null;
   /**
-   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   * Lowest number first in the team grid, after the leadership members. Give every record a number: the sequence of records without one is not defined.
    */
   order?: number | null;
   /**
@@ -1840,7 +1840,7 @@ export interface TeamMember {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this profile's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this profile's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -1862,7 +1862,7 @@ export interface RelatedPostsBlock {
    */
   heading?: string | null;
   /**
-   * Pick the posts to offer at the end of the page. This block does not fill itself in: leave it empty and the section has nothing to show.
+   * Pick the posts to offer at the end of the page. This block does not fill itself in, and left empty it prints a developer note on the published page, so either pick posts or remove the block (ROADMAP UI-2 leftover).
    */
   manualItems?: (number | Post)[] | null;
   /**
@@ -1952,7 +1952,7 @@ export interface Location {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this location's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this location's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -2056,7 +2056,7 @@ export interface Workshop {
    */
   testimonial?: (number | null) | Testimonial;
   /**
-   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   * Lowest number first in the workshop list. Give every record a number: the sequence of records without one is not defined.
    */
   order?: number | null;
   /**
@@ -2068,7 +2068,7 @@ export interface Workshop {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this workshop's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this workshop's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -2077,7 +2077,7 @@ export interface Workshop {
     ogImage?: (number | null) | Media;
   };
   /**
-   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   * Scheduling only. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
   updatedAt: string;
@@ -2131,7 +2131,7 @@ export interface VideoEmbedBlock {
    */
   eyebrow?: string | null;
   /**
-   * Optional still shown before the video plays. Leave it blank to use the host's own thumbnail.
+   * Leave this blank. Filling it in replaces the player with a still image and a Play badge that cannot be clicked, so the video becomes unwatchable (ROADMAP INERT-2).
    */
   thumbnail?: (number | null) | Media;
   id?: string | null;
@@ -2166,7 +2166,7 @@ export interface MissionVisionValuesBlock {
     id?: string | null;
   }[];
   /**
-   * A grid shows everything at once and is the safe choice. Tabs hide all but one at a time. Stacked runs them full width down the page.
+   * Grid shows the values two across; stacked runs them full width down the page. "Tabs" is not built and renders exactly like the grid (ROADMAP INERT-2).
    */
   layout?: ('tabs' | 'grid' | 'stacked') | null;
   id?: string | null;
@@ -2210,7 +2210,7 @@ export interface TabsBlock {
    */
   heading?: string | null;
   /**
-   * Two to six tabs. Only one is visible at a time, so do not put anything essential in the ones after the first.
+   * Two to six sections with jump links above them. They are NOT tabs today: every section renders stacked down the page and the links scroll to one (ROADMAP INERT-2).
    */
   tabs: {
     /**
@@ -2324,7 +2324,7 @@ export interface HubspotFormBlock {
    */
   formId: string;
   /**
-   * Where to send someone after they submit, e.g. "/thank-you". Leave blank to keep them on this page with the form's own confirmation message.
+   * Not wired up: nothing reads this yet, so a path typed here changes nothing. Set the redirect on the form in HubSpot instead (ROADMAP INERT-2).
    */
   submitRedirect?: string | null;
   id?: string | null;
@@ -2337,7 +2337,7 @@ export interface HubspotFormBlock {
  */
 export interface HubspotMeetingsBlock {
   /**
-   * The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. Embeds that person's live calendar.
+   * The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. The live calendar is not embedded yet: the block draws a placeholder box showing this address (ROADMAP INERT-2).
    */
   meetingUrl: string;
   /**
@@ -2473,7 +2473,7 @@ export interface Partner {
    */
   slug: string;
   /**
-   * One or two sentences on what we do together. Shown on the partners index card and used as the search result summary when the SEO section below is left blank.
+   * One or two sentences on what we do together, shown on the partners index card. It does not reach search results: fill in the summary below for that.
    */
   summary?: string | null;
   /**
@@ -2537,11 +2537,11 @@ export interface Partner {
       )[]
     | null;
   /**
-   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   * Lowest number first in the partner list. Partners without a number come after the numbered ones, in alphabetical order.
    */
   order?: number | null;
   /**
-   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   * Scheduling only. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
   /**
@@ -2553,7 +2553,7 @@ export interface Partner {
      */
     metaTitle?: string | null;
     /**
-     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this partner's own summary, then the company tagline.
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this partner's own summary, then the company tagline.
      */
     metaDescription?: string | null;
     /**
@@ -4198,7 +4198,7 @@ export interface CollectionsWidget {
  */
 export interface CalloutBlock {
   /**
-   * Sets the colour and the icon. Warning is the loudest, so save it for something a reader would regret missing.
+   * Sets the color of the panel. Warning is the loudest, so save it for something a reader would regret missing.
    */
   tone: 'info' | 'tip' | 'warning' | 'note';
   /**
@@ -4304,7 +4304,7 @@ export interface InlineCtaBlock {
    */
   url: string;
   /**
-   * How the button is drawn. "Link" is the quietest and suits a button set inside a paragraph.
+   * How the link is drawn. All four are underlined: primary is bold and accent-colored, secondary is muted, and ghost and link are plain body text.
    */
   variant?: ('primary' | 'secondary' | 'ghost' | 'link') | null;
   id?: string | null;

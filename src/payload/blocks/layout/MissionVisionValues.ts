@@ -65,7 +65,7 @@ export const MissionVisionValues: Block = {
       ],
       admin: {
         description:
-          'A grid shows everything at once and is the safe choice. Tabs hide all but one at a time. Stacked runs them full width down the page.',
+          'Grid shows the values two across; stacked runs them full width down the page. "Tabs" is not built and renders exactly like the grid (ROADMAP INERT-2).',
       },
     },
   ],

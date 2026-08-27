@@ -511,8 +511,8 @@ mechanically over every collection, global and block:
 1. **No rendered label may be machine text.** Payload title-cases the field
    name when no `label` is declared, which turns `cta` into "Cta", `ogImage`
    into "Og Image" and `url` into "Url". The check runs on the effective label,
-   so hand-typing `label: 'Seo'` fails the same way. Write `label: 'Search
-result and link preview'` and move on. Correctly-cased acronyms pass:
+   so hand-typing `label: 'Seo'` fails the same way. Write
+   `label: 'Search result and link preview'` and move on. Correctly-cased acronyms pass:
    `CTA`, `SEO`, `URL`, `ID`, `HubSpot`, `LinkedIn`.
 2. **Non-obvious fields carry `admin.description`.** A field is non-obvious
    when it declares `admin.condition` (it appears and disappears, so say when),

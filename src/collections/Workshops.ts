@@ -9,6 +9,7 @@ import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { workshopSkeleton } from '../payload/seed/skeletons/workshop'
 import { seoField } from '../payload/fields/seo'
+import { orderField, publishedAtField } from '../payload/fields/publishing'
 
 export const Workshops: CollectionConfig = {
   slug: 'workshops',
@@ -83,25 +84,8 @@ export const Workshops: CollectionConfig = {
           'Pick a testimonial already in the panel. Add it to Testimonials first if it is not there.',
       },
     },
-    {
-      name: 'order',
-      type: 'number',
-      label: 'Sort position',
-      admin: {
-        description:
-          'Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.',
-      },
-    },
+    orderField({ what: 'the workshop list' }),
     seoField({ noun: 'workshop' }),
-    {
-      name: 'publishedAt',
-      type: 'date',
-      label: 'Publish date',
-      admin: {
-        position: 'sidebar',
-        description:
-          'The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.',
-      },
-    },
+    publishedAtField(),
   ],
 }

@@ -83,7 +83,7 @@ before we spend more effort loading content by hand.
   `SiteSettings` globals settled — site chrome is code-owned now (ADR 0010). FR-008 is recorded **NOT MET**;
   its one real finding is **INERT-1** below.
   **US2 landed in PR #118** (block picker), **US3 in PR #120** (media thumbnails, `_status` columns),
-  **US4 in PR #122**: every field an editor can see now carries a written label and, where its effect is not
+  **US4 in PR #123**: every field an editor can see now carries a written label and, where its effect is not
   visible, help text; variant-only fields hide; collapsed block rows name themselves by their content.
   INERT-1 is closed by it (see below).
   **Still open:** US5 slug-from-title with collision handling, US6 collection grouping. Tasks T052–T065.
@@ -115,14 +115,30 @@ before we spend more effort loading content by hand.
   changes; its help text no longer repeats the claim. **Fix:** either give it a resolver (it needs the
   containing document's categories, which `resolveLayout`'s block-only signature does not carry today) or drop
   the placeholder branch and render nothing.
-- **INERT-2 — `logo-bar.source: 'from-homepage'` is an inert OPTION.** Found by the spec 011 US4 variant audit
-  (2026-08-27). Nothing reads the value; `src/components/sections/LogoBar.tsx:27` maps it to an empty list, so a
-  block set to it publishes an empty band. Same defect US1 removed from `stats-bar`, missed because that audit
-  enumerated fields, not option values. Left in place because the value lives in eight Postgres enum types and
-  withdrawing it is a migration, which does not belong in an admin-only change; the option is labelled "(not
-  built yet)" and the help text says so meanwhile. **Fix:** drop the option and the `source` field with it (it
-  then has one value), in a migration-bearing change. **Worth a sweep**: US1 audited fields, so any other
-  `select` option that no renderer branches on is still unfound.
+- **INERT-2 — controls whose renderer does nothing with them.** Opened by the spec 011 US4 variant audit
+  (2026-08-27) and widened by the PR #123 review, which read every new description against its renderer. US1
+  audited whether a _field_ had a consumer; none of these fails that test, because the consumer exists and
+  ignores the value. The help text on each now says so rather than describing behaviour that was never built:
+  - `logo-bar.source: 'from-homepage'` — an inert **option**: `LogoBar.tsx:27` maps it to an empty list, so the
+    block publishes an empty band. Same defect US1 removed from `stats-bar`. The value lives in eight Postgres
+    enum types, so withdrawing it is a migration. **Fix:** drop the option and the `source` field with it.
+  - `mission-vision-values.layout: 'tabs'` — the same shape: `MissionVisionValues.tsx:25` branches only on
+    `stacked`, so "tabs" renders exactly like "grid".
+  - `tabs` (the block) — jump links over a stack; no panel is ever hidden. Either build the tabs or rename the
+    block to what it draws.
+  - `video-embed.thumbnail` — **worse than inert**: `VideoEmbed.tsx:34` swaps the `<iframe>` for a still and a
+    non-interactive "▶ Play" span, so filling it in makes the video unplayable.
+  - `newsletter-cta` — the whole block is a placeholder: a disabled input and a caption naming
+    `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID`, an env var nothing in `src/` reads. Publishing it puts developer
+    text on the page (the UI-2 class again).
+  - `hubspot-form.submitRedirect`, `featured-testimonials.autoplay`, `posts.relatedPosts`, `media.caption`,
+    `services.icon`, `process-steps.steps.icon` — declared, never read.
+  - `hubspot-meetings` and `contact-cta.meetingUrl` — both draw a bordered placeholder printing the raw URL; no
+    Meetings embed script exists in the repo.
+
+  **Worth a sweep**: this list came from auditing the ~120 descriptions one PR happened to touch. Nothing has
+  checked the rest of the config the same way.
+
 - **IND-1 / SVC-2 leftover — two blocks link to routes that do not exist.** Also found 2026-08-27.
   `industry-grid` links each card to `/industries/<slug>` and `locations-list` to `/locations/<slug>`
   (`IndustryGrid.tsx:30`, `LocationsList.tsx:37`); neither route is built, so both are 404s wherever those
@@ -284,7 +300,7 @@ Real work, none of it blocking a launch. Ordered by expected return.
   - `services` — `seo.*` (by **SVC-2**)
 
   They were left in place rather than deleted: they are metadata sitting _ahead of_ routes the roadmap intends
-  to build, so deleting them today means re-adding them later. **Closed 2026-08-27 by spec 011 US4 (PR #122)**:
+  to build, so deleting them today means re-adding them later. **Closed 2026-08-27 by spec 011 US4 (PR #123)**:
   all 24 are `admin.hidden`, so the columns survive for SVC-2 and IND-1 to consume while the controls are gone
   from the panel. `admin.hidden` does not touch REST, so `tools/payload-seed` and `docs/content-drafts/*.json`
   still write them. Un-hide each group in the same change that ships the route reading it.

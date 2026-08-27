@@ -16,7 +16,7 @@ export const Callout: Block = {
       defaultValue: 'info',
       admin: {
         description:
-          'Sets the colour and the icon. Warning is the loudest, so save it for something a reader would regret missing.',
+          'Sets the color of the panel. Warning is the loudest, so save it for something a reader would regret missing.',
       },
       options: [
         { label: 'Info', value: 'info' },

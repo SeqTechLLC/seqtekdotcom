@@ -20,7 +20,7 @@ export const HubspotMeetings: Block = {
       validate: httpsUrlValidate,
       admin: {
         description:
-          "The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. Embeds that person's live calendar.",
+          'The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. The live calendar is not embedded yet: the block draws a placeholder box showing this address (ROADMAP INERT-2).',
       },
     },
     headingField(),

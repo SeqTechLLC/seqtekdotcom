@@ -43,7 +43,7 @@ export const ContactCta: Block = {
       validate: httpsUrlValidate,
       admin: {
         description:
-          "Optional. Paste a HubSpot meetings address (https://meetings.hubspot.com/name) to embed that person's live calendar under the buttons.",
+          'Optional HubSpot meetings address (https://meetings.hubspot.com/name). It appears in a panel beside the text, and the live calendar is not embedded yet: the panel shows the address (ROADMAP INERT-2).',
       },
     },
   ],

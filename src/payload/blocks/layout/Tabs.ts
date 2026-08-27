@@ -22,7 +22,7 @@ export const Tabs: Block = {
       maxRows: 6,
       admin: {
         description:
-          'Two to six tabs. Only one is visible at a time, so do not put anything essential in the ones after the first.',
+          'Two to six sections with jump links above them. They are NOT tabs today: every section renders stacked down the page and the links scroll to one (ROADMAP INERT-2).',
       },
       fields: [
         {
