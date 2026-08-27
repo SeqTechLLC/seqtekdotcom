@@ -110,10 +110,19 @@ on:
       - README.md
       - CLAUDE.md
       - LICENSE
-  # THE production trigger — the only one. Release-Please creates the release as
-  # a DRAFT, so this fires when a person opens that draft and clicks Publish.
-  # That the publisher is a human is what makes the event exist: GitHub creates
-  # no workflow run for a release published by the default GITHUB_TOKEN.
+  # THE production trigger — the only one. You create the release yourself,
+  # naming the build to promote:
+  #
+  #     gh release create v0.3.5 --title "v0.3.5" --generate-notes --target <sha>
+  #
+  # The version is resolved against ECR, NOT against `main`. `main` may be
+  # several builds ahead of whatever production runs; that is the normal state
+  # and neither stream constrains the other.
+  #
+  # Release-Please's own releases deliberately CANNOT reach here: it publishes
+  # as the default GITHUB_TOKEN, and GitHub creates no workflow run from events
+  # raised by that token. It owns `main`/UAT versioning; production promotion
+  # is this, and only this.
   release:
     types: [published]
   workflow_dispatch:
@@ -125,6 +134,16 @@ on:
         options:
           - preview
           - prod
+      target:
+        description: >-
+          PROD ONLY. What to promote. Accepts a version (`0.3.5`, `v0.3.5`), a
+          commit SHA (full or short), or a branch such as `main`. Whatever you
+          give it is resolved to ONE existing ECR image, and production runs
+          that exact image. Nothing is built, UAT is untouched, and no commit is
+          made. Ambiguous or unresolvable selectors stop with the candidates
+          listed. Leave blank when promoting from a published release.
+        required: false
+        type: string
       stack-filter:
         description: >-
           CDK stack glob, WITHOUT the Seqtek<Env> prefix (it is prepended from
@@ -137,7 +156,10 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  # `write` so a promotion started from the Actions UI can record itself as a
+  # GitHub Release. A release created by this token raises no workflow run, so
+  # it cannot re-trigger this workflow.
+  contents: write
   deployments: write # so the GitHub Environment records the deployment
 
 env:
@@ -269,6 +291,9 @@ jobs:
           # so it works on both the `release` event and a `workflow_dispatch`
           # run against a tag. Empty on an ordinary merge to `main`; that is
           # correct — an unreleased build has no release version.
+          # A published release carries its version in the ref. A promotion
+          # started from the Actions UI passes a selector instead, resolved in
+          # the "Resolve the promotion target" step below.
           VERSION_TAG=""
           case "$GITHUB_REF" in
             refs/tags/v*) VERSION_TAG="${GITHUB_REF#refs/tags/}" ;;
@@ -402,65 +427,157 @@ jobs:
       # If it is missing, stop. A tag created against a commit that never built
       # — or one whose build is still running — must not silently become a
       # production deploy of something else.
-      - name: Resolve the release to its built image
+      - name: Resolve the promotion target
         id: resolve
         if: ${{ env.IS_RELEASE == 'true' }}
         env:
           VERSION_TAG: ${{ steps.img.outputs.version-tag }}
+          TARGET: ${{ github.event.inputs.target }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          # A release names a build that already exists. `v0.4.2` promotes the
-          # image tagged `0.4.2` — the one a `main` build produced and UAT has
-          # been running. The `v` is the only difference between "built" and
-          # "released", and it is added to that same digest below.
+
+          # ONE SELECTOR, ONE IMAGE. Whatever you name is resolved to exactly one
+          # image that ALREADY EXISTS in ECR, and production runs that digest.
+          # Nothing is built, UAT is not touched, and no commit is made.
           #
-          # Nothing is rebuilt and nothing is guessed: if no image carries that
-          # version, the deploy fails.
-          VERSION="${VERSION_TAG#v}"
-          if [ -z "$VERSION" ]; then
-            echo "::error::This release has no version tag; cannot resolve an image."
+          #   0.3.5 / v0.3.5   version tag on the image
+          #   4af4a49          short commit SHA
+          #   4af4a49d8c...    full commit SHA
+          #   main             a branch — its current commit
+          #
+          # A published release has no input; its ref supplies the version.
+          SELECTOR="${TARGET:-}"
+          [ -z "$SELECTOR" ] && SELECTOR="${VERSION_TAG:-}"
+          if [ -z "$SELECTOR" ]; then
+            echo "::error::Nothing to promote: no target given and no release tag."
             exit 1
           fi
 
+          # Work out what kind of thing it is, and what ECR tag to look up.
+          if printf '%s' "$SELECTOR" | grep -qE '^v?[0-9]+\.[0-9]+\.[0-9]+'; then
+            KIND="version"
+            LOOKUP="${SELECTOR#v}"
+          elif printf '%s' "$SELECTOR" | grep -qE '^[0-9a-f]{7,40}$'; then
+            KIND="commit"
+            # Normalise through git so a full or partial SHA both land on the
+            # 7-character tag the build actually pushed.
+            if FULL=$(git rev-parse --verify --quiet "${SELECTOR}^{commit}"); then
+              LOOKUP="${FULL:0:7}"
+            else
+              echo "::error::Commit ${SELECTOR} is not in this checkout."
+              echo "::error::It may be older than the fetch depth, or not on this branch."
+              exit 1
+            fi
+          else
+            KIND="ref"
+            # `origin/` first: the remote branch is authoritative for "what is
+            # on main right now", and a local branch of the same name can lag.
+            if FULL=$(git rev-parse --verify --quiet "origin/${SELECTOR}^{commit}"); then
+              LOOKUP="${FULL:0:7}"
+            elif FULL=$(git rev-parse --verify --quiet "${SELECTOR}^{commit}"); then
+              LOOKUP="${FULL:0:7}"
+            else
+              echo "::error::'${SELECTOR}' is not a version, a commit, or a known branch."
+              exit 1
+            fi
+          fi
+          echo "Selector '${SELECTOR}' (${KIND}) -> ECR tag ${LOOKUP}"
+
+          # --- That tag must name exactly one image -------------------------
           DIGEST=$(aws ecr describe-images \
             --repository-name "$ECR_REPOSITORY" \
-            --image-ids imageTag="$VERSION" \
+            --image-ids imageTag="$LOOKUP" \
             --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
           if [ -z "$DIGEST" ] || [ "$DIGEST" = "None" ]; then
-            echo "::error::image for version ${VERSION} not found in ECR"
-            echo "::error::A release promotes a build that already exists. Either that"
-            echo "::error::build has not finished, or it failed, or ${VERSION} was never built."
+            echo "::error::No image tagged '${LOOKUP}' in ${ECR_REPOSITORY}."
+            if [ "$KIND" = "version" ]; then
+              echo "::error::A promotion names a build that already exists. Either that"
+              echo "::error::build has not finished, it failed, or ${LOOKUP} was never built."
+            else
+              echo "::error::Commit ${LOOKUP} has no image — it may not have been merged"
+              echo "::error::to main, or its build has not finished."
+            fi
+            echo "::error::Nothing was rebuilt and nothing was promoted."
             exit 1
           fi
 
-          # Deploy by the COMMIT tag, not the version tag. Both name this same
-          # digest, but the SHA is the identity that cannot be reassigned.
-          PROMOTE_TAG=$(aws ecr describe-images \
+          # --- and carry exactly one commit identity ------------------------
+          ALL_TAGS=$(aws ecr describe-images \
             --repository-name "$ECR_REPOSITORY" \
             --image-ids imageDigest="$DIGEST" \
-            --query 'imageDetails[0].imageTags' --output json \
-            | python3 -c 'import json,sys,re; print(next((t for t in json.load(sys.stdin) if re.fullmatch(r"[0-9a-f]{7}", t)), ""))')
-          if [ -z "$PROMOTE_TAG" ]; then
-            echo "::error::No commit tag on the digest for version ${VERSION}."
-            echo "::error::Expected a 7-character SHA tag alongside it."
+            --query 'imageDetails[0].imageTags' --output json)
+          COMMIT_TAGS=$(printf '%s' "$ALL_TAGS" \
+            | python3 -c 'import json,sys,re; print("\n".join(t for t in json.load(sys.stdin) if re.fullmatch(r"[0-9a-f]{7}", t)))')
+          COUNT=$(printf '%s' "$COMMIT_TAGS" | grep -c . || true)
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::error::The image for '${SELECTOR}' carries no commit tag."
+            echo "::error::Tags on that digest: ${ALL_TAGS}"
+            echo "::error::Without one there is no immutable identity to deploy."
             exit 1
           fi
+          if [ "$COUNT" -gt 1 ]; then
+            # An ECR tag names one manifest at a time, so this should not happen.
+            # If it does, promoting the wrong image on a guess is worse than
+            # stopping — show the candidates and let a person choose.
+            echo "::error::'${SELECTOR}' resolves to more than one commit. Candidates:"
+            printf '%s\n' "$COMMIT_TAGS" | while read -r c; do
+              [ -z "$c" ] && continue
+              INFO=$(git log -1 --format='%ad  %s' --date=short "$c" 2>/dev/null || echo '(commit not fetched)')
+              echo "::error::  ${c}  ${INFO}"
+            done
+            echo "::error::Nothing promoted. Re-run naming one of them."
+            exit 1
+          fi
+          PROMOTE_TAG=$(printf '%s' "$COMMIT_TAGS" | head -n 1)
 
-          echo "Release ${VERSION_TAG} -> version ${VERSION} -> commit ${PROMOTE_TAG}"
+          # The version this image was built as — used to name the release.
+          # Older images predate version tagging and simply have none.
+          IMAGE_VERSION=$(printf '%s' "$ALL_TAGS" \
+            | python3 -c 'import json,sys,re; print(next((t for t in json.load(sys.stdin) if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", t)), ""))')
+          [ -n "$IMAGE_VERSION" ] && VERSION_TAG="v${IMAGE_VERSION}"
+
+          echo "Promoting ${SELECTOR} -> version ${IMAGE_VERSION:-<none>} -> commit ${PROMOTE_TAG}"
+          echo "  digest ${DIGEST}"
           echo "promote-tag=${PROMOTE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "release-tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
-          # Add the release tag to that SAME digest, so one image carries the
-          # build number, the commit, and the release. put-image attaches a tag
-          # to the existing manifest — no pull, no push, no rebuild.
-          MANIFEST=$(aws ecr batch-get-image \
-            --repository-name "$ECR_REPOSITORY" \
-            --image-ids imageDigest="$DIGEST" \
-            --query 'images[0].imageManifest' --output text)
-          if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
-            --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
-            echo "Tagged ${VERSION} as ${VERSION_TAG} in ECR."
+          # --- Label the digest, and record the promotion -------------------
+          # put-image attaches a tag to the existing manifest: no pull, no push,
+          # no rebuild. One image, named by build, commit and release.
+          if [ -n "${VERSION_TAG:-}" ]; then
+            MANIFEST=$(aws ecr batch-get-image \
+              --repository-name "$ECR_REPOSITORY" \
+              --image-ids imageDigest="$DIGEST" \
+              --query 'images[0].imageManifest' --output text)
+            if aws ecr put-image --repository-name "$ECR_REPOSITORY" \
+              --image-tag "$VERSION_TAG" --image-manifest "$MANIFEST" >/dev/null 2>&1; then
+              echo "Tagged the digest ${VERSION_TAG} in ECR."
+            else
+              echo "::notice::${VERSION_TAG} already tags this digest."
+            fi
+
+            # A promotion from the Actions UI has no GitHub Release yet. Create
+            # one as the record, targeting the commit actually promoted (the
+            # full SHA, which --target requires). Created by GITHUB_TOKEN, so it
+            # raises no workflow run and cannot re-trigger this deploy.
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+              if gh release view "$VERSION_TAG" >/dev/null 2>&1; then
+                echo "::notice::Release ${VERSION_TAG} already exists."
+              else
+                FULL_SHA=$(git rev-parse --verify --quiet "${PROMOTE_TAG}^{commit}" || true)
+                if [ -n "$FULL_SHA" ]; then
+                  gh release create "$VERSION_TAG" --title "$VERSION_TAG" \
+                    --generate-notes --target "$FULL_SHA" \
+                    && echo "Recorded release ${VERSION_TAG} at ${FULL_SHA}."
+                else
+                  echo "::warning::Could not resolve ${PROMOTE_TAG}; no release recorded."
+                fi
+              fi
+            fi
           else
-            echo "::notice::${VERSION_TAG} already tags this digest."
+            echo "::warning::This image has no version tag, so no release was recorded."
           fi
 
       - name: Resolve the tested image from the preview lane (release path only)

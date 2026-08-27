@@ -6,25 +6,24 @@ name: Release Please
 # event is what the future Phase 6 `deploy-prod.yml` listens to.
 #
 # Versioning policy:
-# The release is created as a DRAFT. Merging the release PR cuts the tag and
-# prepares the release; NOTHING deploys. Publishing that draft is the single
-# act that promotes production — see `deploy.yml`'s `release:` trigger.
+# THIS WORKFLOW OWNS `main`/UAT VERSIONING ONLY. It never promotes production.
 #
-# YOU CHOOSE THE VERSION; THIS ACTION DOES THE PAPERWORK. Every `main` build
-# is already tagged with its own version (0.4.0, 0.4.1, 0.4.2 ... — see
-# deploy.yml), and a release must name a build that EXISTS in ECR, because
-# that is how the deploy locates the image to promote. So the release version
-# is not something to be computed after the fact; it is the build you tested.
+# Its releases are published by the default GITHUB_TOKEN, and GitHub creates no
+# workflow run from events raised by that token — so a release cut here CANNOT
+# reach `deploy.yml`'s `release:` trigger. That is deliberate: production is
+# promoted by a release a PERSON creates, naming a build that already exists.
 #
-# Tell this action which one with a `Release-As:` footer:
+#     gh release create v0.3.5 --title "v0.3.5" --generate-notes --target <sha>
 #
-#     git commit --allow-empty -m "chore: release 0.4.2" -m "Release-As: 0.4.2"
+# `deploy.yml` strips the `v`, finds the ECR image tagged `0.3.5`, and promotes
+# that exact digest. It does not consult this workflow, so the two version
+# streams are free to differ — `main` may be several builds ahead of whatever
+# production is running, which is the normal state.
 #
-# It then produces the tag, CHANGELOG and release for exactly that version
-# instead of deriving one from commit types. Left to itself it would propose a
-# number based on `feat:`/`fix:` since the last release, which will not
-# generally match any build — and publishing that would fail resolution with
-# `image for version X not found in ECR`.
+# A `Release-As:` footer is still available when you want THIS workflow to cut
+# a specific number rather than derive one:
+#
+#     git commit --allow-empty -m "chore: release 0.3.5" -m "Release-As: 0.3.5"
 #
 # - Starts at `0.1.0`. Bumps to `1.0.0` at seqtek.com cutover via the same
 #   `Release-As: 1.0.0` footer.

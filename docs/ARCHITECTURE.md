@@ -774,18 +774,40 @@ notably UAT, which normally runs ahead of any release. It deliberately does not
 fall back to `version`: claiming a release a lane never received is worse than
 reporting none.
 
-**You choose which build to release.** Release-Please does the paperwork — tag,
-CHANGELOG, GitHub Release — but the version must name a build that exists,
-because that is how the deploy finds the image. Tell it which one with a
-`Release-As:` footer:
+**The two version streams are independent.** Release-Please owns `main`/UAT
+versioning and the CHANGELOG; it never promotes production. Its releases are
+published by the default `GITHUB_TOKEN`, and GitHub creates no workflow run
+from events raised by that token — so a release it cuts cannot reach the
+production trigger.
+
+Production is promoted from the **Actions UI** — Deploy → Run workflow →
+`env: prod`, and a `target` naming what to promote. The target accepts any of:
+
+| you type            | resolved as                        |
+| ------------------- | ---------------------------------- |
+| `0.3.5` or `v0.3.5` | the image tagged with that version |
+| `4af4a49`           | short commit SHA                   |
+| `4af4a492f751…`     | full commit SHA                    |
+| `main`              | that branch's current commit       |
+
+All four land on **one existing ECR image**, and production runs that exact
+digest. Nothing is built, UAT is untouched, and no commit is made. The workflow
+also adds the `vX.Y.Z` tag to that digest and records a GitHub Release as the
+promotion's receipt.
+
+If a selector does not resolve to exactly one image, the run **stops and shows
+the candidates** rather than guessing:
 
 ```
-git commit --allow-empty -m "chore: release 0.4.2" -m "Release-As: 0.4.2"
+image for version 0.4.0 not found in ECR
 ```
 
-Left to itself it proposes a number derived from `feat:`/`fix:` since the last
-release, which will not generally match any build — publishing that would fail
-resolution with `image for version X not found in ECR`.
+Publishing a GitHub Release yourself is the other route to the same job — the
+release's tag supplies the version, and no `target` is needed.
+
+The version is resolved against ECR, not against `main`. So `main` may already
+be at `0.3.9` while you promote `0.3.5` — that is the normal state, not a
+conflict. Neither stream constrains the other.
 
 **The lanes are meant to drift.** UAT can be many builds ahead of production;
 that is the point. Each lane points at one immutable image, and every deploy
