@@ -1,3 +1,6 @@
+import { HubspotLeadForm } from '@/components/forms/HubspotLeadForm'
+import { type FormFieldConfig } from '@/lib/hubspot/fields'
+
 interface MediaLike {
   url?: string | null
   alt?: string | null
@@ -14,6 +17,34 @@ interface DownloadCardProps {
 const isFullMedia = (v: unknown): v is MediaLike =>
   typeof v === 'object' && v !== null && 'url' in (v as object)
 
+const GATE_FIELDS: FormFieldConfig[] = [
+  {
+    name: 'firstname',
+    label: 'First name',
+    type: 'text',
+    required: true,
+    autoComplete: 'given-name',
+  },
+  {
+    name: 'lastname',
+    label: 'Last name',
+    type: 'text',
+    required: true,
+    autoComplete: 'family-name',
+  },
+  { name: 'email', label: 'Email', type: 'email', required: true, autoComplete: 'email' },
+  { name: 'company', label: 'Company', type: 'text', autoComplete: 'organization' },
+]
+
+/**
+ * ROADMAP INERT-2 — this was a disabled input, a disabled button, "HubSpot
+ * form <id> loads in production", and `Asset: <fileUrl>` printed in the clear.
+ * The gated download was therefore neither gated nor a download: the form did
+ * nothing and the file was one copy-paste away.
+ *
+ * It now mounts the shared `HubspotLeadForm` and hands the asset over in the
+ * success panel, so `fileUrl` reaches the page only after a submit lands.
+ */
 export function DownloadCard({
   title,
   description,
@@ -36,25 +67,16 @@ export function DownloadCard({
           <p className="text-caption uppercase tracking-wide text-accent-strong">Free download</p>
           <h2 className="mt-2 text-h2 font-bold">{title}</h2>
           <p className="mt-3 text-body text-text-secondary">{description}</p>
-          <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row">
-            <input
-              type="email"
-              placeholder="you@company.com"
-              className="rounded-md border border-border-strong bg-surface px-4 py-3 text-body"
-              disabled
+          <div className="mt-6">
+            <HubspotLeadForm
+              formId={formId}
+              fields={GATE_FIELDS}
+              submitLabel="Get it"
+              successHeading="It's yours."
+              successBody="The download is ready below, and a copy is on its way by email."
+              successCta={{ href: fileUrl, label: 'Download now' }}
             />
-            <button
-              type="button"
-              className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
-              disabled
-            >
-              Get it
-            </button>
           </div>
-          <p className="mt-4 text-caption text-text-muted">
-            HubSpot form {formId} loads in production.
-          </p>
-          <p className="mt-1 text-caption text-text-muted">Asset: {fileUrl}</p>
         </div>
       </div>
     </section>

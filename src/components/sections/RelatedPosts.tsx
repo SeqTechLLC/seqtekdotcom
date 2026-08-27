@@ -17,18 +17,13 @@ const isDoc = (v: unknown): v is PostDoc =>
 
 export function RelatedPosts({ heading, manualItems, limit = 3 }: RelatedPostsProps) {
   const docs = (manualItems ?? []).filter(isDoc).slice(0, limit ?? 6)
-  if (docs.length === 0) {
-    return (
-      <section className="border-t border-border-subtle px-4 py-12 md:px-6 lg:px-8">
-        <div className="mx-auto max-w-container-lg">
-          <h2 className="text-h3 font-semibold">{heading ?? 'Related posts'}</h2>
-          <p className="mt-2 text-caption text-text-muted">
-            No manual items — falls back to category-derived list at render time.
-          </p>
-        </div>
-      </section>
-    )
-  }
+  // ROADMAP INERT-2 — an empty pick used to publish "No manual items — falls
+  // back to category-derived list at render time", promising a fallback that
+  // was never built: `resolveLayout` has no `related-posts` resolver, and
+  // writing one needs the containing document's categories, which its
+  // block-only signature does not carry. Until that lands, an empty block
+  // renders nothing, the same as every other collection-backed block.
+  if (docs.length === 0) return null
   return (
     <section className="border-t border-border-subtle px-4 py-12 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">

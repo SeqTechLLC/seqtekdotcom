@@ -678,11 +678,14 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           },
         },
         {
-          name: 'no-form-id',
+          // No supporting sentence — the heading has to carry the ask alone.
+          // (A variant with no form GUID would render nothing at all, by
+          // design: there is no way to subscribe without one.)
+          name: 'heading-only',
           data: {
             blockType: 'newsletter-cta',
             heading: 'Stay in the loop',
-            body: 'Falls back to the env-var form GUID at render time.',
+            formId: '00000000-aaaa-bbbb-cccc-dddddddddddd',
           },
         },
       ],
@@ -809,10 +812,14 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           },
         },
         {
-          name: 'fallback',
+          // Capped below the number of posts picked, and with the default
+          // heading. (A variant with nothing picked renders nothing at all, by
+          // design — the block does not fill itself in.)
+          name: 'capped',
           data: {
             blockType: 'related-posts',
-            heading: 'No manual items',
+            manualItems: supporting.postIds.slice(0, 3),
+            limit: 2,
           },
         },
       ],

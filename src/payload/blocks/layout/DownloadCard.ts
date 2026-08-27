@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 
 import { httpsUrlValidate, hubspotFormIdValidate } from '../../fields/url'
@@ -10,6 +12,14 @@ export const DownloadCard: Block = {
   interfaceName: 'DownloadCardBlock',
   labels: { singular: 'Download card', plural: 'Download cards' },
   admin: blockAdmin('specialty', 'download-card', 'Download card'),
+  custom: outputContract({
+    behavioural: {
+      formId: 'submit target — src/lib/hubspot/submit.ts',
+      // Deliberately absent from the initial paint: revealing it there is what
+      // made the gated asset ungated. It arrives in the form's success panel.
+      fileUrl: 'revealed in the success panel — HubspotLeadForm successCta',
+    },
+  }),
   fields: [
     {
       name: 'title',
@@ -49,7 +59,7 @@ export const DownloadCard: Block = {
       validate: hubspotFormIdValidate,
       admin: {
         description:
-          'The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. Nothing is gated yet: the block draws a disabled form and prints "HubSpot form <id> loads in production" on the page (ROADMAP INERT-2).',
+          'The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. Name, email and company go to that form, and the download appears once it is sent.',
       },
     },
     {
@@ -60,7 +70,7 @@ export const DownloadCard: Block = {
       validate: httpsUrlValidate,
       admin: {
         description:
-          'The full https:// address of the file. It is currently printed on the published page as "Asset: <address>", so anyone can take it without filling anything in. Do not put anything here you would not publish outright (ROADMAP INERT-2).',
+          'The full https:// address of the file. It appears only after the form is sent, so this is what the form is trading for. Anyone who fills the form in gets the link, so treat it as shareable rather than secret.',
       },
     },
   ],

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 
 import { headingField } from '../../fields/blockCopy'
@@ -14,6 +16,18 @@ export const LogoBar: Block = {
   interfaceName: 'LogoBarBlock',
   labels: { singular: 'Logo bar', plural: 'Logo bars' },
   admin: blockAdmin('social-proof', 'logo-bar', 'Logo bar'),
+  custom: outputContract({
+    inert: {
+      options: {
+        // `LogoBar.tsx:27` maps anything but `inline` to an empty list, so the
+        // block publishes an empty band. Same defect US1 removed from
+        // `stats-bar`; the value lives in eight Postgres enums, so withdrawing
+        // it is a migration.
+        source: ['from-homepage'],
+      },
+      why: 'homepage logo set was never wired — ROADMAP INERT-2',
+    },
+  }),
   fields: [
     headingField(),
     {

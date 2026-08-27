@@ -54,10 +54,14 @@ describe('<ContactCta /> scheduling panel (INERT-2)', () => {
 
   it('renders the panel as a second column when a meeting URL is set', () => {
     const url = 'https://meetings.hubspot.com/seqtek'
-    const { container, getByText } = render(<ContactCta {...base} meetingUrl={url} />)
+    const { container, getByRole } = render(<ContactCta {...base} meetingUrl={url} />)
     const grid = container.querySelector('div.grid')
     expect(grid?.className).toMatch(/grid-cols-2/)
     expect(grid?.children.length).toBe(2)
-    expect(getByText(url)).toBeTruthy()
+    // The panel books the meeting rather than printing the address at the
+    // reader: the URL belongs in the href, not in the copy.
+    const booking = getByRole('link', { name: 'See available times' })
+    expect(booking.getAttribute('href')).toBe(url)
+    expect(container.textContent).not.toContain(url)
   })
 })

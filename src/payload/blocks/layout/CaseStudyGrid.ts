@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 
 import { headingField } from '../../fields/blockCopy'
@@ -13,6 +15,13 @@ export const CaseStudyGrid: Block = {
   interfaceName: 'CaseStudyGridBlock',
   labels: { singular: 'Case study grid', plural: 'Case study grids' },
   admin: blockAdmin('content-collection', 'case-study-grid', 'Case study grid'),
+  custom: outputContract({
+    // `source`, `industry` and `service` pick the rows; `src/lib/resolveLayout.ts`
+    // reads them and fills `manualItems` before the block reaches a component
+    // (ADR 0009 keeps blocks pure and synchronous), so a component-level render
+    // cannot observe them.
+    resolvedUpstream: ['source', 'industry', 'service'],
+  }),
   fields: [
     headingField(),
     {

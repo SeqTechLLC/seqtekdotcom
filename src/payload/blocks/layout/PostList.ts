@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 
 import { headingField } from '../../fields/blockCopy'
@@ -15,6 +17,10 @@ export const PostList: Block = {
   interfaceName: 'PostListBlock',
   labels: { singular: 'Post list', plural: 'Post lists' },
   admin: blockAdmin('content-collection', 'post-list', 'Post list'),
+  custom: outputContract({
+    // Resolved by `src/lib/resolveLayout.ts` into `manualItems` before render.
+    resolvedUpstream: ['source', 'category'],
+  }),
   fields: [
     headingField(),
     {

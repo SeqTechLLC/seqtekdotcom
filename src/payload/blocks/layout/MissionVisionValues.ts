@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 
 // Per BLOCK_LIBRARY.md §5.6. Inline content (per-page authoring) is the
@@ -10,6 +12,14 @@ export const MissionVisionValues: Block = {
   interfaceName: 'MissionVisionValuesBlock',
   labels: { singular: 'Mission/Vision/Values', plural: 'Mission/Vision/Values blocks' },
   admin: blockAdmin('specialty', 'mission-vision-values', 'Mission/Vision/Values'),
+  custom: outputContract({
+    inert: {
+      // `MissionVisionValues.tsx:25` branches only on `stacked`, so "Tabs"
+      // renders exactly like "Grid".
+      options: { layout: ['tabs'] },
+      why: 'no tab treatment — ROADMAP INERT-2',
+    },
+  }),
   fields: [
     {
       name: 'mission',

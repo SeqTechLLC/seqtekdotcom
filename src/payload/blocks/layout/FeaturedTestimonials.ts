@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 import { headingField } from '../../fields/blockCopy'
 
@@ -11,6 +13,13 @@ export const FeaturedTestimonials: Block = {
   interfaceName: 'FeaturedTestimonialsBlock',
   labels: { singular: 'Featured testimonials', plural: 'Featured testimonials blocks' },
   admin: blockAdmin('social-proof', 'featured-testimonials', 'Featured testimonials'),
+  custom: outputContract({
+    inert: {
+      // Read by nothing: the block renders a static grid, not a carousel.
+      fields: ['autoplay'],
+      why: 'carousel was never shipped — ROADMAP INERT-2',
+    },
+  }),
   fields: [
     headingField(),
     {
