@@ -61,6 +61,18 @@ for (const fixture of fixtures) {
       200,
     )
 
+    // The dev server paints its own tooling over the page, and an element
+    // screenshot clips the viewport region the element occupies — so a
+    // fixed-position overlay sitting over that region lands in the file. The
+    // Next.js dev-tools pill did exactly that, baking a red "2 Issues" badge
+    // into a committed preview (PR #118 review). These previews are shipped
+    // assets in a public repo, so the overlay is suppressed at the source
+    // rather than caught per-block by eye.
+    await page.addStyleTag({
+      content:
+        'nextjs-portal, [data-nextjs-toast], #__next-build-watcher { display: none !important; }',
+    })
+
     const article = page.getByTestId('page')
     await expect(article).toBeVisible()
 

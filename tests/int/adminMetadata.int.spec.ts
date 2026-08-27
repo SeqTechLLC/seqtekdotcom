@@ -168,6 +168,27 @@ describe('C2 — every rich-text block declares an icon', () => {
     }
     expect(missing).toEqual([])
   })
+
+  it('public/block-previews/inline holds no orphan files', async () => {
+    // The layout check above cannot see this directory: `readdir` is not
+    // recursive and `isFile()` filters the subdirectory out, so a renamed or
+    // deleted rich-text block used to leave its icon behind unnoticed.
+    const referenced = new Set(
+      [...richTextBlocks, ...richTextInlineBlocks]
+        .map((b) => imageUrl(b.admin?.images?.icon as ThumbnailImage))
+        .filter((url): url is string => Boolean(url))
+        .map((url) => path.basename(url)),
+    )
+    const onDisk = (
+      await fs.readdir(path.join(PUBLIC_DIR, 'block-previews/inline'), { withFileTypes: true })
+    )
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+    expect(
+      onDisk.filter((name) => !referenced.has(name)),
+      'an icon whose block was renamed or deleted — remove the file',
+    ).toEqual([])
+  })
 })
 
 describe('C1 — labels disambiguate within their own picker', () => {

@@ -28,8 +28,10 @@ explicit command (`npm run block:thumbnails`) that is never part of a build.**
   per-block element captures from `tests/e2e/visual/blockPreviews.e2e.spec.ts`.
 - Output: `public/block-previews/<slug>.webp`, 480×320 (Payload's documented 3:2
   ratio), WebP q78, letterboxed on the block's own background colour.
-- Budget: 400 KB for the committed set, enforced by the generator and again by
-  `tests/int/adminMetadata.int.spec.ts`. Measured at 45 blocks: **141 KB**.
+- Budget: 400 KB for the committed set. `tests/int/adminMetadata.int.spec.ts` is the
+  CI gate; the generator also refuses to finish over budget, but it is a manual
+  command and no workflow invokes it, so it gates the author's run and nothing else.
+  Measured at 45 blocks: **141 KB**.
 - Blocks that cannot be photographed deterministically ship a hand-authored SVG
   wireframe instead, listed in the generator's `HAND_AUTHORED` set.
 

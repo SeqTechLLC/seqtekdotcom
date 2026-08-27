@@ -39,24 +39,42 @@ const QUALITY = 78
 const BUDGET_BYTES = 400 * 1024
 
 /**
- * Blocks whose first variant is not the one an editor should be shown. Keyed
- * by block slug → variant index in the showcase fixtures. Every entry here was
- * decided by looking at the captures, not by reading the fixture source.
+ * Override for a block whose first showcase variant is not the one an editor
+ * should be shown: block slug → variant index.
+ *
+ * Deliberately empty. Every variant is captured, and all 45 blocks were looked
+ * at variant-by-variant when this shipped; variant 0 read best in every case.
+ * The hook stays because re-pointing a preview should not need a re-capture —
+ * add an entry and re-run.
  */
 const PREVIEW_VARIANT: Record<string, number> = {}
 
 /**
- * Blocks that render nothing in isolation (a third-party embed with no
- * credentials, a collection query with no seeded rows). They ship a
- * hand-authored SVG wireframe instead; a screenshot of an empty box would be
- * worse than no preview at all.
+ * A block's preview format is declared in exactly one place: the block's own
+ * `admin.images.thumbnail` URL, via `blockAdmin()`. An `.svg` there means the
+ * preview is hand-authored and this tool must leave it alone; `.webp` means it
+ * is derived from a capture.
+ *
+ * This used to be a second list here, which is the same duplication US2
+ * removed for category assignment — a tool-side set and a config-side argument
+ * that a test could only catch after they disagreed. Reading the config is
+ * what makes disagreement impossible.
+ *
+ * `video-embed` is the one hand-authored preview today: it renders a facade
+ * around a REMOTE YouTube poster frame, so the capture is non-deterministic
+ * (it failed outright on one run) and would commit a third party's video still
+ * into a public repository.
  */
-const HAND_AUTHORED = new Set<string>([
-  // Renders a facade around a REMOTE YouTube poster frame. The capture is
-  // non-deterministic (it failed outright on one run) and would commit a third
-  // party's video still into a public repository. Drawn instead.
-  'video-embed',
-])
+function declaredPreview(block: (typeof layoutBlocks)[number]): {
+  filename: string
+  handAuthored: boolean
+} | null {
+  const thumbnail = block.admin?.images?.thumbnail
+  const url = typeof thumbnail === 'string' ? thumbnail : thumbnail?.url
+  if (!url) return null
+  const filename = path.basename(url)
+  return { filename, handAuthored: path.extname(filename).toLowerCase() === '.svg' }
+}
 
 interface Result {
   slug: string
@@ -88,11 +106,11 @@ async function letterboxColour(file: string): Promise<{ r: number; g: number; b:
   return { r: data[0], g: data[1], b: data[2] }
 }
 
-async function build(slug: string): Promise<Result | null> {
+async function build(slug: string, filename: string): Promise<Result | null> {
   const source = await findCapture(slug)
   if (!source) return null
   const background = await letterboxColour(source)
-  const out = path.join(OUT_DIR, `${slug}.webp`)
+  const out = path.join(OUT_DIR, filename)
   await sharp(source)
     .resize(WIDTH, HEIGHT, { fit: 'contain', background, withoutEnlargement: false })
     .webp({ quality: QUALITY })
@@ -105,26 +123,32 @@ async function main(): Promise<void> {
   const checkOnly = process.argv.includes('--check')
   await fs.mkdir(OUT_DIR, { recursive: true })
 
-  const slugs = layoutBlocks.map((b) => b.slug)
   const built: Result[] = []
   const missing: string[] = []
 
-  for (const slug of slugs) {
-    if (HAND_AUTHORED.has(slug)) {
-      const svg = path.join(OUT_DIR, `${slug}.svg`)
+  for (const block of layoutBlocks) {
+    const slug = block.slug
+    const declared = declaredPreview(block)
+
+    if (!declared) {
+      missing.push(`${slug} (declares no admin.images.thumbnail)`)
+      continue
+    }
+
+    if (declared.handAuthored) {
+      const svg = path.join(OUT_DIR, declared.filename)
       try {
         const { size } = await fs.stat(svg)
         built.push({ slug, bytes: size, source: 'svg' })
       } catch {
-        missing.push(`${slug} (expected hand-authored ${slug}.svg)`)
+        missing.push(`${slug} (declares ${declared.filename}, which is not on disk)`)
       }
       continue
     }
 
     if (checkOnly) {
-      const webp = path.join(OUT_DIR, `${slug}.webp`)
       try {
-        const { size } = await fs.stat(webp)
+        const { size } = await fs.stat(path.join(OUT_DIR, declared.filename))
         built.push({ slug, bytes: size, source: 'capture' })
       } catch {
         missing.push(slug)
@@ -132,7 +156,7 @@ async function main(): Promise<void> {
       continue
     }
 
-    const result = await build(slug)
+    const result = await build(slug, declared.filename)
     if (result) built.push(result)
     else
       missing.push(`${slug} (no capture at ${path.relative(repoRoot, CAPTURE_DIR)}/${slug}--*.png)`)
@@ -141,7 +165,7 @@ async function main(): Promise<void> {
   const total = built.reduce((sum, r) => sum + r.bytes, 0)
   const largest = [...built].sort((a, b) => b.bytes - a.bytes).slice(0, 5)
 
-  console.log(`${checkOnly ? 'checked' : 'built'} ${built.length}/${slugs.length} previews`)
+  console.log(`${checkOnly ? 'checked' : 'built'} ${built.length}/${layoutBlocks.length} previews`)
   console.log(`total ${(total / 1024).toFixed(1)} KB of a ${BUDGET_BYTES / 1024} KB budget`)
   console.log('largest:')
   for (const r of largest) {
