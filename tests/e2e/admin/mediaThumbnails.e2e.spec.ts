@@ -34,6 +34,7 @@ const FIXTURE = {
 
 let session: AdminSession
 let payload: Payload
+let pageId: number | string
 
 test.use({ viewport: { width: 1400, height: 1000 } })
 
@@ -51,12 +52,17 @@ async function landscapePng(): Promise<Buffer> {
     .toBuffer()
 }
 
-/** Open the fixture page's edit view from the list, the way an editor would. */
+/**
+ * Open the fixture page's edit view.
+ *
+ * Addressed by id rather than by clicking the row link from the list: on a
+ * cold admin the click fires before React has hydrated the row and is
+ * swallowed, which left this green locally against a warm dev server and red
+ * on all three CI retries. The list link is worth asserting, so the
+ * publish-state test below asserts it directly — as markup, not as a click.
+ */
 async function openFixturePage(page: Page): Promise<void> {
-  await page.goto(`/admin/collections/pages?search=${encodeURIComponent(FIXTURE.pageTitle)}`)
-  const row = page.locator('table tbody tr', { hasText: FIXTURE.pageTitle })
-  await expect(row).toBeVisible({ timeout: 25_000 })
-  await row.getByRole('link').first().click()
+  await page.goto(`/admin/collections/pages/${pageId}`)
   await expect(page.locator('#field-layout')).toBeVisible({ timeout: 25_000 })
 }
 
@@ -85,7 +91,7 @@ test.describe('US3 — lists answer "what\'s live?" and "which image is this?"',
       file: { data: file, mimetype: 'image/png', name: FIXTURE.mediaName, size: file.length },
       overrideAccess: true,
     })
-    await payload.create({
+    const fixturePage = await payload.create({
       collection: 'pages',
       data: {
         title: FIXTURE.pageTitle,
@@ -109,6 +115,7 @@ test.describe('US3 — lists answer "what\'s live?" and "which image is this?"',
       },
       overrideAccess: true,
     })
+    pageId = fixturePage.id
 
     const context = await browser.newContext()
     session = await useAdminSession(context, baseURL!, 'media-thumbnails')
