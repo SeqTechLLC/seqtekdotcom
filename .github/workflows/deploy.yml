@@ -110,10 +110,19 @@ on:
       - README.md
       - CLAUDE.md
       - LICENSE
-  # THE production trigger — the only one. Release-Please creates the release as
-  # a DRAFT, so this fires when a person opens that draft and clicks Publish.
-  # That the publisher is a human is what makes the event exist: GitHub creates
-  # no workflow run for a release published by the default GITHUB_TOKEN.
+  # THE production trigger — the only one. You create the release yourself,
+  # naming the build to promote:
+  #
+  #     gh release create v0.3.5 --title "v0.3.5" --generate-notes --target <sha>
+  #
+  # The version is resolved against ECR, NOT against `main`. `main` may be
+  # several builds ahead of whatever production runs; that is the normal state
+  # and neither stream constrains the other.
+  #
+  # Release-Please's own releases deliberately CANNOT reach here: it publishes
+  # as the default GITHUB_TOKEN, and GitHub creates no workflow run from events
+  # raised by that token. It owns `main`/UAT versioning; production promotion
+  # is this, and only this.
   release:
     types: [published]
   workflow_dispatch:
