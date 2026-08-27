@@ -3,8 +3,9 @@ import type { Block } from 'payload'
 import { blockAdmin } from '../blockAdmin'
 import { headingField } from '../../fields/blockCopy'
 
-// Horizontal tab strip with a single visible panel. Useful for grouping
-// alternative views of related content (e.g., engagement models).
+// Named "tabs", but `components/sections/Tabs.tsx` draws jump links over a
+// stack of always-visible sections — no panel is ever hidden. Tracked in
+// ROADMAP INERT-2; the field descriptions below say what it actually does.
 export const Tabs: Block = {
   slug: 'tabs',
   interfaceName: 'TabsBlock',
@@ -28,16 +29,16 @@ export const Tabs: Block = {
         {
           name: 'label',
           type: 'text',
-          label: 'Tab name',
+          label: 'Section name',
           required: true,
-          admin: { description: 'One or two words on the tab itself.' },
+          admin: { description: 'One or two words. It becomes the jump link and the heading.' },
         },
         {
           name: 'body',
           type: 'textarea',
-          label: 'Tab content',
+          label: 'Section content',
           required: true,
-          admin: { description: 'What appears when this tab is selected.' },
+          admin: { description: 'The prose under that heading. It is always visible.' },
         },
       ],
     },

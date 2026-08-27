@@ -61,7 +61,7 @@ export const ClientLogoGrid: Block = {
       defaultValue: '4',
       admin: {
         description:
-          'How many fit across on a wide screen. Fewer columns means bigger logos. Phones show two or three across, never one.',
+          'How many fit across on a wide screen. The logos stay the same height either way, so fewer columns just means more space around them. Phones show two or three across, never one.',
       },
       options: [
         { label: '3 columns', value: '3' },

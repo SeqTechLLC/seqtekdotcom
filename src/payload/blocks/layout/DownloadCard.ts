@@ -49,7 +49,7 @@ export const DownloadCard: Block = {
       validate: hubspotFormIdValidate,
       admin: {
         description:
-          'The form the reader fills in to get the file. Copy the form ID out of HubSpot (Marketing > Forms > Share > embed code); it looks like 12345678-90ab-cdef-1234-567890abcdef.',
+          'The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. Nothing is gated yet: the block draws a disabled form and prints "HubSpot form <id> loads in production" on the page (ROADMAP INERT-2).',
       },
     },
     {
@@ -60,7 +60,7 @@ export const DownloadCard: Block = {
       validate: httpsUrlValidate,
       admin: {
         description:
-          'The full https:// address of the file the reader receives after submitting the form. Upload it to Media first and paste its address here.',
+          'The full https:// address of the file. It is currently printed on the published page as "Asset: <address>", so anyone can take it without filling anything in. Do not put anything here you would not publish outright (ROADMAP INERT-2).',
       },
     },
   ],

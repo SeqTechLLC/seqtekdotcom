@@ -3,8 +3,10 @@ import type { Block } from 'payload'
 import { blockAdmin } from '../blockAdmin'
 import { headingField } from '../../fields/blockCopy'
 
-// Generic disclosure pattern. Distinct from FAQ in that the items don't
-// emit FAQPage JSON-LD and the heading/body shape is generic (not Q/A).
+// Generic disclosure pattern. Distinct from FAQ in that the heading/body
+// shape is generic (not Q/A). Neither block emits FAQPage JSON-LD — an
+// earlier comment on FAQ claimed it did, and `components/sections/FAQ.tsx`
+// does not (spec 011 US4 review).
 export const Accordion: Block = {
   slug: 'accordion',
   interfaceName: 'AccordionBlock',

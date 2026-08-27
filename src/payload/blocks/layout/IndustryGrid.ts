@@ -21,7 +21,7 @@ export const IndustryGrid: Block = {
       minRows: 2,
       admin: {
         description:
-          'At least two, drawn as cards in the order you pick them. Add them under Industries first.',
+          'At least two, drawn as cards in the order you pick them. Each card links to /industries/<name>, and that route does not exist yet, so the cards currently lead to a 404 (ROADMAP IND-1).',
       },
     },
   ],

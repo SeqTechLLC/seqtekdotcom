@@ -129,7 +129,8 @@ export const Posts: CollectionConfig = {
     },
     seoField({ noun: 'post' }),
     publishedAtField({
-      effect: 'Orders the insights index, newest first, and is the date shown on the post itself.',
+      effect:
+        'Orders the insights index, newest first, and is the date shown on the post itself. Leave it blank and the post sorts to the TOP of that index, ahead of everything dated.',
     }),
   ],
 }

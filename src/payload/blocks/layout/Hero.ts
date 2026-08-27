@@ -62,7 +62,7 @@ export const Hero: Block = {
     (() => {
       const { admin, validate } = requiredWhen<HeroSibling>((d) => d?.variant === 'with-video', {
         description:
-          'Shown only by the "With video" style. Paste the player\'s EMBED address, not the page you watch on: https://www.youtube.com/embed/ID, https://player.vimeo.com/video/ID, or a Wistia embed address. Anything else is dropped at render time and the hero shows no video at all.',
+          'Shown only by the "With video" style. Paste the player\'s EMBED address, not the page you watch on: https://www.youtube-nocookie.com/embed/ID or https://player.vimeo.com/video/ID. Anything else is dropped at render time and the hero shows no video at all.',
       })
       return {
         name: 'videoUrl' as const,

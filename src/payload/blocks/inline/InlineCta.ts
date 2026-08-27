@@ -13,14 +13,14 @@ export const InlineCta: Block = {
     {
       name: 'label',
       type: 'text',
-      label: 'Button text',
+      label: 'Link text',
       required: true,
-      admin: { description: 'The words on the button. Two to four words reads best.' },
+      admin: { description: 'The words the reader clicks. Two to four words reads best.' },
     },
     {
       name: 'url',
       type: 'text',
-      label: 'Button link',
+      label: 'Destination',
       required: true,
       validate: safeUrlValidate,
       admin: {
@@ -31,7 +31,7 @@ export const InlineCta: Block = {
     {
       name: 'variant',
       type: 'select',
-      label: 'Button style',
+      label: 'Link style',
       defaultValue: 'primary',
       admin: {
         description:

@@ -168,7 +168,8 @@ export const CaseStudies: CollectionConfig = {
     },
     seoField({ noun: 'case study' }),
     publishedAtField({
-      effect: 'Orders the case study index, newest first. It is not shown on the study.',
+      effect:
+        'Orders the case study index, newest first, though it is not shown on the study itself. Leave it blank and the study sorts to the TOP of that index, ahead of everything dated.',
     }),
   ],
 }

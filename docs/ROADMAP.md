@@ -132,9 +132,20 @@ before we spend more effort loading content by hand.
     `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID`, an env var nothing in `src/` reads. Publishing it puts developer
     text on the page (the UI-2 class again).
   - `hubspot-form.submitRedirect`, `featured-testimonials.autoplay`, `posts.relatedPosts`, `media.caption`,
-    `services.icon`, `process-steps.steps.icon` — declared, never read.
+    `servicePillars.order` — declared, never read. (`listServicePillars` has no callers and the
+    `service-pillar-cards` block renders its relationship in pick order, so this one is now `admin.hidden`.)
+  - `services.icon` and `process-steps.steps.icon` — read, but there is no icon set behind them:
+    `ServiceCards.tsx:36` and `ProcessSteps.tsx:29` print the raw string on the page.
   - `hubspot-meetings` and `contact-cta.meetingUrl` — both draw a bordered placeholder printing the raw URL; no
-    Meetings embed script exists in the repo.
+    Meetings embed script exists in the repo. `contact-cta`'s panel renders even when the URL is blank, printing
+    "Configure a HubSpot meetings URL to embed the scheduler" on the page.
+  - `download-card` — `newsletter-cta`'s twin, found by the second-round sweep: a disabled form, "HubSpot form
+    <id> loads in production", **and `Asset: <fileUrl>` printed in the clear**, so the gated download is neither
+    gated nor a download. Worth fixing before any of these blocks is published.
+
+  A related renderer defect, same audit: three components read fields their collection does not have —
+  `LocationsList.tsx:16` (`state`, which lives at `address.state`), `ServicePillarCards.tsx:24` (`tagline`) and
+  `WorkshopList.tsx:21` (`subtitle`). Each is a silently dead branch, not a wrong description.
 
   **Worth a sweep**: this list came from auditing the ~120 descriptions one PR happened to touch. Nothing has
   checked the rest of the config the same way.

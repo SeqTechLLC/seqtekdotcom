@@ -17,14 +17,14 @@ export const FeaturedTestimonials: Block = {
       name: 'testimonials',
       type: 'relationship',
       relationTo: 'testimonials',
-      label: 'Quotes to rotate',
+      label: 'Quotes to show',
       hasMany: true,
       required: true,
       minRows: 2,
       maxRows: 6,
       admin: {
         description:
-          'Two to six quotes, shown one at a time in the order you pick them. Add them under Testimonials first.',
+          'Two to six quotes, drawn together as a grid in the order you pick them. Add them under Testimonials first.',
       },
     },
     {

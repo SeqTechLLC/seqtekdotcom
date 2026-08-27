@@ -63,7 +63,9 @@ export const ComparisonTable: Block = {
           label: 'Answers',
           labels: { singular: 'Answer', plural: 'Answers' },
           required: true,
-          // Cells per row must match column count; validated at render time.
+          // Cells per row SHOULD match the column count, but nothing enforces
+          // it: `ComparisonTable.tsx` maps every cell unconditionally, so a
+          // mismatch renders a misaligned row (spec 011 US4 review).
           admin: {
             description:
               'One answer per option, in the same order as the options above. Nothing checks the count, so a row with too few or too many answers renders a misaligned table.',

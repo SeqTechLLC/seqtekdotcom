@@ -84,7 +84,9 @@ export const Workshops: CollectionConfig = {
           'Pick a testimonial already in the panel. Add it to Testimonials first if it is not there.',
       },
     },
-    orderField({ what: 'the workshop list' }),
+    orderField({
+      what: 'the /workshops page (a workshop-list block keeps the order you pick there)',
+    }),
     seoField({ noun: 'workshop' }),
     publishedAtField(),
   ],

@@ -65,6 +65,14 @@ export const ServicePillars: CollectionConfig = {
       },
     },
     seoField({ noun: 'pillar', hidden: true }),
-    orderField({ what: 'the pillar cards' }),
+    {
+      ...orderField({ what: 'a pillar list' }),
+      admin: {
+        // ROADMAP INERT-1/INERT-2: `listServicePillars` has no callers, and the
+        // `service-pillar-cards` block renders its `hasMany` relationship in the
+        // order an editor picked. Nothing sorts pillars by this.
+        hidden: true,
+      },
+    },
   ],
 }

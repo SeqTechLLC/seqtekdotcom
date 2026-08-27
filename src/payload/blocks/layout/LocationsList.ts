@@ -20,7 +20,8 @@ export const LocationsList: Block = {
       required: true,
       minRows: 1,
       admin: {
-        description: 'Drawn as cards in the order you pick them. Add them under Locations first.',
+        description:
+          'Drawn as cards in the order you pick them. Each card links to /locations/<name>, and that route does not exist yet, so the cards currently lead to a 404 (ROADMAP IND-1).',
       },
     },
   ],

@@ -193,7 +193,7 @@ export interface Media {
    */
   alt: string;
   /**
-   * A note for whoever picks this image later. Blocks draw their own caption field, not this one, so nothing here reaches the page.
+   * Nothing reads this. Blocks draw their own caption field, and the media pickers label a file by its alt text or filename, so a caption here reaches neither the page nor the picker.
    */
   caption?: string | null;
   prefix?: string | null;
@@ -392,7 +392,7 @@ export interface HeroBlock {
    */
   media?: (number | null) | Media;
   /**
-   * Shown only by the "With video" style. Paste the player's EMBED address, not the page you watch on: https://www.youtube.com/embed/ID, https://player.vimeo.com/video/ID, or a Wistia embed address. Anything else is dropped at render time and the hero shows no video at all.
+   * Shown only by the "With video" style. Paste the player's EMBED address, not the page you watch on: https://www.youtube-nocookie.com/embed/ID or https://player.vimeo.com/video/ID. Anything else is dropped at render time and the hero shows no video at all.
    */
   videoUrl?: string | null;
   /**
@@ -991,7 +991,7 @@ export interface FeaturedTestimonialsBlock {
    */
   heading?: string | null;
   /**
-   * Two to six quotes, shown one at a time in the order you pick them. Add them under Testimonials first.
+   * Two to six quotes, drawn together as a grid in the order you pick them. Add them under Testimonials first.
    */
   testimonials: (number | Testimonial)[];
   /**
@@ -1164,7 +1164,7 @@ export interface CaseStudy {
     ogImage?: (number | null) | Media;
   };
   /**
-   * Orders the case study index, newest first. It is not shown on the study. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   * Orders the case study index, newest first, though it is not shown on the study itself. Leave it blank and the study sorts to the TOP of that index, ahead of everything dated. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
   updatedAt: string;
@@ -1272,7 +1272,7 @@ export interface Service {
     ogImage?: (number | null) | Media;
   };
   /**
-   * Lowest number first in a service list. Give every record a number: the sequence of records without one is not defined.
+   * Lowest number first in a service list. Records left without a number come after the numbered ones, newest first.
    */
   order?: number | null;
   /**
@@ -1330,9 +1330,6 @@ export interface ServicePillar {
      */
     ogImage?: (number | null) | Media;
   };
-  /**
-   * Lowest number first in the pillar cards. Give every record a number: the sequence of records without one is not defined.
-   */
   order?: number | null;
   updatedAt: string;
   createdAt: string;
@@ -1379,7 +1376,7 @@ export interface ClientLogoGridBlock {
     id?: string | null;
   }[];
   /**
-   * How many fit across on a wide screen. Fewer columns means bigger logos. Phones show two or three across, never one.
+   * How many fit across on a wide screen. The logos stay the same height either way, so fewer columns just means more space around them. Phones show two or three across, never one.
    */
   columns?: ('3' | '4' | '6') | null;
   id?: string | null;
@@ -1502,7 +1499,7 @@ export interface ContactCtaBlock {
     url?: string | null;
   };
   /**
-   * Optional HubSpot meetings address (https://meetings.hubspot.com/name). It appears in a panel beside the text, and the live calendar is not embedded yet: the panel shows the address (ROADMAP INERT-2).
+   * A HubSpot meetings address (https://meetings.hubspot.com/name). The panel beside the text renders either way, so leaving this blank publishes the words "Configure a HubSpot meetings URL to embed the scheduler" on the page. The live calendar is not embedded yet: filled in, the panel shows the address (ROADMAP INERT-2).
    */
   meetingUrl?: string | null;
   id?: string | null;
@@ -1721,7 +1718,7 @@ export interface Post {
     ogImage?: (number | null) | Media;
   };
   /**
-   * Orders the insights index, newest first, and is the date shown on the post itself. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   * Orders the insights index, newest first, and is the date shown on the post itself. Leave it blank and the post sorts to the TOP of that index, ahead of everything dated. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
   updatedAt: string;
@@ -1819,7 +1816,7 @@ export interface TeamMember {
    */
   isLeadership?: boolean | null;
   /**
-   * Lowest number first in the team grid, after the leadership members. Give every record a number: the sequence of records without one is not defined.
+   * Lowest number first in the team grid, after the leadership members. Records left without a number come after the numbered ones, newest first.
    */
   order?: number | null;
   /**
@@ -1883,7 +1880,7 @@ export interface IndustryGridBlock {
    */
   heading?: string | null;
   /**
-   * At least two, drawn as cards in the order you pick them. Add them under Industries first.
+   * At least two, drawn as cards in the order you pick them. Each card links to /industries/<name>, and that route does not exist yet, so the cards currently lead to a 404 (ROADMAP IND-1).
    */
   industries: (number | Industry)[];
   id?: string | null;
@@ -1900,7 +1897,7 @@ export interface LocationsListBlock {
    */
   heading?: string | null;
   /**
-   * Drawn as cards in the order you pick them. Add them under Locations first.
+   * Drawn as cards in the order you pick them. Each card links to /locations/<name>, and that route does not exist yet, so the cards currently lead to a 404 (ROADMAP IND-1).
    */
   locations: (number | Location)[];
   id?: string | null;
@@ -2056,7 +2053,7 @@ export interface Workshop {
    */
   testimonial?: (number | null) | Testimonial;
   /**
-   * Lowest number first in the workshop list. Give every record a number: the sequence of records without one is not defined.
+   * Lowest number first in the /workshops page (a workshop-list block keeps the order you pick there). Records left without a number come after the numbered ones, newest first.
    */
   order?: number | null;
   /**
@@ -2214,11 +2211,11 @@ export interface TabsBlock {
    */
   tabs: {
     /**
-     * One or two words on the tab itself.
+     * One or two words. It becomes the jump link and the heading.
      */
     label: string;
     /**
-     * What appears when this tab is selected.
+     * The prose under that heading. It is always visible.
      */
     body: string;
     id?: string | null;
@@ -2295,11 +2292,11 @@ export interface DownloadCardBlock {
    */
   coverImage: number | Media;
   /**
-   * The form the reader fills in to get the file. Copy the form ID out of HubSpot (Marketing > Forms > Share > embed code); it looks like 12345678-90ab-cdef-1234-567890abcdef.
+   * The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. Nothing is gated yet: the block draws a disabled form and prints "HubSpot form <id> loads in production" on the page (ROADMAP INERT-2).
    */
   formId: string;
   /**
-   * The full https:// address of the file the reader receives after submitting the form. Upload it to Media first and paste its address here.
+   * The full https:// address of the file. It is currently printed on the published page as "Asset: <address>", so anyone can take it without filling anything in. Do not put anything here you would not publish outright (ROADMAP INERT-2).
    */
   fileUrl: string;
   id?: string | null;
@@ -4296,7 +4293,7 @@ export interface DisclosureBlock {
  */
 export interface InlineCtaBlock {
   /**
-   * The words on the button. Two to four words reads best.
+   * The words the reader clicks. Two to four words reads best.
    */
   label: string;
   /**

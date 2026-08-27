@@ -1,4 +1,4 @@
-import type { NumberField } from 'payload'
+import type { DateField, NumberField } from 'payload'
 
 /**
  * Spec 011 US4 — `publishedAt` and `order`, whose help text is HALF shared.
@@ -26,16 +26,15 @@ interface PublishedAtOptions {
 const SCHEDULING =
   'A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.'
 
-export const publishedAtField = ({ effect }: PublishedAtOptions = {}) =>
-  ({
-    name: 'publishedAt',
-    type: 'date' as const,
-    label: 'Publish date',
-    admin: {
-      position: 'sidebar' as const,
-      description: effect ? `${effect} ${SCHEDULING}` : `Scheduling only. ${SCHEDULING}`,
-    },
-  }) as const
+export const publishedAtField = ({ effect }: PublishedAtOptions = {}): DateField => ({
+  name: 'publishedAt',
+  type: 'date',
+  label: 'Publish date',
+  admin: {
+    position: 'sidebar',
+    description: effect ? `${effect} ${SCHEDULING}` : `Scheduling only. ${SCHEDULING}`,
+  },
+})
 
 interface OrderOptions {
   /** What is being ordered, e.g. "the service cards". */
@@ -50,8 +49,7 @@ export const orderField = ({ what, unnumbered }: OrderOptions): NumberField => (
   label: 'Sort position',
   admin: {
     description: `Lowest number first in ${what}. ${
-      unnumbered ??
-      'Give every record a number: the sequence of records without one is not defined.'
+      unnumbered ?? 'Records left without a number come after the numbered ones, newest first.'
     }`,
   },
 })
