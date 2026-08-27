@@ -23,6 +23,7 @@ import { InlineCodeFeatureClient as InlineCodeFeatureClient_e70f5e05f09f93e00b99
 import { SuperscriptFeatureClient as SuperscriptFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { SubscriptFeatureClient as SubscriptFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { StrikethroughFeatureClient as StrikethroughFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { MediaRowLabel as MediaRowLabel_8674335b8541cf13662b0acddda2dbb4 } from '../../../components/admin/MediaRowLabel'
 import { default as default_aee0e759e8f919c2def218119e4b984a } from '../../../components/admin/CustomLogoutButton'
 import { default as default_afe7f5706c48d2224b5926eadac6bc33 } from '../../../components/admin/LoginError'
 import { default as default_6e4967edf80176a5bd10cff405b93314 } from '../../../components/admin/BeforeLoginGoogle'
@@ -56,6 +57,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#SuperscriptFeatureClient": SuperscriptFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#SubscriptFeatureClient": SubscriptFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#StrikethroughFeatureClient": StrikethroughFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/components/admin/MediaRowLabel#MediaRowLabel": MediaRowLabel_8674335b8541cf13662b0acddda2dbb4,
   "/components/admin/CustomLogoutButton#default": default_aee0e759e8f919c2def218119e4b984a,
   "/components/admin/LoginError#default": default_afe7f5706c48d2224b5926eadac6bc33,
   "/components/admin/BeforeLoginGoogle#default": default_6e4967edf80176a5bd10cff405b93314,

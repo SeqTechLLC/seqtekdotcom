@@ -8,6 +8,8 @@ import {
   BLOCK_CATEGORIES,
   BLOCK_CATEGORY_LABELS,
 } from '../../src/payload/blocks/categories'
+import { collections } from '../../src/collections'
+import { Homepage } from '../../src/globals/Homepage'
 import { richTextBlocks, richTextInlineBlocks } from '../../src/payload/blocks/inline'
 import { layoutBlocks } from '../../src/payload/blocks/layout'
 
@@ -259,4 +261,138 @@ describe('the category taxonomy', () => {
     const labels = Object.values(BLOCK_CATEGORY_LABELS)
     expect(new Set(labels).size).toBe(labels.length)
   })
+})
+
+/**
+ * Spec 011 US3 / T040 — contracts/admin-metadata.md C3, publish-state clause.
+ *
+ * The rest of C3 (group, description) lands with US6; this is the half US3
+ * owns. It is asserted over the whole registered set rather than a listed ten
+ * so that a collection which gains drafts later cannot quietly ship without
+ * the column.
+ *
+ * **Second, not first** — the contract as drafted said `defaultColumns` MUST
+ * begin with `_status`, and it was implemented that way and then looked at.
+ * Payload links whichever column comes first (`buildColumnState`:
+ * `isLinkedColumn: enableLinkedCell && colIndex === activeColumnsIndices[0]`),
+ * so `_status` in front turned every row into an underlined "Published" that
+ * opened the record while the title beside it went dead. Publish state is
+ * still the first thing after the record's name, which is what the story
+ * asked for; the name stays the thing you click. C3 is amended to match.
+ */
+describe('C3 — draft collections show publish state by default', () => {
+  const draftCollections = collections.filter(
+    (collection) =>
+      collection.versions && collection.versions !== true && collection.versions.drafts,
+  )
+
+  it('there are draft-enabled collections to check', () => {
+    // A guard on the filter itself: if `versions` ever changes shape, the
+    // suite below would pass vacuously by testing nothing.
+    expect(draftCollections.length).toBeGreaterThan(0)
+  })
+
+  it.each(draftCollections.map((c) => [c.slug, c] as const))(
+    '%s shows _status immediately after the title column',
+    (slug, collection) => {
+      const columns = collection.admin?.defaultColumns
+      expect(columns, `${slug} declares no defaultColumns`).toBeDefined()
+      expect(
+        columns?.[1],
+        `${slug}: publish state must be the second default column — first in the list makes the status pill the row's link and leaves the title unclickable`,
+      ).toBe('_status')
+      expect(
+        columns?.[0],
+        `${slug}: the first default column must be useAsTitle — it is the one Payload turns into the link to the record`,
+      ).toBe(collection.admin?.useAsTitle)
+    },
+  )
+
+  it.each(
+    collections
+      .filter((c) => !(c.versions && c.versions !== true && c.versions.drafts))
+      .map((c) => [c.slug, c] as const),
+  )('%s has no _status column, having no drafts', (slug, collection) => {
+    // `_status` only exists on the schema when drafts are enabled, so naming
+    // it elsewhere is a column header over an empty cell.
+    expect(collection.admin?.defaultColumns ?? [], slug).not.toContain('_status')
+  })
+})
+
+/**
+ * Spec 011 US3 / T043 — contracts/admin-metadata.md C6, FR-017.
+ *
+ * Payload labels array rows by position, so an array of nothing but uploads
+ * collapses to `Logo 01` … `Logo 08` and has to be expanded one row at a time
+ * to find anything. Six arrays in this config have an `upload` in their rows;
+ * this fails the seventh, added later without a row label.
+ *
+ * The walk is deliberate about `blocks`: the block registries are the source
+ * for those, so blocks are traversed once from `layoutBlocks` /
+ * `richTextBlocks` rather than once per collection that embeds them.
+ */
+describe('FR-017 — a collapsed row of media identifies itself', () => {
+  interface ArrayFieldRecord {
+    where: string
+    path: string
+    hasRowLabel: boolean
+  }
+
+  type AnyField = {
+    name?: string
+    type?: string
+    fields?: AnyField[]
+    tabs?: { name?: string; fields: AnyField[] }[]
+    admin?: { components?: { RowLabel?: unknown } }
+  }
+
+  function collectMediaArrays(fields: AnyField[] | undefined, where: string, path: string) {
+    const found: ArrayFieldRecord[] = []
+    for (const field of fields ?? []) {
+      const here = field.name ? `${path}${path ? '.' : ''}${field.name}` : path
+      if (field.type === 'array') {
+        if ((field.fields ?? []).some((child) => child.type === 'upload')) {
+          found.push({
+            where,
+            path: here,
+            hasRowLabel: Boolean(field.admin?.components?.RowLabel),
+          })
+        }
+        found.push(...collectMediaArrays(field.fields, where, here))
+      } else if (field.type === 'group' || field.type === 'row' || field.type === 'collapsible') {
+        found.push(...collectMediaArrays(field.fields, where, field.name ? here : path))
+      } else if (field.type === 'tabs') {
+        for (const tab of field.tabs ?? []) {
+          found.push(
+            ...collectMediaArrays(tab.fields, where, tab.name ? `${path}.${tab.name}` : path),
+          )
+        }
+      }
+    }
+    return found
+  }
+
+  const mediaArrays: ArrayFieldRecord[] = [
+    ...collections.flatMap((c) =>
+      collectMediaArrays(c.fields as AnyField[], `collection:${c.slug}`, ''),
+    ),
+    ...collectMediaArrays(Homepage.fields as AnyField[], 'global:homepage', ''),
+    ...[...layoutBlocks, ...richTextBlocks, ...richTextInlineBlocks].flatMap((b) =>
+      collectMediaArrays(b.fields as AnyField[], `block:${b.slug}`, ''),
+    ),
+  ]
+
+  it('the walk finds the arrays it is supposed to check', () => {
+    expect(mediaArrays.length).toBeGreaterThan(0)
+  })
+
+  it.each(mediaArrays.map((a) => [`${a.where} ${a.path}`, a] as const))(
+    '%s declares a RowLabel',
+    (_name, field) => {
+      expect(
+        field.hasRowLabel,
+        'use mediaRowLabel() from src/payload/fields/mediaRowLabel.ts — without it the rows collapse to "Logo 01", "Logo 02", …',
+      ).toBe(true)
+    },
+  )
 })

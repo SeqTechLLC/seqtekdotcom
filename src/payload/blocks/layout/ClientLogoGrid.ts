@@ -2,6 +2,8 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
+import { mediaRowLabel } from '../../fields/mediaRowLabel'
+
 // Variant of LogoBar that renders client logos in a denser grid (per
 // BLOCK_LIBRARY.md §5.3 — modeled as a separate block per tasks.md T052
 // since the layout intent differs from the linear bar treatment).
@@ -17,6 +19,15 @@ export const ClientLogoGrid: Block = {
       type: 'array',
       required: true,
       minRows: 4,
+      admin: {
+        components: {
+          RowLabel: mediaRowLabel({
+            singular: 'Logo',
+            textFields: ['caption'],
+            uploadField: 'logo',
+          }),
+        },
+      },
       fields: [
         { name: 'logo', type: 'upload', relationTo: 'media', required: true },
         { name: 'caption', type: 'text' },

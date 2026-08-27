@@ -2,6 +2,8 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
+import { mediaRowLabel } from '../../fields/mediaRowLabel'
+
 // Per BLOCK_LIBRARY.md §5.2.
 export const Timeline: Block = {
   slug: 'timeline',
@@ -15,6 +17,15 @@ export const Timeline: Block = {
       type: 'array',
       required: true,
       minRows: 2,
+      admin: {
+        components: {
+          RowLabel: mediaRowLabel({
+            singular: 'Entry',
+            textFields: ['title', 'date'],
+            uploadField: 'image',
+          }),
+        },
+      },
       fields: [
         { name: 'date', type: 'text', required: true },
         { name: 'title', type: 'text', required: true },

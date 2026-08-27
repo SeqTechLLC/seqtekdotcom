@@ -240,12 +240,65 @@ export const Posts: CollectionConfig = {
 | ---------------------------- | ------------------------------------------------------------------------------------ |
 | `slug`                       | URL segment and database table name. Use kebab-case for multi-word: `'case-studies'` |
 | `admin.useAsTitle`           | Which field displays as the document title in lists and relationship pickers         |
-| `admin.defaultColumns`       | Columns shown in the list view                                                       |
+| `admin.defaultColumns`       | Columns shown in the list view. `[useAsTitle, '_status', …]` on draft collections    |
 | `admin.listSearchableFields` | Fields included in the admin search                                                  |
 | `admin.group`                | Groups collections in the admin sidebar                                              |
 | `versions.drafts`            | Enables draft/publish workflow with version history                                  |
 | `timestamps`                 | Auto-adds `createdAt` and `updatedAt` fields                                         |
 | `orderable`                  | Enables drag-and-drop reordering in admin list view                                  |
+
+### List-view conventions (spec 011 US3)
+
+Two rules `tests/int/adminMetadata.int.spec.ts` enforces on every collection:
+
+- **`useAsTitle` first, `_status` second** in `defaultColumns` on any collection with
+  `versions.drafts: true`. Publish state has to be a default column so "what's live?"
+  is answered by scanning rather than by opening records, but it cannot come first:
+  Payload turns the first active column into the link to the record
+  (`buildColumnState`: `isLinkedColumn && colIndex === activeColumnsIndices[0]`), so
+  `_status` in front makes an underlined "Published" the only clickable thing in the
+  row and leaves the title inert. A collection **without** drafts must not name
+  `_status` at all — the column exists only where drafts are enabled.
+- **Media previews itself.** `Media.upload.adminThumbnail` is the function form
+  (`mediaAdminThumbnail`), returning the smallest existing WebP derivative and `null`
+  for non-images or records with no derivative, so Payload draws its file glyph rather
+  than a src that never loads. It returns the derivative's stored
+  `/api/media/file/<filename>` path rather than the CloudFront `/media/*` URL: the list
+  view narrows its query to `{ mimeType, thumbnailURL, sizes.* }`, so the document's
+  storage `prefix` — which `mediaFileURL` needs — is not available there.
+
+### Array fields holding media
+
+An array whose rows contain an `upload` must declare a row label, or its rows collapse
+to `Logo 01` … `Logo 08` and have to be expanded one at a time:
+
+```typescript
+import { mediaRowLabel } from '../payload/fields/mediaRowLabel'
+
+{
+  name: 'logos',
+  type: 'array',
+  admin: {
+    components: {
+      RowLabel: mediaRowLabel({
+        singular: 'Logo',              // matches the array's own singular label
+        textFields: ['caption'],       // tried first, in order, for the name
+        uploadField: 'logo',           // fallback: the media's alt, then its filename
+      }),
+    },
+  },
+  fields: [
+    { name: 'logo', type: 'upload', relationTo: 'media', required: true },
+    { name: 'caption', type: 'text' },
+  ],
+}
+```
+
+`MediaRowLabel` renders the `adminThumbnail` image beside the name, so the row answers
+"which image is this?" without expanding. That costs one `GET /api/media/:id` per row
+holding an upload — every such row, since the thumbnail needs the document whether or
+not a caption already names the row. `adminMetadata.int.spec.ts` fails any array with an
+`upload` child and no `RowLabel`.
 
 ---
 
@@ -1292,6 +1345,14 @@ export const Media: CollectionConfig = {
   ],
 }
 ```
+
+> **This is Payload's generic shape, not ours.** `src/collections/Media.ts` excludes
+> SVG deliberately (it can carry inline script, and the raw file is served on the site
+> origin), generates eight derivatives from four breakpoints rather than three named
+> crops, and uses the **function form** of `adminThumbnail`. The string form is a trap
+> on an existing library: derivatives are generated at upload time only, so pointing it
+> at a newly declared size leaves every record already in the database with no preview
+> at all. See §3 "List-view conventions".
 
 ### S3 Storage Adapter
 

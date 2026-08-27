@@ -10,7 +10,7 @@ export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'pillar', 'order'],
+    defaultColumns: ['title', '_status', 'slug', 'pillar', 'order'],
   },
   access: {
     read: publishedOrAuthed,

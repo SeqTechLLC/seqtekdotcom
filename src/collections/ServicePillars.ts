@@ -11,7 +11,7 @@ export const ServicePillars: CollectionConfig = {
   labels: { singular: 'Service pillar', plural: 'Service pillars' },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'order'],
+    defaultColumns: ['title', '_status', 'slug', 'order'],
   },
   access: {
     read: publishedOrAuthed,

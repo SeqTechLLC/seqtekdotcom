@@ -114,7 +114,7 @@ admin: {
   group: 'Content' | 'Reference data' | 'Site' | 'Admin',
   description: string,          // one line, what it is for, in an editor's words
   useAsTitle: string,
-  defaultColumns: string[],     // MUST begin with '_status' when versions.drafts is enabled
+  defaultColumns: string[],     // [useAsTitle, '_status', ...] when versions.drafts is enabled
 }
 ```
 
@@ -122,10 +122,29 @@ admin: {
 
 - fails when any collection or global lacks `group` or `description`
 - fails when `group` is outside the allowed set
-- fails when a collection has `versions.drafts === true` and `_status` is absent from `defaultColumns`
+- fails when a collection has `versions.drafts === true` and `_status` is not the **second** entry of `defaultColumns`, or when the first entry is not `useAsTitle`
+- fails when a collection without drafts names `_status` at all — the column exists only when drafts are enabled
 - exempts collections marked `admin.hidden`
 
 **Rationale**: FR-014, FR-026, FR-027.
+
+### Amendment 2026-08-27 — `_status` is the second column, not the first
+
+The clause above originally read "MUST begin with `_status`". It was implemented
+that way, screenshotted, and reverted the same session.
+
+`@payloadcms/ui`'s `buildColumnState` makes the first active column the link to
+the record — `isLinkedColumn: enableLinkedCell && colIndex === activeColumnsIndices[0]`
+— and nothing configures which column that is. Leading with `_status` therefore
+turned every row of every content list into an underlined **Published** that
+opened the record, with the title beside it inert. Fifteen rows of the Pages
+list read `Published / Published / Published …` in the leftmost, most
+prominent, only-clickable position.
+
+The requirement it serves (US3 acceptance scenario 1) is that publish state is
+"visible as a column without changing column settings" — it says nothing about
+position. Second place satisfies it, keeps the state adjacent to the name it
+qualifies, and leaves the name as the thing you click.
 
 ---
 
@@ -166,9 +185,37 @@ Resolution order: the existing `mobile_webp` derivative → `null`.
 
 Returning `null` (rather than a broken URL) for non-image uploads, and for any record with no usable derivative, is required so Payload falls back to its file-type icon.
 
-**Enforced by**: `tests/int/adminThumbnail.int.spec.ts`, over three fixtures — a record with `mobile_webp` (the state of all 78 existing records), a record with no derivatives at all, and a non-image record.
+**Enforced by**: `tests/int/adminThumbnail.int.spec.ts`, over three fixtures — a record with `mobile_webp` (the state of all 78 existing records), a record with no derivatives at all, and a non-image record. `tests/e2e/admin/mediaThumbnails.e2e.spec.ts` proves Payload actually draws the result, in the list and in the picker a block's upload field opens.
+
+**Which URL the resolver returns** (decided 2026-08-27): the derivative's own stored `/api/media/file/<filename>` path, **not** the CloudFront `/media/*` URL from `mediaFileURL`. The CDN URL is what the public site renders and would be the cheaper fetch, but it is built from the document's storage `prefix`, and Payload narrows the list-view query to `{ mimeType, thumbnailURL, sizes.* }` (`appendUploadSelectFields`) — `prefix` is not in that set, so the CDN URL is unbuildable exactly where the thumbnails are needed most. The stored path resolves on every lane: against the filesystem locally and in CI, and through the S3 static handler on the deployed lanes, which is the same route the admin already uses for the full-size preview on the edit screen.
 
 **Rationale**: FR-015, FR-016. Clarified 2026-08-21: **no dedicated thumbnail size is added.** Measured on the real photo library, the existing 640px derivative averages 53 KB against 16 KB for a 300px thumbnail, so a 20-item picker costs ~1.04 MB versus ~0.32 MB — a 3.3× saving on an edge-cached internal screen, which does not justify a ninth derivative on every upload plus a backfill migration (research R7).
+
+### C6a — a collapsed row of media identifies itself (FR-017)
+
+```ts
+// any array field whose rows contain an `upload`
+admin: { components: { RowLabel: mediaRowLabel({ singular, textFields?, uploadField }) } }
+```
+
+Payload labels array rows by position, so an array of uploads collapses to
+`Logo 01` … `Logo 08` and has to be expanded one row at a time. `MediaRowLabel`
+(`src/components/admin/MediaRowLabel.tsx`) resolves the row's name cheapest-first:
+a text field the editor filled in on the row, then the linked media's alt text,
+then its filename, then Payload's numbering. It renders the `adminThumbnail`
+image beside the name, so the row answers "which image is this?" too.
+
+**Cost**: one `GET /api/media/:id` per row holding an upload — every such row,
+not only the ones with no text field. The 20px thumbnail comes from the same
+document and answers "which image is this?" on a captioned row as much as on a
+bare one, so a caption does not save the request. What the text fields decide is
+the _name_; `logo-bar.logos` and `industries.clientLogos` are the two arrays
+with no other source for it.
+
+**Enforced by**: `tests/int/adminMetadata.int.spec.ts` walks every collection,
+global and block and fails any array with an `upload` child and no `RowLabel`.
+
+**Rationale**: FR-017.
 
 ---
 

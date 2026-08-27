@@ -4,20 +4,8 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
-import { Categories } from './collections/Categories'
-import { CaseStudies } from './collections/CaseStudies'
-import { Industries } from './collections/Industries'
-import { Locations } from './collections/Locations'
-import { Media } from './collections/Media'
-import { Pages } from './collections/Pages'
-import { Partners } from './collections/Partners'
-import { Posts } from './collections/Posts'
-import { ServicePillars } from './collections/ServicePillars'
-import { Services } from './collections/Services'
-import { TeamMembers } from './collections/TeamMembers'
-import { Testimonials } from './collections/Testimonials'
+import { collections } from './collections'
 import { Users } from './collections/Users'
-import { Workshops } from './collections/Workshops'
 import { Homepage } from './globals/Homepage'
 import { editorConfig } from './payload/editor/editorConfig'
 import { s3StoragePlugin } from './payload/storage/s3'
@@ -54,22 +42,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [
-    Users,
-    Media,
-    Pages,
-    Posts,
-    CaseStudies,
-    Services,
-    ServicePillars,
-    TeamMembers,
-    Testimonials,
-    Workshops,
-    Partners,
-    Industries,
-    Locations,
-    Categories,
-  ],
+  collections,
   // spec 011 T016 (FR-003/FR-005): `siteSettings` and `navigation` were
   // withdrawn. Site chrome is code-owned (ADR 0010) — see src/lib/site-content.ts.
   globals: [Homepage],
