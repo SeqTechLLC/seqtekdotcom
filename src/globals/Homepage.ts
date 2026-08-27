@@ -21,7 +21,13 @@ export const Homepage: GlobalConfig = {
       // via RenderBlocks; editors reorder/edit sections with no deploy.
       name: 'layout',
       type: 'blocks',
+      label: 'Homepage content',
+      labels: { singular: 'Block', plural: 'Blocks' },
       blocks: [...layoutBlocks],
+      admin: {
+        description:
+          'The homepage, built from blocks, top to bottom. Add a block for each band of the page; drag the handles to reorder.',
+      },
     },
   ],
 }

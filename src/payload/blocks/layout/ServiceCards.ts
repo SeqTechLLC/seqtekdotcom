@@ -2,6 +2,7 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
+import { headingField } from '../../fields/blockCopy'
 import { requiredWhen } from '../conditional'
 
 type ServiceCardsSibling = { source?: string }
@@ -11,12 +12,13 @@ export const ServiceCards: Block = {
   slug: 'service-cards',
   interfaceName: 'ServiceCardsBlock',
   labels: { singular: 'Service cards', plural: 'Service cards blocks' },
-  admin: blockAdmin('content-collection', 'service-cards', 'Service cards block preview'),
+  admin: blockAdmin('content-collection', 'service-cards', 'Service cards'),
   fields: [
-    { name: 'heading', type: 'text' },
+    headingField(),
     {
       name: 'source',
       type: 'select',
+      label: 'How to choose the services',
       required: true,
       admin: {
         // ROADMAP UI-2 review: `source` decides, and manual picks are
@@ -35,14 +37,21 @@ export const ServiceCards: Block = {
       name: 'pillar',
       type: 'relationship',
       relationTo: 'servicePillars',
-      ...requiredWhen<ServiceCardsSibling>((d) => d?.source === 'by-pillar'),
+      label: 'Which pillar',
+      ...requiredWhen<ServiceCardsSibling>((d) => d?.source === 'by-pillar', {
+        description: 'Shows every service filed under this pillar, in their sort order.',
+      }),
     },
     {
       name: 'manualItems',
       type: 'relationship',
       relationTo: 'services',
+      label: 'Services to show',
       hasMany: true,
-      ...requiredWhen<ServiceCardsSibling>((d) => d?.source === 'manual'),
+      ...requiredWhen<ServiceCardsSibling>((d) => d?.source === 'manual', {
+        description:
+          'The exact services, in the order you pick them. Only used while the source above is "Manual".',
+      }),
     },
   ],
 }

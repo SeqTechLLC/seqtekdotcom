@@ -10,12 +10,33 @@ export const InlineCta: Block = {
   labels: { singular: 'Inline CTA', plural: 'Inline CTAs' },
   admin: inlineBlockAdmin('inline-cta', 'Inline CTA icon'),
   fields: [
-    { name: 'label', type: 'text', required: true },
-    { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
+    {
+      name: 'label',
+      type: 'text',
+      label: 'Link text',
+      required: true,
+      admin: { description: 'The words the reader clicks. Two to four words reads best.' },
+    },
+    {
+      name: 'url',
+      type: 'text',
+      label: 'Destination',
+      required: true,
+      validate: safeUrlValidate,
+      admin: {
+        description:
+          'Where the button goes. A page on this site starts with a slash ("/contact"); an outside link needs the full https:// address.',
+      },
+    },
     {
       name: 'variant',
       type: 'select',
+      label: 'Link style',
       defaultValue: 'primary',
+      admin: {
+        description:
+          'How the link is drawn. All four are underlined: primary is bold and accent-colored, secondary is muted, and ghost and link are plain body text.',
+      },
       options: [
         { label: 'Primary', value: 'primary' },
         { label: 'Secondary', value: 'secondary' },

@@ -156,9 +156,61 @@ qualifies, and leaves the name as the thing you click.
 2. **Help text** — a field listed in the spec's non-obvious set MUST carry `admin.description` stating what it does and where it appears.
 3. **Variant conditionality** — a field that applies only to a subset of a block's `variant` values MUST declare `admin.condition` (via the existing `requiredWhen` helper in `src/payload/blocks/conditional.ts`), so it is hidden rather than shown blank.
 
-**Enforced by**: `tests/int/adminMetadata.int.spec.ts` for (1) and (2); a Playwright admin spec for (3), which selects each variant of each multi-variant block and asserts other-variant fields are not rendered.
+**Enforced by**: `tests/int/adminMetadata.int.spec.ts` for (1) and (2); `tests/e2e/admin/variantFields.e2e.spec.ts` for (3), which selects each option of each block's selects and asserts the rendered fields match what the config's own `condition` predicates say should be there.
 
 **Rationale**: FR-018, FR-019, FR-020.
+
+### Amendment 2026-08-27 — clause (1) as drafted cannot fail, and clause (2)'s "set" is a rule
+
+**Clause (1)** said a field fails when "its auto-generated label differs from
+its declared label by more than case and spacing **and** no `label` is
+declared". Those two conditions cannot both hold: with no `label` declared, the
+declared label **is** the auto-generated one, so they never differ. Implemented
+as written the check passes on every config, including the one the story exists
+to fix.
+
+The acceptance scenario names the real rule — "no bare Cta, Seo, Og Image, Url"
+— and it is mechanical. **A rendered label may not contain a mechanically
+title-cased acronym or brand name.** The check runs on the EFFECTIVE label
+(declared, or `toWords(name)` when none is declared), word by word, case
+sensitively, against a lexicon: `Cta`, `Seo`, `Og`, `Url`, `Id`, `Faq`, `Api`,
+`Cms`, `Html`, `Ui`, `Linkedin`, `Hubspot`, `Youtube`. So `CTA`, `SEO`, `URL`
+and `HubSpot` pass and their title-cased forms do not, and hand-typing
+`label: 'Seo'` fails just as an absent label does.
+
+**Clause (2)** deferred to "the spec's non-obvious set", which the spec never
+enumerates. Enumerating it by hand would be C5's mistake again: 200 field paths
+asserted to hold a non-empty string proves a human typed a sentence. The set is
+therefore defined by rule — a field is non-obvious when the panel cannot show
+its effect:
+
+- it declares `admin.condition` (it appears and disappears; say when), or
+- it is a `select` (its options are values; the consequence is invisible), or
+- its own name carries jargon (the clause (1) lexicon), which is the same
+  evidence that its name failed to communicate.
+
+**Both clauses skip hidden fields.** An editor cannot read help text on a
+control they never see, and ROADMAP INERT-1 hides four collections' unrouted
+metadata rather than dropping the columns. `tests/int/helpers/flattenFields.ts`
+propagates `admin.hidden` from a container to its descendants for this.
+
+### Amendment 2026-08-27 — clause (3) is not about `variant` alone
+
+Clause (3) says "a subset of a block's `variant` values". Only two blocks name
+that field `variant`; the same relationship is carried by `source`, `layout`,
+`background`, `width` and `filter` elsewhere. The rule is read as **any select
+whose value determines whether another field applies**, and the E2E derives
+which selects those are by evaluating the block's own `condition` predicates
+across each select's options — a select whose options change nothing is skipped
+rather than driven.
+
+### Amendment 2026-08-27 — a fourth clause: collapsed rows (FR-021)
+
+4. **Row identity** — every layout block MUST declare
+   `admin.components.Label`, and the name it passes MUST equal the block's own
+   `labels.singular`, so the card an editor picks in the drawer and the row
+   they get back agree. `blockAdmin()` derives both from one argument;
+   `adminMetadata.int.spec.ts` fails the pair if they drift.
 
 ---
 

@@ -82,9 +82,11 @@ before we spend more effort loading content by hand.
   expand/contract finished by dropping the retained legacy body columns, and the dead `Navigation` /
   `SiteSettings` globals settled — site chrome is code-owned now (ADR 0010). FR-008 is recorded **NOT MET**;
   its one real finding is **INERT-1** below.
-  **Still open:** US2 the 45-block picker (categories, thumbnails, disambiguating labels), US3 media thumbnails +
-  `_status` columns, US4 form legibility (labels, help text, conditional fields — INERT-1 lands here), US5
-  slug-from-title with collision handling, US6 collection grouping. Tasks T026–T065.
+  **US2 landed in PR #118** (block picker), **US3 in PR #120** (media thumbnails, `_status` columns),
+  **US4 in PR #123**: every field an editor can see now carries a written label and, where its effect is not
+  visible, help text; variant-only fields hide; collapsed block rows name themselves by their content.
+  INERT-1 is closed by it (see below).
+  **Still open:** US5 slug-from-title with collision handling, US6 collection grouping. Tasks T052–T065.
   → `specs/011-payload-admin-ux/spec.md`
 - **A-1 residual — Megan signs in, then editor training.** The multi-domain admin auth code shipped (#77,
   P5-11); what's left is a deploy, Megan's first sign-in (auto-provisions an `editor`), and a short CMS
@@ -105,6 +107,55 @@ before we spend more effort loading content by hand.
   be published by accident. Decide: ship the skeletons as empty blocks, mark skeleton text so a publish
   check can catch it, or add a "still has placeholder copy" guard to the K8 sweep. Same class as UI-2 —
   developer text reaching public copy.
+- **UI-2 leftover — `related-posts` still prints developer text.** Found by the spec 011 US4 variant audit
+  (2026-08-27). It is the one collection-backed block PR #118's `resolveLayout.ts` did not get a resolver, so a
+  block with an empty `manualItems` renders _"No manual items — falls back to category-derived list at render
+  time."_ as public body copy (`src/components/sections/RelatedPosts.tsx:26`) — the exact defect UI-2 closed for
+  the other four. It was left alone there because US4 is admin-only and FR-028 promises no rendered byte
+  changes; its help text no longer repeats the claim. **Fix:** either give it a resolver (it needs the
+  containing document's categories, which `resolveLayout`'s block-only signature does not carry today) or drop
+  the placeholder branch and render nothing.
+- **INERT-2 — controls whose renderer does nothing with them.** Opened by the spec 011 US4 variant audit
+  (2026-08-27) and widened by the PR #123 review, which read every new description against its renderer. US1
+  audited whether a _field_ had a consumer; none of these fails that test, because the consumer exists and
+  ignores the value. The help text on each now says so rather than describing behaviour that was never built:
+  - `logo-bar.source: 'from-homepage'` — an inert **option**: `LogoBar.tsx:27` maps it to an empty list, so the
+    block publishes an empty band. Same defect US1 removed from `stats-bar`. The value lives in eight Postgres
+    enum types, so withdrawing it is a migration. **Fix:** drop the option and the `source` field with it.
+  - `mission-vision-values.layout: 'tabs'` — the same shape: `MissionVisionValues.tsx:25` branches only on
+    `stacked`, so "tabs" renders exactly like "grid".
+  - `tabs` (the block) — jump links over a stack; no panel is ever hidden. Either build the tabs or rename the
+    block to what it draws.
+  - `video-embed.thumbnail` — **worse than inert**: `VideoEmbed.tsx:34` swaps the `<iframe>` for a still and a
+    non-interactive "▶ Play" span, so filling it in makes the video unplayable.
+  - `newsletter-cta` — the whole block is a placeholder: a disabled input and a caption naming
+    `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID`, an env var nothing in `src/` reads. Publishing it puts developer
+    text on the page (the UI-2 class again).
+  - `hubspot-form.submitRedirect`, `featured-testimonials.autoplay`, `posts.relatedPosts`, `media.caption`,
+    `servicePillars.order` — declared, never read. (`listServicePillars` has no callers and the
+    `service-pillar-cards` block renders its relationship in pick order, so this one is now `admin.hidden`.)
+  - `services.icon` and `process-steps.steps.icon` — read, but there is no icon set behind them:
+    `ServiceCards.tsx:36` and `ProcessSteps.tsx:29` print the raw string on the page.
+  - `hubspot-meetings` and `contact-cta.meetingUrl` — both draw a bordered placeholder printing the raw URL; no
+    Meetings embed script exists in the repo. `contact-cta`'s panel renders even when the URL is blank, printing
+    "Configure a HubSpot meetings URL to embed the scheduler" on the page.
+  - `download-card` — `newsletter-cta`'s twin, found by the second-round sweep: a disabled form, "HubSpot form
+    <id> loads in production", **and `Asset: <fileUrl>` printed in the clear**, so the gated download is neither
+    gated nor a download. Worth fixing before any of these blocks is published.
+
+  A related renderer defect, same audit: three components read fields their collection does not have —
+  `LocationsList.tsx:16` (`state`, which lives at `address.state`), `ServicePillarCards.tsx:24` (`tagline`) and
+  `WorkshopList.tsx:21` (`subtitle`). Each is a silently dead branch, not a wrong description.
+
+  **Worth a sweep**: this list came from auditing the ~120 descriptions one PR happened to touch. Nothing has
+  checked the rest of the config the same way.
+
+- **IND-1 / SVC-2 leftover — two blocks link to routes that do not exist.** Also found 2026-08-27.
+  `industry-grid` links each card to `/industries/<slug>` and `locations-list` to `/locations/<slug>`
+  (`IndustryGrid.tsx:30`, `LocationsList.tsx:37`); neither route is built, so both are 404s wherever those
+  blocks are published. `LocationsList` also reads a top-level `state` the collection does not have (it lives
+  at `address.state`), and `ServicePillarCards` reads a `tagline` that does not exist on `servicePillars` — two
+  more silent no-ops. Fold into IND-1 / SVC-2, or make the cards unlinked until the routes exist.
 - **UI-1 / UI-2 — both resolved 2026-08-25 (P5-27, P5-28).** Team cards render `title`, not the
   descriptive `role`. The four collection-backed blocks (`team-grid`, `post-list`, `case-study-grid`,
   `service-cards`) now resolve their `source`/`filter` in `src/lib/resolveLayout.ts` instead of printing
@@ -260,9 +311,10 @@ Real work, none of it blocking a launch. Ordered by expected return.
   - `services` — `seo.*` (by **SVC-2**)
 
   They were left in place rather than deleted: they are metadata sitting _ahead of_ routes the roadmap intends
-  to build, so deleting them today means re-adding them later. Until then they should be hidden from the admin
-  (`admin.hidden`) so nobody fills in a control that does nothing — a US4 form-legibility task, not a schema
-  change.
+  to build, so deleting them today means re-adding them later. **Closed 2026-08-27 by spec 011 US4 (PR #123)**:
+  all 24 are `admin.hidden`, so the columns survive for SVC-2 and IND-1 to consume while the controls are gone
+  from the panel. `admin.hidden` does not touch REST, so `tools/payload-seed` and `docs/content-drafts/*.json`
+  still write them. Un-hide each group in the same change that ships the route reading it.
 
 - **SVC-2 — put services back on a metadata collection.** _(Blocks SVC-3.)_ The `/services` fold took the wrong
   half of ADR 0009: services became bare `Page` slugs behind hardcoded lookups, so a fifth offering means

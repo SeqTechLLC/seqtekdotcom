@@ -9,30 +9,64 @@ export const MissionVisionValues: Block = {
   slug: 'mission-vision-values',
   interfaceName: 'MissionVisionValuesBlock',
   labels: { singular: 'Mission/Vision/Values', plural: 'Mission/Vision/Values blocks' },
-  admin: blockAdmin('specialty', 'mission-vision-values', 'Mission/Vision/Values block preview'),
+  admin: blockAdmin('specialty', 'mission-vision-values', 'Mission/Vision/Values'),
   fields: [
-    { name: 'mission', type: 'textarea', required: true },
-    { name: 'vision', type: 'textarea', required: true },
+    {
+      name: 'mission',
+      type: 'textarea',
+      label: 'Mission',
+      required: true,
+      admin: { description: 'What we do and who for, in the words signed off in the brand kit.' },
+    },
+    {
+      name: 'vision',
+      type: 'textarea',
+      label: 'Vision',
+      required: true,
+      admin: { description: 'Where we are going, in the words signed off in the brand kit.' },
+    },
     {
       name: 'values',
       type: 'array',
+      label: 'Values',
+      labels: { singular: 'Value', plural: 'Values' },
       required: true,
       minRows: 3,
       maxRows: 8,
+      admin: { description: 'Three to eight. Keep them to the set signed off in the brand kit.' },
       fields: [
-        { name: 'name', type: 'text', required: true },
-        { name: 'description', type: 'textarea', required: true },
+        {
+          name: 'name',
+          type: 'text',
+          label: 'Value',
+          required: true,
+          admin: { description: 'One or two words, e.g. "Ownership".' },
+        },
+        {
+          name: 'description',
+          type: 'textarea',
+          label: 'What it means here',
+          required: true,
+          admin: {
+            description: 'A sentence on how it shows up in the work, not a dictionary definition.',
+          },
+        },
       ],
     },
     {
       name: 'layout',
       type: 'select',
+      label: 'How to arrange it',
       defaultValue: 'grid',
       options: [
         { label: 'Tabs', value: 'tabs' },
         { label: 'Grid', value: 'grid' },
         { label: 'Stacked', value: 'stacked' },
       ],
+      admin: {
+        description:
+          'Grid shows the values two across; stacked runs them full width down the page. "Tabs" is not built and renders exactly like the grid (ROADMAP INERT-2).',
+      },
     },
   ],
 }

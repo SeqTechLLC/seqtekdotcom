@@ -35,8 +35,11 @@ function picker(page: Page) {
 
 async function openPicker(page: Page): Promise<void> {
   await page.goto('/admin/collections/pages/create')
+  // The button is named from the field's `labels.singular`, NOT its `label`:
+  // US4 set that to "Block" so the button reads "Add Block" rather than the
+  // generated "Add Layout" (FR-018).
   await page
-    .getByRole('button', { name: /add layout/i })
+    .getByRole('button', { name: /add block/i })
     .first()
     .click()
   await expect(picker(page)).toBeVisible()

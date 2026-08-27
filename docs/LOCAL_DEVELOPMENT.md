@@ -141,6 +141,25 @@ Accounts outside `@seqtechllc.com` and `@seqtek.com` are rejected at the OAuth c
 
 Vitest integration tests cover the Users `beforeChange` hook directly (`payload.create({ collection: 'users', ... })`) — same code path the plugin's OAuth callback invokes, no Google round-trip. Playwright E2E tests for the post-auth experience mint a session cookie via `payload.login()` and navigate `/admin` with that cookie set — no OAuth round-trip either. See spec 001 `tasks.md` for the FR-012 note on why we test the integration surface only.
 
+### Running a second dev server on another port
+
+Two Claude sessions (or a test run beside your own `npm run dev`) need two
+servers, and the second one must not use `:3100`. When you start it, set
+`NEXT_PUBLIC_SITE_URL` to match:
+
+```bash
+NEXT_PUBLIC_SITE_URL=http://localhost:3111 npx next dev --port 3111
+```
+
+Without it the admin **looks** signed in and silently does nothing: Payload
+pushes `config.serverURL` (which defaults to `http://localhost:3100`) onto
+`config.csrf`, and `extractJWT` drops the session cookie whenever the request's
+`Origin` is not on that list. Page navigations send no `Origin` and still
+authenticate; every server action — `form-state`, which is what adds a block
+row, populates an upload preview, and re-evaluates a conditional field — comes
+back `UnauthorizedError` and the UI just fails to update. Diagnosed 2026-08-27
+while verifying spec 011 US4.
+
 ### Staging and prod
 
 Production and staging read `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from AWS Parameter Store at `/seqtek/website/{env}/google_client_{id,secret}` via the EC2 instance profile. See `specs/001-google-oauth-sso/contracts/env-vars.md` for the exact path map.

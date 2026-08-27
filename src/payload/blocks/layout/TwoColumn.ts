@@ -3,34 +3,50 @@ import type { Block } from 'payload'
 import { blockAdmin } from '../blockAdmin'
 
 import { editorConfig } from '../../editor/editorConfig'
-import { safeUrlValidate } from '../../fields/url'
+import { ctaField } from '../../fields/cta'
 
 // Per BLOCK_LIBRARY.md §5.2.
 export const TwoColumn: Block = {
   slug: 'two-column',
   interfaceName: 'TwoColumnBlock',
   labels: { singular: 'Two-column', plural: 'Two-column blocks' },
-  admin: blockAdmin('content', 'two-column', 'Two-column block preview'),
+  admin: blockAdmin('content', 'two-column', 'Two-column'),
   fields: [
     {
       name: 'mediaPosition',
       type: 'select',
+      label: 'Which side the image sits on',
       required: true,
       defaultValue: 'left',
       options: [
         { label: 'Left', value: 'left' },
         { label: 'Right', value: 'right' },
       ],
+      admin: {
+        description:
+          'On a phone the columns stack in this order, so "Left" puts the image first and "Right" puts the text first. Alternate the side down a page of these so it does not read as a ladder.',
+      },
     },
-    { name: 'body', type: 'richText', required: true, editor: editorConfig },
-    { name: 'media', type: 'upload', relationTo: 'media', required: true },
     {
-      name: 'cta',
-      type: 'group',
-      fields: [
-        { name: 'label', type: 'text' },
-        { name: 'url', type: 'text', validate: safeUrlValidate },
-      ],
+      name: 'body',
+      type: 'richText',
+      label: 'Text',
+      required: true,
+      editor: editorConfig,
+      admin: { description: 'The column of prose beside the image.' },
     },
+    {
+      name: 'media',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Image',
+      required: true,
+      admin: { description: 'The image beside the text. Landscape or square.' },
+    },
+    ctaField({
+      name: 'cta',
+      label: 'Button',
+      description: 'Optional. Appears under the text column.',
+    }),
   ],
 }

@@ -502,6 +502,50 @@ await payload.updateGlobal({
 }
 ```
 
+### Required field metadata (spec 011 US4)
+
+`tests/int/adminMetadata.int.spec.ts` (contract C4) fails CI when a field an
+editor can see is not legible without knowing the schema. Three rules, checked
+mechanically over every collection, global and block:
+
+1. **No rendered label may be machine text.** Payload title-cases the field
+   name when no `label` is declared, which turns `cta` into "Cta", `ogImage`
+   into "Og Image" and `url` into "Url". The check runs on the effective label,
+   so hand-typing `label: 'Seo'` fails the same way. Write
+   `label: 'Search result and link preview'` and move on. Correctly-cased acronyms pass:
+   `CTA`, `SEO`, `URL`, `ID`, `HubSpot`, `LinkedIn`.
+2. **Non-obvious fields carry `admin.description`.** A field is non-obvious
+   when it declares `admin.condition` (it appears and disappears, so say when),
+   when it is a `select` (the options are values; the consequence is not
+   visible), or when its own name carries jargon. Write for the person filling
+   it in: what it changes, where it appears, and what happens if it is left
+   blank.
+3. **Variant-only fields declare `admin.condition`.** Use `requiredWhen()` from
+   `src/payload/blocks/conditional.ts`, and pass any other `admin` properties as
+   its **second argument** — writing `admin: { … }` as a sibling key after the
+   spread silently replaces the condition it returns.
+   `tests/e2e/admin/variantFields.e2e.spec.ts` drives each select in the browser
+   and checks the rendered fields against the config's own predicates.
+
+Anything hidden (`admin.hidden`, including a hidden container's children) is
+exempt from 1 and 2 — an editor cannot read help text on a control they never
+see.
+
+Four shapes are authored once rather than repeated. Use them instead of
+hand-rolling the fields:
+
+| Factory                                                       | File                              | Covers                                                                                        |
+| ------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `seoField({ noun, hidden })`                                  | `src/payload/fields/seo.ts`       | the `seo` group on all 10 collections                                                         |
+| `ctaField({ name, label, description, required, withStyle })` | `src/payload/fields/cta.ts`       | `cta` / `primaryCta` / `secondaryCta` on 6 blocks                                             |
+| `headingField({ required, fallback })`                        | `src/payload/fields/blockCopy.ts` | the `heading` on 29 blocks (`fallback` is the line the renderer substitutes when it is blank) |
+| `eyebrowField()`                                              | `src/payload/fields/blockCopy.ts` | the `eyebrow` on 4 blocks                                                                     |
+
+`seoField` and `ctaField` are schema-identical to the inline definitions they
+replaced: same names, same types, same `relationTo`, so Drizzle generates the
+same columns. `npm run generate:types` produced no type-line diff across the
+extraction, which is how to prove it if either is ever changed.
+
 ---
 
 ## 6. Blocks
@@ -686,8 +730,11 @@ Every layout block in this project declares its admin presentation through
 `inlineBlockAdmin()`. `tests/int/adminMetadata.int.spec.ts` fails CI otherwise. The
 checklist when adding a block:
 
-1. `admin: blockAdmin('<category>', '<slug>', '<Label> block preview')` — the category
-   must be one of the six in `src/payload/blocks/categories.ts`.
+1. `admin: blockAdmin('<category>', '<slug>', '<Label>')` — the category must be one
+   of the six in `src/payload/blocks/categories.ts`, and the third argument must be
+   the block's own `labels.singular`. That one name becomes the preview's alt text
+   AND the name on the collapsed row, so the picker card and the row agree; the
+   contract test fails the pair if they drift.
 2. Register it in the right run of `layoutBlocks` — that array is sorted by category,
    and the picker draws its headings in registration order.
 3. Give it a label that is unique, and not a substring of any sibling's label, within
@@ -699,6 +746,10 @@ checklist when adding a block:
    npm run visual:capture     # element captures per block
    npm run block:thumbnails   # 480x320 WebP into public/block-previews/
    ```
+
+   Collapsed rows name themselves from the block's content (`BlockRowLabel`), wired
+   through `blockAdmin()` — there is nothing per-block to do, but a new block does
+   need `npm run generate:importmap` like any other component change.
 
    A block that cannot be captured deterministically gets a hand-authored SVG instead.
    Declare it by passing `'svg'` as `blockAdmin()`'s fourth argument and dropping the

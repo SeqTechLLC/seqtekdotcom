@@ -9,6 +9,8 @@ import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { teamMemberSkeleton } from '../payload/seed/skeletons/teamMember'
+import { seoField } from '../payload/fields/seo'
+import { orderField } from '../payload/fields/publishing'
 
 export const TeamMembers: CollectionConfig = {
   slug: 'teamMembers',
@@ -35,14 +37,27 @@ export const TeamMembers: CollectionConfig = {
     afterChange: [revalidateOnChange('teamMembers')],
   },
   fields: [
-    { name: 'name', type: 'text', required: true },
+    {
+      name: 'name',
+      type: 'text',
+      label: 'Full name',
+      required: true,
+      admin: {
+        description: 'The name as this person writes it. Heads their card and their own page.',
+      },
+    },
     {
       name: 'slug',
       type: 'text',
+      label: 'URL path',
       required: true,
       unique: true,
       index: true,
       validate: validateSlug,
+      admin: {
+        description:
+          'The last part of the web address for this profile, for example "dana-dudley". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+      },
     },
     {
       // ROADMAP UI-1: `title` and `role` overlap enough that the grid was
@@ -66,19 +81,63 @@ export const TeamMembers: CollectionConfig = {
           'A full sentence describing what this person owns. It appears only on their own /team page, under the job title — never on the cards. Leave it blank if the job title says enough.',
       },
     },
-    { name: 'photo', type: 'upload', relationTo: 'media', required: true },
+    {
+      name: 'photo',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Headshot',
+      required: true,
+      admin: {
+        description:
+          'Landscape reads best: the cards crop it to 4:3 and the photo fills the top of the card. The compact team layout crops the same file to a circle instead.',
+      },
+    },
     {
       // spec 010 / ADR 0009: the block-composed body for the `/team/[slug]`
       // detail route. New records get the default skeleton.
       name: 'layout',
       type: 'blocks',
+      label: 'Profile page',
+      labels: { singular: 'Block', plural: 'Blocks' },
       blocks: [...layoutBlocks],
       defaultValue: teamMemberSkeleton,
+      admin: {
+        description:
+          "This person's own page, built from blocks. A new profile starts from a standard outline; replace the placeholder text in each block.",
+      },
     },
-    { name: 'linkedinUrl', type: 'text', validate: httpsUrlValidate },
-    { name: 'email', type: 'text' },
-    { name: 'isLeadership', type: 'checkbox', defaultValue: false },
-    { name: 'order', type: 'number' },
+    {
+      name: 'linkedinUrl',
+      type: 'text',
+      label: 'LinkedIn profile',
+      validate: httpsUrlValidate,
+      admin: {
+        description:
+          'The full https:// address of their LinkedIn page. Becomes the LinkedIn icon on their profile; leave blank and no icon is drawn.',
+      },
+    },
+    {
+      name: 'email',
+      type: 'text',
+      label: 'Work email',
+      admin: {
+        description:
+          'Published on their profile as a contact link, so use the address they are happy to have public.',
+      },
+    },
+    {
+      name: 'isLeadership',
+      type: 'checkbox',
+      label: 'Part of leadership',
+      defaultValue: false,
+      admin: {
+        description:
+          'Tick to include this person when a team block is set to show leadership only.',
+      },
+    },
+    orderField({
+      what: 'the team grid, after the leadership members',
+    }),
     {
       // spec 011 T011 (FR-001): NOT a legacy field. `expertise` is read by
       // `personLd` in src/lib/structured-data.ts and emitted as `knowsAbout`
@@ -90,21 +149,14 @@ export const TeamMembers: CollectionConfig = {
       name: 'expertise',
       type: 'array',
       label: 'Areas of expertise',
+      labels: { singular: 'Area', plural: 'Areas' },
       admin: {
         description:
           'Short skill or subject labels, one per row (for example "Cloud architecture", "Team facilitation"). These do not appear on the page, but search engines and AI assistants read them to understand what this person is known for.',
       },
       fields: [{ name: 'label', type: 'text', required: true, label: 'Area' }],
     },
-    {
-      // spec 010 US2: per-member metadata for the new detail route (AICO).
-      name: 'seo',
-      type: 'group',
-      fields: [
-        { name: 'metaTitle', type: 'text' },
-        { name: 'metaDescription', type: 'textarea' },
-        { name: 'ogImage', type: 'upload', relationTo: 'media' },
-      ],
-    },
+    // spec 010 US2: per-member metadata for the new detail route (AICO).
+    seoField({ noun: 'profile' }),
   ],
 }

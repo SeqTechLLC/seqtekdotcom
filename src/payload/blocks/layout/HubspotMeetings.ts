@@ -2,6 +2,7 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
+import { headingField } from '../../fields/blockCopy'
 import { httpsUrlValidate } from '../../fields/url'
 
 // Per BLOCK_LIBRARY.md §5.6. HubSpot Meetings booking embed.
@@ -9,9 +10,19 @@ export const HubspotMeetings: Block = {
   slug: 'hubspot-meetings',
   interfaceName: 'HubspotMeetingsBlock',
   labels: { singular: 'HubSpot meetings', plural: 'HubSpot meetings blocks' },
-  admin: blockAdmin('specialty', 'hubspot-meetings', 'HubSpot meetings block preview'),
+  admin: blockAdmin('specialty', 'hubspot-meetings', 'HubSpot meetings'),
   fields: [
-    { name: 'meetingUrl', type: 'text', required: true, validate: httpsUrlValidate },
-    { name: 'heading', type: 'text' },
+    {
+      name: 'meetingUrl',
+      type: 'text',
+      label: 'HubSpot scheduling link',
+      required: true,
+      validate: httpsUrlValidate,
+      admin: {
+        description:
+          'The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. The live calendar is not embedded yet: the block draws a placeholder box showing this address (ROADMAP INERT-2).',
+      },
+    },
+    headingField(),
   ],
 }

@@ -26,14 +26,27 @@ export const Categories: CollectionConfig = {
     afterChange: [revalidateOnChange('categories')],
   },
   fields: [
-    { name: 'title', type: 'text', required: true },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Topic name',
+      required: true,
+      admin: {
+        description: 'What this topic is called on a post and in a "Posts by category" block.',
+      },
+    },
     {
       name: 'slug',
       type: 'text',
+      label: 'URL path',
       required: true,
       unique: true,
       index: true,
       validate: validateSlug,
+      admin: {
+        description:
+          'The last part of the web address for this topic, for example "delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+      },
     },
   ],
 }

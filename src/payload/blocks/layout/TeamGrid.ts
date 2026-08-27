@@ -1,6 +1,7 @@
 import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
+import { headingField } from '../../fields/blockCopy'
 
 // Per BLOCK_LIBRARY.md §5.5. `filter` is resolved by `src/lib/resolveLayout.ts`
 // before the layout reaches RenderBlocks (ROADMAP UI-2) — the render component
@@ -9,12 +10,13 @@ export const TeamGrid: Block = {
   slug: 'team-grid',
   interfaceName: 'TeamGridBlock',
   labels: { singular: 'Team grid', plural: 'Team grids' },
-  admin: blockAdmin('content-collection', 'team-grid', 'Team grid block preview'),
+  admin: blockAdmin('content-collection', 'team-grid', 'Team grid'),
   fields: [
-    { name: 'heading', type: 'text' },
+    headingField(),
     {
       name: 'filter',
       type: 'select',
+      label: 'Who to show',
       required: true,
       defaultValue: 'all',
       options: [
@@ -29,16 +31,22 @@ export const TeamGrid: Block = {
     {
       name: 'layout',
       type: 'select',
+      label: 'How to draw them',
       defaultValue: 'cards',
       options: [
         { label: 'Cards', value: 'cards' },
         { label: 'Compact', value: 'compact' },
       ],
+      admin: {
+        description:
+          'Cards give each person a bordered tile with room to read. Compact fits four across and suits a long team.',
+      },
     },
     {
       name: 'manualItems',
       type: 'relationship',
       relationTo: 'teamMembers',
+      label: 'Specific people',
       hasMany: true,
       admin: {
         description:
