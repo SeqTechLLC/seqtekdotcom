@@ -68,7 +68,10 @@ async function main(): Promise<number> {
         const buf = readFileSync(path.join(HERE, 'out', c.slug, winner))
         const doc = await payload.create({
           collection: 'media',
-          data: { alt: c.alt, caption: c.caption },
+          // `media.caption` was dropped (ROADMAP INERT-2): it rendered
+          // nowhere. The caption that actually shows sits on the figure block,
+          // spliced below via `figureNode(mediaId, c.caption)`.
+          data: { alt: c.alt },
           file: { data: buf, mimetype: 'image/jpeg', name: filename, size: buf.length },
           overrideAccess: true,
         })

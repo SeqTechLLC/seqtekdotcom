@@ -2,9 +2,10 @@
 
 **Written** 2026-08-27, after PR #123 (spec 011 US4).
 
-**Status:** Lane B step 1 shipped in PR #124. Lane A (the gate) shipped in PR #125, together with all of
-Lane B and Lane D step 1 — the gate's first assertion bans placeholder copy with no allowlist, so it could
-not land green until every block that published placeholder text was fixed. Lanes C, D (2-4) and E are open.
+**Status: complete.** PR #124 (the live `contact-cta` fix) → #125 (Lane A, the gate, plus all of Lane B and
+Lane D step 1 — the gate's first assertion bans placeholder copy with no allowlist, so it could not land green
+until every block publishing placeholder text was fixed) → #126 (Lanes C and D) → #127 (Lane E, the
+migration).
 
 The gate found **24** defects on its first run, including two the hand audit missed:
 `hero.variant: 'split'` renders identically to `with-image`, and the `video-embed` thumbnail branch takes

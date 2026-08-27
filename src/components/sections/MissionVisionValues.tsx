@@ -8,7 +8,7 @@ interface MissionVisionValuesProps {
   mission: string
   vision: string
   values: ValueItem[]
-  layout?: 'tabs' | 'grid' | 'stacked' | null
+  layout?: 'grid' | 'stacked' | null
 }
 
 export function MissionVisionValues({

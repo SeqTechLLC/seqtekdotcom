@@ -7,7 +7,6 @@ interface HubspotFormProps {
   heading?: string | null
   description?: string | null
   formId: string
-  submitRedirect?: string | null
 }
 
 // Generic lead fields for content-placed `hubspot-form` blocks. When the block's

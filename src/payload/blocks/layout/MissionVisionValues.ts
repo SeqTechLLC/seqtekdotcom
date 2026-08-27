@@ -1,7 +1,5 @@
 import type { Block } from 'payload'
 
-import { outputContract } from '../outputContract'
-
 import { blockAdmin } from '../blockAdmin'
 
 // Per BLOCK_LIBRARY.md §5.6. Inline content (per-page authoring) is the
@@ -12,14 +10,6 @@ export const MissionVisionValues: Block = {
   interfaceName: 'MissionVisionValuesBlock',
   labels: { singular: 'Mission/Vision/Values', plural: 'Mission/Vision/Values blocks' },
   admin: blockAdmin('specialty', 'mission-vision-values', 'Mission/Vision/Values'),
-  custom: outputContract({
-    inert: {
-      // `MissionVisionValues.tsx:25` branches only on `stacked`, so "Tabs"
-      // renders exactly like "Grid".
-      options: { layout: ['tabs'] },
-      why: 'no tab treatment — ROADMAP INERT-2',
-    },
-  }),
   fields: [
     {
       name: 'mission',
@@ -69,13 +59,12 @@ export const MissionVisionValues: Block = {
       label: 'How to arrange it',
       defaultValue: 'grid',
       options: [
-        { label: 'Tabs', value: 'tabs' },
         { label: 'Grid', value: 'grid' },
         { label: 'Stacked', value: 'stacked' },
       ],
       admin: {
         description:
-          'Grid shows the values two across; stacked runs them full width down the page. "Tabs" is not built and renders exactly like the grid (ROADMAP INERT-2).',
+          'Grid shows the values two across; stacked runs them full width down the page.',
       },
     },
   ],

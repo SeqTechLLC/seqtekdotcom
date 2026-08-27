@@ -10,7 +10,6 @@ interface LogoItem {
 
 interface LogoBarProps {
   heading?: string | null
-  source: 'inline' | 'from-homepage'
   logos?: LogoItem[] | null
   treatment?: 'grayscale-on-color-hover' | 'color' | null
 }
@@ -18,13 +17,12 @@ interface LogoBarProps {
 const isFullMedia = (value: unknown): value is MediaLike =>
   typeof value === 'object' && value !== null && 'url' in (value as object)
 
-export function LogoBar({
-  heading,
-  source,
-  logos,
-  treatment = 'grayscale-on-color-hover',
-}: LogoBarProps) {
-  const list = source === 'inline' ? (logos ?? []) : []
+export function LogoBar({ heading, logos, treatment = 'grayscale-on-color-hover' }: LogoBarProps) {
+  // ROADMAP INERT-2 — this used to read a `source` select whose other option,
+  // "reuse the homepage set", mapped to an empty list and published an empty
+  // band. There was nothing to reuse: the `homepage` global carries only a
+  // `layout`. The select is gone, and the picked logos are the only source.
+  const list = logos ?? []
   if (list.length === 0) return null
   const imgCls =
     treatment === 'color'

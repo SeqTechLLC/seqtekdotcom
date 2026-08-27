@@ -192,10 +192,6 @@ export interface Media {
    * What this image shows, in a sentence, for someone using a screen reader. Describe the content, not the file: "Two engineers at a whiteboard", not "photo 1".
    */
   alt: string;
-  /**
-   * Nothing reads this. Blocks draw their own caption field, and the media pickers label a file by its alt text or filename, so a caption here reaches neither the page nor the picker.
-   */
-  caption?: string | null;
   prefix?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -958,21 +954,15 @@ export interface LogoBarBlock {
    */
   heading?: string | null;
   /**
-   * "Pick them here" is the only working choice. The homepage-set option is unfinished: nothing reads it, so the section renders empty.
+   * The logos to show, in the order they should read. Leave the block off the page rather than publishing it empty.
    */
-  source: 'inline' | 'from-homepage';
-  /**
-   * Only used while the source above is set to "Pick them here".
-   */
-  logos?:
-    | {
-        /**
-         * Transparent PNG or SVG where possible, so it sits on any background.
-         */
-        logo: number | Media;
-        id?: string | null;
-      }[]
-    | null;
+  logos: {
+    /**
+     * Transparent PNG or SVG where possible, so it sits on any background.
+     */
+    logo: number | Media;
+    id?: string | null;
+  }[];
   /**
    * Gray keeps a wall of mismatched brand colors calm and is the usual choice. Full color suits a short row of two or three.
    */
@@ -994,10 +984,6 @@ export interface FeaturedTestimonialsBlock {
    * Two to six quotes, drawn together as a grid in the order you pick them. Add them under Testimonials first.
    */
   testimonials: (number | Testimonial)[];
-  /**
-   * Not wired up: the carousel has not shipped, so the quotes render as a static set whichever way this is left (ROADMAP INERT-2).
-   */
-  autoplay?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'featured-testimonials';
@@ -1696,10 +1682,6 @@ export interface Post {
    */
   categories?: (number | Category)[] | null;
   /**
-   * Not wired up: no route reads this yet, so picks here change nothing on the published post (ROADMAP INERT-2).
-   */
-  relatedPosts?: (number | Post)[] | null;
-  /**
    * Used to connect the post to the work it describes. Not shown on the post itself.
    */
   relatedServices?: (number | Service)[] | null;
@@ -2166,9 +2148,9 @@ export interface MissionVisionValuesBlock {
     id?: string | null;
   }[];
   /**
-   * Grid shows the values two across; stacked runs them full width down the page. "Tabs" is not built and renders exactly like the grid (ROADMAP INERT-2).
+   * Grid shows the values two across; stacked runs them full width down the page.
    */
-  layout?: ('tabs' | 'grid' | 'stacked') | null;
+  layout?: ('grid' | 'stacked') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'mission-vision-values';
@@ -2323,10 +2305,6 @@ export interface HubspotFormBlock {
    * Which HubSpot form to embed. Copy the form ID out of HubSpot (Marketing > Forms > Share > embed code); it looks like 12345678-90ab-cdef-1234-567890abcdef.
    */
   formId: string;
-  /**
-   * Not wired up: nothing reads this yet, so a path typed here changes nothing. Set the redirect on the form in HubSpot instead (ROADMAP INERT-2).
-   */
-  submitRedirect?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'hubspot-form';
@@ -2718,7 +2696,6 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
-  caption?: T;
   prefix?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3165,7 +3142,6 @@ export interface MetricDisplayBlockSelect<T extends boolean = true> {
  */
 export interface LogoBarBlockSelect<T extends boolean = true> {
   heading?: T;
-  source?: T;
   logos?:
     | T
     | {
@@ -3183,7 +3159,6 @@ export interface LogoBarBlockSelect<T extends boolean = true> {
 export interface FeaturedTestimonialsBlockSelect<T extends boolean = true> {
   heading?: T;
   testimonials?: T;
-  autoplay?: T;
   id?: T;
   blockName?: T;
 }
@@ -3493,7 +3468,6 @@ export interface HubspotFormBlockSelect<T extends boolean = true> {
   heading?: T;
   description?: T;
   formId?: T;
-  submitRedirect?: T;
   id?: T;
   blockName?: T;
 }
@@ -3580,7 +3554,6 @@ export interface PostsSelect<T extends boolean = true> {
   featuredImage?: T;
   author?: T;
   categories?: T;
-  relatedPosts?: T;
   relatedServices?: T;
   seo?:
     | T

@@ -10,7 +10,6 @@ interface TestimonialDoc {
 interface FeaturedTestimonialsProps {
   heading?: string | null
   testimonials?: Array<TestimonialDoc | string | number> | null
-  // autoplay: deferred until the carousel ships; static stack-grid for now.
 }
 
 const isDoc = (v: unknown): v is TestimonialDoc =>

@@ -161,14 +161,5 @@ export const Media: CollectionConfig = {
         return true
       },
     },
-    {
-      name: 'caption',
-      type: 'text',
-      label: 'Caption',
-      admin: {
-        description:
-          'Nothing reads this. Blocks draw their own caption field, and the media pickers label a file by its alt text or filename, so a caption here reaches neither the page nor the picker.',
-      },
-    },
   ],
 }
