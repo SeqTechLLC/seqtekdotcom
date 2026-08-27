@@ -774,18 +774,22 @@ notably UAT, which normally runs ahead of any release. It deliberately does not
 fall back to `version`: claiming a release a lane never received is worse than
 reporting none.
 
-**You choose which build to release.** Release-Please does the paperwork — tag,
-CHANGELOG, GitHub Release — but the version must name a build that exists,
-because that is how the deploy finds the image. Tell it which one with a
-`Release-As:` footer:
+**The two version streams are independent.** Release-Please owns `main`/UAT
+versioning and the CHANGELOG; it never promotes production. Its releases are
+published by the default `GITHUB_TOKEN`, and GitHub creates no workflow run
+from events raised by that token — so a release it cuts cannot reach the
+production trigger.
+
+Production is promoted by a release **you** create, naming a build that already
+exists:
 
 ```
-git commit --allow-empty -m "chore: release 0.4.2" -m "Release-As: 0.4.2"
+gh release create v0.3.5 --title "v0.3.5" --generate-notes --target <sha>
 ```
 
-Left to itself it proposes a number derived from `feat:`/`fix:` since the last
-release, which will not generally match any build — publishing that would fail
-resolution with `image for version X not found in ECR`.
+The version is resolved against ECR, not against `main`. So `main` may already
+be at `0.3.9` while you promote `0.3.5` — that is the normal state, not a
+conflict. Neither stream constrains the other.
 
 **The lanes are meant to drift.** UAT can be many builds ahead of production;
 that is the point. Each lane points at one immutable image, and every deploy
