@@ -3,6 +3,7 @@ import type { BrowserContext } from '@playwright/test'
 import {
   attachEditorSessionToContext,
   cleanupEditorSession,
+  parseSetCookieForContext,
   type EditorSession,
 } from '../../sessions/editorSession'
 
@@ -23,6 +24,15 @@ import {
 
 export interface AdminSession extends EditorSession {
   email: string
+  /**
+   * Attach this ALREADY-MINTED session to another browser context.
+   *
+   * Prefer this in `beforeEach` over calling `useAdminSession` again: that
+   * re-seeds, and re-seeding deletes and recreates the fixture user, so every
+   * test in the file runs as a different user id and the previous test's
+   * cookie is dead the moment the next one starts.
+   */
+  attachTo: (context: BrowserContext) => Promise<void>
   /** Idempotent teardown. Safe to call more than once. */
   dispose: () => Promise<void>
 }
@@ -54,6 +64,9 @@ export async function useAdminSession(
   return {
     ...session,
     email,
+    attachTo: async (target: BrowserContext) => {
+      await target.addCookies([parseSetCookieForContext(session.cookieHeader, baseURL)])
+    },
     dispose: async () => {
       if (disposed) return
       disposed = true

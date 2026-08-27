@@ -7,6 +7,7 @@ import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenSche
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
+import { seoField } from '../payload/fields/seo'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
@@ -31,20 +32,35 @@ export const Pages: CollectionConfig = {
     {
       name: 'title',
       type: 'text',
+      label: 'Page title',
       required: true,
+      admin: {
+        description:
+          'The name of this page. It becomes the browser tab title and the default search result headline.',
+      },
     },
     {
       name: 'slug',
       type: 'text',
+      label: 'URL path',
       required: true,
       unique: true,
       index: true,
       validate: validateSlug,
+      admin: {
+        description:
+          'The last part of the web address for this page, for example "about-us". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+      },
     },
     {
       name: 'publishedAt',
       type: 'date',
-      admin: { position: 'sidebar' },
+      label: 'Publish date',
+      admin: {
+        position: 'sidebar',
+        description:
+          'The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.',
+      },
     },
     {
       // spec 011 T018 (FR-002): the legacy `hero` group was deleted. It sat at
@@ -54,16 +70,14 @@ export const Pages: CollectionConfig = {
       // (specs/011-payload-admin-ux/inventory-before.md §3).
       name: 'layout',
       type: 'blocks',
+      label: 'Page content',
+      labels: { singular: 'Block', plural: 'Blocks' },
       blocks: [...layoutBlocks],
+      admin: {
+        description:
+          'The page itself, built from blocks. Add a block for each band of content down the page; drag the handles to reorder.',
+      },
     },
-    {
-      name: 'seo',
-      type: 'group',
-      fields: [
-        { name: 'metaTitle', type: 'text' },
-        { name: 'metaDescription', type: 'textarea' },
-        { name: 'ogImage', type: 'upload', relationTo: 'media' },
-      ],
-    },
+    seoField(),
   ],
 }

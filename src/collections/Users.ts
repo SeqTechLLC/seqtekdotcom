@@ -43,12 +43,19 @@ export const Users: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+      label: 'Full name',
       required: true,
+      admin: { description: 'Shown wherever this account appears in the panel.' },
     },
     {
       name: 'roles',
       type: 'select',
+      label: 'Access level',
       hasMany: true,
+      admin: {
+        description:
+          'Editors can create, edit and publish content. Admins can do that and also add or remove accounts and delete records.',
+      },
       options: [
         { label: 'Admin', value: 'admin' },
         { label: 'Editor', value: 'editor' },

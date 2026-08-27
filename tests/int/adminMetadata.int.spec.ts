@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { promises as fs } from 'fs'
 import path from 'path'
+import { toWords } from 'payload'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -12,6 +13,7 @@ import { collections } from '../../src/collections'
 import { Homepage } from '../../src/globals/Homepage'
 import { richTextBlocks, richTextInlineBlocks } from '../../src/payload/blocks/inline'
 import { layoutBlocks } from '../../src/payload/blocks/layout'
+import { flattenAll, type FlatField } from './helpers/flattenFields'
 
 /**
  * Spec 011 US2 — contracts/admin-metadata.md C1 and C2.
@@ -393,6 +395,165 @@ describe('FR-017 — a collapsed row of media identifies itself', () => {
         field.hasRowLabel,
         'use mediaRowLabel() from src/payload/fields/mediaRowLabel.ts — without it the rows collapse to "Logo 01", "Logo 02", …',
       ).toBe(true)
+    },
+  )
+})
+
+/**
+ * Spec 011 US4 / T044 — contracts/admin-metadata.md C4, clauses (1) and (2).
+ *
+ * **C4 clause (1) is amended.** As drafted it read "a field fails if its
+ * auto-generated label differs from its declared label by more than case and
+ * spacing and no `label` is declared", which cannot fail: with no `label`
+ * declared, the declared label IS the auto-generated one, so the two never
+ * differ. What the acceptance scenario actually names is the real rule, and it
+ * is mechanical — no rendered label may contain a mechanically title-cased
+ * acronym or brand name. `toWords('ogImage')` yields "Og Image" and
+ * `toWords('cta')` yields "Cta"; a human writing the same label writes "Open
+ * Graph" and "CTA". So the check is on the EFFECTIVE label (declared or
+ * generated), which also catches someone hand-typing `label: 'Seo'`.
+ *
+ * Clause (2)'s "the spec's non-obvious set" is likewise defined by rule rather
+ * than by a hand-listed registry — a list of 200 field paths asserted to have
+ * a non-empty string is the ceremony that got C5 retracted. A field is
+ * non-obvious when the panel cannot show its effect: it appears and disappears
+ * (`admin.condition`), it is a `select` (options are values, not
+ * consequences), or its own name is jargon (the same lexicon as clause 1).
+ *
+ * Both clauses skip anything hidden: an editor cannot read help text on a
+ * control they never see, and ROADMAP INERT-1 hides four collections' unrouted
+ * metadata rather than dropping the columns.
+ */
+describe('C4 — every field is legible without schema knowledge', () => {
+  const allBlocks = [...layoutBlocks, ...richTextBlocks, ...richTextInlineBlocks]
+  const fields = flattenAll(collections, [Homepage], allBlocks).filter((f) => !f.hidden)
+
+  /**
+   * Title-cased forms Payload's `toWords` produces from names an engineer
+   * chose, mapped to what a person writes instead. Word-for-word and
+   * case-sensitive, so "CTA", "SEO" and "HubSpot" pass and "Cta", "Seo" and
+   * "Hubspot" do not.
+   */
+  const MACHINE_WORDS: Record<string, string> = {
+    Api: 'API',
+    Cms: 'CMS',
+    Cta: 'CTA',
+    Faq: 'FAQ',
+    Html: 'HTML',
+    Hubspot: 'HubSpot',
+    Id: 'ID',
+    Ids: 'IDs',
+    Linkedin: 'LinkedIn',
+    Og: 'Open Graph',
+    Seo: 'SEO',
+    Ui: 'UI',
+    Url: 'URL',
+    Urls: 'URLs',
+    Youtube: 'YouTube',
+  }
+
+  /** The same lexicon, matched against the field NAME for clause (2). */
+  const JARGON_NAMES = /(^|[a-z])(cta|seo|og|url|id|faq|api|cms|html)([A-Z]|$)/
+
+  const labelOf = (field: FlatField['field']): string => {
+    const declared = (field as { label?: unknown }).label
+    if (typeof declared === 'string') return declared
+    const name = (field as { name?: string }).name ?? ''
+    return toWords(name)
+  }
+
+  const describeField = (f: FlatField) => `${f.entity} ${f.path}`
+
+  it('the walk covers the whole config', () => {
+    // Guards the two suites below from passing vacuously if the flattener
+    // stops descending into something.
+    expect(fields.length).toBeGreaterThan(300)
+    expect(new Set(fields.map((f) => f.entity)).size).toBeGreaterThan(50)
+  })
+
+  it('no rendered label is machine text', () => {
+    const offenders: string[] = []
+    for (const f of fields) {
+      const label = labelOf(f.field)
+      const words = label.split(/[^A-Za-z]+/).filter(Boolean)
+      for (const word of words) {
+        const better = MACHINE_WORDS[word]
+        if (better) {
+          offenders.push(`${describeField(f)}: "${label}" — write "${better}", not "${word}"`)
+        }
+      }
+    }
+    expect(offenders, 'declare an explicit `label` on these fields (spec 011 FR-018)').toEqual([])
+  })
+
+  it('every rendered label is non-empty', () => {
+    const empty = fields
+      .filter((f) => labelOf(f.field).trim().length === 0)
+      .map((f) => describeField(f))
+    expect(empty).toEqual([])
+  })
+
+  it('every non-obvious field carries help text', () => {
+    const missing: string[] = []
+    for (const f of fields) {
+      const field = f.field as {
+        name?: string
+        type?: string
+        admin?: { condition?: unknown; description?: unknown }
+      }
+      const conditional = Boolean(field.admin?.condition)
+      const isSelect = field.type === 'select'
+      const jargonName = JARGON_NAMES.test(field.name ?? '')
+      if (!conditional && !isSelect && !jargonName) continue
+      if (typeof field.admin?.description === 'string' && field.admin.description.trim()) continue
+      const why = conditional
+        ? 'it appears and disappears, so say when'
+        : isSelect
+          ? 'its options are values, not consequences'
+          : 'its name is jargon'
+      missing.push(`${describeField(f)} — ${why}`)
+    }
+    expect(missing, 'add `admin.description` (spec 011 FR-019)').toEqual([])
+  })
+})
+
+/**
+ * Spec 011 US4 / T051 — FR-021, and the invariant `blockAdmin()`'s single
+ * `name` argument now rests on.
+ *
+ * That name feeds three things at once: the preview's alt text, the collapsed
+ * row's pill, and (by the C1 suite above) the picker card's own label is
+ * `labels.singular`. If the two drift, the card an editor picks and the row
+ * they get back say different things.
+ */
+describe('C4 — a collapsed block row names itself', () => {
+  it.each(layoutBlocks.map((b) => [b.slug, b] as const))(
+    '%s declares a row Label component',
+    (slug, block) => {
+      expect(
+        block.admin?.components?.Label,
+        `${slug} must build its admin with blockAdmin() so collapsed rows are identifiable`,
+      ).toBeDefined()
+    },
+  )
+
+  it.each(layoutBlocks.map((b) => [b.slug, b] as const))(
+    "%s's row label matches labels.singular",
+    (slug, block) => {
+      const label = block.admin?.components?.Label as
+        | { clientProps?: { name?: string } }
+        | undefined
+      expect(label?.clientProps?.name, `${slug} passes no name to BlockRowLabel`).toBe(
+        String(block.labels?.singular),
+      )
+    },
+  )
+
+  it.each(layoutBlocks.map((b) => [b.slug, b] as const))(
+    "%s's preview alt text is derived from the same name",
+    (slug, block) => {
+      const thumbnail = block.admin?.images?.thumbnail as ThumbnailImage
+      expect(imageAlt(thumbnail), slug).toBe(`${String(block.labels?.singular)} block preview`)
     },
   )
 })

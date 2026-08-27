@@ -12,7 +12,12 @@ export const TestimonialEmbed: Block = {
       name: 'testimonial',
       type: 'relationship',
       relationTo: 'testimonials',
+      label: 'The quote',
       required: true,
+      admin: {
+        description:
+          'Pick a testimonial already in the panel. Add it under Testimonials first if it is not there.',
+      },
     },
   ],
 }

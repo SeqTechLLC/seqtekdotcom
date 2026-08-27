@@ -2,7 +2,9 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
-import { httpsUrlValidate, safeUrlValidate } from '../../fields/url'
+import { headingField } from '../../fields/blockCopy'
+import { ctaField } from '../../fields/cta'
+import { httpsUrlValidate } from '../../fields/url'
 
 // Tasks.md T053 specialty: a CTA pointing at the contact path (book a call,
 // email, meeting embed). Distinct from cta-section because the variants
@@ -12,32 +14,36 @@ export const ContactCta: Block = {
   slug: 'contact-cta',
   interfaceName: 'ContactCtaBlock',
   labels: { singular: 'Contact CTA', plural: 'Contact CTAs' },
-  admin: blockAdmin('cta', 'contact-cta', 'Contact CTA block preview'),
+  admin: blockAdmin('cta', 'contact-cta', 'Contact CTA'),
   fields: [
-    { name: 'heading', type: 'text', required: true },
-    { name: 'body', type: 'textarea' },
+    headingField({ required: true }),
     {
+      name: 'body',
+      type: 'textarea',
+      label: 'Supporting sentence',
+      admin: {
+        description: 'Optional line under the heading saying what happens when they get in touch.',
+      },
+    },
+    ctaField({
       name: 'primaryCta',
-      type: 'group',
-      fields: [
-        { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
-      ],
-    },
-    {
+      label: 'Main button',
+      description: 'The one action this section is asking for, usually booking a call.',
+      required: true,
+    }),
+    ctaField({
       name: 'secondaryCta',
-      type: 'group',
-      fields: [
-        { name: 'label', type: 'text' },
-        { name: 'url', type: 'text', validate: safeUrlValidate },
-      ],
-    },
+      label: 'Second button',
+      description: 'An optional lighter alternative, for example emailing instead of booking.',
+    }),
     {
       name: 'meetingUrl',
       type: 'text',
+      label: 'HubSpot scheduling link',
       validate: httpsUrlValidate,
       admin: {
-        description: 'Optional HubSpot meetings URL — embeds an inline scheduler.',
+        description:
+          "Optional. Paste a HubSpot meetings address (https://meetings.hubspot.com/name) to embed that person's live calendar under the buttons.",
       },
     },
   ],

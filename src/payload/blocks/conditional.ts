@@ -9,9 +9,20 @@ type ValidateArgs = { data?: unknown; siblingData?: unknown }
  * required for a specific variant (e.g., `media` when variant is `with-image`).
  *
  * Spread directly onto the field config: `...requiredWhen(d => d?.variant === 'with-image')`.
+ *
+ * **Pass any other `admin` properties as the second argument, never as a
+ * sibling key.** A spread followed by `admin: { ... }` silently replaces the
+ * `condition` this returns, which is how `logo-bar.logos` shipped with a
+ * conditional validator and no conditional visibility: it was required only
+ * when the source was inline, yet showed unconditionally. Found by the spec
+ * 011 US4 audit (T050) and fixed by this signature.
  */
-export const requiredWhen = <TData = Record<string, unknown>>(predicate: Predicate<TData>) => ({
+export const requiredWhen = <TData = Record<string, unknown>, TAdmin extends object = object>(
+  predicate: Predicate<TData>,
+  admin: TAdmin = {} as TAdmin,
+) => ({
   admin: {
+    ...admin,
     condition: (data: unknown, siblingData: unknown) => predicate((siblingData ?? data) as TData),
   },
   validate: (value: unknown, args: ValidateArgs): true | string => {

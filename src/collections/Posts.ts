@@ -7,6 +7,7 @@ import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenSche
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
+import { seoField } from '../payload/fields/seo'
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -28,47 +29,113 @@ export const Posts: CollectionConfig = {
     afterChange: [revalidateOnChange('posts')],
   },
   fields: [
-    { name: 'title', type: 'text', required: true },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Headline',
+      required: true,
+      admin: {
+        description:
+          'The title of the post, as it appears on the insights index and the post itself.',
+      },
+    },
     {
       name: 'slug',
       type: 'text',
+      label: 'URL path',
       required: true,
       unique: true,
       index: true,
       validate: validateSlug,
+      admin: {
+        description:
+          'The last part of the web address for this post, for example "why-localshoring-works". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+      },
     },
-    { name: 'excerpt', type: 'textarea' },
-    { name: 'content', type: 'richText', editor: editorConfig },
-    { name: 'featuredImage', type: 'upload', relationTo: 'media', required: true },
-    { name: 'author', type: 'relationship', relationTo: 'teamMembers', required: true },
+    {
+      name: 'excerpt',
+      type: 'textarea',
+      label: 'Summary',
+      admin: {
+        description:
+          'One or two sentences shown on the insights index card, and used as the search result summary when the SEO section below is left blank.',
+      },
+    },
+    {
+      name: 'content',
+      type: 'richText',
+      label: 'Post body',
+      editor: editorConfig,
+      admin: {
+        description:
+          'The article. Use the slash menu to drop in a callout, a pull quote or an image between paragraphs.',
+      },
+    },
+    {
+      name: 'featuredImage',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Header image',
+      required: true,
+      admin: {
+        description:
+          'Runs across the top of the post and appears on the insights index card. Landscape.',
+      },
+    },
+    {
+      name: 'author',
+      type: 'relationship',
+      relationTo: 'teamMembers',
+      label: 'Written by',
+      required: true,
+      admin: {
+        description: 'Shown as the byline. Pick from the team members already in the panel.',
+      },
+    },
     {
       name: 'categories',
       type: 'relationship',
       relationTo: 'categories',
+      label: 'Topics',
       hasMany: true,
+      admin: {
+        description:
+          'What this post is about. Topics are how a "Posts by category" block finds it.',
+      },
     },
     {
       name: 'relatedPosts',
       type: 'relationship',
       relationTo: 'posts',
+      label: 'Read next',
       hasMany: true,
       maxRows: 3,
+      admin: {
+        description:
+          'Up to three other posts to offer at the end of this one. Leave empty to show the newest instead.',
+      },
     },
     {
       name: 'relatedServices',
       type: 'relationship',
       relationTo: 'services',
+      label: 'Services this relates to',
       hasMany: true,
+      admin: {
+        description:
+          'Used to connect the post to the work it describes. Not shown on the post itself.',
+      },
     },
+    seoField({ noun: 'post' }),
     {
-      name: 'seo',
-      type: 'group',
-      fields: [
-        { name: 'metaTitle', type: 'text' },
-        { name: 'metaDescription', type: 'textarea' },
-        { name: 'ogImage', type: 'upload', relationTo: 'media' },
-      ],
+      name: 'publishedAt',
+      type: 'date',
+      label: 'Publish date',
+      admin: {
+        position: 'sidebar',
+        description:
+          'The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.',
+      },
     },
-    { name: 'publishedAt', type: 'date', admin: { position: 'sidebar' } },
   ],
 }

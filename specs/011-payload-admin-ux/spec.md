@@ -199,9 +199,21 @@ An editor landing on the admin home sees content types grouped by purpose, with 
 **Form legibility (US4)**
 
 - **FR-018**: No field label may be a mechanically title-cased field name; all labels MUST be plain-language.
+  **Met, with the check restated 2026-08-27.** "Mechanically title-cased field name" is not decidable as
+  contract C4 first phrased it, because an undeclared label IS the title-cased name and nothing distinguishes
+  a good one ("Headline") from a bad one ("Og Image"). What is decidable, and what this requirement is
+  actually about, is the acronym: no rendered label may contain a title-cased acronym or brand name
+  (`Cta`, `Seo`, `Og`, `Url`, `Id`, `Linkedin`, `Hubspot`). See C4's amendment.
 - **FR-019**: Every field whose purpose or rendered effect is not self-evident from its label MUST carry help text.
+  **Met.** "Not self-evident" is enforced by rule rather than by a hand-listed set, for the reason FR-008 was
+  dropped: a list of field paths asserted to hold a non-empty string proves only that someone typed. A field
+  is non-obvious when it is conditional, when it is a `select`, or when its own name is jargon.
 - **FR-020**: Fields that apply only to a specific variant of a block MUST be shown only when that variant is selected.
+  **Met, and it was not met before** — `logo-bar.logos` declared the condition and lost it to a sibling
+  `admin` key, so it displayed for both sources. `tests/e2e/admin/variantFields.e2e.spec.ts` now checks the
+  rendered DOM against the config's own predicates rather than trusting the declaration.
 - **FR-021**: Collapsed block rows MUST identify themselves by their content rather than a repeated generic placeholder.
+  **Met** for all 45 layout blocks, via `BlockRowLabel` wired through `blockAdmin()`.
 
 **Record creation (US5)**
 

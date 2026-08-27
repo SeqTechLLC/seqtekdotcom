@@ -1,19 +1,24 @@
 import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
+import { eyebrowField } from '../../fields/blockCopy'
 
 // Per BLOCK_LIBRARY.md §5.6.
 export const VideoEmbed: Block = {
   slug: 'video-embed',
   interfaceName: 'VideoEmbedBlock',
   labels: { singular: 'Video embed', plural: 'Video embeds' },
-  admin: blockAdmin('specialty', 'video-embed', 'Video embed block preview', 'svg'),
+  admin: blockAdmin('specialty', 'video-embed', 'Video embed', 'svg'),
   fields: [
     {
       name: 'provider',
       type: 'select',
+      label: 'Where the video is hosted',
       required: true,
       defaultValue: 'youtube',
+      admin: {
+        description: 'Which service to embed from. It decides how the ID below is read.',
+      },
       options: [
         { label: 'YouTube', value: 'youtube' },
         { label: 'Vimeo', value: 'vimeo' },
@@ -22,6 +27,7 @@ export const VideoEmbed: Block = {
     {
       name: 'videoId',
       type: 'text',
+      label: 'Video ID',
       required: true,
       // YouTube IDs are 11 chars; Vimeo IDs are numeric up to ~10 digits.
       // The pattern blocks query-param injection (e.g. "abc?autoplay=1").
@@ -31,14 +37,34 @@ export const VideoEmbed: Block = {
           ? true
           : 'videoId must be 6–32 alphanumerics, hyphens, or underscores'
       },
+      admin: {
+        description:
+          'Just the ID, not the whole address. On YouTube it is the part after "v=" (dQw4w9WgXcQ); on Vimeo it is the digits at the end of the address.',
+      },
     },
-    { name: 'title', type: 'text', required: true },
     {
-      // Optional kicker above the card (e.g. "From the SEQTEK Podcast") —
-      // marks the video as an intentional interlude on narrative pages.
-      name: 'eyebrow',
+      name: 'title',
       type: 'text',
+      label: 'Video title',
+      required: true,
+      admin: {
+        description:
+          'Names the video for screen readers and search engines. Use the real title of the video.',
+      },
     },
-    { name: 'thumbnail', type: 'upload', relationTo: 'media' },
+    eyebrowField({
+      description:
+        'The small line above the video, e.g. "From the SEQTEK Podcast". Marks it as a deliberate interlude rather than decoration.',
+    }),
+    {
+      name: 'thumbnail',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Poster image',
+      admin: {
+        description:
+          "Optional still shown before the video plays. Leave it blank to use the host's own thumbnail.",
+      },
+    },
   ],
 }

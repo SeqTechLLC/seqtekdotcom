@@ -95,7 +95,8 @@ lives in exactly one place — the block's own `admin.group`, set through
 category from there rather than restating it, `src/payload/blocks/categories.ts` holds
 the canonical slugs and their editor-facing headings, and
 `tests/int/adminMetadata.int.spec.ts` fails CI when a block has no category, no
-preview, or a name it shares with a neighbour.
+preview, a name it shares with a neighbour, or (spec 011 US4) a field whose label reads
+as machine text or whose effect the panel cannot show.
 
 | §   | Category             | Picker heading        |
 | --- | -------------------- | --------------------- |
@@ -546,7 +547,9 @@ Under ADR 0009 every non-blog page is `RenderBlocks(layout)`. Rearranging, enric
    - Add the Payload migration for the new block tables (`<collection>_blocks_<slug>*` live **and** `_<collection>_v_blocks_<slug>*` version tables) — never `drizzle-kit push` (Constitution V). Because `layout` is the same `[...layoutBlocks]` array on every collection, the generated migration adds the block's tables for **every** collection at once.
    - Add a showcase fixture (`src/payload/seed/showcase/fixtures.ts`) and visually verify per CLAUDE.md.
      The fixture no longer declares a category — it is read from the block's `admin.group`.
-   - Give the block its admin presentation: `admin: blockAdmin('<category>', '<slug>', '<Label> block preview')`.
+   - Give the block its admin presentation: `admin: blockAdmin('<category>', '<slug>', '<Label>')`,
+     where `<Label>` is the block's own `labels.singular` — one name feeds the preview's alt text,
+     the picker card and the collapsed row's pill (spec 011 US4).
      Then build its picker preview — `npm run seed:showcase`, `npm run visual:capture`,
      `npm run block:thumbnails` — and commit the generated `public/block-previews/<slug>.webp`.
      `tests/int/adminMetadata.int.spec.ts` fails without it (ADR 0011).

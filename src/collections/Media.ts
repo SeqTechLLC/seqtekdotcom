@@ -148,7 +148,12 @@ export const Media: CollectionConfig = {
     {
       name: 'alt',
       type: 'text',
+      label: 'Alt text',
       required: true,
+      admin: {
+        description:
+          'What this image shows, in a sentence, for someone using a screen reader. Describe the content, not the file: "Two engineers at a whiteboard", not "photo 1".',
+      },
       validate: (value: unknown): true | string => {
         if (typeof value !== 'string' || value.trim().length === 0) {
           return 'Alt text is required for accessibility (FR-023)'
@@ -156,6 +161,14 @@ export const Media: CollectionConfig = {
         return true
       },
     },
-    { name: 'caption', type: 'text' },
+    {
+      name: 'caption',
+      type: 'text',
+      label: 'Caption',
+      admin: {
+        description:
+          'Optional visible caption. Only some blocks draw it, and it never replaces the alt text.',
+      },
+    },
   ],
 }

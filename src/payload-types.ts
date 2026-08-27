@@ -151,7 +151,13 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  /**
+   * Shown wherever this account appears in the panel.
+   */
   name: string;
+  /**
+   * Editors can create, edit and publish content. Admins can do that and also add or remove accounts and delete records.
+   */
   roles: ('admin' | 'editor')[];
   /**
    * Stable identifier from Google. Set on first sign-in; never edited.
@@ -182,7 +188,13 @@ export interface User {
  */
 export interface Media {
   id: number;
+  /**
+   * What this image shows, in a sentence, for someone using a screen reader. Describe the content, not the file: "Two engineers at a whiteboard", not "photo 1".
+   */
   alt: string;
+  /**
+   * Optional visible caption. Only some blocks draw it, and it never replaces the alt text.
+   */
   caption?: string | null;
   prefix?: string | null;
   updatedAt: string;
@@ -269,9 +281,21 @@ export interface Media {
  */
 export interface Page {
   id: number;
+  /**
+   * The name of this page. It becomes the browser tab title and the default search result headline.
+   */
   title: string;
+  /**
+   * The last part of the web address for this page, for example "about-us". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
+  /**
+   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   */
   publishedAt?: string | null;
+  /**
+   * The page itself, built from blocks. Add a block for each band of content down the page; drag the handles to reorder.
+   */
   layout?:
     | (
         | HeroBlock
@@ -321,9 +345,21 @@ export interface Page {
         | TechStackBlock
       )[]
     | null;
+  /**
+   * How this page looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the page title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this page's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
   updatedAt: string;
@@ -335,21 +371,63 @@ export interface Page {
  * via the `definition` "HeroBlock".
  */
 export interface HeroBlock {
+  /**
+   * What sits beside or under the words. Choosing one changes which fields below apply: "With image" and "Split" ask for an image, "With video" asks for a video address, "Text only" asks for neither.
+   */
   variant: 'text-only' | 'with-image' | 'with-video' | 'split';
+  /**
+   * The small line above the headline, in caps. Two or three words that say what kind of thing this is, e.g. "Case study".
+   */
   eyebrow?: string | null;
+  /**
+   * The first thing a visitor reads on this page. Say what we do for them, not who we are.
+   */
   headline: string;
+  /**
+   * One or two sentences under the headline. Optional.
+   */
   subheadline?: string | null;
+  /**
+   * Shown only by the "With image" and "Split" styles. Landscape, at least 1600px wide.
+   */
   media?: (number | null) | Media;
+  /**
+   * Shown only by the "With video" style. Paste the full https:// address of the YouTube or Vimeo page.
+   */
   videoUrl?: string | null;
+  /**
+   * Optional. Leave both fields empty and the hero renders without buttons.
+   */
   primaryCta?: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label?: string | null;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url?: string | null;
+    /**
+     * How the button is drawn. Use the solid one for the action you most want.
+     */
     variant?: ('primary' | 'secondary' | 'ghost') | null;
   };
+  /**
+   * Optional. Only appears when the main button is filled in too.
+   */
   secondaryCta?: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label?: string | null;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url?: string | null;
   };
+  /**
+   * Left is the default and easiest to read. Centre suits a short headline with no image.
+   */
   alignment?: ('left' | 'center') | null;
   id?: string | null;
   blockName?: string | null;
@@ -360,13 +438,34 @@ export interface HeroBlock {
  * via the `definition` "CaseStudyHeroBlock".
  */
 export interface CaseStudyHeroBlock {
+  /**
+   * The small line above the headline, in caps. Two or three words that say what kind of thing this is, e.g. "Case study".
+   */
   eyebrow: string;
+  /**
+   * The result this engagement produced, in one line.
+   */
   headline: string;
+  /**
+   * The one number this study is remembered for. It is set in large type beside the headline.
+   */
   metric: {
+    /**
+     * Written as it should read, e.g. "40%", "3x", "$1.2M".
+     */
     number: string;
+    /**
+     * A few words under the number, e.g. "faster ticket turnaround".
+     */
     label: string;
+    /**
+     * Optional smaller line, e.g. "in the first six months".
+     */
     context?: string | null;
   };
+  /**
+   * The image behind the top of the case study. Landscape, at least 1600px wide.
+   */
   heroImage: number | Media;
   id?: string | null;
   blockName?: string | null;
@@ -377,12 +476,33 @@ export interface CaseStudyHeroBlock {
  * via the `definition` "ServicePillarHeroBlock".
  */
 export interface ServicePillarHeroBlock {
+  /**
+   * The small line above the headline naming which pillar this page is, e.g. "Strategy".
+   */
   pillarName: string;
+  /**
+   * What this pillar does for a client, in a line.
+   */
   headline: string;
+  /**
+   * One or two sentences under the headline. Optional.
+   */
   subheadline?: string | null;
+  /**
+   * The image at the top of the pillar page. Landscape, at least 1600px wide.
+   */
   heroImage: number | Media;
+  /**
+   * Optional. Leave both fields empty and the hero renders without a button.
+   */
   primaryCta?: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label?: string | null;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url?: string | null;
   };
   id?: string | null;
@@ -394,16 +514,46 @@ export interface ServicePillarHeroBlock {
  * via the `definition` "HomepageHeroBlock".
  */
 export interface HomepageHeroBlock {
+  /**
+   * The small line above the headline, in caps. Two or three words that say what kind of thing this is, e.g. "Case study".
+   */
   eyebrow?: string | null;
+  /**
+   * The largest line on the site. Say what we do for a client in their words. This is the one sentence most visitors read.
+   */
   headline: string;
+  /**
+   * One or two sentences under the headline.
+   */
   subheadline?: string | null;
+  /**
+   * Sits behind the words, so pick something with quiet space where the text falls. Landscape, at least 2000px wide.
+   */
   backgroundImage?: (number | null) | Media;
+  /**
+   * The homepage asks for one thing above all. This is it.
+   */
   primaryCta: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label: string;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url: string;
   };
+  /**
+   * The softer path for a visitor who is not ready to talk yet, e.g. "See our work". Required here by design.
+   */
   secondaryCta: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label: string;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url: string;
   };
   id?: string | null;
@@ -415,7 +565,13 @@ export interface HomepageHeroBlock {
  * via the `definition` "ContentBlock".
  */
 export interface ContentBlock {
+  /**
+   * How wide the text runs. Standard is the comfortable reading width and is right nearly always; wide suits text with images or tables in it.
+   */
   width?: ('narrow' | 'standard' | 'wide') | null;
+  /**
+   * The prose of this section. Use the slash menu to drop in a callout, a pull quote, an image or an FAQ between paragraphs.
+   */
   body: {
     root: {
       type: string;
@@ -431,6 +587,9 @@ export interface ContentBlock {
     };
     [k: string]: unknown;
   };
+  /**
+   * Tints the band behind the text so it separates from the sections above and below. Use sparingly, or the page turns into stripes.
+   */
   background?: ('none' | 'subtle' | 'accent') | null;
   id?: string | null;
   blockName?: string | null;
@@ -441,7 +600,13 @@ export interface ContentBlock {
  * via the `definition` "TwoColumnBlock".
  */
 export interface TwoColumnBlock {
+  /**
+   * On a phone the image always comes first and the text follows, whichever side you pick. Alternate the side down a page of these so it does not read as a ladder.
+   */
   mediaPosition: 'left' | 'right';
+  /**
+   * The column of prose beside the image.
+   */
   body: {
     root: {
       type: string;
@@ -457,9 +622,21 @@ export interface TwoColumnBlock {
     };
     [k: string]: unknown;
   };
+  /**
+   * The image beside the text. Landscape or square.
+   */
   media: number | Media;
+  /**
+   * Optional. Appears under the text column.
+   */
   cta?: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label?: string | null;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url?: string | null;
   };
   id?: string | null;
@@ -471,9 +648,21 @@ export interface TwoColumnBlock {
  * via the `definition` "ImageBlock".
  */
 export interface ImageBlock {
+  /**
+   * Pick from Media, or upload. Alt text is set on the image itself, not here.
+   */
   image: number | Media;
+  /**
+   * Optional line under the image, shown to everyone. It does not replace alt text, which is set on the image itself.
+   */
   caption?: string | null;
+  /**
+   * How much of the page the image takes. "Full bleed" fills the whole content area, which is why alignment disappears when you choose it.
+   */
   width?: ('narrow' | 'standard' | 'wide' | 'full') | null;
+  /**
+   * Where a narrower image sits across the page. Centre keeps it on the reading axis.
+   */
   alignment?: ('center' | 'left' | 'right') | null;
   id?: string | null;
   blockName?: string | null;
@@ -484,13 +673,31 @@ export interface ImageBlock {
  * via the `definition` "GalleryBlock".
  */
 export interface GalleryBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * The pictures in this gallery, in the order you arrange them.
+   */
   items: {
+    /**
+     * Pick from Media, or upload. Landscape images sit best in a grid.
+     */
     image: number | Media;
+    /**
+     * Optional line under the image. It also names this row when the list is collapsed.
+     */
     caption?: string | null;
     id?: string | null;
   }[];
+  /**
+   * A grid shows every image at once. A carousel shows one at a time and the reader swipes, which suits a long set.
+   */
   layout?: ('grid' | 'carousel') | null;
+  /**
+   * How many fit across on a wide screen. Phones always stack. Hidden while the carousel is selected, which ignores it.
+   */
   columns?: ('2' | '3' | '4') | null;
   id?: string | null;
   blockName?: string | null;
@@ -501,10 +708,25 @@ export interface GalleryBlock {
  * via the `definition` "ProcessStepsBlock".
  */
 export interface ProcessStepsBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Two to six steps, numbered automatically in the order you arrange them.
+   */
   steps: {
+    /**
+     * A few words, e.g. "Discovery workshop".
+     */
     title: string;
+    /**
+     * One or two sentences on what we do and what the client gets.
+     */
     body: string;
+    /**
+     * Optional short icon keyword. Leave blank unless a developer has given you one.
+     */
     icon?: string | null;
     id?: string | null;
   }[];
@@ -517,8 +739,17 @@ export interface ProcessStepsBlock {
  * via the `definition` "DeliverablesBlock".
  */
 export interface DeliverablesBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Three to eight concrete things. Nouns, not promises.
+   */
   items: {
+    /**
+     * One item, e.g. "A prioritised backlog".
+     */
     label: string;
     id?: string | null;
   }[];
@@ -531,22 +762,52 @@ export interface DeliverablesBlock {
  * via the `definition` "ComparisonTableBlock".
  */
 export interface ComparisonTableBlock {
+  /**
+   * The line that introduces this section.
+   */
   heading: string;
+  /**
+   * One row here becomes one column of the table, left to right. Two to four of them.
+   */
   columns: {
+    /**
+     * The column heading, e.g. "Localshoring".
+     */
     label: string;
+    /**
+     * Optional smaller line under the column heading.
+     */
     tagline?: string | null;
     id?: string | null;
   }[];
+  /**
+   * One row per thing you are comparing the options on.
+   */
   rows: {
+    /**
+     * The label at the start of the row, e.g. "Time zone overlap".
+     */
     dimension: string;
+    /**
+     * One answer per option, in the same order as the options above. Add exactly as many as there are options or the row will not render.
+     */
     cells: {
+      /**
+       * A few words. Long sentences make the table hard to scan.
+       */
       value: string;
       id?: string | null;
     }[];
     id?: string | null;
   }[];
+  /**
+   * Optional last row saying who each option suits. Same order and count as the options above.
+   */
   bestForRow?:
     | {
+        /**
+         * A few words, e.g. "teams that need daylight overlap".
+         */
         value: string;
         id?: string | null;
       }[]
@@ -560,11 +821,29 @@ export interface ComparisonTableBlock {
  * via the `definition` "TimelineBlock".
  */
 export interface TimelineBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * At least two, drawn top to bottom in the order you arrange them.
+   */
   items: {
+    /**
+     * Free text, so "1999", "Spring 2018" and "Today" are all fine.
+     */
     date: string;
+    /**
+     * A few words. It also names this row when the list is collapsed.
+     */
     title: string;
+    /**
+     * One or two sentences on why it mattered.
+     */
     body: string;
+    /**
+     * Optional picture for this entry.
+     */
     image?: (number | null) | Media;
     id?: string | null;
   }[];
@@ -577,9 +856,21 @@ export interface TimelineBlock {
  * via the `definition` "FAQBlock".
  */
 export interface FAQBlock {
+  /**
+   * The line that introduces this section. Leave it blank and the section reads "Frequently asked questions".
+   */
   heading?: string | null;
+  /**
+   * At least two. Write the question the way a prospect would actually ask it; search engines read these and can show them directly in results.
+   */
   items: {
+    /**
+     * In the visitor's words, e.g. "How long does a discovery take?".
+     */
     question: string;
+    /**
+     * Answer it in the first sentence, then add detail.
+     */
     answer: {
       root: {
         type: string;
@@ -606,10 +897,25 @@ export interface FAQBlock {
  * via the `definition` "StatsBarBlock".
  */
 export interface StatsBarBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Three to five figures, side by side. Only numbers we can stand behind.
+   */
   items: {
+    /**
+     * Just the digits and symbol, e.g. "500" or "$1.2M".
+     */
     number: string;
+    /**
+     * A few words under the figure, e.g. "projects delivered".
+     */
     label: string;
+    /**
+     * Optional short tail set beside the figure, e.g. "+" or "yrs".
+     */
     suffix?: string | null;
     id?: string | null;
   }[];
@@ -622,9 +928,21 @@ export interface StatsBarBlock {
  * via the `definition` "MetricDisplayBlock".
  */
 export interface MetricDisplayBlock {
+  /**
+   * Written as it should read, e.g. "40%", "3x", "$1.2M". Set in very large type.
+   */
   number: string;
+  /**
+   * A few words under the number, e.g. "faster ticket turnaround".
+   */
   label: string;
+  /**
+   * Optional smaller line, e.g. "measured over the first six months".
+   */
   context?: string | null;
+  /**
+   * The colour of the band this number sits in. Alternate it from the section above.
+   */
   background?: ('accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
@@ -635,14 +953,29 @@ export interface MetricDisplayBlock {
  * via the `definition` "LogoBarBlock".
  */
 export interface LogoBarBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * "Pick them here" is the only working choice. The homepage-set option is unfinished: nothing reads it, so the section renders empty.
+   */
   source: 'inline' | 'from-homepage';
+  /**
+   * Only used while the source above is set to "Pick them here".
+   */
   logos?:
     | {
+        /**
+         * Transparent PNG or SVG where possible, so it sits on any background.
+         */
         logo: number | Media;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Grey keeps a wall of mismatched brand colours calm and is the usual choice. Full colour suits a short row of two or three.
+   */
   treatment?: ('grayscale-on-color-hover' | 'color') | null;
   id?: string | null;
   blockName?: string | null;
@@ -653,8 +986,17 @@ export interface LogoBarBlock {
  * via the `definition` "FeaturedTestimonialsBlock".
  */
 export interface FeaturedTestimonialsBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Two to six quotes, shown one at a time in the order you pick them. Add them under Testimonials first.
+   */
   testimonials: (number | Testimonial)[];
+  /**
+   * Rotates the quotes without the reader clicking. Leave it off unless the section is purely decorative, since moving text is hard to read.
+   */
   autoplay?: boolean | null;
   id?: string | null;
   blockName?: string | null;
@@ -666,12 +1008,33 @@ export interface FeaturedTestimonialsBlock {
  */
 export interface Testimonial {
   id: number;
+  /**
+   * The quote itself, without surrounding quotation marks. Keep the words as they said them; trim with an ellipsis rather than rewriting.
+   */
   quote: string;
+  /**
+   * Their full name, as it should appear under the quote.
+   */
   personName: string;
+  /**
+   * For example "VP of Operations". Shown under their name.
+   */
   personTitle?: string | null;
+  /**
+   * Where they work. Only publish it if the client has agreed to be named.
+   */
   company?: string | null;
+  /**
+   * Optional headshot. A testimonial block set to one of the "with photo" layouts falls back to text only when this is empty.
+   */
   photo?: (number | null) | Media;
+  /**
+   * The case study this quote came out of, if there is one.
+   */
   caseStudy?: (number | null) | CaseStudy;
+  /**
+   * Untick to retire a quote without deleting it. Blocks that pull testimonials automatically skip the ones not cleared.
+   */
   isActive?: boolean | null;
   updatedAt: string;
   createdAt: string;
@@ -682,17 +1045,50 @@ export interface Testimonial {
  */
 export interface CaseStudy {
   id: number;
+  /**
+   * The result, in a line. Shown on the case study index card and at the top of the study.
+   */
   title: string;
+  /**
+   * The last part of the web address for this case study, for example "taurex-eticketing". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
+  /**
+   * One sentence under the title, on the index card and in search results when the SEO section below is left blank.
+   */
   subtitle?: string | null;
+  /**
+   * What sector the client is in. A "Case studies by industry" block filters on this.
+   */
   industry: number | Industry;
+  /**
+   * Which services this engagement used. A "Case studies by service" block filters on this.
+   */
   services?: (number | Service)[] | null;
+  /**
+   * Who the work was for. Fill in what the client has agreed to have published.
+   */
   client?: {
+    /**
+     * The company name as they write it themselves.
+     */
     name?: string | null;
+    /**
+     * Their mark, for the case study header and logo walls. Transparent background where possible.
+     */
     logo?: (number | null) | Media;
+    /**
+     * Tick when the client has not approved being named. Write around the name in the body too.
+     */
     isAnonymized?: boolean | null;
   };
+  /**
+   * Runs across the top of the case study and appears on the index card. Landscape.
+   */
   heroImage: number | Media;
+  /**
+   * The study itself, built from blocks. A new case study starts from a standard outline; replace the placeholder text in each block.
+   */
   layout?:
     | (
         | HeroBlock
@@ -742,13 +1138,34 @@ export interface CaseStudy {
         | TechStackBlock
       )[]
     | null;
+  /**
+   * Pick a testimonial already in the panel. Add it to Testimonials first if it is not there.
+   */
   testimonial?: (number | null) | Testimonial;
+  /**
+   * Up to three other studies to offer at the end of this one.
+   */
   relatedCaseStudies?: (number | CaseStudy)[] | null;
+  /**
+   * How this case study looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the case study title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this case study's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
+  /**
+   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   */
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -760,7 +1177,13 @@ export interface CaseStudy {
  */
 export interface Industry {
   id: number;
+  /**
+   * What this sector is called on case studies and in an industry grid.
+   */
   title: string;
+  /**
+   * The last part of the web address for this industry, for example "oil-and-gas". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
   description?: {
     root: {
@@ -784,9 +1207,21 @@ export interface Industry {
         id?: string | null;
       }[]
     | null;
+  /**
+   * How this industry looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the industry title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this industry's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
   updatedAt: string;
@@ -799,17 +1234,50 @@ export interface Industry {
  */
 export interface Service {
   id: number;
+  /**
+   * What this service is called on service cards and case studies.
+   */
   title: string;
+  /**
+   * The last part of the web address for this service, for example "software-delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
+  /**
+   * Which of the three pillars this service sits under. A "Services by pillar" block filters on this.
+   */
   pillar: number | ServicePillar;
+  /**
+   * Optional short icon keyword used by service cards. Leave blank unless a developer has given you one.
+   */
   icon?: string | null;
+  /**
+   * Case studies that show this service delivered.
+   */
   relatedCaseStudies?: (number | CaseStudy)[] | null;
+  /**
+   * How this service looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the service title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this service's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
+  /**
+   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   */
   order?: number | null;
+  /**
+   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   */
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -821,7 +1289,13 @@ export interface Service {
  */
 export interface ServicePillar {
   id: number;
+  /**
+   * One of the three top-level groupings services sit under.
+   */
   title: string;
+  /**
+   * The last part of the web address for this pillar, for example "strategy". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
   description?: {
     root: {
@@ -839,11 +1313,26 @@ export interface ServicePillar {
     [k: string]: unknown;
   } | null;
   heroImage?: (number | null) | Media;
+  /**
+   * How this pillar looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the pillar title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this pillar's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
+  /**
+   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   */
   order?: number | null;
   updatedAt: string;
   createdAt: string;
@@ -854,7 +1343,13 @@ export interface ServicePillar {
  * via the `definition` "TestimonialBlock".
  */
 export interface TestimonialBlock {
+  /**
+   * Pick a testimonial already in the panel. Add it under Testimonials first if it is not there.
+   */
   testimonial: number | Testimonial;
+  /**
+   * The photo comes from the testimonial itself, so the two photo layouts fall back to centred when that person has no photo on file.
+   */
   layout?: ('centered' | 'with-photo-left' | 'with-photo-right') | null;
   id?: string | null;
   blockName?: string | null;
@@ -865,12 +1360,27 @@ export interface TestimonialBlock {
  * via the `definition` "ClientLogoGridBlock".
  */
 export interface ClientLogoGridBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * At least four. Only logos we have written permission to display.
+   */
   logos: {
+    /**
+     * Transparent PNG or SVG where possible, so it sits on any background.
+     */
     logo: number | Media;
+    /**
+     * Optional line under the logo. It also names this row when the list is collapsed.
+     */
     caption?: string | null;
     id?: string | null;
   }[];
+  /**
+   * How many fit across on a wide screen. Fewer columns means bigger logos. Phones always stack.
+   */
   columns?: ('3' | '4' | '6') | null;
   id?: string | null;
   blockName?: string | null;
@@ -881,18 +1391,51 @@ export interface ClientLogoGridBlock {
  * via the `definition` "CtaSectionBlock".
  */
 export interface CtaSectionBlock {
+  /**
+   * Centred stacks the text and buttons in the middle. Split puts the text left and the buttons right. Inverse reverses the colours to make it the loudest thing on the page.
+   */
   variant: 'centered' | 'split' | 'inverse';
+  /**
+   * The ask, in a line. Address the reader directly.
+   */
   headline: string;
+  /**
+   * Optional line under the headline. One sentence is plenty here.
+   */
   body?: string | null;
+  /**
+   * The action this section exists to get. Required, because the block is a call to action.
+   */
   primaryCta: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label: string;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url: string;
   };
+  /**
+   * Optional. Leave both fields empty and only the main button is drawn.
+   */
   secondaryCta?: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label?: string | null;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url?: string | null;
   };
+  /**
+   * What sits behind the section. Choosing "Image" asks for the picture below.
+   */
   background?: ('default' | 'accent' | 'image') | null;
+  /**
+   * Shown only while the background above is set to "Image". The text sits on top, so pick something with quiet space, at least 2000px wide.
+   */
   backgroundImage?: (number | null) | Media;
   id?: string | null;
   blockName?: string | null;
@@ -903,10 +1446,16 @@ export interface CtaSectionBlock {
  * via the `definition` "NewsletterCtaBlock".
  */
 export interface NewsletterCtaBlock {
+  /**
+   * The line that introduces this section. Leave it blank and the section reads "Subscribe to SEQTEK Insights".
+   */
   heading?: string | null;
+  /**
+   * Optional line saying what a subscriber gets and how often.
+   */
   body?: string | null;
   /**
-   * HubSpot form GUID. Falls back to NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID at render time.
+   * Only needed to use a different form here than the site-wide newsletter one. Leave it blank and the standard newsletter form is used.
    */
   formId?: string | null;
   id?: string | null;
@@ -918,18 +1467,42 @@ export interface NewsletterCtaBlock {
  * via the `definition` "ContactCtaBlock".
  */
 export interface ContactCtaBlock {
+  /**
+   * The line that introduces this section.
+   */
   heading: string;
+  /**
+   * Optional line under the heading saying what happens when they get in touch.
+   */
   body?: string | null;
+  /**
+   * The one action this section is asking for, usually booking a call.
+   */
   primaryCta: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label: string;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url: string;
   };
+  /**
+   * An optional lighter alternative, for example emailing instead of booking.
+   */
   secondaryCta?: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
     label?: string | null;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
     url?: string | null;
   };
   /**
-   * Optional HubSpot meetings URL — embeds an inline scheduler.
+   * Optional. Paste a HubSpot meetings address (https://meetings.hubspot.com/name) to embed that person's live calendar under the buttons.
    */
   meetingUrl?: string | null;
   id?: string | null;
@@ -941,14 +1514,29 @@ export interface ContactCtaBlock {
  * via the `definition` "CaseStudyGridBlock".
  */
 export interface CaseStudyGridBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
   /**
    * How this block picks its case studies. "Latest", "By industry" and "By service" fill themselves in and stay current as you publish; "Manual" uses exactly the studies you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
    */
   source: 'manual' | 'latest' | 'by-industry' | 'by-service';
+  /**
+   * The exact studies, in the order you pick them. Only used while the source above is "Manual".
+   */
   manualItems?: (number | CaseStudy)[] | null;
+  /**
+   * Shows the newest studies whose client is in this sector.
+   */
   industry?: (number | null) | Industry;
+  /**
+   * Shows the newest studies where we delivered this service.
+   */
   service?: (number | null) | Service;
+  /**
+   * Caps the grid at this many cards, whichever way it is filled.
+   */
   limit?: number | null;
   id?: string | null;
   blockName?: string | null;
@@ -959,12 +1547,21 @@ export interface CaseStudyGridBlock {
  * via the `definition` "ServiceCardsBlock".
  */
 export interface ServiceCardsBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
   /**
    * How this block picks its services. "By pillar" fills itself in and stays current as you publish; "Manual" uses exactly the services you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
    */
   source: 'by-pillar' | 'manual';
+  /**
+   * Shows every service filed under this pillar, in their sort order.
+   */
   pillar?: (number | null) | ServicePillar;
+  /**
+   * The exact services, in the order you pick them. Only used while the source above is "Manual".
+   */
   manualItems?: (number | Service)[] | null;
   id?: string | null;
   blockName?: string | null;
@@ -975,7 +1572,13 @@ export interface ServiceCardsBlock {
  * via the `definition` "ServicePillarCardsBlock".
  */
 export interface ServicePillarCardsBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Drawn as cards in the order you pick them. Usually all three.
+   */
   pillars: (number | ServicePillar)[];
   id?: string | null;
   blockName?: string | null;
@@ -986,7 +1589,13 @@ export interface ServicePillarCardsBlock {
  * via the `definition` "FeaturedCaseStudyBlock".
  */
 export interface FeaturedCaseStudyBlock {
+  /**
+   * The line that introduces this section. Leave it blank and the section reads "Featured case study".
+   */
   heading?: string | null;
+  /**
+   * The one study to feature here, drawn large. It must already exist and be published for visitors to reach it.
+   */
   caseStudy: number | CaseStudy;
   id?: string | null;
   blockName?: string | null;
@@ -997,13 +1606,25 @@ export interface FeaturedCaseStudyBlock {
  * via the `definition` "PostListBlock".
  */
 export interface PostListBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
   /**
    * How this block picks its posts. "Latest" and "By category" fill themselves in and stay current as you publish; "Manual" uses exactly the posts you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
    */
   source: 'latest' | 'by-category' | 'manual';
+  /**
+   * Shows the newest posts filed under this topic, and keeps up as you publish more.
+   */
   category?: (number | null) | Category;
+  /**
+   * The exact posts, in the order you pick them. Only used while the source above is "Manual".
+   */
   manualItems?: (number | Post)[] | null;
+  /**
+   * Caps the list at this many posts, whichever way it is filled.
+   */
   limit?: number | null;
   id?: string | null;
   blockName?: string | null;
@@ -1015,7 +1636,13 @@ export interface PostListBlock {
  */
 export interface Category {
   id: number;
+  /**
+   * What this topic is called on a post and in a "Posts by category" block.
+   */
   title: string;
+  /**
+   * The last part of the web address for this topic, for example "delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -1026,9 +1653,21 @@ export interface Category {
  */
 export interface Post {
   id: number;
+  /**
+   * The title of the post, as it appears on the insights index and the post itself.
+   */
   title: string;
+  /**
+   * The last part of the web address for this post, for example "why-localshoring-works". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
+  /**
+   * One or two sentences shown on the insights index card, and used as the search result summary when the SEO section below is left blank.
+   */
   excerpt?: string | null;
+  /**
+   * The article. Use the slash menu to drop in a callout, a pull quote or an image between paragraphs.
+   */
   content?: {
     root: {
       type: string;
@@ -1044,16 +1683,46 @@ export interface Post {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Runs across the top of the post and appears on the insights index card. Landscape.
+   */
   featuredImage: number | Media;
+  /**
+   * Shown as the byline. Pick from the team members already in the panel.
+   */
   author: number | TeamMember;
+  /**
+   * What this post is about. Topics are how a "Posts by category" block finds it.
+   */
   categories?: (number | Category)[] | null;
+  /**
+   * Up to three other posts to offer at the end of this one. Leave empty to show the newest instead.
+   */
   relatedPosts?: (number | Post)[] | null;
+  /**
+   * Used to connect the post to the work it describes. Not shown on the post itself.
+   */
   relatedServices?: (number | Service)[] | null;
+  /**
+   * How this post looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the post title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this post's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
+  /**
+   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   */
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1065,7 +1734,13 @@ export interface Post {
  */
 export interface TeamMember {
   id: number;
+  /**
+   * The name as this person writes it. Heads their card and their own page.
+   */
   name: string;
+  /**
+   * The last part of the web address for this profile, for example "dana-dudley". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
   /**
    * The short job title, as it appears on the team cards — for example "CTO" or "Enterprise Architect". Leave it blank and the card shows only the name.
@@ -1075,7 +1750,13 @@ export interface TeamMember {
    * A full sentence describing what this person owns. It appears only on their own /team page, under the job title — never on the cards. Leave it blank if the job title says enough.
    */
   role?: string | null;
+  /**
+   * Square or close to it. Cropped to a circle on the team cards.
+   */
   photo: number | Media;
+  /**
+   * This person's own page, built from blocks. A new profile starts from a standard outline; replace the placeholder text in each block.
+   */
   layout?:
     | (
         | HeroBlock
@@ -1125,9 +1806,21 @@ export interface TeamMember {
         | TechStackBlock
       )[]
     | null;
+  /**
+   * The full https:// address of their LinkedIn page. Becomes the LinkedIn icon on their profile; leave blank and no icon is drawn.
+   */
   linkedinUrl?: string | null;
+  /**
+   * Published on their profile as a contact link, so use the address they are happy to have public.
+   */
   email?: string | null;
+  /**
+   * Tick to include this person when a team block is set to show leadership only.
+   */
   isLeadership?: boolean | null;
+  /**
+   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   */
   order?: number | null;
   /**
    * Short skill or subject labels, one per row (for example "Cloud architecture", "Team facilitation"). These do not appear on the page, but search engines and AI assistants read them to understand what this person is known for.
@@ -1138,9 +1831,21 @@ export interface TeamMember {
         id?: string | null;
       }[]
     | null;
+  /**
+   * How this profile looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the profile title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this profile's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
   updatedAt: string;
@@ -1152,11 +1857,17 @@ export interface TeamMember {
  * via the `definition` "RelatedPostsBlock".
  */
 export interface RelatedPostsBlock {
+  /**
+   * The line that introduces this section. Leave it blank and the section reads "Related posts".
+   */
   heading?: string | null;
   /**
-   * Optional manual override; falls back to category-derived list at render time.
+   * Pick the posts to offer at the end of the page. This block does not fill itself in: leave it empty and the section has nothing to show.
    */
   manualItems?: (number | Post)[] | null;
+  /**
+   * Caps the list at this many posts.
+   */
   limit?: number | null;
   id?: string | null;
   blockName?: string | null;
@@ -1167,7 +1878,13 @@ export interface RelatedPostsBlock {
  * via the `definition` "IndustryGridBlock".
  */
 export interface IndustryGridBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * At least two, drawn as cards in the order you pick them. Add them under Industries first.
+   */
   industries: (number | Industry)[];
   id?: string | null;
   blockName?: string | null;
@@ -1178,7 +1895,13 @@ export interface IndustryGridBlock {
  * via the `definition` "LocationsListBlock".
  */
 export interface LocationsListBlock {
+  /**
+   * The line that introduces this section. Leave it blank and the section reads "Where we work".
+   */
   heading?: string | null;
+  /**
+   * Drawn as cards in the order you pick them. Add them under Locations first.
+   */
   locations: (number | Location)[];
   id?: string | null;
   blockName?: string | null;
@@ -1190,7 +1913,13 @@ export interface LocationsListBlock {
  */
 export interface Location {
   id: number;
+  /**
+   * The market name, as it appears on a "Where we work" block.
+   */
   city: string;
+  /**
+   * The last part of the web address for this market, for example "tulsa". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
   description?: {
     root: {
@@ -1214,9 +1943,21 @@ export interface Location {
     zip?: string | null;
   };
   hasOffice?: boolean | null;
+  /**
+   * How this location looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the location title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this location's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
   updatedAt: string;
@@ -1228,7 +1969,13 @@ export interface Location {
  * via the `definition` "WorkshopListBlock".
  */
 export interface WorkshopListBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Drawn as cards in the order you pick them. Add them under Workshops first.
+   */
   workshops: (number | Workshop)[];
   id?: string | null;
   blockName?: string | null;
@@ -1240,8 +1987,17 @@ export interface WorkshopListBlock {
  */
 export interface Workshop {
   id: number;
+  /**
+   * What this workshop is called, on the workshops index and its own page.
+   */
   title: string;
+  /**
+   * The last part of the web address for this workshop, for example "ai-readiness". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
+  /**
+   * The workshop page, built from blocks. A new workshop starts from a standard outline; replace the placeholder text in each block.
+   */
   layout?:
     | (
         | HeroBlock
@@ -1291,14 +2047,38 @@ export interface Workshop {
         | TechStackBlock
       )[]
     | null;
+  /**
+   * The team member who leads this workshop.
+   */
   facilitator?: (number | null) | TeamMember;
+  /**
+   * Pick a testimonial already in the panel. Add it to Testimonials first if it is not there.
+   */
   testimonial?: (number | null) | Testimonial;
+  /**
+   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   */
   order?: number | null;
+  /**
+   * How this workshop looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the workshop title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this workshop's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
+  /**
+   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   */
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1309,11 +2089,17 @@ export interface Workshop {
  * via the `definition` "TeamGridBlock".
  */
 export interface TeamGridBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
   /**
    * Which team members to show. "Leadership only" shows everyone marked as leadership; "All" shows the whole team, leadership first.
    */
   filter: 'leadership-only' | 'all';
+  /**
+   * Cards give each person a bordered tile with room to read. Compact fits four across and suits a long team.
+   */
   layout?: ('cards' | 'compact') | null;
   /**
    * Optional. Leave this empty and the filter above chooses the members. Pick people here only when you want an exact set in an exact order — your picks win over the filter.
@@ -1328,10 +2114,25 @@ export interface TeamGridBlock {
  * via the `definition` "VideoEmbedBlock".
  */
 export interface VideoEmbedBlock {
+  /**
+   * Which service to embed from. It decides how the ID below is read.
+   */
   provider: 'youtube' | 'vimeo';
+  /**
+   * Just the ID, not the whole address. On YouTube it is the part after "v=" (dQw4w9WgXcQ); on Vimeo it is the digits at the end of the address.
+   */
   videoId: string;
+  /**
+   * Names the video for screen readers and search engines. Use the real title of the video.
+   */
   title: string;
+  /**
+   * The small line above the video, e.g. "From the SEQTEK Podcast". Marks it as a deliberate interlude rather than decoration.
+   */
   eyebrow?: string | null;
+  /**
+   * Optional still shown before the video plays. Leave it blank to use the host's own thumbnail.
+   */
   thumbnail?: (number | null) | Media;
   id?: string | null;
   blockName?: string | null;
@@ -1342,13 +2143,31 @@ export interface VideoEmbedBlock {
  * via the `definition` "MissionVisionValuesBlock".
  */
 export interface MissionVisionValuesBlock {
+  /**
+   * What we do and who for, in the words signed off in the brand kit.
+   */
   mission: string;
+  /**
+   * Where we are going, in the words signed off in the brand kit.
+   */
   vision: string;
+  /**
+   * Three to eight. Keep them to the set signed off in the brand kit.
+   */
   values: {
+    /**
+     * One or two words, e.g. "Ownership".
+     */
     name: string;
+    /**
+     * A sentence on how it shows up in the work, not a dictionary definition.
+     */
     description: string;
     id?: string | null;
   }[];
+  /**
+   * A grid shows everything at once and is the safe choice. Tabs hide all but one at a time. Stacked runs them full width down the page.
+   */
   layout?: ('tabs' | 'grid' | 'stacked') | null;
   id?: string | null;
   blockName?: string | null;
@@ -1359,9 +2178,21 @@ export interface MissionVisionValuesBlock {
  * via the `definition` "AccordionBlock".
  */
 export interface AccordionBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Each row is a closed panel a reader clicks to open. Use it for detail most readers will skip.
+   */
   items: {
+    /**
+     * The line the reader clicks. Keep it short enough to scan.
+     */
     title: string;
+    /**
+     * What appears when the panel is opened.
+     */
     body: string;
     id?: string | null;
   }[];
@@ -1374,9 +2205,21 @@ export interface AccordionBlock {
  * via the `definition` "TabsBlock".
  */
 export interface TabsBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Two to six tabs. Only one is visible at a time, so do not put anything essential in the ones after the first.
+   */
   tabs: {
+    /**
+     * One or two words on the tab itself.
+     */
     label: string;
+    /**
+     * What appears when this tab is selected.
+     */
     body: string;
     id?: string | null;
   }[];
@@ -1389,9 +2232,21 @@ export interface TabsBlock {
  * via the `definition` "MapBlock".
  */
 export interface MapBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * The embed address from OpenStreetMap or Google Maps ("Share > Embed a map", then copy the src address). Other hosts are refused and the block shows a notice instead.
+   */
   embedUrl: string;
+  /**
+   * Optional line under the map, e.g. the street address.
+   */
   caption?: string | null;
+  /**
+   * How tall the map is, in pixels, between 200 and 800.
+   */
   height?: number | null;
   id?: string | null;
   blockName?: string | null;
@@ -1402,9 +2257,21 @@ export interface MapBlock {
  * via the `definition` "EmbedBlock".
  */
 export interface EmbedBlock {
+  /**
+   * Describes the embedded page for screen readers, e.g. "SEQTEK delivery survey". Not drawn on screen.
+   */
   title: string;
+  /**
+   * The full https:// address of the page to show in a frame. It must be a page that allows embedding; many sites refuse.
+   */
   url: string;
+  /**
+   * Optional visible line under the frame.
+   */
   caption?: string | null;
+  /**
+   * How tall the frame is, in pixels, between 200 and 1200. The embedded page scrolls inside it if it is longer.
+   */
   height?: number | null;
   id?: string | null;
   blockName?: string | null;
@@ -1415,15 +2282,24 @@ export interface EmbedBlock {
  * via the `definition` "DownloadCardBlock".
  */
 export interface DownloadCardBlock {
+  /**
+   * The name of the guide, template or report, as it appears on the card.
+   */
   title: string;
+  /**
+   * One or two sentences on what the reader gets. This is what earns the form fill.
+   */
   description: string;
+  /**
+   * A picture of the thing itself, e.g. the report cover. Portrait or square reads best.
+   */
   coverImage: number | Media;
   /**
-   * HubSpot form GUID for the gated download.
+   * The form the reader fills in to get the file. Copy the form ID out of HubSpot (Marketing > Forms > Share > embed code); it looks like 12345678-90ab-cdef-1234-567890abcdef.
    */
   formId: string;
   /**
-   * S3 URL to the asset (or other allow-listed host).
+   * The full https:// address of the file the reader receives after submitting the form. Upload it to Media first and paste its address here.
    */
   fileUrl: string;
   id?: string | null;
@@ -1435,11 +2311,20 @@ export interface DownloadCardBlock {
  * via the `definition` "HubspotFormBlock".
  */
 export interface HubspotFormBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
+  /**
+   * Optional line above the form saying what happens after they submit it.
+   */
   description?: string | null;
+  /**
+   * Which HubSpot form to embed. Copy the form ID out of HubSpot (Marketing > Forms > Share > embed code); it looks like 12345678-90ab-cdef-1234-567890abcdef.
+   */
   formId: string;
   /**
-   * Optional thank-you page path on successful submit.
+   * Where to send someone after they submit, e.g. "/thank-you". Leave blank to keep them on this page with the form's own confirmation message.
    */
   submitRedirect?: string | null;
   id?: string | null;
@@ -1451,7 +2336,13 @@ export interface HubspotFormBlock {
  * via the `definition` "HubspotMeetingsBlock".
  */
 export interface HubspotMeetingsBlock {
+  /**
+   * The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. Embeds that person's live calendar.
+   */
   meetingUrl: string;
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
   heading?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1462,10 +2353,25 @@ export interface HubspotMeetingsBlock {
  * via the `definition` "BrandTeaserBlock".
  */
 export interface BrandTeaserBlock {
+  /**
+   * The big line of this section.
+   */
   headline: string;
+  /**
+   * Two or three sentences under the headline.
+   */
   body: string;
+  /**
+   * The words of the link, e.g. "Read our story".
+   */
   linkLabel: string;
+  /**
+   * Where the link goes. A page on this site starts with a slash; the default is our story page.
+   */
   linkUrl: string;
+  /**
+   * Optional picture beside the text. Landscape reads best here.
+   */
   image?: (number | null) | Media;
   id?: string | null;
   blockName?: string | null;
@@ -1476,10 +2382,25 @@ export interface BrandTeaserBlock {
  * via the `definition` "NavCardsBlock".
  */
 export interface NavCardsBlock {
+  /**
+   * Two to four cards sending the reader on to another page.
+   */
   cards: {
+    /**
+     * Where this card goes, e.g. "Case studies". It also names the row when collapsed.
+     */
     title: string;
+    /**
+     * One sentence on what the reader finds there.
+     */
     description: string;
+    /**
+     * Optional picture at the top of the card. Landscape.
+     */
     image?: (number | null) | Media;
+    /**
+     * Where the card goes. A page on this site starts with a slash, e.g. "/case-studies".
+     */
     linkUrl: string;
     id?: string | null;
   }[];
@@ -1492,8 +2413,17 @@ export interface NavCardsBlock {
  * via the `definition` "KeyTakeawaysBlock".
  */
 export interface KeyTakeawaysBlock {
+  /**
+   * The line that introduces this section. Leave it blank and the section reads "Key takeaways".
+   */
   heading?: string | null;
+  /**
+   * Three to six points a reader should leave with. Put this near the top of a long piece so a skimmer gets the argument.
+   */
   items: {
+    /**
+     * One point, in a full sentence.
+     */
     label: string;
     id?: string | null;
   }[];
@@ -1506,11 +2436,20 @@ export interface KeyTakeawaysBlock {
  * via the `definition` "TechStackBlock".
  */
 export interface TechStackBlock {
+  /**
+   * The line that introduces this section. Leave it blank and the section reads "Technologies".
+   */
   heading?: string | null;
+  /**
+   * The tools and platforms used, drawn as a row of tags.
+   */
   items: {
+    /**
+     * The technology as its makers spell it, e.g. "PostgreSQL", ".NET".
+     */
     label: string;
     /**
-     * Optional link to a service page or external reference.
+     * Optional. Makes the tag clickable: a page on this site starts with a slash, an outside reference needs the full https:// address.
      */
     linkUrl?: string | null;
     id?: string | null;
@@ -1525,20 +2464,29 @@ export interface TechStackBlock {
  */
 export interface Partner {
   id: number;
+  /**
+   * The partner company name, as they write it themselves.
+   */
   name: string;
+  /**
+   * The last part of the web address for this partner, for example "microsoft". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
   slug: string;
   /**
-   * One or two sentences. Used on the /partners index card.
+   * One or two sentences on what we do together. Shown on the partners index card and used as the search result summary when the SEO section below is left blank.
    */
   summary?: string | null;
   /**
-   * The partner's own mark, for the index card.
+   * The partner's own mark, for the index card. Transparent PNG or SVG where possible.
    */
   logo: number | Media;
   /**
-   * The partner's website. Rendered as an outbound link.
+   * The partner's own website, as a full https:// address. Rendered as a link that opens off this site.
    */
   url?: string | null;
+  /**
+   * The partner page, built from blocks. A new partner starts from a standard outline; replace the placeholder text in each block.
+   */
   layout?:
     | (
         | HeroBlock
@@ -1588,11 +2536,29 @@ export interface Partner {
         | TechStackBlock
       )[]
     | null;
+  /**
+   * Lowest number first wherever these are listed together. Leave blank and the list falls back to alphabetical.
+   */
   order?: number | null;
+  /**
+   * The date shown on the page and used to order listings. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   */
   publishedAt?: string | null;
+  /**
+   * How this partner looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
   seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the partner title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
     metaTitle?: string | null;
+    /**
+     * The grey summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank to fall back to this partner's own summary, then the company tagline.
+     */
     metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
     ogImage?: (number | null) | Media;
   };
   updatedAt: string;
@@ -3101,6 +4067,9 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface Homepage {
   id: number;
+  /**
+   * The homepage, built from blocks, top to bottom. Add a block for each band of the page; drag the handles to reorder.
+   */
   layout?:
     | (
         | HeroBlock
@@ -3228,7 +4197,13 @@ export interface CollectionsWidget {
  * via the `definition` "CalloutBlock".
  */
 export interface CalloutBlock {
+  /**
+   * Sets the colour and the icon. Warning is the loudest, so save it for something a reader would regret missing.
+   */
   tone: 'info' | 'tip' | 'warning' | 'note';
+  /**
+   * A sentence or two set apart from the surrounding paragraphs.
+   */
   body: string;
   id?: string | null;
   blockName?: string | null;
@@ -3239,7 +4214,13 @@ export interface CalloutBlock {
  * via the `definition` "ImageWithCaptionBlock".
  */
 export interface ImageWithCaptionBlock {
+  /**
+   * Pick from Media, or upload. Alt text is set on the image itself, not here.
+   */
   image: number | Media;
+  /**
+   * Optional line under the image, shown to everyone.
+   */
   caption?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -3250,7 +4231,13 @@ export interface ImageWithCaptionBlock {
  * via the `definition` "FigureBlock".
  */
 export interface FigureBlock {
+  /**
+   * Pick from Media, or upload. Alt text is set on the image itself, not here.
+   */
   image: number | Media;
+  /**
+   * Required here, because this block exists for images that need explaining. Use the plain image block instead when there is nothing to say.
+   */
   caption: string;
   id?: string | null;
   blockName?: string | null;
@@ -3261,7 +4248,13 @@ export interface FigureBlock {
  * via the `definition` "QuotePullquoteBlock".
  */
 export interface QuotePullquoteBlock {
+  /**
+   * The line to lift out of the surrounding text, without quotation marks. It is set large, so keep it to a sentence or two.
+   */
   quote: string;
+  /**
+   * Optional name and title under the quote. Leave blank when lifting a line from the article itself.
+   */
   attribution?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -3272,6 +4265,9 @@ export interface QuotePullquoteBlock {
  * via the `definition` "TestimonialEmbedBlock".
  */
 export interface TestimonialEmbedBlock {
+  /**
+   * Pick a testimonial already in the panel. Add it under Testimonials first if it is not there.
+   */
   testimonial: number | Testimonial;
   id?: string | null;
   blockName?: string | null;
@@ -3282,7 +4278,13 @@ export interface TestimonialEmbedBlock {
  * via the `definition` "DisclosureBlock".
  */
 export interface DisclosureBlock {
+  /**
+   * The line the reader sees and clicks to open, e.g. "How we price this".
+   */
   summary: string;
+  /**
+   * What appears when it is opened. It starts closed, so nothing essential should live only in here.
+   */
   body: string;
   id?: string | null;
   blockName?: string | null;
@@ -3293,8 +4295,17 @@ export interface DisclosureBlock {
  * via the `definition` "InlineCtaBlock".
  */
 export interface InlineCtaBlock {
+  /**
+   * The words on the button. Two to four words reads best.
+   */
   label: string;
+  /**
+   * Where the button goes. A page on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+   */
   url: string;
+  /**
+   * How the button is drawn. "Link" is the quietest and suits a button set inside a paragraph.
+   */
   variant?: ('primary' | 'secondary' | 'ghost' | 'link') | null;
   id?: string | null;
   blockName?: string | null;

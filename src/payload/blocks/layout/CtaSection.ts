@@ -2,7 +2,7 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
-import { safeUrlValidate } from '../../fields/url'
+import { ctaField } from '../../fields/cta'
 import { requiredWhen } from '../conditional'
 
 type CtaSibling = { background?: string }
@@ -11,11 +11,12 @@ export const CtaSection: Block = {
   slug: 'cta-section',
   interfaceName: 'CtaSectionBlock',
   labels: { singular: 'CTA section', plural: 'CTA sections' },
-  admin: blockAdmin('cta', 'cta-section', 'CTA section block preview'),
+  admin: blockAdmin('cta', 'cta-section', 'CTA section'),
   fields: [
     {
       name: 'variant',
       type: 'select',
+      label: 'Section style',
       required: true,
       defaultValue: 'centered',
       options: [
@@ -23,40 +24,59 @@ export const CtaSection: Block = {
         { label: 'Split', value: 'split' },
         { label: 'Inverse', value: 'inverse' },
       ],
+      admin: {
+        description:
+          'Centred stacks the text and buttons in the middle. Split puts the text left and the buttons right. Inverse reverses the colours to make it the loudest thing on the page.',
+      },
     },
-    { name: 'headline', type: 'text', required: true },
-    { name: 'body', type: 'textarea' },
     {
+      name: 'headline',
+      type: 'text',
+      label: 'Headline',
+      required: true,
+      admin: { description: 'The ask, in a line. Address the reader directly.' },
+    },
+    {
+      name: 'body',
+      type: 'textarea',
+      label: 'Supporting sentence',
+      admin: { description: 'Optional line under the headline. One sentence is plenty here.' },
+    },
+    ctaField({
       name: 'primaryCta',
-      type: 'group',
-      fields: [
-        { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true, validate: safeUrlValidate },
-      ],
-    },
-    {
+      label: 'Main button',
+      description:
+        'The action this section exists to get. Required, because the block is a call to action.',
+      required: true,
+    }),
+    ctaField({
       name: 'secondaryCta',
-      type: 'group',
-      fields: [
-        { name: 'label', type: 'text' },
-        { name: 'url', type: 'text', validate: safeUrlValidate },
-      ],
-    },
+      label: 'Second button',
+      description: 'Optional. Leave both fields empty and only the main button is drawn.',
+    }),
     {
       name: 'background',
       type: 'select',
+      label: 'Background',
       defaultValue: 'default',
       options: [
         { label: 'Default', value: 'default' },
         { label: 'Accent', value: 'accent' },
         { label: 'Image', value: 'image' },
       ],
+      admin: {
+        description: 'What sits behind the section. Choosing "Image" asks for the picture below.',
+      },
     },
     {
       name: 'backgroundImage',
       type: 'upload',
       relationTo: 'media',
-      ...requiredWhen<CtaSibling>((d) => d?.background === 'image'),
+      label: 'Background image',
+      ...requiredWhen<CtaSibling>((d) => d?.background === 'image', {
+        description:
+          'Shown only while the background above is set to "Image". The text sits on top, so pick something with quiet space, at least 2000px wide.',
+      }),
     },
   ],
 }
