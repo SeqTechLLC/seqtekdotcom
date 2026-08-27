@@ -189,6 +189,8 @@ Returning `null` (rather than a broken URL) for non-image uploads, and for any r
 
 **Which URL the resolver returns** (decided 2026-08-27): the derivative's own stored `/api/media/file/<filename>` path, **not** the CloudFront `/media/*` URL from `mediaFileURL`. The CDN URL is what the public site renders and would be the cheaper fetch, but it is built from the document's storage `prefix`, and Payload narrows the list-view query to `{ mimeType, thumbnailURL, sizes.* }` (`appendUploadSelectFields`) — `prefix` is not in that set, so the CDN URL is unbuildable exactly where the thumbnails are needed most. The stored path resolves on every lane: against the filesystem locally and in CI, and through the S3 static handler on the deployed lanes, which is the same route the admin already uses for the full-size preview on the edit screen.
 
+**Rationale**: FR-015, FR-016. Clarified 2026-08-21: **no dedicated thumbnail size is added.** Measured on the real photo library, the existing 640px derivative averages 53 KB against 16 KB for a 300px thumbnail, so a 20-item picker costs ~1.04 MB versus ~0.32 MB — a 3.3× saving on an edge-cached internal screen, which does not justify a ninth derivative on every upload plus a backfill migration (research R7).
+
 ### C6a — a collapsed row of media identifies itself (FR-017)
 
 ```ts
@@ -203,14 +205,17 @@ a text field the editor filled in on the row, then the linked media's alt text,
 then its filename, then Payload's numbering. It renders the `adminThumbnail`
 image beside the name, so the row answers "which image is this?" too.
 
-Only the two arrays that are nothing but an upload (`logo-bar.logos`,
-`industries.clientLogos`) reach the fetch; the other four are named from a
-sibling `caption` or `title` with no request at all.
+**Cost**: one `GET /api/media/:id` per row holding an upload — every such row,
+not only the ones with no text field. The 20px thumbnail comes from the same
+document and answers "which image is this?" on a captioned row as much as on a
+bare one, so a caption does not save the request. What the text fields decide is
+the _name_; `logo-bar.logos` and `industries.clientLogos` are the two arrays
+with no other source for it.
 
 **Enforced by**: `tests/int/adminMetadata.int.spec.ts` walks every collection,
 global and block and fails any array with an `upload` child and no `RowLabel`.
 
-**Rationale**: FR-015, FR-016. Clarified 2026-08-21: **no dedicated thumbnail size is added.** Measured on the real photo library, the existing 640px derivative averages 53 KB against 16 KB for a 300px thumbnail, so a 20-item picker costs ~1.04 MB versus ~0.32 MB — a 3.3× saving on an edge-cached internal screen, which does not justify a ninth derivative on every upload plus a backfill migration (research R7).
+**Rationale**: FR-017.
 
 ---
 

@@ -2,8 +2,8 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
-import { requiredWhen } from '../conditional'
 import { mediaRowLabel } from '../../fields/mediaRowLabel'
+import { requiredWhen } from '../conditional'
 
 type LogoBarSibling = { source?: string }
 

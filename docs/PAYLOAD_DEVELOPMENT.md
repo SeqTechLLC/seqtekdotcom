@@ -282,7 +282,7 @@ import { mediaRowLabel } from '../payload/fields/mediaRowLabel'
     components: {
       RowLabel: mediaRowLabel({
         singular: 'Logo',              // matches the array's own singular label
-        textFields: ['caption'],       // tried first, in order — no request needed
+        textFields: ['caption'],       // tried first, in order, for the name
         uploadField: 'logo',           // fallback: the media's alt, then its filename
       }),
     },
@@ -295,8 +295,10 @@ import { mediaRowLabel } from '../payload/fields/mediaRowLabel'
 ```
 
 `MediaRowLabel` renders the `adminThumbnail` image beside the name, so the row answers
-"which image is this?" without expanding. `adminMetadata.int.spec.ts` fails any array
-with an `upload` child and no `RowLabel`.
+"which image is this?" without expanding. That costs one `GET /api/media/:id` per row
+holding an upload — every such row, since the thumbnail needs the document whether or
+not a caption already names the row. `adminMetadata.int.spec.ts` fails any array with an
+`upload` child and no `RowLabel`.
 
 ---
 

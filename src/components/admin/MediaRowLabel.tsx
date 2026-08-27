@@ -17,12 +17,14 @@ import React from 'react'
  *   2. the linked media's alt text, then its filename;
  *   3. Payload's numbered fallback, so a half-filled row still renders.
  *
- * Step 2 costs one `GET /api/media/:id` per row with no text field, which is
- * why the text fields are tried first: only `logo-bar` and
- * `industries.clientLogos` — the two arrays that are nothing but an upload —
- * reach it. The thumbnail comes from the same request, so it is free once the
- * name is being fetched, and it is `adminThumbnail`'s output (T041) rather
- * than the full-size original.
+ * **Cost**: one `GET /api/media/:id` per row that holds an upload — every such
+ * row, not only the ones step 1 cannot name. The 20px thumbnail comes from the
+ * same document, and it is what answers "which image is this?" on a captioned
+ * row as much as on a bare one, so the request is not avoidable by finding a
+ * caption. What the text fields buy is the *name*: `logo-bar.logos` and
+ * `industries.clientLogos`, the two arrays that are nothing but an upload,
+ * have no other source for it. The image is `adminThumbnail`'s output (T041),
+ * not the full-size original.
  */
 
 export interface MediaRowLabelProps {

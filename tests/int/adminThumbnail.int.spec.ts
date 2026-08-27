@@ -47,18 +47,49 @@ const withDerivative = {
 }
 
 /**
- * An image narrower than the smallest breakpoint: `withoutEnlargement` leaves
- * every derivative unwritten, so the size group exists with null members.
+ * A legacy upload from before `imageSizes` was declared: the size group exists
+ * on the schema but every member is null, because nothing has ever re-uploaded
+ * the file to generate derivatives. `ResponsiveImage.tsx` carries the same case
+ * on the render side.
+ *
+ * Note this is NOT what a small image looks like — see `smallSource` below.
  */
 const withoutUsableDerivative = {
   id: 91,
-  filename: 'favicon-source.png',
+  filename: 'legacy-upload.png',
   mimeType: 'image/png',
-  url: '/api/media/file/favicon-source.png',
+  url: '/api/media/file/legacy-upload.png',
   width: 180,
   sizes: {
     mobile_webp: { url: null, width: null, filename: null },
     mobile_jpeg: { url: null, width: null, filename: null },
+  },
+}
+
+/**
+ * An image narrower than the smallest breakpoint. `withoutEnlargement: true`
+ * means Payload writes the derivative anyway, at the source's own dimensions —
+ * it does NOT skip it (that is the `undefined` default). Verified against the
+ * local mirror: all 78 records carry a `mobile_webp`, and the 220px client
+ * logos hold `client-logo-quiktrip-220x220.webp`.
+ *
+ * This fixture exists because the opposite is an easy thing to assume, and
+ * assuming it argues for a `doc.width <= 640 → doc.url` fallback that would be
+ * dead code — and unreachable anyway, since the list view does not select the
+ * top-level `url`.
+ */
+const smallSource = {
+  id: 93,
+  filename: 'client-logo-quiktrip.png',
+  mimeType: 'image/png',
+  url: '/api/media/file/client-logo-quiktrip.png',
+  width: 220,
+  sizes: {
+    mobile_webp: {
+      url: '/api/media/file/client-logo-quiktrip-220x220.webp',
+      width: 220,
+      filename: 'client-logo-quiktrip-220x220.webp',
+    },
   },
 }
 
@@ -91,6 +122,15 @@ describe('C6 — media always previews', () => {
 
   it('returns null, not a broken URL, when no derivative was generated', () => {
     expect(mediaAdminThumbnail({ doc: withoutUsableDerivative })).toBeNull()
+  })
+
+  it('previews an image narrower than the smallest breakpoint', () => {
+    // withoutEnlargement: true writes the derivative at the source's own size,
+    // so small raster logos — the asset class the row labels target — preview
+    // like anything else. No width-based fallback is needed.
+    expect(mediaAdminThumbnail({ doc: smallSource })).toBe(
+      '/api/media/file/client-logo-quiktrip-220x220.webp',
+    )
   })
 
   it('returns null for a record with no sizes group at all', () => {
