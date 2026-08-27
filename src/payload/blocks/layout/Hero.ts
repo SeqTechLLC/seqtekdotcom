@@ -1,7 +1,5 @@
 import type { Block } from 'payload'
 
-import { outputContract } from '../outputContract'
-
 import { blockAdmin } from '../blockAdmin'
 
 import { eyebrowField } from '../../fields/blockCopy'
@@ -16,20 +14,6 @@ export const Hero: Block = {
   interfaceName: 'HeroBlock',
   labels: { singular: 'Hero (standard page)', plural: 'Heroes (standard page)' },
   admin: blockAdmin('hero', 'hero', 'Hero (standard page)'),
-  custom: outputContract({
-    inert: {
-      options: {
-        // `Hero.tsx:76` draws the image for `with-image || split` on one
-        // branch, so "Split" is "With image" under another name.
-        variant: ['split'],
-        // `Hero.tsx:99` hardcodes `bg-accent-strong text-white`; the variant is
-        // declared on the CTA type and never destructured, so all three draw
-        // the same button.
-        'primaryCta.variant': ['secondary', 'ghost'],
-      },
-      why: 'no split layout and no button variants — ROADMAP INERT-2',
-    },
-  }),
   fields: [
     {
       name: 'variant',
@@ -39,7 +23,7 @@ export const Hero: Block = {
       defaultValue: 'text-only',
       admin: {
         description:
-          'What sits beside or under the words. Choosing one changes which fields below apply: "With image" and "Split" ask for an image, "With video" asks for a video address, "Text only" asks for neither.',
+          'What sits beside or under the words. "With image" puts the picture under the copy at full width, "Split" sets it alongside; both ask for an image. "With video" asks for a video address, "Text only" asks for neither.',
       },
       options: [
         { label: 'Text only', value: 'text-only' },

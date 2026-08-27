@@ -4,7 +4,6 @@ interface PillarDoc {
   id?: string | number
   title?: string | null
   slug?: string | null
-  tagline?: string | null
 }
 
 interface ServicePillarCardsProps {
@@ -32,14 +31,11 @@ export function ServicePillarCards({
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ul className="mt-8 grid gap-6 md:grid-cols-3">
           {docs.map((p) => {
-            const card = (
-              <>
-                <CardHeading className="text-h3 font-semibold">{p.title}</CardHeading>
-                {p.tagline ? (
-                  <p className="mt-3 text-body text-text-secondary">{p.tagline}</p>
-                ) : null}
-              </>
-            )
+            // ROADMAP INERT-2 — a second line used to read `p.tagline`, which
+            // `servicePillars` does not have (its one-liner is richText
+            // `description`, and its plain-text summary is `seo.metaDescription`).
+            // The branch never fired, so the card has always been title-only.
+            const card = <CardHeading className="text-h3 font-semibold">{p.title}</CardHeading>
             return (
               <li
                 key={p.id ?? p.slug}

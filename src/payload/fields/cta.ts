@@ -70,12 +70,12 @@ export const ctaField = ({
   const style: SelectField = {
     name: 'variant',
     type: 'select',
-    label: 'Button style (not wired up)',
+    label: 'Button style',
     defaultValue: 'primary',
     options: BUTTON_STYLES,
     admin: {
       description:
-        'Not wired up: the hero draws a solid accent button whichever of these is chosen (ROADMAP INERT-2).',
+        'How much weight the button carries: solid for the one thing you want clicked, outlined for a real but lesser option, text-only when it should not compete with the page.',
     },
   }
 

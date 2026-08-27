@@ -128,8 +128,17 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
      */
     const states: Array<Record<string, unknown>> = [{}]
     for (const { path, field } of leaves) {
-      if (field.type !== 'select') continue
-      for (const option of selectOptions(field).slice(1)) states.push({ [path]: option })
+      if (field.type === 'select') {
+        for (const option of selectOptions(field).slice(1)) states.push({ [path]: option })
+        continue
+      }
+      // An optional image can also switch a branch off: `video-embed`'s poster
+      // stands in front of the player until it is clicked, so with one set the
+      // provider and video id do not reach the first paint at all. Leaving it
+      // out is a state an author reaches, so the gate has to look there too.
+      if (field.type === 'upload' && !(field as { required?: boolean }).required) {
+        states.push({ [path]: null })
+      }
     }
 
     // ---- 1. No placeholder text reaches a reader. No exceptions. ------------
@@ -234,41 +243,62 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
         (path, field) => {
           const declaredInert = new Set(inertOptions[path] ?? [])
           const options = selectOptions(field)
-          const byOption = new Map<string, string>()
-
-          for (const option of options) {
-            const rendered = html(block, synthesizeBlock(block, { overrides: { [path]: option } }))
-            if (!declaredInert.has(option)) {
-              expect(
-                rendered.trim().length,
-                `"${slug}.${path}" option "${option}" renders nothing at all — an editor who picks it loses the section`,
-              ).toBeGreaterThan(0)
-            }
-            byOption.set(option, rendered)
-          }
-
-          // A declared-inert option is understood to be a duplicate of a live
-          // one, so it is not itself evidence that the live option is a lie —
-          // otherwise declaring two of three identical options would leave the
-          // third failing and the set undeclarable.
           const live = options.filter((o) => !declaredInert.has(o))
 
-          for (const option of live) {
-            const twin = live.find((o) => o !== option && byOption.get(o) === byOption.get(option))
+          // Same reasoning as the perturbation check: an option can only tell
+          // itself apart under the right sibling settings. `video-embed`'s
+          // provider is invisible while a poster stands in front of the
+          // player, so the options are judged in whichever state separates
+          // them, not only in the baseline.
+          const perState = states.map((overrides) => {
+            const byOption = new Map<string, string>()
+            for (const option of options) {
+              byOption.set(
+                option,
+                html(
+                  block,
+                  synthesizeBlock(block, { overrides: { ...overrides, [path]: option } }),
+                ),
+              )
+            }
+            return byOption
+          })
+
+          const drawn = (byOption: Map<string, string>, option: string): boolean =>
+            (byOption.get(option) ?? '').trim().length > 0
+          const twinOf = (byOption: Map<string, string>, option: string): string | undefined =>
+            live.find((o) => o !== option && byOption.get(o) === byOption.get(option))
+
+          const separates = perState.find(
+            (byOption) =>
+              live.every((o) => drawn(byOption, o)) &&
+              live.every((o) => twinOf(byOption, o) === undefined),
+          )
+
+          if (!separates) {
+            // Report against the baseline, which is the state a reader of the
+            // failure will go and look at.
+            const baseline = perState[0]
+            const blank = live.find((o) => !drawn(baseline, o))
             expect(
-              twin,
-              `"${slug}.${path}" options "${option}" and "${twin}" render identical HTML, so one of them is a lie in the picker`,
+              blank,
+              `"${slug}.${path}" option "${blank}" renders nothing at all — an editor who picks it loses the section`,
+            ).toBeUndefined()
+            const doubled = live.find((o) => twinOf(baseline, o) !== undefined)
+            expect(
+              doubled,
+              `"${slug}.${path}" options "${doubled}" and "${doubled && twinOf(baseline, doubled)}" render identical HTML in every state, so one of them is a lie in the picker`,
             ).toBeUndefined()
           }
 
           for (const option of declaredInert) {
-            const stillDead =
-              byOption.get(option)?.trim() === '' ||
-              live.some((o) => byOption.get(o) === byOption.get(option))
+            const standsAlone = perState.some(
+              (byOption) => drawn(byOption, option) && twinOf(byOption, option) === undefined,
+            )
             expect(
-              stillDead,
+              standsAlone,
               `"${slug}.${path}" option "${option}" is declared inert but now renders on its own — delete it from the block's outputContract`,
-            ).toBe(true)
+            ).toBe(false)
           }
         },
       )

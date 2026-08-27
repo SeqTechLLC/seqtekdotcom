@@ -23,7 +23,7 @@ export const Tabs: Block = {
       maxRows: 6,
       admin: {
         description:
-          'Two to six sections with jump links above them. They are NOT tabs today: every section renders stacked down the page and the links scroll to one (ROADMAP INERT-2).',
+          'Two to six sections behind a row of tabs. One is shown at a time and the reader switches between them, so this suits alternatives a reader compares rather than steps they read in order.',
       },
       fields: [
         {
@@ -31,14 +31,16 @@ export const Tabs: Block = {
           type: 'text',
           label: 'Section name',
           required: true,
-          admin: { description: 'One or two words. It becomes the jump link and the heading.' },
+          admin: { description: 'One or two words. It becomes the tab itself, so keep it short.' },
         },
         {
           name: 'body',
           type: 'textarea',
           label: 'Section content',
           required: true,
-          admin: { description: 'The prose under that heading. It is always visible.' },
+          admin: {
+            description: 'The prose behind that tab. It is shown when the reader picks it.',
+          },
         },
       ],
     },

@@ -1,3 +1,7 @@
+'use client'
+
+import { useId, useRef, useState } from 'react'
+
 interface Tab {
   id?: string | null
   label: string
@@ -9,33 +13,91 @@ interface TabsProps {
   tabs: Tab[]
 }
 
-// Server-rendered static representation: labels as anchors, all panels
-// visible. Phase 3 can ship a client-side variant when an actual tab strip
-// is desired (use of <ViewTransition> is a reasonable upgrade path).
+/**
+ * ROADMAP INERT-2 — this block is called "tabs" and used to draw jump links
+ * over a stack in which every panel was visible, so the name promised
+ * something the page did not do. It now shows one panel at a time.
+ *
+ * Keyboard behaviour follows the ARIA tabs pattern: left/right move between
+ * tabs, home/end jump to the ends, and only the selected tab is in the tab
+ * order so a keyboard user tabs past the strip into the panel rather than
+ * through every label.
+ */
 export function Tabs({ heading, tabs }: TabsProps) {
+  const [active, setActive] = useState(0)
+  const base = useId()
+  const buttons = useRef<Array<HTMLButtonElement | null>>([])
+
+  if (tabs.length === 0) return null
+
+  const select = (index: number) => {
+    const next = (index + tabs.length) % tabs.length
+    setActive(next)
+    buttons.current[next]?.focus()
+  }
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const moves: Record<string, number> = {
+      ArrowRight: index + 1,
+      ArrowLeft: index - 1,
+      Home: 0,
+      End: tabs.length - 1,
+    }
+    const next = moves[event.key]
+    if (next === undefined) return
+    event.preventDefault()
+    select(next)
+  }
+
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
-        <nav aria-label="Tabs" className="mt-6 flex flex-wrap gap-2 border-b border-border-subtle">
-          {tabs.map((t, i) => (
-            <a
-              key={t.id ?? i}
-              href={`#tab-${t.id ?? i}`}
-              className="rounded-t-md border-b-2 border-transparent px-3 py-2 text-small font-medium text-text-secondary hover:border-accent-strong hover:text-text-primary"
-            >
-              {t.label}
-            </a>
-          ))}
-        </nav>
-        <div className="mt-6 space-y-8">
-          {tabs.map((t, i) => (
-            <div key={t.id ?? i} id={`tab-${t.id ?? i}`}>
-              <h3 className="text-h4 font-semibold">{t.label}</h3>
-              <p className="mt-2 text-body text-text-secondary">{t.body}</p>
-            </div>
-          ))}
+        <div
+          role="tablist"
+          aria-label={heading ?? 'Sections'}
+          className="mt-6 flex flex-wrap gap-2 border-b border-border-subtle"
+        >
+          {tabs.map((t, i) => {
+            const selected = i === active
+            return (
+              <button
+                key={t.id ?? i}
+                ref={(el) => {
+                  buttons.current[i] = el
+                }}
+                type="button"
+                role="tab"
+                id={`${base}-tab-${i}`}
+                aria-selected={selected}
+                aria-controls={`${base}-panel-${i}`}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => setActive(i)}
+                onKeyDown={(event) => onKeyDown(event, i)}
+                className={`-mb-px rounded-t-md border-b-2 px-3 py-2 text-small font-medium transition ${
+                  selected
+                    ? 'border-accent-strong text-text-primary'
+                    : 'border-transparent text-text-secondary hover:border-border-strong hover:text-text-primary'
+                }`}
+              >
+                {t.label}
+              </button>
+            )
+          })}
         </div>
+        {tabs.map((t, i) => (
+          <div
+            key={t.id ?? i}
+            role="tabpanel"
+            id={`${base}-panel-${i}`}
+            aria-labelledby={`${base}-tab-${i}`}
+            tabIndex={0}
+            hidden={i !== active}
+            className="mt-6"
+          >
+            <p className="text-body text-text-secondary">{t.body}</p>
+          </div>
+        ))}
       </div>
     </section>
   )
