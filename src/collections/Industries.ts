@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
+import { mediaRowLabel } from '../payload/fields/mediaRowLabel'
 import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { editorConfig } from '../payload/editor/editorConfig'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
@@ -10,7 +11,7 @@ export const Industries: CollectionConfig = {
   slug: 'industries',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug'],
+    defaultColumns: ['title', '_status', 'slug'],
   },
   access: {
     read: publishedOrAuthed,
@@ -44,6 +45,11 @@ export const Industries: CollectionConfig = {
     {
       name: 'clientLogos',
       type: 'array',
+      admin: {
+        components: {
+          RowLabel: mediaRowLabel({ singular: 'Client logo', uploadField: 'logo' }),
+        },
+      },
       fields: [{ name: 'logo', type: 'upload', relationTo: 'media', required: true }],
     },
     {

@@ -14,7 +14,7 @@ export const CaseStudies: CollectionConfig = {
   labels: { singular: 'Case study', plural: 'Case studies' },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'industry', 'updatedAt'],
+    defaultColumns: ['title', '_status', 'slug', 'industry', 'updatedAt'],
     livePreview: livePreviewFor('caseStudies'),
   },
   access: {

@@ -2,6 +2,7 @@ import {
   APIError,
   type CollectionBeforeOperationHook,
   type CollectionConfig,
+  type GetAdminThumbnail,
   type ImageSize,
 } from 'payload'
 
@@ -59,6 +60,49 @@ const BREAKPOINTS = [
   { name: 'wide', width: 2400 },
 ] as const
 
+/**
+ * The derivative the admin previews from: the smallest WebP already generated
+ * for every record. Derived from BREAKPOINTS rather than hard-coded so adding
+ * a smaller breakpoint moves the thumbnail with it.
+ */
+const THUMBNAIL_SIZE = `${[...BREAKPOINTS].sort((a, b) => a.width - b.width)[0].name}_webp`
+
+interface StoredSize {
+  url?: unknown
+}
+
+/**
+ * spec 011 US3 / FR-015, FR-016 / contracts/admin-metadata.md C6.
+ *
+ * Payload leaves `thumbnailURL` null unless `upload.adminThumbnail` is set, so
+ * every media picker and list row fell back to whatever the client could infer
+ * — in practice, nothing. This resolves the preview server-side from the
+ * `mobile_webp` derivative all 78 existing records already carry, so no new
+ * `imageSize` is introduced and no media is re-processed (research R7:
+ * derivatives are generated at upload time only, so a newly declared size
+ * would leave every existing record exactly as blank as it is now).
+ *
+ * Returns the derivative's own stored URL rather than the CloudFront
+ * `/media/*` URL from `mediaFileURL`. That path is tempting — it is what the
+ * public site renders — but it needs the doc's storage `prefix`, and Payload's
+ * list view narrows its query to `{ mimeType, thumbnailURL, sizes.* }`
+ * (`appendUploadSelectFields`), so `prefix` is simply absent there. The stored
+ * `/api/media/file/<filename>` path resolves on every lane: locally against the
+ * filesystem, and in the deployed lanes through the S3 static handler the admin
+ * already uses for the full-size preview on the edit screen.
+ *
+ * `null` — never a guessed URL — for non-images and for any record missing the
+ * derivative, so Payload falls back to its file-type glyph (FR-016).
+ */
+export const mediaAdminThumbnail: GetAdminThumbnail = ({ doc }) => {
+  const mimeType = doc.mimeType
+  if (typeof mimeType !== 'string' || !mimeType.startsWith('image/')) return null
+
+  const sizes = doc.sizes as Record<string, StoredSize | null | undefined> | null | undefined
+  const url = sizes?.[THUMBNAIL_SIZE]?.url
+  return typeof url === 'string' && url.length > 0 ? url : null
+}
+
 const imageSizes: ImageSize[] = BREAKPOINTS.flatMap(({ name, width }) => [
   {
     name: `${name}_webp`,
@@ -88,6 +132,7 @@ export const Media: CollectionConfig = {
     focalPoint: true,
     filesRequiredOnCreate: true,
     imageSizes,
+    adminThumbnail: mediaAdminThumbnail,
   },
   hooks: {
     beforeOperation: [enforceMaxFileSize],

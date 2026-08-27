@@ -3,6 +3,7 @@ import type { Block } from 'payload'
 import { blockAdmin } from '../blockAdmin'
 
 import { requiredWhen } from '../conditional'
+import { mediaRowLabel } from '../../fields/mediaRowLabel'
 
 type LogoBarSibling = { source?: string }
 
@@ -28,6 +29,9 @@ export const LogoBar: Block = {
       name: 'logos',
       type: 'array',
       ...requiredWhen<LogoBarSibling>((d) => d?.source === 'inline'),
+      admin: {
+        components: { RowLabel: mediaRowLabel({ singular: 'Logo', uploadField: 'logo' }) },
+      },
       fields: [{ name: 'logo', type: 'upload', relationTo: 'media', required: true }],
     },
     {

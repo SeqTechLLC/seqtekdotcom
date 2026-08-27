@@ -15,7 +15,7 @@ export const TeamMembers: CollectionConfig = {
   labels: { singular: 'Team member', plural: 'Team members' },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'title', 'isLeadership', 'order'],
+    defaultColumns: ['name', '_status', 'title', 'isLeadership', 'order'],
     livePreview: livePreviewFor('teamMembers'),
   },
   // spec 010 US2 (Phase E, R6/R7): teamMembers gains drafts + a public

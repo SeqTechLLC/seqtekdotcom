@@ -12,7 +12,7 @@ export const Posts: CollectionConfig = {
   slug: 'posts',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'publishedAt', 'updatedAt'],
+    defaultColumns: ['title', '_status', 'slug', 'publishedAt', 'updatedAt'],
     livePreview: livePreviewFor('posts'),
   },
   access: {

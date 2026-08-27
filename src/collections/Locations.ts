@@ -10,7 +10,7 @@ export const Locations: CollectionConfig = {
   slug: 'locations',
   admin: {
     useAsTitle: 'city',
-    defaultColumns: ['city', 'slug', 'hasOffice'],
+    defaultColumns: ['city', '_status', 'slug', 'hasOffice'],
   },
   access: {
     read: publishedOrAuthed,

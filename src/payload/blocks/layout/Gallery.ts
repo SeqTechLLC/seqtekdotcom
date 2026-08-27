@@ -2,6 +2,8 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
+import { mediaRowLabel } from '../../fields/mediaRowLabel'
+
 // 1..N image gallery block (spec 010 / ADR 0009 gap-fill, FR-005) — the
 // "add a one-to-many picture section to any page layout" block. Workshop
 // `photos[]` migrates here; one-off figures use `image`. Captions + alt come
@@ -18,6 +20,15 @@ export const Gallery: Block = {
       type: 'array',
       required: true,
       minRows: 1,
+      admin: {
+        components: {
+          RowLabel: mediaRowLabel({
+            singular: 'Image',
+            textFields: ['caption'],
+            uploadField: 'image',
+          }),
+        },
+      },
       fields: [
         { name: 'image', type: 'upload', relationTo: 'media', required: true },
         { name: 'caption', type: 'text' },

@@ -12,7 +12,7 @@ export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'updatedAt'],
+    defaultColumns: ['title', '_status', 'slug', 'updatedAt'],
     livePreview: livePreviewFor('pages'),
   },
   access: {

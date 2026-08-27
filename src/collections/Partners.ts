@@ -22,7 +22,7 @@ export const Partners: CollectionConfig = {
   labels: { singular: 'Partner', plural: 'Partners' },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'url', 'order', 'updatedAt'],
+    defaultColumns: ['name', '_status', 'url', 'order', 'updatedAt'],
     livePreview: livePreviewFor('partners'),
   },
   // Same `editorial-draftable` tier as teamMembers/pages: anon reads published

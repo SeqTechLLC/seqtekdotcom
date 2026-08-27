@@ -3,6 +3,7 @@ import type { Block } from 'payload'
 import { blockAdmin } from '../blockAdmin'
 
 import { safeUrlValidate } from '../../fields/url'
+import { mediaRowLabel } from '../../fields/mediaRowLabel'
 
 // Per BLOCK_LIBRARY.md §5.6. 3-up navigation cards (about-landing pattern).
 export const NavCards: Block = {
@@ -17,6 +18,15 @@ export const NavCards: Block = {
       required: true,
       minRows: 2,
       maxRows: 4,
+      admin: {
+        components: {
+          RowLabel: mediaRowLabel({
+            singular: 'Card',
+            textFields: ['title'],
+            uploadField: 'image',
+          }),
+        },
+      },
       fields: [
         { name: 'title', type: 'text', required: true },
         { name: 'description', type: 'textarea', required: true },

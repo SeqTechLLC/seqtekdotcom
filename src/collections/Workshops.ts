@@ -13,7 +13,7 @@ export const Workshops: CollectionConfig = {
   slug: 'workshops',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'order'],
+    defaultColumns: ['title', '_status', 'slug', 'order'],
     livePreview: livePreviewFor('workshops'),
   },
   access: {
