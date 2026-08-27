@@ -706,7 +706,7 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           data: {
             blockType: 'contact-cta',
             heading: 'Get in touch',
-            body: 'No HubSpot meetings URL: the fallback card shows.',
+            body: 'No HubSpot meetings URL: the section collapses to one full-width column.',
             primaryCta: { label: 'Contact us', url: '/contact' },
           },
         },
