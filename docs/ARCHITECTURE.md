@@ -780,12 +780,30 @@ published by the default `GITHUB_TOKEN`, and GitHub creates no workflow run
 from events raised by that token — so a release it cuts cannot reach the
 production trigger.
 
-Production is promoted by a release **you** create, naming a build that already
-exists:
+Production is promoted from the **Actions UI** — Deploy → Run workflow →
+`env: prod`, and a `target` naming what to promote. The target accepts any of:
+
+| you type            | resolved as                        |
+| ------------------- | ---------------------------------- |
+| `0.3.5` or `v0.3.5` | the image tagged with that version |
+| `4af4a49`           | short commit SHA                   |
+| `4af4a492f751…`     | full commit SHA                    |
+| `main`              | that branch's current commit       |
+
+All four land on **one existing ECR image**, and production runs that exact
+digest. Nothing is built, UAT is untouched, and no commit is made. The workflow
+also adds the `vX.Y.Z` tag to that digest and records a GitHub Release as the
+promotion's receipt.
+
+If a selector does not resolve to exactly one image, the run **stops and shows
+the candidates** rather than guessing:
 
 ```
-gh release create v0.3.5 --title "v0.3.5" --generate-notes --target <sha>
+image for version 0.4.0 not found in ECR
 ```
+
+Publishing a GitHub Release yourself is the other route to the same job — the
+release's tag supplies the version, and no `target` is needed.
 
 The version is resolved against ECR, not against `main`. So `main` may already
 be at `0.3.9` while you promote `0.3.5` — that is the normal state, not a
