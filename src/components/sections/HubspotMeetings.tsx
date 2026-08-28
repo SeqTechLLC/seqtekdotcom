@@ -1,4 +1,5 @@
 import { BookingCompleteSeam } from '@/components/analytics/BookingCompleteSeam'
+import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
 
 interface HubspotMeetingsProps {
   meetingUrl: string
@@ -28,14 +29,17 @@ export function HubspotMeetings({ meetingUrl, heading }: HubspotMeetingsProps) {
           <p className="text-body-lg text-text-secondary">
             Pick a slot that suits you and we will send the invitation.
           </p>
-          <a
+          <TrackedCtaLink
             href={meetingUrl}
+            ctaId="hubspot-meetings-booking"
+            location="hubspot-meetings"
+            label="See available times"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
           >
             See available times
-          </a>
+          </TrackedCtaLink>
         </div>
       </div>
     </section>

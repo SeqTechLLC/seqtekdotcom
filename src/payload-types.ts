@@ -2299,7 +2299,7 @@ export interface DownloadCardBlock {
    */
   formId: string;
   /**
-   * The full https:// address of the file. It appears only after the form is sent, so this is what the form is trading for. Anyone who fills the form in gets the link, so treat it as shareable rather than secret.
+   * The full https:// address of the file. The form hides it from the page, but it is still present in the page source, so treat this as a public link: the form is a courtesy step that most people will take, not a lock. Do not put anything here you would not publish outright.
    */
   fileUrl: string;
   id?: string | null;

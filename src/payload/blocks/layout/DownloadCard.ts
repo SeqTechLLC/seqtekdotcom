@@ -15,8 +15,10 @@ export const DownloadCard: Block = {
   custom: outputContract({
     behavioural: {
       formId: 'submit target — src/lib/hubspot/submit.ts',
-      // Deliberately absent from the initial paint: revealing it there is what
-      // made the gated asset ungated. It arrives in the form's success panel.
+      // Absent from what the block PAINTS: it arrives in the form's success
+      // panel. Note this is not the same as being hidden — it crosses the
+      // server/client boundary as a prop, so it is in the RSC payload in the
+      // page source either way. See the note on DownloadCard.tsx.
       fileUrl: 'revealed in the success panel — HubspotLeadForm successCta',
     },
   }),
@@ -70,7 +72,7 @@ export const DownloadCard: Block = {
       validate: httpsUrlValidate,
       admin: {
         description:
-          'The full https:// address of the file. It appears only after the form is sent, so this is what the form is trading for. Anyone who fills the form in gets the link, so treat it as shareable rather than secret.',
+          'The full https:// address of the file. The form hides it from the page, but it is still present in the page source, so treat this as a public link: the form is a courtesy step that most people will take, not a lock. Do not put anything here you would not publish outright.',
       },
     },
   ],

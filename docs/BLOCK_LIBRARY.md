@@ -405,9 +405,12 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 | `formId`      | text     | yes      | HubSpot form GUID for gated download |
 | `fileUrl`     | text     | yes      | S3 URL to the asset                  |
 
-> **Really gated (PR #125, ROADMAP INERT-2):** the block used to draw a disabled form and print
-> `Asset: <fileUrl>` beside it, so the asset was neither gated nor downloadable. It now mounts the shared
-> `HubspotLeadForm`; `fileUrl` reaches the page only in the form's success panel.
+> **A courtesy gate, not a real one (PR #125, ROADMAP INERT-2):** the block used to draw a disabled form and
+> print `Asset: <fileUrl>` beside it, so the asset was neither gated nor downloadable. It now mounts the shared
+> `HubspotLeadForm` and reveals the link in the success panel, so a reader does not see it on the page.
+> **The address is still in the page source**: `successCta` is a prop to a client component, so Next serialises
+> it into the RSC flight payload. Anyone viewing source, or any scraper, has the link without submitting.
+> A real gate needs the asset served through a token-bearing route (signed S3 URL) — not built.
 
 #### `newsletter-signup` — inline email capture
 

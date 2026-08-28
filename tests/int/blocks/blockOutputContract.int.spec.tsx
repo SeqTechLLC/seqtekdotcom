@@ -7,7 +7,12 @@ import { RESOLVED_BLOCK_TYPES } from '../../../src/lib/resolvedBlockTypes'
 import { layoutBlocks } from '../../../src/payload/blocks/layout'
 import { readOutputContract } from '../../../src/payload/blocks/outputContract'
 import { flattenBlock, isContainer } from '../helpers/flattenFields'
-import { SYNTHESIZABLE_TYPES, selectOptions, synthesizeBlock } from '../helpers/synthesizeBlock'
+import {
+  SYNTHESIZABLE_TYPES,
+  type SynthesizeOptions,
+  selectOptions,
+  synthesizeBlock,
+} from '../helpers/synthesizeBlock'
 
 /**
  * ROADMAP INERT-2 — the block output contract.
@@ -112,14 +117,46 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
     const behavioural = new Set(Object.keys(contract.behavioural ?? {}))
     const leaves = leafFields(block)
 
-    // ---- 1. No placeholder text reaches a reader. No allowlist. -------------
+    /**
+     * A control is often only drawn under one setting of a sibling select: a
+     * hero's image needs `variant: with-image`, a CTA section's background
+     * image needs `background: image`. Comparing under the baseline alone
+     * would call both of those inert, so each perturbation is retried under
+     * every single-select variation of the block. One state where the control
+     * moves the output is enough — the question is whether the control is
+     * wired at all, not whether it is wired in every combination.
+     */
+    const states: Array<Record<string, unknown>> = [{}]
+    for (const { path, field } of leaves) {
+      if (field.type !== 'select') continue
+      for (const option of selectOptions(field).slice(1)) states.push({ [path]: option })
+    }
 
-    it.each([
+    // ---- 1. No placeholder text reaches a reader. No exceptions. ------------
+
+    /**
+     * Checked in every state an author can reach, not only the default one.
+     * The known dead options — `logo-bar.source: from-homepage`,
+     * `mission-vision-values.layout: tabs` — are exactly the shape a
+     * baseline-only check cannot see: a branch behind a non-default select.
+     * `requiredOnly` is the other end: what an author gets by saving the moment
+     * Payload lets them, which is where the placeholder branches this gate was
+     * written for actually lived.
+     */
+    const banCheckStates: Array<[string, SynthesizeOptions]> = [
       ['fully authored', {}],
-      // The state an author reaches by saving the moment Payload lets them —
-      // which is exactly where the placeholder branches lived.
       ['required fields only', { requiredOnly: true }],
-    ])('publishes no developer copy (%s)', (_label, options) => {
+      ...states
+        .filter((overrides) => Object.keys(overrides).length > 0)
+        .map((overrides): [string, SynthesizeOptions] => [
+          Object.entries(overrides)
+            .map(([path, value]) => `${path}=${String(value)}`)
+            .join(','),
+          { overrides },
+        ]),
+    ]
+
+    it.each(banCheckStates)('publishes no developer copy (%s)', (_label, options) => {
       const rendered = text(block, synthesizeBlock(block, options))
       for (const banned of BANNED) {
         expect(
@@ -136,18 +173,28 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
     )
 
     /**
-     * A control is often only drawn under one setting of a sibling select: a
-     * hero's image needs `variant: with-image`, a CTA section's background
-     * image needs `background: image`. Comparing under the baseline alone
-     * would call both of those inert, so each perturbation is retried under
-     * every single-select variation of the block. One state where the control
-     * moves the output is enough — the question is whether the control is
-     * wired at all, not whether it is wired in every combination.
+     * `behavioural` means "read at submit time, not paint time", so the claim
+     * is falsifiable in the other direction: such a field must NOT move the
+     * output. Without this, a `behavioural` declaration was the one exception
+     * kind with no reverse check — a field could go genuinely dead, or start
+     * painting, and the declaration would sit there unchallenged.
      */
-    const states: Array<Record<string, unknown>> = [{}]
-    for (const { path, field } of leaves) {
-      if (field.type !== 'select') continue
-      for (const option of selectOptions(field).slice(1)) states.push({ [path]: option })
+    const behaviouralLeaves = leaves.filter(
+      ({ path, field }) => field.type !== 'select' && behavioural.has(path),
+    )
+
+    if (behaviouralLeaves.length > 0) {
+      it.each(behaviouralLeaves.map(({ path }) => path))(
+        'the `%s` control is consumed at submit time, so it does not paint',
+        (path) => {
+          const before = html(block, synthesizeBlock(block))
+          const after = html(block, synthesizeBlock(block, { perturb: [path] }))
+          expect(
+            before === after,
+            `"${slug}.${path}" is declared behavioural (${contract.behavioural?.[path]}) but changing it changes the rendered HTML. Either it paints after all — drop the declaration and let assertion 2 cover it — or it is doing both and the declaration needs to say so.`,
+          ).toBe(true)
+        },
+      )
     }
 
     if (perturbable.length > 0) {

@@ -43,7 +43,17 @@ const GATE_FIELDS: FormFieldConfig[] = [
  * nothing and the file was one copy-paste away.
  *
  * It now mounts the shared `HubspotLeadForm` and hands the asset over in the
- * success panel, so `fileUrl` reaches the page only after a submit lands.
+ * success panel, so a reader no longer sees the address on the page.
+ *
+ * This is a COURTESY GATE, not a real one, and the distinction matters. This is
+ * a server component and `HubspotLeadForm` is `'use client'`, so `successCta`
+ * crosses the boundary as a prop and Next serialises it into the RSC flight
+ * payload embedded in the HTML. `curl` the page and the address is there before
+ * anything is submitted. That is strictly better than the old `Asset: {fileUrl}`
+ * line, which a reader could see — but anyone who views source, and any scraper
+ * that never renders the form, still has the link. Gating it for real means
+ * serving the asset through a token-bearing route (signed S3 URL), which is its
+ * own piece of work; until then the copy must not promise more than this.
  */
 export function DownloadCard({
   title,
@@ -73,7 +83,7 @@ export function DownloadCard({
               fields={GATE_FIELDS}
               submitLabel="Get it"
               successHeading="It's yours."
-              successBody="The download is ready below, and a copy is on its way by email."
+              successBody="Your download is ready below."
               successCta={{ href: fileUrl, label: 'Open the download' }}
             />
           </div>

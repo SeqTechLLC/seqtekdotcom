@@ -113,7 +113,10 @@ function url(name: string, variant: Variant, path: string): string {
     case 'meetingUrl':
       return `https://meetings.hubspot.com/${tag}`
     case 'fileUrl':
-      return `/media/${tag}-guide.pdf`
+      // Absolute: `httpsUrlValidate` rejects a relative path outright, so a
+      // site-relative value here would be one no editor could ever save — the
+      // exact drift from the schema this helper exists to avoid.
+      return `https://assets.example.com/${tag}-guide.pdf`
     default:
       return `https://example.com/${tag}-${path.replace(/\./g, '-')}`
   }
@@ -183,12 +186,7 @@ export interface SynthesizeOptions {
   overrides?: Record<string, unknown>
 }
 
-function valueFor(
-  field: AnyField,
-  path: string,
-  variant: Variant,
-  options: SynthesizeOptions,
-): unknown {
+function valueFor(field: AnyField, path: string, variant: Variant): unknown {
   switch (field.type) {
     case 'text':
     case 'textarea': {
@@ -261,14 +259,16 @@ function build(
     }
 
     const variant: Variant = perturbed.has(path) ? 1 : 0
-    const value = valueFor(field, path, variant, options)
+    const value = valueFor(field, path, variant)
     if (value !== undefined) out[field.name] = value
   }
 
   // Overrides are dotted and applied after the walk so a caller can set a
   // nested select without rebuilding the tree.
   for (const [path, value] of Object.entries(options.overrides ?? {})) {
-    if (!path.startsWith(prefix)) continue
+    // Segment-aware: a bare `startsWith` would treat a top-level `ctaLabel` as
+    // living under a sibling `cta` group and write the override to a truncated key.
+    if (prefix && !path.startsWith(`${prefix}.`)) continue
     const rest = (prefix ? path.slice(prefix.length + 1) : path).split('.')
     if (rest.length !== 1) continue
     out[rest[0]] = value
