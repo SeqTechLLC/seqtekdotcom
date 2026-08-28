@@ -137,8 +137,9 @@ before we spend more effort loading content by hand.
   - `services.icon` and `process-steps.steps.icon` — read, but there is no icon set behind them:
     `ServiceCards.tsx:36` and `ProcessSteps.tsx:29` print the raw string on the page.
   - `hubspot-meetings` and `contact-cta.meetingUrl` — both draw a bordered placeholder printing the raw URL; no
-    Meetings embed script exists in the repo. `contact-cta`'s panel renders even when the URL is blank, printing
-    "Configure a HubSpot meetings URL to embed the scheduler" on the page.
+    Meetings embed script exists in the repo. (`contact-cta`'s panel used to render even when the URL was blank,
+    publishing "Configure a HubSpot meetings URL to embed the scheduler" on nine services pages; fixed in
+    PR #124, so the panel is now an optional second column.)
   - `download-card` — `newsletter-cta`'s twin, found by the second-round sweep: a disabled form, "HubSpot form
     <id> loads in production", **and `Asset: <fileUrl>` printed in the clear**, so the gated download is neither
     gated nor a download. Worth fixing before any of these blocks is published.
