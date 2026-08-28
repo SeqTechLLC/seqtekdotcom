@@ -3,10 +3,11 @@ import type { Block, Field } from 'payload'
 import { describe, expect, it } from 'vitest'
 
 import { registry } from '../../../src/components/sections/registry'
+import { RESOLVED_BLOCK_TYPES } from '../../../src/lib/resolvedBlockTypes'
 import { layoutBlocks } from '../../../src/payload/blocks/layout'
 import { readOutputContract } from '../../../src/payload/blocks/outputContract'
-import { flattenBlock } from '../helpers/flattenFields'
-import { selectOptions, synthesizeBlock } from '../helpers/synthesizeBlock'
+import { flattenBlock, isContainer } from '../helpers/flattenFields'
+import { SYNTHESIZABLE_TYPES, selectOptions, synthesizeBlock } from '../helpers/synthesizeBlock'
 
 /**
  * ROADMAP INERT-2 — the block output contract.
@@ -44,6 +45,15 @@ import { selectOptions, synthesizeBlock } from '../helpers/synthesizeBlock'
  * Developer copy that has been published as body text at some point in this
  * repo's history, plus the generic words that introduce it.
  *
+ * This is a denylist with **no per-block exceptions** — no block may opt out of
+ * it — but it is not a proof that no such sentence exists. A phrase nobody has
+ * published yet is not in it. `HubspotLeadForm`'s "Preview mode — submissions
+ * are not yet sent to HubSpot." is the deliberate near-miss: it renders here
+ * (`isHubspotLive` needs `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`, unset in CI) and is
+ * NOT banned, because it is an honest state notice for a form that genuinely
+ * is not wired, not a leftover placeholder. Adding it would also make the gate
+ * pass or fail on whether an env var happens to be set.
+ *
  * Checked against `textContent`, not HTML: `placeholder` is a legitimate input
  * attribute, and banning it in markup would forbid a working form.
  */
@@ -56,11 +66,12 @@ const BANNED = [
   'TODO',
 ]
 
-/** Blocks whose `source`/`filter` is resolved by `src/lib/resolveLayout.ts`. */
-const RESOLVED_BLOCKS = new Set(['team-grid', 'post-list', 'case-study-grid', 'service-cards'])
-
-const isContainerType = (field: Field): boolean =>
-  field.type === 'group' || field.type === 'array' || field.type === 'row'
+/**
+ * Read from `resolveLayout` itself rather than restated here: a hand-copied
+ * list stays green after a resolver is deleted, which is the exact rot this
+ * gate exists to prevent.
+ */
+const RESOLVED_BLOCKS = new Set<string>(RESOLVED_BLOCK_TYPES)
 
 /**
  * Payload's sanitizer adds `blockName` (the admin's own label for a row) and
@@ -75,7 +86,7 @@ const PAYLOAD_OWNED = new Set(['blockName', 'id'])
 /** Every leaf control an editor can actually set on this block. */
 function leafFields(block: Block): Array<{ path: string; field: Field }> {
   return flattenBlock(block)
-    .filter((f) => !f.hidden && !isContainerType(f.field) && !PAYLOAD_OWNED.has(f.path))
+    .filter((f) => !f.hidden && !isContainer(f.field) && !PAYLOAD_OWNED.has(f.path))
     .map((f) => ({ path: f.path, field: f.field }))
 }
 
@@ -225,6 +236,12 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
         expect(
           known.has(path),
           `"${slug}" declares an output contract for "${path}", which is not a field on the block`,
+        ).toBe(true)
+      }
+      for (const { path, field } of leaves) {
+        expect(
+          SYNTHESIZABLE_TYPES.has(field.type),
+          `"${slug}.${path}" is a \`${field.type}\` field, which tests/int/helpers/synthesizeBlock.ts cannot build a value for. The gate would report it as inert whether or not it is wired. Teach \`valueFor\` this type and add it to SYNTHESIZABLE_TYPES.`,
         ).toBe(true)
       }
       if (contract.inert) {

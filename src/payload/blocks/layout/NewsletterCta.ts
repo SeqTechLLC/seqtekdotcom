@@ -3,6 +3,8 @@ import type { Block } from 'payload'
 import { outputContract } from '../outputContract'
 
 import { blockAdmin } from '../blockAdmin'
+
+import { hubspotFormIdValidate } from '../../fields/url'
 import { headingField } from '../../fields/blockCopy'
 
 // Per BLOCK_LIBRARY.md §5.6 newsletter-signup. Renders as a HubSpot form
@@ -28,6 +30,8 @@ export const NewsletterCta: Block = {
       name: 'formId',
       type: 'text',
       label: 'HubSpot form ID',
+      required: true,
+      validate: hubspotFormIdValidate,
       admin: {
         description:
           'The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. The form collects an email address and sends it to that form. Required: with no ID there is no way to subscribe, so the whole section is left off the page.',

@@ -417,11 +417,11 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 
 > **No longer a mock (PR #125, ROADMAP INERT-2):** it was a disabled input and a caption naming that removed env var. It now mounts the shared `HubspotLeadForm` with one email field, against whatever `formId` the block carries. With no `formId` the whole section is left off the page, so a dormant block publishes nothing rather than a dead form.
 
-| Field     | Type     | Required | Notes                                                |
-| --------- | -------- | -------- | ---------------------------------------------------- |
-| `heading` | text     | no       | Default "Subscribe to SEQTEK Insights"               |
-| `body`    | textarea | no       |                                                      |
-| `formId`  | text     | no       | HubSpot form GUID (none provisioned — block dormant) |
+| Field     | Type     | Required | Notes                                                                |
+| --------- | -------- | -------- | -------------------------------------------------------------------- |
+| `heading` | text     | no       | Default "Subscribe to SEQTEK Insights"                               |
+| `body`    | textarea | no       |                                                                      |
+| `formId`  | text     | yes      | HubSpot form GUID; validated, and the section is omitted without one |
 
 #### `hubspot-form` — full HubSpot form embed
 

@@ -120,9 +120,10 @@ before we spend more effort loading content by hand.
   then 3) — always by reading, never by testing, because nothing in CI checked what a block actually rendered.
 
   **The gate (PR #125).** `tests/int/blocks/blockOutputContract.int.spec.tsx` renders every block in
-  `layoutBlocks` from its own field config and holds it to three promises: no placeholder phrase ever reaches
-  body text (absolute, no allowlist); every control changes the rendered output; every option of a select draws
-  something, and something different from its siblings. Blocks are pure synchronous components by design
+  `layoutBlocks` from its own field config and holds it to three promises: none of the developer phrases this
+  repo has actually published reaches body text (a denylist no block may opt out of, not a proof that no such
+  sentence exists); every control changes the rendered output; every option of a select draws something, and
+  something different from its siblings. Blocks are pure synchronous components by design
   (ADR 0009), so this costs a unit test. Exceptions are declared **on the block** via
   `custom: outputContract({...})` (`src/payload/blocks/outputContract.ts`) in three named kinds —
   `resolvedUpstream` (read by `lib/resolveLayout.ts` before render), `behavioural` (read at submit time, not

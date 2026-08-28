@@ -36,6 +36,25 @@ type AnyField = Field & {
 
 export type Variant = 0 | 1
 
+/**
+ * The leaf field types `valueFor` knows how to build. A block registered later
+ * with a type outside this set would synthesize `undefined`, so its control
+ * could not move the HTML and the gate would accuse a correctly wired field of
+ * being inert. `blockOutputContract.int.spec.tsx` asserts against this set so
+ * the failure names the real problem instead.
+ */
+export const SYNTHESIZABLE_TYPES: ReadonlySet<string> = new Set([
+  'text',
+  'textarea',
+  'number',
+  'checkbox',
+  'date',
+  'select',
+  'richText',
+  'upload',
+  'relationship',
+])
+
 /** variant 0 / variant 1 word pairs, so a perturbed value is obviously different. */
 const WORD: Record<Variant, string> = { 0: 'Alpha', 1: 'Bravo' }
 
@@ -269,12 +288,20 @@ export function synthesizeBlock(
     const parts = path.split('.')
     if (parts.length < 2) continue
     let cursor: Record<string, unknown> = data
+    let reached = true
     for (const key of parts.slice(0, -1)) {
       const next = cursor[key]
-      if (typeof next !== 'object' || next === null) break
+      if (typeof next !== 'object' || next === null) {
+        reached = false
+        break
+      }
       cursor = next as Record<string, unknown>
     }
-    cursor[parts[parts.length - 1]] = value
+    // Assign only if the whole path existed. Falling through on a missing
+    // intermediate would write the leaf key onto the top-level object —
+    // `primaryCta.variant` would land as `hero.variant`, a real control, and
+    // the gate would compare two heroes in the wrong style without saying so.
+    if (reached) cursor[parts[parts.length - 1]] = value
   }
   return { ...data, blockType: block.slug }
 }

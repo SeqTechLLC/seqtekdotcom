@@ -74,7 +74,7 @@ export function DownloadCard({
               submitLabel="Get it"
               successHeading="It's yours."
               successBody="The download is ready below, and a copy is on its way by email."
-              successCta={{ href: fileUrl, label: 'Download now' }}
+              successCta={{ href: fileUrl, label: 'Open the download' }}
             />
           </div>
         </div>

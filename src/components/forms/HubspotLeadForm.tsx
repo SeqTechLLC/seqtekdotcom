@@ -97,9 +97,13 @@ export function HubspotLeadForm({
         <h3 className="text-h3 font-bold">{successHeading}</h3>
         <p className="mt-2 text-body-lg text-text-secondary">{successBody}</p>
         {successCta ? (
+          // No `download` attribute: the asset is a cross-origin https URL
+          // (see `fileUrl`'s validator), and browsers ignore `download` on one,
+          // so it would promise a save and open a tab instead.
           <a
             href={successCta.href}
-            download
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
           >
             {successCta.label}

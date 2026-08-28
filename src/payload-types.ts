@@ -1457,7 +1457,7 @@ export interface NewsletterCtaBlock {
   /**
    * The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. The form collects an email address and sends it to that form. Required: with no ID there is no way to subscribe, so the whole section is left off the page.
    */
-  formId?: string | null;
+  formId: string;
   id?: string | null;
   blockName?: string | null;
   blockType: 'newsletter-cta';
@@ -1502,7 +1502,7 @@ export interface ContactCtaBlock {
     url?: string | null;
   };
   /**
-   * A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them, but the live calendar is not embedded yet: today that panel only shows the address (ROADMAP INERT-2).
+   * A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them with a "See available times" button that opens that scheduler. The calendar is not embedded inline yet.
    */
   meetingUrl?: string | null;
   id?: string | null;

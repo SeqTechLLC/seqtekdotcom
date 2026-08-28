@@ -1,5 +1,6 @@
 import type { CaseStudy, Post, Service } from '../payload-types'
 import { listCaseStudies, listPosts, listServices, listTeamMembers } from './payload'
+import type { ResolvedBlockType } from './resolvedBlockTypes'
 
 /**
  * ROADMAP UI-2 — resolve collection-backed blocks at template time.
@@ -125,10 +126,15 @@ async function resolveServiceCards(block: LayoutBlock): Promise<LayoutBlock> {
   return { ...block, manualItems: picked }
 }
 
-const RESOLVERS: Record<string, (block: LayoutBlock) => Promise<LayoutBlock>> = {
+/**
+ * Keyed by `ResolvedBlockType` rather than `string`: the union is what
+ * `blockOutputContract.int.spec.tsx` checks `resolvedUpstream` declarations
+ * against, and typing the record this way means deleting a resolver here, or
+ * adding one without listing it in `resolvedBlockTypes.ts`, is a compile error
+ * instead of a silently green gate.
+ */
+const RESOLVERS: Record<ResolvedBlockType, (block: LayoutBlock) => Promise<LayoutBlock>> = {
   'team-grid': resolveTeamGrid,
-  // BLOCK_LIBRARY calls this the `latest-insights` variant; the block slug is
-  // `post-list` (see src/payload/blocks/layout/PostList.ts).
   'post-list': resolvePostList,
   'case-study-grid': resolveCaseStudyGrid,
   'service-cards': resolveServiceCards,
@@ -144,7 +150,11 @@ export async function resolveLayout(
   if (!blocks || blocks.length === 0) return []
   return Promise.all(
     blocks.map((block) => {
-      const resolver = RESOLVERS[block.blockType]
+      // `RESOLVERS` is keyed by the narrow union, so the string blockType
+      // needs a membership check before it can index it.
+      const resolver = Object.hasOwn(RESOLVERS, block.blockType)
+        ? RESOLVERS[block.blockType as ResolvedBlockType]
+        : undefined
       return resolver ? resolver(block) : Promise.resolve(block)
     }),
   )
