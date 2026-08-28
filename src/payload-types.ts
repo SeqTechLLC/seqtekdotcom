@@ -1502,7 +1502,7 @@ export interface ContactCtaBlock {
     url?: string | null;
   };
   /**
-   * A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them — but the live calendar is not embedded yet, so today that panel only shows the address (ROADMAP INERT-2).
+   * A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them, but the live calendar is not embedded yet: today that panel only shows the address (ROADMAP INERT-2).
    */
   meetingUrl?: string | null;
   id?: string | null;

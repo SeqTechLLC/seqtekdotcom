@@ -24,10 +24,13 @@ describe('<ContactCta /> scheduling panel (INERT-2)', () => {
 
   it('drops the empty second column rather than reserving half the width for it', () => {
     const { container } = render(<ContactCta {...base} />)
-    const grid = container.querySelector('div.grid')
-    expect(grid).toBeTruthy()
-    expect(grid?.className).not.toMatch(/grid-cols-2/)
-    expect(grid?.children.length).toBe(1)
+    // No grid at all in the collapsed state: `grid` and `gap-10` do nothing on
+    // a one-child container, so the class string swaps wholesale rather than
+    // carrying two inert utilities.
+    expect(container.querySelector('div.grid')).toBeNull()
+    const column = container.querySelector('section > div')
+    expect(column?.className).not.toMatch(/grid-cols-2/)
+    expect(column?.children.length).toBe(1)
   })
 
   it('still renders the heading, body and buttons without a meeting URL', () => {
@@ -38,6 +41,15 @@ describe('<ContactCta /> scheduling panel (INERT-2)', () => {
     expect(getByText('We answer in a day.')).toBeTruthy()
     expect(getByText('Book a call')).toBeTruthy()
     expect(getByText('Email us')).toBeTruthy()
+  })
+
+  it('treats a whitespace-only meeting URL as blank, the way the validator does', () => {
+    // `httpsUrlValidate` accepts '   ' as empty, so it saves; a bare truthiness
+    // check in the renderer would put the framed panel back over a blank
+    // address line and re-open the defect above.
+    const { container } = render(<ContactCta {...base} meetingUrl="   " />)
+    expect(container.textContent).not.toMatch(/HubSpot Meetings embed/i)
+    expect(container.querySelector('div.grid')).toBeNull()
   })
 
   it('renders the panel as a second column when a meeting URL is set', () => {
