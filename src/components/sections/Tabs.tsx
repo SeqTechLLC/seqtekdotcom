@@ -30,6 +30,12 @@ export function Tabs({ heading, tabs }: TabsProps) {
 
   if (tabs.length === 0) return null
 
+  // Live preview replaces props on the mounted tree (`Pages` has it enabled),
+  // so deleting the selected tab can leave `active` past the end: every panel
+  // hidden and no tab holding tabIndex={0}, which drops the strip out of the
+  // tab order. Clamp rather than trust the index.
+  const current = Math.min(active, tabs.length - 1)
+
   const select = (index: number) => {
     const next = (index + tabs.length) % tabs.length
     setActive(next)
@@ -67,7 +73,7 @@ export function Tabs({ heading, tabs }: TabsProps) {
           className="mt-6 flex flex-wrap gap-2 border-b border-border-subtle"
         >
           {tabs.map((t, i) => {
-            const selected = i === active
+            const selected = i === current
             return (
               <button
                 key={t.id ?? i}
@@ -100,7 +106,7 @@ export function Tabs({ heading, tabs }: TabsProps) {
             id={`${base}-panel-${i}`}
             aria-labelledby={`${base}-tab-${i}`}
             tabIndex={0}
-            hidden={i !== active}
+            hidden={i !== current}
             className="mt-6"
           >
             <p className="text-body text-text-secondary">{t.body}</p>

@@ -190,8 +190,10 @@ before we spend more effort loading content by hand.
 - **IND-1 / SVC-2 leftover — two blocks linked to routes that do not exist. Cards unlinked 2026-08-27
   (PR #126).** `industry-grid` linked each card to `/industries/<slug>` and `locations-list` to
   `/locations/<slug>`; neither route is built, so every card was a 404 wherever those blocks were published.
-  Both now render as plain cards. **Re-link them when IND-1 / SVC-2 ship the detail routes** — that is the
-  remaining work, and the cards are the call site to change. (The two phantom field reads found alongside this
+  Both now render as plain cards. **Re-link them when IND-1 / SVC-2 ship the detail routes.** The cards are
+  one call site; `src/payload/hooks/revalidateOnChange.ts:135-141` is the other, and it already builds
+  invalidation paths for those unbuilt routes. Note the two disagree on the name — the hook says
+  `/consulting/<slug>` where the block said `/locations/<slug>` — so settle that before either route is built. (The two phantom field reads found alongside this
   are fixed; see INERT-2 above.)
 - **UI-1 / UI-2 — both resolved 2026-08-25 (P5-27, P5-28).** Team cards render `title`, not the
   descriptive `role`. The four collection-backed blocks (`team-grid`, `post-list`, `case-study-grid`,

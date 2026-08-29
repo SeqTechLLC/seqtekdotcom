@@ -136,7 +136,18 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
       // stands in front of the player until it is clicked, so with one set the
       // provider and video id do not reach the first paint at all. Leaving it
       // out is a state an author reaches, so the gate has to look there too.
-      if (field.type === 'upload' && !(field as { required?: boolean }).required) {
+      // `requiredWhen()` enforces requiredness through `validate` rather than
+      // the `required` flag, and marks itself so this check does not have to
+      // guess. Clearing such a field is not a state an author can save, so the
+      // gate must not judge a control against it.
+      const conditionallyRequired = Boolean(
+        (field as { custom?: { conditionallyRequired?: boolean } }).custom?.conditionallyRequired,
+      )
+      if (
+        field.type === 'upload' &&
+        !(field as { required?: boolean }).required &&
+        !conditionallyRequired
+      ) {
         states.push({ [path]: null })
       }
     }

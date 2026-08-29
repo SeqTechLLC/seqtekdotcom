@@ -60,6 +60,26 @@ describe('<Tabs /> shows one panel at a time (INERT-2)', () => {
     expect(tablist.getAttribute('aria-label')).toBe('Sections')
   })
 
+  it('jumps to the ends with Home and End', () => {
+    const { getByRole } = render(<Tabs tabs={TABS} />)
+    fireEvent.keyDown(getByRole('tab', { name: 'Discovery' }), { key: 'End' })
+    expect(getByRole('tab', { name: 'Handover' }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.keyDown(getByRole('tab', { name: 'Handover' }), { key: 'Home' })
+    expect(getByRole('tab', { name: 'Discovery' }).getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('wraps forward off the last tab', () => {
+    const { getByRole } = render(<Tabs tabs={TABS} />)
+    fireEvent.keyDown(getByRole('tab', { name: 'Discovery' }), { key: 'End' })
+    fireEvent.keyDown(getByRole('tab', { name: 'Handover' }), { key: 'ArrowRight' })
+    expect(getByRole('tab', { name: 'Discovery' }).getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('renders nothing rather than an empty tab strip', () => {
+    const { container } = render(<Tabs heading="How we work" tabs={[]} />)
+    expect(container.innerHTML).toBe('')
+  })
+
   it('keeps only the selected tab in the tab order', () => {
     const { getAllByRole } = render(<Tabs tabs={TABS} />)
     const order = getAllByRole('tab').map((t) => t.getAttribute('tabindex'))
