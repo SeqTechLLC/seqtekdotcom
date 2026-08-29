@@ -162,19 +162,29 @@ before we spend more effort loading content by hand.
     real state so the fixed line has somewhere to show up.
   - `industry-grid` and `locations-list` cards are **unlinked**. See IND-1 / SVC-2 below.
 
-  **Still open, each declared `inert` on its block and failing the gate the moment it is fixed:**
-  - `logo-bar.source: 'from-homepage'` — `LogoBar.tsx:27` maps it to an empty list, so the block publishes an
-    empty band. There is nothing to resolve it from either: the `homepage` global carries only `layout`, no
-    logo set. The value lives in eight Postgres enum types, so withdrawing it is a migration.
-  - `mission-vision-values.layout: 'tabs'` — `MissionVisionValues.tsx:25` branches only on `stacked`, so "tabs"
-    renders exactly like "grid". A tabbed treatment of seven values is not worth building; drop the option.
-  - `hubspot-form.submitRedirect`, `featured-testimonials.autoplay`, `posts.relatedPosts`, `media.caption`,
-    `servicePillars.order` — declared, never read. (`listServicePillars` has no callers and
-    `service-pillar-cards` renders its relationship in pick order, so that one is `admin.hidden`.)
-  - `services.icon` and `process-steps.steps.icon` — read, but there is no icon set behind them:
-    `ServiceCards.tsx:36` and `ProcessSteps.tsx:29` print the raw string on the page.
+  **Withdrawn from the schema (PR #127, migration `20260827_232537_inert2_drop_dead_controls`):** the controls
+  that could not be made to work are no longer offered at all.
+  - `logo-bar.source` — the "reuse the homepage set" option mapped to an empty list, and there was nothing to
+    reuse: the `homepage` global carries only `layout`, no logo set. With that gone one option remained, so the
+    whole select went and the picked logos are the only source.
+  - `mission-vision-values.layout: 'tabs'` — branched nowhere; it rendered exactly like "grid". A tabbed
+    treatment of seven values was not worth building.
+  - `featured-testimonials.autoplay` (no carousel), `hubspot-form.submitRedirect` (the form shows an inline
+    success panel and never navigates), `posts.relatedPosts` (a "Read next" picker no route read; every
+    instance in the drafts was `[]`), `media.caption` (blocks draw their own).
 
-  The first two and the third group are all schema-bearing, so they are one migration — Lane E in the plan.
+  **`servicePillars.order` was on that list and was deliberately left in place.** It is already `admin.hidden`,
+  so no editor is being promised anything, and `docs/content-drafts/service-pillars.json` carries real values in
+  it. Dropping it would also mean rewriting `listServicePillars`, whose `sort: 'order'` is its only reader — and
+  that function has no callers, so the honest cleanup there is to delete the function, not the field.
+
+  **Still open:**
+  - `services.icon` and `process-steps.steps.icon` — read, but there is no icon set behind them:
+    `ServiceCards.tsx:36` and `ProcessSteps.tsx:29` print the raw string on the page. Not gate-visible: the
+    string does reach the output, it just reaches it as a string.
+  - `related-posts` still has no resolver. Dropping `posts.relatedPosts` removed the simplest possible source
+    for one, so a resolver now has to derive the list from the containing document's categories — which needs
+    the `resolveLayout` signature change that was out of scope here.
 
   **Not gate-visible, worth knowing:** the gate covers block controls, not collection fields, so it could not
   have failed on the three phantom reads. It does build its related documents from the real collection configs,

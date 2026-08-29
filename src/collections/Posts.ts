@@ -105,18 +105,6 @@ export const Posts: CollectionConfig = {
       },
     },
     {
-      name: 'relatedPosts',
-      type: 'relationship',
-      relationTo: 'posts',
-      label: 'Read next',
-      hasMany: true,
-      maxRows: 3,
-      admin: {
-        description:
-          'Not wired up: no route reads this yet, so picks here change nothing on the published post (ROADMAP INERT-2).',
-      },
-    },
-    {
       name: 'relatedServices',
       type: 'relationship',
       relationTo: 'services',

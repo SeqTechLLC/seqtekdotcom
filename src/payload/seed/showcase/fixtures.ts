@@ -557,7 +557,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             blockType: 'featured-testimonials',
             heading: 'What clients are saying',
             testimonials: supporting.testimonialIds,
-            autoplay: false,
           },
         },
       ],
@@ -1113,13 +1112,12 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       blockType: 'hubspot-form',
       variants: [
         {
-          name: 'with-redirect',
+          name: 'lead-capture',
           data: {
             blockType: 'hubspot-form',
             heading: 'Get in touch',
             description: 'Tell us about your team and what you are trying to ship.',
             formId: '11111111-aaaa-bbbb-cccc-dddddddddddd',
-            submitRedirect: '/contact/thank-you',
           },
         },
       ],

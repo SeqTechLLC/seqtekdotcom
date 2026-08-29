@@ -17,8 +17,12 @@ Bulk-loads the SEQTEK photo archive into the Payload **Media** collection
 - Dedups by **sha256 of the converted bytes**: identical photos in multiple
   folders collapse to one Media row, and re-runs skip already-uploaded content
   (the idempotency the case-study importer lacks — ROADMAP **T-1**).
-- Sets a required placeholder `alt` from the folder name and stamps `caption`
-  with a review marker so the editorial alt-text pass (**C-7**) can find them.
+- Sets a required placeholder `alt` from the folder name and flags every
+  uploaded doc with `altPending: true` on its manifest entry, so the editorial
+  alt-text pass (**C-7**) can find them. That flag used to be a review marker
+  stamped into `media.caption`; ROADMAP INERT-2 dropped that column, and the
+  manifest — already the per-upload record, keyed by sha256 alongside the
+  `mediaId` — is where the flag lives now.
 
 The `../photos` archive is never modified — the tool only produces in-memory
 buffers for upload.

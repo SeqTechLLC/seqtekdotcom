@@ -12,6 +12,17 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 export interface ManifestEntry {
   /** Set by an upload run (the created Media row id). */
   mediaId?: string | number
+  /**
+   * True when this doc was uploaded with a generated placeholder `alt` that
+   * still needs an editor (C-7). This used to be stamped into `media.caption`
+   * as `REVIEW_MARKER`, but ROADMAP INERT-2 dropped that column — it rendered
+   * nowhere, so the admin offered editors a caption field that reached no
+   * page. The flag lives here instead, beside the `mediaId` it describes, so
+   * the alt-text pass can select exactly the auto-ingested rows. Note that
+   * pass does not exist yet — nothing in the tree reads this field except the
+   * test that pins it — so this is where C-7 should look, not a live contract.
+   */
+  altPending?: boolean
   /** Set by a `--out` disk run (path of the written file, relative to outDir). */
   outPath?: string
   filename: string

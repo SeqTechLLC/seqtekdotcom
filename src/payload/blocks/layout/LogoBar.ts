@@ -1,14 +1,9 @@
 import type { Block } from 'payload'
 
-import { outputContract } from '../outputContract'
-
 import { blockAdmin } from '../blockAdmin'
 
 import { headingField } from '../../fields/blockCopy'
 import { mediaRowLabel } from '../../fields/mediaRowLabel'
-import { requiredWhen } from '../conditional'
-
-type LogoBarSibling = { source?: string }
 
 // Per BLOCK_LIBRARY.md §5.3.
 export const LogoBar: Block = {
@@ -16,54 +11,23 @@ export const LogoBar: Block = {
   interfaceName: 'LogoBarBlock',
   labels: { singular: 'Logo bar', plural: 'Logo bars' },
   admin: blockAdmin('social-proof', 'logo-bar', 'Logo bar'),
-  custom: outputContract({
-    inert: {
-      options: {
-        // `LogoBar.tsx:27` maps anything but `inline` to an empty list, so the
-        // block publishes an empty band. Same defect US1 removed from
-        // `stats-bar`; the value lives in eight Postgres enums, so withdrawing
-        // it is a migration.
-        source: ['from-homepage'],
-      },
-      why: 'homepage logo set was never wired — ROADMAP INERT-2',
-    },
-  }),
   fields: [
     headingField(),
-    {
-      name: 'source',
-      type: 'select',
-      label: 'Where the logos come from',
-      required: true,
-      defaultValue: 'inline',
-      options: [
-        { label: 'Pick them here', value: 'inline' },
-        // Spec 011 T050: nothing reads this value. `LogoBar.tsx:27` maps it to
-        // an empty list, so the block renders no logos at all — the same
-        // inert-option defect US1 removed from `stats-bar`, which it missed
-        // because that audit was over fields, not over option values.
-        // Withdrawing it is a migration (the value is in eight Postgres enums),
-        // so US4 names it instead of smuggling a schema change into an
-        // admin-only change. Tracked in ROADMAP.
-        { label: 'Reuse the homepage set (not built yet)', value: 'from-homepage' },
-      ],
-      admin: {
-        description:
-          '"Pick them here" is the only working choice. The homepage-set option is unfinished: nothing reads it, so the section renders empty.',
-      },
-    },
     {
       name: 'logos',
       type: 'array',
       label: 'Logos',
       labels: { singular: 'Logo', plural: 'Logos' },
-      // The `admin` object MUST be passed to `requiredWhen`, not written as a
-      // sibling key: as a sibling it replaced the returned `condition` outright
-      // and this array showed for both sources. Spec 011 T050.
-      ...requiredWhen<LogoBarSibling>((d) => d?.source === 'inline', {
+      admin: {
         components: { RowLabel: mediaRowLabel({ singular: 'Logo', uploadField: 'logo' }) },
-        description: 'Only used while the source above is set to "Pick them here".',
-      }),
+        // Deliberately not `required`. Any block still holding zero logos was
+        // authored under the withdrawn `from-homepage` source, and marking the
+        // array required would make its containing page unsaveable — the error
+        // landing on an editor doing something unrelated. An empty block simply
+        // renders nothing, as `industry-grid` and `related-posts` do.
+        description:
+          'The logos to show, in the order they should read. With none picked the section is left off the page.',
+      },
       fields: [
         {
           name: 'logo',

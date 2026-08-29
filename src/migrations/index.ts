@@ -13,6 +13,7 @@ import * as migration_20260811_141528_add_partners_collection from './20260811_1
 import * as migration_20260824_201317_spec011_drop_inert_fields from './20260824_201317_spec011_drop_inert_fields'
 import * as migration_20260824_214311_spec011_drop_stats_bar_source from './20260824_214311_spec011_drop_stats_bar_source'
 import * as migration_20260825_181054_ui2_drop_team_grid_featured from './20260825_181054_ui2_drop_team_grid_featured'
+import * as migration_20260827_232537_inert2_drop_dead_controls from './20260827_232537_inert2_drop_dead_controls'
 
 export const migrations = [
   {
@@ -89,5 +90,10 @@ export const migrations = [
     up: migration_20260825_181054_ui2_drop_team_grid_featured.up,
     down: migration_20260825_181054_ui2_drop_team_grid_featured.down,
     name: '20260825_181054_ui2_drop_team_grid_featured',
+  },
+  {
+    up: migration_20260827_232537_inert2_drop_dead_controls.up,
+    down: migration_20260827_232537_inert2_drop_dead_controls.down,
+    name: '20260827_232537_inert2_drop_dead_controls',
   },
 ]

@@ -107,7 +107,6 @@ test.describe('US3 — lists answer "what\'s live?" and "which image is this?"',
           {
             blockType: 'logo-bar',
             heading: 'Logos without captions',
-            source: 'inline',
             logos: [{ logo: media.id }],
             treatment: 'color',
           },

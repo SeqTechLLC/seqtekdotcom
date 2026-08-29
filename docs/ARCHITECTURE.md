@@ -94,7 +94,6 @@ Blog posts at `/insights/[slug]`.
 | `featuredImage`   | upload (media)                       | Required — no stock photos                 |
 | `author`          | relationship -> teamMembers          | Required                                   |
 | `categories`      | relationship -> categories (hasMany) | For filtering and archive pages            |
-| `relatedPosts`    | relationship -> posts (hasMany)      | Manual curation, max 3                     |
 | `relatedServices` | relationship -> services (hasMany)   | For contextual CTAs                        |
 | `seo`             | group                                | metaTitle, metaDescription, ogImage        |
 | `publishedAt`     | date                                 | Controls ordering and display              |
@@ -249,10 +248,9 @@ Market/location taxonomy records. **Not yet routed** — there is no `/consultin
 
 Payload's built-in upload collection with S3 storage adapter.
 
-| Field     | Type | Notes                                                            |
-| --------- | ---- | ---------------------------------------------------------------- |
-| `alt`     | text | Required — accessibility and SEO. Validation enforced in schema. |
-| `caption` | text | Optional                                                         |
+| Field | Type | Notes                                                            |
+| ----- | ---- | ---------------------------------------------------------------- |
+| `alt` | text | Required — accessibility and SEO. Validation enforced in schema. |
 
 #### `categories`
 

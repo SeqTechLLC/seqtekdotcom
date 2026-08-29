@@ -5,7 +5,7 @@
  * us (the T-1 gap the case-study importer has). No Payload/DB needed; uploads
  * go through an in-memory fake uploader.
  */
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -122,10 +122,12 @@ describe('runIngest dedup + idempotency', () => {
     const manifestPath = path.join(dir, '.manifest.test.json')
 
     const uploads: string[] = []
+    const uploadedData: Array<Record<string, unknown>> = []
     let counter = 0
     const uploader: MediaUploader = {
       create: async (args) => {
         uploads.push(args.file.name)
+        uploadedData.push(args.data as unknown as Record<string, unknown>)
         return { id: ++counter }
       },
     }
@@ -143,6 +145,19 @@ describe('runIngest dedup + idempotency', () => {
     expect(first.uploaded).toBe(2) // a.png + c.png; b.png collapses to a.png
     expect(first.skippedExisting).toBe(1)
     expect(new Manifest(manifestPath).size).toBe(2)
+
+    // ROADMAP INERT-2 — the review flag for the alt-text pass (C-7) used to be
+    // `caption: REVIEW_MARKER` on the created doc, until `media.caption` was
+    // dropped. It now rides on the manifest entry. Both halves are pinned here
+    // because neither `tsc` nor this stub could see the old write: `data` is
+    // passed as a variable, so excess-property checking never fired, and the
+    // stub swallowed whatever it was given.
+    expect(uploadedData.every((d) => !('caption' in d))).toBe(true)
+    const entries = Object.values(
+      JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, { altPending?: boolean }>,
+    )
+    expect(entries).toHaveLength(2)
+    expect(entries.every((e) => e.altPending === true)).toBe(true)
 
     const second = await runIngest(uploader, opts)
     expect(second.uploaded).toBe(0) // manifest already has both hashes

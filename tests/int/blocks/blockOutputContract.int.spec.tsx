@@ -156,9 +156,11 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
 
     /**
      * Checked in every state an author can reach, not only the default one.
-     * The known dead options — `logo-bar.source: from-homepage`,
-     * `mission-vision-values.layout: tabs` — are exactly the shape a
-     * baseline-only check cannot see: a branch behind a non-default select.
+     * The dead options this gate was written for — `logo-bar.source:
+     * from-homepage` and `mission-vision-values.layout: tabs`, both since
+     * withdrawn from the schema — were exactly the shape a baseline-only check
+     * cannot see: a branch behind a non-default select. `hero.variant` and
+     * `cta-section.background` are live examples of the same shape.
      * `requiredOnly` is the other end: what an author gets by saving the moment
      * Payload lets them, which is where the placeholder branches this gate was
      * written for actually lived.

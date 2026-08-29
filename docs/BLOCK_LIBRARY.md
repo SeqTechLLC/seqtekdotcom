@@ -256,12 +256,15 @@ Frontend emits `FAQPage` JSON-LD automatically.
 
 #### `logo-bar` — client logo strip
 
-| Field       | Type            | Required    | Notes                                                         |
-| ----------- | --------------- | ----------- | ------------------------------------------------------------- |
-| `heading`   | text            | no          | Default "Trusted by industry leaders"                         |
-| `source`    | select          | yes         | `inline` / `from-homepage` — homepage owns canonical logo set |
-| `logos`     | array of upload | conditional | When `source: inline`                                         |
-| `treatment` | select          | no          | `grayscale-on-color-hover` / `color`                          |
+| Field       | Type            | Required | Notes                                             |
+| ----------- | --------------- | -------- | ------------------------------------------------- |
+| `heading`   | text            | no       | Default "Trusted by industry leaders"             |
+| `logos`     | array of upload | no       | The only source; with none the section is omitted |
+| `treatment` | select          | no       | `grayscale-on-color-hover` / `color`              |
+
+> **`source` dropped (PR #127, ROADMAP INERT-2):** its other option, "reuse the homepage set", mapped to an
+> empty list and published an empty band — and there was nothing to reuse, since the `homepage` global carries
+> only a `layout`. With that gone one option remained, so the select went with it.
 
 #### `testimonial-single` — featured testimonial
 
@@ -276,7 +279,9 @@ Frontend emits `FAQPage` JSON-LD automatically.
 | -------------- | ------------------------------------- | -------- | ------------ |
 | `heading`      | text                                  | no       |              |
 | `testimonials` | relationship → testimonials (hasMany) | yes      | Min 2, max 6 |
-| `autoplay`     | checkbox                              | no       | Default off  |
+
+> **`autoplay` dropped (PR #127, ROADMAP INERT-2):** the block renders a static grid, so nothing read it.
+> Re-add it with the carousel, not before.
 
 ### 5.4 CTA blocks
 
@@ -362,12 +367,12 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 
 #### `mission-vision-values` — MVV block (about page)
 
-| Field     | Type     | Required           | Notes                       |
-| --------- | -------- | ------------------ | --------------------------- |
-| `mission` | textarea | yes                |                             |
-| `vision`  | textarea | yes                |                             |
-| `values`  | array    | yes (min 3, max 8) | `name`, `description`       |
-| `layout`  | select   | no                 | `tabs` / `grid` / `stacked` |
+| Field     | Type     | Required           | Notes                                                                              |
+| --------- | -------- | ------------------ | ---------------------------------------------------------------------------------- |
+| `mission` | textarea | yes                |                                                                                    |
+| `vision`  | textarea | yes                |                                                                                    |
+| `values`  | array    | yes (min 3, max 8) | `name`, `description`                                                              |
+| `layout`  | select   | no                 | `grid` / `stacked` (`tabs` dropped in PR #127 — it rendered identically to `grid`) |
 
 #### `markets-map` — 4-market visual
 
@@ -428,12 +433,14 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 
 #### `hubspot-form` — full HubSpot form embed
 
-| Field            | Type     | Required | Notes                        |
-| ---------------- | -------- | -------- | ---------------------------- |
-| `heading`        | text     | no       |                              |
-| `description`    | textarea | no       |                              |
-| `formId`         | text     | yes      | HubSpot form GUID            |
-| `submitRedirect` | text     | no       | Optional thank-you page path |
+| Field         | Type     | Required | Notes             |
+| ------------- | -------- | -------- | ----------------- |
+| `heading`     | text     | no       |                   |
+| `description` | textarea | no       |                   |
+| `formId`      | text     | yes      | HubSpot form GUID |
+
+> **`submitRedirect` dropped (PR #127, ROADMAP INERT-2):** the form shows an inline success panel and never
+> navigates, so nothing read it.
 
 #### `hubspot-meetings` — booking embed
 
@@ -495,7 +502,7 @@ Spec 003 Phase 2 (T050–T056) shipped 32 layout blocks. The mapping below recon
 | Catalog name           | Implemented slug        | Note                                                                                             |
 | ---------------------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
 | `testimonial-single`   | `testimonial-block`     | Same field shape; `layout` select includes the catalog's three variants                          |
-| `testimonial-carousel` | `featured-testimonials` | Static grid in Phase 2; carousel autoplay deferred                                               |
+| `testimonial-carousel` | `featured-testimonials` | Static grid; the carousel was never built and the `autoplay` field was dropped in PR #127        |
 | `latest-insights`      | `post-list`             | Adds explicit `source` (latest / by-category / manual)                                           |
 | `markets-map`          | `locations-list`        | Renamed to reflect that the Phase 2 renderer is a card grid, not a map; map is `map` block below |
 | `workshop-progression` | `workshop-list`         | Numbered list rendering; horizontal flow can be added without schema change                      |

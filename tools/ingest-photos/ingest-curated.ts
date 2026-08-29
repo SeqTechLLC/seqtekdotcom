@@ -119,10 +119,14 @@ async function main(): Promise<number> {
         continue
       }
       const buf = readFileSync(path.join(args.dir, e.curated))
-      const caption = `[curated:${e.slot}]${e.people.length ? ' ' + e.people.join(', ') : ''}`
+      // The slot + people used to be denormalised into `media.caption` as
+      // `[curated:<slot>] <people>`. Nothing ever read it back, and ROADMAP
+      // INERT-2 dropped that column because the admin showed it as a caption
+      // that reaches no page. `manifest.json` beside the images remains the
+      // source of truth for both.
       const doc = await payload.create({
         collection: 'media',
-        data: { alt: e.alt, caption },
+        data: { alt: e.alt },
         file: { data: buf, mimetype: mimeFor(e.curated), name: e.curated, size: buf.length },
         overrideAccess: true,
       })

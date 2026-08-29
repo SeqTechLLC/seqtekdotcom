@@ -387,7 +387,12 @@ const COLLECTION_SPECS: CollectionSpec[] = [
     // needs the `file` argument too.
     tier: 'public-read-editorial-mutate',
     visibleData: (s) => ({ alt: `AM Media ${s}` }),
-    updateData: { caption: 'AM updated caption' },
+    // `alt`, not `caption`: `media.caption` was dropped (ROADMAP INERT-2), and
+    // because `updateData` is `Record<string, unknown>` a stale field here is
+    // not a type error — Payload discards the unknown key and the access
+    // assertion still passes, so the media update cells would stay green while
+    // exercising no field write at all.
+    updateData: { alt: 'AM Media updated alt' },
   },
   {
     slug: 'categories',

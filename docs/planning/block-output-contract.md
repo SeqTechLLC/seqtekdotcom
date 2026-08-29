@@ -2,9 +2,17 @@
 
 **Written** 2026-08-27, after PR #123 (spec 011 US4).
 
-**Status:** Lane B step 1 shipped in PR #124. Lane A (the gate) shipped in PR #125, together with all of
-Lane B and Lane D step 1 — the gate's first assertion bans placeholder copy with no allowlist, so it could
-not land green until every block that published placeholder text was fixed. Lanes C, D (2-4) and E are open.
+> **Read everything below this banner in the past tense.** It is the plan as written on 2026-08-27, kept as
+> the record of what was decided and why. Every lane has since shipped, so its present-tense descriptions of
+> defects ("`LogoBar.tsx:27` maps it to an empty list", "`tabs` and `grid` are the same path", the Lane E
+> "drop these" checklist) describe the code as it _was_. The code sample in **The gate** is likewise the
+> proposal, not the shipped API. For current state read `docs/ROADMAP.md` INERT-2, which is the source of
+> truth; for the contract itself read `src/payload/blocks/outputContract.ts`.
+
+**Status: complete.** PR #124 (the live `contact-cta` fix) → #125 (Lane A, the gate, plus all of Lane B and
+Lane D step 1 — the gate's first assertion bans placeholder copy with no allowlist, so it could not land green
+until every block publishing placeholder text was fixed) → #126 (Lanes C and D) → #127 (Lane E, the
+migration).
 
 The gate found **24** defects on its first run, including two the hand audit missed:
 `hero.variant: 'split'` renders identically to `with-image`, and the `video-embed` thumbnail branch takes
@@ -110,6 +118,10 @@ exceptions. Put the declaration **on the block**, not in a shared file:
 
 ```ts
 // src/payload/blocks/layout/FeaturedTestimonials.ts
+// NOTE: this was the proposal. What shipped is `custom: outputContract({ ... })`
+// (see `src/payload/blocks/outputContract.ts`), with three named exception
+// kinds rather than one — `inert`, `behavioural` and `resolvedUpstream`. Both
+// fields named below have since been withdrawn from the schema entirely.
 custom: {
   inert: {
     fields: ['autoplay'],           // read by nothing
