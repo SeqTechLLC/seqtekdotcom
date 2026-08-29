@@ -66,8 +66,18 @@ export function ContactCta({
         {meeting ? (
           <div className="rounded-md border border-border-subtle bg-surface-subtle p-6 text-center">
             <p className="text-caption uppercase tracking-wide text-accent-strong">Book a time</p>
-            <p className="mt-2 text-body-lg font-semibold">HubSpot Meetings embed</p>
-            <p className="mt-1 text-small text-text-muted">{meeting}</p>
+            <p className="mt-2 text-body">Pick a slot and we will send the invitation.</p>
+            <TrackedCtaLink
+              href={meeting}
+              ctaId="contact-cta-booking"
+              location="contact-cta"
+              label="See available times"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+            >
+              See available times
+            </TrackedCtaLink>
           </div>
         ) : null}
       </div>

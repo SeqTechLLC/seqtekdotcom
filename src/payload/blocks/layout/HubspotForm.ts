@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 
 import { headingField } from '../../fields/blockCopy'
@@ -11,6 +13,17 @@ export const HubspotForm: Block = {
   interfaceName: 'HubspotFormBlock',
   labels: { singular: 'HubSpot form', plural: 'HubSpot forms' },
   admin: blockAdmin('specialty', 'hubspot-form', 'HubSpot form'),
+  custom: outputContract({
+    // The GUID is the submit target, read by `lib/hubspot/submit.ts` when the
+    // visitor sends the form, not while it paints.
+    behavioural: { formId: 'submit target — src/lib/hubspot/submit.ts' },
+    inert: {
+      // Read by nothing: the form shows an inline success panel and never
+      // navigates.
+      fields: ['submitRedirect'],
+      why: 'the form never redirects — ROADMAP INERT-2',
+    },
+  }),
   fields: [
     headingField(),
     {

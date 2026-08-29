@@ -405,17 +405,26 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 | `formId`      | text     | yes      | HubSpot form GUID for gated download |
 | `fileUrl`     | text     | yes      | S3 URL to the asset                  |
 
+> **A courtesy gate, not a real one (PR #125, ROADMAP INERT-2):** the block used to draw a disabled form and
+> print `Asset: <fileUrl>` beside it, so the asset was neither gated nor downloadable. It now mounts the shared
+> `HubspotLeadForm` and reveals the link in the success panel, so a reader does not see it on the page.
+> **The address is still in the page source**: `successCta` is a prop to a client component, so Next serialises
+> it into the RSC flight payload. Anyone viewing source, or any scraper, has the link without submitting.
+> A real gate needs the asset served through a token-bearing route (signed S3 URL) — not built.
+
 #### `newsletter-signup` — inline email capture
 
 > **Category note (spec 011 US2):** Ships as **`newsletter-cta`**, category **`cta`** (§5.4 — "Calls to action"), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
 
 > **Dormant (spec 005, 2026-06-02):** no newsletter program exists and the old site had none, so this block is unused in templates and `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID` was removed. The definition stays in the library; wire it only if a newsletter program starts.
 
-| Field     | Type     | Required | Notes                                                |
-| --------- | -------- | -------- | ---------------------------------------------------- |
-| `heading` | text     | no       | Default "Subscribe to SEQTEK Insights"               |
-| `body`    | textarea | no       |                                                      |
-| `formId`  | text     | no       | HubSpot form GUID (none provisioned — block dormant) |
+> **No longer a mock (PR #125, ROADMAP INERT-2):** it was a disabled input and a caption naming that removed env var. It now mounts the shared `HubspotLeadForm` with one email field, against whatever `formId` the block carries. With no `formId` the whole section is left off the page, so a dormant block publishes nothing rather than a dead form.
+
+| Field     | Type     | Required | Notes                                                                |
+| --------- | -------- | -------- | -------------------------------------------------------------------- |
+| `heading` | text     | no       | Default "Subscribe to SEQTEK Insights"                               |
+| `body`    | textarea | no       |                                                                      |
+| `formId`  | text     | yes      | HubSpot form GUID; validated, and the section is omitted without one |
 
 #### `hubspot-form` — full HubSpot form embed
 
@@ -432,6 +441,11 @@ nothing else to select on, so it had no backing field and rendered an empty sect
 | ------------ | ---- | -------- | ------------------------- |
 | `meetingUrl` | text | yes      | Full HubSpot meetings URL |
 | `heading`    | text | no       |                           |
+
+> **A button, not an embed (PR #125, ROADMAP INERT-2):** it used to draw a bordered box printing the raw URL
+> and "loads in production". It now renders a "See available times" button opening that scheduler. The inline
+> iframe would mean shipping HubSpot's `MeetingsEmbedCode.js` and widening the CSP (INTEGRATIONS.md §8);
+> `BookingCompleteSeam` is already wired for it when that happens.
 
 #### `brand-teaser` — Sequoyah story teaser (homepage)
 
@@ -502,7 +516,7 @@ Spec 003 Phase 2 (T050–T056) shipped 32 layout blocks. The mapping below recon
 
 **Catalog blocks landed in the same PR** (built in the second pass after initial deferral): `deliverables` (§5.2), `metric-display` (§5.3), `service-pillar-cards` (§5.5), `team-grid` (§5.5), `download-card` (§5.6), `hubspot-form` (§5.6), `hubspot-meetings` (§5.6), `brand-teaser` (§5.6), `nav-cards` (§5.6), `key-takeaways` (§5.6), `tech-stack` (§5.6).
 
-**Final Phase 2 layout block count: 43** — every block enumerated in §5.1–§5.6 is implemented, plus the 7 additions beyond the catalog from the table above. HubSpot-driven blocks (`hubspot-form`, `hubspot-meetings`, `download-card`, `newsletter-cta`) ship with static placeholder affordances in the Phase 2 renderer; the live HubSpot script integration lands in Phase 3 per `docs/INTEGRATIONS.md` §1–§3.
+**Final Phase 2 layout block count: 43** — every block enumerated in §5.1–§5.6 is implemented, plus the 7 additions beyond the catalog from the table above. HubSpot-driven blocks (`hubspot-form`, `hubspot-meetings`, `download-card`, `newsletter-cta`) shipped with static placeholder affordances in the Phase 2 renderer. **That is no longer true (PR #125):** all four now do the real thing — the three form blocks share `HubspotLeadForm` and its live submit path, and `hubspot-meetings` links to the scheduler. What is still deferred is the inline HubSpot _script_ embeds per `docs/INTEGRATIONS.md` §1–§3.
 
 **Spec 010 additions (ADR 0009, FR-005): +2 → 45 blocks.** `image` (§5.2) and `gallery` (§5.2) close the image gap surfaced by the block-coverage audit (§5.8). These are the only new blocks the block-composed-pages migration required.
 

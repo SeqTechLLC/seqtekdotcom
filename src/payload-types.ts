@@ -1455,9 +1455,9 @@ export interface NewsletterCtaBlock {
    */
   body?: string | null;
   /**
-   * This block does not collect anything yet: it draws a disabled form and prints a note about production either way, so publishing it puts developer text on the page. Use a HubSpot form block instead (ROADMAP INERT-2).
+   * The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. The form collects an email address and sends it to that form. Required: with no ID there is no way to subscribe, so the whole section is left off the page.
    */
-  formId?: string | null;
+  formId: string;
   id?: string | null;
   blockName?: string | null;
   blockType: 'newsletter-cta';
@@ -1502,7 +1502,7 @@ export interface ContactCtaBlock {
     url?: string | null;
   };
   /**
-   * A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them, but the live calendar is not embedded yet: today that panel only shows the address (ROADMAP INERT-2).
+   * A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them with a "See available times" button that opens that scheduler. The calendar is not embedded inline yet.
    */
   meetingUrl?: string | null;
   id?: string | null;
@@ -1862,7 +1862,7 @@ export interface RelatedPostsBlock {
    */
   heading?: string | null;
   /**
-   * Pick the posts to offer at the end of the page. This block does not fill itself in, and left empty it prints a developer note on the published page, so either pick posts or remove the block (ROADMAP UI-2 leftover).
+   * Pick the posts to offer at the end of the page. This block does not fill itself in from categories: with nothing picked the whole section is left off the page.
    */
   manualItems?: (number | Post)[] | null;
   /**
@@ -2295,11 +2295,11 @@ export interface DownloadCardBlock {
    */
   coverImage: number | Media;
   /**
-   * The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. Nothing is gated yet: the block draws a disabled form and prints "HubSpot form <id> loads in production" on the page (ROADMAP INERT-2).
+   * The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. Name, email and company go to that form, and the download appears once it is sent.
    */
   formId: string;
   /**
-   * The full https:// address of the file. It is currently printed on the published page as "Asset: <address>", so anyone can take it without filling anything in. Do not put anything here you would not publish outright (ROADMAP INERT-2).
+   * The full https:// address of the file. The form hides it from the page, but it is still present in the page source, so treat this as a public link: the form is a courtesy step that most people will take, not a lock. Do not put anything here you would not publish outright.
    */
   fileUrl: string;
   id?: string | null;
@@ -2337,7 +2337,7 @@ export interface HubspotFormBlock {
  */
 export interface HubspotMeetingsBlock {
   /**
-   * The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. The live calendar is not embedded yet: the block draws a placeholder box showing this address (ROADMAP INERT-2).
+   * The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. The section draws a "See available times" button that opens that scheduler in a new tab. The calendar is not embedded inline yet.
    */
   meetingUrl: string;
   /**

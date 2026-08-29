@@ -27,7 +27,7 @@ export const RelatedPosts: Block = {
         // developer placeholder rather than a derived list. Say so plainly
         // rather than repeat the old description's claim that it fills itself.
         description:
-          'Pick the posts to offer at the end of the page. This block does not fill itself in, and left empty it prints a developer note on the published page, so either pick posts or remove the block (ROADMAP UI-2 leftover).',
+          'Pick the posts to offer at the end of the page. This block does not fill itself in from categories: with nothing picked the whole section is left off the page.',
       },
     },
     {

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 import { eyebrowField } from '../../fields/blockCopy'
 
@@ -9,6 +11,17 @@ export const VideoEmbed: Block = {
   interfaceName: 'VideoEmbedBlock',
   labels: { singular: 'Video embed', plural: 'Video embeds' },
   admin: blockAdmin('specialty', 'video-embed', 'Video embed', 'svg'),
+  custom: outputContract({
+    inert: {
+      // `VideoEmbed.tsx:34` swaps the <iframe> for a still and a
+      // non-interactive "▶ Play" span whenever a thumbnail is set, so with one
+      // filled in the provider, the video id and the title all reach nothing
+      // and the video cannot be played at all.
+      fields: ['videoId', 'title'],
+      options: { provider: ['vimeo'] },
+      why: 'the thumbnail branch replaces the player — ROADMAP INERT-2',
+    },
+  }),
   fields: [
     {
       name: 'provider',

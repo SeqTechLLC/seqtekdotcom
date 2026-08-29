@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 
 import { headingField } from '../../fields/blockCopy'
@@ -13,6 +15,10 @@ export const ServiceCards: Block = {
   interfaceName: 'ServiceCardsBlock',
   labels: { singular: 'Service cards', plural: 'Service cards blocks' },
   admin: blockAdmin('content-collection', 'service-cards', 'Service cards'),
+  custom: outputContract({
+    // Resolved by `src/lib/resolveLayout.ts` into `manualItems` before render.
+    resolvedUpstream: ['source', 'pillar'],
+  }),
   fields: [
     headingField(),
     {

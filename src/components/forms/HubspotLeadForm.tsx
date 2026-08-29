@@ -13,6 +13,13 @@ interface HubspotLeadFormProps {
   submitLabel?: string
   successHeading?: string
   successBody?: string
+  /**
+   * Revealed only once the submit succeeds. This is how a gated asset is
+   * actually gated: `download-card` used to print `Asset: <fileUrl>` beside a
+   * disabled form, so the file was neither gated nor downloadable
+   * (ROADMAP INERT-2).
+   */
+  successCta?: { href: string; label: string } | null
 }
 
 const MAILTO = 'mailto:contact@seqtek.com'
@@ -31,6 +38,7 @@ export function HubspotLeadForm({
   submitLabel = 'Submit',
   successHeading = 'Thanks — we got it.',
   successBody = "We'll be in touch shortly.",
+  successCta,
 }: HubspotLeadFormProps) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {}
@@ -88,6 +96,19 @@ export function HubspotLeadForm({
       >
         <h3 className="text-h3 font-bold">{successHeading}</h3>
         <p className="mt-2 text-body-lg text-text-secondary">{successBody}</p>
+        {successCta ? (
+          // No `download` attribute: the asset is a cross-origin https URL
+          // (see `fileUrl`'s validator), and browsers ignore `download` on one,
+          // so it would promise a save and open a tab instead.
+          <a
+            href={successCta.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+          >
+            {successCta.label}
+          </a>
+        ) : null}
       </div>
     )
   }

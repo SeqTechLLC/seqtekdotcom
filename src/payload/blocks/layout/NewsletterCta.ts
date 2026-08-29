@@ -1,6 +1,10 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
+
+import { hubspotFormIdValidate } from '../../fields/url'
 import { headingField } from '../../fields/blockCopy'
 
 // Per BLOCK_LIBRARY.md §5.6 newsletter-signup. Renders as a HubSpot form
@@ -11,6 +15,9 @@ export const NewsletterCta: Block = {
   interfaceName: 'NewsletterCtaBlock',
   labels: { singular: 'Newsletter CTA', plural: 'Newsletter CTAs' },
   admin: blockAdmin('cta', 'newsletter-cta', 'Newsletter CTA'),
+  custom: outputContract({
+    behavioural: { formId: 'submit target — src/lib/hubspot/submit.ts' },
+  }),
   fields: [
     headingField({ fallback: 'Subscribe to SEQTEK Insights' }),
     {
@@ -23,9 +30,11 @@ export const NewsletterCta: Block = {
       name: 'formId',
       type: 'text',
       label: 'HubSpot form ID',
+      required: true,
+      validate: hubspotFormIdValidate,
       admin: {
         description:
-          'This block does not collect anything yet: it draws a disabled form and prints a note about production either way, so publishing it puts developer text on the page. Use a HubSpot form block instead (ROADMAP INERT-2).',
+          'The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. The form collects an email address and sends it to that form. Required: with no ID there is no way to subscribe, so the whole section is left off the page.',
       },
     },
   ],

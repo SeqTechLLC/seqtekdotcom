@@ -1,46 +1,43 @@
+import { HubspotLeadForm } from '@/components/forms/HubspotLeadForm'
+import { type FormFieldConfig } from '@/lib/hubspot/fields'
+
 interface NewsletterCtaProps {
   heading?: string | null
   body?: string | null
   formId?: string | null
 }
 
+const EMAIL_ONLY: FormFieldConfig[] = [
+  { name: 'email', label: 'Email', type: 'email', required: true, autoComplete: 'email' },
+]
+
+/**
+ * ROADMAP INERT-2 — this was a disabled input, a disabled button and a caption
+ * naming `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID`, an env var nothing in
+ * `src/` reads. It now mounts the same `HubspotLeadForm` the `hubspot-form`
+ * block has used all along, with the one field a newsletter needs; the submit
+ * path (`lib/hubspot/submit.ts`) and its GTM events come with it.
+ *
+ * Without a form GUID there is no way to subscribe, so the section renders
+ * nothing rather than publishing a heading over a form that cannot work —
+ * the same choice `logo-bar` and `industry-grid` make when they have no items.
+ */
 export function NewsletterCta({ heading, body, formId }: NewsletterCtaProps) {
-  // Phase 3 (Spec 005) wires the real HubSpot form via the existing
-  // HubspotTracking integration. Showcase renders the affordance only so
-  // no third-party script loads during visual verification.
-  const showFallback = !formId
+  if (!formId) return null
   return (
     <section className="bg-surface-accent px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-md text-center">
         <h2 className="text-h2 font-bold">{heading ?? 'Subscribe to SEQTEK Insights'}</h2>
         {body ? <p className="mt-4 text-body-lg text-text-secondary">{body}</p> : null}
-        <form
-          className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row"
-          aria-label="Newsletter signup placeholder"
-        >
-          <input
-            type="email"
-            placeholder="you@company.com"
-            className="rounded-md border border-border-strong bg-surface px-4 py-3 text-body"
-            disabled
+        <div className="mx-auto mt-8 max-w-md text-left">
+          <HubspotLeadForm
+            formId={formId}
+            fields={EMAIL_ONLY}
+            submitLabel="Subscribe"
+            successHeading="You're on the list."
+            successBody="Look for the next SEQTEK Insights in your inbox."
           />
-          <button
-            type="button"
-            className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
-            disabled
-          >
-            Subscribe
-          </button>
-        </form>
-        {showFallback ? (
-          <p className="mt-4 text-caption text-text-muted">
-            Form GUID missing — production wires HubSpot via NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID.
-          </p>
-        ) : (
-          <p className="mt-4 text-caption text-text-muted">
-            HubSpot form {formId} loads in production.
-          </p>
-        )}
+        </div>
       </div>
     </section>
   )

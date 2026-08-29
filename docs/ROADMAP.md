@@ -107,49 +107,74 @@ before we spend more effort loading content by hand.
   be published by accident. Decide: ship the skeletons as empty blocks, mark skeleton text so a publish
   check can catch it, or add a "still has placeholder copy" guard to the K8 sweep. Same class as UI-2 —
   developer text reaching public copy.
-- **UI-2 leftover — `related-posts` still prints developer text.** Found by the spec 011 US4 variant audit
-  (2026-08-27). It is the one collection-backed block PR #118's `resolveLayout.ts` did not get a resolver, so a
-  block with an empty `manualItems` renders _"No manual items — falls back to category-derived list at render
-  time."_ as public body copy (`src/components/sections/RelatedPosts.tsx:26`) — the exact defect UI-2 closed for
-  the other four. It was left alone there because US4 is admin-only and FR-028 promises no rendered byte
-  changes; its help text no longer repeats the claim. **Fix:** either give it a resolver (it needs the
-  containing document's categories, which `resolveLayout`'s block-only signature does not carry today) or drop
-  the placeholder branch and render nothing.
-- **INERT-2 — controls whose renderer does nothing with them.** Opened by the spec 011 US4 variant audit
-  (2026-08-27) and widened by the PR #123 review, which read every new description against its renderer. US1
-  audited whether a _field_ had a consumer; none of these fails that test, because the consumer exists and
-  ignores the value. The help text on each now says so rather than describing behaviour that was never built:
-  - `logo-bar.source: 'from-homepage'` — an inert **option**: `LogoBar.tsx:27` maps it to an empty list, so the
-    block publishes an empty band. Same defect US1 removed from `stats-bar`. The value lives in eight Postgres
-    enum types, so withdrawing it is a migration. **Fix:** drop the option and the `source` field with it.
-  - `mission-vision-values.layout: 'tabs'` — the same shape: `MissionVisionValues.tsx:25` branches only on
-    `stacked`, so "tabs" renders exactly like "grid".
-  - `tabs` (the block) — jump links over a stack; no panel is ever hidden. Either build the tabs or rename the
-    block to what it draws.
+- **UI-2 leftover — `related-posts` printed developer text. Resolved 2026-08-27 (PR #125).** An empty
+  `manualItems` used to render _"No manual items — falls back to category-derived list at render time."_ as
+  public body copy, promising a fallback that was never built. The block now renders nothing when nothing is
+  picked, the same as every other collection-backed block. Giving it a real resolver is still open and is
+  tracked under INERT-2 below: it needs the containing document's categories, which `resolveLayout`'s
+  block-only signature does not carry.
+- **INERT-2 — controls whose renderer does nothing with them. Now enforced, and half fixed.** Opened by the
+  spec 011 US4 variant audit (2026-08-27) and widened by the PR #123 review, which read every new description
+  against its renderer. US1 audited whether a _field_ had a consumer; none of these failed that test, because
+  the consumer exists and ignores the value. Three review rounds each found more of them by hand (5, then 3,
+  then 3) — always by reading, never by testing, because nothing in CI checked what a block actually rendered.
+
+  **The gate (PR #125).** `tests/int/blocks/blockOutputContract.int.spec.tsx` renders every block in
+  `layoutBlocks` from its own field config and holds it to three promises: none of the developer phrases this
+  repo has actually published reaches body text (a denylist no block may opt out of, not a proof that no such
+  sentence exists); every control changes the rendered output; every option of a select draws something, and
+  something different from its siblings. Blocks are pure synchronous components by design
+  (ADR 0009), so this costs a unit test. Exceptions are declared **on the block** via
+  `custom: outputContract({...})` (`src/payload/blocks/outputContract.ts`) in three named kinds —
+  `resolvedUpstream` (read by `lib/resolveLayout.ts` before render), `behavioural` (read at submit time, not
+  paint time), and `inert` (read by nothing: a defect, with the reason it still exists). A declaration that
+  stops being true fails the gate, so the list cannot rot the way this prose one did. It found 24 defects on
+  its first run, including two nobody had catalogued.
+
+  **Fixed (PR #124, #125):**
+  - `contact-cta` — the only one that was live. Nine blocks in `services.json` leave `meetingUrl` blank, and
+    the panel rendered either way, publishing _"Configure a HubSpot meetings URL to embed the scheduler"_ on
+    nine services pages. The panel is now optional, and when it is filled in it books the meeting through a
+    button instead of printing the raw address.
+  - `newsletter-cta` — was a disabled input, a disabled button and a caption naming
+    `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID`, an env var nothing in `src/` reads. Now mounts the working
+    `HubspotLeadForm` with an email field; with no form GUID the section is left off the page entirely.
+  - `download-card` — was the same disabled mock **plus `Asset: <fileUrl>` printed in the clear**, so the gated
+    download was neither gated nor a download. Now a real form; the file arrives in the success panel.
+  - `hubspot-meetings` — was a bordered box printing the raw URL and _"loads in production"_. Now a real
+    booking button. The inline embed would mean shipping HubSpot's `MeetingsEmbedCode.js` and widening the CSP
+    (INTEGRATIONS.md §8) for a block with no live instances; `BookingCompleteSeam` stays wired for it.
+  - `related-posts` — see the UI-2 leftover above.
+
+  **Still open, each now declared `inert` on its block and failing the gate the moment it is fixed:**
+  - `hero.variant: 'split'` — `Hero.tsx:76` draws the image for `with-image || split` on one branch, so "Split"
+    is "With image" under another name. **Found by the gate, not by the audit.**
+  - `hero.primaryCta.variant` — declared on the `Cta` type, never destructured; `Hero.tsx:99` hardcodes
+    `bg-accent-strong text-white`, so all three options draw the same button.
+  - `logo-bar.source: 'from-homepage'` — `LogoBar.tsx:27` maps it to an empty list, so the block publishes an
+    empty band. The value lives in eight Postgres enum types, so withdrawing it is a migration.
+  - `mission-vision-values.layout: 'tabs'` — `MissionVisionValues.tsx:25` branches only on `stacked`, so "tabs"
+    renders exactly like "grid".
   - `video-embed.thumbnail` — **worse than inert**: `VideoEmbed.tsx:34` swaps the `<iframe>` for a still and a
-    non-interactive "▶ Play" span, so filling it in makes the video unplayable.
-  - `newsletter-cta` — the whole block is a placeholder: a disabled input and a caption naming
-    `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID`, an env var nothing in `src/` reads. Publishing it puts developer
-    text on the page (the UI-2 class again).
-  - `hubspot-form.submitRedirect`, `featured-testimonials.autoplay`, `posts.relatedPosts`, `media.caption`,
-    `servicePillars.order` — declared, never read. (`listServicePillars` has no callers and the
-    `service-pillar-cards` block renders its relationship in pick order, so this one is now `admin.hidden`.)
+    non-interactive "▶ Play" span, so filling it in makes the video unplayable and takes `provider`, `videoId`
+    and `title` down with it.
+  - `tabs` (the block) — jump links over a stack; no panel is ever hidden. Either build the tabs or rename the
+    block to what it draws. (Not gate-visible: it renders every tab, so every control moves the output.)
+  - `hubspot-form.submitRedirect`, `posts.relatedPosts`, `media.caption`, `servicePillars.order` — declared,
+    never read. (`featured-testimonials.autoplay` is now declared inert on the block; `listServicePillars` has
+    no callers and `service-pillar-cards` renders its relationship in pick order, so that one is `admin.hidden`.)
   - `services.icon` and `process-steps.steps.icon` — read, but there is no icon set behind them:
     `ServiceCards.tsx:36` and `ProcessSteps.tsx:29` print the raw string on the page.
-  - `hubspot-meetings` and `contact-cta.meetingUrl` — both draw a bordered placeholder printing the raw URL; no
-    Meetings embed script exists in the repo. (`contact-cta`'s panel used to render even when the URL was blank,
-    publishing "Configure a HubSpot meetings URL to embed the scheduler" on nine services pages; fixed in
-    PR #124, so the panel is now an optional second column.)
-  - `download-card` — `newsletter-cta`'s twin, found by the second-round sweep: a disabled form, "HubSpot form
-    <id> loads in production", **and `Asset: <fileUrl>` printed in the clear**, so the gated download is neither
-    gated nor a download. Worth fixing before any of these blocks is published.
+  - A related renderer defect, same audit: three components read fields their collection does not have —
+    `LocationsList.tsx:16` (`state`, which lives at `address.state`), `ServicePillarCards.tsx:24` (`tagline`)
+    and `WorkshopList.tsx:21` (`subtitle`). Each is a silently dead branch. The gate builds its related
+    documents from the real collection configs, so it will not paper over these, but it cannot fail on them
+    either — they are collection fields, not block controls.
 
-  A related renderer defect, same audit: three components read fields their collection does not have —
-  `LocationsList.tsx:16` (`state`, which lives at `address.state`), `ServicePillarCards.tsx:24` (`tagline`) and
-  `WorkshopList.tsx:21` (`subtitle`). Each is a silently dead branch, not a wrong description.
+  Sequencing and the remaining fixes are in `docs/planning/block-output-contract.md`.
 
-  **Worth a sweep**: this list came from auditing the ~120 descriptions one PR happened to touch. Nothing has
-  checked the rest of the config the same way.
+  **Worth a sweep**: this list came from auditing the ~120 descriptions one PR happened to touch, and the gate
+  only covers `layoutBlocks`. Nothing has checked the collections' own fields the same way.
 
 - **IND-1 / SVC-2 leftover — two blocks link to routes that do not exist.** Also found 2026-08-27.
   `industry-grid` links each card to `/industries/<slug>` and `locations-list` to `/locations/<slug>`

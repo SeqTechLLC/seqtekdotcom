@@ -43,7 +43,7 @@ export const ContactCta: Block = {
       validate: httpsUrlValidate,
       admin: {
         description:
-          'A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them, but the live calendar is not embedded yet: today that panel only shows the address (ROADMAP INERT-2).',
+          'A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them with a "See available times" button that opens that scheduler. The calendar is not embedded inline yet.',
       },
     },
   ],

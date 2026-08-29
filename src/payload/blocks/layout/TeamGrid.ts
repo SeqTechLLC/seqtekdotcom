@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { outputContract } from '../outputContract'
+
 import { blockAdmin } from '../blockAdmin'
 import { headingField } from '../../fields/blockCopy'
 
@@ -11,6 +13,10 @@ export const TeamGrid: Block = {
   interfaceName: 'TeamGridBlock',
   labels: { singular: 'Team grid', plural: 'Team grids' },
   admin: blockAdmin('content-collection', 'team-grid', 'Team grid'),
+  custom: outputContract({
+    // Resolved by `src/lib/resolveLayout.ts` into `manualItems` before render.
+    resolvedUpstream: ['filter'],
+  }),
   fields: [
     headingField(),
     {
