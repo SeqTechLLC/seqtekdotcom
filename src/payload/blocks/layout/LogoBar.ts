@@ -18,11 +18,15 @@ export const LogoBar: Block = {
       type: 'array',
       label: 'Logos',
       labels: { singular: 'Logo', plural: 'Logos' },
-      required: true,
       admin: {
         components: { RowLabel: mediaRowLabel({ singular: 'Logo', uploadField: 'logo' }) },
+        // Deliberately not `required`. The blocks that have zero logos are the
+        // `from-homepage` ones this migration removes, and marking the array
+        // required would make their containing page unsaveable — the error
+        // landing on an editor doing something unrelated. An empty block
+        // simply renders nothing, as `industry-grid` and `related-posts` do.
         description:
-          'The logos to show, in the order they should read. Leave the block off the page rather than publishing it empty.',
+          'The logos to show, in the order they should read. With none picked the section is left off the page.',
       },
       fields: [
         {

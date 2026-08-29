@@ -5,7 +5,7 @@ import { outputContract } from '../outputContract'
 import { blockAdmin } from '../blockAdmin'
 
 import { headingField } from '../../fields/blockCopy'
-import { hubspotFormIdValidate, safeUrlValidate } from '../../fields/url'
+import { hubspotFormIdValidate } from '../../fields/url'
 
 // Per BLOCK_LIBRARY.md §5.6. Full HubSpot form embed.
 export const HubspotForm: Block = {

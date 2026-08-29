@@ -34,6 +34,13 @@ import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 // file without re-adding them. The plain `DROP COLUMN` statements need no such
 // care; they succeed whatever the rows hold.
 //
+// `down()` IS NOT A DATA UNDO. It restores the columns, the enum value and the
+// relationship table column — the SHAPE — and nothing else. The `'tabs'`
+// selections re-homed to `'grid'` above, every `relatedPosts` pick, and every
+// `media.caption` are gone for good the moment `up()` commits. Rolling back
+// gives you somewhere to put that data, not the data. The RDS snapshot named
+// below is the only real undo.
+//
 // NO AUTOMATED GATE EXERCISES THIS FILE. No workflow runs `payload migrate`,
 // and the testcontainers Vitest job builds its schema with a drizzle PUSH, not
 // the migration chain — so a green CI says nothing about whether this applies.

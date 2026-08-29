@@ -954,15 +954,17 @@ export interface LogoBarBlock {
    */
   heading?: string | null;
   /**
-   * The logos to show, in the order they should read. Leave the block off the page rather than publishing it empty.
+   * The logos to show, in the order they should read. With none picked the section is left off the page.
    */
-  logos: {
-    /**
-     * Transparent PNG or SVG where possible, so it sits on any background.
-     */
-    logo: number | Media;
-    id?: string | null;
-  }[];
+  logos?:
+    | {
+        /**
+         * Transparent PNG or SVG where possible, so it sits on any background.
+         */
+        logo: number | Media;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Gray keeps a wall of mismatched brand colors calm and is the usual choice. Full color suits a short row of two or three.
    */

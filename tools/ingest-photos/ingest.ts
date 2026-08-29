@@ -8,7 +8,7 @@ import { mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join, relative } from 'node:path'
 
 import { convertFile, SOURCE_EXTS, type OutputFormat } from './convert'
-import { generateAlt, REVIEW_MARKER } from './altText'
+import { generateAlt } from './altText'
 import { Manifest } from './manifest'
 import type { NormalizeMode, SourceFile } from './types'
 
@@ -16,7 +16,7 @@ import type { NormalizeMode, SourceFile } from './types'
 export interface MediaUploader {
   create(args: {
     collection: 'media'
-    data: { alt: string; caption: string }
+    data: { alt: string }
     file: { data: Buffer; mimetype: string; name: string; size: number }
     overrideAccess: boolean
   }): Promise<{ id: string | number }>
@@ -189,7 +189,10 @@ export async function runIngest(
     try {
       const { id } = await uploader.create({
         collection: 'media',
-        data: { alt: generateAlt(file.relPath), caption: REVIEW_MARKER },
+        // `caption: REVIEW_MARKER` used to ride along here. `media.caption`
+        // was dropped (ROADMAP INERT-2); the review flag is recorded on the
+        // manifest entry below instead, which is the record C-7 should read.
+        data: { alt: generateAlt(file.relPath) },
         file: {
           data: converted.buffer,
           mimetype: converted.mimeType,
@@ -202,6 +205,7 @@ export async function runIngest(
         mediaId: id,
         filename: converted.filename,
         relPath: file.relPath,
+        altPending: true,
       })
       summary.uploaded++
       if (summary.uploaded % 25 === 0) manifest.save()

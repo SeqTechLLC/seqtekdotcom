@@ -4,13 +4,16 @@
  * The Media collection requires non-empty `alt` (FR-023), and we can't
  * hand-write 900+ strings up front. These are deliberately generic, context-
  * derived placeholders — good enough to satisfy the validator and give an
- * editor a starting point. Every ingested doc is also tagged with
- * `REVIEW_MARKER` in `caption` so the alt-text pass (C-7) can filter them.
+ * editor a starting point. Every ingested doc is also flagged for review so
+ * the alt-text pass (C-7) can filter them: `altPending: true` on its manifest
+ * entry, keyed by the same sha256 that carries the `mediaId`.
+ *
+ * That flag used to be `REVIEW_MARKER` stamped into `media.caption`. ROADMAP
+ * INERT-2 dropped that column — nothing rendered it, so the admin was offering
+ * editors a caption that reached no page — and the manifest is the better
+ * home anyway: it is already the per-upload record, and it does not depend on
+ * a content field surviving a schema change.
  */
-
-/** Stamped into `caption` on every ingested doc so editors can find them. */
-export const REVIEW_MARKER =
-  'Auto-ingested from photo library — alt text pending editorial review (C-7/C-8)'
 
 /** Top-level source folder → human-ish alt template. */
 const FOLDER_ALT: Record<string, string> = {
