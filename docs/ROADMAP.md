@@ -146,42 +146,55 @@ before we spend more effort loading content by hand.
     (INTEGRATIONS.md §8) for a block with no live instances; `BookingCompleteSeam` stays wired for it.
   - `related-posts` — see the UI-2 leftover above.
 
-  **Still open, each now declared `inert` on its block and failing the gate the moment it is fixed:**
-  - `hero.variant: 'split'` — `Hero.tsx:76` draws the image for `with-image || split` on one branch, so "Split"
-    is "With image" under another name. **Found by the gate, not by the audit.**
-  - `hero.primaryCta.variant` — declared on the `Cta` type, never destructured; `Hero.tsx:99` hardcodes
-    `bg-accent-strong text-white`, so all three options draw the same button.
+  **Also fixed (PR #126):**
+  - `tabs` (the block) — was jump links over a stack in which no panel was ever hidden, so the name promised
+    something the page did not do. It now shows one panel at a time, with the ARIA tabs keyboard pattern.
+  - `video-embed.thumbnail` — was **worse than inert**: it swapped the `<iframe>` for a still and a
+    non-interactive "▶ Play" span, so filling it in made the video unplayable and took `provider`, `videoId`
+    and `title` down with it. The still is now a real click-to-play facade, which also keeps the third-party
+    frame from loading until someone asks for it.
+  - `hero.variant: 'split'` — drew the identical stacked hero as `with-image`, so the picker offered one
+    layout twice under two names. It now sets the copy beside the image. **Found by the gate, not the audit.**
+  - `hero.primaryCta.variant` — was declared on the `Cta` type and never destructured. All three options now
+    draw distinct buttons.
+  - The three phantom reads — `LocationsList` now reads `address.state` (where the field actually lives), and
+    the dead `servicePillars.tagline` / `workshops.subtitle` branches are gone. The showcase locations carry a
+    real state so the fixed line has somewhere to show up.
+  - `industry-grid` and `locations-list` cards are **unlinked**. See IND-1 / SVC-2 below.
+
+  **Still open, each declared `inert` on its block and failing the gate the moment it is fixed:**
   - `logo-bar.source: 'from-homepage'` — `LogoBar.tsx:27` maps it to an empty list, so the block publishes an
-    empty band. The value lives in eight Postgres enum types, so withdrawing it is a migration.
+    empty band. There is nothing to resolve it from either: the `homepage` global carries only `layout`, no
+    logo set. The value lives in eight Postgres enum types, so withdrawing it is a migration.
   - `mission-vision-values.layout: 'tabs'` — `MissionVisionValues.tsx:25` branches only on `stacked`, so "tabs"
-    renders exactly like "grid".
-  - `video-embed.thumbnail` — **worse than inert**: `VideoEmbed.tsx:34` swaps the `<iframe>` for a still and a
-    non-interactive "▶ Play" span, so filling it in makes the video unplayable and takes `provider`, `videoId`
-    and `title` down with it.
-  - `tabs` (the block) — jump links over a stack; no panel is ever hidden. Either build the tabs or rename the
-    block to what it draws. (Not gate-visible: it renders every tab, so every control moves the output.)
-  - `hubspot-form.submitRedirect`, `posts.relatedPosts`, `media.caption`, `servicePillars.order` — declared,
-    never read. (`featured-testimonials.autoplay` is now declared inert on the block; `listServicePillars` has
-    no callers and `service-pillar-cards` renders its relationship in pick order, so that one is `admin.hidden`.)
+    renders exactly like "grid". A tabbed treatment of seven values is not worth building; drop the option.
+  - `hubspot-form.submitRedirect`, `featured-testimonials.autoplay`, `posts.relatedPosts`, `media.caption`,
+    `servicePillars.order` — declared, never read. (`listServicePillars` has no callers and
+    `service-pillar-cards` renders its relationship in pick order, so that one is `admin.hidden`.)
   - `services.icon` and `process-steps.steps.icon` — read, but there is no icon set behind them:
     `ServiceCards.tsx:36` and `ProcessSteps.tsx:29` print the raw string on the page.
-  - A related renderer defect, same audit: three components read fields their collection does not have —
-    `LocationsList.tsx:16` (`state`, which lives at `address.state`), `ServicePillarCards.tsx:24` (`tagline`)
-    and `WorkshopList.tsx:21` (`subtitle`). Each is a silently dead branch. The gate builds its related
-    documents from the real collection configs, so it will not paper over these, but it cannot fail on them
-    either — they are collection fields, not block controls.
+
+  The first two and the third group are all schema-bearing, so they are one migration — Lane E in the plan.
+
+  **Not gate-visible, worth knowing:** the gate covers block controls, not collection fields, so it could not
+  have failed on the three phantom reads. It does build its related documents from the real collection configs,
+  so it will never paper over one either. `service-pillar-cards` is now title-only, which is thin — the
+  collection's one-liner is richText `description`; giving the card a real subtitle would be a schema addition,
+  not a removal.
 
   Sequencing and the remaining fixes are in `docs/planning/block-output-contract.md`.
 
   **Worth a sweep**: this list came from auditing the ~120 descriptions one PR happened to touch, and the gate
   only covers `layoutBlocks`. Nothing has checked the collections' own fields the same way.
 
-- **IND-1 / SVC-2 leftover — two blocks link to routes that do not exist.** Also found 2026-08-27.
-  `industry-grid` links each card to `/industries/<slug>` and `locations-list` to `/locations/<slug>`
-  (`IndustryGrid.tsx:30`, `LocationsList.tsx:37`); neither route is built, so both are 404s wherever those
-  blocks are published. `LocationsList` also reads a top-level `state` the collection does not have (it lives
-  at `address.state`), and `ServicePillarCards` reads a `tagline` that does not exist on `servicePillars` — two
-  more silent no-ops. Fold into IND-1 / SVC-2, or make the cards unlinked until the routes exist.
+- **IND-1 / SVC-2 leftover — two blocks linked to routes that do not exist. Cards unlinked 2026-08-27
+  (PR #126).** `industry-grid` linked each card to `/industries/<slug>` and `locations-list` to
+  `/locations/<slug>`; neither route is built, so every card was a 404 wherever those blocks were published.
+  Both now render as plain cards. **Re-link them when IND-1 / SVC-2 ship the detail routes.** The cards are
+  one call site; `src/payload/hooks/revalidateOnChange.ts:135-141` is the other, and it already builds
+  invalidation paths for those unbuilt routes. Note the two disagree on the name — the hook says
+  `/consulting/<slug>` where the block said `/locations/<slug>` — so settle that before either route is built. (The two phantom field reads found alongside this
+  are fixed; see INERT-2 above.)
 - **UI-1 / UI-2 — both resolved 2026-08-25 (P5-27, P5-28).** Team cards render `title`, not the
   descriptive `role`. The four collection-backed blocks (`team-grid`, `post-list`, `case-study-grid`,
   `service-cards`) now resolve their `source`/`filter` in `src/lib/resolveLayout.ts` instead of printing

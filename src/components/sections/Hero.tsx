@@ -36,6 +36,21 @@ const ALLOWED_VIDEO_HOSTS = [
   'fast.wistia.net',
 ]
 
+/**
+ * ROADMAP INERT-2 — `primaryCta.variant` was declared on the `Cta` type and
+ * never destructured; the button was hardcoded `bg-accent-strong text-white`,
+ * so all three options in the picker drew the same thing.
+ */
+const CTA_VARIANT_CLASS: Record<string, string> = {
+  primary: 'rounded-md bg-accent-strong px-5 py-3 font-medium text-white',
+  secondary:
+    'rounded-md border border-accent-strong px-5 py-3 font-medium text-accent-strong hover:bg-surface-accent',
+  ghost: 'rounded-md px-5 py-3 font-medium text-accent-strong underline hover:no-underline',
+}
+
+const ctaClass = (variant: string | null | undefined): string =>
+  CTA_VARIANT_CLASS[variant ?? 'primary'] ?? CTA_VARIANT_CLASS.primary
+
 const isAllowedVideoUrl = (value: string | null | undefined): value is string => {
   if (!value) return false
   try {
@@ -59,58 +74,87 @@ export function Hero({
   alignment = 'left',
 }: HeroProps) {
   const alignmentCls = alignment === 'center' ? 'text-center mx-auto' : 'text-left'
+  const image = isFullMedia(media) && media.url ? media : null
+  // ROADMAP INERT-2 — `split` used to share one branch with `with-image`, so
+  // it drew the identical stacked hero and the picker offered the same layout
+  // twice under two names. It now does what it says: copy beside the image.
+  const isSplit = variant === 'split' && image !== null
+
+  const copy = (
+    <>
+      {eyebrow ? (
+        <p className="text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
+      ) : null}
+      <h1 className="mt-3 max-w-3xl text-display font-bold md:text-display-xl">{headline}</h1>
+      {subheadline ? (
+        <p className="mt-5 max-w-2xl text-body-lg text-text-secondary">{subheadline}</p>
+      ) : null}
+    </>
+  )
+
+  const ctas = (
+    <div className="mt-8 flex flex-wrap items-center gap-4">
+      {primaryCta?.label && primaryCta?.url ? (
+        <Link href={primaryCta.url} className={ctaClass(primaryCta.variant)}>
+          {primaryCta.label}
+        </Link>
+      ) : null}
+      {secondaryCta?.label && secondaryCta?.url ? (
+        <Link href={secondaryCta.url} className="font-medium underline">
+          {secondaryCta.label}
+        </Link>
+      ) : null}
+    </div>
+  )
+
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       {/* container-lg: the hero shares the page grid edge with every section
           below it (two-column, video bands). Headline at display scale with
           a measure cap so it wraps editorially instead of spanning the
           container; subheadline capped likewise. */}
-      <div className={`mx-auto max-w-container-lg ${alignmentCls}`}>
-        {eyebrow ? (
-          <p className="text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
-        ) : null}
-        <h1 className="mt-3 max-w-3xl text-display font-bold md:text-display-xl">{headline}</h1>
-        {subheadline ? (
-          <p className="mt-5 max-w-2xl text-body-lg text-text-secondary">{subheadline}</p>
-        ) : null}
-        {(variant === 'with-image' || variant === 'split') && isFullMedia(media) && media.url ? (
+      {isSplit ? (
+        <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
+          <div className={alignmentCls}>
+            {copy}
+            {ctas}
+          </div>
           <ResponsiveImage
-            media={media}
-            sizes="100vw"
-            className="mt-8 w-full rounded-lg border border-border-subtle shadow-sm"
+            media={image}
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            className="w-full rounded-lg border border-border-subtle shadow-sm"
             loading="eager"
             fetchPriority="high"
           />
-        ) : null}
-        {variant === 'with-video' && isAllowedVideoUrl(videoUrl) ? (
-          <div className="mt-8 aspect-video">
-            <iframe
-              src={videoUrl}
-              title={headline}
-              className="h-full w-full rounded-md"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-            />
-          </div>
-        ) : null}
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          {primaryCta?.label && primaryCta?.url ? (
-            <Link
-              href={primaryCta.url}
-              className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
-            >
-              {primaryCta.label}
-            </Link>
-          ) : null}
-          {secondaryCta?.label && secondaryCta?.url ? (
-            <Link href={secondaryCta.url} className="font-medium underline">
-              {secondaryCta.label}
-            </Link>
-          ) : null}
         </div>
-      </div>
+      ) : (
+        <div className={`mx-auto max-w-container-lg ${alignmentCls}`}>
+          {copy}
+          {variant === 'with-image' && image ? (
+            <ResponsiveImage
+              media={image}
+              sizes="100vw"
+              className="mt-8 w-full rounded-lg border border-border-subtle shadow-sm"
+              loading="eager"
+              fetchPriority="high"
+            />
+          ) : null}
+          {variant === 'with-video' && isAllowedVideoUrl(videoUrl) ? (
+            <div className="mt-8 aspect-video">
+              <iframe
+                src={videoUrl}
+                title={headline}
+                className="h-full w-full rounded-md"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+          ) : null}
+          {ctas}
+        </div>
+      )}
     </section>
   )
 }

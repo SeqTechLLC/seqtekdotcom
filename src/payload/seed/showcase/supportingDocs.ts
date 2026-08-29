@@ -133,11 +133,16 @@ async function seedIndustries(payload: Payload) {
 
 async function seedLocations(payload: Payload) {
   await clearTagged(payload, 'locations', 'city')
+  // ROADMAP INERT-2: `locations-list` renders a second line from the state,
+  // which lives at `address.state` — the renderer used to read a top-level
+  // `state` the collection does not have. These fixtures carried no address at
+  // all, so the showcase looked identical either way and the dead branch had
+  // nowhere to show up.
   return createBatch(payload, 'locations', [
-    { city: `${SHOWCASE_TAG}Tulsa`, _status: 'published' },
-    { city: `${SHOWCASE_TAG}Oklahoma City`, _status: 'published' },
-    { city: `${SHOWCASE_TAG}Northwest Arkansas`, _status: 'published' },
-    { city: `${SHOWCASE_TAG}Kansas City`, _status: 'published' },
+    { city: `${SHOWCASE_TAG}Tulsa`, address: { state: 'OK' }, _status: 'published' },
+    { city: `${SHOWCASE_TAG}Oklahoma City`, address: { state: 'OK' }, _status: 'published' },
+    { city: `${SHOWCASE_TAG}Northwest Arkansas`, address: { state: 'AR' }, _status: 'published' },
+    { city: `${SHOWCASE_TAG}Kansas City`, address: { state: 'MO' }, _status: 'published' },
   ])
 }
 

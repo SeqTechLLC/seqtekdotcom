@@ -25,6 +25,12 @@ export const requiredWhen = <TData = Record<string, unknown>, TAdmin extends obj
     ...admin,
     condition: (data: unknown, siblingData: unknown) => predicate((siblingData ?? data) as TData),
   },
+  // Read by `blockOutputContract.int.spec.tsx`: a field that is required for
+  // some variants must not be judged against a state where it is cleared,
+  // because Payload would refuse to save that. There is no other reliable
+  // signal — `required` is not set here, and every field grows a `validate`
+  // once the config is sanitized.
+  custom: { conditionallyRequired: true },
   validate: (value: unknown, args: ValidateArgs): true | string => {
     const data = (args.siblingData ?? args.data) as TData
     if (!predicate(data)) return true

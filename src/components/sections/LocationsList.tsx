@@ -1,10 +1,11 @@
-import Link from 'next/link'
-
 interface LocationDoc {
   id?: string | number
   city?: string | null
   slug?: string | null
-  state?: string | null
+  /** ROADMAP INERT-2 — the renderer used to read a top-level `state`, which
+   *  the `locations` collection does not have: it lives under `address`. That
+   *  made the second line of every card a silently dead branch. */
+  address?: { state?: string | null } | null
 }
 
 interface LocationsListProps {
@@ -23,28 +24,19 @@ export function LocationsList({ heading, locations }: LocationsListProps) {
       <div className="mx-auto max-w-container-lg">
         <h2 className="text-h2 font-bold">{heading ?? 'Where we work'}</h2>
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {docs.map((d) => {
-            const card = (
-              <>
-                <h3 className="text-h4 font-semibold">{d.city}</h3>
-                {d.state ? <p className="mt-1 text-small text-text-muted">{d.state}</p> : null}
-              </>
-            )
-            return (
-              <li
-                key={d.id ?? d.slug}
-                className="group rounded-md border border-border-subtle bg-surface text-center shadow-xs transition hover:border-border-strong hover:shadow-sm"
-              >
-                {d.slug ? (
-                  <Link href={`/locations/${d.slug}`} className="block h-full p-6">
-                    {card}
-                  </Link>
-                ) : (
-                  <div className="p-6">{card}</div>
-                )}
-              </li>
-            )
-          })}
+          {/* ROADMAP SVC-2 — these cards used to link to `/locations/<slug>`,
+              a route that has never been built, so every card was a 404. */}
+          {docs.map((d) => (
+            <li
+              key={d.id ?? d.slug}
+              className="rounded-md border border-border-subtle bg-surface p-6 text-center shadow-xs"
+            >
+              <h3 className="text-h4 font-semibold">{d.city}</h3>
+              {d.address?.state ? (
+                <p className="mt-1 text-small text-text-muted">{d.address.state}</p>
+              ) : null}
+            </li>
+          ))}
         </ul>
       </div>
     </section>

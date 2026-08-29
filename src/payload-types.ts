@@ -372,7 +372,7 @@ export interface Page {
  */
 export interface HeroBlock {
   /**
-   * What sits beside or under the words. Choosing one changes which fields below apply: "With image" and "Split" ask for an image, "With video" asks for a video address, "Text only" asks for neither.
+   * What sits beside or under the words. "With image" puts the picture under the copy at full width, "Split" sets it alongside; both ask for an image. "With video" asks for a video address, "Text only" asks for neither.
    */
   variant: 'text-only' | 'with-image' | 'with-video' | 'split';
   /**
@@ -408,7 +408,7 @@ export interface HeroBlock {
      */
     url?: string | null;
     /**
-     * Not wired up: the hero draws a solid accent button whichever of these is chosen (ROADMAP INERT-2).
+     * How much weight the button carries: solid for the one thing you want clicked, outlined for a real but lesser option, text-only when it should not compete with the page.
      */
     variant?: ('primary' | 'secondary' | 'ghost') | null;
   };
@@ -1883,7 +1883,7 @@ export interface IndustryGridBlock {
    */
   heading?: string | null;
   /**
-   * At least two, drawn as cards in the order you pick them. Each card links to /industries/<name>, and that route does not exist yet, so the cards currently lead to a 404 (ROADMAP IND-1).
+   * At least two, drawn as cards in the order you pick them. The cards are not links: the per-industry pages do not exist yet, so they name the industries rather than sending anyone to a dead page (ROADMAP IND-1).
    */
   industries: (number | Industry)[];
   id?: string | null;
@@ -1900,7 +1900,7 @@ export interface LocationsListBlock {
    */
   heading?: string | null;
   /**
-   * Drawn as cards in the order you pick them. Each card links to /locations/<name>, and that route does not exist yet, so the cards currently lead to a 404 (ROADMAP IND-1).
+   * Drawn as cards in the order you pick them. The cards are not links: the per-location pages do not exist yet, so they name the places rather than sending anyone to a dead page (ROADMAP SVC-2).
    */
   locations: (number | Location)[];
   id?: string | null;
@@ -2131,7 +2131,7 @@ export interface VideoEmbedBlock {
    */
   eyebrow?: string | null;
   /**
-   * Leave this blank. Filling it in replaces the player with a still image and a Play badge that cannot be clicked, so the video becomes unwatchable (ROADMAP INERT-2).
+   * Optional. With one set, the page shows this still and a Play button, and loads the video only when a reader clicks it — which keeps YouTube or Vimeo from tracking people who never watch. Leave it blank to embed the player directly.
    */
   thumbnail?: (number | null) | Media;
   id?: string | null;
@@ -2210,15 +2210,15 @@ export interface TabsBlock {
    */
   heading?: string | null;
   /**
-   * Two to six sections with jump links above them. They are NOT tabs today: every section renders stacked down the page and the links scroll to one (ROADMAP INERT-2).
+   * Two to six sections behind a row of tabs. One is shown at a time and the reader switches between them, so this suits alternatives a reader compares rather than steps they read in order.
    */
   tabs: {
     /**
-     * One or two words. It becomes the jump link and the heading.
+     * One or two words. It becomes the tab itself, so keep it short.
      */
     label: string;
     /**
-     * The prose under that heading. It is always visible.
+     * The prose behind that tab. It is shown when the reader picks it.
      */
     body: string;
     id?: string | null;

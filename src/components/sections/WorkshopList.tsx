@@ -4,7 +4,6 @@ interface WorkshopDoc {
   id?: string | number
   title?: string | null
   slug?: string | null
-  subtitle?: string | null
 }
 
 interface WorkshopListProps {
@@ -28,13 +27,12 @@ export function WorkshopList({ heading, workshops, headingLevel = 'h3' }: Worksh
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ol className="mt-8 grid gap-6 md:grid-cols-3">
           {docs.map((w, i) => {
+            // ROADMAP INERT-2 — a second line used to read `w.subtitle`, which
+            // `workshops` does not have at all. The branch never fired.
             const card = (
               <>
                 <p className="text-display font-bold text-accent-strong">{i + 1}</p>
                 <CardHeading className="mt-2 text-h4 font-semibold">{w.title}</CardHeading>
-                {w.subtitle ? (
-                  <p className="mt-2 text-body text-text-secondary">{w.subtitle}</p>
-                ) : null}
               </>
             )
             return (

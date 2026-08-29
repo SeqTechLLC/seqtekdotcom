@@ -1,5 +1,3 @@
-import Link from 'next/link'
-
 interface IndustryDoc {
   id?: string | number
   title?: string | null
@@ -22,23 +20,17 @@ export function IndustryGrid({ heading, industries }: IndustryGridProps) {
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {docs.map((d) => {
-            const card = <h3 className="text-h4 font-semibold">{d.title}</h3>
-            return (
-              <li
-                key={d.id ?? d.slug}
-                className="group rounded-md border border-border-subtle bg-surface text-center shadow-xs transition hover:border-border-strong hover:shadow-sm"
-              >
-                {d.slug ? (
-                  <Link href={`/industries/${d.slug}`} className="block h-full p-5">
-                    {card}
-                  </Link>
-                ) : (
-                  <div className="p-5">{card}</div>
-                )}
-              </li>
-            )
-          })}
+          {/* ROADMAP IND-1 — these cards used to link to `/industries/<slug>`,
+              a route that has never been built, so every card was a 404. They
+              stay unlinked until IND-1 ships the detail pages. */}
+          {docs.map((d) => (
+            <li
+              key={d.id ?? d.slug}
+              className="rounded-md border border-border-subtle bg-surface p-5 text-center shadow-xs"
+            >
+              <h3 className="text-h4 font-semibold">{d.title}</h3>
+            </li>
+          ))}
         </ul>
       </div>
     </section>

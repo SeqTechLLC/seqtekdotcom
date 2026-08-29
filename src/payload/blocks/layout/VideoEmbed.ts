@@ -1,7 +1,5 @@
 import type { Block } from 'payload'
 
-import { outputContract } from '../outputContract'
-
 import { blockAdmin } from '../blockAdmin'
 import { eyebrowField } from '../../fields/blockCopy'
 
@@ -11,17 +9,6 @@ export const VideoEmbed: Block = {
   interfaceName: 'VideoEmbedBlock',
   labels: { singular: 'Video embed', plural: 'Video embeds' },
   admin: blockAdmin('specialty', 'video-embed', 'Video embed', 'svg'),
-  custom: outputContract({
-    inert: {
-      // `VideoEmbed.tsx:34` swaps the <iframe> for a still and a
-      // non-interactive "▶ Play" span whenever a thumbnail is set, so with one
-      // filled in the provider, the video id and the title all reach nothing
-      // and the video cannot be played at all.
-      fields: ['videoId', 'title'],
-      options: { provider: ['vimeo'] },
-      why: 'the thumbnail branch replaces the player — ROADMAP INERT-2',
-    },
-  }),
   fields: [
     {
       name: 'provider',
@@ -76,7 +63,7 @@ export const VideoEmbed: Block = {
       label: 'Poster image',
       admin: {
         description:
-          'Leave this blank. Filling it in replaces the player with a still image and a Play badge that cannot be clicked, so the video becomes unwatchable (ROADMAP INERT-2).',
+          'Optional. With one set, the page shows this still and a Play button, and loads the video only when a reader clicks it — which keeps YouTube or Vimeo from tracking people who never watch. Leave it blank to embed the player directly.',
       },
     },
   ],
