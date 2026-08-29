@@ -256,11 +256,11 @@ Frontend emits `FAQPage` JSON-LD automatically.
 
 #### `logo-bar` — client logo strip
 
-| Field       | Type            | Required | Notes                                 |
-| ----------- | --------------- | -------- | ------------------------------------- |
-| `heading`   | text            | no       | Default "Trusted by industry leaders" |
-| `logos`     | array of upload | yes      | The only source                       |
-| `treatment` | select          | no       | `grayscale-on-color-hover` / `color`  |
+| Field       | Type            | Required | Notes                                             |
+| ----------- | --------------- | -------- | ------------------------------------------------- |
+| `heading`   | text            | no       | Default "Trusted by industry leaders"             |
+| `logos`     | array of upload | no       | The only source; with none the section is omitted |
+| `treatment` | select          | no       | `grayscale-on-color-hover` / `color`              |
 
 > **`source` dropped (PR #127, ROADMAP INERT-2):** its other option, "reuse the homepage set", mapped to an
 > empty list and published an empty band — and there was nothing to reuse, since the `homepage` global carries

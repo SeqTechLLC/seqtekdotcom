@@ -1397,7 +1397,7 @@ export const Media: CollectionConfig = {
 }
 ```
 
-> **This is Payload's generic shape, not ours.** `src/collections/Media.ts` excludes
+> **This is Payload's generic shape, not ours (ours has no `caption` — dropped in ROADMAP INERT-2).** `src/collections/Media.ts` excludes
 > SVG deliberately (it can carry inline script, and the raw file is served on the site
 > origin), generates eight derivatives from four breakpoints rather than three named
 > crops, and uses the **function form** of `adminThumbnail`. The string form is a trap

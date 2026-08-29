@@ -73,8 +73,11 @@ tunnel drops mid-way.
 
 ## 4. Verify
 
-- `https://seqtek-preview.com/admin/collections/media` — 23 new rows, each with
-  alt text and a `[curated:<slot>]` caption.
+- `.../admin/collections/media` — 23 new rows, each with alt text. (This step
+  used to say "and a `[curated:<slot>]` caption"; `media.caption` was dropped in
+  ROADMAP INERT-2, and the curated slot/people provenance lives in the curated
+  set's own `manifest.json`. Note this whole document still targets the retired
+  `seqtek-preview.com` and needs re-pointing before it is followed again.)
 - Media serves via CloudFront OAC; uploads are live immediately (object keys are
   `media/<filename>` — settled in ADR 0008 / spec 009; the URL path maps
   verbatim onto the key, so fresh uploads need no cache invalidation).

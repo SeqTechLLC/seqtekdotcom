@@ -14,10 +14,10 @@
  * that already carries a `figure` block is left untouched. Run generate.ts first
  * so out/<slug>/ holds the candidates.
  *
- * Note: PayloadRestClient.uploadMedia only forwards `alt`, so staging media docs
- * carry no `caption` (insert.ts sets one locally). This is cosmetic — the rendered
- * caption comes from the `figure` block, not the media doc — so the divergence is
- * left as-is rather than widening the shared REST client.
+ * Note: PayloadRestClient.uploadMedia forwards only `alt`, which is now the
+ * whole story — `media.caption` was dropped in ROADMAP INERT-2, so `insert.ts`
+ * no longer sets one locally either and there is no local/remote divergence
+ * left to explain. The rendered caption comes from the `figure` block.
  */
 import { copyFileSync, existsSync } from 'node:fs'
 import path from 'node:path'

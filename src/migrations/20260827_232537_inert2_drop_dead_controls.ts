@@ -34,6 +34,31 @@ import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 // file without re-adding them. The plain `DROP COLUMN` statements need no such
 // care; they succeed whatever the rows hold.
 //
+// RUN THESE FOUR COUNTS AGAINST THE TARGET DATABASE BEFORE PROMOTING.
+// The "no editorial work is discarded" claim below is verified against
+// `docs/content-drafts/*.json`, which is the seed data — NOT against preview or
+// ww3, which accept admin authoring. Anything these return is destroyed by
+// `up()` and is not recoverable by `down()`:
+//
+//   SELECT count(*) FROM posts_rels WHERE posts_id IS NOT NULL;   -- relatedPosts picks
+//   SELECT count(*) FROM media WHERE caption IS NOT NULL;         -- captions
+//   -- and across each of the 12 *_blocks_mission_vision_values tables:
+//   SELECT count(*) FROM pages_blocks_mission_vision_values WHERE layout = 'tabs';
+//
+// One more, which is a RENDER change rather than data loss: a `logo-bar` saved
+// under the withdrawn `from-homepage` source can still hold rows in
+// `*_blocks_logo_bar_logos`. Those render nothing today because the renderer
+// mapped any non-`inline` source to an empty list — and they START rendering
+// the moment `source` is dropped. The block-preview verification is code-level
+// and cannot see this.
+//
+//   SELECT count(*) FROM pages_blocks_logo_bar b
+//    WHERE b.source = 'from-homepage'
+//      AND EXISTS (SELECT 1 FROM pages_blocks_logo_bar_logos l WHERE l._parent_id = b.id);
+//
+// `docs/content-drafts/*.json` contains no `logo-bar` block at all, so a lane
+// loaded only from the drafts is safe; a hand-authored block in preview is not.
+//
 // `down()` IS NOT A DATA UNDO. It restores the columns, the enum value and the
 // relationship table column — the SHAPE — and nothing else. The `'tabs'`
 // selections re-homed to `'grid'` above, every `relatedPosts` pick, and every
