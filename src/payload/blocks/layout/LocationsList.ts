@@ -21,7 +21,7 @@ export const LocationsList: Block = {
       minRows: 1,
       admin: {
         description:
-          'Drawn as cards in the order you pick them. Each card links to /locations/<name>, and that route does not exist yet, so the cards currently lead to a 404 (ROADMAP IND-1).',
+          'Drawn as cards in the order you pick them. The cards are not links: the per-location pages do not exist yet, so they name the places rather than sending anyone to a dead page (ROADMAP SVC-2).',
       },
     },
   ],

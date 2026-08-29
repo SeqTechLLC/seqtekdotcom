@@ -219,7 +219,8 @@ one migration for the whole set:
   `posts.relatedPosts`, `media.caption`, `servicePillars.order`
 - `logoBar.source` (once `from-homepage` goes, one value remains — drop the
   field), and its value in eight enum types
-- `hero.primaryCta.variant`, if Lane C removes rather than implements
+- ~~`hero.primaryCta.variant`~~ — **resolved in PR #126: Lane C implemented the three styles rather than
+  removing the control, so it must NOT be dropped here.**
 
 Reconcile `docs/content-drafts/*.json` in the same change (CLAUDE.md, FR-029)
 and take an RDS snapshot first (`docs/INFRASTRUCTURE_RUNBOOK.md` §2.9).

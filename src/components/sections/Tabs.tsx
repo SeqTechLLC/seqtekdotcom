@@ -52,10 +52,18 @@ export function Tabs({ heading, tabs }: TabsProps) {
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
+        {heading ? (
+          <h2 id={`${base}-heading`} className="text-h3 font-semibold">
+            {heading}
+          </h2>
+        ) : null}
         <div
           role="tablist"
-          aria-label={heading ?? 'Sections'}
+          // Point at the visible heading rather than copying it: an aria-label
+          // here makes a screen reader announce the same string twice, once for
+          // the <h2> and again for the tablist.
+          aria-labelledby={heading ? `${base}-heading` : undefined}
+          aria-label={heading ? undefined : 'Sections'}
           className="mt-6 flex flex-wrap gap-2 border-b border-border-subtle"
         >
           {tabs.map((t, i) => {

@@ -42,6 +42,24 @@ describe('<Tabs /> shows one panel at a time (INERT-2)', () => {
     expect(getByRole('tab', { name: 'Handover' }).getAttribute('aria-selected')).toBe('true')
   })
 
+  it('names the tablist by the visible heading instead of repeating it', () => {
+    const { getByRole } = render(<Tabs heading="How we work" tabs={TABS} />)
+    const tablist = getByRole('tablist')
+    // `aria-label` here would make a screen reader read "How we work" twice —
+    // once for the <h2>, once for the tablist. Point at the heading instead.
+    expect(tablist.getAttribute('aria-label')).toBeNull()
+    const labelledBy = tablist.getAttribute('aria-labelledby')
+    expect(labelledBy).toBeTruthy()
+    expect(document.getElementById(labelledBy as string)?.textContent).toBe('How we work')
+  })
+
+  it('falls back to a literal label when there is no heading', () => {
+    const { getByRole } = render(<Tabs tabs={TABS} />)
+    const tablist = getByRole('tablist')
+    expect(tablist.getAttribute('aria-labelledby')).toBeNull()
+    expect(tablist.getAttribute('aria-label')).toBe('Sections')
+  })
+
   it('keeps only the selected tab in the tab order', () => {
     const { getAllByRole } = render(<Tabs tabs={TABS} />)
     const order = getAllByRole('tab').map((t) => t.getAttribute('tabindex'))
