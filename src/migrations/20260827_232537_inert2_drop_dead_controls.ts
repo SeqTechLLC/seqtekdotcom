@@ -63,8 +63,17 @@ import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 // relationship table column — the SHAPE — and nothing else. The `'tabs'`
 // selections re-homed to `'grid'` above, every `relatedPosts` pick, and every
 // `media.caption` are gone for good the moment `up()` commits. Rolling back
-// gives you somewhere to put that data, not the data. The RDS snapshot named
-// below is the only real undo.
+// gives you somewhere to put that data, not the data.
+//
+// That matters less than it sounds, because of where the content came from:
+// these lanes are loaded by `tools/payload-seed` from `docs/content-drafts/*.json`,
+// so re-running the seeder IS the recovery path for anything seeded. What the
+// seeder cannot bring back is work typed straight into `/admin` since the last
+// load — and that is exactly what the counts above measure. If they come back
+// zero, there is nothing here a snapshot would save. If they do not, take one
+// (INFRASTRUCTURE_RUNBOOK.md §2.9) before promoting, remembering that preview
+// and prod are separate DATABASES on one RDS INSTANCE, so a restore lands in a
+// new instance and the rows come back by hand.
 //
 // NO AUTOMATED GATE EXERCISES THIS FILE. No workflow runs `payload migrate`,
 // and the testcontainers Vitest job builds its schema with a drizzle PUSH, not
