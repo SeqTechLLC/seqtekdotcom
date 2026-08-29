@@ -6,7 +6,9 @@
  * derived placeholders — good enough to satisfy the validator and give an
  * editor a starting point. Every ingested doc is also flagged for review so
  * the alt-text pass (C-7) can filter them: `altPending: true` on its manifest
- * entry, keyed by the same sha256 that carries the `mediaId`.
+ * entry, keyed by the same sha256 that carries the `mediaId`. C-7 itself is
+ * not built — nothing reads that flag yet — so this describes where the
+ * review set is recorded, not an existing consumer.
  *
  * That flag used to be `REVIEW_MARKER` stamped into `media.caption`. ROADMAP
  * INERT-2 dropped that column — nothing rendered it, so the admin was offering

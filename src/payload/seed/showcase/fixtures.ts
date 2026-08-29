@@ -1112,7 +1112,7 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       blockType: 'hubspot-form',
       variants: [
         {
-          name: 'with-redirect',
+          name: 'lead-capture',
           data: {
             blockType: 'hubspot-form',
             heading: 'Get in touch',

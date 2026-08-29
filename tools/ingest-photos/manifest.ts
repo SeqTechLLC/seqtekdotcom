@@ -18,7 +18,9 @@ export interface ManifestEntry {
    * as `REVIEW_MARKER`, but ROADMAP INERT-2 dropped that column — it rendered
    * nowhere, so the admin offered editors a caption field that reached no
    * page. The flag lives here instead, beside the `mediaId` it describes, so
-   * the alt-text pass can still select exactly the auto-ingested rows.
+   * the alt-text pass can select exactly the auto-ingested rows. Note that
+   * pass does not exist yet — nothing in the tree reads this field except the
+   * test that pins it — so this is where C-7 should look, not a live contract.
    */
   altPending?: boolean
   /** Set by a `--out` disk run (path of the written file, relative to outDir). */
