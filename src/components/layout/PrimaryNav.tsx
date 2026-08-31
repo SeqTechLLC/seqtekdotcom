@@ -114,7 +114,11 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
                   id={panelId}
                   hidden={!open}
                   data-testid={`nav-panel-${index}`}
-                  className="absolute left-0 top-full z-dropdown mt-1 rounded-md border border-border-subtle bg-surface p-5 shadow-lg"
+                  // `w-max` matters: the panel is absolutely positioned inside a
+                  // list item barely wider than its own label, and without it
+                  // shrink-to-fit clamps every column to its 10rem minimum and
+                  // the longest leaf overflows its own box.
+                  className="absolute left-0 top-full z-dropdown mt-1 w-max max-w-[min(80vw,56rem)] rounded-md border border-border-subtle bg-surface p-5 shadow-lg"
                 >
                   <div
                     className="grid gap-x-10 gap-y-6"
