@@ -7,12 +7,13 @@ import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { seoField } from '../payload/fields/seo'
 import { orderField, publishedAtField } from '../payload/fields/publishing'
+import { layoutBlocks } from '../payload/blocks/layout'
 
 export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', '_status', 'slug', 'pillar', 'order'],
+    defaultColumns: ['title', '_status', 'slug', 'order'],
   },
   access: {
     read: publishedOrAuthed,
@@ -48,17 +49,6 @@ export const Services: CollectionConfig = {
       },
     },
     {
-      name: 'pillar',
-      type: 'relationship',
-      relationTo: 'servicePillars',
-      label: 'Belongs to pillar',
-      required: true,
-      admin: {
-        description:
-          'Which of the three pillars this service sits under. A "Services by pillar" block filters on this.',
-      },
-    },
-    {
       name: 'icon',
       type: 'text',
       label: 'Icon name',
@@ -75,7 +65,20 @@ export const Services: CollectionConfig = {
       hasMany: true,
       admin: { description: 'Case studies that show this service delivered.' },
     },
-    seoField({ noun: 'service', hidden: true }),
+    {
+      name: 'layout',
+      type: 'blocks',
+      label: 'Service page',
+      labels: { singular: 'Block', plural: 'Blocks' },
+      blocks: [...layoutBlocks],
+      admin: {
+        description:
+          'The service page, built from blocks. Start with a hero so the page has a headline.',
+      },
+    },
+    // Un-hidden with the route that reads it (ROADMAP INERT-1): `/services/[slug]`
+    // now calls `buildMetadata` with this group.
+    seoField({ noun: 'service' }),
     orderField({ what: 'a service list' }),
     publishedAtField(),
   ],

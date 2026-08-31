@@ -11,18 +11,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // the `react-server` condition — the same mock the other lib specs use.
 vi.mock('server-only', () => ({}))
 
-const { listTeamMembers, listPosts, listCaseStudies, listServices } = vi.hoisted(() => ({
-  listTeamMembers: vi.fn(),
-  listPosts: vi.fn(),
-  listCaseStudies: vi.fn(),
-  listServices: vi.fn(),
-}))
+const { listTeamMembers, listPosts, listCaseStudies, listServices, listServicePillars } =
+  vi.hoisted(() => ({
+    listTeamMembers: vi.fn(),
+    listPosts: vi.fn(),
+    listCaseStudies: vi.fn(),
+    listServices: vi.fn(),
+    listServicePillars: vi.fn(),
+  }))
 
 vi.mock('../../../src/lib/payload', () => ({
   listTeamMembers,
   listPosts,
   listCaseStudies,
   listServices,
+  listServicePillars,
 }))
 
 import { resolveLayout, byLeadershipThenOrder } from '../../../src/lib/resolveLayout'
@@ -131,22 +134,62 @@ describe('resolveLayout — case-study-grid', () => {
   })
 })
 
+// ROADMAP SVC-2 moved this relation from the leaf to the group: a service no
+// longer names one pillar, the pillar holds an ordered list of its services.
+// That is what lets a leaf be cross-listed under two groups (NAV-1).
 describe('resolveLayout — service-cards', () => {
-  const alpha = { id: 1, title: 'Alpha', pillar: { id: 3, slug: 'p' } }
-  const beta = { id: 2, title: 'Beta', pillar: 4 }
+  const alpha = { id: 1, title: 'Alpha' }
+  const beta = { id: 2, title: 'Beta' }
+  const gamma = { id: 3, title: 'Gamma' }
 
-  beforeEach(() => listServices.mockResolvedValue([alpha, beta]))
-
-  it('filters by-pillar against a populated relation', async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'service-cards', source: 'by-pillar', pillar: 3 },
+  beforeEach(() => {
+    // `listServices` is sorted by the services' own `order`.
+    listServices.mockResolvedValue([alpha, beta, gamma])
+    listServicePillars.mockResolvedValue([
+      // Populated relations and bare ids both appear, depending on read depth.
+      { id: 30, slug: 'build', items: [gamma, alpha] },
+      { id: 40, slug: 'operate', items: [2] },
     ])
-    expect(block.manualItems).toEqual([alpha])
   })
 
-  it('applies no limit — service-cards has no limit field', async () => {
-    const [block] = await resolveLayout([{ blockType: 'service-cards', source: 'by-pillar' }])
-    expect(block.manualItems).toEqual([])
+  it('resolves by-pillar through the group that holds the services', async () => {
+    const [block] = await resolveLayout([
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 30 },
+    ])
+    expect(block.manualItems).toEqual([gamma, alpha])
+  })
+
+  it("renders in the GROUP's order, not the services' own order", async () => {
+    // `listServices` returns alpha, beta, gamma; the group says gamma first.
+    // The editor's arrangement on the group is what a visitor sees.
+    const [block] = await resolveLayout([
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 30 },
+    ])
+    expect((block.manualItems as { title: string }[]).map((s) => s.title)).toEqual([
+      'Gamma',
+      'Alpha',
+    ])
+  })
+
+  it('accepts a group whose items came back as bare ids', async () => {
+    const [block] = await resolveLayout([
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 40 },
+    ])
+    expect(block.manualItems).toEqual([beta])
+  })
+
+  it('renders nothing when the block names no group, or an unknown one', async () => {
+    const [none] = await resolveLayout([{ blockType: 'service-cards', source: 'by-pillar' }])
+    expect(none.manualItems).toEqual([])
+    const [missing] = await resolveLayout([
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 999 },
+    ])
+    expect(missing.manualItems).toEqual([])
+  })
+
+  it('still returns every service when the source is not by-pillar', async () => {
+    const [block] = await resolveLayout([{ blockType: 'service-cards', source: 'all' }])
+    expect(block.manualItems).toEqual([alpha, beta, gamma])
   })
 })
 

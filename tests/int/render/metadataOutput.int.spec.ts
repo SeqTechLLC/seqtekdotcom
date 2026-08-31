@@ -110,7 +110,7 @@ describe('buildMetadata call sites are enumerated', () => {
     'partners/[slug]/page.tsx',
     'partners/page.tsx',
     'privacy-policy/page.tsx',
-    'services/[offering]/page.tsx',
+    'services/[slug]/page.tsx',
     'services/page.tsx',
     'team/[slug]/page.tsx',
     'team/page.tsx',

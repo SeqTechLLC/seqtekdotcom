@@ -1231,10 +1231,6 @@ export interface Service {
    */
   slug: string;
   /**
-   * Which of the three pillars this service sits under. A "Services by pillar" block filters on this.
-   */
-  pillar: number | ServicePillar;
-  /**
    * Leave this blank. There is no icon set behind it yet, so whatever you type is printed on the card as text (ROADMAP INERT-2).
    */
   icon?: string | null;
@@ -1242,6 +1238,58 @@ export interface Service {
    * Case studies that show this service delivered.
    */
   relatedCaseStudies?: (number | CaseStudy)[] | null;
+  /**
+   * The service page, built from blocks. Start with a hero so the page has a headline.
+   */
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | TimelineBlock
+        | FAQBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | MissionVisionValuesBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
+    | null;
   /**
    * How this service looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
    */
@@ -1267,61 +1315,6 @@ export interface Service {
    * Scheduling only. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
    */
   publishedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "servicePillars".
- */
-export interface ServicePillar {
-  id: number;
-  /**
-   * One of the three top-level groupings services sit under.
-   */
-  title: string;
-  /**
-   * The last part of the web address for this pillar, for example "strategy". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
-   */
-  slug: string;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  heroImage?: (number | null) | Media;
-  /**
-   * How this pillar looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
-   */
-  seo?: {
-    /**
-     * The blue headline in a Google result. Leave blank to use the pillar title above. "| SEQTEK" is appended automatically, so do not type it.
-     */
-    metaTitle?: string | null;
-    /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
-     */
-    metaDescription?: string | null;
-    /**
-     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
-     */
-    ogImage?: (number | null) | Media;
-  };
-  /**
-   * Lowest number first in a pillar list. Records left without a number come after the numbered ones, newest first.
-   */
-  order?: number | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1554,6 +1547,121 @@ export interface ServiceCardsBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'service-cards';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "servicePillars".
+ */
+export interface ServicePillar {
+  id: number;
+  /**
+   * One of the three top-level groupings services sit under.
+   */
+  title: string;
+  /**
+   * The last part of the web address for this pillar, for example "strategy". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
+  slug: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  heroImage?: (number | null) | Media;
+  /**
+   * The services shown under this group, in the order you arrange them. A service may appear under more than one group.
+   */
+  items?: (number | Service)[] | null;
+  /**
+   * The group page, built from blocks. Start with a hero so the page has a headline. A group page needs a reason to exist beyond listing its own services.
+   */
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | TimelineBlock
+        | FAQBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | MissionVisionValuesBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
+    | null;
+  /**
+   * How this pillar looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
+  seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the pillar title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
+    metaTitle?: string | null;
+    /**
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
+     */
+    metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
+    ogImage?: (number | null) | Media;
+  };
+  /**
+   * Lowest number first in a pillar list. Records left without a number come after the numbered ones, newest first.
+   */
+  order?: number | null;
+  /**
+   * Scheduling only. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   */
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3657,9 +3765,57 @@ export interface CaseStudiesSelect<T extends boolean = true> {
 export interface ServicesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
-  pillar?: T;
   icon?: T;
   relatedCaseStudies?: T;
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
   seo?:
     | T
     | {
@@ -3682,6 +3838,56 @@ export interface ServicePillarsSelect<T extends boolean = true> {
   slug?: T;
   description?: T;
   heroImage?: T;
+  items?: T;
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
   seo?:
     | T
     | {
@@ -3690,6 +3896,7 @@ export interface ServicePillarsSelect<T extends boolean = true> {
         ogImage?: T;
       };
   order?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;

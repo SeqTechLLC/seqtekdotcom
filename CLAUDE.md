@@ -64,6 +64,10 @@ of what shipped. Don't re-derive status from git history — read those two.
 
 - **Conventional Commits** — `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `perf:`, `ci:`, `build:`. Scope optional, e.g. `feat(payload): ...`.
 - **Branches** — `spike/*` for spikes, `feat/*` for features, `fix/*` for fixes. `main` is stable.
+- **Docs ride with the code that changed them.** A doc update caused by, explaining, or invalidated by a code
+  change goes in the **same PR** as that code, as its own commit. Standalone docs-only PRs are for docs with no
+  related code in flight — a meeting note, a decision that arrived from a person, an ADR ahead of
+  implementation. (Docs-only merges deploy nothing: `deploy.yml` sets `paths-ignore: docs/**`.)
 - **Public repo** — no secrets committed. `.env.local` only. Pre-commit gitleaks (per Phase 1 plan).
 - **TypeScript strict mode**, no `any`. ESLint + Prettier enforced in CI.
 - **Tooling and scripts** live in subdirectories, not the repo root.

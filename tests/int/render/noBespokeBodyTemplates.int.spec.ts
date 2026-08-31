@@ -26,7 +26,7 @@ const RENDER_BLOCKS_ROUTES = [
   // feat/services-restructure (ADR 0009): the bespoke pillar/service route
   // templates were retired in favor of block-composed offering Pages.
   'src/app/(frontend)/services/page.tsx', // services overview (block Page)
-  'src/app/(frontend)/services/[offering]/page.tsx', // peer offerings (block Pages)
+  'src/app/(frontend)/services/[slug]/page.tsx', // SVC-2: leaf + group, off the collections
   'src/app/(frontend)/team/[slug]/page.tsx',
   // ADR 0009 Option C metadata collection — a partner is a Page + typed metadata.
   'src/app/(frontend)/partners/[slug]/page.tsx',

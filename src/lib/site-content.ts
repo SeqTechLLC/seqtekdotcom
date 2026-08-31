@@ -99,7 +99,9 @@ export const navigation: Navigation = {
             label: 'Our Story',
             items: [
               { label: 'Team', url: '/team' },
-              { label: 'Localshoring', url: '/localshoring' },
+              // SVC-2: Localshoring lives at /services/localshoring only. It is
+              // a "how we work" service, not a second brand-narrative page —
+              // one subject, one URL (ROADMAP SVC-3's no-duplication rule).
               // TODO(stub): no Careers page exists yet. Re-add when the stub
               // ships (docs/CONTENT_NEEDS.md §"Missing pages — linked but 404").
             ],
@@ -140,7 +142,6 @@ export const navigation: Navigation = {
         // Was "About" + "Our Story" — the same URL listed twice. One entry now.
         { label: 'Our Story', url: '/our-story' },
         { label: 'Team', url: '/team' },
-        { label: 'Localshoring', url: '/localshoring' },
         { label: 'Partners', url: '/partners' },
         // TODO(stub): Careers page not built — re-add when it ships.
       ],
@@ -174,13 +175,13 @@ export const navigation: Navigation = {
         // route ships (CONTENT_NEEDS §4; matches the not-found.tsx CTA).
         { label: 'Book a Call', url: '/contact' },
         // Interim: the four market landing pages aren't built yet, so the city
-        // links point at the localshoring story (our local-delivery model)
+        // links point at the localshoring service (our local-delivery model)
         // rather than 404ing. TODO(stub): build /tulsa-consulting etc. as
         // per-market SEO pages (CONTENT_NEEDS §"Missing pages — linked but 404").
-        { label: 'Tulsa', url: '/localshoring' },
-        { label: 'Oklahoma City', url: '/localshoring' },
-        { label: 'Northwest Arkansas', url: '/localshoring' },
-        { label: 'Kansas City', url: '/localshoring' },
+        { label: 'Tulsa', url: '/services/localshoring' },
+        { label: 'Oklahoma City', url: '/services/localshoring' },
+        { label: 'Northwest Arkansas', url: '/services/localshoring' },
+        { label: 'Kansas City', url: '/services/localshoring' },
       ],
     },
   ],

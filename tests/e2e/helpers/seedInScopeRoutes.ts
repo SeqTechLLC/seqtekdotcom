@@ -71,21 +71,22 @@ export const IN_SCOPE_SEED: InScopeSeed = {
 }
 
 /**
- * The four-offering services IA (feat/services-restructure, ADR 0009). `/services`
- * and each `/services/<offering>` are block-composed Pages looked up by these
- * fixed slugs — NOT namespaced like the other a11y fixtures, because the
- * `services/page.tsx` + `services/[offering]/page.tsx` routes hard-code the slug
- * they read. We seed the real Page slugs so the in-scope routes 200.
+ * ROADMAP SVC-2. `/services` is still a block-composed Page looked up by a fixed
+ * slug (`services/page.tsx` hard-codes it), so it stays here. The leaves and
+ * groups below it are no longer Pages: `/services/<slug>` resolves off the
+ * `services` and `servicePillars` collections, so a slug needs no code change.
  */
-const SERVICE_PAGE_SLUGS = {
-  overview: 'service-overview',
-  localshoring: 'service-localshoring',
-  aiIntegration: 'service-ai-integration',
-  digitalTransformation: 'service-digital-transformation',
-} as const
+const SERVICE_OVERVIEW_PAGE_SLUG = 'service-overview'
 
-/** `/services/<offering>` URL segments the offering route maps to a Page slug. */
-const SERVICE_OFFERINGS = ['localshoring', 'ai-integration', 'digital-transformation'] as const
+/** Leaf services — `/services/<slug>` resolves these off the `services` collection. */
+const SERVICE_SLUGS = ['localshoring', 'ai-integration', 'digital-transformation'] as const
+
+/**
+ * A group — same flat namespace as a leaf, resolved off `servicePillars`. Seeded
+ * so the group branch of `/services/[slug]` gets the same a11y sweep the leaf
+ * branch does; without it half the route would ship unexercised.
+ */
+const SERVICE_GROUP_SLUG = 'delivery-and-change'
 
 /**
  * The full in-scope route inventory (contracts C-1). Listing routes render even
@@ -103,10 +104,12 @@ export function inScopeRoutes(
     { path: '/insights', label: 'insights (listing)' },
     { path: `/insights/${seed.postSlug}`, label: 'insight (detail)' },
     { path: '/services', label: 'services (overview)' },
-    ...SERVICE_OFFERINGS.map((offering) => ({
-      path: `/services/${offering}`,
-      label: `service offering (${offering})`,
+    ...SERVICE_SLUGS.map((slug) => ({
+      path: `/services/${slug}`,
+      label: `service leaf (${slug})`,
     })),
+    // Same flat namespace, different collection — SVC-2's group branch.
+    { path: `/services/${SERVICE_GROUP_SLUG}`, label: 'service group' },
     { path: '/workshops', label: 'workshops (listing)' },
     { path: `/workshops/${seed.workshopSlug}`, label: 'workshop (detail)' },
     // ADR 0009 metadata collection (feat/partners-accesseva) — the index is new
@@ -248,7 +251,28 @@ export async function seedInScopeRoutes(
       overrideAccess: true,
     })
 
-  await servicePage('Services', SERVICE_PAGE_SLUGS.overview, [
+  // A leaf is a `services` doc now, not a Page. It leads with a hero because the
+  // route owns no <h1> — the body supplies it, same as partners.
+  const serviceDoc = (
+    title: string,
+    slug: string,
+    body: Record<string, unknown>[],
+  ): Promise<unknown> =>
+    payload.create({
+      collection: 'services',
+      data: {
+        title,
+        slug,
+        layout: [
+          { blockType: 'hero', variant: 'text-only', alignment: 'left', headline: title },
+          ...body,
+        ] as never,
+        _status: 'published',
+      },
+      overrideAccess: true,
+    })
+
+  await servicePage('Services', SERVICE_OVERVIEW_PAGE_SLUG, [
     { blockType: 'content', body: lexical('Four ways SEQTEK helps.') },
     {
       blockType: 'nav-cards',
@@ -264,7 +288,7 @@ export async function seedInScopeRoutes(
     { blockType: 'featured-case-study', heading: 'Featured work', caseStudy: caseStudy.id },
   ])
 
-  await servicePage('Localshoring', SERVICE_PAGE_SLUGS.localshoring, [
+  const localshoring = await serviceDoc('Localshoring', 'localshoring', [
     {
       blockType: 'content',
       body: lexical('A senior US engineering team that plugs into your roadmap.'),
@@ -278,7 +302,7 @@ export async function seedInScopeRoutes(
     },
   ])
 
-  await servicePage('AI Integration', SERVICE_PAGE_SLUGS.aiIntegration, [
+  const aiIntegration = await serviceDoc('AI Integration', 'ai-integration', [
     { blockType: 'content', body: lexical('Where AI fits your business, and where it does not.') },
     {
       blockType: 'process-steps',
@@ -290,13 +314,36 @@ export async function seedInScopeRoutes(
     },
   ])
 
-  await servicePage('Digital Transformation', SERVICE_PAGE_SLUGS.digitalTransformation, [
+  await serviceDoc('Digital Transformation', 'digital-transformation', [
     {
       blockType: 'content',
       body: lexical('Custom software plus the change management to make it stick.'),
     },
     { blockType: 'featured-case-study', heading: 'Featured work', caseStudy: caseStudy.id },
   ])
+
+  // The group holds an ordered list of its services (SVC-2) — the relation lives
+  // here, not on the leaf, so a leaf can sit under more than one group.
+  await payload.create({
+    collection: 'servicePillars',
+    data: {
+      title: 'Delivery and Change',
+      slug: SERVICE_GROUP_SLUG,
+      items: [(localshoring as { id: number }).id, (aiIntegration as { id: number }).id] as never,
+      layout: [
+        {
+          blockType: 'hero',
+          variant: 'text-only',
+          alignment: 'left',
+          headline: 'Delivery and Change',
+          subheadline: 'How an engagement actually runs.',
+        },
+        { blockType: 'service-cards', source: 'manual' },
+      ] as never,
+      _status: 'published',
+    },
+    overrideAccess: true,
+  })
 
   // /partners + /partners/<slug>. The body leads with a hero because the detail
   // route has no route-owned <h1> — the h1 is the hero's (see partnerSkeleton).
@@ -408,9 +455,11 @@ export async function cleanupInScopeRoutes(
   await del(payload, 'partners', 'slug', seed.partnerSlug)
   await del(payload, 'pages', 'slug', seed.storySlug)
   await del(payload, 'pages', 'slug', seed.localshoringSlug)
-  // The four block-composed service Pages (feat/services-restructure).
-  for (const slug of Object.values(SERVICE_PAGE_SLUGS)) {
-    await del(payload, 'pages', 'slug', slug)
+  await del(payload, 'pages', 'slug', SERVICE_OVERVIEW_PAGE_SLUG)
+  // SVC-2: the leaves and the group are collection docs, not Pages.
+  await del(payload, 'servicePillars', 'slug', SERVICE_GROUP_SLUG)
+  for (const slug of SERVICE_SLUGS) {
+    await del(payload, 'services', 'slug', slug)
   }
   await del(payload, 'industries', 'slug', seed.industrySlug)
   await payload.delete({

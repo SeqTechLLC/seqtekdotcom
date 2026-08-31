@@ -219,44 +219,26 @@ The rest of this tier is what has to be true around them.
   service pages hang off "how we do it" rather than leading. Each page carries its use cases and, where they
   exist, video — a capability list without proof is exactly what loses at our size.
 
-- **SVC-2 — put services back on a metadata collection.** _(Was P4. Now blocks NAV-1.)_ The `/services` fold
-  took the wrong half of ADR 0009: services became bare `Page` slugs behind hardcoded lookups, so a fifth
-  offering means editing `OFFERING_TO_SLUG` + `OFFERING_TITLE` (`services/[offering]/page.tsx`),
-  `SERVICE_OFFERING_PATHS` + `SERVICE_PAGE_SLUGS` (`sitemap.ts`) and the footer nav, then deploying —
-  contradicting the ADR's own rule that only creating or fixing a _block_ requires code. Every other type
-  derives routing, indexing, sitemap and JSON-LD from its collection. **Fix, with the shape decided 2026-08-31:** give the existing
-  `services` collection the `layout` body + listing metadata, resolve `/services/[offering]` off the
-  collection, delete the four hardcoded lists, migrate the four `service-*` Pages in, hold the 301s. `partners`
-  (#99) is the reference implementation. Un-hide the four `services.seo.*` fields (INERT-1) in the same change,
-  and clean up the orphaned `services` path builder in `livePreview/url.ts`. **Carry the group tier NAV-1
-  needs**, and carry it as **many-to-many**: a group title may be a page, and a leaf can sit under more than
-  one group (see NAV-1). So the **group** holds an ordered list of its items rather than each service naming
-  one parent, and **leaf URLs stay flat at `/services/<leaf>`** so nothing gets two addresses. A group page is
-  **optional**, so the schema has to let a group exist without a URL.
-
-  **Nothing gets renamed** (decided 2026-08-31). The `offerings` alternative is dropped — it is functionally
-  identical to `services`, which already exists, already holds the nine drafted capability records in
-  `docs/content-drafts/services.json`, and is already the target of `industries.relevantServices`. The **group**
-  tier is the existing `servicePillars` collection, which already carries the optional-page shape NAV-1
-  describes (title · slug · `description` · `heroImage` · `seo.*`); what it lacks is the ordered `items` list.
-  So the migration is: **add** `layout` + listing metadata to `services`, **add** ordered `items` to
-  `servicePillars`, **drop** `Services.pillar` (the single-parent relationship that cannot express a
-  cross-listed leaf). The collection names stay as they are — the stale 3-pillar IA is a content problem, and
-  a table rename buys nothing.
-
-  **The target shape is no longer hypothetical.** Brent's list (`CONTENT_NEEDS.md` §12) is three groups of
-  three, so `servicePillars` needs exactly three records with an ordered `items` list of three each, and
-  `services` needs nine. The three group names he chose are near-identical to the three `servicePillars`
-  already sitting in the archive — "Organizational Strategy", "Technology & Data", "AI & Automation" — which
-  someone arrived at independently. Reuse those records rather than creating new ones where the subject
-  matches. **This is the change that unblocks NAV-1's content**, and nothing should link a leaf until it does.
-
-  **Scope the new "how we work" axis page
-  here too** — `/services` has no counterpart today, and Localshoring becomes a leaf under it rather than the
-  standalone it is now. Settle all of it here rather than retrofitting after the 301s are set. At four
-  offerings this was a
-  tidiness argument; at a full menu it is the difference between Megan publishing a service page and Megan filing a
-  ticket — which is the same bottleneck P1 exists to fix.
+- **SVC-2 residual — the content, not the code.** _(The code shipped; see PROJECT_HISTORY P5-31.)_ Services and
+  their groups are collections now: `/services/[slug]` resolves a leaf off `services` or a group off
+  `servicePillars`, the four hardcoded lists are gone, and the sitemap derives both from published slugs. What
+  is left is **data and copy**, which a deploy never ships:
+  - **Seed Brent's nine services and three groups** (`CONTENT_NEEDS.md` §12) into the collections via
+    `tools/payload-seed`. The gitignored `docs/content-drafts/services.json` still holds the OLD nine
+    (the capability set) and `service-pillars.json` the old three pillars, and neither carries the `items`
+    list the group tier needs. **Until that runs, `/services/<leaf>` 404s on a lane** — the code ships ahead
+    of the content, as it always does here.
+  - **Retarget the 20 Wix redirects** that point at `/services/ai-integration` and
+    `/services/digital-transformation`. Those were Page-backed offering URLs; under Brent's structure neither
+    survives as a service name, so both destinations become 404s the moment the new content lands.
+    **Nothing is live, so retarget at source — do not layer a second hop** (Kenn, 2026-08-31); `redirects.ts`
+    line 187 already chains `/services/ai-automation` → `/services/ai-integration` and collapses to one hop
+    in the same pass.
+  - **Write the missing copy** — six of nine leaves and all three group pages (`CONTENT_NEEDS.md` §12).
+  - **Localshoring is settled:** one page at `/services/localshoring`, a "how we work" leaf rather than a
+    top-level item. The standalone `/localshoring` is gone from the nav and the footer, and the four market
+    links repoint to it. The standalone Page record retires on the next seed. No internal 301 — nothing is
+    live, so the URL simply changes.
 
 - **SVC-3 — the services IA, with the nav question now settled the other way.** Direction decided, not built;
   blocked on SVC-2. The **flat 6-item nav with no mega-menu is withdrawn** — that was Kenn's call and the

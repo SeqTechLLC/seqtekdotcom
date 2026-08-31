@@ -258,6 +258,8 @@ export const getServicePillarBySlug = withReadTimeout(
   'getServicePillarBySlug',
   (slug: string): Promise<ServicePillar | null> =>
     unstable_cache(
+      // `findPublishedBySlug` reads at depth 2, so `items` arrives as service
+      // documents — the group page lists the services it holds (SVC-2).
       async () => (await findPublishedBySlug('servicePillars', slug)) as ServicePillar | null,
       ['servicePillars', slug],
       { tags: detailCacheTags('servicePillars', slug), revalidate: ONE_HOUR },
@@ -343,9 +345,7 @@ export const listServices = withReadTimeout(
   'listServices',
   (): Promise<Service[]> =>
     unstable_cache(
-      // depth 2 so `pillar` is populated — the nested `/services/[pillar]/[slug]`
-      // URL + static params need the pillar slug.
-      async () => (await findPublishedList('services', { sort: 'order', depth: 2 })) as Service[],
+      async () => (await findPublishedList('services', { sort: 'order' })) as Service[],
       ['services', 'list'],
       { tags: listCacheTags('services'), revalidate: ONE_HOUR },
     )(),
@@ -355,7 +355,11 @@ export const listServicePillars = withReadTimeout(
   'listServicePillars',
   (): Promise<ServicePillar[]> =>
     unstable_cache(
-      async () => (await findPublishedList('servicePillars', { sort: 'order' })) as ServicePillar[],
+      // depth 2 so `items` comes back as service documents rather than ids —
+      // the group holds the ordered relation now (ROADMAP SVC-2), so both the
+      // `by-pillar` service-cards resolver and the group page read it here.
+      async () =>
+        (await findPublishedList('servicePillars', { sort: 'order', depth: 2 })) as ServicePillar[],
       ['servicePillars', 'list'],
       { tags: listCacheTags('servicePillars'), revalidate: ONE_HOUR },
     )(),

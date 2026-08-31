@@ -1,5 +1,11 @@
 import type { CaseStudy, Post, Service } from '../payload-types'
-import { listCaseStudies, listPosts, listServices, listTeamMembers } from './payload'
+import {
+  listCaseStudies,
+  listPosts,
+  listServicePillars,
+  listServices,
+  listTeamMembers,
+} from './payload'
 import type { ResolvedBlockType } from './resolvedBlockTypes'
 
 /**
@@ -119,10 +125,20 @@ async function resolveCaseStudyGrid(block: LayoutBlock): Promise<LayoutBlock> {
 async function resolveServiceCards(block: LayoutBlock): Promise<LayoutBlock> {
   if (block.source === 'manual') return block
   const services = await listServices() // already sorted by `order`
-  const picked: Service[] =
-    block.source === 'by-pillar'
-      ? services.filter((s) => sameRelation(s.pillar, block.pillar))
-      : services
+  if (block.source !== 'by-pillar') return { ...block, manualItems: services }
+
+  // SVC-2 moved this relation from the leaf to the group: a service no longer
+  // names one pillar, the pillar holds an ordered list of its services. So the
+  // filter became a lookup, and the group's chosen ORDER is what renders —
+  // previously this fell back to the services' own `order`.
+  const pillars = await listServicePillars()
+  const pillar = pillars.find((p) => sameRelation(p, block.pillar))
+  const ids = new Set(
+    (pillar?.items ?? []).map((item) => (typeof item === 'object' ? item.id : item)),
+  )
+  // Walk the pillar's list, not the service list, so the editor's ordering wins.
+  const byId = new Map(services.map((s) => [s.id, s]))
+  const picked = [...ids].map((id) => byId.get(id as number)).filter((s): s is Service => !!s)
   return { ...block, manualItems: picked }
 }
 

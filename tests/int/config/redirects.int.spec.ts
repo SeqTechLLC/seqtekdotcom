@@ -115,9 +115,13 @@ const KNOWN_DETAIL_DESTINATIONS = new Set<string>([
   '/workshops/touchstone',
   '/workshops/re-alignment',
   '/workshops/five-dysfunctions',
-  // The three peer offerings. Not content slugs — a fixed enum in
-  // src/app/(frontend)/services/[offering]/page.tsx (OFFERING_TO_SLUG), so the
-  // route exists as long as the seeded `service-*` Page does.
+  // ROADMAP SVC-2: these are CONTENT slugs now, not a fixed enum. `/services/
+  // <slug>` resolves off the `services` collection, so each of these 301s
+  // reaches a page only while a published service carries that slug. Brent's
+  // structure retires `ai-integration` and `digital-transformation` as service
+  // names, so these three destinations are retargeted with the content, not
+  // chained through a second hop (nothing is live yet, so redirects are
+  // REPLACED rather than layered).
   '/services/localshoring',
   '/services/ai-integration',
   '/services/digital-transformation',
