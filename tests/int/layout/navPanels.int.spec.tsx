@@ -72,6 +72,16 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
     expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(true)
   })
 
+  // The int environment loads no CSS, so `getComputedStyle(panel).display` is
+  // 'none' whether or not a display class is present — it cannot see this
+  // regression. Assert on the class list, which it can.
+  it('keeps every display utility off the element that `hidden` hides', () => {
+    const { getByTestId } = render(<PrimaryNav items={FIXTURE} />)
+    expect(getByTestId('nav-panel-0').className).not.toMatch(
+      /(?:^|\s)(?:grid|flex|block|inline-flex|inline-block|table|contents)(?:\s|$)/,
+    )
+  })
+
   it('draws one column per group', () => {
     const { getByTestId } = render(<PrimaryNav items={FIXTURE} />)
     const grid = getByTestId('nav-panel-0').firstElementChild as HTMLElement
@@ -107,7 +117,21 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
     const list = panel.querySelector('ul') as HTMLElement
     const labelledBy = list.getAttribute('aria-labelledby') ?? ''
     expect(document.getElementById(labelledBy)?.textContent).toBe('Services')
-    expect(panel.querySelectorAll('span')).toHaveLength(0)
+    // The point is that the group title is not repeated inside the panel, not
+    // that the panel contains no <span> at all.
+    expect(within(panel).queryByText('Services')).toBeNull()
+  })
+
+  it('closes when its own trigger link navigates away', () => {
+    // `SiteHeader` lives in the persistent frontend layout, so this component
+    // is not remounted across a route change: without an explicit close the
+    // panel hangs over the page the trigger just navigated to.
+    const { getByRole, getByTestId } = render(<PrimaryNav items={FIXTURE} />)
+    fireEvent.click(getByRole('button', { name: 'What we do menu' }))
+    expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(false)
+
+    fireEvent.click(getByRole('link', { name: 'What we do' }))
+    expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(true)
   })
 
   it('closes on Escape and puts focus back on the caret', () => {
@@ -118,6 +142,18 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
     fireEvent.keyDown(getByTestId('nav-panel-0'), { key: 'Escape' })
     expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(true)
     expect(document.activeElement).toBe(caret)
+  })
+
+  it('closes on Escape even when nothing inside the nav has focus', () => {
+    // Safari and Firefox on macOS do not focus a <button> when it is clicked,
+    // so after a mouse-open there is nothing focused in the nav. A nav-scoped
+    // key handler would never fire there; this one is on the document.
+    const { getByRole, getByTestId } = render(<PrimaryNav items={FIXTURE} />)
+    fireEvent.click(getByRole('button', { name: 'What we do menu' }))
+    ;(document.activeElement as HTMLElement | null)?.blur()
+
+    fireEvent.keyDown(document.body, { key: 'Escape' })
+    expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(true)
   })
 
   it('closes when a pointer lands outside the nav', () => {

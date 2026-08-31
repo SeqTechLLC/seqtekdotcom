@@ -23,6 +23,14 @@ import { NavCaret } from './NavCaret'
  * 3. **It is a disclosure, not a modal.** No focus trap. Tab walks out of the
  *    panel and into the rest of the page, and leaving closes it.
  *
+ * A group title is a labelled `<span>`/`<a>`, never a heading. `aria-labelledby`
+ * does not need a heading to point at, and a column label in the site chrome is
+ * not a section of the document — putting an `<h2>` above the page's own `<h1>`
+ * would misstate the outline on every route. Note this is a judgement, not
+ * something a test forces: `a11y.e2e.spec.ts` only rejects *downward* heading
+ * jumps, so header-`h2` → page-`h1` would pass it, and axe's `heading-order` is
+ * `best-practice`, which `AXE_TAGS` excludes.
+ *
  * The column count is `groups.length`, taken straight from the data — see the
  * `NavPanel` docs in `site-content.ts` for why the group is the unit.
  */
@@ -34,25 +42,36 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
 
   const close = useCallback(() => setOpenIndex(null), [])
 
-  // Click-outside closes. Bound only while something is open so the document
-  // carries no listener in the common case.
+  // Click-outside and Escape close. Both are bound on the document, and only
+  // while something is open, so nothing is listening in the common case.
+  //
+  // Escape is document-level rather than bound to the `<nav>` for a reason:
+  // Safari and Firefox on macOS do not move focus to a `<button>` when it is
+  // clicked, so after a mouse-open there is nothing focused inside the nav for
+  // a nav-scoped handler to fire on, and the panel would not be dismissible by
+  // keyboard on those browsers. CI runs chromium only and cannot see it.
   useEffect(() => {
     if (openIndex === null) return
+
     const onPointerDown = (event: PointerEvent) => {
       if (!navRef.current?.contains(event.target as Node)) close()
     }
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [openIndex, close])
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      // Focus goes back to the control that opened the panel, so a keyboard
+      // user is not dropped at the top of the document.
+      const caret = caretRefs.current[openIndex]
+      close()
+      caret?.focus()
+    }
 
-  const onKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-    if (event.key !== 'Escape' || openIndex === null) return
-    // Escape returns focus to the control that opened the panel, so a keyboard
-    // user is not dropped at the top of the document.
-    const caret = caretRefs.current[openIndex]
-    close()
-    caret?.focus()
-  }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [openIndex, close])
 
   // Focus leaving the nav entirely closes the panel. `relatedTarget` is null
   // when focus goes to the browser chrome or the window loses it — leave the
@@ -63,13 +82,7 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
   }
 
   return (
-    <nav
-      ref={navRef}
-      aria-label="Primary"
-      className="hidden lg:flex"
-      onKeyDown={onKeyDown}
-      onBlur={onBlur}
-    >
+    <nav ref={navRef} aria-label="Primary" className="hidden lg:flex" onBlur={onBlur}>
       <ul className="flex items-center gap-1">
         {items.map((item, index) => {
           const panel = item.panel
@@ -80,9 +93,16 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
           return (
             <li key={item.url} className="relative">
               <div className="flex items-center">
+                {/* `onClick={close}` is not optional here. `SiteHeader` sits in
+                    the persistent frontend layout, so this component is not
+                    remounted across a route change and `openIndex` survives it
+                    — without this the panel hangs over the page the trigger
+                    itself just navigated to. Every other link in the panel, and
+                    the equivalent row in `MobileNav`, closes the same way. */}
                 <SmartLink
                   id={triggerId}
                   href={item.url}
+                  onClick={close}
                   className="inline-flex h-10 items-center rounded-md px-3 text-body text-text-primary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-accent"
                 >
                   {item.label}
@@ -107,9 +127,14 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
 
               {panel ? (
                 // `hidden` does the hiding, so no display utility may sit on
-                // this element — a `grid`/`flex` class in the utilities layer
-                // would win over the base `[hidden]` rule and the panel would
-                // never close. The grid lives on the inner element.
+                // this element. Tailwind's preflight supplies
+                // `[hidden]:where(:not([hidden="until-found"])){display:none}`
+                // in the BASE layer; `.grid`/`.flex` match with the same
+                // specificity from the utilities layer, which comes later and
+                // therefore wins, and the panel would never close. The grid
+                // lives on the inner element. `navPanels.int.spec.tsx` asserts
+                // this element carries no display class, because the int
+                // environment loads no CSS and cannot catch it any other way.
                 <div
                   id={panelId}
                   hidden={!open}

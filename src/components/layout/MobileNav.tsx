@@ -31,7 +31,9 @@ type MobileNavProps = {
  *   and handled inconsistently by assistive tech.
  *
  * Same single-group rule as the desktop panel: with one group the top-level
- * row is already the heading, so the group title is not repeated.
+ * row is already the heading, so the group title is not repeated. Group titles
+ * are labelled spans/links rather than headings, for the reasons in
+ * `PrimaryNav`.
  */
 export function MobileNav({ navItems, ctaButton }: MobileNavProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)

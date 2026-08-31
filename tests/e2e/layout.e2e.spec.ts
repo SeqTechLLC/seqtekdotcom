@@ -138,10 +138,17 @@ test.describe('Site chrome — mobile viewport', () => {
     })
 
     // ROADMAP NAV-1. Children are collapsed behind a caret rather than
-    // rendered as a permanently expanded tree.
-    const servicesRegion = dialog.getByTestId('mobile-nav-panel-1')
+    // rendered as a permanently expanded tree. Resolved by accessible name
+    // through `aria-controls`, the same way the desktop test does, so a nav
+    // reorder fails on the behaviour rather than on a missing test id.
+    const servicesCaret = dialog.getByRole('button', { name: 'Services menu' })
+    const regionId = await servicesCaret.getAttribute('aria-controls')
+    expect(regionId).toBeTruthy()
+    const servicesRegion = page.locator(`[id="${regionId}"]`)
+
     await expect(servicesRegion).toBeHidden()
-    await dialog.getByTestId('mobile-nav-caret-1').click()
+    await expect(servicesCaret).toHaveAttribute('aria-expanded', 'false')
+    await servicesCaret.click()
     await expect(servicesRegion).toBeVisible()
     await expect(servicesRegion.getByRole('link', { name: 'AI Integration' })).toBeVisible()
 
