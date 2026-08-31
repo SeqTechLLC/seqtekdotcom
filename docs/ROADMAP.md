@@ -106,9 +106,24 @@ The rest of this tier is what has to be true around them.
   **No content is committed here.** Brent is supplying the groups, the items and the industry list; what was
   said in the room is recorded in the meeting note and is not a plan. Nothing in this repo should enumerate a
   service menu until his diagram arrives — build the mechanism against the routes that exist today and let the
-  content land as data. Chase the diagram; it was promised 2026-08-31. **It did not arrive that day**, so the
-  mechanism is being built against today's real routes and the groups and items stay a data edit for whenever
-  the list lands.
+  content land as data. Chase the diagram; it was promised 2026-08-31. **It arrived the same day** — Brent's
+  email "Services", 2026-08-31 14:32, transcribed in full in `CONTENT_NEEDS.md` §12. The mechanism shipped
+  against today's real routes (#129), so what is left is the data edit, and the data now exists.
+
+  **It is nine services in three groups, not the "roughly fifteen" the meeting produced.** The email
+  supersedes the transcript. With the axis page and the three group pages that is **13 pages**, and the menu
+  cannot carry the leaves until the routes exist — nine header links to unbuilt routes is the #126 defect
+  (cards pointing at routes nobody had built) reintroduced at the top of every page. **Sequence is SVC-2
+  first, then the nav data.** Brent's grouping, verbatim:
+
+  | Group                                | Services                                                                    |
+  | ------------------------------------ | --------------------------------------------------------------------------- |
+  | **Strategy and Business Consulting** | Strategy and Alignment · Business Process Consulting · Change Management    |
+  | **Technology and Data**              | Enterprise Architecture · Data Engineering and Warehousing · BI & Analytics |
+  | **AI & Automation**                  | Generative AI · Machine Learning · Agentic AI                               |
+
+  **The industry list did NOT come with it.** IND-1 continues on the meeting's five plus Aerospace until
+  Brent confirms; that row stays open in "Waiting on people".
 
   **Both top-level items get a panel.** Leadership likes dropdowns, so "What we do" and "How we work" each
   open one rather than one being a panel and the other a plain link. The panel component is generic and takes
@@ -142,6 +157,13 @@ The rest of this tier is what has to be true around them.
   and nothing more, so the menu's structure ships without waiting on a page for every heading, and group pages
   get added later as content allows. Given PROOF-1 — we cannot fill the leaves yet, let alone a tier above them
   — expect most groups to start headless and earn a page.
+
+  **Brent's answer overrides that for the "what we do" panel:** he asked for all three groups to be
+  "a clickable page with high level content covering the area", so every group on that panel takes a URL. The
+  optional-URL design still stands and still matters — it is what lets the **second** panel ("how we work")
+  ship with headless groups — and no code changes, because the panel already renders a group with or without
+  a URL (#129). What changes is the expectation: on this panel, three group pages are content that has to be
+  written, and none of them has a draft.
 
   Two things that follow from the tiers:
   - **"How we work" is a new top-level page.** `/services` exists; its counterpart does not. Localshoring
@@ -220,7 +242,16 @@ The rest of this tier is what has to be true around them.
   So the migration is: **add** `layout` + listing metadata to `services`, **add** ordered `items` to
   `servicePillars`, **drop** `Services.pillar` (the single-parent relationship that cannot express a
   cross-listed leaf). The collection names stay as they are — the stale 3-pillar IA is a content problem, and
-  a table rename buys nothing. **Scope the new "how we work" axis page
+  a table rename buys nothing.
+
+  **The target shape is no longer hypothetical.** Brent's list (`CONTENT_NEEDS.md` §12) is three groups of
+  three, so `servicePillars` needs exactly three records with an ordered `items` list of three each, and
+  `services` needs nine. The three group names he chose are near-identical to the three `servicePillars`
+  already sitting in the archive — "Organizational Strategy", "Technology & Data", "AI & Automation" — which
+  someone arrived at independently. Reuse those records rather than creating new ones where the subject
+  matches. **This is the change that unblocks NAV-1's content**, and nothing should link a leaf until it does.
+
+  **Scope the new "how we work" axis page
   here too** — `/services` has no counterpart today, and Localshoring becomes a leaf under it rather than the
   standalone it is now. Settle all of it here rather than retrofitting after the 301s are set. At four
   offerings this was a
@@ -718,7 +749,8 @@ what's outstanding and who owns it:
 | C-7 Case-study sign-offs        | Kenn + Megan | Taurex (Andrew) first — see P2. Then Hogan (Ryan) and NovaMud (Sam).                                                                                                                                                                                                         |
 | BR-5 A sourced projects count   | Leadership   | Or we ship years + markets only — see P2.                                                                                                                                                                                                                                    |
 | BR-6 Cherokee Nation outreach   | —            | **Decided 2026-06-19: no outreach.** Listed only because it keeps getting re-asked. Revisit only if the Nation asks.                                                                                                                                                         |
-| Services menu + industry list   | Brent        | **Blocks NAV-1's pages, not its mechanism.** Committed 2026-08-31 to send the drawn dropdown, the grouped ~15 items and the confirmed industry list the same day; **it did not arrive**. Chase it — the service pages cannot start without it.                               |
+| Services menu                   | Brent        | **DELIVERED 2026-08-31 14:32** — nine services in three groups, not ~15. Transcribed in `CONTENT_NEEDS.md` §12. No longer blocking; SVC-2 is.                                                                                                                                |
+| Industry list                   | Brent        | **Still outstanding.** It did not come with the services email. IND-1 runs on the meeting's five plus Aerospace until he confirms.                                                                                                                                           |
 | PROOF-1 case-study chase        | Megan        | Brent escalates. YCS drafting, YouVersion unanswered, NovaMud needs a redo, Hogan open. Protocol and named targets in P0.                                                                                                                                                    |
 | 2026-09-14 go/no-go invite      | Megan        | Add Dana and Trevor.                                                                                                                                                                                                                                                         |
 | Daniel's HubSpot meetings link  | Megan        | For BOOK-1. Portal config, not code.                                                                                                                                                                                                                                         |
@@ -738,11 +770,14 @@ what's outstanding and who owns it:
 4. **Bleeding-edge stack.** Next 16 + React 19 + Payload 3.84+ on Postgres 18.3. Validated end-to-end. If a
    future minor bump breaks the combo, **downgrade Next first** — not Payload; that's the constraint.
    Tailwind v4 was evaluated and rejected (ADR 0001).
-5. **More capability claims than proofs.** NAV-1 commits the site to a menu of them while PROOF-1 has three
-   Taurex studies and one in draft. Hank's own argument for the menu was that a services list without use
-   cases loses at our size — so the menu shipping ahead of the case studies is the failure mode both he and Kenn
+5. **More capability claims than proofs — now countable.** Brent's list is **nine services**; PROOF-1 holds
+   three Taurex studies and one in draft, all in oil and gas. So the menu asserts nine capabilities against
+   four proofs concentrated in one industry, and six of the nine leaves have no usable copy either
+   (`CONTENT_NEEDS.md` §12). Hank's own argument for the menu was that a services list without use cases
+   loses at our size — so the menu shipping ahead of the case studies is the failure mode both he and Kenn
    described, arrived at by agreeing with each other. Either the proof lands first, or the menu ships with the
-   pages that have proof and grows.
+   pages that have proof and grows. **This is the single largest gap between what is decided and what can
+   actually be published**, and it is a people problem, not an engineering one.
 6. **One AWS account runs both lanes.** `preview.seqtek.com` and `ww3.seqtek.com` are two services in the same
    stack in the same account, and the separate staging account is gone. There is no isolated environment left
    to rehearse a destructive change in.
