@@ -58,11 +58,15 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
-      // Focus goes back to the control that opened the panel, so a keyboard
-      // user is not dropped at the top of the document.
+      // Focus goes back to the control that opened the panel — but only if it
+      // was in the nav to begin with. On a mouse-open in Safari/Firefox focus
+      // never entered the nav, so the user may have tabbed well past it by
+      // now; pulling them back to the caret would be worse than leaving them
+      // where they are.
+      const restoreFocus = navRef.current?.contains(document.activeElement)
       const caret = caretRefs.current[openIndex]
       close()
-      caret?.focus()
+      if (restoreFocus) caret?.focus()
     }
 
     document.addEventListener('pointerdown', onPointerDown)

@@ -38,6 +38,9 @@ type MobileNavProps = {
 export function MobileNav({ navItems, ctaButton }: MobileNavProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const baseId = useId()
+  // Deliberately component state rather than dialog state: a group the user
+  // opened stays open the next time they pull the drawer out. Reopening to the
+  // section you were just in beats collapsing everything on every close.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const open = () => dialogRef.current?.showModal()

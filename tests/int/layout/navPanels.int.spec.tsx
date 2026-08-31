@@ -42,6 +42,20 @@ const FIXTURE: NavItem[] = [
 
 const CTA = { label: 'Book a Call', url: '/contact' }
 
+/**
+ * A `hidden` element must carry no display utility: Tailwind's preflight rule
+ * lives in the base layer and any `display` utility beats it from the later
+ * utilities layer, leaving a panel that can never close.
+ *
+ * The int environment loads no CSS, so `getComputedStyle(el).display` reports
+ * `none` whether or not such a class is present and cannot see the regression.
+ * The class list can. The `(?:[a-z0-9-]+:)*` prefix matters most of all — this
+ * is a `hidden lg:flex` nav, so `lg:grid` is the likeliest reintroduction, and
+ * an unanchored pattern is blind to exactly that shape.
+ */
+const DISPLAY_UTILITY =
+  /(?:^|\s)(?:[a-z0-9-]+:)*(?:grid|inline-grid|flex|inline-flex|block|inline-block|inline|table|inline-table|flow-root|list-item|contents)(?:\s|$)/
+
 describe('<PrimaryNav /> — the desktop dropdown panel', () => {
   it('leaves every top-level item a link, so no axis page is stranded behind a menu', () => {
     const { getByRole } = render(<PrimaryNav items={navigation.mainNav} />)
@@ -72,14 +86,9 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
     expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(true)
   })
 
-  // The int environment loads no CSS, so `getComputedStyle(panel).display` is
-  // 'none' whether or not a display class is present — it cannot see this
-  // regression. Assert on the class list, which it can.
   it('keeps every display utility off the element that `hidden` hides', () => {
     const { getByTestId } = render(<PrimaryNav items={FIXTURE} />)
-    expect(getByTestId('nav-panel-0').className).not.toMatch(
-      /(?:^|\s)(?:grid|flex|block|inline-flex|inline-block|table|contents)(?:\s|$)/,
-    )
+    expect(getByTestId('nav-panel-0').className).not.toMatch(DISPLAY_UTILITY)
   })
 
   it('draws one column per group', () => {
@@ -111,9 +120,12 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
   })
 
   it('labels a single-group panel by the trigger instead of repeating it', () => {
-    const { getByTestId } = render(<PrimaryNav items={navigation.mainNav} />)
-    // mainNav[1] is Services: one group, so no group title is drawn.
-    const panel = getByTestId('nav-panel-1')
+    const { getByRole } = render(<PrimaryNav items={navigation.mainNav} />)
+    // Services carries one group, so no group title is drawn. Resolved through
+    // `aria-controls` rather than a positional test id, so reordering the nav
+    // fails on behaviour instead of on a missing element.
+    const controls = getByRole('button', { name: 'Services menu' }).getAttribute('aria-controls')
+    const panel = document.getElementById(controls ?? '') as HTMLElement
     const list = panel.querySelector('ul') as HTMLElement
     const labelledBy = list.getAttribute('aria-labelledby') ?? ''
     expect(document.getElementById(labelledBy)?.textContent).toBe('Services')
@@ -134,26 +146,37 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
     expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(true)
   })
 
-  it('closes on Escape and puts focus back on the caret', () => {
+  it('closes on Escape and puts focus back on the caret it came from', () => {
+    // The keyboard path: the caret holds focus, so Escape must hand it back
+    // rather than dropping the user at the top of the document.
     const { getByRole, getByTestId } = render(<PrimaryNav items={FIXTURE} />)
     const caret = getByRole('button', { name: 'What we do menu' })
+    caret.focus()
     fireEvent.click(caret)
+    expect(document.activeElement).toBe(caret)
 
     fireEvent.keyDown(getByTestId('nav-panel-0'), { key: 'Escape' })
     expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(true)
     expect(document.activeElement).toBe(caret)
   })
 
-  it('closes on Escape even when nothing inside the nav has focus', () => {
-    // Safari and Firefox on macOS do not focus a <button> when it is clicked,
-    // so after a mouse-open there is nothing focused in the nav. A nav-scoped
-    // key handler would never fire there; this one is on the document.
+  it('closes on Escape when nothing in the nav has focus, without stealing it', () => {
+    // The mouse path. Safari and Firefox on macOS do not focus a <button> when
+    // it is clicked — and neither does jsdom — so after a mouse-open there is
+    // nothing focused in the nav. A nav-scoped key handler would never fire
+    // there; this one is on the document. But the user may have tabbed well
+    // past the nav by now, so Escape must close WITHOUT dragging focus back.
     const { getByRole, getByTestId } = render(<PrimaryNav items={FIXTURE} />)
     fireEvent.click(getByRole('button', { name: 'What we do menu' }))
-    ;(document.activeElement as HTMLElement | null)?.blur()
+
+    const elsewhere = document.createElement('button')
+    document.body.appendChild(elsewhere)
+    elsewhere.focus()
 
     fireEvent.keyDown(document.body, { key: 'Escape' })
     expect(getByTestId('nav-panel-0').hasAttribute('hidden')).toBe(true)
+    expect(document.activeElement).toBe(elsewhere)
+    elsewhere.remove()
   })
 
   it('closes when a pointer lands outside the nav', () => {
@@ -190,6 +213,19 @@ describe('<MobileNav /> — the same data, collapsed', () => {
       '/services',
     )
     expect(getByRole('button', { name: 'What we do menu', hidden: true })).toBeTruthy()
+  })
+
+  it('keeps every display utility off the elements that `hidden` hides', () => {
+    const { getByTestId, getByRole } = render(<MobileNav navItems={FIXTURE} ctaButton={CTA} />)
+    expect(getByTestId('mobile-nav-panel-0').className).not.toMatch(DISPLAY_UTILITY)
+
+    // The nested group region is hidden the same way, so it carries the same
+    // constraint.
+    fireEvent.click(getByTestId('mobile-nav-caret-0'))
+    const groupRegion = getByRole('button', { name: 'Operate links', hidden: true }).getAttribute(
+      'aria-controls',
+    )
+    expect(document.getElementById(groupRegion ?? '')?.className).not.toMatch(DISPLAY_UTILITY)
   })
 
   it('leaves a plain item without a caret at all', () => {

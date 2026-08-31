@@ -95,7 +95,13 @@ test.describe('a11y — the nav panel while open (NAV-1)', () => {
     await caret.click()
     await expect(caret).toHaveAttribute('aria-expanded', 'true')
 
-    const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+    // Same exclusions as the route sweep above, so the two axe runs on this
+    // route cannot disagree if a video block is ever seeded onto `/`.
+    const results = await new AxeBuilder({ page })
+      .withTags(AXE_TAGS)
+      .exclude('iframe[src*="youtube-nocookie.com"]')
+      .exclude('iframe[src*="player.vimeo.com"]')
+      .analyze()
     expect(
       results.violations,
       `axe found ${results.violations.length} violation(s) with the nav panel open:\n` +
