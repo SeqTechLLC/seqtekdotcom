@@ -68,6 +68,9 @@ export const CaseStudyGrid: Block = {
       name: 'service',
       type: 'relationship',
       relationTo: 'services',
+      // SVC-2: `services` holds three tiers now. Only a leaf is a thing a
+      // client buys, so the picker must not offer "What We Do" or a group.
+      filterOptions: () => ({ tier: { equals: 'leaf' } }),
       label: 'Which service',
       ...requiredWhen<CaseStudyGridSibling>((d) => d?.source === 'by-service', {
         description: 'Shows the newest studies where we delivered this service.',

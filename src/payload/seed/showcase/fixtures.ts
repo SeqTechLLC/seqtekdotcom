@@ -757,7 +757,7 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             blockType: 'service-cards',
             heading: 'By pillar',
             source: 'by-pillar',
-            pillar: supporting.servicePillarIds[0],
+            pillar: supporting.serviceGroupIds[0],
           },
         },
       ],
@@ -1062,7 +1062,7 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           data: {
             blockType: 'service-pillar-cards',
             heading: 'Three service pillars',
-            pillars: supporting.servicePillarIds,
+            pillars: supporting.serviceGroupIds,
           },
         },
       ],

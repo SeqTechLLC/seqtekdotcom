@@ -263,6 +263,7 @@ export async function seedInScopeRoutes(
       data: {
         title,
         slug,
+        tier: 'leaf',
         layout: [
           { blockType: 'hero', variant: 'text-only', alignment: 'left', headline: title },
           ...body,
@@ -325,10 +326,11 @@ export async function seedInScopeRoutes(
   // The group holds an ordered list of its services (SVC-2) — the relation lives
   // here, not on the leaf, so a leaf can sit under more than one group.
   await payload.create({
-    collection: 'servicePillars',
+    collection: 'services',
     data: {
       title: 'Delivery and Change',
       slug: SERVICE_GROUP_SLUG,
+      tier: 'group',
       items: [(localshoring as { id: number }).id, (aiIntegration as { id: number }).id] as never,
       layout: [
         {
@@ -338,7 +340,7 @@ export async function seedInScopeRoutes(
           headline: 'Delivery and Change',
           subheadline: 'How an engagement actually runs.',
         },
-        { blockType: 'service-cards', source: 'manual' },
+        { blockType: 'service-cards', source: 'by-pillar' },
       ] as never,
       _status: 'published',
     },
@@ -457,7 +459,7 @@ export async function cleanupInScopeRoutes(
   await del(payload, 'pages', 'slug', seed.localshoringSlug)
   await del(payload, 'pages', 'slug', SERVICE_OVERVIEW_PAGE_SLUG)
   // SVC-2: the leaves and the group are collection docs, not Pages.
-  await del(payload, 'servicePillars', 'slug', SERVICE_GROUP_SLUG)
+  await del(payload, 'services', 'slug', SERVICE_GROUP_SLUG)
   for (const slug of SERVICE_SLUGS) {
     await del(payload, 'services', 'slug', slug)
   }

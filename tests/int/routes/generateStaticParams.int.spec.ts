@@ -26,7 +26,7 @@ import { getPayloadInstance, findPublishedSlugs, findPublishedList } from '../..
  * Per-route `generateStaticParams()` output assertions extend this file in the
  * user-story phases (US2 case studies, services, etc.).
  *
- * Fixtures use `pages` and `servicePillars` — the two in-scope collections
+ * Fixtures use `pages` and `services` — the two in-scope collections
  * with no REQUIRED relationship fields — so a *published* row can be created
  * without standing up media/industry fixtures.
  */
@@ -39,7 +39,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  for (const collection of ['pages', 'servicePillars', 'caseStudies'] as const) {
+  for (const collection of ['pages', 'services', 'caseStudies'] as const) {
     await payload.delete({
       collection,
       where: { slug: { like: `${PREFIX}-%` } },
@@ -88,25 +88,25 @@ describe('R3 — list readers return published rows only', () => {
 
   beforeAll(async () => {
     await payload.delete({
-      collection: 'servicePillars',
+      collection: 'services',
       where: { slug: { like: `${PREFIX}-pillar-%` } },
       overrideAccess: true,
     })
     await payload.create({
-      collection: 'servicePillars',
-      data: { title: 'Published Pillar', slug: publishedSlug, _status: 'published' },
+      collection: 'services',
+      data: { tier: 'leaf', title: 'Published Pillar', slug: publishedSlug, _status: 'published' },
       overrideAccess: true,
     })
     await payload.create({
-      collection: 'servicePillars',
-      data: { title: 'Draft Pillar', slug: draftSlug },
+      collection: 'services',
+      data: { tier: 'leaf', title: 'Draft Pillar', slug: draftSlug },
       draft: true,
       overrideAccess: true,
     })
   })
 
-  it('the published servicePillars list includes the published row and excludes the draft', async () => {
-    const pillars = (await findPublishedList('servicePillars', { sort: 'order' })) as Array<{
+  it('the published services list includes the published row and excludes the draft', async () => {
+    const pillars = (await findPublishedList('services', { sort: 'order' })) as Array<{
       slug?: string | null
     }>
     const slugs = pillars.map((p) => p.slug)
@@ -119,7 +119,7 @@ describe('R3 — case-studies static params exclude drafts (US2 / T015)', () => 
   // caseStudies requires media/industry to PUBLISH, so we assert the
   // draft-exclusion half directly (a draft slug must never enter the manifest);
   // the published-inclusion half is covered generically by the `pages` /
-  // `servicePillars` fixtures above.
+  // `services` fixtures above.
   const draftSlug = `${PREFIX}-case-draft`
 
   beforeAll(async () => {

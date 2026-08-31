@@ -13,7 +13,7 @@ export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', '_status', 'slug', 'order'],
+    defaultColumns: ['title', '_status', 'tier', 'slug', 'order'],
   },
   access: {
     read: publishedOrAuthed,
@@ -28,6 +28,33 @@ export const Services: CollectionConfig = {
     afterChange: [revalidateOnChange('services')],
   },
   fields: [
+    // ROADMAP SVC-2. THREE TIERS, ONE COLLECTION. Brent's structure has an axis
+    // page ("What We Do"), three group pages under it, and the services
+    // themselves — and the three differ in ROLE, not in shape: each is a title,
+    // a slug, a block body and an SEO group. Separate collections would have
+    // meant a third collection for the axis, or the special-cased `Page` that
+    // SVC-2 exists to delete.
+    //
+    // It also turns a hazard into an invariant. With services and groups in two
+    // collections nothing enforced slug uniqueness BETWEEN them, so a collision
+    // silently made one of them unreachable and a precedence rule in the route
+    // decided which. One collection means one unique index and no rule.
+    {
+      name: 'tier',
+      type: 'select',
+      label: 'What kind of page this is',
+      required: true,
+      defaultValue: 'leaf',
+      options: [
+        { label: 'Service', value: 'leaf' },
+        { label: 'Group of services', value: 'group' },
+        { label: 'Top-level menu page', value: 'axis' },
+      ],
+      admin: {
+        description:
+          'A service is the thing a client buys. A group gathers several services and can have its own page. A top-level menu page is what a nav button points at, like "What We Do".',
+      },
+    },
     {
       name: 'title',
       type: 'text',
@@ -64,6 +91,33 @@ export const Services: CollectionConfig = {
       label: 'Proof of this work',
       hasMany: true,
       admin: { description: 'Case studies that show this service delivered.' },
+    },
+    // The parent→children relation lives on the PARENT and is many-to-many: a
+    // leaf can be cross-listed under more than one group, and under both axes —
+    // the strategy and alignment work is genuinely something a client buys AND
+    // the way we open an engagement. A `parent` field on the child assumes one
+    // owner and cannot express that. Holding the ordered list here also makes a
+    // group page an editorial object that chooses what it shows, in the order it
+    // wants, rather than a query result.
+    //
+    // Cross-listing means ONE page and TWO links to it, never two pages: the
+    // flat `/services/<slug>` namespace IS that rule expressed in routing.
+    {
+      name: 'items',
+      type: 'relationship',
+      relationTo: 'services',
+      label: 'What sits under this',
+      hasMany: true,
+      filterOptions: ({ data }) => ({
+        // An axis holds groups; a group holds services. Nothing sits under a
+        // service, and nothing may contain itself.
+        tier: { equals: data?.tier === 'axis' ? 'group' : 'leaf' },
+      }),
+      admin: {
+        condition: (data) => data?.tier === 'axis' || data?.tier === 'group',
+        description:
+          'The pages shown under this one, in the order you arrange them. The same service may appear under more than one group.',
+      },
     },
     {
       name: 'layout',

@@ -81,7 +81,7 @@ export async function cleanupDraftDoc(collection: string, slug: string): Promise
 export async function cleanupServicePillar(slug: string): Promise<void> {
   const payload = await payloadInstance()
   await payload.delete({
-    collection: 'servicePillars',
+    collection: 'services',
     where: { slug: { equals: slug } },
     overrideAccess: true,
   })

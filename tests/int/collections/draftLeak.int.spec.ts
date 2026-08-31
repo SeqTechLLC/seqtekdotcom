@@ -53,7 +53,6 @@ const DRAFTABLE_COLLECTIONS = [
   'posts',
   'caseStudies',
   'services',
-  'servicePillars',
   'workshops',
   'industries',
   'locations',
@@ -101,11 +100,6 @@ const DRAFT_SPECS: DraftSpec[] = [
       slug: `${FIXTURE_SLUG_PREFIX}-service-${s}`,
     }),
     uniqueWhere: (s) => ({ slug: { equals: `${FIXTURE_SLUG_PREFIX}-service-${s}` } }),
-  },
-  {
-    collection: 'servicePillars',
-    data: (s) => ({ title: `Draft Leak Pillar ${s}`, slug: `${FIXTURE_SLUG_PREFIX}-pillar-${s}` }),
-    uniqueWhere: (s) => ({ slug: { equals: `${FIXTURE_SLUG_PREFIX}-pillar-${s}` } }),
   },
   {
     collection: 'workshops',

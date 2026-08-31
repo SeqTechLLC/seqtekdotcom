@@ -42,10 +42,13 @@ export const ServiceCards: Block = {
     {
       name: 'pillar',
       type: 'relationship',
-      relationTo: 'servicePillars',
-      label: 'Which pillar',
+      // SVC-2 absorbed `servicePillars`: a group is a `services` row with
+      // `tier: 'group'`, and it holds an ordered list of its services.
+      relationTo: 'services',
+      label: 'Which group',
+      filterOptions: () => ({ tier: { equals: 'group' } }),
       ...requiredWhen<ServiceCardsSibling>((d) => d?.source === 'by-pillar', {
-        description: 'Shows every service filed under this pillar, in their sort order.',
+        description: 'Shows the services this group holds, in the order the group arranges them.',
       }),
     },
     {
@@ -54,6 +57,7 @@ export const ServiceCards: Block = {
       relationTo: 'services',
       label: 'Services to show',
       hasMany: true,
+      filterOptions: () => ({ tier: { equals: 'leaf' } }),
       ...requiredWhen<ServiceCardsSibling>((d) => d?.source === 'manual', {
         description:
           'The exact services, in the order you pick them. Only used while the source above is "Manual".',

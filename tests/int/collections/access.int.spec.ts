@@ -223,10 +223,11 @@ beforeAll(async () => {
   sharedIndustryId = industry.id
 
   const servicePillar = await payload.create({
-    collection: 'servicePillars',
+    collection: 'services',
     data: {
       title: 'Access Matrix Pillar',
       slug: 'access-matrix-shared-pillar',
+      tier: 'group',
       _status: 'published',
     },
     overrideAccess: true,
@@ -326,7 +327,7 @@ const COLLECTION_SPECS: CollectionSpec[] = [
     updateData: { excerpt: undefined },
   },
   {
-    slug: 'servicePillars',
+    slug: 'services',
     tier: 'editorial-draftable',
     visibleData: (s) => ({ title: `AM Pillar ${s}`, slug: `access-matrix-pillar-${s}` }),
     hiddenData: (s) => ({ title: `AM Pillar ${s}`, slug: `access-matrix-pillar-${s}` }),
@@ -436,7 +437,7 @@ const FIXTURE_COLLECTIONS = [
   'posts',
   'caseStudies',
   'services',
-  'servicePillars',
+  'services',
   'workshops',
   'industries',
   'locations',

@@ -43,6 +43,7 @@ test.beforeAll(async () => {
     data: {
       title: TITLE,
       slug: SLUG,
+      tier: 'leaf',
       layout: layoutAlphaFirst as never,
       _status: 'published',
     },

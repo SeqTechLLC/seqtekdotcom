@@ -16,12 +16,12 @@ const SHOWCASE_TAG = '[Showcase] '
 export interface SupportingIds {
   testimonialIds: Array<string | number>
   caseStudyIds: Array<string | number>
+  serviceGroupIds: Array<string | number>
   serviceIds: Array<string | number>
   postIds: Array<string | number>
   industryIds: Array<string | number>
   locationIds: Array<string | number>
   workshopIds: Array<string | number>
-  servicePillarIds: Array<string | number>
   categoryIds: Array<string | number>
   teamMemberIds: Array<string | number>
 }
@@ -34,7 +34,6 @@ type CollectionWithStringTitleField =
   | 'industries'
   | 'locations'
   | 'workshops'
-  | 'servicePillars'
   | 'categories'
   | 'teamMembers'
 
@@ -65,7 +64,6 @@ export async function clearSupportingDocs(payload: Payload): Promise<void> {
   await clearTagged(payload, 'workshops', 'title')
   await clearTagged(payload, 'industries', 'title')
   await clearTagged(payload, 'locations', 'city')
-  await clearTagged(payload, 'servicePillars', 'title')
   await clearTagged(payload, 'categories', 'title')
 }
 
@@ -112,12 +110,15 @@ async function seedCategories(payload: Payload) {
   ])
 }
 
-async function seedServicePillars(payload: Payload) {
-  await clearTagged(payload, 'servicePillars', 'title')
-  return createBatch(payload, 'servicePillars', [
-    { title: `${SHOWCASE_TAG}Organizational Strategy`, _status: 'published' },
-    { title: `${SHOWCASE_TAG}Technology & Data`, _status: 'published' },
-    { title: `${SHOWCASE_TAG}AI & Automation`, _status: 'published' },
+// SVC-2: a group is a `services` row with `tier: 'group'`, not its own
+// collection. Seeded before the leaves so the leaves exist to be listed — the
+// ordered `items` list is written back after, since the relation lives on the
+// group.
+async function seedServiceGroups(payload: Payload) {
+  return createBatch(payload, 'services', [
+    { title: `${SHOWCASE_TAG}Organizational Strategy`, tier: 'group', _status: 'published' },
+    { title: `${SHOWCASE_TAG}Technology & Data`, tier: 'group', _status: 'published' },
+    { title: `${SHOWCASE_TAG}AI & Automation`, tier: 'group', _status: 'published' },
   ])
 }
 
@@ -173,19 +174,17 @@ async function seedTeamMembers(payload: Payload, photoId: string | number) {
   ])
 }
 
-async function seedServices(payload: Payload, servicePillarIds: Array<string | number>) {
-  await clearTagged(payload, 'services', 'title')
-  const pillar = servicePillarIds[0]
+async function seedServices(payload: Payload) {
   return createBatch(payload, 'services', [
-    { title: `${SHOWCASE_TAG}Org Maturity Assessment`, pillar, _status: 'published' },
+    { title: `${SHOWCASE_TAG}Org Maturity Assessment`, tier: 'leaf', _status: 'published' },
     {
       title: `${SHOWCASE_TAG}Platform Engineering`,
-      pillar: servicePillarIds[1] ?? pillar,
+      tier: 'leaf',
       _status: 'published',
     },
     {
       title: `${SHOWCASE_TAG}LLM Workflow Integration`,
-      pillar: servicePillarIds[2] ?? pillar,
+      tier: 'leaf',
       _status: 'published',
     },
   ])
@@ -279,11 +278,27 @@ export async function seedSupportingDocs(
 ): Promise<SupportingIds> {
   const testimonialIds = await seedTestimonials(payload, photoId)
   const categoryIds = await seedCategories(payload)
-  const servicePillarIds = await seedServicePillars(payload)
+  // One `clearTagged` for the whole collection: groups and leaves share it now.
+  await clearTagged(payload, 'services', 'title')
+  const servicePillarIds = await seedServiceGroups(payload)
   const industryIds = await seedIndustries(payload)
   const locationIds = await seedLocations(payload)
   const teamMemberIds = await seedTeamMembers(payload, photoId)
-  const serviceIds = await seedServices(payload, servicePillarIds)
+  const serviceIds = await seedServices(payload)
+  // The relation lives on the GROUP. Give each group one leaf so the
+  // `service-cards` `by-pillar` source has something to resolve.
+  await Promise.all(
+    servicePillarIds.map((id, i) =>
+      serviceIds[i] === undefined
+        ? Promise.resolve(null)
+        : payload.update({
+            collection: 'services',
+            id,
+            data: { items: [serviceIds[i]!] } as never,
+            overrideAccess: true,
+          }),
+    ),
+  )
   const caseStudyIds = await seedCaseStudies(payload, industryIds, photoId)
   const postIds = await seedPosts(payload, teamMemberIds[0]!, photoId)
   const workshopIds = await seedWorkshops(payload)
@@ -296,7 +311,7 @@ export async function seedSupportingDocs(
     industryIds,
     locationIds,
     workshopIds,
-    servicePillarIds,
+    serviceGroupIds: servicePillarIds,
     categoryIds,
     teamMemberIds,
   }

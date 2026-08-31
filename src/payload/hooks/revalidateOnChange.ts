@@ -9,38 +9,6 @@ interface DocLike {
   [key: string]: unknown
 }
 
-/**
- * Resolve a service's pillar slug from the doc for the nested
- * `/services/[pillar]/[slug]` path (drift #1 / research §D4). Reads a populated
- * `pillar` relationship object's `.slug`, or a `pillarSlug` the afterChange
- * hook injects after fetching the pillar (the hook sees `pillar` as an ID).
- */
-const resolvePillarSlug = (doc: DocLike): string | undefined => {
-  const pillar = doc.pillar
-  if (pillar && typeof pillar === 'object' && 'slug' in pillar) {
-    const slug = (pillar as { slug?: unknown }).slug
-    if (typeof slug === 'string' && slug.length > 0) return slug
-  }
-  return typeof doc.pillarSlug === 'string' && doc.pillarSlug.length > 0
-    ? doc.pillarSlug
-    : undefined
-}
-
-/**
- * Extract a service's pillar relationship ID. At afterChange depth `pillar` is
- * an ID; the populated-object form is handled defensively. Used to detect a
- * pillar *move* so the previous pillar's now-stale paths get busted too.
- */
-const pillarIdOf = (doc: DocLike): string | number | undefined => {
-  const pillar = doc.pillar
-  if (typeof pillar === 'number' || typeof pillar === 'string') return pillar
-  if (pillar && typeof pillar === 'object' && 'id' in pillar) {
-    const id = (pillar as { id?: unknown }).id
-    if (typeof id === 'number' || typeof id === 'string') return id
-  }
-  return undefined
-}
-
 interface PreviousDocLike {
   _status?: 'draft' | 'published'
   slug?: string
@@ -93,31 +61,11 @@ export const buildRevalidatePlan = (
       case 'caseStudies':
         detailPaths.push(`/case-studies/${s}`, '/case-studies')
         break
-      case 'services': {
-        // drift #1 (research §D4): service detail lives at the NESTED path
-        // `/services/[pillar]/[slug]`; the pillar landing at `/services/[pillar]`.
-        // When a service MOVES pillars, the *previous* pillar's nested + landing
-        // paths also go stale — so bust both pillars (the hook resolves the old
-        // pillar slug onto `previousDoc.pillarSlug`). Fall back to the flat path
-        // only when no pillar resolves (e.g. a minimal test doc) so revalidation
-        // still busts something rather than nothing.
-        const pillarSlugs = Array.from(
-          new Set(
-            [resolvePillarSlug(doc), resolvePillarSlug(previousDoc ?? {})].filter(
-              (p): p is string => Boolean(p),
-            ),
-          ),
-        )
-        if (pillarSlugs.length > 0) {
-          for (const p of pillarSlugs) {
-            detailPaths.push(`/services/${p}/${s}`, `/services/${p}`)
-          }
-        } else {
-          detailPaths.push(`/services/${s}`)
-        }
-        break
-      }
-      case 'servicePillars':
+      case 'services':
+        // SVC-2: one flat namespace. A service, the group holding it and the
+        // axis page above it are all `/services/<slug>`. The nested
+        // `/services/[pillar]/[slug]` IA this used to bust was retired in #79;
+        // its last machinery went with the servicePillars merge.
         detailPaths.push(`/services/${s}`, '/services')
         break
       case 'workshops':
@@ -173,45 +121,13 @@ const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {
 }
 
 /**
- * At afterChange depth a service's `pillar` is an ID, not a populated object —
- * so `buildRevalidatePlan` can't read the pillar slug for the nested path
- * (drift #1 / research §D4 implementation risk). Resolve it via `req.payload`
- * (the hook's own Payload instance — no `getPayloadInstance`/`server-only`
- * import, which would break the hook's pure unit tests) and inject `pillarSlug`.
- */
-const enrichServiceDoc = async (doc: DocLike, req: PayloadRequest): Promise<DocLike> => {
-  if (resolvePillarSlug(doc)) return doc
-  const pillarId = pillarIdOf(doc)
-  if (pillarId === undefined || !req?.payload) return doc
-  try {
-    const fetched = await req.payload.findByID({
-      collection: 'servicePillars',
-      id: pillarId,
-      depth: 0,
-    })
-    return fetched?.slug ? { ...doc, pillarSlug: fetched.slug } : doc
-  } catch {
-    return doc
-  }
-}
-
-/**
  * Returns an afterChange hook bound to a specific collection slug.
  */
 export const revalidateOnChange =
   (collection: string): CollectionAfterChangeHook =>
   async ({ doc, previousDoc, req }) => {
-    let enriched = doc as DocLike
-    let prev = previousDoc as PreviousDocLike | undefined
-    if (collection === 'services') {
-      enriched = await enrichServiceDoc(doc as DocLike, req)
-      // A pillar move makes the OLD pillar's nested + landing paths stale too.
-      // Resolve the previous pillar slug only when the pillar actually changed,
-      // so the common no-move save stays a single fetch.
-      if (prev && pillarIdOf(prev) !== undefined && pillarIdOf(prev) !== pillarIdOf(enriched)) {
-        prev = (await enrichServiceDoc(prev as DocLike, req)) as PreviousDocLike
-      }
-    }
+    const enriched = doc as DocLike
+    const prev = previousDoc as PreviousDocLike | undefined
     const plan = buildRevalidatePlan(collection, enriched, prev)
     await runRevalidation(plan)
     return doc

@@ -4,73 +4,43 @@ import { describe, expect, it } from 'vitest'
 import { buildRevalidatePlan } from '../../../src/payload/hooks/revalidateOnChange'
 
 /**
- * spec 004 T034 — pins the drift-#1 fix (research §D4). `buildRevalidatePlan`
- * for `services` must emit the NESTED detail + pillar paths
- * (`/services/[pillar]/[slug]` + `/services/[pillar]`), while the cache TAGS
- * stay unchanged (`services_${slug}` / `services_list`) so the keystone
- * tag-parity invariant (C1) still holds.
+ * ROADMAP SVC-2. This spec used to pin the nested `/services/[pillar]/[slug]`
+ * paths, including the "service moved pillars, so bust the OLD pillar too"
+ * case. That IA was retired in PR #79 and its last machinery — `resolvePillarSlug`,
+ * `pillarIdOf`, `enrichServiceDoc` and the extra Payload fetch each service save
+ * paid for — went with the `servicePillars` merge.
+ *
+ * What replaces it is the invariant that matters now: every tier is flat, so a
+ * save busts its own page and the index, and nothing else.
  */
+describe('buildRevalidatePlan(services) — one flat namespace', () => {
+  it('busts the service page and the services index', () => {
+    const plan = buildRevalidatePlan('services', { slug: 'change-management' })
+    expect(plan.paths).toContain('/services/change-management')
+    expect(plan.paths).toContain('/services')
+  })
 
-describe('buildRevalidatePlan(services) — nested path', () => {
-  it('emits nested detail + pillar paths when `pillar` is a populated object', () => {
+  it('emits no nested pillar path for any tier', () => {
+    for (const tier of ['axis', 'group', 'leaf'] as const) {
+      const plan = buildRevalidatePlan('services', { slug: 'strategy', tier })
+      expect(plan.paths.filter((p) => p.startsWith('/services/'))).toEqual(['/services/strategy'])
+    }
+  })
+
+  it('ignores a legacy `pillar` value rather than routing on it', () => {
+    // A doc still carrying the dropped relation must not resurrect the nested
+    // path — the field is gone from the schema, but old payloads exist.
     const plan = buildRevalidatePlan('services', {
-      _status: 'published',
-      slug: 'cloud-migration',
-      pillar: { slug: 'modernization' },
+      slug: 'data-engineering',
+      pillar: { slug: 'technology-data' },
     })
-    expect(plan.paths).toContain('/services/modernization/cloud-migration')
-    expect(plan.paths).toContain('/services/modernization')
+    expect(plan.paths).not.toContain('/services/technology-data/data-engineering')
+    expect(plan.paths).toContain('/services/data-engineering')
   })
 
-  it('accepts an injected `pillarSlug` (the afterChange hook path)', () => {
-    const plan = buildRevalidatePlan('services', {
-      _status: 'published',
-      slug: 'svc',
-      pillarSlug: 'data',
-    })
-    expect(plan.paths).toContain('/services/data/svc')
-    expect(plan.paths).toContain('/services/data')
-  })
-
-  it('keeps the tag scheme unchanged (keystone C1 parity)', () => {
-    const plan = buildRevalidatePlan('services', {
-      _status: 'published',
-      slug: 'svc',
-      pillarSlug: 'data',
-    })
-    expect(plan.tags.sort()).toEqual(['services_list', 'services_svc'])
-  })
-
-  it('falls back to the flat path only when the pillar cannot be resolved', () => {
-    const plan = buildRevalidatePlan('services', { _status: 'published', slug: 'svc' })
-    expect(plan.paths).toContain('/services/svc')
-    expect(plan.paths).not.toContain('/services/undefined/svc')
-  })
-
-  it('handles a slug rename with the same pillar (old + new nested paths)', () => {
-    const plan = buildRevalidatePlan(
-      'services',
-      { _status: 'published', slug: 'new', pillarSlug: 'ops' },
-      { _status: 'published', slug: 'old' },
-    )
-    expect(plan.paths).toContain('/services/ops/new')
-    expect(plan.paths).toContain('/services/ops/old')
-  })
-
-  it('busts BOTH pillars when a service moves pillars (PR #21 review follow-up)', () => {
-    // previousDoc carries the OLD pillar slug (the afterChange hook enriches it
-    // when the pillar relationship changes). Without this, the stale
-    // `/services/old-pillar/...` paths would survive until the 3600s fallback.
-    const plan = buildRevalidatePlan(
-      'services',
-      { _status: 'published', slug: 'svc', pillarSlug: 'new-pillar' },
-      { _status: 'published', slug: 'svc', pillarSlug: 'old-pillar' },
-    )
-    expect(plan.paths).toContain('/services/new-pillar/svc')
-    expect(plan.paths).toContain('/services/new-pillar')
-    expect(plan.paths).toContain('/services/old-pillar/svc')
-    expect(plan.paths).toContain('/services/old-pillar')
-    // tags stay slug-based — keystone C1 parity is unaffected by the pillar move
-    expect(plan.tags.sort()).toEqual(['services_list', 'services_svc'])
+  it('tags the collection list and the document', () => {
+    const plan = buildRevalidatePlan('services', { slug: 'agentic-ai' })
+    expect(plan.tags).toContain('services_list')
+    expect(plan.tags).toContain('services_agentic-ai')
   })
 })
