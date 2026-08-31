@@ -1,6 +1,6 @@
 # Content We Still Need — Authoritative List
 
-**Owner:** Kenn Williamson · **Last updated:** 2026-07-27 (the **Hank and Brent interviews are filmed**, along with the localshoring content — all in edit, so §1 and §2 are now transcript-extraction work rather than asks; the case-study target set corrected to **three** clients with **Taurex** promoted to first chase and **Well Checked** demoted to a logo item; the **All Hands moved to September**, shifting §3. Prior pass 2026-06-30: reconciled against a live crawl of every staging route + the Payload REST inventory; added §9 "Missing pages — linked but 404" from the link audit; marked the Contact form GUID and Brent's live bio draft as resolved)
+**Owner:** Kenn Williamson · **Last updated:** 2026-08-31 (the 2026-08-31 sales alignment reopened **BOK / QuickTrip / ONEOK** as case-study targets, and added **§11** — the six industry pages and the proof each one still lacks. Prior pass 2026-07-27: the **Hank and Brent interviews are filmed**, along with the localshoring content — all in edit, so §1 and §2 are now transcript-extraction work rather than asks; the case-study target set corrected to **three** clients with **Taurex** promoted to first chase and **Well Checked** demoted to a logo item; the **All Hands moved to September**, shifting §3. Prior pass 2026-06-30: reconciled against a live crawl of every staging route + the Payload REST inventory; added §9 "Missing pages — linked but 404" from the link audit; marked the Contact form GUID and Brent's live bio draft as resolved)
 **Purpose:** the single source of truth for content the website is still waiting on. Hand this to Hank, Justin, and Megan. If a request isn't on this list, we don't need it — see "Already decided / do not re-ask" below. This supersedes the scattered gap notes in `docs/content-drafts/CONTENT_GAPS.md` (dated 2026-06-11, now stale — its snapshot shows services/case-studies/insights empty, all of which are live) and the long-lead `C-*` rows in `ROADMAP.md`.
 
 **State of the site (2026-06-30):** the technology is essentially done. A full crawl of staging returns **36 live pages** (homepage, 5 case studies, 5 insights, 11 team bios, 4 service pages, 3 workshops, localshoring, about, contact, privacy) — every one with real, substantial, professionally-rendered copy (no lorem, no "coming soon", no missing alt text). The block migration is complete and most copy/photos are loaded. What remains is (1) a small set of **human inputs** (Hank interview, named client quotes, the photo/video shoot), and (2) a handful of **stub pages that are linked in the nav/footer but 404** (new §9 below). Everything else is _loading_ work the dev side does without you.
@@ -46,14 +46,14 @@
 - **NovaMud** (via **Sam**) — the **flagship** (the existing study, the only one with metrics); need it made specifically about them + permission to name them.
 - **Well Checked** (via **Mike**) — the sign-off is believed easy, but we are lukewarm on the content (2026-07-27). Treat it as a **logo / permission** item, not a case-study chase.
 
-Kenn has sign-off from **nobody** yet — Megan is tracking the project histories + sign-offs for website use. This is a hard-launch gate (relational branding: named, signed studies only — anonymous studies are dropped). **Logo note:** **BOK** is a **logo only** (current client, not a case-study target); **ONEOK + QuickTrip are a NO for case studies** (their logos may still be fine). See "Logos" below.
+Kenn has sign-off from **nobody** yet — Megan is tracking the project histories + sign-offs for website use. This is a hard-launch gate (relational branding: named, signed studies only — anonymous studies are dropped). **Logo note, revised 2026-08-31:** BOK, QuickTrip and ONEOK were logo-only here, and the 2026-08-31 sales alignment named all three as case-study targets. They are back on the chase list — leadership believes it can get them, and they would be the strongest proof we have. The earlier exclusion stands only as the reason to expect a no. See "Logos" below.
 
 **Logos — Industry Leaders strip (audit + curation, Megan owns).** The current strip was copied as-is from the live seqtek.com site, and the 2026-06-24 meeting **re-opened whether we actually have permission to show these** (the earlier "the logos run publicly, so we're covered" assumption was softer than the conversation). Working assumption: if no client has objected to marks already running publicly, they're probably fine — but **Megan owns curating the showcase list and chasing logo permission** with Hank/Brent before launch. Full meeting audit:
 
 - **Keep / current:** **Hogan**, **BOK**, **QuickTrip** (all current clients).
 - **Stale — drop or refresh:** **GE** (the Lovekin project, ~10 yr ago), **AVB** (last work ~5 yr ago), **Change Health** (~6 yr ago).
-- **Verify first:** **ONEOK / ONE Gas** — confirm SEQTEK ever did work with them at all (Kenn doesn't recall any).
-- **Case-study exclusions:** **ONEOK + QuickTrip are a NO for case studies** (logos only, if at all).
+- **Verify first:** **ONEOK / ONE Gas** — confirm SEQTEK ever did work with them at all (Kenn doesn't recall any). This is the one to settle before asking ONEOK for anything.
+- **Case studies:** **ONEOK + QuickTrip were excluded; reopened 2026-08-31** at the sales alignment. Chase them like any other target and record the answer here.
 
 ---
 
@@ -200,3 +200,30 @@ Found in the live Payload inventory on 2026-06-30. None require leadership input
 - ~~**`navigation` CMS global is empty**~~ — **closed (spec 011).** The global was withdrawn entirely and its table dropped; site chrome is code-owned in `src/lib/site-content.ts` by decision, not by omission. See ADR 0010.
 - **`/our-story` video embeds** — the founder/brand videos render as large empty dark blocks in a fresh page capture; verify they show a poster frame (not a black box) before launch.
 - **Case-study `ogImage` is null** — social-share images missing (SEO nice-to-have).
+
+---
+
+## 11. Industry pages — the six, and the proof each one needs
+
+Decided at the 2026-08-31 sales alignment (Healthcare, FinTech, Oil & Gas, Energy, Manufacturing) plus
+**Aerospace**, added the same day. **Non-profit is explicitly excluded** — Brent does not want non-profit
+inbound, so YouVersion stays a wanted case study and does not anchor a page.
+
+Every one of these is an assertion of expertise, and the meeting's own rule is that a claim we cannot point
+at loses at our size. Here is what each has behind it **today**:
+
+| Industry          | Case-study proof we hold                          | What we need                                                     |
+| ----------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
+| **Oil & Gas**     | Endurance Lift, NovaMud, Taurex ×3                | Named sign-off (the §1.F chase). Proof is not the problem here.  |
+| **Energy**        | WellChecked                                       | One more, ideally with a metric.                                 |
+| **Healthcare**    | **none**                                          | A client, a story, or the page waits.                            |
+| **FinTech**       | **none** — BOK is the obvious candidate           | BOK as a case study (reopened 2026-08-31), or a logo at minimum. |
+| **Manufacturing** | **none** — Taurex is arguably here as well as O&G | Confirm whether Taurex reads as manufacturing, or find another.  |
+| **Aerospace**     | **none**                                          | Have we done aerospace work at all? Hank/Brent to confirm.       |
+
+**The ask, in one line:** four of the six industries have nothing to point at. Either PROOF-1 lands a study
+per industry, or the pages ship in the order the proof does.
+
+**Open, not a request:** **Hogan Assessments** does not fit any of the six — its vertical is psychometrics,
+and the nearest honest bucket is something like leadership development or talent. Left as-is for now rather
+than forced into a marketing industry.
