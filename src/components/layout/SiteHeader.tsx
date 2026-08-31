@@ -2,9 +2,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 import { Button } from '@/components/ui/Button'
-import { SmartLink } from '@/components/ui/SmartLink'
 import { navigation, siteSettings } from '@/lib/site-content'
 import { MobileNav } from './MobileNav'
+import { PrimaryNav } from './PrimaryNav'
 
 export function SiteHeader() {
   const { mainNav, ctaButton } = navigation
@@ -31,20 +31,7 @@ export function SiteHeader() {
             />
           </Link>
 
-          <nav aria-label="Primary" className="hidden lg:flex">
-            <ul className="flex items-center gap-1">
-              {mainNav.map((item) => (
-                <li key={item.url}>
-                  <SmartLink
-                    href={item.url}
-                    className="inline-flex h-10 items-center rounded-md px-3 text-body text-text-primary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-accent"
-                  >
-                    {item.label}
-                  </SmartLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <PrimaryNav items={mainNav} />
 
           <div className="flex items-center gap-2">
             <Button

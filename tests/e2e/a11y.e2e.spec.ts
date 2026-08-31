@@ -81,6 +81,55 @@ test.describe('a11y — WCAG 2.2 A/AA, all in-scope routes (T005/T015)', () => {
 })
 
 // ---------------------------------------------------------------------------
+// ROADMAP NAV-1 — the dropdown panel, axe'd in its OPEN state
+// ---------------------------------------------------------------------------
+
+// The sweep above only ever sees a closed panel, and a mega-menu is the most
+// common place this suite starts failing. Open one and re-run axe on it.
+test.describe('a11y — the nav panel while open (NAV-1)', () => {
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  test('an open dropdown panel adds zero axe violations', async ({ page }) => {
+    await page.goto('/')
+    const caret = page.getByTestId('site-header').getByRole('button', { name: 'Services menu' })
+    await caret.click()
+    await expect(caret).toHaveAttribute('aria-expanded', 'true')
+
+    // Same exclusions as the route sweep above, so the two axe runs on this
+    // route cannot disagree if a video block is ever seeded onto `/`.
+    const results = await new AxeBuilder({ page })
+      .withTags(AXE_TAGS)
+      .exclude('iframe[src*="youtube-nocookie.com"]')
+      .exclude('iframe[src*="player.vimeo.com"]')
+      .analyze()
+    expect(
+      results.violations,
+      `axe found ${results.violations.length} violation(s) with the nav panel open:\n` +
+        results.violations.map((v) => `  • [${v.impact}] ${v.id} — ${v.help}`).join('\n'),
+    ).toEqual([])
+  })
+
+  test('the panel is a disclosure, not a modal — Tab walks out of it', async ({ page }) => {
+    await page.goto('/')
+    const caret = page.getByTestId('site-header').getByRole('button', { name: 'Services menu' })
+    await caret.focus()
+    await page.keyboard.press('Enter')
+    await expect(caret).toHaveAttribute('aria-expanded', 'true')
+
+    // Tab through the panel's own links and out the far side. Focus must leave
+    // the nav rather than cycling inside it.
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Tab')
+      const inNav = await page.evaluate(
+        () => !!document.activeElement?.closest('nav[aria-label="Primary"]'),
+      )
+      if (!inNav) return
+    }
+    throw new Error('focus never left the primary nav — the panel is trapping it')
+  })
+})
+
+// ---------------------------------------------------------------------------
 // T016 — landmarks, heading order, keyboard/focus
 // ---------------------------------------------------------------------------
 

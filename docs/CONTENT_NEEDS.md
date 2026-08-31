@@ -1,6 +1,6 @@
 # Content We Still Need — Authoritative List
 
-**Owner:** Kenn Williamson · **Last updated:** 2026-08-31 (the 2026-08-31 sales alignment reopened **BOK / QuickTrip / ONEOK** as case-study targets, and added **§11** — the six industry pages and the proof each one still lacks. Prior pass 2026-07-27: the **Hank and Brent interviews are filmed**, along with the localshoring content — all in edit, so §1 and §2 are now transcript-extraction work rather than asks; the case-study target set corrected to **three** clients with **Taurex** promoted to first chase and **Well Checked** demoted to a logo item; the **All Hands moved to September**, shifting §3. Prior pass 2026-06-30: reconciled against a live crawl of every staging route + the Payload REST inventory; added §9 "Missing pages — linked but 404" from the link audit; marked the Contact form GUID and Brent's live bio draft as resolved)
+**Owner:** Kenn Williamson · **Last updated:** 2026-08-31 (**§12 added** — Brent's emailed services structure, the authoritative nine-in-three that supersedes the transcript's "roughly fifteen". The 2026-08-31 sales alignment reopened **BOK / QuickTrip / ONEOK** as case-study targets, and added **§11** — the six industry pages and the proof each one still lacks. Prior pass 2026-07-27: the **Hank and Brent interviews are filmed**, along with the localshoring content — all in edit, so §1 and §2 are now transcript-extraction work rather than asks; the case-study target set corrected to **three** clients with **Taurex** promoted to first chase and **Well Checked** demoted to a logo item; the **All Hands moved to September**, shifting §3. Prior pass 2026-06-30: reconciled against a live crawl of every staging route + the Payload REST inventory; added §9 "Missing pages — linked but 404" from the link audit; marked the Contact form GUID and Brent's live bio draft as resolved)
 **Purpose:** the single source of truth for content the website is still waiting on. Hand this to Hank, Justin, and Megan. If a request isn't on this list, we don't need it — see "Already decided / do not re-ask" below. This supersedes the scattered gap notes in `docs/content-drafts/CONTENT_GAPS.md` (dated 2026-06-11, now stale — its snapshot shows services/case-studies/insights empty, all of which are live) and the long-lead `C-*` rows in `ROADMAP.md`.
 
 **State of the site (2026-06-30):** the technology is essentially done. A full crawl of staging returns **36 live pages** (homepage, 5 case studies, 5 insights, 11 team bios, 4 service pages, 3 workshops, localshoring, about, contact, privacy) — every one with real, substantial, professionally-rendered copy (no lorem, no "coming soon", no missing alt text). The block migration is complete and most copy/photos are loaded. What remains is (1) a small set of **human inputs** (Hank interview, named client quotes, the photo/video shoot), and (2) a handful of **stub pages that are linked in the nav/footer but 404** (new §9 below). Everything else is _loading_ work the dev side does without you.
@@ -227,3 +227,63 @@ per industry, or the pages ship in the order the proof does.
 **Open, not a request:** **Hogan Assessments** does not fit any of the six — its vertical is psychometrics,
 and the nearest honest bucket is something like leadership development or talent. Left as-is for now rather
 than forced into a marketing industry.
+
+---
+
+## 12. The "What We Do" menu — the 13 pages Brent specified
+
+**Source: Brent's email "Services", 2026-08-31 14:32** (to Kenn, cc Megan and Hank), sent hours after the
+sales alignment. This is the authoritative structure and it **supersedes anything inferred from the meeting
+transcript**, including the "roughly fifteen items" figure. It is **nine services, not fifteen**.
+
+His words on the shape: _"What We Do as the link at the top of the homepage. Those 3 core functions going
+across horizontal as the drop down. Those 3 are a clickable page with high level content covering the area.
+The 3 services below them vertical each as a page."_
+
+That is **13 pages**: one axis page, three group pages, nine leaf pages. Note the group pages are **required
+here** — the optional-group-URL design in `ROADMAP.md` NAV-1 still applies to the second ("how we work")
+panel, but not to this one.
+
+| Group                                | Service                                                           | Nearest existing draft                                                                   |
+| ------------------------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Strategy and Business Consulting** | Strategy and Alignment                                            | `strategy-alignment` (4.5k) — direct                                                     |
+|                                      | Business Process Consulting _(project management tailored in)_    | `process-automation` (3.9k) — adjacent, different subject                                |
+|                                      | Change Management                                                 | **nothing**                                                                              |
+| **Technology and Data**              | Enterprise Architecture _(app development and cloud tailored in)_ | `custom-software-development` (4.8k) + `application-modernization` (4.7k) — raw material |
+|                                      | Data Engineering and Warehousing                                  | `cloud-data-engineering` (4.6k) — direct                                                 |
+|                                      | Business Intelligence and Analytics                               | **nothing**                                                                              |
+| **AI & Automation**                  | Generative AI _(AI readiness tailored in)_                        | `ai-assisted-modernization` (4.0k) — adjacent, different subject                         |
+|                                      | Machine Learning                                                  | `machine-learning-solutions` (3.9k) — direct                                             |
+|                                      | Agentic AI _(AI governance tailored in)_                          | **nothing**                                                                              |
+
+Drafts are in `docs/content-drafts/_archive/content-batch.json`. **The mapping above is by title only** — each
+one needs reading before it is assumed reusable.
+
+**Three of nine have a usable draft, three have adjacent material about a different subject, three have
+nothing.** The three group pages and the axis page have no drafts at all.
+
+**The three group names already exist in the archive** as `servicePillars` — "Organizational Strategy",
+"Technology & Data", "AI & Automation" (~1.4k each: a description and metadata, no body). Someone landed on
+the same three buckets independently, which is a point in favour of the grouping. They are seeds for the
+group pages, not the "high level content covering the area" Brent is asking for.
+
+**Two archived drafts are not on Brent's list, and that is correct** — `fractional-product-ownership` and
+`team-workshops` are "how we work", not "what we do", and so is Localshoring. That is the two-axis split
+doing its job, not a gap.
+
+**What we need from people**
+
+| Item                                      | Owner                       | State                                                                                                                                                                                 |
+| ----------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Copy for the **3 group pages**            | Kenn drafts, Brent confirms | Brent asked for "high level content covering the area". No draft exists.                                                                                                              |
+| Copy for the **6 leaf pages** without one | Kenn drafts                 | Change Management, BI & Analytics, Agentic AI outright; plus Business Process Consulting, Enterprise Architecture and Generative AI, where the nearest draft is about something else. |
+| **A proof link per service**              | Megan (ROADMAP PROOF-1)     | The meeting's own rule is that a claim we cannot point at loses at our size. **Nine services, four studies.** This is the real gate, not the copy.                                    |
+| **The industry list**                     | Brent                       | He sent the services; **industries did not come with them.** §11 runs on the meeting's five plus Aerospace until he confirms.                                                         |
+
+**Raw material we already hold.** Brent's earlier email ("Website Notes for Call Monday", 2026-08-28) carries
+the positioning line — a business transformation and management consulting company that uses technology, data
+and AI, explicitly _not_ a software house, IT staffing or a technology implementer — and a ten-item list of
+the buyer problems he hears: competing priorities, disconnected teams, failed transformations, technology not
+delivering value, AI pressure without a strategy, poor data, process inefficiency, change fatigue, difficulty
+executing strategy, no alignment across leadership. That is the source for the "What We Do" page and for the
+homepage problem/solution section the meeting agreed to. Use it rather than inventing one.

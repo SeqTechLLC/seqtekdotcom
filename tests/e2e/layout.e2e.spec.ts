@@ -58,6 +58,41 @@ test.describe('Site chrome — desktop viewport', () => {
     })
   })
 
+  // ROADMAP NAV-1. The top-level item stays a link and the caret is its own
+  // button, which is why the six-visible-links assertion above still holds.
+  test('a nav panel opens on click, closes on Escape, and hands focus back', async ({ page }) => {
+    await page.goto('/')
+    const header = page.getByTestId('site-header')
+    const caret = header.getByRole('button', { name: 'Services menu' })
+
+    // The caret controls a panel that actually exists in the document.
+    const panelId = await caret.getAttribute('aria-controls')
+    expect(panelId).toBeTruthy()
+    const panel = page.locator(`[id="${panelId}"]`)
+
+    await expect(panel).toBeHidden()
+    await expect(caret).toHaveAttribute('aria-expanded', 'false')
+
+    await caret.click()
+    await expect(panel).toBeVisible()
+    await expect(caret).toHaveAttribute('aria-expanded', 'true')
+    await expect(panel.getByRole('link', { name: 'AI Integration' })).toBeVisible()
+
+    // Escape closes and returns focus to the control that opened it, rather
+    // than dropping the keyboard user at the top of the document.
+    await page.keyboard.press('Escape')
+    await expect(panel).toBeHidden()
+    await expect(caret).toBeFocused()
+
+    // A pointer landing outside the nav closes it too.
+    await caret.click()
+    await expect(panel).toBeVisible()
+    await page.evaluate(() =>
+      document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
+    )
+    await expect(panel).toBeHidden()
+  })
+
   test('skip link becomes visible on keyboard focus', async ({ page }) => {
     await page.goto('/')
     await page.keyboard.press('Tab')
@@ -101,6 +136,21 @@ test.describe('Site chrome — mobile viewport', () => {
       path: path.join(SCREENSHOTS_DIR, 'layout-mobile-menu-open.png'),
       fullPage: false,
     })
+
+    // ROADMAP NAV-1. Children are collapsed behind a caret rather than
+    // rendered as a permanently expanded tree. Resolved by accessible name
+    // through `aria-controls`, the same way the desktop test does, so a nav
+    // reorder fails on the behaviour rather than on a missing test id.
+    const servicesCaret = dialog.getByRole('button', { name: 'Services menu' })
+    const regionId = await servicesCaret.getAttribute('aria-controls')
+    expect(regionId).toBeTruthy()
+    const servicesRegion = page.locator(`[id="${regionId}"]`)
+
+    await expect(servicesRegion).toBeHidden()
+    await expect(servicesCaret).toHaveAttribute('aria-expanded', 'false')
+    await servicesCaret.click()
+    await expect(servicesRegion).toBeVisible()
+    await expect(servicesRegion.getByRole('link', { name: 'AI Integration' })).toBeVisible()
 
     // Close button dismisses the dialog.
     await page.getByTestId('mobile-menu-close').click()

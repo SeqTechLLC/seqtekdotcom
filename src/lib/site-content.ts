@@ -26,7 +26,36 @@
 export type NavItem = {
   label: string
   url: string
+  /** Footer columns. The header reads `panel`, not this. */
   children?: NavItem[]
+  /** Header dropdown. Absent means the item is a plain link. */
+  panel?: NavPanel
+}
+
+/**
+ * ROADMAP NAV-1. A dropdown panel is a list of groups, and the group is the
+ * unit: the desktop column count falls out of `groups.length` rather than
+ * being a knob that can be set wrong, and the same data draws both viewports
+ * so they cannot drift.
+ *
+ * `url` is optional on purpose, and it is the lever that de-risks the whole
+ * menu: a group with no URL is a heading and nothing more, so the structure
+ * ships without waiting on a page for every heading. Groups organise the menu
+ * and may own a page; they never own a leaf's URL, which stays flat so that a
+ * leaf cross-listed under two groups still resolves to one address.
+ *
+ * A single-group panel renders no group title — with one column the trigger
+ * IS the heading, and repeating it would announce the same word twice. The
+ * `<ul>` is labelled by the trigger instead. See `PrimaryNav` / `MobileNav`.
+ */
+export type NavGroup = {
+  label: string
+  url?: string
+  items: NavItem[]
+}
+
+export type NavPanel = {
+  groups: NavGroup[]
 }
 
 export type Navigation = {
@@ -59,25 +88,44 @@ export const navigation: Navigation = {
       // "Our Story", and the page moved to /our-story (301 from /about).
       label: 'Our Story',
       url: '/our-story',
-      children: [
-        { label: 'Team', url: '/team' },
-        { label: 'Localshoring', url: '/localshoring' },
-        // TODO(stub): no Careers page exists yet. Re-add when the stub ships
-        // (docs/CONTENT_NEEDS.md §"Missing pages — linked but 404").
-      ],
+      // NAV-1: one group, so no group title renders. The groups and items are
+      // deliberately today's real routes — Brent's grouped service list had
+      // not arrived when the mechanism was built, and nothing in this repo
+      // should enumerate a service menu ahead of it. Adding a second group
+      // here is a data edit, not a component change.
+      panel: {
+        groups: [
+          {
+            label: 'Our Story',
+            items: [
+              { label: 'Team', url: '/team' },
+              { label: 'Localshoring', url: '/localshoring' },
+              // TODO(stub): no Careers page exists yet. Re-add when the stub
+              // ships (docs/CONTENT_NEEDS.md §"Missing pages — linked but 404").
+            ],
+          },
+        ],
+      },
     },
     {
       label: 'Services',
       url: '/services',
-      children: [
-        // feat/services-restructure — four peer offerings (ADR 0009). Workshops
-        // is the primary funnel and stays a top-level nav item (see below), so
-        // it is intentionally NOT duplicated here; the /services page itself
-        // still surfaces all four offering cards.
-        { label: 'Localshoring', url: '/services/localshoring' },
-        { label: 'AI Integration', url: '/services/ai-integration' },
-        { label: 'Digital Transformation', url: '/services/digital-transformation' },
-      ],
+      panel: {
+        groups: [
+          {
+            label: 'Services',
+            items: [
+              // feat/services-restructure — four peer offerings (ADR 0009).
+              // Workshops is the primary funnel and stays a top-level nav item
+              // (see below), so it is intentionally NOT duplicated here; the
+              // /services page itself still surfaces all four offering cards.
+              { label: 'Localshoring', url: '/services/localshoring' },
+              { label: 'AI Integration', url: '/services/ai-integration' },
+              { label: 'Digital Transformation', url: '/services/digital-transformation' },
+            ],
+          },
+        ],
+      },
     },
     { label: 'Workshops', url: '/workshops' },
     { label: 'Case Studies', url: '/case-studies' },
