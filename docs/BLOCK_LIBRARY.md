@@ -19,20 +19,20 @@ Payload supports two ways to model page content:
 
 **As of spec 010 / ADR 0009 this choice is largely settled: two content primitives.** Every non-blog page renders its body from a `layout` blocks array through `RenderBlocks`; only the blog Post keeps a bespoke richText article body. The "structured vs blocks" tension below is now mostly historical context — the rule of thumb still governs _new_ models, but the specialized detail types have all moved to blocks (keeping their typed metadata: slug, listing image, SEO, relationships).
 
-| Collection / Global | Body approach                              | Notes                                                                                                                                                                                                                             |
-| ------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pages`             | **Blocks** (`layout`)                      | The reference model; generic content pages composed freely                                                                                                                                                                        |
-| `homepage` (global) | **Blocks** (`layout`)                      | spec 010: was structured; now block-composed and editor-reorderable (composer adds the dual-CTA hero defaults)                                                                                                                    |
-| `caseStudies`       | **Blocks** (`layout`)                      | spec 010: was structured (problem/solution/impact/metrics/…); composed into blocks, typed metadata retained                                                                                                                       |
-| `services`          | **Blocks** (`layout`)                      | spec 010: was structured; composed. The nested `/services/[pillar]/[slug]` URL + pillar-move revalidation is **retired** — offerings are now four Pages addressed by slug; the `services` collection is no longer publicly routed |
-| `workshops`         | **Blocks** (`layout`)                      | spec 010 pilot (US1): the acceptance gate; composed (incl. `gallery` proof photos + `video-embed`)                                                                                                                                |
-| `teamMembers`       | **Blocks** (`layout`)                      | spec 010: gained `layout` + drafts/live-preview; new `/team/[slug]` detail renders via `RenderBlocks` + Person JSON-LD                                                                                                            |
-| `posts`             | **Structured + inline blocks in richText** | **The sanctioned exception** (ADR 0009): title/excerpt/author fixed; body is rich text with embedded inline blocks                                                                                                                |
-| `servicePillars`    | **Structured**                             | **Vestigial** — the pillar IA is retired (offerings are now four Pages by slug) and it is no longer publicly routed; kept only for the data it still backs                                                                        |
-| `industries`        | **Structured**                             | Taxonomy/listing; no body composition                                                                                                                                                                                             |
-| `locations`         | **Structured**                             | Market landing taxonomy; no body composition                                                                                                                                                                                      |
+| Collection / Global  | Body approach                              | Notes                                                                                                                                                                                                                             |
+| -------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages`              | **Blocks** (`layout`)                      | The reference model; generic content pages composed freely                                                                                                                                                                        |
+| `homepage` (global)  | **Blocks** (`layout`)                      | spec 010: was structured; now block-composed and editor-reorderable (composer adds the dual-CTA hero defaults)                                                                                                                    |
+| `caseStudies`        | **Blocks** (`layout`)                      | spec 010: was structured (problem/solution/impact/metrics/…); composed into blocks, typed metadata retained                                                                                                                       |
+| `services`           | **Blocks** (`layout`)                      | spec 010: was structured; composed. The nested `/services/[pillar]/[slug]` URL + pillar-move revalidation is **retired** — offerings are now four Pages addressed by slug; the `services` collection is no longer publicly routed |
+| `workshops`          | **Blocks** (`layout`)                      | spec 010 pilot (US1): the acceptance gate; composed (incl. `gallery` proof photos + `video-embed`)                                                                                                                                |
+| `teamMembers`        | **Blocks** (`layout`)                      | spec 010: gained `layout` + drafts/live-preview; new `/team/[slug]` detail renders via `RenderBlocks` + Person JSON-LD                                                                                                            |
+| `posts`              | **Structured + inline blocks in richText** | **The sanctioned exception** (ADR 0009): title/excerpt/author fixed; body is rich text with embedded inline blocks                                                                                                                |
+| ~~`servicePillars`~~ | **REMOVED (SVC-2)**                        | Absorbed into `services` as `tier: 'group'`; the collection and its tables are gone                                                                                                                                               |
+| `industries`         | **Structured**                             | Taxonomy/listing; no body composition                                                                                                                                                                                             |
+| `locations`          | **Structured**                             | Market landing taxonomy; no body composition                                                                                                                                                                                      |
 
-Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `industries`/`locations` stay structured because they are listing/taxonomy targets; `servicePillars` is now vestigial (the pillar IA is retired and unrouted — see the table note above). The old discrete body columns were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011** — `layout` is now the only body.
+Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `industries`/`locations` stay structured because they are listing/taxonomy targets; `services` joined the block-composed set under SVC-2 (three tiers in one collection, all routed at `/services/<slug>`) and `servicePillars` was absorbed into it. The old discrete body columns were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011** — `layout` is now the only body.
 
 ---
 
@@ -319,19 +319,19 @@ Frontend emits `FAQPage` JSON-LD automatically.
 
 #### `service-pillar-cards` — 3-up pillar grid
 
-| Field     | Type                                    | Required | Notes           |
-| --------- | --------------------------------------- | -------- | --------------- |
-| `heading` | text                                    | no       |                 |
-| `pillars` | relationship → servicePillars (hasMany) | yes      | Typically all 3 |
+| Field     | Type                                                           | Required | Notes           |
+| --------- | -------------------------------------------------------------- | -------- | --------------- |
+| `heading` | text                                                           | no       |                 |
+| `pillars` | relationship → services, filtered to `tier: 'group'` (hasMany) | yes      | Typically all 3 |
 
 #### `service-cards` — sub-service grid
 
-| Field         | Type                              | Required    | Notes                  |
-| ------------- | --------------------------------- | ----------- | ---------------------- |
-| `heading`     | text                              | no          |                        |
-| `source`      | select                            | yes         | `by-pillar` / `manual` |
-| `pillar`      | relationship → servicePillars     | conditional |                        |
-| `manualItems` | relationship → services (hasMany) | conditional |                        |
+| Field         | Type                                                 | Required    | Notes                                  |
+| ------------- | ---------------------------------------------------- | ----------- | -------------------------------------- |
+| `heading`     | text                                                 | no          |                                        |
+| `source`      | select                                               | yes         | `by-pillar` / `manual`                 |
+| `pillar`      | relationship → services, filtered to `tier: 'group'` | conditional | The group whose ordered `items` render |
+| `manualItems` | relationship → services (hasMany)                    | conditional |                                        |
 
 #### `team-grid` — team members display
 

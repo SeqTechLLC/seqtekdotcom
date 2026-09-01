@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-06-05
 
-> **Implementation note (2026-06-30).** The wrapper pattern is unchanged, but the reader count has grown: spec 010's block-composition readers bring the total to **17 cached public readers** (the Decision's count is updated to match). The enumerated `listServices` / `listServicePillars` readers still exist and remain wrapped, but are **likely vestigial** after the four-offering services restructure (PRs #79–#83), which routes `/services` and `/services/[offering]` off Pages by slug rather than the `Services` / `ServicePillars` collections. The `withReadTimeout`-outermost invariant and the `headers()`-in-catch reasoning below are unaffected.
+> **Implementation note (2026-06-30).** The wrapper pattern is unchanged, but the reader count has grown: spec 010's block-composition readers bring the total to **17 cached public readers** (the Decision's count is updated to match). The enumerated `listServices` / `listServicePillars` readers still exist and remain wrapped, but are **likely vestigial** after the four-offering services restructure (PRs #79–#83), which routes `/services` and `/services/[offering]` off Pages by slug rather than the `Services` / `ServicePillars` collections. _(Superseded 2026-09-01 by ROADMAP SVC-2: `listServices` is on the render path again — `/services/[slug]` and every `service-cards` block resolve through it — and `listServicePillars` is gone with the collection it read.)_ The `withReadTimeout`-outermost invariant and the `headers()`-in-catch reasoning below are unaffected.
 
 ## Context
 

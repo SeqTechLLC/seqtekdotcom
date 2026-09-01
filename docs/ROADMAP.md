@@ -249,17 +249,23 @@ The rest of this tier is what has to be true around them.
     cannot repair, both documented in its header. `service_pillars` was dropped with no backfill, so the pillar
     documents (title, slug, description, hero image, SEO, version history) are **gone** — the three groups come
     back only from the seed above. And `*_rels.service_pillars_id` was dropped across thirteen tables, which
-    discards the `pillars` selection on **every `service-pillar-cards` block anywhere** — Pages, case studies,
-    workshops, partners and the homepage, not only the service pages. `pillars` is `required: true,
-minRows: 1`, so each of those documents is **invalid until re-picked** and will refuse to save as it
-    stands. Separately, every `service-cards` block set to "By pillar" had its `pillar` NULLed on purpose (the
-    old value was a `service_pillars` id, meaningless against `services`), so each needs its group chosen
-    again. **After seeding the groups, sweep both block types across all six collections.**
+    discards the `pillars` selection on any `service-pillar-cards` block, in any of the six collections that
+    can carry one. `pillars` is `required: true, minRows: 1`, so such a document is **invalid until
+    re-picked**. Every `service-cards` block set to "By pillar" likewise had its `pillar` NULLed on purpose
+    (the old value was a `service_pillars` id, meaningless against `services`). **Scope check before budgeting
+    this: no file in `docs/content-drafts/*.json` currently carries either block**, so on a lane seeded only
+    from those drafts there may be nothing to sweep. The exposure is whatever was authored directly in the
+    admin — check a lane before assuming either number.
   - **Write the missing copy** — six of nine leaves and all three group pages (`CONTENT_NEEDS.md` §12).
-  - **Localshoring is settled:** one page at `/services/localshoring`, a "how we work" leaf rather than a
-    top-level item. The standalone `/localshoring` is gone from the nav and the footer, and the four market
-    links repoint to it. The standalone Page record retires on the next seed. No internal 301 — nothing is
-    live, so the URL simply changes.
+  - **Localshoring is settled as a destination, and is a TENTH leaf to seed.** One page at
+    `/services/localshoring`, a "how we work" leaf rather than a top-level item. **It is not one of Brent's
+    nine** — `CONTENT_NEEDS.md` §12 puts Localshoring on the "how we work" axis, deliberately outside them —
+    so the seed above does not create it and `docs/content-drafts/services.json` has no `localshoring` slug.
+    Add one, or that URL 404s no matter how much of §12 lands.
+    **Until it exists the nav, the footer and the four market links point at the `localshoring` PAGE**, which
+    resolves today through the catch-all. Chrome is code (ADR 0010), so pointing it at an unseeded slug would
+    be a dead link fixable only by a deploy. Flip all six to `/services/localshoring` in the same commit that
+    seeds the leaf and retires the Page record. No internal 301 — nothing is live, so the URL simply changes.
 
 - **SVC-3 — the services IA, with the nav question now settled the other way.** Direction decided, not built;
   blocked on SVC-2. The **flat 6-item nav with no mega-menu is withdrawn** — that was Kenn's call and the
