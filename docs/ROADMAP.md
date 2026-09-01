@@ -220,9 +220,18 @@ The rest of this tier is what has to be true around them.
   exist, video — a capability list without proof is exactly what loses at our size.
 
 - **SVC-2 residual — the content, not the code.** _(The code shipped; see PROJECT_HISTORY P5-31.)_ Services and
-  their groups are collections now: `/services/[slug]` resolves a leaf off `services` or a group off
-  `servicePillars`, the four hardcoded lists are gone, and the sitemap derives both from published slugs. What
-  is left is **data and copy**, which a deploy never ships:
+  their groups are **one** collection now: `services` carries `tier: 'axis' | 'group' | 'leaf'`, every tier
+  lives at a flat `/services/<slug>`, the four hardcoded lists are gone, and the sitemap derives all of it from
+  published slugs. The group holds an ordered many-to-many `items` list, so a leaf can be cross-listed under
+  two groups — or under both axes — and still resolve to one URL. `servicePillars` was absorbed and dropped.
+
+  **The finding worth carrying forward:** absorbing tiers into one collection means **every relationship that
+  points at that collection has to constrain to a tier**, or the pickers start offering nonsense. Six fields
+  pointed at `services`, and without `filterOptions` each would have offered "What We Do" and "Technology &
+  Data" as taggable services — the spec-011 defect class, in six places at once. One collection is only better
+  than two once that is done; before it, it is worse. Any future collection merge inherits this.
+
+  What is left is **data and copy**, which a deploy never ships:
   - **Seed Brent's nine services and three groups** (`CONTENT_NEEDS.md` §12) into the collections via
     `tools/payload-seed`. The gitignored `docs/content-drafts/services.json` still holds the OLD nine
     (the capability set) and `service-pillars.json` the old three pillars, and neither carries the `items`
@@ -664,7 +673,9 @@ Real work, none of it blocking a launch. Ordered by expected return.
   (n=1,002): **83% of companies require a security or privacy assessment** to purchase (75% SMB, 82% mid-market,
   **88% enterprise**), and **39% overall / 50% of enterprise** buyers name IT security review as their single
   biggest source of evaluation delay. We have no such page.
-- **INERT-1 — 24 admin fields on four unrouted collections have no consumer.** Found by audit during spec 011. `industries`, `locations`, `servicePillars` and `services` have no detail route, so nothing calls
+- **INERT-1 — admin fields on unrouted collections have no consumer.** _(Partly closed by SVC-2: `services`
+  is routed now and its `seo` group un-hidden, and `servicePillars` no longer exists — its fields went with the
+  collection. What remains is `industries` and `locations`.)_ Originally 24 fields on four collections: Found by audit during spec 011. `industries`, `locations`, `servicePillars` and `services` have no detail route, so nothing calls
   `buildMetadata` with their `seo` group and nothing renders their longer prose. An editor can fill any of
   these in and publish to no effect:
   - `industries` — `description`, `relevantServices`, `clientLogos`, `seo.*` (would be consumed by **IND-1**)
