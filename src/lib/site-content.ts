@@ -117,13 +117,21 @@ export const navigation: Navigation = {
           {
             label: 'Services',
             items: [
-              // feat/services-restructure — four peer offerings (ADR 0009).
               // Workshops is the primary funnel and stays a top-level nav item
-              // (see below), so it is intentionally NOT duplicated here; the
-              // /services page itself still surfaces all four offering cards.
+              // (see below), so it is intentionally NOT duplicated here.
+              //
+              // SVC-2 removed `AI Integration` and `Digital Transformation`.
+              // Those were `/services/[offering]` Page slugs, and that route is
+              // gone; Brent's structure (CONTENT_NEEDS §12) retires both as
+              // service NAMES, so neither URL ever comes back — leaving them
+              // here would ship two permanently dead links in code-owned chrome
+              // (ADR 0010). Localshoring survives as a real leaf.
+              //
+              // The nine services in three groups replace them here once they
+              // are seeded — a data edit in this file, tracked under the
+              // ROADMAP SVC-2 residual. Nothing enumerates them before the
+              // pages exist.
               { label: 'Localshoring', url: '/services/localshoring' },
-              { label: 'AI Integration', url: '/services/ai-integration' },
-              { label: 'Digital Transformation', url: '/services/digital-transformation' },
             ],
           },
         ],
@@ -150,11 +158,11 @@ export const navigation: Navigation = {
       label: 'Services',
       url: '/services',
       children: [
-        // feat/services-restructure — four peer offerings (ADR 0009). Workshops
-        // lives in the Resources column below, so it is not duplicated here.
+        // Workshops lives in the Resources column below, so it is not
+        // duplicated here. `AI Integration` and `Digital Transformation` are
+        // gone for the same reason as in the header panel above: SVC-2 deleted
+        // the route that served them and retires both as service names.
         { label: 'Localshoring', url: '/services/localshoring' },
-        { label: 'AI Integration', url: '/services/ai-integration' },
-        { label: 'Digital Transformation', url: '/services/digital-transformation' },
       ],
     },
     {

@@ -331,7 +331,12 @@ export const listServices = withReadTimeout(
   'listServices',
   (): Promise<Service[]> =>
     unstable_cache(
-      async () => (await findPublishedList('services', { sort: 'order' })) as Service[],
+      // depth 0 on purpose. SVC-2 gave `services` a full `layout` AND made
+      // `items` a self-relation, so at any depth above 0 every group drags back
+      // its services as complete documents — whole block trees, duplicated once
+      // per group that cross-lists them — into an hour-long cache entry. The
+      // one consumer, `resolveLayout`, reads `tier` and walks `items` by id.
+      async () => (await findPublishedList('services', { sort: 'order', depth: 0 })) as Service[],
       ['services', 'list'],
       { tags: listCacheTags('services'), revalidate: ONE_HOUR },
     )(),

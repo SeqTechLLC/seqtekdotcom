@@ -13,17 +13,23 @@ interface ServiceCardsProps {
    *  component renders whatever items it is handed (ROADMAP UI-2). */
   source?: 'by-pillar' | 'manual'
   manualItems?: Array<ServiceDoc | string | number> | null
-  /** Card title level. Defaults to `h3`; the pillar page (page-level `h1`, no
-   *  section heading) passes `h2` to keep heading order non-skipping. */
+  /** Card title level. Left unset it follows `heading`: a section that renders
+   *  an `h2` puts its cards at `h3`, a section with no heading puts them at
+   *  `h2` — otherwise a group page (page-level `h1`, block heading left blank)
+   *  jumps h1 -> h3 and fails the T016 heading-order check. An explicit value
+   *  still wins, for a caller that knows what sits above it. */
   headingLevel?: 'h2' | 'h3'
 }
 
 const isDoc = (v: unknown): v is ServiceDoc =>
   typeof v === 'object' && v !== null && 'title' in (v as object)
 
-export function ServiceCards({ heading, manualItems, headingLevel = 'h3' }: ServiceCardsProps) {
+export function ServiceCards({ heading, manualItems, headingLevel }: ServiceCardsProps) {
   const docs = (manualItems ?? []).filter(isDoc)
-  const CardHeading = headingLevel
+  // No section heading means no `h2` above the cards, so the cards ARE the
+  // section's top level. Deriving this rather than defaulting to `h3` keeps the
+  // block accessible whatever an editor leaves blank.
+  const CardHeading = headingLevel ?? (heading ? 'h3' : 'h2')
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">

@@ -23,9 +23,22 @@ const url = (path: string): string => `${SITE_URL}${path}`
 // slug — so those page slugs are excluded from the flat-page loop below.
 // ROADMAP SVC-2: both hardcoded lists are gone. Services and their groups are
 // collections now, so their URLs come from published slugs like every other
-// type and a new one needs no code change. `service-overview` stays excluded
-// below because /services is a STATIC_PATH, not a flat page slug.
-const SERVICE_OVERVIEW_PAGE_SLUG = 'service-overview'
+// type and a new one needs no code change.
+//
+// This set is the ONE thing that still has to be named. It is not a route map —
+// it is the retiring `service-*` Pages, excluded from the flat-page loop below.
+// `service-overview` because /services is a STATIC_PATH rather than a flat page
+// slug; the other three because SVC-2 deleted `/services/[offering]`, the only
+// route that ever rendered them. Dropping them from this set would not make
+// them unreachable, it would ADVERTISE them at `/service-ai-integration` —
+// flat URLs that were never canonical and that retire on the next content seed
+// (ROADMAP SVC-2 residual). Delete an entry here when its Page record goes.
+const RETIRING_SERVICE_PAGE_SLUGS = new Set([
+  'service-overview',
+  'service-localshoring',
+  'service-ai-integration',
+  'service-digital-transformation',
+])
 
 const STATIC_PATHS = [
   '/',
@@ -72,11 +85,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // `touchstone-workshops` doc, if ever published) would put a
     // redirecting URL in the sitemap — the redirect wins over the route,
     // so exclude redirect sources here (PR #49 review hardening). The
-    // `service-*` offering Pages are excluded too: their canonical URL is
-    // /services/<offering> (a STATIC_PATH), not the flat /service-* slug.
+    // retiring `service-*` Pages are excluded too — see the set above.
     const redirectSources = new Set(redirectMap.map((r) => r.source))
     for (const slug of pageSlugs) {
-      if (slug === SERVICE_OVERVIEW_PAGE_SLUG) continue
+      if (RETIRING_SERVICE_PAGE_SLUGS.has(slug)) continue
       if (!redirectSources.has(`/${slug}`)) paths.add(`/${slug}`)
     }
     for (const slug of caseStudySlugs) paths.add(`/case-studies/${slug}`)

@@ -8,6 +8,38 @@
 // a no-op, so this is safe in both directions. Verified by applying the whole
 // chain to an empty database. This is exactly what the P3 schema-drift CI guard
 // is for; nothing in CI runs migrations today (P5-30).
+//
+// WHAT THIS DOES TO EXISTING DATA — read before running it on a lane with
+// content. An empty-database apply proves the DDL parses; it proves nothing
+// about the three effects below, every one of which only exists when there are
+// rows.
+//
+//   1. `pillar_id` on twelve `*_blocks_service_cards` tables is NULLed by hand
+//      before its foreign key is repointed from `service_pillars` to
+//      `services`. Without that the stored pillar ids would be reinterpreted as
+//      service ids — silently wrong, or a mid-deploy abort. The reasoning is
+//      spelled out at the statements themselves, in `up()`.
+//
+//   2. Pillar DOCUMENTS are destroyed and not backfilled. `DROP TABLE
+//      "service_pillars" CASCADE` (and its `_v` twin) takes every pillar's
+//      title, slug, description, hero image, SEO group and version history with
+//      it, and nothing here inserts the matching `services` rows at
+//      `tier: 'group'`. That is deliberate — the three groups are reseeded from
+//      `docs/content-drafts` with real copy, which these rows never had (they
+//      are ~1.4k of description and metadata, no body; CONTENT_NEEDS §12) — but
+//      it means `down()` is a SCHEMA rollback only. It recreates the tables
+//      empty. There is no path back to the documents.
+//
+//   3. Every `service-pillar-cards` PICK is discarded. `ALTER TABLE
+//      "*_rels" DROP COLUMN "service_pillars_id"` across thirteen tables throws
+//      away the `pillars` selection on that block wherever it appears — Pages,
+//      case studies, workshops, partners and the homepage, not just the service
+//      pages. `pillars` is `required: true, minRows: 1`, so those documents are
+//      INVALID until an editor re-picks and will refuse to save as they stand.
+//
+// Effects 2 and 3 are content work a deploy cannot do; both are tracked in the
+// ROADMAP SVC-2 residual. Re-pick every `service-pillar-cards` block and every
+// `service-cards` block set to "By pillar" after the groups are seeded.
 
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
@@ -1414,6 +1446,47 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"block_name" varchar
   );
   
+  -- ---------------------------------------------------------------------
+  -- SVC-2 DATA. Everything else in this migration is DDL; these twelve
+  -- statements are not, and without them the migration is silently WRONG on
+  -- any database that holds content (it was verified against an empty one,
+  -- which is the single dataset where this cannot show up).
+  --
+  -- "pillar_id" on every "*_blocks_service_cards" table stores a
+  -- "service_pillars.id". Below, the column keeps its values while its foreign
+  -- key is repointed at "services": "DROP TABLE ... CASCADE" drops dependent
+  -- CONSTRAINTS, not referencing ROWS, and "ON DELETE set null" governs row
+  -- deletes rather than table drops, so nothing clears them on its own. Left
+  -- alone every id is reinterpreted as a "services.id" and one of two things
+  -- happens, both bad: it matches an unrelated LEAF (both tables use small
+  -- serials, so it usually does), "resolveLayout" finds no "tier: 'group'" for
+  -- it, and the block renders an empty card list with no error -- the exact
+  -- INERT-2 defect class this work exists to remove; or it matches nothing and
+  -- "ADD CONSTRAINT" fails validation, aborting the migration mid-deploy.
+  --
+  -- NULL rather than a remap, deliberately: the groups that replace these
+  -- pillars do not exist yet when this runs -- they are reseeded from
+  -- "docs/content-drafts" afterwards (ROADMAP SVC-2 residual) -- so there is no
+  -- id to remap TO. A blank "Which group" is a required field an editor is
+  -- forced to re-pick; a wrong one is silent. Prior art for hand-written DML in
+  -- a migration here: "20260827_232537_inert2_drop_dead_controls.ts".
+  --
+  -- "services_blocks_service_cards" / "_services_v_blocks_service_cards" are
+  -- CREATEd empty by this same migration and so need no statement.
+  UPDATE "pages_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_pages_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "case_studies_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_case_studies_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "team_members_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_team_members_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "workshops_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_workshops_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "partners_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_partners_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "homepage_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_homepage_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  -- ---------------------------------------------------------------------
+
   ALTER TABLE "service_pillars" DISABLE ROW LEVEL SECURITY;
   ALTER TABLE "_service_pillars_v" DISABLE ROW LEVEL SECURITY;
   DROP TABLE "service_pillars" CASCADE;
@@ -2506,6 +2579,25 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   CREATE INDEX "_service_pillars_v_created_at_idx" ON "_service_pillars_v" USING btree ("created_at");
   CREATE INDEX "_service_pillars_v_updated_at_idx" ON "_service_pillars_v" USING btree ("updated_at");
   CREATE INDEX "_service_pillars_v_latest_idx" ON "_service_pillars_v" USING btree ("latest");
+  -- SVC-2 DATA, in reverse. After "up()" these columns hold "services.id"
+  -- values; the constraints below repoint them at a "service_pillars" table
+  -- that has just been recreated EMPTY, so any surviving value fails FK
+  -- validation and aborts the rollback. Clear them first. Note this is a
+  -- schema rollback, not a data one: the pillar documents themselves are gone
+  -- for good (see the header).
+  UPDATE "pages_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_pages_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "case_studies_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_case_studies_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "team_members_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_team_members_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "workshops_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_workshops_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "partners_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_partners_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "homepage_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+  UPDATE "_homepage_v_blocks_service_cards" SET "pillar_id" = NULL WHERE "pillar_id" IS NOT NULL;
+
   ALTER TABLE "pages_blocks_service_cards" ADD CONSTRAINT "pages_blocks_service_cards_pillar_id_service_pillars_id_fk" FOREIGN KEY ("pillar_id") REFERENCES "public"."service_pillars"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "pages_rels" ADD CONSTRAINT "pages_rels_service_pillars_fk" FOREIGN KEY ("service_pillars_id") REFERENCES "public"."service_pillars"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_pages_v_blocks_service_cards" ADD CONSTRAINT "_pages_v_blocks_service_cards_pillar_id_service_pillars_id_fk" FOREIGN KEY ("pillar_id") REFERENCES "public"."service_pillars"("id") ON DELETE set null ON UPDATE no action;

@@ -92,13 +92,13 @@ export const Services: CollectionConfig = {
       hasMany: true,
       admin: { description: 'Case studies that show this service delivered.' },
     },
-    // The parent→children relation lives on the PARENT and is many-to-many: a
-    // leaf can be cross-listed under more than one group, and under both axes —
-    // the strategy and alignment work is genuinely something a client buys AND
-    // the way we open an engagement. A `parent` field on the child assumes one
-    // owner and cannot express that. Holding the ordered list here also makes a
-    // group page an editorial object that chooses what it shows, in the order it
-    // wants, rather than a query result.
+    // The group→services relation lives on the GROUP and is many-to-many: a
+    // leaf can be cross-listed under more than one group — the strategy and
+    // alignment work is genuinely something a client buys AND the way we open
+    // an engagement. A `parent` field on the child assumes one owner and cannot
+    // express that. Holding the ordered list here also makes a group page an
+    // editorial object that chooses what it shows, in the order it wants,
+    // rather than a query result.
     //
     // Cross-listing means ONE page and TWO links to it, never two pages: the
     // flat `/services/<slug>` namespace IS that rule expressed in routing.
@@ -108,15 +108,25 @@ export const Services: CollectionConfig = {
       relationTo: 'services',
       label: 'What sits under this',
       hasMany: true,
-      filterOptions: ({ data }) => ({
-        // An axis holds groups; a group holds services. Nothing sits under a
-        // service, and nothing may contain itself.
-        tier: { equals: data?.tier === 'axis' ? 'group' : 'leaf' },
+      filterOptions: () => ({
+        // A group holds services. Nothing sits under a service, and nothing may
+        // contain itself.
+        tier: { equals: 'leaf' },
       }),
       admin: {
-        condition: (data) => data?.tier === 'axis' || data?.tier === 'group',
+        // GROUPS ONLY, and that is an INERT-2 call rather than a modelling one.
+        // An axis holding its groups reads like the obvious other half of this
+        // relation, but nothing renders it: `resolveLayout` reaches `.items`
+        // only through a `service-cards` block whose `pillar` is a
+        // `tier: 'group'` row, and `service-pillar-cards` has no `source` field
+        // and no resolver, so it is manual-pick only. Shown on an axis, this
+        // would be a control an editor arranges and no page reflects — the
+        // defect class this collection was rebuilt to remove. It comes back the
+        // moment something reads it (a `source` on `service-pillar-cards`, or a
+        // nav built from data rather than `site-content.ts`).
+        condition: (data) => data?.tier === 'group',
         description:
-          'The pages shown under this one, in the order you arrange them. The same service may appear under more than one group.',
+          'The services shown under this group, in the order you arrange them. The same service may appear under more than one group.',
       },
     },
     {

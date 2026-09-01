@@ -1241,7 +1241,7 @@ export interface Service {
    */
   relatedCaseStudies?: (number | CaseStudy)[] | null;
   /**
-   * The pages shown under this one, in the order you arrange them. The same service may appear under more than one group.
+   * The services shown under this group, in the order you arrange them. The same service may appear under more than one group.
    */
   items?: (number | Service)[] | null;
   /**
