@@ -32,9 +32,10 @@ export function ServicePillarCards({
         <ul className="mt-8 grid gap-6 md:grid-cols-3">
           {docs.map((p) => {
             // ROADMAP INERT-2 — a second line used to read `p.tagline`, which
-            // `servicePillars` does not have (its one-liner is richText
-            // `description`, and its plain-text summary is `seo.metaDescription`).
-            // The branch never fired, so the card has always been title-only.
+            // no group has ever carried. The branch never fired, so the card has
+            // always been title-only. (Groups are `services` rows at
+            // `tier: 'group'` since SVC-2; before that they were `servicePillars`,
+            // whose one-liner was richText `description`.)
             const card = <CardHeading className="text-h3 font-semibold">{p.title}</CardHeading>
             return (
               <li

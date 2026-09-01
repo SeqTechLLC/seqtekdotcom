@@ -1,7 +1,7 @@
 /**
  * Showcase supporting docs — minimal seeded records in collections that
  * showcase blocks reference (testimonials, caseStudies, services, posts,
- * industries, locations, workshops, servicePillars, categories, teamMembers).
+ * industries, locations, workshops, service groups, categories, teamMembers).
  *
  * Records are tagged with a `[Showcase]` prefix on their useAsTitle field so
  * they can be cleared idempotently. The prefix lives in the title/name so

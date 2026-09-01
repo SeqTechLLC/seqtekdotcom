@@ -115,16 +115,12 @@ const KNOWN_DETAIL_DESTINATIONS = new Set<string>([
   '/workshops/touchstone',
   '/workshops/re-alignment',
   '/workshops/five-dysfunctions',
-  // ROADMAP SVC-2: these are CONTENT slugs now, not a fixed enum. `/services/
-  // <slug>` resolves off the `services` collection, so each of these 301s
-  // reaches a page only while a published service carries that slug. Brent's
-  // structure retires `ai-integration` and `digital-transformation` as service
-  // names, so these three destinations are retargeted with the content, not
-  // chained through a second hop (nothing is live yet, so redirects are
-  // REPLACED rather than layered).
-  '/services/localshoring',
-  '/services/ai-integration',
-  '/services/digital-transformation',
+  // ROADMAP SVC-2 deliberately adds NO service slug here. `/services/<slug>`
+  // resolves off the `services` collection now, and no service is seeded yet —
+  // so listing one would be widening this allowlist to admit the exact defect
+  // RM3 exists to catch, which is what an earlier cut of this PR did. Every
+  // service redirect targets the `/services` LISTING instead. Add a slug here
+  // only once a published service carries it.
   // Verified against docs/content-drafts/posts.json.
   '/insights/the-skill-shift',
 ])

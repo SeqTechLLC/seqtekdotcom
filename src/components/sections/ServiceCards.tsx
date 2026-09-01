@@ -26,6 +26,12 @@ const isDoc = (v: unknown): v is ServiceDoc =>
 
 export function ServiceCards({ heading, manualItems, headingLevel }: ServiceCardsProps) {
   const docs = (manualItems ?? []).filter(isDoc)
+  // Nothing to show means nothing to draw, matching `ServicePillarCards`.
+  // Rendering the shell instead would put an 8rem band of empty background on
+  // the page — and SVC-2's migration NULLs `pillar_id` on every existing
+  // "By pillar" block, so that is the state they ALL start in after the deploy,
+  // until an editor re-picks the group.
+  if (docs.length === 0) return null
   // No section heading means no `h2` above the cards, so the cards ARE the
   // section's top level. Deriving this rather than defaulting to `h3` keeps the
   // block accessible whatever an editor leaves blank.
@@ -34,32 +40,30 @@ export function ServiceCards({ heading, manualItems, headingLevel }: ServiceCard
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-        {docs.length > 0 ? (
-          <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {docs.map((s) => {
-              const card = (
-                <>
-                  {s.icon ? <p className="text-h3 text-accent-strong">{s.icon}</p> : null}
-                  <CardHeading className="mt-2 text-h4 font-semibold">{s.title}</CardHeading>
-                </>
-              )
-              return (
-                <li
-                  key={s.id ?? s.slug}
-                  className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
-                >
-                  {s.slug ? (
-                    <Link href={`/services/${s.slug}`} className="block h-full p-6">
-                      {card}
-                    </Link>
-                  ) : (
-                    <div className="p-6">{card}</div>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        ) : null}
+        <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {docs.map((s) => {
+            const card = (
+              <>
+                {s.icon ? <p className="text-h3 text-accent-strong">{s.icon}</p> : null}
+                <CardHeading className="mt-2 text-h4 font-semibold">{s.title}</CardHeading>
+              </>
+            )
+            return (
+              <li
+                key={s.id ?? s.slug}
+                className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+              >
+                {s.slug ? (
+                  <Link href={`/services/${s.slug}`} className="block h-full p-6">
+                    {card}
+                  </Link>
+                ) : (
+                  <div className="p-6">{card}</div>
+                )}
+              </li>
+            )
+          })}
+        </ul>
       </div>
     </section>
   )

@@ -114,63 +114,76 @@ export const redirectMap: Redirect[] = [
   },
 
   // ---- The old Wix Services menu -------------------------------------------
-  // The old site's main nav, folded on the same lines as ADR 0009 below:
-  // AI/data leaves → AI Integration, software/cloud/systems leaves → Digital
-  // Transformation, leadership/process/PM leaves → Workshops (the funnel).
+  // The old site's main nav. These used to fold onto /services/ai-integration
+  // and /services/digital-transformation, which were `/services/[offering]`
+  // Page slugs.
+  //
+  // ROADMAP SVC-2 deletes that route, and Brent's structure retires both as
+  // service names, so neither URL comes back — a 301 aimed at either is a
+  // permanent 404, and it breaks the moment this MERGES, not when content
+  // lands. Nothing is live, so they are RETARGETED AT SOURCE rather than
+  // chained through a second hop, and the only service URL that resolves
+  // today is the overview. That also honours the rule in
+  // `redirects.int.spec.ts`: a redirect may target a per-slug page only if
+  // that slug's content exists, otherwise send it to the LISTING.
+  //
+  // Refine these to the specific group and leaf pages once those are seeded
+  // (ROADMAP SVC-2 residual) — a better destination, not a correctness fix.
+  // Leadership/process/PM leaves still land on /workshops, the funnel.
   {
     source: '/organizational-strategy-1-1-1-2',
-    destination: '/services/ai-integration',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-1-1-2-1',
-    destination: '/services/ai-integration',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-1-1-2-1-1',
-    destination: '/services/ai-integration',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-3-1',
-    destination: '/services/ai-integration',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-3-1-1',
-    destination: '/services/ai-integration',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-1-1-1',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-1-3',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-2-1',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-3',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-4',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   // The Wix "Technology & Data" pillar page.
   {
     source: '/technology-and-data',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   { source: '/organizational-strategy-1-1', destination: '/workshops', permanent: true },
@@ -178,49 +191,50 @@ export const redirectMap: Redirect[] = [
   { source: '/organizational-strategy-1-1-2', destination: '/workshops', permanent: true },
   { source: '/organizational-strategy-1-2', destination: '/workshops', permanent: true },
 
-  // feat/services-restructure — the retired 3-pillar / 9-service IA folds into
-  // the four peer offerings (ADR 0009). Pillar slugs and the nine leaf service
+  // The retired 3-pillar / 9-service IA. Pillar slugs and the nine leaf service
   // slugs were read live from the DB before finalizing. Workshops is the primary
   // funnel, so the organizational-strategy pillar + its workshop/strategy leaves
-  // land on /workshops; fractional-product-ownership folds into digital
-  // transformation. These are internal route→route 301s (INTEGRATIONS §9).
-  { source: '/services/ai-automation', destination: '/services/ai-integration', permanent: true },
+  // land on /workshops; everything else lands on the /services overview for the
+  // reason given above. These are internal route→route 301s (INTEGRATIONS §9),
+  // and they stay ONE hop: `/services/ai-automation` now points straight at
+  // /services rather than at a URL that is itself about to 404.
+  { source: '/services/ai-automation', destination: '/services', permanent: true },
   {
     source: '/services/technology-data',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   { source: '/services/organizational-strategy', destination: '/workshops', permanent: true },
   // ai-automation leaves → AI Integration
   {
     source: '/services/ai-automation/ai-assisted-modernization',
-    destination: '/services/ai-integration',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/services/ai-automation/machine-learning-solutions',
-    destination: '/services/ai-integration',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/services/ai-automation/process-automation',
-    destination: '/services/ai-integration',
+    destination: '/services',
     permanent: true,
   },
   // technology-data leaves → Digital Transformation
   {
     source: '/services/technology-data/application-modernization',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/services/technology-data/cloud-data-engineering',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   {
     source: '/services/technology-data/custom-software-development',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   // organizational-strategy leaves → Workshops (funnel) except FPO → Digital Transformation
@@ -231,7 +245,7 @@ export const redirectMap: Redirect[] = [
   },
   {
     source: '/services/organizational-strategy/fractional-product-ownership',
-    destination: '/services/digital-transformation',
+    destination: '/services',
     permanent: true,
   },
   {
