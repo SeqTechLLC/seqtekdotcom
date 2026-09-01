@@ -340,7 +340,11 @@ export async function seedInScopeRoutes(
           headline: 'Delivery and Change',
           subheadline: 'How an engagement actually runs.',
         },
-        { blockType: 'service-cards', source: 'by-pillar' },
+        {
+          blockType: 'service-cards',
+          source: 'manual',
+          manualItems: [(localshoring as { id: number }).id, (aiIntegration as { id: number }).id],
+        },
       ] as never,
       _status: 'published',
     },
