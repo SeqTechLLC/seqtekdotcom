@@ -280,7 +280,7 @@ export async function seedSupportingDocs(
   const categoryIds = await seedCategories(payload)
   // One `clearTagged` for the whole collection: groups and leaves share it now.
   await clearTagged(payload, 'services', 'title')
-  const servicePillarIds = await seedServiceGroups(payload)
+  const serviceGroupIds = await seedServiceGroups(payload)
   const industryIds = await seedIndustries(payload)
   const locationIds = await seedLocations(payload)
   const teamMemberIds = await seedTeamMembers(payload, photoId)
@@ -288,7 +288,7 @@ export async function seedSupportingDocs(
   // The relation lives on the GROUP. Give each group one leaf so the
   // `service-cards` `by-pillar` source has something to resolve.
   await Promise.all(
-    servicePillarIds.map((id, i) =>
+    serviceGroupIds.map((id, i) =>
       serviceIds[i] === undefined
         ? Promise.resolve(null)
         : payload.update({
@@ -311,7 +311,7 @@ export async function seedSupportingDocs(
     industryIds,
     locationIds,
     workshopIds,
-    serviceGroupIds: servicePillarIds,
+    serviceGroupIds,
     categoryIds,
     teamMemberIds,
   }

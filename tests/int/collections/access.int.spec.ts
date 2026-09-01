@@ -122,7 +122,6 @@ let adminUser: User
 let sharedMediaId: string | number
 let sharedTeamMemberId: string | number
 let sharedIndustryId: string | number
-let sharedServicePillarId: string | number
 
 // SVG→PNG (sharp's `create` API produces a buffer that `file-type`
 // can't identify as a real PNG, which `checkFileRestrictions`
@@ -221,18 +220,6 @@ beforeAll(async () => {
     overrideAccess: true,
   })
   sharedIndustryId = industry.id
-
-  const servicePillar = await payload.create({
-    collection: 'services',
-    data: {
-      title: 'Access Matrix Pillar',
-      slug: 'access-matrix-shared-pillar',
-      tier: 'group',
-      _status: 'published',
-    },
-    overrideAccess: true,
-  })
-  sharedServicePillarId = servicePillar.id
 })
 
 afterAll(async () => {
@@ -318,20 +305,12 @@ const COLLECTION_SPECS: CollectionSpec[] = [
   {
     slug: 'services',
     tier: 'editorial-draftable',
-    visibleData: (s) => ({
-      title: `AM Service ${s}`,
-      slug: `access-matrix-service-${s}`,
-      pillar: sharedServicePillarId,
-    }),
+    // SVC-2 deleted `pillar` from the leaf (the relation moved to the group as
+    // `items`). Payload silently drops unknown fields, so passing it here
+    // asserted nothing — this spec exercises access control, not relations.
+    visibleData: (s) => ({ title: `AM Service ${s}`, slug: `access-matrix-service-${s}` }),
     hiddenData: (s) => ({ title: `AM Service ${s}`, slug: `access-matrix-service-${s}` }),
     updateData: { excerpt: undefined },
-  },
-  {
-    slug: 'services',
-    tier: 'editorial-draftable',
-    visibleData: (s) => ({ title: `AM Pillar ${s}`, slug: `access-matrix-pillar-${s}` }),
-    hiddenData: (s) => ({ title: `AM Pillar ${s}`, slug: `access-matrix-pillar-${s}` }),
-    updateData: { title: 'AM Pillar updated' },
   },
   {
     slug: 'workshops',
@@ -436,7 +415,6 @@ const FIXTURE_COLLECTIONS = [
   'pages',
   'posts',
   'caseStudies',
-  'services',
   'services',
   'workshops',
   'industries',

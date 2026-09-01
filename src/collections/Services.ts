@@ -8,12 +8,17 @@ import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { seoField } from '../payload/fields/seo'
 import { orderField, publishedAtField } from '../payload/fields/publishing'
 import { layoutBlocks } from '../payload/blocks/layout'
+import { livePreviewFor } from '../payload/livePreview/url'
 
 export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'tier', 'slug', 'order'],
+    // SVC-2 made this a routed, block-composed collection again, so it gets the
+    // same live preview as every other one — without it `/services/[slug]`'s
+    // draft branch has no way to be entered.
+    livePreview: livePreviewFor('services'),
   },
   access: {
     read: publishedOrAuthed,

@@ -73,8 +73,8 @@ export const IN_SCOPE_SEED: InScopeSeed = {
 /**
  * ROADMAP SVC-2. `/services` is still a block-composed Page looked up by a fixed
  * slug (`services/page.tsx` hard-codes it), so it stays here. The leaves and
- * groups below it are no longer Pages: `/services/<slug>` resolves off the
- * `services` and `servicePillars` collections, so a slug needs no code change.
+ * groups below it are no longer Pages: every tier resolves off the ONE
+ * `services` collection, so a slug needs no code change.
  */
 const SERVICE_OVERVIEW_PAGE_SLUG = 'service-overview'
 
@@ -82,9 +82,10 @@ const SERVICE_OVERVIEW_PAGE_SLUG = 'service-overview'
 const SERVICE_SLUGS = ['localshoring', 'ai-integration', 'digital-transformation'] as const
 
 /**
- * A group — same flat namespace as a leaf, resolved off `servicePillars`. Seeded
- * so the group branch of `/services/[slug]` gets the same a11y sweep the leaf
- * branch does; without it half the route would ship unexercised.
+ * A group — same flat namespace as a leaf, and the same collection: a row with
+ * `tier: 'group'`. Seeded so the group branch of `/services/[slug]` gets the
+ * same a11y sweep the leaf branch does; without it half the route would ship
+ * unexercised.
  */
 const SERVICE_GROUP_SLUG = 'delivery-and-change'
 

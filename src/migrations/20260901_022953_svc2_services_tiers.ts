@@ -5,8 +5,13 @@
 // DROPs and recreates `pages_blocks_service_cards` without it — so the snapshot
 // and the SQL have already diverged for that table, and any regenerated
 // migration inherits the divergence. Dropping a constraint that is not there is
-// a no-op, so this is safe in both directions. Verified by applying the whole
-// chain to an empty database. This is exactly what the P3 schema-drift CI guard
+// a no-op, so this is safe in both directions. The `DROP INDEX` statements
+// carry `IF EXISTS` for the same reason: the divergence is a property of the
+// snapshot chain, not of constraints specifically, and nothing in CI applies
+// migrations (P5-30) so the deploy is the only gate — the container runs
+// `npx payload migrate && node server.js`, which turns one already-absent
+// index into a failed deploy. Verified by applying the whole chain to an
+// empty database. This is exactly what the P3 schema-drift CI guard
 // is for; nothing in CI runs migrations today (P5-30).
 //
 // WHAT THIS DOES TO EXISTING DATA — read before running it on a lane with
@@ -1545,21 +1550,21 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   
   ALTER TABLE "_homepage_v_rels" DROP CONSTRAINT IF EXISTS "_homepage_v_rels_service_pillars_fk";
   
-  DROP INDEX "pages_rels_service_pillars_id_idx";
-  DROP INDEX "_pages_v_rels_service_pillars_id_idx";
-  DROP INDEX "case_studies_rels_service_pillars_id_idx";
-  DROP INDEX "_case_studies_v_rels_service_pillars_id_idx";
-  DROP INDEX "services_pillar_idx";
-  DROP INDEX "_services_v_version_version_pillar_idx";
-  DROP INDEX "team_members_rels_service_pillars_id_idx";
-  DROP INDEX "_team_members_v_rels_service_pillars_id_idx";
-  DROP INDEX "workshops_rels_service_pillars_id_idx";
-  DROP INDEX "_workshops_v_rels_service_pillars_id_idx";
-  DROP INDEX "partners_rels_service_pillars_id_idx";
-  DROP INDEX "_partners_v_rels_service_pillars_id_idx";
-  DROP INDEX "payload_locked_documents_rels_service_pillars_id_idx";
-  DROP INDEX "homepage_rels_service_pillars_id_idx";
-  DROP INDEX "_homepage_v_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "pages_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "_pages_v_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "case_studies_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "_case_studies_v_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "services_pillar_idx";
+  DROP INDEX IF EXISTS "_services_v_version_version_pillar_idx";
+  DROP INDEX IF EXISTS "team_members_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "_team_members_v_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "workshops_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "_workshops_v_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "partners_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "_partners_v_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "homepage_rels_service_pillars_id_idx";
+  DROP INDEX IF EXISTS "_homepage_v_rels_service_pillars_id_idx";
   ALTER TABLE "services" ADD COLUMN "tier" "enum_services_tier" DEFAULT 'leaf';
   ALTER TABLE "services_rels" ADD COLUMN "services_id" integer;
   ALTER TABLE "services_rels" ADD COLUMN "testimonials_id" integer;
@@ -2529,20 +2534,20 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   
   ALTER TABLE "_homepage_v_blocks_service_cards" DROP CONSTRAINT IF EXISTS "_homepage_v_blocks_service_cards_pillar_id_services_id_fk";
   
-  DROP INDEX "services_rels_services_id_idx";
-  DROP INDEX "services_rels_testimonials_id_idx";
-  DROP INDEX "services_rels_posts_id_idx";
-  DROP INDEX "services_rels_industries_id_idx";
-  DROP INDEX "services_rels_locations_id_idx";
-  DROP INDEX "services_rels_workshops_id_idx";
-  DROP INDEX "services_rels_team_members_id_idx";
-  DROP INDEX "_services_v_rels_services_id_idx";
-  DROP INDEX "_services_v_rels_testimonials_id_idx";
-  DROP INDEX "_services_v_rels_posts_id_idx";
-  DROP INDEX "_services_v_rels_industries_id_idx";
-  DROP INDEX "_services_v_rels_locations_id_idx";
-  DROP INDEX "_services_v_rels_workshops_id_idx";
-  DROP INDEX "_services_v_rels_team_members_id_idx";
+  DROP INDEX IF EXISTS "services_rels_services_id_idx";
+  DROP INDEX IF EXISTS "services_rels_testimonials_id_idx";
+  DROP INDEX IF EXISTS "services_rels_posts_id_idx";
+  DROP INDEX IF EXISTS "services_rels_industries_id_idx";
+  DROP INDEX IF EXISTS "services_rels_locations_id_idx";
+  DROP INDEX IF EXISTS "services_rels_workshops_id_idx";
+  DROP INDEX IF EXISTS "services_rels_team_members_id_idx";
+  DROP INDEX IF EXISTS "_services_v_rels_services_id_idx";
+  DROP INDEX IF EXISTS "_services_v_rels_testimonials_id_idx";
+  DROP INDEX IF EXISTS "_services_v_rels_posts_id_idx";
+  DROP INDEX IF EXISTS "_services_v_rels_industries_id_idx";
+  DROP INDEX IF EXISTS "_services_v_rels_locations_id_idx";
+  DROP INDEX IF EXISTS "_services_v_rels_workshops_id_idx";
+  DROP INDEX IF EXISTS "_services_v_rels_team_members_id_idx";
   ALTER TABLE "pages_rels" ADD COLUMN "service_pillars_id" integer;
   ALTER TABLE "_pages_v_rels" ADD COLUMN "service_pillars_id" integer;
   ALTER TABLE "case_studies_rels" ADD COLUMN "service_pillars_id" integer;

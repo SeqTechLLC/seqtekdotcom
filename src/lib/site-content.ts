@@ -99,9 +99,10 @@ export const navigation: Navigation = {
             label: 'Our Story',
             items: [
               { label: 'Team', url: '/team' },
-              // SVC-2: Localshoring lives at /services/localshoring only. It is
-              // a "how we work" service, not a second brand-narrative page —
-              // one subject, one URL (ROADMAP SVC-3's no-duplication rule).
+              // SVC-2: Localshoring is one subject with one URL, and today
+              // that URL is the `localshoring` Page (ROADMAP SVC-3's
+              // no-duplication rule). It moves to /services/localshoring with
+              // the seed that creates the leaf — see the footer note below.
               // TODO(stub): no Careers page exists yet. Re-add when the stub
               // ships (docs/CONTENT_NEEDS.md §"Missing pages — linked but 404").
             ],
@@ -131,7 +132,17 @@ export const navigation: Navigation = {
               // are seeded — a data edit in this file, tracked under the
               // ROADMAP SVC-2 residual. Nothing enumerates them before the
               // pages exist.
-              { label: 'Localshoring', url: '/services/localshoring' },
+              //
+              // Localshoring points at the Page that EXISTS rather than the
+              // leaf that is planned. `/services/localshoring` needs a
+              // `services` row with that slug, and there is none — it is not in
+              // Brent's nine (CONTENT_NEEDS §12 puts Localshoring on the "how
+              // we work" axis, deliberately outside them), so the SVC-2 seed
+              // does not create it either. Chrome is code (ADR 0010): pointing
+              // it at an unseeded slug is a dead link fixable only by deploy.
+              // Flip this and the five below to /services/localshoring in the
+              // same commit that seeds the leaf and retires the Page.
+              { label: 'Localshoring', url: '/localshoring' },
             ],
           },
         ],
@@ -162,7 +173,9 @@ export const navigation: Navigation = {
         // duplicated here. `AI Integration` and `Digital Transformation` are
         // gone for the same reason as in the header panel above: SVC-2 deleted
         // the route that served them and retires both as service names.
-        { label: 'Localshoring', url: '/services/localshoring' },
+        // Localshoring stays on the Page URL that resolves today — see the
+        // header panel note.
+        { label: 'Localshoring', url: '/localshoring' },
       ],
     },
     {
@@ -183,13 +196,15 @@ export const navigation: Navigation = {
         // route ships (CONTENT_NEEDS §4; matches the not-found.tsx CTA).
         { label: 'Book a Call', url: '/contact' },
         // Interim: the four market landing pages aren't built yet, so the city
-        // links point at the localshoring service (our local-delivery model)
-        // rather than 404ing. TODO(stub): build /tulsa-consulting etc. as
+        // links point at the localshoring story (our local-delivery model)
+        // rather than 404ing — which means the URL that RESOLVES, the Page, not
+        // the planned `/services/localshoring` leaf nothing seeds yet (see the
+        // header panel note). TODO(stub): build /tulsa-consulting etc. as
         // per-market SEO pages (CONTENT_NEEDS §"Missing pages — linked but 404").
-        { label: 'Tulsa', url: '/services/localshoring' },
-        { label: 'Oklahoma City', url: '/services/localshoring' },
-        { label: 'Northwest Arkansas', url: '/services/localshoring' },
-        { label: 'Kansas City', url: '/services/localshoring' },
+        { label: 'Tulsa', url: '/localshoring' },
+        { label: 'Oklahoma City', url: '/localshoring' },
+        { label: 'Northwest Arkansas', url: '/localshoring' },
+        { label: 'Kansas City', url: '/localshoring' },
       ],
     },
   ],

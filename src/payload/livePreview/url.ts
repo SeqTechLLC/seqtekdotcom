@@ -4,6 +4,7 @@ export type PreviewCollection =
   | 'pages'
   | 'posts'
   | 'caseStudies'
+  | 'services'
   | 'workshops'
   | 'teamMembers'
   | 'partners'
@@ -12,6 +13,7 @@ export const PREVIEW_COLLECTIONS: readonly PreviewCollection[] = [
   'pages',
   'posts',
   'caseStudies',
+  'services',
   'workshops',
   'teamMembers',
   'partners',
@@ -23,11 +25,13 @@ const PUBLIC_PATH_BUILDERS: Record<PreviewCollection, (doc: DocLike) => string |
   pages: (doc) => (doc.slug ? `/${doc.slug}` : null),
   posts: (doc) => (doc.slug ? `/insights/${doc.slug}` : null),
   caseStudies: (doc) => (doc.slug ? `/case-studies/${doc.slug}` : null),
-  // spec 011 T017: the `services` builder was deleted, not left orphaned. PR
-  // #79 retired the `/services/[pillar]` routes it pointed at, so it had been
-  // building preview URLs into 404s. Services keeps its typed metadata (it
-  // still feeds ServiceCards and resolves caseStudies.services) but has no
-  // public page and therefore no preview.
+  // ROADMAP SVC-2 restored this builder. It was deleted under spec 011 T017
+  // because PR #79 had retired the `/services/[pillar]` routes it pointed at,
+  // leaving it to build preview URLs into 404s. `services` is now a routed,
+  // draft-enabled, block-composed collection again — every tier resolves at a
+  // flat `/services/<slug>` — and its route implements the full draft path, so
+  // without this entry that branch would be unreachable dead code.
+  services: (doc) => (doc.slug ? `/services/${doc.slug}` : null),
   workshops: (doc) => (doc.slug ? `/workshops/${doc.slug}` : null),
   teamMembers: (doc) => (doc.slug ? `/team/${doc.slug}` : null),
   partners: (doc) => (doc.slug ? `/partners/${doc.slug}` : null),
