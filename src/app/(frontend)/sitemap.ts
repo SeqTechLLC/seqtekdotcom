@@ -32,8 +32,10 @@ const url = (path: string): string => `${SITE_URL}${path}`
 // route that ever rendered them. Dropping them from this set would not make
 // them unreachable, it would ADVERTISE them at `/service-ai-integration` —
 // flat URLs that were never canonical and that retire on the next content seed
-// (ROADMAP SVC-2 residual). Delete an entry here when its Page record goes.
-const RETIRING_SERVICE_PAGE_SLUGS = new Set([
+// (ROADMAP SVC-2 residual). Delete a RETIRING entry when its Page record goes —
+// but `service-overview` is NOT retiring and must stay: `/services` still reads
+// it as that route's body. Hence the name is about the sitemap, not about fate.
+const SERVICE_PAGE_SLUGS_NOT_IN_SITEMAP = new Set([
   'service-overview',
   'service-localshoring',
   'service-ai-integration',
@@ -88,7 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // retiring `service-*` Pages are excluded too — see the set above.
     const redirectSources = new Set(redirectMap.map((r) => r.source))
     for (const slug of pageSlugs) {
-      if (RETIRING_SERVICE_PAGE_SLUGS.has(slug)) continue
+      if (SERVICE_PAGE_SLUGS_NOT_IN_SITEMAP.has(slug)) continue
       if (!redirectSources.has(`/${slug}`)) paths.add(`/${slug}`)
     }
     for (const slug of caseStudySlugs) paths.add(`/case-studies/${slug}`)

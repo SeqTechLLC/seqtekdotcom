@@ -1,17 +1,25 @@
-// ROADMAP SVC-2 / Risk 3 (schema drift). Every `DROP CONSTRAINT` below carries
-// `IF EXISTS`, added by hand after a test-apply against a fresh database failed
-// on `pages_blocks_service_cards_pillar_id_service_pillars_id_fk`. The snapshot
-// chain drizzle generates from still records that FK, but a later migration
-// DROPs and recreates `pages_blocks_service_cards` without it — so the snapshot
-// and the SQL have already diverged for that table, and any regenerated
-// migration inherits the divergence. Dropping a constraint that is not there is
-// a no-op, so this is safe in both directions. The `DROP INDEX` statements
-// carry `IF EXISTS` for the same reason: the divergence is a property of the
-// snapshot chain, not of constraints specifically, and nothing in CI applies
-// migrations (P5-30) so the deploy is the only gate — the container runs
-// `npx payload migrate && node server.js`, which turns one already-absent
-// index into a failed deploy. Verified by applying the whole chain to an
-// empty database. This is exactly what the P3 schema-drift CI guard
+// ROADMAP SVC-2. Every `DROP CONSTRAINT` below carries `IF EXISTS`, added by
+// hand after a test-apply against a fresh database failed on
+// `pages_blocks_service_cards_pillar_id_service_pillars_id_fk`.
+//
+// The cause is local to this script, not schema drift. `DROP TABLE
+// "service_pillars" CASCADE` runs a few lines below, and CASCADE drops every FK
+// constraint that references the table — so by the time the explicit
+// `DROP CONSTRAINT` block runs, drizzle is asking Postgres to drop constraints
+// CASCADE has already removed. Dropping one that is not there is a no-op, so
+// the guards are safe in both directions and no reordering is needed.
+//
+// (An earlier version of this comment blamed a later migration for dropping and
+// recreating `pages_blocks_service_cards`. That is wrong: the table is created
+// once, in `20260531_141253_init.ts`, and the only DROP of it is in that same
+// file's `down()`. The snapshot chain and the live schema agree.)
+//
+// The `DROP INDEX` statements are guarded too, but as belt-and-braces rather
+// than for the reason above — CASCADE does not touch them, since their columns
+// survive. Nothing in CI applies migrations (P5-30), so the deploy is the only
+// gate: the container runs `npx payload migrate && node server.js`, where one
+// already-absent index is a failed deploy. Verified by applying the whole chain
+// to an empty database. This is exactly what the P3 schema-drift CI guard
 // is for; nothing in CI runs migrations today (P5-30).
 //
 // WHAT THIS DOES TO EXISTING DATA — read before running it on a lane with
@@ -42,8 +50,15 @@
 //      pages. `pillars` is `required: true, minRows: 1`, so those documents are
 //      INVALID until an editor re-picks and will refuse to save as they stand.
 //
-// Effects 2 and 3 are content work a deploy cannot do; both are tracked in the
-// ROADMAP SVC-2 residual. Re-pick every `service-pillar-cards` block and every
+//   4. `services.pillar_id` and `_services_v.version_pillar_id` are DROPPED
+//      outright. That column was the leaf-to-pillar mapping, and the new model
+//      inverts it: the relation lives on the group as an ordered `items` list.
+//      There is no in-place conversion — the old edges are read by nothing once
+//      `service_pillars` is gone (effect 2), so they go with it and the group's
+//      membership is authored fresh with the seed.
+//
+// Effects 2, 3 and 4 are content work a deploy cannot do; 2 and 3 are tracked in
+// the ROADMAP SVC-2 residual. Re-pick every `service-pillar-cards` block and every
 // `service-cards` block set to "By pillar" after the groups are seeded.
 
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'

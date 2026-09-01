@@ -9,22 +9,22 @@ interface PillarDoc {
 interface ServicePillarCardsProps {
   heading?: string | null
   pillars?: Array<PillarDoc | string | number> | null
-  /** Card title level. Defaults to `h3`; listing pages with a page-level `h1`
-   *  and no section heading pass `h2` to keep heading order non-skipping. */
+  /** Card title level. Left unset it follows `heading`: a section that renders
+   *  an `h2` puts its cards at `h3`, a section with no heading puts them at
+   *  `h2`, so heading order never skips. An explicit value still wins. */
   headingLevel?: 'h2' | 'h3'
 }
 
 const isDoc = (v: unknown): v is PillarDoc =>
   typeof v === 'object' && v !== null && 'title' in (v as object)
 
-export function ServicePillarCards({
-  heading,
-  pillars,
-  headingLevel = 'h3',
-}: ServicePillarCardsProps) {
+export function ServicePillarCards({ heading, pillars, headingLevel }: ServicePillarCardsProps) {
   const docs = (pillars ?? []).filter(isDoc)
   if (docs.length === 0) return null
-  const CardHeading = headingLevel
+  // Same rule as `ServiceCards`: `headingField()` is optional, so a page whose
+  // only h1 is a hero and whose block heading is blank would skip h1 -> h3.
+  // With no section h2 above them, the cards ARE the section's top level.
+  const CardHeading = headingLevel ?? (heading ? 'h3' : 'h2')
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
       <div className="mx-auto max-w-container-lg">

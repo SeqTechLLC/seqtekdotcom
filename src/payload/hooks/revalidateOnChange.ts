@@ -1,4 +1,4 @@
-import type { CollectionAfterChangeHook, GlobalAfterChangeHook, PayloadRequest } from 'payload'
+import type { CollectionAfterChangeHook, GlobalAfterChangeHook } from 'payload'
 import { revalidateTag } from 'next/cache'
 
 import { invalidateCloudFrontPaths } from '../../lib/cloudfront/invalidate'
@@ -125,7 +125,7 @@ const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {
  */
 export const revalidateOnChange =
   (collection: string): CollectionAfterChangeHook =>
-  async ({ doc, previousDoc, req }) => {
+  async ({ doc, previousDoc }) => {
     const enriched = doc as DocLike
     const prev = previousDoc as PreviousDocLike | undefined
     const plan = buildRevalidatePlan(collection, enriched, prev)
