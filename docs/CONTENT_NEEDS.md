@@ -150,7 +150,7 @@ Waiting only on placement/loading, not on you:
 
 - **8 case studies** with full narratives — the 5 published on staging, plus **3 more Taurex studies** (partnership, eticketing, repair) drafted 2026-07-16 with banner art done, held only for their quotes. NovaMud is flagship-ready bar a hero image + named quote.
 - **6 blog posts**, full bodies.
-- **Four peer service offerings** (Localshoring, AI Integration, Digital Transformation, Workshops) rendered as block Pages by slug, full copy + FAQs. (The old 3-pillar service IA — 9 services across 3 pillars — was retired in the #79–#83 restructure; the `services`/`servicePillars` collections still exist but are no longer publicly routed.)
+- **Thirteen service pages** — the axis page, three groups and nine leaves of §12, plus Localshoring as a tenth leaf — full copy + FAQs. (Superseded twice: the 3-pillar / 9-service IA was retired in #79–#83 for four peer offerings as block Pages, and SVC-2 replaced those with one routed `services` collection carrying a `tier`. `servicePillars` no longer exists; a group is a `services` row.)
 - **Touchstone landing**, full copy + CrossCo proof video/photos (cleared).
 - **Hank & Dana bios**, publish-ready.
 - **Sequoyah name story** — written and **live on `/our-story`** + companion video (the old-feather Sequoyah Technologies logo is the swap-in for its current quill-panel placeholder).
