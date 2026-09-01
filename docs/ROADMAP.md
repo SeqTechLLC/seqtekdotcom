@@ -239,10 +239,22 @@ The rest of this tier is what has to be true around them.
     of the content, as it always does here.
   - **Retarget the 20 Wix redirects** that point at `/services/ai-integration` and
     `/services/digital-transformation`. Those were Page-backed offering URLs; under Brent's structure neither
-    survives as a service name, so both destinations become 404s the moment the new content lands.
+    survives as a service name, so both destinations become 404s the moment the new content lands. _(The nav
+    and footer entries for the same two URLs are already gone — removed alongside the `[offering]` route that
+    served them, so no code-owned chrome points at them in the meantime.)_
     **Nothing is live, so retarget at source — do not layer a second hop** (Kenn, 2026-08-31); `redirects.ts`
     line 187 already chains `/services/ai-automation` → `/services/ai-integration` and collapses to one hop
     in the same pass.
+  - **Re-pick every block the migration emptied.** The SVC-2 migration is destructive in two ways a deploy
+    cannot repair, both documented in its header. `service_pillars` was dropped with no backfill, so the pillar
+    documents (title, slug, description, hero image, SEO, version history) are **gone** — the three groups come
+    back only from the seed above. And `*_rels.service_pillars_id` was dropped across thirteen tables, which
+    discards the `pillars` selection on **every `service-pillar-cards` block anywhere** — Pages, case studies,
+    workshops, partners and the homepage, not only the service pages. `pillars` is `required: true,
+minRows: 1`, so each of those documents is **invalid until re-picked** and will refuse to save as it
+    stands. Separately, every `service-cards` block set to "By pillar" had its `pillar` NULLed on purpose (the
+    old value was a `service_pillars` id, meaningless against `services`), so each needs its group chosen
+    again. **After seeding the groups, sweep both block types across all six collections.**
   - **Write the missing copy** — six of nine leaves and all three group pages (`CONTENT_NEEDS.md` §12).
   - **Localshoring is settled:** one page at `/services/localshoring`, a "how we work" leaf rather than a
     top-level item. The standalone `/localshoring` is gone from the nav and the footer, and the four market
