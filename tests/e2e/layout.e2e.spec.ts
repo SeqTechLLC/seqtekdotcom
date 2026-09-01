@@ -22,10 +22,13 @@ test.describe('Site chrome — desktop viewport', () => {
     const header = page.getByTestId('site-header')
     await expect(header).toBeVisible()
     const primaryNav = header.getByRole('navigation', { name: /primary/i })
+    // NAV-1 two-axis IA: "Services" split into "What We Do" (the nine services
+    // in three groups) and "How We Work" (workshops, localshoring). Workshops
+    // moved under the second axis rather than staying a seventh top-level item.
     for (const label of [
       'Our Story',
-      'Services',
-      'Workshops',
+      'What We Do',
+      'How We Work',
       'Case Studies',
       'Insights',
       'Contact',
@@ -42,7 +45,7 @@ test.describe('Site chrome — desktop viewport', () => {
     // Footer is rendered with all four navigation columns + legal links.
     const footer = page.getByTestId('site-footer')
     await expect(footer).toBeVisible()
-    for (const column of ['Company', 'Services', 'Resources', 'Connect']) {
+    for (const column of ['Company', 'What We Do', 'Resources', 'Connect']) {
       await expect(footer.getByRole('heading', { name: column, level: 2 })).toBeVisible()
     }
     await expect(footer.getByRole('link', { name: 'Privacy Policy' })).toBeVisible()
@@ -76,10 +79,9 @@ test.describe('Site chrome — desktop viewport', () => {
     await caret.click()
     await expect(panel).toBeVisible()
     await expect(caret).toHaveAttribute('aria-expanded', 'true')
-    // A real leaf from `site-content.ts`. SVC-2 removed the `AI Integration`
-    // entry this used to assert on: that URL was a `/services/[offering]` Page
-    // slug and the route is gone.
-    await expect(panel.getByRole('link', { name: 'Localshoring' })).toBeVisible()
+    // A real leaf from `site-content.ts`. Panel 1 is now the "What We Do" axis,
+    // whose groups hold the nine services; Localshoring moved to "How We Work".
+    await expect(panel.getByRole('link', { name: 'Strategy and Alignment' })).toBeVisible()
 
     // Escape closes and returns focus to the control that opened it, rather
     // than dropping the keyboard user at the top of the document.
@@ -126,8 +128,8 @@ test.describe('Site chrome — mobile viewport', () => {
     // Nav items rendered inside the dialog.
     for (const label of [
       'Our Story',
-      'Services',
-      'Workshops',
+      'What We Do',
+      'How We Work',
       'Case Studies',
       'Insights',
       'Contact',
@@ -144,7 +146,7 @@ test.describe('Site chrome — mobile viewport', () => {
     // rendered as a permanently expanded tree. Resolved by accessible name
     // through `aria-controls`, the same way the desktop test does, so a nav
     // reorder fails on the behaviour rather than on a missing test id.
-    const servicesCaret = dialog.getByRole('button', { name: 'Services menu' })
+    const servicesCaret = dialog.getByRole('button', { name: 'What We Do menu' })
     const regionId = await servicesCaret.getAttribute('aria-controls')
     expect(regionId).toBeTruthy()
     const servicesRegion = page.locator(`[id="${regionId}"]`)
@@ -153,7 +155,7 @@ test.describe('Site chrome — mobile viewport', () => {
     await expect(servicesCaret).toHaveAttribute('aria-expanded', 'false')
     await servicesCaret.click()
     await expect(servicesRegion).toBeVisible()
-    await expect(servicesRegion.getByRole('link', { name: 'Localshoring' })).toBeVisible()
+    await expect(servicesRegion.getByRole('link', { name: 'Strategy and Alignment' })).toBeVisible()
 
     // Close button dismisses the dialog.
     await page.getByTestId('mobile-menu-close').click()

@@ -121,17 +121,18 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
 
   it('labels a single-group panel by the trigger instead of repeating it', () => {
     const { getByRole } = render(<PrimaryNav items={navigation.mainNav} />)
-    // Services carries one group, so no group title is drawn. Resolved through
-    // `aria-controls` rather than a positional test id, so reordering the nav
-    // fails on behaviour instead of on a missing element.
-    const controls = getByRole('button', { name: 'Services menu' }).getAttribute('aria-controls')
+    // "How We Work" carries one group, so no group title is drawn. ("What We
+    // Do" carries three and is covered above.) Resolved through `aria-controls`
+    // rather than a positional test id, so reordering the nav fails on
+    // behaviour instead of on a missing element.
+    const controls = getByRole('button', { name: 'How We Work menu' }).getAttribute('aria-controls')
     const panel = document.getElementById(controls ?? '') as HTMLElement
     const list = panel.querySelector('ul') as HTMLElement
     const labelledBy = list.getAttribute('aria-labelledby') ?? ''
-    expect(document.getElementById(labelledBy)?.textContent).toBe('Services')
+    expect(document.getElementById(labelledBy)?.textContent).toBe('How We Work')
     // The point is that the group title is not repeated inside the panel, not
     // that the panel contains no <span> at all.
-    expect(within(panel).queryByText('Services')).toBeNull()
+    expect(within(panel).queryByText('How We Work')).toBeNull()
   })
 
   it('closes when its own trigger link navigates away', () => {
@@ -247,13 +248,29 @@ describe('<MobileNav /> — the same data, collapsed', () => {
 
   it('puts the leaves straight under a single-group item, with no repeated title', () => {
     const { getByTestId } = render(<MobileNav navItems={navigation.mainNav} ctaButton={CTA} />)
+    // Index 2 is "How We Work" — the single-group axis. Index 1 ("What We Do")
+    // carries Brent's three groups, so it exercises the nested-disclosure path
+    // covered by the fixture test above, not this one.
+    fireEvent.click(getByTestId('mobile-nav-caret-2'))
+    const panel = within(getByTestId('mobile-nav-panel-2'))
+    expect(panel.getByRole('link', { name: 'Localshoring', hidden: true })).toBeTruthy()
+    // No nested group disclosure and no duplicated "How We Work" heading.
+    expect(panel.queryByRole('button', { hidden: true })).toBeNull()
+  })
+
+  it('gives the multi-group axis one nested disclosure per group', () => {
+    const { getByTestId, getByRole } = render(
+      <MobileNav navItems={navigation.mainNav} ctaButton={CTA} />,
+    )
     fireEvent.click(getByTestId('mobile-nav-caret-1'))
     const panel = within(getByTestId('mobile-nav-panel-1'))
-    // A real leaf from `site-content.ts`, not a fixture: SVC-2 removed the
-    // `AI Integration` / `Digital Transformation` entries this used to assert
-    // on, because the `[offering]` route that served them is gone.
-    expect(panel.getByRole('link', { name: 'Localshoring', hidden: true })).toBeTruthy()
-    // No nested group disclosure and no duplicated "Services" heading.
-    expect(panel.queryByRole('button', { hidden: true })).toBeNull()
+    // Brent's three groups (CONTENT_NEEDS §12), each its own disclosure.
+    for (const group of [
+      'Strategy and Business Consulting',
+      'Technology and Data',
+      'AI and Automation',
+    ]) {
+      expect(panel.getByRole('button', { name: `${group} links`, hidden: true })).toBeTruthy()
+    }
   })
 })
