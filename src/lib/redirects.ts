@@ -205,7 +205,8 @@ export const redirectMap: Redirect[] = [
     permanent: true,
   },
   { source: '/services/organizational-strategy', destination: '/workshops', permanent: true },
-  // ai-automation leaves → AI Integration
+  // ai-automation leaves → the /services overview (see the note above: the
+  // AI Integration URL they used to fold onto no longer exists)
   {
     source: '/services/ai-automation/ai-assisted-modernization',
     destination: '/services',
@@ -221,7 +222,7 @@ export const redirectMap: Redirect[] = [
     destination: '/services',
     permanent: true,
   },
-  // technology-data leaves → Digital Transformation
+  // technology-data leaves → the /services overview, same reason
   {
     source: '/services/technology-data/application-modernization',
     destination: '/services',
@@ -237,7 +238,8 @@ export const redirectMap: Redirect[] = [
     destination: '/services',
     permanent: true,
   },
-  // organizational-strategy leaves → Workshops (funnel) except FPO → Digital Transformation
+  // organizational-strategy leaves → Workshops (the funnel), except
+  // fractional-product-ownership, which lands on the /services overview
   {
     source: '/services/organizational-strategy/team-workshops',
     destination: '/workshops',
