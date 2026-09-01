@@ -85,11 +85,13 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 │
 ├── /localshoring                                    The Localshoring Model (standalone top-level page — the model explainer; distinct from the /services/localshoring offering)
 │
-├── /services                                        Services Overview — four peer offerings (IA corrected: four peers replace the retired 3-pillar / 15-service tree — ADR 0009 / PR #79)
-│   ├── /services/localshoring                       Localshoring
-│   ├── /services/ai-integration                     AI Integration
-│   └── /services/digital-transformation             Digital Transformation
-│       (Workshops is the fourth peer offering — top-level at /workshops below)
+├── /services                                        Services Overview — still a `pages` record (`service-overview`)
+│   ├── /services/<axis>                             e.g. "What We Do" — tier `axis`, the nav target
+│   ├── /services/<group>                            The three groups — tier `group`, each holding ordered services
+│   └── /services/<leaf>                             The nine services + localshoring — tier `leaf`
+│       (SVC-2: one flat namespace, one `services` collection, three tiers. The
+│        four-peer IA and its `service-*` Pages are retired; slugs are content,
+│        not code. Brent's structure is in §12. Workshops stays at /workshops.)
 │
 ├── /workshops/                                      Workshops Landing (IA corrected 2026-06-11: ONE Touchstone workshop among three)
 │   ├── /workshops/touchstone
@@ -500,9 +502,9 @@ The homepage is not a brochure — it's a routing mechanism. Per Nielsen Norman 
 
 **Homepage scroll depth benchmark:** Per Chartbeat research, 66% of engagement on a page happens below the fold. Don't front-load everything. The hero section qualifies intent; the below-fold content converts it.
 
-### Service Offering Page (e.g., `/services/digital-transformation`)
+### Service Page (e.g., `/services/data-engineering-and-warehousing`)
 
-The retired 3-pillar / 15-service tree is replaced by **four peer offerings** — Localshoring, AI Integration, Digital Transformation, and Workshops (the Workshops offering lives at `/workshops`; see below). Each is a single block-composed page (ADR 0009 / PR #79), served by slug under `/services/[offering]`. There is no longer a pillar-landing → sub-service hierarchy, so each offering page must stand on its own and do the full conversion job. Per Semrush (2024 content research): pages with 1,000-2,000 words of unique content rank 3x better than thin pages (<500 words) — the depth the old service pages lacked.
+**Superseded twice; this is the current shape.** The 3-pillar / 15-service tree gave way to four peer offerings (ADR 0009 / PR #79), and ROADMAP SVC-2 replaced those with **one `services` collection carrying a `tier`** — `axis`, `group` or `leaf` — every row block-composed and served at a flat `/services/<slug>`. The content is Brent's nine services in three groups (§12), plus Localshoring as a tenth leaf. The guidance below is written for a **leaf**; a group page does the same job one level up, over an ordered list of its services. There is no per-slug template to change — a new service is a publish. Per Semrush (2024 content research): pages with 1,000-2,000 words of unique content rank 3x better than thin pages (<500 words) — the depth the old service pages lacked.
 
 | Element            | Content Required                                      | Writing Guidance                                                                 |
 | ------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------- |

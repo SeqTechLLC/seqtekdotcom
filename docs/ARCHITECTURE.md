@@ -123,7 +123,7 @@ The most important content type. Each gets a dedicated page at `/case-studies/[s
 
 #### `services`
 
-Structured service records. **No longer publicly routed** — the four-offering `/services` IA (PR #79, ADR 0009) renders each offering as a block-composed `pages` record by known slug (`service-localshoring`, `service-ai-integration`, `service-digital-transformation`; Workshops is the fourth peer offering and lives at `/workshops`). This collection is retained as a relationship target (`posts.relatedServices`, `caseStudies.services`, `industries.relevantServices`) and migration/taxonomy data; the old `/services/[pillar]/[slug]` detail route is retired.
+Service pages — **block-composed and publicly routed** (ROADMAP SVC-2). `/services/[slug]` renders every row through `RenderBlocks`, so a new service is a publish, not a deploy. It remains a relationship target too (`posts.relatedServices`, `caseStudies.services`, `industries.relevantServices`). The `/services/[pillar]/[slug]` detail route and the later `/services/[offering]` Page-by-slug route are both retired, along with the `service-*` Pages the latter read; `/services` itself is still a `pages` record (`service-overview`).
 
 | Field                | Type                                  | Notes                                                   |
 | -------------------- | ------------------------------------- | ------------------------------------------------------- |
@@ -158,18 +158,15 @@ pages as taggable services. Six fields needed it.
 
 #### `servicePillars` — REMOVED (SVC-2)
 
-Absorbed into `services` as `tier: 'group'`. The tables were dropped; see
-`src/migrations/20260901_022953_svc2_services_tiers.ts` for what that does to
-existing rows.
-
-| Field         | Type           | Notes                 |
-| ------------- | -------------- | --------------------- |
-| `title`       | text           | Legacy grouping label |
-| `slug`        | text           |                       |
-| `description` | richText       | Grouping overview     |
-| `heroImage`   | upload (media) |                       |
-| `seo`         | group          |                       |
-| `order`       | number         | Display ordering      |
+Absorbed into `services` as `tier: 'group'`. The collection, its tables and its
+version history were dropped — see
+`src/migrations/20260901_022953_svc2_services_tiers.ts` for exactly what that
+does to existing rows. A group is now a `services` row: `title`, `slug`,
+`layout`, `seo` and `order` come from that collection's table above, and the
+old `description` / `heroImage` fields did not carry over (the group page's
+body is blocks now). Nothing points at `servicePillars` any more; the
+`service-cards` and `service-pillar-cards` blocks both relate to `services`
+filtered to `tier: 'group'`.
 
 #### `partners`
 
