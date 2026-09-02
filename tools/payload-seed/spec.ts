@@ -60,39 +60,60 @@ function parseStatus(value: unknown, path: string, errors: string[]): SeedStatus
   return 'published'
 }
 
-/** Levenshtein distance, capped small — only used to spot key typos. */
+/**
+ * Damerau-Levenshtein: edit distance that counts an adjacent TRANSPOSITION as
+ * one operation, not two. That matters here — the motivating typo, `stauts`
+ * for `status`, is a single swap and plain Levenshtein scores it 2, the same
+ * as genuinely unrelated words.
+ */
 function editDistance(a: string, b: string): number {
-  const prev = Array.from({ length: b.length + 1 }, (_, i) => i)
-  const cur = new Array<number>(b.length + 1).fill(0)
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
+  )
   for (let i = 1; i <= a.length; i++) {
-    cur[0] = i
     for (let j = 1; j <= b.length; j++) {
-      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost)
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1)
+      }
     }
-    for (let j = 0; j <= b.length; j++) prev[j] = cur[j]
   }
-  return prev[b.length]
+  return d[a.length][b.length]
 }
 
 const KNOWN_KEYS = ['collection', 'global', 'identity', 'data', 'status'] as const
 
 /**
+ * Only `status` and `identity` are checked, and only at distance 1.
+ *
  * Unknown top-level keys are IGNORED by design — `docs/content-drafts` files
  * park editorial notes beside `collection`, and `_note` documents a spec in
- * place. That tolerance has one sharp edge: a typo in a REAL key is also
- * ignored, silently. `"stauts": "unpublished"` does not retire a document, it
- * publishes it, because `parseStatus(undefined)` returns 'published'.
+ * place. The sharp edge is that a typo in a REAL key is ignored too. But that
+ * is only DANGEROUS for the two keys that have defaults:
  *
- * So: an unknown key close enough to a real one to be a typo is an ERROR; a key
- * that resembles nothing is left alone. This keeps the escape hatch open while
- * closing the case where the file says one thing and the tool does another.
+ *   - `status`   → `parseStatus(undefined)` returns 'published', so
+ *                  `"stauts": "unpublished"` PUBLISHES what you meant to retire.
+ *   - `identity` → falls back to 'slug', silently changing the upsert key.
+ *
+ * A typo in `collection`, `global` or `data` leaves the real key absent, and
+ * all three are required — validation below already rejects those with a clear
+ * message, so widening the net to cover them buys nothing and costs matches.
+ *
+ * Distance 1 with transposition, against two targets, is deliberately narrow.
+ * An earlier cut used distance 2 against all five and rejected `date`, `meta`,
+ * `state` and `entity` — ordinary editorial keys — which would have turned a
+ * file that seeded fine into a hard exit 1, and closed the escape hatch this
+ * docstring promises to keep open.
  */
+const TYPO_CHECKED_KEYS = ['status', 'identity'] as const
+
 function checkKeyTypos(raw: Record<string, unknown>, path: string, errors: string[]): void {
   for (const key of Object.keys(raw)) {
     if ((KNOWN_KEYS as readonly string[]).includes(key)) continue
     if (key.startsWith('_')) continue // documented escape hatch, e.g. `_note`
-    for (const known of KNOWN_KEYS) {
-      if (editDistance(key.toLowerCase(), known) <= 2) {
+    for (const known of TYPO_CHECKED_KEYS) {
+      if (editDistance(key.toLowerCase(), known) <= 1) {
         errors.push(
           `${path}.${key} is not a known key and looks like a typo for "${known}". ` +
             `Rename it, or prefix it with "_" if it is deliberate metadata.`,

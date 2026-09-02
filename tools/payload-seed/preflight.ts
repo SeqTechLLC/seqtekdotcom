@@ -55,8 +55,13 @@ function checkRef(node: Record<string, unknown>, where: string, errors: string[]
   if (!isNonEmptyString(raw.collection)) {
     errors.push(`${where}: $ref.collection must be a non-empty string`)
   }
-  if (!isNonEmptyString(raw.field)) {
-    errors.push(`${where}: $ref.field must be a non-empty string`)
+  // `field` is OPTIONAL and defaults to "slug" — `resolve.ts` does exactly that
+  // and the README documents it. Requiring it here made pre-flight reject the
+  // shorthand the tool's own docs teach, and because pre-flight now runs before
+  // the first write that is a hard exit 2 rather than a warning. Only a field
+  // that is PRESENT and unusable is an error.
+  if (raw.field !== undefined && !isNonEmptyString(raw.field)) {
+    errors.push(`${where}: $ref.field must be a non-empty string when set`)
   }
   const value = raw.value
   const values = Array.isArray(value) ? value : [value]
@@ -64,8 +69,12 @@ function checkRef(node: Record<string, unknown>, where: string, errors: string[]
     errors.push(`${where}: $ref.value must not be empty`)
   }
   for (const v of values) {
-    if (typeof v !== 'string' && typeof v !== 'number') {
-      errors.push(`${where}: $ref.value must be a string/number or an array of them`)
+    // Strings only, matching the resolver (`resolve.ts` requires
+    // `every(v => typeof v === 'string')`). Accepting numbers here would let a
+    // numeric value through the gate and fail mid-run — the partial-write
+    // shape pre-flight exists to prevent.
+    if (typeof v !== 'string') {
+      errors.push(`${where}: $ref.value must be a string or an array of strings`)
       break
     }
   }

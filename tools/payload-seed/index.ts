@@ -116,7 +116,7 @@ function describe(err: unknown): string {
  */
 function jsonFailure(
   json: boolean,
-  stage: 'read' | 'envelope' | 'directives' | 'auth',
+  stage: 'args' | 'read' | 'envelope' | 'directives' | 'auth',
   errors: string[],
   code: number,
 ): number {
@@ -136,14 +136,16 @@ async function main(): Promise<number> {
     return 0
   }
   if (args.unknown.length > 0) {
-    errln(`Unknown argument(s): ${args.unknown.join(', ')}`)
+    const msg = `Unknown argument(s): ${args.unknown.join(', ')}`
+    errln(msg)
     errln(USAGE)
-    return 2
+    return jsonFailure(args.json, 'args', [msg], 2)
   }
   if (!args.file) {
-    errln('Missing required <file.json> argument.')
+    const msg = 'Missing required <file.json> argument.'
+    errln(msg)
     errln(USAGE)
-    return 2
+    return jsonFailure(args.json, 'args', [msg], 2)
   }
 
   // Validate the file first so authoring mistakes surface even without a token.
@@ -181,11 +183,27 @@ async function main(): Promise<number> {
     return jsonFailure(args.json, 'auth', ['IMPORT_TOKEN is required to write'], 2)
   }
 
+  // Validate rather than swallow: `Number(x) || undefined` silently fell back
+  // to the default for a typo and passed a negative straight to
+  // `AbortSignal.timeout`, which throws a RangeError far from the cause. Silent
+  // misconfiguration is the class this whole PR is closing.
+  const rawTimeout = process.env.IMPORT_TIMEOUT_MS
+  let timeoutMs: number | undefined
+  if (rawTimeout !== undefined && rawTimeout !== '') {
+    const parsed = Number(rawTimeout)
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      const msg = `IMPORT_TIMEOUT_MS must be a positive number of milliseconds, got "${rawTimeout}"`
+      errln(msg)
+      return jsonFailure(args.json, 'args', [msg], 2)
+    }
+    timeoutMs = parsed
+  }
+
   const client = new PayloadRestClient({
     baseUrl: args.baseUrl,
     token,
     cookie: process.env.IMPORT_COOKIE,
-    timeoutMs: Number(process.env.IMPORT_TIMEOUT_MS) || undefined,
+    timeoutMs,
   })
   // With --json, stdout carries the result object and nothing else, so the
   // human log moves to stderr rather than corrupting the parse.
@@ -228,6 +246,12 @@ async function main(): Promise<number> {
     error?: string
   }> = []
   let aborted: string | null = null
+  // A gated lane reached without IMPORT_COOKIE stalls on every request, so
+  // without this a 58-doc file spends 58 full timeouts — roughly an hour —
+  // before exiting. The 401/403 abort exists for exactly this shape of
+  // problem; a run of timeouts is the same thing wearing a different error.
+  let consecutiveTimeouts = 0
+  const TIMEOUT_ABORT_THRESHOLD = 3
 
   // Sequential: an earlier spec's created doc must be findable by a later $ref.
   for (let i = 0; i < validated.value.length; i++) {
@@ -268,6 +292,7 @@ async function main(): Promise<number> {
           if (!args.json) log(JSON.stringify(data, null, 2))
           break
       }
+      consecutiveTimeouts = 0
       results.push({
         target: result.target,
         operation: result.operation,
@@ -284,6 +309,21 @@ async function main(): Promise<number> {
       // Auth failures are not per-document problems — the credential is dead
       // for the whole run. Continuing turns one expired token into N identical
       // failures against a remote lane, and buries the real cause in noise.
+      if (err instanceof PayloadRestError && /exceeded \d+ms/.test(message)) {
+        consecutiveTimeouts += 1
+        if (consecutiveTimeouts >= TIMEOUT_ABORT_THRESHOLD) {
+          aborted =
+            `${consecutiveTimeouts} consecutive request timeouts. The target is unreachable or ` +
+            `stalling — a lane behind an auth proxy does this when IMPORT_COOKIE is missing or ` +
+            `expired. Stopped at spec ${i + 1} of ${validated.value.length}; re-running is safe ` +
+            `(every write is an idempotent upsert).`
+          errln(`\n✗ aborting: ${aborted}`)
+          break
+        }
+      } else {
+        consecutiveTimeouts = 0
+      }
+
       const status = err instanceof PayloadRestError ? err.status : undefined
       if (status === 401 || status === 403) {
         aborted =

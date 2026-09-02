@@ -251,11 +251,17 @@ interleaved with writes — so a malformed `$file` in spec 19 of 20 was found
 _after_ eighteen documents had been written.
 
 **Unknown top-level keys are still ignored** (content files park editorial notes
-beside `collection`, and `_note` documents a spec in place) — but a key close
-enough to a real one to be a typo is now an **error**. `"stauts": "unpublished"`
-does not retire a document, it publishes it, because the misspelling is ignored
-and `status` defaults to `published`. Prefix a key with `_` to mark it
-deliberate.
+beside `collection`, and `_note` documents a spec in place) — but a key within
+one edit of **`status`** or **`identity`** is an **error**. Those two are the
+only keys where a typo is silently harmful, because they are the only two with
+defaults: `"stauts": "unpublished"` publishes what you meant to retire, and a
+misspelled `identity` silently falls back to `slug`. A typo in `collection`,
+`global` or `data` leaves a required key absent and is already rejected with a
+clear message. Prefix a key with `_` to mark it deliberate.
+
+The net is deliberately narrow — one edit (counting a transposition as one, so
+`stauts` is caught), against two targets. `date`, `meta`, `state`, `entity`,
+`notes`, `title` and `tags` all pass.
 
 ## What it will not do: retire
 

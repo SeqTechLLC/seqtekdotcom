@@ -254,3 +254,70 @@ describe('dry-run — order matters', () => {
     ).rejects.toThrow(/unresolved \$ref/)
   })
 })
+
+describe('preflight — parity with the resolver', () => {
+  const spec = (data: Record<string, unknown>) => {
+    const v = validateSpecs([{ collection: 'services', identity: 'slug', data }])
+    if (!v.ok) throw new Error(`fixture invalid: ${v.errors.join(', ')}`)
+    return v.value
+  }
+
+  it('accepts a $ref with no `field` — the documented shorthand defaulting to slug', async () => {
+    // `resolve.ts` defaults `field` to 'slug' and the README says so. Pre-flight
+    // requiring it made the gate reject the shorthand its own docs teach, and
+    // because pre-flight runs before the first write that is a hard exit 2.
+    const { errors } = await preflight(
+      spec({ slug: 'a', industry: { $ref: { collection: 'industries', value: 'energy' } } }),
+      process.cwd(),
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('still rejects a `field` that is present but unusable', async () => {
+    const { errors } = await preflight(
+      spec({ slug: 'a', x: { $ref: { collection: 'c', field: '', value: 'v' } } }),
+      process.cwd(),
+    )
+    expect(errors.join('\n')).toMatch(/\$ref\.field must be a non-empty string when set/)
+  })
+
+  it('rejects a numeric $ref.value, which the resolver would reject mid-run', async () => {
+    // Pre-flight accepting what the resolver refuses recreates the exact
+    // partial-write shape the gate exists to prevent.
+    const { errors } = await preflight(
+      spec({ slug: 'a', x: { $ref: { collection: 'c', field: 'f', value: 42 } } }),
+      process.cwd(),
+    )
+    expect(errors.join('\n')).toMatch(/must be a string or an array of strings/)
+  })
+})
+
+describe('spec validation — the typo net is narrow on purpose', () => {
+  const base = { collection: 'services', identity: 'slug', data: { slug: 'x' } }
+
+  it.each(['stauts', 'identiy', 'statuss', 'identtiy'])('flags %s', (key) => {
+    expect(validateSpecs([{ ...base, [key]: 'v' }]).ok).toBe(false)
+  })
+
+  // These are ordinary editorial keys. An earlier cut used distance 2 against
+  // all five known keys and rejected every one of them, turning a file that
+  // seeded fine into a hard exit 1.
+  it.each(['date', 'meta', 'state', 'entity', 'notes', 'title', 'tags', 'bannerHeadline'])(
+    'leaves %s alone',
+    (key) => {
+      expect(validateSpecs([{ ...base, [key]: 'v' }]).ok).toBe(true)
+    },
+  )
+
+  it.each([
+    ['collectoin', 'collection'],
+    ['dat', 'data'],
+  ])('%s is caught by the required-field check, not the heuristic', (typo, real) => {
+    const spec: Record<string, unknown> = { identity: 'slug', data: { slug: 'x' }, [typo]: 'v' }
+    if (real === 'data') delete spec.data
+    else delete spec.collection
+    if (real === 'data') spec.collection = 'services'
+    const r = validateSpecs([spec])
+    expect(r.ok).toBe(false)
+  })
+})

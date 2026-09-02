@@ -110,20 +110,32 @@ interface WriteResponse {
  * constructor so every call site inherits it — patching them individually is how
  * one gets missed, and the count changes as methods are added.
  */
+export function timeoutMessage(url: string, timeoutMs: number): string {
+  return (
+    `Request to ${url} exceeded ${timeoutMs}ms. If the target is behind an auth ` +
+    `proxy, a missing or expired session cookie stalls rather than refusing — ` +
+    `check IMPORT_COOKIE first.`
+  )
+}
+
+export function isAbortLike(err: unknown): boolean {
+  const name = (err as { name?: string } | undefined)?.name
+  return name === 'TimeoutError' || name === 'AbortError'
+}
+
 function withTimeout(fetchFn: FetchFn, timeoutMs: number): FetchFn {
   return async (input, init) => {
-    const signal = AbortSignal.timeout(timeoutMs)
+    const timeout = AbortSignal.timeout(timeoutMs)
+    // Preserve a caller's own signal rather than replacing it. Nothing passes
+    // one today, but silently disabling caller cancellation the moment
+    // something does is the kind of latent surprise this file is trying to
+    // stop shipping.
+    const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout
     try {
       return await fetchFn(input, { ...(init ?? {}), signal })
     } catch (err) {
-      const name = (err as { name?: string } | undefined)?.name
-      if (name === 'TimeoutError' || name === 'AbortError') {
-        const url = typeof input === 'string' ? input : String(input)
-        throw new PayloadRestError(
-          `Request to ${url} exceeded ${timeoutMs}ms. If the target is behind an auth ` +
-            `proxy, a missing or expired session cookie stalls rather than refusing — ` +
-            `check IMPORT_COOKIE first.`,
-        )
+      if (isAbortLike(err)) {
+        throw new PayloadRestError(timeoutMessage(String(input), timeoutMs))
       }
       throw err
     }
@@ -180,7 +192,17 @@ export class PayloadRestClient {
         body,
       )
     }
-    return (await res.json()) as T
+    try {
+      return (await res.json()) as T
+    } catch (err) {
+      // `fetch` settles when the HEADERS arrive, so a timeout that fires while
+      // the BODY is still draining throws here, outside the wrapper — and used
+      // to surface as a bare TimeoutError with none of the guidance.
+      if (isAbortLike(err)) {
+        throw new PayloadRestError(timeoutMessage(res.url || this.hostLabel(res), this.timeoutMs))
+      }
+      throw err
+    }
   }
 
   /** Response body as text, never throwing — both callers are error paths. */
