@@ -81,9 +81,12 @@ function checkRef(node: Record<string, unknown>, where: string, errors: string[]
   if (raw.createIfMissing !== undefined && !isObject(raw.createIfMissing)) {
     errors.push(`${where}: $ref.createIfMissing must be an object`)
   }
-  if (raw.createIfMissing !== undefined && raw.omitIfMissing === true) {
-    errors.push(`${where}: $ref sets both createIfMissing and omitIfMissing — use one`)
-  }
+  // NOT an error when both `createIfMissing` and `omitIfMissing` are set. The
+  // resolver tolerates it — it checks `createIfMissing` first and returns, so
+  // `omitIfMissing` is merely unreachable — and pre-flight must never reject
+  // what the resolver accepts. That is exactly the mistake `$ref.field` made:
+  // a new rejection class in a gate that runs before the first write turns a
+  // file which used to seed into a hard exit 2.
 }
 
 function checkFile(
@@ -177,16 +180,23 @@ export async function preflight(specs: SeedSpec[], baseDir: string): Promise<Pre
     list.push(f.where)
     seen.set(abs, list)
   }
-  await Promise.all(
-    [...seen.entries()].map(async ([abs, wheres]) => {
+  // Collected into a parallel array and appended in order, not pushed from
+  // inside `Promise.all` — completion order is nondeterministic, and the
+  // docstring promises one run tells the author everything to fix, which is
+  // easier to act on when two runs agree on the order.
+  const entries = [...seen.entries()]
+  const missing = await Promise.all(
+    entries.map(async ([abs, wheres]) => {
       try {
         await access(abs)
+        return null
       } catch {
         const extra = wheres.length > 1 ? ` (referenced by ${wheres.length} specs)` : ''
-        errors.push(`${wheres[0]}: $file.path does not exist on disk: ${abs}${extra}`)
+        return `${wheres[0]}: $file.path does not exist on disk: ${abs}${extra}`
       }
     }),
   )
+  for (const m of missing) if (m !== null) errors.push(m)
 
   return { errors }
 }

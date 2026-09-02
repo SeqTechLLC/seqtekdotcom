@@ -88,6 +88,13 @@ export class PayloadRestError extends Error {
     message: string,
     readonly status?: number,
     readonly body?: string,
+    /**
+     * Structural failure kind. `'timeout'` is what the consecutive-timeout
+     * abort branches on — it used to match `/exceeded \d+ms/` against the
+     * message, so rewording the prose would have silently disabled the abort
+     * with no test to catch it.
+     */
+    readonly code?: 'timeout',
   ) {
     super(message)
     this.name = 'PayloadRestError'
@@ -135,7 +142,17 @@ function withTimeout(fetchFn: FetchFn, timeoutMs: number): FetchFn {
       return await fetchFn(input, { ...(init ?? {}), signal })
     } catch (err) {
       if (isAbortLike(err)) {
-        throw new PayloadRestError(timeoutMessage(String(input), timeoutMs))
+        // A caller's own signal aborting is a cancellation, not a timeout —
+        // distinguish them rather than blaming the deadline for both.
+        const cancelled = init?.signal?.aborted === true
+        throw new PayloadRestError(
+          cancelled
+            ? `Request to ${String(input)} was cancelled by the caller.`
+            : timeoutMessage(String(input), timeoutMs),
+          undefined,
+          undefined,
+          cancelled ? undefined : 'timeout',
+        )
       }
       throw err
     }
@@ -199,7 +216,12 @@ export class PayloadRestClient {
       // the BODY is still draining throws here, outside the wrapper — and used
       // to surface as a bare TimeoutError with none of the guidance.
       if (isAbortLike(err)) {
-        throw new PayloadRestError(timeoutMessage(res.url || this.hostLabel(res), this.timeoutMs))
+        throw new PayloadRestError(
+          timeoutMessage(res.url || this.hostLabel(res), this.timeoutMs),
+          undefined,
+          undefined,
+          'timeout',
+        )
       }
       throw err
     }
@@ -318,9 +340,10 @@ export class PayloadRestClient {
         // live orphans, advising you to unpublish what is already unpublished.
         //
         // A server-side `where[_status][equals]=published` would fix that for
-        // drafts-enabled collections and break the rest: `categories`,
-        // `industries` and `locations` have no `_status` field to filter on.
-        // Treating a MISSING `_status` as published is correct for both.
+        // drafts-enabled collections and break the rest: `categories` has no
+        // `versions` key, so no `_status` column to filter on, while
+        // `industries`, `locations` and `services` do. Treating a MISSING
+        // `_status` as published is correct for both shapes.
         const status = doc._status
         if (status !== undefined && status !== 'published') continue
         const value = doc[field]

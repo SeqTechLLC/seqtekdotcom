@@ -78,19 +78,18 @@ Flags:
                        thing "unpublished" exists to prevent.)
   --dry-run            Resolve + print intended ops; no writes or uploads.
   --allow-missing-refs Downgrade an unresolved non-omittable $ref to warn + drop.
+  --json               Emit a single JSON result object on stdout; the human
+                       log moves to stderr. For unattended callers.
+  --check-orphans      After writing, report PUBLISHED docs in the touched
+                       collections that this file does not mention. The seeder
+                       only ever writes what it is given, so a doc removed from
+                       a file stays live — this makes that visible.
   --help, -h           Show this help and exit 0.
 
 Environment:
   IMPORT_TOKEN         Your /admin session JWT (payload-token). Required unless
                        --dry-run. Sent as: Authorization: JWT <token>.
   IMPORT_BASE_URL      Alternative to --base-url.
-  --json               Emit a single JSON result object on stdout (human log
-                       moves to stderr), for unattended callers.
-  --check-orphans      After writing, warn about PUBLISHED docs in the touched
-                       collections that this file does not mention. The seeder
-                       only ever writes what it is given, so a doc removed from
-                       a file stays live — this is what makes that visible.
-
   IMPORT_TIMEOUT_MS    Per-request timeout, default 60000. A gated lane reached
                        without its cookie stalls rather than refusing, so this
                        is what turns a hang into an error.
@@ -288,7 +287,9 @@ async function main(): Promise<number> {
           log(`updated ${result.target} [${status}]`)
           break
         case 'dry-run':
-          log(`[dry-run] would ${result.wouldBe ?? 'unknown'} ${result.target} [${status}]`)
+          log(
+            `[dry-run] would ${result.wouldBe === 'unknown' ? 'create-or-update (no token)' : (result.wouldBe ?? 'create-or-update')} ${result.target} [${status}]`,
+          )
           if (!args.json) log(JSON.stringify(data, null, 2))
           break
       }
@@ -309,7 +310,7 @@ async function main(): Promise<number> {
       // Auth failures are not per-document problems — the credential is dead
       // for the whole run. Continuing turns one expired token into N identical
       // failures against a remote lane, and buries the real cause in noise.
-      if (err instanceof PayloadRestError && /exceeded \d+ms/.test(message)) {
+      if (err instanceof PayloadRestError && err.code === 'timeout') {
         consecutiveTimeouts += 1
         if (consecutiveTimeouts >= TIMEOUT_ABORT_THRESHOLD) {
           aborted =
@@ -342,7 +343,19 @@ async function main(): Promise<number> {
   // say they are there. Opt-in, because a partial file — seeding one document
   // on purpose — would otherwise report every other document as an orphan.
   const orphans: Array<{ collection: string; identity: string; values: string[] }> = []
+  // `orphans: []` alone was ambiguous four ways — flag not passed, skipped
+  // under --dry-run, run aborted, or genuinely clean — and a check that THREW
+  // wrote to stderr while stdout still said `ok: true` with an empty list. For
+  // an unattended caller that is a clean bill of health from a check that
+  // never ran: the exact silent false negative this tool is being hardened
+  // against. The state is now explicit, and a failed check fails the run.
+  let orphanCheck: 'not-requested' | 'skipped-dry-run' | 'skipped-aborted' | 'failed' | 'ok' =
+    'not-requested'
+  let orphanCheckError: string | null = null
+  if (args.checkOrphans && args.dryRun) orphanCheck = 'skipped-dry-run'
+  else if (args.checkOrphans && aborted !== null) orphanCheck = 'skipped-aborted'
   if (args.checkOrphans && !args.dryRun && aborted === null) {
+    orphanCheck = 'ok'
     // Keyed by collection AND identity field. Keying by collection alone took
     // the identity from whichever spec came first, so a file that upserted one
     // collection by two different fields would compare values gathered from one
@@ -375,7 +388,9 @@ async function main(): Promise<number> {
           )
         }
       } catch (err) {
-        warn(`orphan check failed for ${collection}: ${describe(err)}`)
+        orphanCheck = 'failed'
+        orphanCheckError = `orphan check failed for ${collection}: ${describe(err)}`
+        errln(`✗ ${orphanCheckError}`)
       }
     }
   }
@@ -386,11 +401,13 @@ async function main(): Promise<number> {
     process.stdout.write(
       JSON.stringify(
         {
-          ok: errors === 0 && aborted === null,
+          ok: errors === 0 && aborted === null && orphanCheck !== 'failed',
           dryRun: args.dryRun,
           baseUrl: args.baseUrl,
           counts: { created, updated, globals, errors, total: validated.value.length },
           aborted,
+          orphanCheck,
+          orphanCheckError,
           orphans,
           results,
         },
@@ -401,7 +418,7 @@ async function main(): Promise<number> {
   } else {
     log(`\nsummary: created=${created} updated=${updated} globals=${globals} errors=${errors}`)
   }
-  return errors > 0 || aborted !== null ? 1 : 0
+  return errors > 0 || aborted !== null || orphanCheck === 'failed' ? 1 : 0
 }
 
 try {

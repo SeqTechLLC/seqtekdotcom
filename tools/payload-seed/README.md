@@ -199,9 +199,23 @@ run continues to the next spec (so a bad ref late in a file doesn't undo earlier
 writes), but the non-zero exit flags that the run was not clean.
 
 **`--json`** replaces that with a single object on stdout — `ok`, `counts`,
-`aborted`, `orphans`, and a `results` entry per spec — and moves the human log
-to stderr, so an unattended caller can assert on a result rather than scrape
-log lines.
+`aborted`, `orphanCheck`, `orphanCheckError`, `orphans`, and a `results` entry
+per spec — and moves the human log to stderr, so an unattended caller can assert
+on a result rather than scrape log lines.
+
+`orphanCheck` exists because an empty `orphans` list is ambiguous four ways:
+
+| value             | meaning                                                           |
+| ----------------- | ----------------------------------------------------------------- |
+| `not-requested`   | `--check-orphans` was not passed                                  |
+| `skipped-dry-run` | requested, but a dry-run writes nothing to compare against        |
+| `skipped-aborted` | the run aborted before the check                                  |
+| `failed`          | the check itself errored — `ok` is `false` and the exit code is 1 |
+| `ok`              | the check ran; `orphans` is the answer                            |
+
+Without it a failed check wrote to stderr while stdout still reported
+`orphans: []` beside `ok: true` — a clean bill of health from a check that never
+ran.
 
 ## What `--dry-run` now tells you
 

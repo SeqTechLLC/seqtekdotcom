@@ -144,15 +144,21 @@ async function resolveRef(
       opts.log(`would create ${collection} (createIfMissing) for unresolved ${label}`)
       return `<ref-create:${collection}:${values[0]}>`
     }
-    // `_status: 'published'` explicitly. Every plausible createIfMissing target
-    // (industries, categories, services, locations) has `versions: { drafts: true }`,
-    // so omitting it let Payload default the row to a DRAFT while this line
-    // logged "created" — and `publishedOrAuthed` filters drafts out of public
-    // reads, so the auto-created taxonomy never appeared on the site. Same bug
-    // the globals branch of `upsert.ts` already fixed and documented.
+    // `_status: 'published'` explicitly. `industries`, `locations` and
+    // `services` all carry `versions: { drafts: true }` (`Industries.ts:24`,
+    // `Locations.ts:24`, `Services.ts:30`), so omitting it let Payload default
+    // those rows to a DRAFT while this line logged "created" — and
+    // `publishedOrAuthed` filters drafts out of public reads, so the
+    // auto-created taxonomy never appeared on the site. Same bug the globals
+    // branch of `upsert.ts` already fixed and documented. `categories` has no
+    // `versions` key at all, where the extra field is simply inert.
+    //
+    // `_status` goes FIRST so an author who sets it deliberately in
+    // `createIfMissing` still wins. Spreading it last silently overrode an
+    // explicit value, which is the behaviour this whole change is against.
     const id = await client.createDoc(
       collection,
-      { ...raw.createIfMissing, _status: 'published' },
+      { _status: 'published', ...raw.createIfMissing },
       { draft: false },
     )
     opts.log(`created ${collection} (createIfMissing) → ${id} [published]`)

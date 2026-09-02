@@ -321,3 +321,82 @@ describe('spec validation — the typo net is narrow on purpose', () => {
     expect(r.ok).toBe(false)
   })
 })
+
+describe('listPublishedFieldValues — orphan detection reads', () => {
+  const page = (docs: unknown[], hasNextPage = false) => okJson({ docs, hasNextPage })
+
+  it('excludes retired documents, which an admin token would otherwise return', async () => {
+    // `draft: false` picks the main table, not published-only; the `_status`
+    // filter normally comes from access control, and `publishedOrAuthed`
+    // returns `true` for the admin session this always runs with. Without a
+    // client-side filter, documents retired via `status: "unpublished"` came
+    // back and were reported as live orphans.
+    const client = new PayloadRestClient({
+      baseUrl: 'https://example.com',
+      token: 't',
+      fetchFn: async () =>
+        page([
+          { slug: 'live', _status: 'published' },
+          { slug: 'retired', _status: 'draft' },
+        ]),
+    })
+    await expect(client.listPublishedFieldValues('services', 'slug')).resolves.toEqual(['live'])
+  })
+
+  it('treats a missing _status as published, for collections without drafts', async () => {
+    // `categories` has no `versions` key at all, so no `_status` column. A
+    // server-side `where[_status][equals]=published` would return nothing here.
+    const client = new PayloadRestClient({
+      baseUrl: 'https://example.com',
+      token: 't',
+      fetchFn: async () => page([{ slug: 'strategy' }, { slug: 'delivery' }]),
+    })
+    await expect(client.listPublishedFieldValues('categories', 'slug')).resolves.toEqual([
+      'strategy',
+      'delivery',
+    ])
+  })
+
+  it('follows pagination instead of truncating', async () => {
+    // A single limit=500 with hasNextPage discarded silently truncated, which
+    // is a FALSE NEGATIVE in the one diagnostic built to surface documents you
+    // cannot otherwise see.
+    let call = 0
+    const client = new PayloadRestClient({
+      baseUrl: 'https://example.com',
+      token: 't',
+      fetchFn: async () => {
+        call += 1
+        return call === 1
+          ? page([{ slug: 'a', _status: 'published' }], true)
+          : page([{ slug: 'b', _status: 'published' }], false)
+      },
+    })
+    await expect(client.listPublishedFieldValues('services', 'slug')).resolves.toEqual(['a', 'b'])
+    expect(call).toBe(2)
+  })
+})
+
+describe('PayloadRestError — timeout is structural, not textual', () => {
+  it('carries code "timeout" so the abort does not depend on message prose', async () => {
+    const neverResolves: typeof fetch = (_i, init) =>
+      new Promise((_r, rej) =>
+        init?.signal?.addEventListener('abort', () =>
+          rej(Object.assign(new Error('aborted'), { name: 'TimeoutError' })),
+        ),
+      )
+    const client = new PayloadRestClient({
+      baseUrl: 'https://x.example',
+      token: 't',
+      timeoutMs: 25,
+      fetchFn: neverResolves,
+    })
+    await client.findIdByField('s', 'slug', 'x', { draft: false }).then(
+      () => expect.unreachable('should have timed out'),
+      (err: unknown) => {
+        expect(err).toBeInstanceOf(PayloadRestError)
+        expect((err as PayloadRestError).code).toBe('timeout')
+      },
+    )
+  })
+})
