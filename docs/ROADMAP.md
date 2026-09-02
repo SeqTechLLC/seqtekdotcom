@@ -145,7 +145,26 @@ The rest of this tier is what has to be true around them.
   - **Nav button — required.** One page per axis. Hank's narrative lives here. _(Built: both axes are
     `services` rows at `tier: 'axis'` — `/services/what-we-do` and `/services/how-we-work` — and both are
     top-level nav items. `/services` is still the `service-overview` Page and is now linked from no chrome at
-    all; whether the legacy Wix 301s should retarget an axis is open. Slugs settled as above.)_
+    all. Slugs settled as above.)_
+
+    **Decided — `/services` collapses into `/services/what-we-do`, but not until the seed runs.** It is an
+    orphan now: nothing in the nav links it, yet it is the destination of 21 legacy Wix 301s, a sitemap
+    `STATIC_PATHS` entry, the "Services" card on the 404 and 410 pages, and the middle breadcrumb crumb on all
+    fifteen service routes. The end state is one axis page, not an index above two of them.
+
+    **Why it is blocked rather than merely unscheduled:** the repo forbids redirect chains ("they stay ONE
+    hop"), so all 21 entries have to retarget `/services/what-we-do` _directly_ — and `RM3` in
+    `redirects.int.spec.ts` resolves a two-segment destination only if the slug is in
+    `KNOWN_DETAIL_DESTINATIONS`, which deliberately holds **no** service slug because none is seeded. Doing
+    this before the seed would aim 21 permanent redirects at a 404 and force re-widening the guard that PR #131
+    restored for exactly this reason. Today `/services` is the only service URL that resolves, which is what
+    makes it the correct target.
+
+    **Do it in the same change that seeds `services.json`:** retarget the 21 redirects, add
+    `/services` → `/services/what-we-do`, add that slug to `KNOWN_DETAIL_DESTINATIONS` (now truthfully), drop
+    `/services` from `STATIC_PATHS`, repoint the 404/410 cards, drop the "Services" breadcrumb crumb, and
+    retire both `services/page.tsx` and the `service-overview` Page record.
+
   - **Group title — optional.** Without a URL the title is a plain heading in the panel and nothing more.
   - **Leaf — required.** The service itself, with its proof.
 

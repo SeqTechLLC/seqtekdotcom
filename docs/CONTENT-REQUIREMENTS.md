@@ -648,6 +648,16 @@ Establish these rules before any content is written:
 **Words to use:** Transform, partner, results, strategy, implement, deliver, local, proven
 **Words to avoid:** Synergy, leverage (as a verb), cutting-edge, best-in-class, world-class, disruptive, turnkey, solutions (when used as a standalone noun)
 
+**Punctuation in titles:**
+
+- **"and", not "&", in page and section titles.** "AI and Automation", not "AI & Automation". This is what
+  shipped (nine service titles and the whole nav use "and", and the slug is `ai-and-automation` either way),
+  and mixing the two across sibling titles is the thing that reads as sloppy. **Exception: job titles** keep
+  the ampersand where it is conventional — "Founder & CEO". Brent's §12 email uses "&" for one of three group
+  names and "and" for the other two; the two won.
+- **No em dashes in public-facing copy** — commas, periods, colons, semicolons and parentheses only. (Recorded
+  in `VALUES_REWRITE.md` for the values section; it applies to all published copy, not just that page.)
+
 **Pronoun rules:**
 
 - Use "we" for SEQTEK voice
