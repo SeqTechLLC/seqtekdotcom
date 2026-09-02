@@ -119,8 +119,12 @@ export function SiteFooter() {
                 {column.label}
               </h2>
               <ul className="mt-4 space-y-2">
+                {/* Keyed by label+url: several columns legitimately repeat a
+                    URL — Connect has /contact twice (Contact, Book a Call) and
+                    the four market links all park on the same interim page —
+                    so `url` alone is not unique and React warns. */}
                 {column.children?.map((item) => (
-                  <li key={item.url}>
+                  <li key={`${item.label}-${item.url}`}>
                     <SmartLink
                       href={item.url}
                       className="text-body text-text-inverse opacity-90 transition-colors duration-fast hover:text-brand-green-400 hover:opacity-100"

@@ -246,24 +246,33 @@ describe('<MobileNav /> — the same data, collapsed', () => {
     expect(getByRole('link', { name: 'Process Automation', hidden: true })).toBeTruthy()
   })
 
+  /**
+   * Open a top-level axis by ACCESSIBLE NAME and return its panel, resolved
+   * through `aria-controls` — the same way the desktop tests above do. The
+   * mobile block used ordinal test ids (`mobile-nav-caret-1`), which fail on a
+   * wrong-element assertion the moment the nav is reordered rather than on the
+   * behaviour under test. Reordering is exactly what this PR did.
+   */
+  const openAxis = (r: ReturnType<typeof render>, label: string) => {
+    const caret = r.getByRole('button', { name: `${label} menu`, hidden: true })
+    fireEvent.click(caret)
+    const id = caret.getAttribute('aria-controls') ?? ''
+    return within(document.getElementById(id) as HTMLElement)
+  }
+
   it('puts the leaves straight under a single-group item, with no repeated title', () => {
-    const { getByTestId } = render(<MobileNav navItems={navigation.mainNav} ctaButton={CTA} />)
-    // Index 2 is "How We Work" — the single-group axis. Index 1 ("What We Do")
-    // carries Brent's three groups, so it exercises the nested-disclosure path
-    // covered by the fixture test above, not this one.
-    fireEvent.click(getByTestId('mobile-nav-caret-2'))
-    const panel = within(getByTestId('mobile-nav-panel-2'))
+    const r = render(<MobileNav navItems={navigation.mainNav} ctaButton={CTA} />)
+    // "How We Work" is the single-group axis; "What We Do" carries Brent's
+    // three groups and exercises the nested-disclosure path instead.
+    const panel = openAxis(r, 'How We Work')
     expect(panel.getByRole('link', { name: 'Localshoring', hidden: true })).toBeTruthy()
     // No nested group disclosure and no duplicated "How We Work" heading.
     expect(panel.queryByRole('button', { hidden: true })).toBeNull()
   })
 
   it('gives the multi-group axis one nested disclosure per group', () => {
-    const { getByTestId, getByRole } = render(
-      <MobileNav navItems={navigation.mainNav} ctaButton={CTA} />,
-    )
-    fireEvent.click(getByTestId('mobile-nav-caret-1'))
-    const panel = within(getByTestId('mobile-nav-panel-1'))
+    const r = render(<MobileNav navItems={navigation.mainNav} ctaButton={CTA} />)
+    const panel = openAxis(r, 'What We Do')
     // Brent's three groups (CONTENT_NEEDS §12), each its own disclosure.
     for (const group of [
       'Strategy and Business Consulting',

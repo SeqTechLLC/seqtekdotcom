@@ -91,7 +91,7 @@ test.describe('a11y — the nav panel while open (NAV-1)', () => {
 
   test('an open dropdown panel adds zero axe violations', async ({ page }) => {
     await page.goto('/')
-    const caret = page.getByTestId('site-header').getByRole('button', { name: 'Services menu' })
+    const caret = page.getByTestId('site-header').getByRole('button', { name: 'What We Do menu' })
     await caret.click()
     await expect(caret).toHaveAttribute('aria-expanded', 'true')
 
@@ -111,7 +111,7 @@ test.describe('a11y — the nav panel while open (NAV-1)', () => {
 
   test('the panel is a disclosure, not a modal — Tab walks out of it', async ({ page }) => {
     await page.goto('/')
-    const caret = page.getByTestId('site-header').getByRole('button', { name: 'Services menu' })
+    const caret = page.getByTestId('site-header').getByRole('button', { name: 'What We Do menu' })
     await caret.focus()
     await page.keyboard.press('Enter')
     await expect(caret).toHaveAttribute('aria-expanded', 'true')

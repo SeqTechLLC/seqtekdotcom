@@ -231,14 +231,19 @@ export const navigation: Navigation = {
         { label: 'Book a Call', url: '/contact' },
         // Interim: the four market landing pages aren't built yet, so the city
         // links point at localshoring (our local-delivery model) rather than
-        // 404ing. Now the `services` leaf, not the standalone Page — SVC-3's
-        // one-subject-one-URL rule, and the Page retires with the next seed.
+        // 404ing. They stay on the `localshoring` PAGE, which is seeded and
+        // resolves today — NOT the planned `/services/localshoring` leaf, which
+        // exists only in an unseeded `services.json`. An earlier cut of this PR
+        // moved them and turned four working links into 404s for nothing; the
+        // twelve new service links above have no working target to give up,
+        // which is not the same trade. Move these when the leaf is seeded and
+        // the Page retires, in that order.
         // TODO(stub): build /tulsa-consulting etc. as per-market SEO pages
         // (CONTENT_NEEDS §"Missing pages — linked but 404").
-        { label: 'Tulsa', url: '/services/localshoring' },
-        { label: 'Oklahoma City', url: '/services/localshoring' },
-        { label: 'Northwest Arkansas', url: '/services/localshoring' },
-        { label: 'Kansas City', url: '/services/localshoring' },
+        { label: 'Tulsa', url: '/localshoring' },
+        { label: 'Oklahoma City', url: '/localshoring' },
+        { label: 'Northwest Arkansas', url: '/localshoring' },
+        { label: 'Kansas City', url: '/localshoring' },
       ],
     },
   ],

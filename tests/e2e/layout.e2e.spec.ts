@@ -68,7 +68,7 @@ test.describe('Site chrome — desktop viewport', () => {
   test('a nav panel opens on click, closes on Escape, and hands focus back', async ({ page }) => {
     await page.goto('/')
     const header = page.getByTestId('site-header')
-    const caret = header.getByRole('button', { name: 'Services menu' })
+    const caret = header.getByRole('button', { name: 'What We Do menu' })
 
     // The caret controls a panel that actually exists in the document.
     const panelId = await caret.getAttribute('aria-controls')
@@ -157,6 +157,17 @@ test.describe('Site chrome — mobile viewport', () => {
     await expect(servicesCaret).toHaveAttribute('aria-expanded', 'false')
     await servicesCaret.click()
     await expect(servicesRegion).toBeVisible()
+    // "What We Do" carries three groups, so mobile nests a SECOND disclosure per
+    // group — the group link is visible at this level, its leaves are not. (The
+    // old single-group "Services" panel rendered leaves directly, which is why
+    // this used to assert one.) Open the group to reach a leaf.
+    const groupLink = servicesRegion.getByRole('link', { name: 'Strategy and Business Consulting' })
+    await expect(groupLink).toBeVisible()
+    const groupCaret = servicesRegion.getByRole('button', {
+      name: 'Strategy and Business Consulting links',
+    })
+    await expect(groupCaret).toHaveAttribute('aria-expanded', 'false')
+    await groupCaret.click()
     await expect(servicesRegion.getByRole('link', { name: 'Strategy and Alignment' })).toBeVisible()
 
     // Close button dismisses the dialog.
