@@ -23,10 +23,11 @@ const RENDER_BLOCKS_ROUTES = [
   'src/app/(frontend)/[slug]/page.tsx', // generic pages
   'src/app/(frontend)/workshops/[slug]/page.tsx',
   'src/app/(frontend)/case-studies/[slug]/page.tsx',
-  // feat/services-restructure (ADR 0009): the bespoke pillar/service route
-  // templates were retired in favor of block-composed offering Pages.
+  // ROADMAP SVC-2 (ADR 0009): the bespoke pillar/service templates are gone and
+  // so are the block-composed offering Pages that briefly replaced them. Every
+  // tier now renders through one collection-backed RenderBlocks template.
   'src/app/(frontend)/services/page.tsx', // services overview (block Page)
-  'src/app/(frontend)/services/[offering]/page.tsx', // peer offerings (block Pages)
+  'src/app/(frontend)/services/[slug]/page.tsx', // SVC-2: leaf, group and axis
   'src/app/(frontend)/team/[slug]/page.tsx',
   // ADR 0009 Option C metadata collection — a partner is a Page + typed metadata.
   'src/app/(frontend)/partners/[slug]/page.tsx',

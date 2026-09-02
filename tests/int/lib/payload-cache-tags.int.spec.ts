@@ -33,7 +33,6 @@ const SLUGGED_COLLECTIONS = [
   'caseStudies',
   'posts',
   'services',
-  'servicePillars',
   'workshops',
   'teamMembers',
   // ADR 0009 metadata collection — routed at /partners + /partners/[slug], so

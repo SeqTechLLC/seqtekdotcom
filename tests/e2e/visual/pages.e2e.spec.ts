@@ -26,10 +26,18 @@ const ROUTES: { slug: string; path: string }[] = [
   { slug: 'home', path: '/' },
   { slug: 'our-story', path: '/our-story' },
   { slug: 'services', path: '/services' },
-  // feat/services-restructure — the three peer-offering pages (ADR 0009).
-  { slug: 'service-localshoring', path: '/services/localshoring' },
-  { slug: 'service-ai-integration', path: '/services/ai-integration' },
-  { slug: 'service-digital-transformation', path: '/services/digital-transformation' },
+  // SVC-2 — `/services/[offering]` and its three hardcoded Page slugs are gone.
+  // Every tier of the `services` collection now renders through one template at
+  // `/services/<slug>`, so capture one of each: a leaf, a group and the axis
+  // page. `ai-integration` / `digital-transformation` are NOT here — Brent's
+  // structure retires both as service names, so those routes never come back.
+  // The group and axis slugs land with the content seed (ROADMAP SVC-2
+  // residual); until then this harness skips them rather than failing, which is
+  // exactly why they are listed now — the day the seed runs they capture
+  // themselves with no edit here.
+  { slug: 'service-leaf', path: '/services/localshoring' },
+  { slug: 'service-group', path: '/services/technology-and-data' },
+  { slug: 'service-axis', path: '/services/what-we-do' },
   { slug: 'case-studies', path: '/case-studies' },
   { slug: 'insights', path: '/insights' },
   { slug: 'team', path: '/team' },

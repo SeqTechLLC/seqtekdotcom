@@ -358,7 +358,10 @@ never made it back into a draft would seed as the _older_ draft copy. Diff the
 rendered output before trusting the cutover:
 
 ```sh
-for p in / /our-story /services /services/localshoring /workshops /team \
+# NOTE: no /services/<slug> probe. SVC-2 made those content slugs, and none is
+# seeded yet, so a probe there would 404 on BOTH sides and pass vacuously. Add
+# one once a service is published on the lane you are comparing.
+for p in / /our-story /services /workshops /team \
          /case-studies /insights /contact /localshoring /privacy-policy; do
   a=$(curl -s "https://seqtek-preview.com$p" | sed 's/<[^>]*>//g' | tr -s '[:space:]' ' ')
   b=$(curl -s "https://<new-env>$p"          | sed 's/<[^>]*>//g' | tr -s '[:space:]' ' ')

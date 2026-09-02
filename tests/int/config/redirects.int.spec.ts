@@ -115,12 +115,12 @@ const KNOWN_DETAIL_DESTINATIONS = new Set<string>([
   '/workshops/touchstone',
   '/workshops/re-alignment',
   '/workshops/five-dysfunctions',
-  // The three peer offerings. Not content slugs — a fixed enum in
-  // src/app/(frontend)/services/[offering]/page.tsx (OFFERING_TO_SLUG), so the
-  // route exists as long as the seeded `service-*` Page does.
-  '/services/localshoring',
-  '/services/ai-integration',
-  '/services/digital-transformation',
+  // ROADMAP SVC-2 deliberately adds NO service slug here. `/services/<slug>`
+  // resolves off the `services` collection now, and no service is seeded yet —
+  // so listing one would be widening this allowlist to admit the exact defect
+  // RM3 exists to catch, which is what an earlier cut of this PR did. Every
+  // service redirect targets the `/services` LISTING instead. Add a slug here
+  // only once a published service carries it.
   // Verified against docs/content-drafts/posts.json.
   '/insights/the-skill-shift',
 ])

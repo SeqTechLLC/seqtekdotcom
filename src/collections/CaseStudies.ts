@@ -79,6 +79,9 @@ export const CaseStudies: CollectionConfig = {
       name: 'services',
       type: 'relationship',
       relationTo: 'services',
+      // SVC-2: `services` holds three tiers now. Only a leaf is a thing a
+      // client buys, so the picker must not offer "What We Do" or a group.
+      filterOptions: () => ({ tier: { equals: 'leaf' } }),
       label: 'Work we did',
       hasMany: true,
       admin: {

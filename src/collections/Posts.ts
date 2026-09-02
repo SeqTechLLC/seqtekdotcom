@@ -108,6 +108,9 @@ export const Posts: CollectionConfig = {
       name: 'relatedServices',
       type: 'relationship',
       relationTo: 'services',
+      // SVC-2: `services` holds three tiers now. Only a leaf is a thing a
+      // client buys, so the picker must not offer "What We Do" or a group.
+      filterOptions: () => ({ tier: { equals: 'leaf' } }),
       label: 'Services this relates to',
       hasMany: true,
       admin: {

@@ -16,7 +16,7 @@ import { buildLexical } from '../../../src/payload/seed/showcase/lexical'
  *
  * Related documents are built from the REAL collection configs rather than
  * from a literal in this file. That matters: a renderer reading a field its
- * collection does not have (`locations.state`, `servicePillars.tagline`) gets
+ * collection does not have (`locations.state`, a group's `tagline`) gets
  * `undefined` here exactly as it does in production, instead of a stub
  * inventing the field and quietly making a dead branch look alive.
  */

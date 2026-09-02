@@ -51,7 +51,7 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 
 All collections are defined in TypeScript. Payload auto-generates the database schema, REST API, GraphQL API, and admin panel from these definitions.
 
-> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011**, which completes the contract half — `layout` is now the only body. The per-type `*ToLayout.ts` composers that performed that migration were deleted with the fields they read; the conversion they existed for is complete, and git history holds them if the mapping is ever needed again. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `services`/`servicePillars`/`industries`/`locations` stay structured — they are relationship/taxonomy targets, no longer publicly routed (the four `/services` offerings render as block-composed `pages` by slug — PR #79, ADR 0009).
+> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011**, which completes the contract half — `layout` is now the only body. The per-type `*ToLayout.ts` composers that performed that migration were deleted with the fields they read; the conversion they existed for is complete, and git history holds them if the mapping is ever needed again. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `industries`/`locations` stay structured — they are relationship/taxonomy targets, not publicly routed. **`services` is neither, since SVC-2**: it is a block-composed collection with a `tier` of `leaf | group | axis`, every tier routed at `/services/[slug]` through `RenderBlocks` like any other. `servicePillars` was absorbed into it and dropped.
 
 ### Document Collections
 
@@ -69,7 +69,7 @@ Access: Email/password auth with JWT. No public registration. Accounts created b
 
 #### `pages`
 
-Block-composed content pages — the generic primitive (spec 010 / ADR 0009). The catch-all `/[slug]` route renders most of these by slug (About, localshoring, etc.); the `/services` overview and each `/services/[offering]` page are also `pages` records looked up by known slug. Source of truth: `src/collections/Pages.ts`.
+Block-composed content pages — the generic primitive (spec 010 / ADR 0009). The catch-all `/[slug]` route renders most of these by slug (About, localshoring, etc.); the `/services` overview is also a `pages` record looked up by a known slug. The per-offering `service-*` Pages are gone — SVC-2 moved every service page into the `services` collection. Source of truth: `src/collections/Pages.ts`.
 
 | Field         | Type   | Notes                                                                               |
 | ------------- | ------ | ----------------------------------------------------------------------------------- |
@@ -123,42 +123,56 @@ The most important content type. Each gets a dedicated page at `/case-studies/[s
 
 #### `services`
 
-Structured service records. **No longer publicly routed** — the four-offering `/services` IA (PR #79, ADR 0009) renders each offering as a block-composed `pages` record by known slug (`service-localshoring`, `service-ai-integration`, `service-digital-transformation`; Workshops is the fourth peer offering and lives at `/workshops`). This collection is retained as a relationship target (`posts.relatedServices`, `caseStudies.services`, `industries.relevantServices`) and migration/taxonomy data; the old `/services/[pillar]/[slug]` detail route is retired.
+Service pages — **block-composed and publicly routed** (ROADMAP SVC-2). `/services/[slug]` renders every row through `RenderBlocks`, so a new service is a publish, not a deploy. It remains a relationship target too (`posts.relatedServices`, `caseStudies.services`, `industries.relevantServices`). The `/services/[pillar]/[slug]` detail route and the later `/services/[offering]` Page-by-slug route are both retired, along with the `service-*` Pages the latter read; `/services` itself is still a `pages` record (`service-overview`).
 
 | Field                | Type                                  | Notes                                                   |
 | -------------------- | ------------------------------------- | ------------------------------------------------------- |
 | `title`              | text                                  | e.g., "Change Management & Transformation"              |
 | `slug`               | text                                  | Auto-generated                                          |
-| `pillar`             | relationship -> servicePillars        | Legacy grouping relationship (no longer drives routing) |
+| `tier`               | select                                | `leaf` \| `group` \| `axis` — what kind of page this is |
+| `items`              | relationship -> services (hasMany)    | Groups only: the ordered services under this group      |
+| `layout`             | blocks                                | The page body, dispatched by `RenderBlocks`             |
 | `icon`               | text                                  | Icon identifier for card displays                       |
 | `relatedCaseStudies` | relationship -> caseStudies (hasMany) |                                                         |
 | `seo`                | group                                 |                                                         |
 | `order`              | number                                | Display ordering                                        |
 | `status`             | select                                | `draft`, `published`                                    |
 
-Spec 011 dropped `description`, `approach`, `deliverables`, `faq` and the whole
-`layout` blocks array from this collection: `/services/[offering]` renders four
-block-composed `pages` by slug (PR #79), so nothing rendered them. What remains
-is the typed metadata the `service-cards` and `service-pillar-cards` blocks read.
+Spec 011 dropped `description`, `approach`, `deliverables` and `faq`, which
+nothing rendered at the time. **SVC-2 gave the collection a `layout` back**, and
+with it a route: `/services/[slug]` renders every tier through `RenderBlocks`.
 
-#### `servicePillars`
+**Three tiers, one collection.** A `leaf` is a service a client buys, a `group`
+gathers several, an `axis` is what a nav button points at ("What We Do"). They
+differ in role, not shape — each is a title, a slug, a block body and an SEO
+group — so they share one table, one flat `/services/<slug>` namespace and one
+unique slug index. Two collections left uniqueness BETWEEN them unenforced,
+which made a collision silently unreachable and put a precedence rule in the
+route; one collection removes the rule. The parent→child relation (`items`)
+lives on the GROUP and is many-to-many, so a leaf can be cross-listed under more
+than one group and still resolve to a single URL.
 
-Retained grouping records. **No longer publicly routed** — the pre-#79 `/services/[slug]` pillar landing pages are retired in favour of the four-offering IA. Kept as structured grouping data and as the relationship target for `services.pillar`.
+The cost of the merge: **every relationship pointing at `services` must
+constrain to a tier** via `filterOptions`, or its picker offers groups and axis
+pages as taggable services. Six fields needed it.
 
-| Field         | Type           | Notes                 |
-| ------------- | -------------- | --------------------- |
-| `title`       | text           | Legacy grouping label |
-| `slug`        | text           |                       |
-| `description` | richText       | Grouping overview     |
-| `heroImage`   | upload (media) |                       |
-| `seo`         | group          |                       |
-| `order`       | number         | Display ordering      |
+#### `servicePillars` — REMOVED (SVC-2)
+
+Absorbed into `services` as `tier: 'group'`. The collection, its tables and its
+version history were dropped — see
+`src/migrations/20260901_022953_svc2_services_tiers.ts` for exactly what that
+does to existing rows. A group is now a `services` row: `title`, `slug`,
+`layout`, `seo` and `order` come from that collection's table above, and the
+old `description` / `heroImage` fields did not carry over (the group page's
+body is blocks now). Nothing points at `servicePillars` any more; the
+`service-cards` and `service-pillar-cards` blocks both relate to `services`
+filtered to `tier: 'group'`.
 
 #### `partners`
 
 Technology / referral partners, rendered as block-composed pages at `/partners` (listing) and `/partners/[slug]` (detail). The worked example of ADR 0009 Option C: typed metadata drives the index, the sitemap, and the breadcrumb schema; the body is the shared `layout` blocks array. Routing resolves straight off the collection — no slug whitelist, no sitemap edit — so publishing a partner needs no deploy.
 
-The detail route owns no `<h1>` (the `/services/[offering]` shape, not the `/team/[slug]` one) — the h1 is the layout's leading **hero block**, which is why `partnerSkeleton` seeds one. The route does own the trailing outbound-link panel built from `logo` + `url`.
+The detail route owns no `<h1>` (the `/services/[slug]` shape, not the `/team/[slug]` one) — the h1 is the layout's leading **hero block**, which is why `partnerSkeleton` seeds one. The route does own the trailing outbound-link panel built from `logo` + `url`.
 
 | Field         | Type           | Notes                                            |
 | ------------- | -------------- | ------------------------------------------------ |
@@ -311,7 +325,7 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 | `/`                      | ISR            | 3600s (1hr)         | Homepage — changes infrequently                                  |
 | `/[slug]`                | ISR            | 3600s               | Catch-all for block-composed `pages` (About, localshoring, etc.) |
 | `/services`              | ISR            | 3600s               | Overview — `pages` record, slug `service-overview`               |
-| `/services/[offering]`   | ISR            | 3600s               | Four-offering IA — each offering a `pages` record by slug        |
+| `/services/[slug]`       | ISR            | 3600s               | Every `services` tier — leaf, group and axis, one flat namespace |
 | `/case-studies`          | ISR            | 3600s               | Listing                                                          |
 | `/case-studies/[slug]`   | ISR            | 3600s               | Individual case studies                                          |
 | `/insights`              | ISR            | 3600s               | Blog listing                                                     |
@@ -373,7 +387,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   │   ├── [slug]/page.tsx            # Catch-all: block-composed `pages` (About, localshoring, …)
 │   │   │   ├── services/
 │   │   │   │   ├── page.tsx               # Overview (`pages` slug `service-overview`)
-│   │   │   │   └── [offering]/page.tsx    # Four-offering IA — `pages` by known slug
+│   │   │   │   └── [slug]/page.tsx        # Every `services` tier — one flat namespace
 │   │   │   ├── case-studies/
 │   │   │   │   ├── page.tsx               # Listing
 │   │   │   │   └── [slug]/page.tsx        # Detail
@@ -1035,7 +1049,7 @@ Draft content is never exposed to the public API or rendered on the public site 
 | Read `testimonials` where `!isActive`   | —      | ✓      | ✓     |
 | Access `/admin`                         | —      | ✓      | ✓     |
 
-**Per-collection overrides** (the "Create / Update / Delete content" rows above describe the default for the editorial collections — `pages`, `posts`, `caseStudies`, `services`, `servicePillars`, `workshops`, `industries`, `locations`, `media`, `teamMembers`, `partners`; the overrides below cover the rest):
+**Per-collection overrides** (the "Create / Update / Delete content" rows above describe the default for the editorial collections — `pages`, `posts`, `caseStudies`, `services`, `workshops`, `industries`, `locations`, `media`, `teamMembers`, `partners`; the overrides below cover the rest):
 
 - `categories` — editors `create` / `update` like any other content collection; `delete` is admin-only, matching every collection. (Was admin-only for create/update on a "curated taxonomy" rationale that contradicted §`categories` above and blocked editors from running the content seed.)
 - `testimonials` — public reads are filtered to `isActive: true`; editors and admins see all rows. Mutations follow the editorial default.
@@ -1407,7 +1421,7 @@ Generic `User-agent: *` rules don't distinguish crawlers that cite-with-attribut
 
 ### 14.2 Plain-text alternatives — `.md` parallel routes
 
-Every content page (`/[slug]`, `/insights/[slug]`, `/case-studies/[slug]`, `/services/[offering]`, `/workshops/[slug]`, `/team/[slug]`) is served in two shapes from a single content source:
+Every content page (`/[slug]`, `/insights/[slug]`, `/case-studies/[slug]`, `/services/[slug]`, `/workshops/[slug]`, `/team/[slug]`) is served in two shapes from a single content source:
 
 - **HTML** at the canonical URL — for browsers and crawlers that render
 - **Markdown** at the same path with `.md` suffix (e.g., `/insights/foo.md`) — for LLMs ingesting the content. ~10x smaller payload than the rendered HTML, no CSS/JS, no analytics, no ad units. Served with `Content-Type: text/markdown; charset=utf-8`.

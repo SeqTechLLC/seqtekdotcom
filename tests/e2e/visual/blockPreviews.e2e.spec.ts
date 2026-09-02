@@ -41,7 +41,7 @@ const STUB_SUPPORTING = {
   industryIds: [0, 0, 0],
   locationIds: [0, 0, 0],
   workshopIds: [0, 0, 0],
-  servicePillarIds: [0, 0, 0],
+  serviceGroupIds: [0, 0, 0],
   categoryIds: [0, 0, 0],
   teamMemberIds: [0],
 }

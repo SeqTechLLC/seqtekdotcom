@@ -131,22 +131,65 @@ describe('resolveLayout — case-study-grid', () => {
   })
 })
 
+// ROADMAP SVC-2. The relation lives on the GROUP, and groups live in the SAME
+// collection as the services under `tier`. So this resolver does two things the
+// old `pillar`-on-the-service version did not: it filters the tiers apart, and
+// it walks the group's ordered list rather than filtering the service list.
 describe('resolveLayout — service-cards', () => {
-  const alpha = { id: 1, title: 'Alpha', pillar: { id: 3, slug: 'p' } }
-  const beta = { id: 2, title: 'Beta', pillar: 4 }
+  const alpha = { id: 1, title: 'Alpha', tier: 'leaf' }
+  const beta = { id: 2, title: 'Beta', tier: 'leaf' }
+  const gamma = { id: 3, title: 'Gamma', tier: 'leaf' }
+  const build = { id: 30, title: 'Build', tier: 'group', items: [gamma, alpha] }
+  const operate = { id: 40, title: 'Operate', tier: 'group', items: [2] }
+  const axis = { id: 50, title: 'What We Do', tier: 'axis', items: [build, operate] }
 
-  beforeEach(() => listServices.mockResolvedValue([alpha, beta]))
+  beforeEach(() => listServices.mockResolvedValue([alpha, beta, gamma, build, operate, axis]))
 
-  it('filters by-pillar against a populated relation', async () => {
+  it('resolves by-pillar through the group that holds the services', async () => {
     const [block] = await resolveLayout([
-      { blockType: 'service-cards', source: 'by-pillar', pillar: 3 },
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 30 },
     ])
-    expect(block.manualItems).toEqual([alpha])
+    expect(block.manualItems).toEqual([gamma, alpha])
   })
 
-  it('applies no limit — service-cards has no limit field', async () => {
-    const [block] = await resolveLayout([{ blockType: 'service-cards', source: 'by-pillar' }])
+  it("renders in the GROUP's order, not the services' own order", async () => {
+    const [block] = await resolveLayout([
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 30 },
+    ])
+    expect((block.manualItems as { title: string }[]).map((s) => s.title)).toEqual([
+      'Gamma',
+      'Alpha',
+    ])
+  })
+
+  it('accepts a group whose items came back as bare ids', async () => {
+    const [block] = await resolveLayout([
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 40 },
+    ])
+    expect(block.manualItems).toEqual([beta])
+  })
+
+  it('never lists a group or an axis page as if it were a service', async () => {
+    // The whole risk of one collection: three tiers share it, and a card list
+    // is always services.
+    const [block] = await resolveLayout([{ blockType: 'service-cards', source: 'all' }])
+    expect(block.manualItems).toEqual([alpha, beta, gamma])
+  })
+
+  it('lists nothing for an axis page, whose items are groups rather than services', async () => {
+    const [block] = await resolveLayout([
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 50 },
+    ])
     expect(block.manualItems).toEqual([])
+  })
+
+  it('renders nothing when the block names no group, or an unknown one', async () => {
+    const [none] = await resolveLayout([{ blockType: 'service-cards', source: 'by-pillar' }])
+    expect(none.manualItems).toEqual([])
+    const [missing] = await resolveLayout([
+      { blockType: 'service-cards', source: 'by-pillar', pillar: 999 },
+    ])
+    expect(missing.manualItems).toEqual([])
   })
 })
 

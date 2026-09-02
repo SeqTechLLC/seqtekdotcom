@@ -59,6 +59,9 @@ export const Industries: CollectionConfig = {
       name: 'relevantServices',
       type: 'relationship',
       relationTo: 'services',
+      // SVC-2: `services` holds three tiers now. Only a leaf is a thing a
+      // client buys, so the picker must not offer "What We Do" or a group.
+      filterOptions: () => ({ tier: { equals: 'leaf' } }),
       hasMany: true,
       admin: {
         hidden: true, // ROADMAP INERT-1 — no route reads this yet

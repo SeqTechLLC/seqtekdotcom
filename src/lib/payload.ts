@@ -12,7 +12,6 @@ import type {
   CaseStudy,
   Post,
   Service,
-  ServicePillar,
   Workshop,
   TeamMember,
   Partner,
@@ -146,7 +145,6 @@ type SluggedCollection =
   | 'caseStudies'
   | 'posts'
   | 'services'
-  | 'servicePillars'
   | 'workshops'
   | 'teamMembers'
   | 'partners'
@@ -254,16 +252,6 @@ export const getServiceBySlug = withReadTimeout(
     )(),
 )
 
-export const getServicePillarBySlug = withReadTimeout(
-  'getServicePillarBySlug',
-  (slug: string): Promise<ServicePillar | null> =>
-    unstable_cache(
-      async () => (await findPublishedBySlug('servicePillars', slug)) as ServicePillar | null,
-      ['servicePillars', slug],
-      { tags: detailCacheTags('servicePillars', slug), revalidate: ONE_HOUR },
-    )(),
-)
-
 export const getWorkshopBySlug = withReadTimeout(
   'getWorkshopBySlug',
   (slug: string): Promise<Workshop | null> =>
@@ -343,21 +331,14 @@ export const listServices = withReadTimeout(
   'listServices',
   (): Promise<Service[]> =>
     unstable_cache(
-      // depth 2 so `pillar` is populated — the nested `/services/[pillar]/[slug]`
-      // URL + static params need the pillar slug.
-      async () => (await findPublishedList('services', { sort: 'order', depth: 2 })) as Service[],
+      // depth 0 on purpose. SVC-2 gave `services` a full `layout` AND made
+      // `items` a self-relation, so at any depth above 0 every group drags back
+      // its services as complete documents — whole block trees, duplicated once
+      // per group that cross-lists them — into an hour-long cache entry. The
+      // one consumer, `resolveLayout`, reads `tier` and walks `items` by id.
+      async () => (await findPublishedList('services', { sort: 'order', depth: 0 })) as Service[],
       ['services', 'list'],
       { tags: listCacheTags('services'), revalidate: ONE_HOUR },
-    )(),
-)
-
-export const listServicePillars = withReadTimeout(
-  'listServicePillars',
-  (): Promise<ServicePillar[]> =>
-    unstable_cache(
-      async () => (await findPublishedList('servicePillars', { sort: 'order' })) as ServicePillar[],
-      ['servicePillars', 'list'],
-      { tags: listCacheTags('servicePillars'), revalidate: ONE_HOUR },
     )(),
 )
 

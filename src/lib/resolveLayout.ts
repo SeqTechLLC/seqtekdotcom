@@ -118,11 +118,20 @@ async function resolveCaseStudyGrid(block: LayoutBlock): Promise<LayoutBlock> {
 
 async function resolveServiceCards(block: LayoutBlock): Promise<LayoutBlock> {
   if (block.source === 'manual') return block
-  const services = await listServices() // already sorted by `order`
-  const picked: Service[] =
-    block.source === 'by-pillar'
-      ? services.filter((s) => sameRelation(s.pillar, block.pillar))
-      : services
+  const all = await listServices() // already sorted by `order`
+  // SVC-2: `services` holds three tiers. A card list is always services, never
+  // the groups or the axis pages that live alongside them.
+  const leaves = all.filter((s) => s.tier === 'leaf')
+  if (block.source !== 'by-pillar') return { ...block, manualItems: leaves }
+
+  // The relation lives on the GROUP, not the leaf, so this is a lookup rather
+  // than a filter — and the group's chosen ORDER is what renders, where the old
+  // `pillar`-on-the-service model fell back to the services' own `order`.
+  const group = all.find((s) => s.tier === 'group' && sameRelation(s, block.pillar))
+  const byId = new Map(leaves.map((s) => [s.id, s]))
+  const picked = (group?.items ?? [])
+    .map((item) => byId.get(typeof item === 'object' ? item.id : (item as number)))
+    .filter((s): s is Service => !!s)
   return { ...block, manualItems: picked }
 }
 

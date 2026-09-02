@@ -21,16 +21,21 @@ const url = (path: string): string => `${SITE_URL}${path}`
 // route (already a STATIC_PATH). The offering content lives in `service-*`
 // Pages whose canonical URL is /services/<offering>, NOT the flat /service-*
 // slug — so those page slugs are excluded from the flat-page loop below.
-const SERVICE_OFFERING_PATHS = [
-  '/services/localshoring',
-  '/services/ai-integration',
-  '/services/digital-transformation',
-]
-
-// The block-composed Pages that back /services (overview + the three offerings).
-// Their canonical URL is /services or /services/<offering>, never the flat
-// /service-* slug, so they are excluded from the flat-page sitemap loop.
-const SERVICE_PAGE_SLUGS = new Set([
+// ROADMAP SVC-2: both hardcoded lists are gone. Services and their groups are
+// collections now, so their URLs come from published slugs like every other
+// type and a new one needs no code change.
+//
+// This set is the ONE thing that still has to be named. It is not a route map —
+// it is the retiring `service-*` Pages, excluded from the flat-page loop below.
+// `service-overview` because /services is a STATIC_PATH rather than a flat page
+// slug; the other three because SVC-2 deleted `/services/[offering]`, the only
+// route that ever rendered them. Dropping them from this set would not make
+// them unreachable, it would ADVERTISE them at `/service-ai-integration` —
+// flat URLs that were never canonical and that retire on the next content seed
+// (ROADMAP SVC-2 residual). Delete a RETIRING entry when its Page record goes —
+// but `service-overview` is NOT retiring and must stay: `/services` still reads
+// it as that route's body. Hence the name is about the sitemap, not about fate.
+const SERVICE_PAGE_SLUGS_NOT_IN_SITEMAP = new Set([
   'service-overview',
   'service-localshoring',
   'service-ai-integration',
@@ -42,7 +47,6 @@ const STATIC_PATHS = [
   '/case-studies',
   '/insights',
   '/services',
-  ...SERVICE_OFFERING_PATHS,
   '/workshops',
   '/team',
   // NOTE: `/partners` is deliberately NOT static — it is added below only when
@@ -61,31 +65,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // and let ISR backfill the dynamic slugs at runtime (revalidate + on-demand
   // `${collection}_list` tag invalidation).
   try {
-    const [pageSlugs, caseStudySlugs, postSlugs, workshopSlugs, teamSlugs, partnerSlugs] =
-      await Promise.all([
-        publishedSlugsFor('pages'),
-        publishedSlugsFor('caseStudies'),
-        publishedSlugsFor('posts'),
-        publishedSlugsFor('workshops'),
-        publishedSlugsFor('teamMembers'),
-        publishedSlugsFor('partners'),
-      ])
+    const [
+      pageSlugs,
+      caseStudySlugs,
+      postSlugs,
+      workshopSlugs,
+      teamSlugs,
+      partnerSlugs,
+      serviceSlugs,
+    ] = await Promise.all([
+      publishedSlugsFor('pages'),
+      publishedSlugsFor('caseStudies'),
+      publishedSlugsFor('posts'),
+      publishedSlugsFor('workshops'),
+      publishedSlugsFor('teamMembers'),
+      publishedSlugsFor('partners'),
+      publishedSlugsFor('services'),
+    ])
 
     // A page slug that collides with a 301 source (e.g. the audit-seeded
     // `touchstone-workshops` doc, if ever published) would put a
     // redirecting URL in the sitemap — the redirect wins over the route,
     // so exclude redirect sources here (PR #49 review hardening). The
-    // `service-*` offering Pages are excluded too: their canonical URL is
-    // /services/<offering> (a STATIC_PATH), not the flat /service-* slug.
+    // retiring `service-*` Pages are excluded too — see the set above.
     const redirectSources = new Set(redirectMap.map((r) => r.source))
     for (const slug of pageSlugs) {
-      if (SERVICE_PAGE_SLUGS.has(slug)) continue
+      if (SERVICE_PAGE_SLUGS_NOT_IN_SITEMAP.has(slug)) continue
       if (!redirectSources.has(`/${slug}`)) paths.add(`/${slug}`)
     }
     for (const slug of caseStudySlugs) paths.add(`/case-studies/${slug}`)
     for (const slug of postSlugs) paths.add(`/insights/${slug}`)
     for (const slug of workshopSlugs) paths.add(`/workshops/${slug}`)
     for (const slug of teamSlugs) paths.add(`/team/${slug}`)
+    // SVC-2: one flat namespace and one collection, so every tier — axis page,
+    // group page and service — is just `/services/<slug>`.
+    for (const slug of serviceSlugs) paths.add(`/services/${slug}`)
     // ADR 0009 metadata collection — no exclusion set needed here (unlike the
     // `service-*` Pages): a partner's canonical URL IS `/partners/<slug>`.
     // The index is listed only once it has cards. Code ships ahead of content

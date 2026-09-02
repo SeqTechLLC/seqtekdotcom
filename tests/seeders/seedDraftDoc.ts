@@ -74,67 +74,6 @@ export async function seedDraftCaseStudy(slug: string, title?: string): Promise<
   return { id: String(doc.id), slug: doc.slug ?? slug }
 }
 
-export interface SeededService extends SeededDoc {
-  pillarSlug: string
-  pillarId: string
-}
-
-export async function seedDraftService(
-  slug: string,
-  options: { pillarSlug?: string; title?: string } = {},
-): Promise<SeededService> {
-  const payload = await payloadInstance()
-  const pillarSlug = options.pillarSlug ?? `preview-pillar-${slug}`
-
-  // Reuse or seed the pillar so multiple services with the same pillar are
-  // safe across tests. servicePillars don't require draft state — they
-  // anchor public navigation.
-  const existing = await payload.find({
-    collection: 'servicePillars',
-    where: { slug: { equals: pillarSlug } },
-    limit: 1,
-    overrideAccess: true,
-    draft: true,
-  })
-  const pillarDoc =
-    existing.docs[0] ??
-    (await payload.create({
-      collection: 'servicePillars',
-      data: {
-        title: `Pillar ${pillarSlug}`,
-        slug: pillarSlug,
-      },
-      ...DRAFT_CREATE_OPTS,
-    }))
-
-  await deleteBySlug('services', slug)
-  const doc = await payload.create({
-    collection: 'services',
-    data: {
-      title: options.title ?? `Draft service ${slug}`,
-      slug,
-      pillar: pillarDoc.id,
-    },
-    ...DRAFT_CREATE_OPTS,
-  })
-
-  return {
-    id: String(doc.id),
-    slug: doc.slug ?? slug,
-    pillarSlug,
-    pillarId: String(pillarDoc.id),
-  }
-}
-
 export async function cleanupDraftDoc(collection: string, slug: string): Promise<void> {
   await deleteBySlug(collection, slug)
-}
-
-export async function cleanupServicePillar(slug: string): Promise<void> {
-  const payload = await payloadInstance()
-  await payload.delete({
-    collection: 'servicePillars',
-    where: { slug: { equals: slug } },
-    overrideAccess: true,
-  })
 }

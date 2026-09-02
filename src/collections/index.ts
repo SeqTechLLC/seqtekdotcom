@@ -8,7 +8,6 @@ import { Media } from './Media'
 import { Pages } from './Pages'
 import { Partners } from './Partners'
 import { Posts } from './Posts'
-import { ServicePillars } from './ServicePillars'
 import { Services } from './Services'
 import { TeamMembers } from './TeamMembers'
 import { Testimonials } from './Testimonials'
@@ -32,7 +31,6 @@ export const collections: CollectionConfig[] = [
   Posts,
   CaseStudies,
   Services,
-  ServicePillars,
   TeamMembers,
   Testimonials,
   Workshops,

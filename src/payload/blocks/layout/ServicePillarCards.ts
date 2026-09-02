@@ -14,8 +14,11 @@ export const ServicePillarCards: Block = {
     {
       name: 'pillars',
       type: 'relationship',
-      relationTo: 'servicePillars',
-      label: 'Pillars to show',
+      // SVC-2 absorbed `servicePillars` into `services`: a group is a row with
+      // `tier: 'group'`, so this picks groups out of the one collection.
+      relationTo: 'services',
+      filterOptions: () => ({ tier: { equals: 'group' } }),
+      label: 'Groups to show',
       hasMany: true,
       required: true,
       minRows: 1,

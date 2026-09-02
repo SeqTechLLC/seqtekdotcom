@@ -76,7 +76,10 @@ test.describe('Site chrome — desktop viewport', () => {
     await caret.click()
     await expect(panel).toBeVisible()
     await expect(caret).toHaveAttribute('aria-expanded', 'true')
-    await expect(panel.getByRole('link', { name: 'AI Integration' })).toBeVisible()
+    // A real leaf from `site-content.ts`. SVC-2 removed the `AI Integration`
+    // entry this used to assert on: that URL was a `/services/[offering]` Page
+    // slug and the route is gone.
+    await expect(panel.getByRole('link', { name: 'Localshoring' })).toBeVisible()
 
     // Escape closes and returns focus to the control that opened it, rather
     // than dropping the keyboard user at the top of the document.
@@ -150,7 +153,7 @@ test.describe('Site chrome — mobile viewport', () => {
     await expect(servicesCaret).toHaveAttribute('aria-expanded', 'false')
     await servicesCaret.click()
     await expect(servicesRegion).toBeVisible()
-    await expect(servicesRegion.getByRole('link', { name: 'AI Integration' })).toBeVisible()
+    await expect(servicesRegion.getByRole('link', { name: 'Localshoring' })).toBeVisible()
 
     // Close button dismisses the dialog.
     await page.getByTestId('mobile-menu-close').click()

@@ -14,7 +14,6 @@ export type PreviewCollection =
   | 'caseStudies'
   | 'posts'
   | 'services'
-  | 'servicePillars'
   | 'workshops'
   | 'teamMembers'
   | 'partners'

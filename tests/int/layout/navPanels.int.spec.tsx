@@ -249,7 +249,10 @@ describe('<MobileNav /> — the same data, collapsed', () => {
     const { getByTestId } = render(<MobileNav navItems={navigation.mainNav} ctaButton={CTA} />)
     fireEvent.click(getByTestId('mobile-nav-caret-1'))
     const panel = within(getByTestId('mobile-nav-panel-1'))
-    expect(panel.getByRole('link', { name: 'AI Integration', hidden: true })).toBeTruthy()
+    // A real leaf from `site-content.ts`, not a fixture: SVC-2 removed the
+    // `AI Integration` / `Digital Transformation` entries this used to assert
+    // on, because the `[offering]` route that served them is gone.
+    expect(panel.getByRole('link', { name: 'Localshoring', hidden: true })).toBeTruthy()
     // No nested group disclosure and no duplicated "Services" heading.
     expect(panel.queryByRole('button', { hidden: true })).toBeNull()
   })
