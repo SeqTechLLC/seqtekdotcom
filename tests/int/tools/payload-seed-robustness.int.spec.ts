@@ -141,12 +141,17 @@ describe('preflight — structure before the first write', () => {
     expect(errors[0]).toContain('services:the-one-that-broke')
   })
 
-  it('catches a $file.path that is not on disk', async () => {
-    const { errors } = await preflight(
+  it('WARNS about a $file.path that is not on disk, and does not block the run', async () => {
+    // The resolver dedupes media by filename BEFORE reading the file, so an
+    // asset already uploaded to the target resolves fine from a checkout that
+    // lacks it. Rejecting here would fail a run the resolver would complete —
+    // the one thing this gate must never do.
+    const { errors, warnings } = await preflight(
       spec({ slug: 'a', img: { $file: { path: 'no/such/asset.png', alt: 'x' } } }),
       process.cwd(),
     )
-    expect(errors.join('\n')).toMatch(/does not exist on disk/)
+    expect(errors).toEqual([])
+    expect(warnings.join('\n')).toMatch(/is not on disk/)
   })
 
   it('rejects a directive object carrying extra keys', async () => {

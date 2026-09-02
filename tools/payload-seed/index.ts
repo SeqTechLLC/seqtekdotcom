@@ -169,6 +169,7 @@ async function main(): Promise<number> {
   // is inside `data`, which used to be checked per-spec inside the resolver —
   // so a malformed $file in spec 19 was found after 18 documents had landed.
   const pre = await preflight(validated.value, process.cwd())
+  for (const w of pre.warnings) errln(`WARN ${w}`)
   if (pre.errors.length > 0) {
     errln(`Invalid directives (${pre.errors.length} problem(s)) — nothing was written:`)
     for (const e of pre.errors) errln(`  - ${e}`)
@@ -307,9 +308,6 @@ async function main(): Promise<number> {
       errln(`✗ ${label}: ${message}`)
       results.push({ target: label, operation: 'error', error: message })
 
-      // Auth failures are not per-document problems — the credential is dead
-      // for the whole run. Continuing turns one expired token into N identical
-      // failures against a remote lane, and buries the real cause in noise.
       if (err instanceof PayloadRestError && err.code === 'timeout') {
         consecutiveTimeouts += 1
         if (consecutiveTimeouts >= TIMEOUT_ABORT_THRESHOLD) {
@@ -325,6 +323,9 @@ async function main(): Promise<number> {
         consecutiveTimeouts = 0
       }
 
+      // Auth failures are not per-document problems — the credential is dead
+      // for the whole run. Continuing turns one expired token into N identical
+      // failures against a remote lane, and buries the real cause in noise.
       const status = err instanceof PayloadRestError ? err.status : undefined
       if (status === 401 || status === 403) {
         aborted =
@@ -351,7 +352,7 @@ async function main(): Promise<number> {
   // against. The state is now explicit, and a failed check fails the run.
   let orphanCheck: 'not-requested' | 'skipped-dry-run' | 'skipped-aborted' | 'failed' | 'ok' =
     'not-requested'
-  let orphanCheckError: string | null = null
+  const orphanCheckErrors: string[] = []
   if (args.checkOrphans && args.dryRun) orphanCheck = 'skipped-dry-run'
   else if (args.checkOrphans && aborted !== null) orphanCheck = 'skipped-aborted'
   if (args.checkOrphans && !args.dryRun && aborted === null) {
@@ -389,8 +390,12 @@ async function main(): Promise<number> {
         }
       } catch (err) {
         orphanCheck = 'failed'
-        orphanCheckError = `orphan check failed for ${collection}: ${describe(err)}`
-        errln(`✗ ${orphanCheckError}`)
+        // Collected, not overwritten. A file spanning several collections can
+        // fail more than one lookup, and `validateSpecs` / `preflight` both
+        // deliberately report every problem in one pass.
+        const msg = `orphan check failed for ${collection}: ${describe(err)}`
+        orphanCheckErrors.push(msg)
+        errln(`✗ ${msg}`)
       }
     }
   }
@@ -407,7 +412,7 @@ async function main(): Promise<number> {
           counts: { created, updated, globals, errors, total: validated.value.length },
           aborted,
           orphanCheck,
-          orphanCheckError,
+          orphanCheckErrors,
           orphans,
           results,
         },

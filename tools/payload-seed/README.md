@@ -199,11 +199,12 @@ run continues to the next spec (so a bad ref late in a file doesn't undo earlier
 writes), but the non-zero exit flags that the run was not clean.
 
 **`--json`** replaces that with a single object on stdout — `ok`, `counts`,
-`aborted`, `orphanCheck`, `orphanCheckError`, `orphans`, and a `results` entry
+`aborted`, `orphanCheck`, `orphanCheckErrors`, `orphans`, and a `results` entry
 per spec — and moves the human log to stderr, so an unattended caller can assert
 on a result rather than scrape log lines.
 
-`orphanCheck` exists because an empty `orphans` list is ambiguous four ways:
+`orphanCheckErrors` collects every failed lookup, not just the last. `orphanCheck`
+exists because an empty `orphans` list is ambiguous four ways:
 
 | value             | meaning                                                           |
 | ----------------- | ----------------------------------------------------------------- |
@@ -240,13 +241,20 @@ real run does. Only backward references resolve.
 
 **With a token, a dry-run makes one read per spec** — that is what buys
 create-vs-update. Against an unreachable or cookie-less gated lane, that means
-one timeout per spec rather than an instant offline rehearsal. Unset
-`IMPORT_TOKEN` (or lower `IMPORT_TIMEOUT_MS`) for a purely offline pass; it then
+one timeout per spec rather than an instant offline rehearsal. Unset `IMPORT_TOKEN` (or lower `IMPORT_TIMEOUT_MS`) to skip that read; it then
 resolves as an anonymous reader, sees only published documents, and reports
-`would unknown` rather than guessing.
+`would create-or-update (no token)` rather than guessing.
+
+**A dry-run is not fully offline for a file carrying `$file`.** The media dedupe
+lookup (by filename) is unconditional, so those directives still reach the
+network even with no token. Files whose `$ref`s are all intra-file and which
+carry no `$file` — `services.json`, for instance — do rehearse entirely
+offline.
 
 On failure, `--json` still emits an object — `{ ok: false, stage, errors }`
-where `stage` is `read`, `envelope`, `directives` or `auth`. The early exits are
+where `stage` is `args`, `read`, `envelope`, `directives` or `auth`. (`args`
+covers an unknown flag, a missing file argument, and an invalid
+`IMPORT_TIMEOUT_MS`.) The early exits are
 the most likely outcomes for an unattended caller, so they are the last place
 that should print nothing.
 

@@ -149,7 +149,18 @@ function walk(node: unknown, where: string, errors: string[], found: Found[]): v
 }
 
 export interface PreflightResult {
+  /** Structural problems. Fatal: nothing is written. */
   errors: string[]
+  /**
+   * Things worth saying that must NOT block a run — currently a local
+   * `$file.path` that is not on disk. The resolver dedupes media by basename
+   * BEFORE it ever reads the file (`resolve.ts`), so an asset already uploaded
+   * to the target resolves fine from a checkout that lacks it. Making that
+   * fatal would reject a run the resolver would have completed, which is the
+   * one thing this gate must never do — and would be the third time on this
+   * branch alone.
+   */
+  warnings: string[]
 }
 
 /**
@@ -162,6 +173,7 @@ export interface PreflightResult {
  */
 export async function preflight(specs: SeedSpec[], baseDir: string): Promise<PreflightResult> {
   const errors: string[] = []
+  const warnings: string[] = []
   const found: Found[] = []
 
   specs.forEach((spec, i) => {
@@ -192,11 +204,15 @@ export async function preflight(specs: SeedSpec[], baseDir: string): Promise<Pre
         return null
       } catch {
         const extra = wheres.length > 1 ? ` (referenced by ${wheres.length} specs)` : ''
-        return `${wheres[0]}: $file.path does not exist on disk: ${abs}${extra}`
+        return (
+          `${wheres[0]}: $file.path is not on disk: ${abs}${extra}. ` +
+          `Not fatal — media already uploaded to the target resolves by filename ` +
+          `without reading the file. It only fails if the upload is actually needed.`
+        )
       }
     }),
   )
-  for (const m of missing) if (m !== null) errors.push(m)
+  for (const m of missing) if (m !== null) warnings.push(m)
 
-  return { errors }
+  return { errors, warnings }
 }
