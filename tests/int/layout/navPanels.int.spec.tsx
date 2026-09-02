@@ -6,15 +6,16 @@ import { PrimaryNav } from '../../../src/components/layout/PrimaryNav'
 import { navigation, type NavItem } from '../../../src/lib/site-content'
 
 /**
- * ROADMAP NAV-1. The shipped nav data has exactly one shape today: two
- * single-group panels, no group URLs, because Brent's grouped service list had
- * not arrived when this was built. So the interesting halves of the component
- * — several columns, and a group that is itself a link — have no live instance
- * to exercise them.
+ * ROADMAP NAV-1. Written when the shipped nav had exactly one shape — two
+ * single-group panels and no group URLs — so the interesting halves of the
+ * component (several columns, and a group that is itself a link) had no live
+ * instance, the condition the INERT-2 gate exists to stop.
  *
- * That is precisely the condition the INERT-2 gate exists to stop: a control
- * that ships without anything proving it draws. These fixtures stand in for
- * the data until it lands.
+ * Brent's structure has since landed, and "What We Do" exercises both of those
+ * against the real `navigation.mainNav` further down. The fixture stays for
+ * what the shipped data still does NOT cover: a group with a title that is not
+ * a link, which neither axis produces (a single-group panel suppresses its
+ * title, and every multi-group entry carries a URL).
  */
 const FIXTURE: NavItem[] = [
   {
@@ -121,8 +122,8 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
 
   it('labels a single-group panel by the trigger instead of repeating it', () => {
     const { getByRole } = render(<PrimaryNav items={navigation.mainNav} />)
-    // "How We Work" carries one group, so no group title is drawn. ("What We
-    // Do" carries three and is covered above.) Resolved through `aria-controls`
+    // "How We Work" carries one group, so no group title is drawn. (The
+    // multi-group path is covered by "What We Do" below, and by FIXTURE above.) Resolved through `aria-controls`
     // rather than a positional test id, so reordering the nav fails on
     // behaviour instead of on a missing element.
     const controls = getByRole('button', { name: 'How We Work menu' }).getAttribute('aria-controls')

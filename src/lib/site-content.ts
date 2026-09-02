@@ -178,7 +178,16 @@ export const navigation: Navigation = {
             label: 'How We Work',
             items: [
               { label: 'Workshops', url: '/workshops' },
-              { label: 'Localshoring', url: '/services/localshoring' },
+              // Stays on the `localshoring` PAGE, which is seeded and resolves
+              // today — not the planned `/services/localshoring` leaf, which
+              // lives only in an unseeded `services.json`. Same rule as the
+              // market links in the footer: the twelve service links above have
+              // no working target to give up, this one does. Moving it early
+              // would also put two Localshoring URLs in chrome at once, the
+              // dead one in the header, which is what SVC-3's
+              // one-subject-one-URL rule exists to prevent. Move both together
+              // when the leaf is seeded and the Page retires.
+              { label: 'Localshoring', url: '/localshoring' },
             ],
           },
         ],

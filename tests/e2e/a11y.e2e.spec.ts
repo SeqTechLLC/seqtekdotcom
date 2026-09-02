@@ -118,14 +118,30 @@ test.describe('a11y — the nav panel while open (NAV-1)', () => {
 
     // Tab through the panel's own links and out the far side. Focus must leave
     // the nav rather than cycling inside it.
-    for (let i = 0; i < 12; i++) {
+    //
+    // The budget is DERIVED, not a constant. It used to be 12, which was ample
+    // while the only panel held a single leaf — then NAV-1's "What We Do" grew
+    // to three group links plus nine leaves, exactly 12 tabbables inside the
+    // panel alone, and the test reported a focus trap that did not exist. What
+    // it means to assert is "tab past everything the nav contains and focus is
+    // outside it", so count that and add slack.
+    const budget = await page.evaluate(() => {
+      const nav = document.querySelector('nav[aria-label="Primary"]')
+      if (!nav) return 0
+      return nav.querySelectorAll('a[href], button:not([disabled])').length + 3
+    })
+    expect(budget).toBeGreaterThan(3)
+
+    for (let i = 0; i < budget; i++) {
       await page.keyboard.press('Tab')
       const inNav = await page.evaluate(
         () => !!document.activeElement?.closest('nav[aria-label="Primary"]'),
       )
       if (!inNav) return
     }
-    throw new Error('focus never left the primary nav — the panel is trapping it')
+    throw new Error(
+      `focus never left the primary nav after ${budget} tabs — the panel is trapping it`,
+    )
   })
 })
 

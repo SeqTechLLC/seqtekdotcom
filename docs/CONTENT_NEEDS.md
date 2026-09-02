@@ -171,7 +171,7 @@ A publishable case study record needs: hero image (real, non-stock) · client + 
 
 ## 9. Missing pages — linked but 404 (surfaced by the 2026-06-30 link audit)
 
-A crawl of every internal link on staging found **10 routes that are linked in the nav/footer/CTAs but return 404** (plus twelve service routes added later by NAV-1 — see the note under the table, which are a seeder run rather than a content build). The nav/footer is code-driven (`src/lib/site-content.ts`), so as an immediate fix the dead links were either repointed to a live equivalent or removed (the live 404 page is professional, but a launched site should not dead-end). The rows below that need a **real page** are genuine content gaps:
+A crawl of every internal link on staging found **10 routes that are linked in the nav/footer/CTAs but return 404** (plus **fourteen** service routes added later by NAV-1 — see the note under the table, which are a seeder run rather than a content build). The nav/footer is code-driven (`src/lib/site-content.ts`), so as an immediate fix the dead links were either repointed to a live equivalent or removed (the live 404 page is professional, but a launched site should not dead-end). The rows below that need a **real page** are genuine content gaps:
 
 | Linked route (was 404)                                       | Interim fix shipped in code   | Real fix needed                                                                                                             | Owner / source | Severity                      |
 | ------------------------------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------- |
@@ -186,9 +186,11 @@ A crawl of every internal link on staging found **10 routes that are linked in t
 | `/terms-of-service`                                          | Removed from footer legal nav | **Terms of Service page** — needs reviewed legal copy (privacy-policy already exists as the model)                          | Legal/Brent    | Important (launch)            |
 | ~~`/resources/organizational-maturity-assessment`~~          | Removed from footer           | **Nothing — retired 2026-08-08 (§5).** The page is not being built; `/organizational-strategy-1-5` now 301s to `/workshops` | —              | closed                        |
 
-**NAV-1 / SVC-2 added twelve more, and they are a SEED not a build.** The two-axis header menu enumerates
+**NAV-1 / SVC-2 added fourteen more, and they are a SEED not a build.** The two-axis header menu enumerates
 Brent's structure from §12, so `/services/what-we-do`, `/services/how-we-work`, the three group slugs and the
-nine leaf slugs are all linked from code-owned chrome. Unlike every row above, **none of them needs a page
+nine leaf slugs are all linked from code-owned chrome — two axes, three groups and nine leaves, fourteen in
+all. (`/services/localshoring` is a fifteenth planned route but is deliberately NOT linked yet: the nav and
+footer both still point at the `localshoring` Page, which resolves today.) Unlike every row above, **none of them needs a page
 built** — `services.json` in the private `website-content` repo already carries all fifteen documents as
 clearly-marked placeholders, verified to seed with `errors=0`. They 404 only until someone runs
 `npm run payload:seed -- docs/content-drafts/services.json` against the lane. **Sequence that immediately

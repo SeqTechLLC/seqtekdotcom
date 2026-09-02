@@ -37,7 +37,12 @@ export function SiteFooter() {
   return (
     <footer data-testid="site-footer" className="bg-surface-inverse text-text-inverse">
       <Container size="lg">
-        <div className="grid gap-10 py-12 md:grid-cols-2 md:py-16 lg:grid-cols-6">
+        {/* Column count is COUPLED to `footerNav.length`: the brand block below
+            spans 2 and each nav column spans 1, so the track count must be
+            `2 + footerNav.length` or the row leaves dead space on the right.
+            Three columns today (Company / Resources / Connect) → 5. Adjust this
+            number if a column is added or removed. */}
+        <div className="grid gap-10 py-12 md:grid-cols-2 md:py-16 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Link href="/" aria-label={companyName} className="inline-block">
               <Image
