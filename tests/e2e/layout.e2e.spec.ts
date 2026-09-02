@@ -109,6 +109,32 @@ test.describe('Site chrome — desktop viewport', () => {
     expect(box?.width ?? 0).toBeGreaterThan(0)
     expect(box?.height ?? 0).toBeGreaterThan(0)
   })
+
+  // The panel is anchored to its trigger and capped in `vw`, so a wide panel at
+  // a narrow desktop can run past the right edge and put a horizontal scrollbar
+  // on every page. That shipped once: an 80vw cap measured 118px over at 1024px
+  // and grew document.scrollWidth to 1142. Checked at 1024 — the `lg` boundary
+  // and the worst case, because the cap grows with the viewport while the
+  // trigger's left offset grows more slowly. The suite's default 1280 measured
+  // 0px over even while the bug was live, so this test sets its own width.
+  test('opening the widest nav panel does not widen the document (lg boundary)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 800 })
+    await page.goto('/')
+    const caret = page.getByTestId('site-header').getByRole('button', { name: 'What We Do menu' })
+    await caret.click()
+    await expect(caret).toHaveAttribute('aria-expanded', 'true')
+
+    const m = await page.evaluate(() => ({
+      doc: document.documentElement.scrollWidth,
+      win: window.innerWidth,
+    }))
+    expect(
+      m.doc,
+      `opening the nav panel widened the document to ${m.doc}px in a ${m.win}px window`,
+    ).toBeLessThanOrEqual(m.win)
+  })
 })
 
 test.describe('Site chrome — mobile viewport', () => {

@@ -130,7 +130,9 @@ test.describe('a11y — the nav panel while open (NAV-1)', () => {
       if (!nav) return 0
       return nav.querySelectorAll('a[href], button:not([disabled])').length + 3
     })
-    expect(budget).toBeGreaterThan(3)
+    // Guards the selector, not the size: `evaluate` returns 0 if the nav is
+    // not found, which would make the loop below vacuous.
+    expect(budget, 'primary nav not found — the tab budget would be vacuous').toBeGreaterThan(3)
 
     for (let i = 0; i < budget; i++) {
       await page.keyboard.press('Tab')

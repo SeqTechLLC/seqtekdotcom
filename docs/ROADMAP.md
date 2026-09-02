@@ -142,9 +142,10 @@ The rest of this tier is what has to be true around them.
   edit, and the same data feeds both viewports so they cannot drift.
 
   **Three tiers of content, and only two of them are required.**
-  - **Nav button — required.** One page per axis. Hank's narrative lives here. `/services` is today's, and the
-    "how we work" counterpart does not exist yet. **Slugs are unsettled** and are not for us to invent: the
-    labels came out of the meeting, the URLs did not.
+  - **Nav button — required.** One page per axis. Hank's narrative lives here. _(Built: both axes are
+    `services` rows at `tier: 'axis'` — `/services/what-we-do` and `/services/how-we-work` — and both are
+    top-level nav items. `/services` is still the `service-overview` Page and is now linked from no chrome at
+    all; whether the legacy Wix 301s should retarget an axis is open. Slugs settled as above.)_
   - **Group title — optional.** Without a URL the title is a plain heading in the panel and nothing more.
   - **Leaf — required.** The service itself, with its proof.
 
@@ -166,8 +167,8 @@ The rest of this tier is what has to be true around them.
   written, and none of them has a draft.
 
   Two things that follow from the tiers:
-  - **"How we work" is a new top-level page.** `/services` exists; its counterpart does not. Localshoring
-    already has a route and becomes a leaf under it. Scope the new axis page with SVC-2.
+  - **"How we work" is a new top-level page.** _(Built — both axis pages exist and are nav items. Localshoring
+    is listed under it, still pointing at the `localshoring` Page until the leaf is seeded.)_
   - **A group page needs a reason to exist.** If it is only a list of its own children it is a worse version of
     the menu that got you there. That is the test for whether a group takes a URL at all, and it is content, so
     it waits for Brent — but flag it early if his grouping produces headings nothing can be written about.
@@ -262,10 +263,12 @@ The rest of this tier is what has to be true around them.
     nine** — `CONTENT_NEEDS.md` §12 puts Localshoring on the "how we work" axis, deliberately outside them —
     so the seed above does not create it and `docs/content-drafts/services.json` has no `localshoring` slug.
     Add one, or that URL 404s no matter how much of §12 lands.
-    **Until it exists the nav, the footer and the four market links point at the `localshoring` PAGE**, which
-    resolves today through the catch-all. Chrome is code (ADR 0010), so pointing it at an unseeded slug would
-    be a dead link fixable only by a deploy. Flip all six to `/services/localshoring` in the same commit that
-    seeds the leaf and retires the Page record. No internal 301 — nothing is live, so the URL simply changes.
+    **Until it exists, the header's How We Work panel and the four market links point at the `localshoring`
+    PAGE**, which resolves today through the catch-all. Chrome is code (ADR 0010), so pointing it at an
+    unseeded slug would be a dead link fixable only by a deploy. Flip **all five** (`site-content.ts:190` and
+    `:252-255`) to `/services/localshoring` in the same commit that seeds the leaf and retires the Page record.
+    _(Five, not six: the sixth was the footer Services column, which NAV-1 deleted outright — the footer
+    carries no services links now.)_ No internal 301 — nothing is live, so the URL simply changes.
 
 - **SVC-3 — the services IA, with the nav question now settled the other way.** Direction decided, not built;
   blocked on SVC-2. The **flat 6-item nav with no mega-menu is withdrawn** — that was Kenn's call and the
@@ -301,8 +304,10 @@ The rest of this tier is what has to be true around them.
   **We already ship the thing this rule forbids.** `docs/content-drafts/pages.json` carries two Page records
   for one subject — `localshoring` at `/localshoring` and `service-localshoring` at `/services/localshoring`,
   both titled "Localshoring", both published, near-identical in structure (hero → content → cta, the services
-  one adding a comparison table). Both are in the nav: `site-content.ts` links the first under Our Story and
-  the second under Services, in the header and the footer. So the second URL is not a stray, it is wired.
+  one adding a comparison table). _(As of NAV-1 only the FIRST is linked, from the header's How We Work panel
+  and the four market links; the Our Story entry and the whole footer Services column are gone. So the second
+  URL is now an unlinked duplicate rather than a wired one — which makes collapsing them cheaper, not less
+  necessary.)_
   **Collapse them to one page and two links as part of SVC-2**, with a 301 from whichever slug loses; it is the
   reference case for the rule and it is cheaper to fix before the cutover freezes the URL. Which one wins is a
   content call — the standalone reads as brand narrative, the services one as an offering — but there is only

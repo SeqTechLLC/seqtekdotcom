@@ -191,9 +191,11 @@ Brent's structure from §12, so `/services/what-we-do`, `/services/how-we-work`,
 nine leaf slugs are all linked from code-owned chrome — two axes, three groups and nine leaves, fourteen in
 all. (`/services/localshoring` is a fifteenth planned route but is deliberately NOT linked yet: the nav and
 footer both still point at the `localshoring` Page, which resolves today.) Unlike every row above, **none of them needs a page
-built** — `services.json` in the private `website-content` repo already carries all fifteen documents as
+built** — `services.json` already carries all fifteen documents as
 clearly-marked placeholders, verified to seed with `errors=0`. They 404 only until someone runs
-`npm run payload:seed -- docs/content-drafts/services.json` against the lane. **Sequence that immediately
+`npm run payload:seed -- docs/content-drafts/services.json` against the lane. (That path is the usual one —
+`docs/content-drafts` is a symlink to the private `website-content` repo, so the file is versioned there and
+reached from here, which is why both names refer to one file.) **Sequence that immediately
 behind the merge**, because a merge to `main` deploys preview at once and both panels are dead in the gap.
 What is genuinely outstanding is the _copy_, tracked in §12: three of nine leaves have a usable draft, three
 have adjacent material about a different subject, three have nothing, and none of the three group pages or

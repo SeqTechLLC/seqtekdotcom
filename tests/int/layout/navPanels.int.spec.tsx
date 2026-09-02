@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest'
 
 import { MobileNav } from '../../../src/components/layout/MobileNav'
 import { PrimaryNav } from '../../../src/components/layout/PrimaryNav'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { navigation, type NavItem } from '../../../src/lib/site-content'
 
 /**
@@ -282,5 +285,27 @@ describe('<MobileNav /> — the same data, collapsed', () => {
     ]) {
       expect(panel.getByRole('button', { name: `${group} links`, hidden: true })).toBeTruthy()
     }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The footer grid track count is COUPLED to `footerNav.length` and nothing
+// enforced it. `SiteFooter` puts the brand block on `lg:col-span-2` and each
+// nav column on `lg:col-span-1`, so the row needs `2 + footerNav.length`
+// tracks. NAV-1 removed the services column and left the count at 6, so the
+// footer rendered five-sixths wide with a dead track — visible on every page,
+// caught by hand rather than by CI. The existing e2e only asserts the column
+// HEADINGS are visible, which passes just as happily with the extra track.
+// ---------------------------------------------------------------------------
+describe('SiteFooter grid fits its columns', () => {
+  it('declares 2 + footerNav.length tracks at lg', () => {
+    // Same pattern as `noBespokeBodyTemplates.int.spec.ts`: resolve from cwd.
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/components/layout/SiteFooter.tsx'),
+      'utf8',
+    )
+    const declared = source.match(/lg:grid-cols-(\d+)/)
+    expect(declared, 'no lg:grid-cols-N on the footer grid').toBeTruthy()
+    expect(Number(declared![1])).toBe(2 + navigation.footerNav.length)
   })
 })
