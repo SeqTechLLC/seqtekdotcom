@@ -13,8 +13,9 @@ import { NavCaret } from './NavCaret'
  * Three things about the shape are deliberate:
  *
  * 1. **The top-level item stays a link, and the caret is a separate button.**
- *    Every axis has its own page (`/services` is today's), so turning the
- *    trigger into a button would strand that page behind a menu. Two controls
+ *    Every axis has its own page (`/services/what-we-do` and
+ *    `/services/how-we-work`), so turning the trigger into a button would
+ *    strand that page behind a menu. Two controls
  *    with two accessible names is also the same row pattern a *linked group*
  *    needs, so there is one idea here rather than two.
  * 2. **Click to open, never hover-only.** Hover-only fails WCAG 2.2 §1.4.13

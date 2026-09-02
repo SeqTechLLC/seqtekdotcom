@@ -23,7 +23,7 @@ import { navigation, type NavItem } from '../../../src/lib/site-content'
 const FIXTURE: NavItem[] = [
   {
     label: 'What we do',
-    url: '/services',
+    url: '/fixture-axis',
     panel: {
       groups: [
         {
@@ -215,7 +215,7 @@ describe('<MobileNav /> — the same data, collapsed', () => {
   it('gives a panel item a link and a separate caret, each with its own name', () => {
     const { getByRole } = render(<MobileNav navItems={FIXTURE} ctaButton={CTA} />)
     expect(getByRole('link', { name: 'What we do', hidden: true }).getAttribute('href')).toBe(
-      '/services',
+      '/fixture-axis',
     )
     expect(getByRole('button', { name: 'What we do menu', hidden: true })).toBeTruthy()
   })

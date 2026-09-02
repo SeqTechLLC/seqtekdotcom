@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
     return buildMetadata(null, {
       title: 'Services',
       description:
-        'How we help: workshops, localshoring, AI integration, and digital transformation.',
+        'What we do and how we work: strategy and business consulting, technology and data, AI and automation.',
     })
   }
   return buildMetadata(page.seo, { title: page.title })

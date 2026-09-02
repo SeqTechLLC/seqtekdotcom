@@ -92,9 +92,11 @@ const SERVICE_GROUP_SLUG = 'delivery-and-change'
 /**
  * An axis — the third and last tier, and the one NAV-1 made load-bearing: two
  * of the six top-level nav items point at an axis page. It was the only tier
- * with no fixture, so the `[slug]` template's axis branch shipped exercised by
- * nothing. Its body is `service-pillar-cards`, which is the block an axis page
- * exists to carry (a group's own page uses `service-cards` instead).
+ * with no fixture. The route is tier-agnostic (it stamps `data-tier` and hands
+ * the layout to RenderBlocks), so what went uncovered is not a branch but the
+ * SHAPE an axis carries: `service-pillar-cards`, the block whose whole purpose
+ * is an axis page, and which no other fixture renders (a group's own page uses
+ * `service-cards` instead).
  */
 const SERVICE_AXIS_SLUG = 'what-we-do-e2e'
 

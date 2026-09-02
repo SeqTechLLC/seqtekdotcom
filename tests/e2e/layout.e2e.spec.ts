@@ -117,23 +117,27 @@ test.describe('Site chrome — desktop viewport', () => {
   // and the worst case, because the cap grows with the viewport while the
   // trigger's left offset grows more slowly. The suite's default 1280 measured
   // 0px over even while the bug was live, so this test sets its own width.
-  test('opening the widest nav panel does not widen the document (lg boundary)', async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1024, height: 800 })
-    await page.goto('/')
-    const caret = page.getByTestId('site-header').getByRole('button', { name: 'What We Do menu' })
-    await caret.click()
-    await expect(caret).toHaveAttribute('aria-expanded', 'true')
+  test('opening the widest nav panel does not widen the document', async ({ page }) => {
+    // 1024 is the `lg` boundary and the worst case, but the cap and the
+    // trigger's offset scale differently, so check across the desktop range
+    // rather than trusting one width. 1280/1440 were hand-checked once; this
+    // makes that permanent.
+    for (const width of [1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 800 })
+      await page.goto('/')
+      const caret = page.getByTestId('site-header').getByRole('button', { name: 'What We Do menu' })
+      await caret.click()
+      await expect(caret).toHaveAttribute('aria-expanded', 'true')
 
-    const m = await page.evaluate(() => ({
-      doc: document.documentElement.scrollWidth,
-      win: window.innerWidth,
-    }))
-    expect(
-      m.doc,
-      `opening the nav panel widened the document to ${m.doc}px in a ${m.win}px window`,
-    ).toBeLessThanOrEqual(m.win)
+      const m = await page.evaluate(() => ({
+        doc: document.documentElement.scrollWidth,
+        win: window.innerWidth,
+      }))
+      expect(
+        m.doc,
+        `opening the nav panel widened the document to ${m.doc}px in a ${m.win}px window`,
+      ).toBeLessThanOrEqual(m.win)
+    }
   })
 })
 

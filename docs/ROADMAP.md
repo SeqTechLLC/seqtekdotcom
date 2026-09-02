@@ -208,8 +208,9 @@ The rest of this tier is what has to be true around them.
     broken on touch and hybrid laptops. Hover is fine layered on top of click.
   - **No focus trap.** It is a disclosure, not a modal.
 
-  Also note `tests/e2e/layout.e2e.spec.ts:24` asserts all six top-level items are visible **links**. If
-  "Services" becomes a button that opens a panel, that assertion changes shape.
+  Also note `tests/e2e/layout.e2e.spec.ts` (the `for (const label of …)` block, ~:28-35) asserts all six
+  top-level items are visible **links**. If an axis item becomes a button that opens a panel, that assertion
+  changes shape.
 
   **Sequencing — this is not all blocked on Brent.** The component needs neither his diagram nor SVC-2. Build
   it against today's real routes, get it through the a11y gate, merge it. Then the groups and items are a data
