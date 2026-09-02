@@ -129,13 +129,17 @@ test.describe('Site chrome — desktop viewport', () => {
       await caret.click()
       await expect(caret).toHaveAttribute('aria-expanded', 'true')
 
+      // `clientWidth`, not `innerWidth`: innerWidth includes the classic
+      // scrollbar headless Chromium renders, while scrollWidth is content
+      // width — so comparing against it hides any overflow smaller than the
+      // scrollbar (~15px). clientWidth is the exact comparand.
       const m = await page.evaluate(() => ({
         doc: document.documentElement.scrollWidth,
-        win: window.innerWidth,
+        win: document.documentElement.clientWidth,
       }))
       expect(
         m.doc,
-        `opening the nav panel widened the document to ${m.doc}px in a ${m.win}px window`,
+        `opening the nav panel widened the document to ${m.doc}px in a ${m.win}px viewport`,
       ).toBeLessThanOrEqual(m.win)
     }
   })

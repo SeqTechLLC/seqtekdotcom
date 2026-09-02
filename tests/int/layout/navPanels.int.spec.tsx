@@ -304,8 +304,10 @@ describe('SiteFooter grid fits its columns', () => {
       resolve(process.cwd(), 'src/components/layout/SiteFooter.tsx'),
       'utf8',
     )
-    const declared = source.match(/lg:grid-cols-(\d+)/)
-    expect(declared, 'no lg:grid-cols-N on the footer grid').toBeTruthy()
-    expect(Number(declared![1])).toBe(2 + navigation.footerNav.length)
+    // Match ALL of them and require exactly one: a first-match regex would
+    // silently retarget this assertion if a second grid ever appeared.
+    const declared = [...source.matchAll(/lg:grid-cols-(\d+)/g)]
+    expect(declared, 'expected exactly one lg:grid-cols-N in SiteFooter').toHaveLength(1)
+    expect(Number(declared[0][1])).toBe(2 + navigation.footerNav.length)
   })
 })
