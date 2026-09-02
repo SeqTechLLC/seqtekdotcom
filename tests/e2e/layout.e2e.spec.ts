@@ -42,10 +42,12 @@ test.describe('Site chrome — desktop viewport', () => {
     await expect(ctaButton).toBeVisible()
     await expect(ctaButton).toHaveAttribute('href', '/contact')
 
-    // Footer is rendered with all four navigation columns + legal links.
+    // Footer is rendered with all THREE navigation columns + legal links. The
+    // services column is gone on purpose: the services menu lives in the
+    // header, and a cut-down copy of it below was a second, worse navigation.
     const footer = page.getByTestId('site-footer')
     await expect(footer).toBeVisible()
-    for (const column of ['Company', 'What We Do', 'Resources', 'Connect']) {
+    for (const column of ['Company', 'Resources', 'Connect']) {
       await expect(footer.getByRole('heading', { name: column, level: 2 })).toBeVisible()
     }
     await expect(footer.getByRole('link', { name: 'Privacy Policy' })).toBeVisible()

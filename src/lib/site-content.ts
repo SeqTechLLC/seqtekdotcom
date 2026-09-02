@@ -200,35 +200,25 @@ export const navigation: Navigation = {
         // TODO(stub): Careers page not built — re-add when it ships.
       ],
     },
-    // The footer carries FOUR columns because the grid is `lg:grid-cols-6` and
-    // the brand block spans 2 (SiteFooter.tsx:40). So it does not mirror the
-    // header's two axes column-for-column: "What We Do" gets its own column,
-    // and the how-we-work items sit in Resources alongside the content hubs.
-    // Widen the grid to 7 if this should mirror the header exactly.
-    {
-      label: 'What We Do',
-      url: '/services/what-we-do',
-      children: [
-        // The three groups, not the nine leaves — a footer column listing nine
-        // services would dwarf every other column.
-        {
-          label: 'Strategy and Business Consulting',
-          url: '/services/strategy-and-business-consulting',
-        },
-        { label: 'Technology and Data', url: '/services/technology-and-data' },
-        { label: 'AI and Automation', url: '/services/ai-and-automation' },
-      ],
-    },
+    // NO SERVICES COLUMN, deliberately. The footer used to list offerings, and
+    // under the two-axis IA that would mean either nine leaves (which dwarfs
+    // every other column) or three group names (the longest of which wrapped to
+    // three lines in a column a sixth of the container wide). Neither earns its
+    // place: the services menu lives in the header, where it has room to be the
+    // Argano-shaped panel Brent asked for. Repeating a cut-down version below
+    // it is a second, worse copy of the same navigation.
+    //
+    // If a single "what we do" link or a full offerings index belongs here
+    // later, that is a decision to take on its own terms — not a leftover.
     {
       label: 'Resources',
       url: '/insights',
       children: [
         { label: 'Case Studies', url: '/case-studies' },
         { label: 'Insights', url: '/insights' },
-        // How-we-work items. Both are in the header's second axis; the footer
-        // has no column for it, so they live with the other read-first pages.
+        // Workshops stays: it is a listing route in its own right and predates
+        // the services IA, not an offering promoted into the footer.
         { label: 'Workshops', url: '/workshops' },
-        { label: 'Localshoring', url: '/services/localshoring' },
       ],
     },
     {
