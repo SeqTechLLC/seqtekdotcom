@@ -57,6 +57,7 @@ jobs:
             src:
               - 'src/**'
               - 'tests/**'
+              - 'tools/**'
               - 'public/**'
               - 'package.json'
               - 'package-lock.json'

@@ -313,7 +313,12 @@ describe('upsertSpec — collection', () => {
       },
     )
     expect(result.operation).toBe('dry-run')
-    expect(calls.length).toBe(0)
+    // A dry-run performs no WRITES. It does now perform one READ — the
+    // find that lets it report `wouldBe: create | update`, which is most of
+    // what a rehearsal is for. Assert on method, not on call count, so the
+    // guarantee is the one that matters.
+    expect(calls.filter((c) => c.method !== 'GET')).toEqual([])
+    expect(result.wouldBe).toBe('create')
   })
 })
 
@@ -406,7 +411,11 @@ describe('resolveData — $ref', () => {
 
     expect(data.industry).toBe('industries-1')
     const created = bodyOf(calls, 'POST', '/api/industries')
-    expect(created).toEqual({ title: 'Healthcare', slug: 'healthcare' })
+    // `_status: 'published'` is the point. Every createIfMissing target has
+    // `versions: { drafts: true }`, so without it Payload defaulted the row to
+    // a draft and `publishedOrAuthed` hid it from the public site — while the
+    // log said "created". This test previously pinned that bug.
+    expect(created).toEqual({ title: 'Healthcare', slug: 'healthcare', _status: 'published' })
   })
 
   it('drops the enclosing array element when an omitIfMissing $ref is unresolved', async () => {

@@ -37,6 +37,16 @@ export interface ResolveOptions {
   allowMissingRefs: boolean
   log: (msg: string) => void
   warn: (msg: string) => void
+  /**
+   * Dry-run only. Identities (`collection:field:value`) that EARLIER specs in
+   * this same run would create. A dry-run writes nothing, so a `$ref` to a
+   * document a previous spec would have created could never resolve — and the
+   * run reported failures the docs then told you to ignore ("a --dry-run of
+   * case-studies.json always reports 3 unresolved $refs… not real defects").
+   * Noise a caller is trained to ignore is worse than no check, because the
+   * one real unresolved ref hides in it.
+   */
+  plannedIdentities?: ReadonlySet<string>
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -94,12 +104,25 @@ async function resolveRef(
           })()
   if (values.length === 0) throw new Error('$ref.value must not be empty')
 
+  const label = `${collection}.${field}=${values.join('|')}`
+
+  // Dry-run: a ref to something an earlier spec in THIS file would create is
+  // resolvable, because that is what the real run does. Checked BEFORE the
+  // network, deliberately — it is free, and it means a dry-run still answers
+  // the intra-file question when the target is slow or unreachable, which is
+  // exactly when a rehearsal is most useful.
+  if (opts.dryRun && opts.plannedIdentities) {
+    const planned = values.find((v) => opts.plannedIdentities?.has(`${collection}:${field}:${v}`))
+    if (planned !== undefined) {
+      opts.log(`would resolve ${label} to a doc an earlier spec creates`)
+      return `<ref-planned:${collection}:${planned}>`
+    }
+  }
+
   for (const value of values) {
     const id = await client.findIdByField(collection, field, value, { draft: true })
     if (id !== null) return id
   }
-
-  const label = `${collection}.${field}=${values.join('|')}`
 
   if (raw.createIfMissing !== undefined) {
     if (!isObject(raw.createIfMissing)) {
@@ -109,8 +132,18 @@ async function resolveRef(
       opts.log(`would create ${collection} (createIfMissing) for unresolved ${label}`)
       return `<ref-create:${collection}:${values[0]}>`
     }
-    const id = await client.createDoc(collection, raw.createIfMissing, { draft: false })
-    opts.log(`created ${collection} (createIfMissing) → ${id}`)
+    // `_status: 'published'` explicitly. Every plausible createIfMissing target
+    // (industries, categories, services, locations) has `versions: { drafts: true }`,
+    // so omitting it let Payload default the row to a DRAFT while this line
+    // logged "created" — and `publishedOrAuthed` filters drafts out of public
+    // reads, so the auto-created taxonomy never appeared on the site. Same bug
+    // the globals branch of `upsert.ts` already fixed and documented.
+    const id = await client.createDoc(
+      collection,
+      { ...raw.createIfMissing, _status: 'published' },
+      { draft: false },
+    )
+    opts.log(`created ${collection} (createIfMissing) → ${id} [published]`)
     return id
   }
 

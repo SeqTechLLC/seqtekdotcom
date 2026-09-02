@@ -33,11 +33,14 @@ IMPORT_TOKEN=<session-jwt> npm run payload:seed ./seed.json \
 | `<file.json>`          | Path to the seed JSON (positional, required).                         |
 | `--base-url=<url>`     | Target origin. Default `http://localhost:3100`, or `IMPORT_BASE_URL`. |
 | `--draft`              | Force every spec to draft. Default: publish.                          |
-| `--dry-run`            | Resolve + print intended ops; write nothing, upload nothing.          |
+| `--dry-run`            | Resolve + report intended ops; write nothing, upload nothing.         |
 | `--allow-missing-refs` | Downgrade an unresolved non-omittable `$ref` from error to warn+drop. |
+| `--json`               | One JSON result object on stdout; human log moves to stderr.          |
+| `--check-orphans`      | After writing, warn about published docs this file does not mention.  |
 | `IMPORT_TOKEN`         | Your `/admin` session JWT. Required unless `--dry-run`. Never logged. |
 | `IMPORT_BASE_URL`      | Alternative to `--base-url`.                                          |
 | `IMPORT_COOKIE`        | Raw `Cookie` header for a target behind an auth proxy. Unset locally. |
+| `IMPORT_TIMEOUT_MS`    | Per-request timeout, default `60000`.                                 |
 
 ### Getting `IMPORT_TOKEN`
 
@@ -194,3 +197,87 @@ created=X updated=Y globals=Z errors=N
 The process exits non-zero if any spec errors. A spec failure is logged and the
 run continues to the next spec (so a bad ref late in a file doesn't undo earlier
 writes), but the non-zero exit flags that the run was not clean.
+
+**`--json`** replaces that with a single object on stdout — `ok`, `counts`,
+`aborted`, `orphans`, and a `results` entry per spec — and moves the human log
+to stderr, so an unattended caller can assert on a result rather than scrape
+log lines.
+
+## What `--dry-run` now tells you
+
+It performs no **writes** — but it does perform reads, when a token is present,
+because that is what lets it say whether each spec would **create** or
+**update**:
+
+```
+[dry-run] would update services:localshoring [published]
+[dry-run] would create services:what-we-do [published]
+```
+
+It also resolves `$ref`s pointing at documents an **earlier spec in the same
+file** would create, rather than reporting them as failures. Previously a
+dry-run of `case-studies.json` always printed three unresolved `$ref`s that the
+docs told you to ignore — noise a caller learns to skip past is worse than no
+check, because the one real failure hides in it.
+
+Without a token it still runs (resolving as an anonymous reader, so it sees
+only published documents) and reports `would unknown` rather than guessing.
+
+## What fails before anything is written
+
+Two checks run up front, and neither needs a token or a server:
+
+1. **Envelope** — `collection`/`global`, `identity`, `data`, `status`, and the
+   identity value's presence in `data`.
+2. **Directive structure** — `$ref` / `$file` / `$lexical` shapes, plus whether
+   each local `$file.path` exists on disk.
+
+Both collect every problem before returning, so one run tells you everything to
+fix. Directive checks used to live inside the resolver, which runs per spec
+interleaved with writes — so a malformed `$file` in spec 19 of 20 was found
+_after_ eighteen documents had been written.
+
+**Unknown top-level keys are still ignored** (content files park editorial notes
+beside `collection`, and `_note` documents a spec in place) — but a key close
+enough to a real one to be a typo is now an **error**. `"stauts": "unpublished"`
+does not retire a document, it publishes it, because the misspelling is ignored
+and `status` defaults to `published`. Prefix a key with `_` to mark it
+deliberate.
+
+## What it will not do: retire
+
+The tool is **upsert-only**. A request file says what to write; it never says
+what to remove, so **deleting a document from a file leaves it published**. This
+has bitten twice — the `taurex` umbrella stayed live for weeks, and nine legacy
+service documents survived a restructure and stayed in the sitemap.
+
+To take a document down, say so:
+
+```json
+{
+  "collection": "services",
+  "identity": "slug",
+  "status": "unpublished",
+  "data": { "slug": "old-thing" }
+}
+```
+
+`unpublished` writes `_status: 'draft'` — the document and its version history
+survive, so it can be re-published. Pass **`--check-orphans`** to have the run
+warn about published documents in the touched collections that the file does not
+mention. It is opt-in because seeding one document on purpose would otherwise
+report every other document as an orphan.
+
+## Failure modes worth knowing
+
+- **Auth is fatal, not per-document.** A 401/403 aborts the run rather than
+  repeating against every remaining spec. Re-running after minting a fresh token
+  is safe — every write is an idempotent upsert.
+- **Requests time out** (default 60s). A gated lane reached without its session
+  cookie stalls rather than refusing, and a hang is indistinguishable from slow
+  progress; `IMPORT_TIMEOUT_MS` adjusts it.
+- **Partial application leaves side effects.** A spec that uploads media and
+  creates a taxonomy doc, then fails on the main upsert, leaves those behind.
+  Re-running dedupes rather than duplicating, so this is litter, not corruption.
+- **A 2xx is not proof the page renders.** The seeder cannot tell you that the
+  document it wrote has a body worth showing.

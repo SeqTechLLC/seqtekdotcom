@@ -42,6 +42,15 @@ export interface ClientConfig {
    * ungated environments (local, staging).
    */
   cookie?: string
+  /**
+   * Per-request timeout in ms. Default 60s — generous enough for a 25MB media
+   * upload over a slow link, short enough that a wedged request fails instead
+   * of hanging. There was no timeout at all before: a gated lane reached
+   * without its session cookie left the run stalled indefinitely rather than
+   * erroring, which is the worst outcome for an unattended caller, because a
+   * hang is indistinguishable from slow progress.
+   */
+  timeoutMs?: number
   fetchFn?: FetchFn
 }
 
@@ -95,17 +104,45 @@ interface WriteResponse {
   doc?: { id: DocId }
 }
 
+/**
+ * Wrap a fetch so every request carries a deadline, and an expired one reports
+ * as a timeout rather than a generic `AbortError`. Applied once in the
+ * constructor so all call sites inherit it — there are six, and patching them
+ * individually is how one gets missed.
+ */
+function withTimeout(fetchFn: FetchFn, timeoutMs: number): FetchFn {
+  return async (input, init) => {
+    const signal = AbortSignal.timeout(timeoutMs)
+    try {
+      return await fetchFn(input, { ...(init ?? {}), signal })
+    } catch (err) {
+      const name = (err as { name?: string } | undefined)?.name
+      if (name === 'TimeoutError' || name === 'AbortError') {
+        const url = typeof input === 'string' ? input : String(input)
+        throw new PayloadRestError(
+          `Request to ${url} exceeded ${timeoutMs}ms. If the target is behind an auth ` +
+            `proxy, a missing or expired session cookie stalls rather than refusing — ` +
+            `check IMPORT_COOKIE first.`,
+        )
+      }
+      throw err
+    }
+  }
+}
+
 export class PayloadRestClient {
   private readonly baseUrl: string
   private readonly token?: string
   private readonly cookie?: string
+  private readonly timeoutMs: number
   private readonly fetchFn: FetchFn
 
   constructor(config: ClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, '')
     this.token = config.token
     this.cookie = config.cookie
-    this.fetchFn = config.fetchFn ?? globalThis.fetch
+    this.timeoutMs = config.timeoutMs ?? 60_000
+    this.fetchFn = withTimeout(config.fetchFn ?? globalThis.fetch, this.timeoutMs)
   }
 
   get hasToken(): boolean {
@@ -210,6 +247,38 @@ export class PayloadRestClient {
     if (!res.ok) throw await this.toError(res, `find ${collection} by ${field}`)
     const json = await this.parseJson<FindResponse>(res, `find ${collection} by ${field}`)
     return json.docs && json.docs.length > 0 ? json.docs[0].id : null
+  }
+
+  /**
+   * Every PUBLISHED value of `field` in a collection, for orphan detection.
+   * Read-only, one request, `depth=0`.
+   *
+   * The seeder is upsert-only: a request file describes what to write, never
+   * what to retire, so deleting a document from a file leaves it live and
+   * unreferenced. That has bitten twice — the `taurex` umbrella stayed
+   * published for weeks, and the nine legacy capability-set services survived
+   * the SVC-2 reseed and stayed in the sitemap. Neither was detectable from
+   * the seeder's own output, because from its point of view nothing was wrong.
+   */
+  async listPublishedFieldValues(collection: string, field: string): Promise<string[]> {
+    const params = new URLSearchParams({
+      limit: '500',
+      depth: '0',
+      draft: 'false',
+      [`where[${field}][exists]`]: 'true',
+    })
+    const res = await this.fetchFn(`${this.baseUrl}/api/${collection}?${params.toString()}`, {
+      headers: this.authHeaders(),
+    })
+    if (!res.ok) throw await this.toError(res, `list ${collection}`)
+    const json = await this.parseJson<{ docs?: Array<Record<string, unknown>> }>(
+      res,
+      `list ${collection}`,
+    )
+    return (json.docs ?? [])
+      .map((d) => d[field])
+      .filter((v): v is string | number => typeof v === 'string' || typeof v === 'number')
+      .map(String)
   }
 
   /** Read an image from disk or URL into bytes, validating type + size. */

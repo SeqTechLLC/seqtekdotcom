@@ -60,11 +60,56 @@ function parseStatus(value: unknown, path: string, errors: string[]): SeedStatus
   return 'published'
 }
 
+/** Levenshtein distance, capped small — only used to spot key typos. */
+function editDistance(a: string, b: string): number {
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i)
+  const cur = new Array<number>(b.length + 1).fill(0)
+  for (let i = 1; i <= a.length; i++) {
+    cur[0] = i
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = cur[j]
+  }
+  return prev[b.length]
+}
+
+const KNOWN_KEYS = ['collection', 'global', 'identity', 'data', 'status'] as const
+
+/**
+ * Unknown top-level keys are IGNORED by design — `docs/content-drafts` files
+ * park editorial notes beside `collection`, and `_note` documents a spec in
+ * place. That tolerance has one sharp edge: a typo in a REAL key is also
+ * ignored, silently. `"stauts": "unpublished"` does not retire a document, it
+ * publishes it, because `parseStatus(undefined)` returns 'published'.
+ *
+ * So: an unknown key close enough to a real one to be a typo is an ERROR; a key
+ * that resembles nothing is left alone. This keeps the escape hatch open while
+ * closing the case where the file says one thing and the tool does another.
+ */
+function checkKeyTypos(raw: Record<string, unknown>, path: string, errors: string[]): void {
+  for (const key of Object.keys(raw)) {
+    if ((KNOWN_KEYS as readonly string[]).includes(key)) continue
+    if (key.startsWith('_')) continue // documented escape hatch, e.g. `_note`
+    for (const known of KNOWN_KEYS) {
+      if (editDistance(key.toLowerCase(), known) <= 2) {
+        errors.push(
+          `${path}.${key} is not a known key and looks like a typo for "${known}". ` +
+            `Rename it, or prefix it with "_" if it is deliberate metadata.`,
+        )
+        break
+      }
+    }
+  }
+}
+
 function validateOne(raw: unknown, path: string, errors: string[]): SeedSpec | null {
   if (!isObject(raw)) {
     errors.push(`${path} must be an object`)
     return null
   }
+
+  checkKeyTypos(raw, path, errors)
 
   // A `global` key marks this as a global spec; otherwise it's a collection.
   if ('global' in raw) {

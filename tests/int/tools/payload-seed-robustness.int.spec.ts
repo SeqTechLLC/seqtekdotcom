@@ -1,0 +1,224 @@
+import { describe, expect, it } from 'vitest'
+
+import { PayloadRestClient, PayloadRestError } from '../../../tools/payload-rest/client'
+import { preflight } from '../../../tools/payload-seed/preflight'
+import { validateSpecs } from '../../../tools/payload-seed/spec'
+
+/**
+ * The seeder's robustness contract, written after an assessment found that the
+ * parts which had already burned someone were solid and the parts that had not
+ * were sharp. Each block below pins one defect that was real:
+ *
+ *   - a hang with no timeout, which an unattended caller cannot distinguish
+ *     from slow progress (cost a 10-minute stall on a gated lane);
+ *   - a typo'd spec key silently doing the OPPOSITE of what the file says;
+ *   - directive errors surfacing after N documents were already written;
+ *   - `$file.path` pointing at nothing, discovered mid-run.
+ *
+ * `createIfMissing` publishing rather than drafting, and dry-run reporting
+ * create-vs-update, are pinned in `payload-seed.int.spec.ts` beside the
+ * behaviour they changed.
+ */
+
+const okJson = (body: unknown): Response =>
+  new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  })
+
+describe('client — per-request timeout', () => {
+  it('fails with an actionable message instead of hanging', async () => {
+    // A gated lane reached without its cookie does not refuse — it stalls.
+    const neverResolves: typeof fetch = (_input, init) =>
+      new Promise((_res, rej) => {
+        init?.signal?.addEventListener('abort', () =>
+          rej(Object.assign(new Error('aborted'), { name: 'TimeoutError' })),
+        )
+      })
+
+    const client = new PayloadRestClient({
+      baseUrl: 'https://gated.example.com',
+      token: 't',
+      timeoutMs: 40,
+      fetchFn: neverResolves,
+    })
+
+    await expect(client.findIdByField('services', 'slug', 'x', { draft: false })).rejects.toThrow(
+      /exceeded 40ms.*IMPORT_COOKIE/s,
+    )
+  })
+
+  it('surfaces the timeout as a PayloadRestError, so callers can branch on it', async () => {
+    const neverResolves: typeof fetch = (_input, init) =>
+      new Promise((_res, rej) => {
+        init?.signal?.addEventListener('abort', () =>
+          rej(Object.assign(new Error('aborted'), { name: 'TimeoutError' })),
+        )
+      })
+    const client = new PayloadRestClient({
+      baseUrl: 'https://gated.example.com',
+      token: 't',
+      timeoutMs: 30,
+      fetchFn: neverResolves,
+    })
+    await expect(
+      client.findIdByField('services', 'slug', 'x', { draft: false }),
+    ).rejects.toBeInstanceOf(PayloadRestError)
+  })
+
+  it('does not interfere with a request that answers in time', async () => {
+    const client = new PayloadRestClient({
+      baseUrl: 'https://example.com',
+      token: 't',
+      timeoutMs: 5_000,
+      fetchFn: async () => okJson({ docs: [{ id: 7 }] }),
+    })
+    await expect(client.findIdByField('services', 'slug', 'x', { draft: false })).resolves.toBe(7)
+  })
+})
+
+describe('spec validation — key typos', () => {
+  it('rejects a near-miss of a real key', () => {
+    // The motivating case: `stauts` is ignored, `parseStatus(undefined)`
+    // returns 'published', and a spec meant to RETIRE a document publishes it.
+    const r = validateSpecs([
+      { collection: 'services', identity: 'slug', stauts: 'unpublished', data: { slug: 'a' } },
+    ])
+    expect(r.ok).toBe(false)
+    expect(r.ok === false && r.errors.join('\n')).toMatch(/stauts.*typo for "status"/)
+  })
+
+  it('rejects a near-miss of identity, which would silently change the upsert key', () => {
+    const r = validateSpecs([{ collection: 'services', identiy: 'title', data: { slug: 'a' } }])
+    expect(r.ok).toBe(false)
+    expect(r.ok === false && r.errors.join('\n')).toMatch(/identiy.*typo for "identity"/)
+  })
+
+  it('leaves deliberate metadata alone — the escape hatch content files rely on', () => {
+    // `docs/content-drafts` parks editorial notes beside `collection`, and
+    // `_note` documents a spec in place. Neither resembles a real key.
+    const r = validateSpecs([
+      {
+        collection: 'services',
+        identity: 'slug',
+        _note: 'why this exists',
+        bannerHeadline: 'editorial aside',
+        data: { slug: 'a' },
+      },
+    ])
+    expect(r.ok).toBe(true)
+  })
+})
+
+describe('preflight — structure before the first write', () => {
+  const spec = (data: Record<string, unknown>) => {
+    const v = validateSpecs([{ collection: 'services', identity: 'slug', data }])
+    if (!v.ok) throw new Error(`fixture invalid: ${v.errors.join(', ')}`)
+    return v.value
+  }
+
+  it('reports every problem in one pass, not the first', async () => {
+    const { errors } = await preflight(
+      spec({
+        slug: 'a',
+        one: { $ref: { collection: '', field: 'slug', value: 'x' } },
+        two: { $lexical: 123 },
+        three: { $file: { url: 'https://e.com/a.png' } },
+      }),
+      process.cwd(),
+    )
+    expect(errors).toHaveLength(3)
+    expect(errors.join('\n')).toMatch(/\$ref\.collection/)
+    expect(errors.join('\n')).toMatch(/\$lexical value must be a string/)
+    expect(errors.join('\n')).toMatch(/\$file\.alt is required/)
+  })
+
+  it('names the document, not just the collection', async () => {
+    const { errors } = await preflight(
+      spec({ slug: 'the-one-that-broke', bad: { $lexical: 5 } }),
+      process.cwd(),
+    )
+    expect(errors[0]).toContain('services:the-one-that-broke')
+  })
+
+  it('catches a $file.path that is not on disk', async () => {
+    const { errors } = await preflight(
+      spec({ slug: 'a', img: { $file: { path: 'no/such/asset.png', alt: 'x' } } }),
+      process.cwd(),
+    )
+    expect(errors.join('\n')).toMatch(/does not exist on disk/)
+  })
+
+  it('rejects a directive object carrying extra keys', async () => {
+    const { errors } = await preflight(
+      spec({ slug: 'a', x: { $ref: { collection: 'c', field: 'f', value: 'v' }, note: 'oops' } }),
+      process.cwd(),
+    )
+    expect(errors.join('\n')).toMatch(/malformed directive/)
+  })
+
+  it('passes a well-formed file', async () => {
+    const { errors } = await preflight(
+      spec({
+        slug: 'a',
+        rel: { $ref: { collection: 'industries', field: 'slug', value: 'energy' } },
+        body: { $lexical: 'Some prose.' },
+      }),
+      process.cwd(),
+    )
+    expect(errors).toEqual([])
+  })
+})
+
+describe('dry-run — intra-file refs resolve without the network', () => {
+  it('resolves a $ref to a doc an earlier spec would create, even when the target is unreachable', async () => {
+    const { resolveData } = await import('../../../tools/payload-seed/resolve')
+    const logs: string[] = []
+    // Any network call here is a failure of the test's premise, not a timeout.
+    const exploding: typeof fetch = () => {
+      throw new Error('the resolver reached the network for a planned identity')
+    }
+    const client = new PayloadRestClient({
+      baseUrl: 'http://127.0.0.1:9',
+      token: 't',
+      fetchFn: exploding,
+    })
+
+    const out = await resolveData(
+      client,
+      { industry: { $ref: { collection: 'industries', field: 'slug', value: 'brand-new' } } },
+      {
+        dryRun: true,
+        allowMissingRefs: false,
+        plannedIdentities: new Set(['industries:slug:brand-new']),
+        log: (m) => logs.push(m),
+        warn: () => {},
+      },
+    )
+
+    expect(out.industry).toBe('<ref-planned:industries:brand-new>')
+    expect(logs.join('\n')).toMatch(/would resolve .* an earlier spec creates/)
+  })
+
+  it('still reports a ref that no spec creates as unresolved', async () => {
+    const { resolveData } = await import('../../../tools/payload-seed/resolve')
+    const client = new PayloadRestClient({
+      baseUrl: 'https://example.com',
+      token: 't',
+      fetchFn: async () => okJson({ docs: [] }),
+    })
+    await expect(
+      resolveData(
+        client,
+        { industry: { $ref: { collection: 'industries', field: 'slug', value: 'nope' } } },
+        {
+          dryRun: true,
+          allowMissingRefs: false,
+          plannedIdentities: new Set(['industries:slug:something-else']),
+          log: () => {},
+          warn: () => {},
+        },
+      ),
+    ).rejects.toThrow(/unresolved \$ref/)
+  })
+})
