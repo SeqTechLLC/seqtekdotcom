@@ -90,6 +90,17 @@ const SERVICE_SLUGS = ['localshoring', 'ai-integration', 'digital-transformation
 const SERVICE_GROUP_SLUG = 'delivery-and-change'
 
 /**
+ * An axis — the third and last tier, and the one NAV-1 made load-bearing: two
+ * of the six top-level nav items point at an axis page. It was the only tier
+ * with no fixture. The route is tier-agnostic (it stamps `data-tier` and hands
+ * the layout to RenderBlocks), so what went uncovered is not a branch but the
+ * SHAPE an axis carries: `service-pillar-cards`, the block whose whole purpose
+ * is an axis page, and which no other fixture renders (a group's own page uses
+ * `service-cards` instead).
+ */
+const SERVICE_AXIS_SLUG = 'what-we-do-e2e'
+
+/**
  * The full in-scope route inventory (contracts C-1). Listing routes render even
  * empty; detail/generic routes need the seeded content above. `/admin` keeps
  * its separate critical/serious-only spec and is intentionally excluded.
@@ -111,6 +122,7 @@ export function inScopeRoutes(
     })),
     // Same flat namespace, different collection — SVC-2's group branch.
     { path: `/services/${SERVICE_GROUP_SLUG}`, label: 'service group' },
+    { path: `/services/${SERVICE_AXIS_SLUG}`, label: 'service axis' },
     { path: '/workshops', label: 'workshops (listing)' },
     { path: `/workshops/${seed.workshopSlug}`, label: 'workshop (detail)' },
     // ADR 0009 metadata collection (feat/partners-accesseva) — the index is new
@@ -326,7 +338,7 @@ export async function seedInScopeRoutes(
 
   // The group holds an ordered list of its services (SVC-2) — the relation lives
   // here, not on the leaf, so a leaf can sit under more than one group.
-  await payload.create({
+  const group = await payload.create({
     collection: 'services',
     data: {
       title: 'Delivery and Change',
@@ -345,6 +357,33 @@ export async function seedInScopeRoutes(
           blockType: 'service-cards',
           source: 'manual',
           manualItems: [(localshoring as { id: number }).id, (aiIntegration as { id: number }).id],
+        },
+      ] as never,
+      _status: 'published',
+    },
+    overrideAccess: true,
+  })
+
+  // The axis tier. `service-pillar-cards` requires at least one group, so this
+  // has to be created after the group above.
+  await payload.create({
+    collection: 'services',
+    data: {
+      title: 'What We Do (e2e)',
+      slug: SERVICE_AXIS_SLUG,
+      tier: 'axis',
+      layout: [
+        {
+          blockType: 'hero',
+          variant: 'text-only',
+          alignment: 'left',
+          headline: 'What We Do (e2e)',
+          subheadline: 'The areas we work in.',
+        },
+        {
+          blockType: 'service-pillar-cards',
+          heading: 'Our groups',
+          pillars: [(group as { id: number }).id],
         },
       ] as never,
       _status: 'published',
@@ -464,6 +503,7 @@ export async function cleanupInScopeRoutes(
   await del(payload, 'pages', 'slug', seed.localshoringSlug)
   await del(payload, 'pages', 'slug', SERVICE_OVERVIEW_PAGE_SLUG)
   // SVC-2: the leaves and the group are collection docs, not Pages.
+  await del(payload, 'services', 'slug', SERVICE_AXIS_SLUG)
   await del(payload, 'services', 'slug', SERVICE_GROUP_SLUG)
   for (const slug of SERVICE_SLUGS) {
     await del(payload, 'services', 'slug', slug)

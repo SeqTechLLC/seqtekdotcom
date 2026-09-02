@@ -3,23 +3,27 @@ import { describe, expect, it } from 'vitest'
 
 import { MobileNav } from '../../../src/components/layout/MobileNav'
 import { PrimaryNav } from '../../../src/components/layout/PrimaryNav'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { navigation, type NavItem } from '../../../src/lib/site-content'
 
 /**
- * ROADMAP NAV-1. The shipped nav data has exactly one shape today: two
- * single-group panels, no group URLs, because Brent's grouped service list had
- * not arrived when this was built. So the interesting halves of the component
- * — several columns, and a group that is itself a link — have no live instance
- * to exercise them.
+ * ROADMAP NAV-1. Written when the shipped nav had exactly one shape — two
+ * single-group panels and no group URLs — so the interesting halves of the
+ * component (several columns, and a group that is itself a link) had no live
+ * instance, the condition the INERT-2 gate exists to stop.
  *
- * That is precisely the condition the INERT-2 gate exists to stop: a control
- * that ships without anything proving it draws. These fixtures stand in for
- * the data until it lands.
+ * Brent's structure has since landed, and "What We Do" exercises both of those
+ * against the real `navigation.mainNav` further down. The fixture stays for
+ * what the shipped data still does NOT cover: a group with a title that is not
+ * a link, which neither axis produces (a single-group panel suppresses its
+ * title, and every multi-group entry carries a URL).
  */
 const FIXTURE: NavItem[] = [
   {
     label: 'What we do',
-    url: '/services',
+    url: '/fixture-axis',
     panel: {
       groups: [
         {
@@ -121,17 +125,18 @@ describe('<PrimaryNav /> — the desktop dropdown panel', () => {
 
   it('labels a single-group panel by the trigger instead of repeating it', () => {
     const { getByRole } = render(<PrimaryNav items={navigation.mainNav} />)
-    // Services carries one group, so no group title is drawn. Resolved through
-    // `aria-controls` rather than a positional test id, so reordering the nav
-    // fails on behaviour instead of on a missing element.
-    const controls = getByRole('button', { name: 'Services menu' }).getAttribute('aria-controls')
+    // "How We Work" carries one group, so no group title is drawn. (The
+    // multi-group path is covered by "What We Do" below, and by FIXTURE above.) Resolved through `aria-controls`
+    // rather than a positional test id, so reordering the nav fails on
+    // behaviour instead of on a missing element.
+    const controls = getByRole('button', { name: 'How We Work menu' }).getAttribute('aria-controls')
     const panel = document.getElementById(controls ?? '') as HTMLElement
     const list = panel.querySelector('ul') as HTMLElement
     const labelledBy = list.getAttribute('aria-labelledby') ?? ''
-    expect(document.getElementById(labelledBy)?.textContent).toBe('Services')
+    expect(document.getElementById(labelledBy)?.textContent).toBe('How We Work')
     // The point is that the group title is not repeated inside the panel, not
     // that the panel contains no <span> at all.
-    expect(within(panel).queryByText('Services')).toBeNull()
+    expect(within(panel).queryByText('How We Work')).toBeNull()
   })
 
   it('closes when its own trigger link navigates away', () => {
@@ -210,7 +215,7 @@ describe('<MobileNav /> — the same data, collapsed', () => {
   it('gives a panel item a link and a separate caret, each with its own name', () => {
     const { getByRole } = render(<MobileNav navItems={FIXTURE} ctaButton={CTA} />)
     expect(getByRole('link', { name: 'What we do', hidden: true }).getAttribute('href')).toBe(
-      '/services',
+      '/fixture-axis',
     )
     expect(getByRole('button', { name: 'What we do menu', hidden: true })).toBeTruthy()
   })
@@ -245,15 +250,64 @@ describe('<MobileNav /> — the same data, collapsed', () => {
     expect(getByRole('link', { name: 'Process Automation', hidden: true })).toBeTruthy()
   })
 
+  /**
+   * Open a top-level axis by ACCESSIBLE NAME and return its panel, resolved
+   * through `aria-controls` — the same way the desktop tests above do. The
+   * mobile block used ordinal test ids (`mobile-nav-caret-1`), which fail on a
+   * wrong-element assertion the moment the nav is reordered rather than on the
+   * behaviour under test. Reordering is exactly what this PR did.
+   */
+  const openAxis = (r: ReturnType<typeof render>, label: string) => {
+    const caret = r.getByRole('button', { name: `${label} menu`, hidden: true })
+    fireEvent.click(caret)
+    const id = caret.getAttribute('aria-controls') ?? ''
+    return within(document.getElementById(id) as HTMLElement)
+  }
+
   it('puts the leaves straight under a single-group item, with no repeated title', () => {
-    const { getByTestId } = render(<MobileNav navItems={navigation.mainNav} ctaButton={CTA} />)
-    fireEvent.click(getByTestId('mobile-nav-caret-1'))
-    const panel = within(getByTestId('mobile-nav-panel-1'))
-    // A real leaf from `site-content.ts`, not a fixture: SVC-2 removed the
-    // `AI Integration` / `Digital Transformation` entries this used to assert
-    // on, because the `[offering]` route that served them is gone.
+    const r = render(<MobileNav navItems={navigation.mainNav} ctaButton={CTA} />)
+    // "How We Work" is the single-group axis; "What We Do" carries Brent's
+    // three groups and exercises the nested-disclosure path instead.
+    const panel = openAxis(r, 'How We Work')
     expect(panel.getByRole('link', { name: 'Localshoring', hidden: true })).toBeTruthy()
-    // No nested group disclosure and no duplicated "Services" heading.
+    // No nested group disclosure and no duplicated "How We Work" heading.
     expect(panel.queryByRole('button', { hidden: true })).toBeNull()
+  })
+
+  it('gives the multi-group axis one nested disclosure per group', () => {
+    const r = render(<MobileNav navItems={navigation.mainNav} ctaButton={CTA} />)
+    const panel = openAxis(r, 'What We Do')
+    // Brent's three groups (CONTENT_NEEDS §12), each its own disclosure.
+    for (const group of [
+      'Strategy and Business Consulting',
+      'Technology and Data',
+      'AI and Automation',
+    ]) {
+      expect(panel.getByRole('button', { name: `${group} links`, hidden: true })).toBeTruthy()
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The footer grid track count is COUPLED to `footerNav.length` and nothing
+// enforced it. `SiteFooter` puts the brand block on `lg:col-span-2` and each
+// nav column on `lg:col-span-1`, so the row needs `2 + footerNav.length`
+// tracks. NAV-1 removed the services column and left the count at 6, so the
+// footer rendered five-sixths wide with a dead track — visible on every page,
+// caught by hand rather than by CI. The existing e2e only asserts the column
+// HEADINGS are visible, which passes just as happily with the extra track.
+// ---------------------------------------------------------------------------
+describe('SiteFooter grid fits its columns', () => {
+  it('declares 2 + footerNav.length tracks at lg', () => {
+    // Same pattern as `noBespokeBodyTemplates.int.spec.ts`: resolve from cwd.
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/components/layout/SiteFooter.tsx'),
+      'utf8',
+    )
+    // Match ALL of them and require exactly one: a first-match regex would
+    // silently retarget this assertion if a second grid ever appeared.
+    const declared = [...source.matchAll(/lg:grid-cols-(\d+)/g)]
+    expect(declared, 'expected exactly one lg:grid-cols-N in SiteFooter').toHaveLength(1)
+    expect(Number(declared[0][1])).toBe(2 + navigation.footerNav.length)
   })
 })

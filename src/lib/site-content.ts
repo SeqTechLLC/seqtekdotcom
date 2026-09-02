@@ -99,10 +99,8 @@ export const navigation: Navigation = {
             label: 'Our Story',
             items: [
               { label: 'Team', url: '/team' },
-              // SVC-2: Localshoring is one subject with one URL, and today
-              // that URL is the `localshoring` Page (ROADMAP SVC-3's
-              // no-duplication rule). It moves to /services/localshoring with
-              // the seed that creates the leaf — see the footer note below.
+              // Localshoring is not here: it is a how-we-work item and lives
+              // on that axis (SVC-3's one-subject-one-URL rule).
               // TODO(stub): no Careers page exists yet. Re-add when the stub
               // ships (docs/CONTENT_NEEDS.md §"Missing pages — linked but 404").
             ],
@@ -110,45 +108,91 @@ export const navigation: Navigation = {
         ],
       },
     },
+    // ROADMAP NAV-1 / SVC-2 — the TWO AXES. Brent's structure (CONTENT_NEEDS
+    // §12) is "What We Do": three groups across, three services under each.
+    // Hank's constraint is the other half — who-we-are and how-we-work read
+    // top-left, services sit to the right — so the things a client buys and the
+    // way we deliver them are separate menus, not one "Services" bucket.
+    //
+    // That split is why Localshoring and Workshops are NOT here: both are how
+    // we work, not what we do (CONTENT_NEEDS §12 says so, which is why
+    // Localshoring is outside Brent's nine). They moved to the axis below.
+    //
+    // Group `url` is optional by design — a group with no URL is just a
+    // heading — so this structure could ship before the group pages existed.
+    // They exist now, so each group links to its own page.
     {
-      label: 'Services',
-      url: '/services',
+      label: 'What We Do',
+      url: '/services/what-we-do',
       panel: {
         groups: [
           {
-            label: 'Services',
+            label: 'Strategy and Business Consulting',
+            url: '/services/strategy-and-business-consulting',
             items: [
-              // Workshops is the primary funnel and stays a top-level nav item
-              // (see below), so it is intentionally NOT duplicated here.
-              //
-              // SVC-2 removed `AI Integration` and `Digital Transformation`.
-              // Those were `/services/[offering]` Page slugs, and that route is
-              // gone; Brent's structure (CONTENT_NEEDS §12) retires both as
-              // service NAMES, so neither URL ever comes back — leaving them
-              // here would ship two permanently dead links in code-owned chrome
-              // (ADR 0010). Localshoring survives as a real leaf.
-              //
-              // The nine services in three groups replace them here once they
-              // are seeded — a data edit in this file, tracked under the
-              // ROADMAP SVC-2 residual. Nothing enumerates them before the
-              // pages exist.
-              //
-              // Localshoring points at the Page that EXISTS rather than the
-              // leaf that is planned. `/services/localshoring` needs a
-              // `services` row with that slug, and there is none — it is not in
-              // Brent's nine (CONTENT_NEEDS §12 puts Localshoring on the "how
-              // we work" axis, deliberately outside them), so the SVC-2 seed
-              // does not create it either. Chrome is code (ADR 0010): pointing
-              // it at an unseeded slug is a dead link fixable only by deploy.
-              // Flip this and the five below to /services/localshoring in the
-              // same commit that seeds the leaf and retires the Page.
+              { label: 'Strategy and Alignment', url: '/services/strategy-and-alignment' },
+              {
+                label: 'Business Process Consulting',
+                url: '/services/business-process-consulting',
+              },
+              { label: 'Change Management', url: '/services/change-management' },
+            ],
+          },
+          {
+            label: 'Technology and Data',
+            url: '/services/technology-and-data',
+            items: [
+              { label: 'Enterprise Architecture', url: '/services/enterprise-architecture' },
+              {
+                label: 'Data Engineering and Warehousing',
+                url: '/services/data-engineering-and-warehousing',
+              },
+              {
+                label: 'Business Intelligence and Analytics',
+                url: '/services/business-intelligence-and-analytics',
+              },
+            ],
+          },
+          {
+            label: 'AI and Automation',
+            url: '/services/ai-and-automation',
+            items: [
+              { label: 'Generative AI', url: '/services/generative-ai' },
+              { label: 'Machine Learning', url: '/services/machine-learning' },
+              { label: 'Agentic AI', url: '/services/agentic-ai' },
+            ],
+          },
+        ],
+      },
+    },
+    // The second axis. One group, so no group title renders — the trigger is
+    // the heading. Workshops keeps its own top-level URL as the primary funnel;
+    // it is listed here because this is the axis it belongs to, not duplicated
+    // as a seventh top-level item.
+    {
+      label: 'How We Work',
+      url: '/services/how-we-work',
+      panel: {
+        groups: [
+          {
+            label: 'How We Work',
+            items: [
+              { label: 'Workshops', url: '/workshops' },
+              // Stays on the `localshoring` PAGE, which is seeded and resolves
+              // today — not the planned `/services/localshoring` leaf, which
+              // lives only in an unseeded `services.json`. Same rule as the
+              // market links in the footer: the twelve service links above have
+              // no working target to give up, this one does. Moving it early
+              // would also put two Localshoring URLs in chrome at once, the
+              // dead one in the header, which is what SVC-3's
+              // one-subject-one-URL rule exists to prevent. Move both together
+              // when the leaf is seeded and the Page retires.
               { label: 'Localshoring', url: '/localshoring' },
             ],
           },
         ],
       },
     },
-    { label: 'Workshops', url: '/workshops' },
     { label: 'Case Studies', url: '/case-studies' },
     { label: 'Insights', url: '/insights' },
     { label: 'Contact', url: '/contact' },
@@ -165,25 +209,24 @@ export const navigation: Navigation = {
         // TODO(stub): Careers page not built — re-add when it ships.
       ],
     },
-    {
-      label: 'Services',
-      url: '/services',
-      children: [
-        // Workshops lives in the Resources column below, so it is not
-        // duplicated here. `AI Integration` and `Digital Transformation` are
-        // gone for the same reason as in the header panel above: SVC-2 deleted
-        // the route that served them and retires both as service names.
-        // Localshoring stays on the Page URL that resolves today — see the
-        // header panel note.
-        { label: 'Localshoring', url: '/localshoring' },
-      ],
-    },
+    // NO SERVICES COLUMN, deliberately. The footer used to list offerings, and
+    // under the two-axis IA that would mean either nine leaves (which dwarfs
+    // every other column) or three group names (the longest of which wrapped to
+    // three lines in a column a sixth of the container wide). Neither earns its
+    // place: the services menu lives in the header, where it has room to be the
+    // Argano-shaped panel Brent asked for. Repeating a cut-down version below
+    // it is a second, worse copy of the same navigation.
+    //
+    // If a single "what we do" link or a full offerings index belongs here
+    // later, that is a decision to take on its own terms — not a leftover.
     {
       label: 'Resources',
       url: '/insights',
       children: [
         { label: 'Case Studies', url: '/case-studies' },
         { label: 'Insights', url: '/insights' },
+        // Workshops stays: it is a listing route in its own right and predates
+        // the services IA, not an offering promoted into the footer.
         { label: 'Workshops', url: '/workshops' },
       ],
     },
@@ -196,11 +239,16 @@ export const navigation: Navigation = {
         // route ships (CONTENT_NEEDS §4; matches the not-found.tsx CTA).
         { label: 'Book a Call', url: '/contact' },
         // Interim: the four market landing pages aren't built yet, so the city
-        // links point at the localshoring story (our local-delivery model)
-        // rather than 404ing — which means the URL that RESOLVES, the Page, not
-        // the planned `/services/localshoring` leaf nothing seeds yet (see the
-        // header panel note). TODO(stub): build /tulsa-consulting etc. as
-        // per-market SEO pages (CONTENT_NEEDS §"Missing pages — linked but 404").
+        // links point at localshoring (our local-delivery model) rather than
+        // 404ing. They stay on the `localshoring` PAGE, which is seeded and
+        // resolves today — NOT the planned `/services/localshoring` leaf, which
+        // exists only in an unseeded `services.json`. An earlier cut of this PR
+        // moved them and turned four working links into 404s for nothing; the
+        // twelve new service links above have no working target to give up,
+        // which is not the same trade. Move these when the leaf is seeded and
+        // the Page retires, in that order.
+        // TODO(stub): build /tulsa-consulting etc. as per-market SEO pages
+        // (CONTENT_NEEDS §"Missing pages — linked but 404").
         { label: 'Tulsa', url: '/localshoring' },
         { label: 'Oklahoma City', url: '/localshoring' },
         { label: 'Northwest Arkansas', url: '/localshoring' },

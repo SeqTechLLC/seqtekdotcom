@@ -37,7 +37,12 @@ export function SiteFooter() {
   return (
     <footer data-testid="site-footer" className="bg-surface-inverse text-text-inverse">
       <Container size="lg">
-        <div className="grid gap-10 py-12 md:grid-cols-2 md:py-16 lg:grid-cols-6">
+        {/* Column count is COUPLED to `footerNav.length`: the brand block below
+            spans 2 and each nav column spans 1, so the track count must be
+            `2 + footerNav.length` or the row leaves dead space on the right.
+            Three columns today (Company / Resources / Connect) → 5. Adjust this
+            number if a column is added or removed. */}
+        <div className="grid gap-10 py-12 md:grid-cols-2 md:py-16 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Link href="/" aria-label={companyName} className="inline-block">
               <Image
@@ -119,8 +124,12 @@ export function SiteFooter() {
                 {column.label}
               </h2>
               <ul className="mt-4 space-y-2">
+                {/* Keyed by label+url: several columns legitimately repeat a
+                    URL — Connect has /contact twice (Contact, Book a Call) and
+                    the four market links all park on the same interim page —
+                    so `url` alone is not unique and React warns. */}
                 {column.children?.map((item) => (
-                  <li key={item.url}>
+                  <li key={`${item.label}-${item.url}`}>
                     <SmartLink
                       href={item.url}
                       className="text-body text-text-inverse opacity-90 transition-colors duration-fast hover:text-brand-green-400 hover:opacity-100"

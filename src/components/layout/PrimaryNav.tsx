@@ -13,8 +13,9 @@ import { NavCaret } from './NavCaret'
  * Three things about the shape are deliberate:
  *
  * 1. **The top-level item stays a link, and the caret is a separate button.**
- *    Every axis has its own page (`/services` is today's), so turning the
- *    trigger into a button would strand that page behind a menu. Two controls
+ *    Every axis has its own page (`/services/what-we-do` and
+ *    `/services/how-we-work`), so turning the trigger into a button would
+ *    strand that page behind a menu. Two controls
  *    with two accessible names is also the same row pattern a *linked group*
  *    needs, so there is one idea here rather than two.
  * 2. **Click to open, never hover-only.** Hover-only fails WCAG 2.2 §1.4.13
@@ -147,7 +148,18 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
                   // list item barely wider than its own label, and without it
                   // shrink-to-fit clamps every column to its 10rem minimum and
                   // the longest leaf overflows its own box.
-                  className="absolute left-0 top-full z-dropdown mt-1 w-max max-w-[min(80vw,56rem)] rounded-md border border-border-subtle bg-surface p-5 shadow-lg"
+                  //
+                  // The cap is 62vw, not 80vw. The panel is anchored to its
+                  // trigger, so its left edge sits ~32-36% into the viewport and
+                  // the space actually available to the right is ~63-67vw, not
+                  // 80. With Brent's three groups this is the first data wide
+                  // enough to hit that: measured at the `lg` boundary, an 80vw
+                  // cap put the panel's right edge at 1142px in a 1024px window
+                  // and grew `document.scrollWidth` to 1142 — a horizontal
+                  // scrollbar on every page, for every viewport from 1024 to
+                  // 1279. 62vw keeps the right edge inside the window at 1024,
+                  // 1280 and 1440.
+                  className="absolute left-0 top-full z-dropdown mt-1 w-max max-w-[min(62vw,56rem)] rounded-md border border-border-subtle bg-surface p-5 shadow-lg"
                 >
                   <div
                     className="grid gap-x-10 gap-y-6"
@@ -192,7 +204,13 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
                                 <SmartLink
                                   href={leaf.url}
                                   onClick={close}
-                                  className="block whitespace-nowrap rounded-md px-2 py-1.5 text-body text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-accent"
+                                  // No `whitespace-nowrap`: with the cap above,
+                                  // a long leaf ("Data Engineering and
+                                  // Warehousing") would be clipped by its own
+                                  // column rather than wrapping. Wrapping to two
+                                  // lines is the lesser evil, and only happens
+                                  // at the narrow end.
+                                  className="block rounded-md px-2 py-1.5 text-body text-text-secondary transition-colors duration-fast hover:bg-surface-subtle hover:text-text-accent"
                                 >
                                   {leaf.label}
                                 </SmartLink>

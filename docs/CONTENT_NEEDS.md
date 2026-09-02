@@ -171,7 +171,7 @@ A publishable case study record needs: hero image (real, non-stock) · client + 
 
 ## 9. Missing pages — linked but 404 (surfaced by the 2026-06-30 link audit)
 
-A crawl of every internal link on staging found **10 routes that are linked in the nav/footer/CTAs but return 404.** The nav/footer is code-driven (`src/lib/site-content.ts`), so as an immediate fix the dead links were either repointed to a live equivalent or removed (the live 404 page is professional, but a launched site should not dead-end). The rows below that need a **real page** are genuine content gaps:
+A crawl of every internal link on staging found **10 routes that are linked in the nav/footer/CTAs but return 404** (plus **fourteen** service routes added later by NAV-1 — see the note under the table, which are a seeder run rather than a content build). The nav/footer is code-driven (`src/lib/site-content.ts`), so as an immediate fix the dead links were either repointed to a live equivalent or removed (the live 404 page is professional, but a launched site should not dead-end). The rows below that need a **real page** are genuine content gaps:
 
 | Linked route (was 404)                                       | Interim fix shipped in code   | Real fix needed                                                                                                             | Owner / source | Severity                      |
 | ------------------------------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------- |
@@ -185,6 +185,21 @@ A crawl of every internal link on staging found **10 routes that are linked in t
 | `/careers`                                                   | Removed from nav              | **Careers stub page** — even a short "we hire senior practitioners; reach out" page with the localshoring/culture angle     | Hank/Megan     | Important                     |
 | `/terms-of-service`                                          | Removed from footer legal nav | **Terms of Service page** — needs reviewed legal copy (privacy-policy already exists as the model)                          | Legal/Brent    | Important (launch)            |
 | ~~`/resources/organizational-maturity-assessment`~~          | Removed from footer           | **Nothing — retired 2026-08-08 (§5).** The page is not being built; `/organizational-strategy-1-5` now 301s to `/workshops` | —              | closed                        |
+
+**NAV-1 / SVC-2 added fourteen more, and they are a SEED not a build.** The two-axis header menu enumerates
+Brent's structure from §12, so `/services/what-we-do`, `/services/how-we-work`, the three group slugs and the
+nine leaf slugs are all linked from code-owned chrome — two axes, three groups and nine leaves, fourteen in
+all. (`/services/localshoring` is a fifteenth planned route but is deliberately NOT linked yet: the nav and
+footer both still point at the `localshoring` Page, which resolves today.) Unlike every row above, **none of them needs a page
+built** — `services.json` already carries all fifteen documents as
+clearly-marked placeholders, verified to seed with `errors=0`. They 404 only until someone runs
+`npm run payload:seed -- docs/content-drafts/services.json` against the lane. (That path is the usual one —
+`docs/content-drafts` is a symlink to the private `website-content` repo, so the file is versioned there and
+reached from here, which is why both names refer to one file.) **Sequence that immediately
+behind the merge**, because a merge to `main` deploys preview at once and both panels are dead in the gap.
+What is genuinely outstanding is the _copy_, tracked in §12: three of nine leaves have a usable draft, three
+have adjacent material about a different subject, three have nothing, and none of the three group pages or
+either axis page has a draft at all.
 
 **The 4 regional pages are the biggest single content opportunity here.** They were a deliberate local-SEO play (one page per market: Tulsa, OKC, NW Arkansas, Kansas City) and the multi-market positioning is core to the brand. They are all currently parked on `/localshoring`. Each wants: a market-specific headline, why-local-here copy, ideally a local proof point or client, and a contact CTA. The block library can compose these today — the gap is **copy + per-market specifics**, not engineering. (If we'd rather not build four, decide whether to keep them in the footer at all.)
 

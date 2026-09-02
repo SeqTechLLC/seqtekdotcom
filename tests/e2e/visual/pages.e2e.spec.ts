@@ -38,6 +38,7 @@ const ROUTES: { slug: string; path: string }[] = [
   { slug: 'service-leaf', path: '/services/localshoring' },
   { slug: 'service-group', path: '/services/technology-and-data' },
   { slug: 'service-axis', path: '/services/what-we-do' },
+  { slug: 'service-axis-how', path: '/services/how-we-work' },
   { slug: 'case-studies', path: '/case-studies' },
   { slug: 'insights', path: '/insights' },
   { slug: 'team', path: '/team' },
