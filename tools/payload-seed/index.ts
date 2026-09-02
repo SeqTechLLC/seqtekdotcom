@@ -107,6 +107,27 @@ function describe(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+/**
+ * Emit a machine-readable failure and return its exit code. The early exits —
+ * unreadable file, bad envelope, bad directives, missing token — are the MOST
+ * likely outcomes for an unattended caller, and they used to write nothing to
+ * stdout at all: a `--json` consumer got an empty stream for the commonest
+ * case, which defeats the point of the flag.
+ */
+function jsonFailure(
+  json: boolean,
+  stage: 'read' | 'envelope' | 'directives' | 'auth',
+  errors: string[],
+  code: number,
+): number {
+  if (json) {
+    process.stdout.write(
+      JSON.stringify({ ok: false, stage, errors, counts: null, results: [] }, null, 2) + '\n',
+    )
+  }
+  return code
+}
+
 async function main(): Promise<number> {
   const args = parseArgs(process.argv.slice(2), process.env)
 
@@ -130,15 +151,16 @@ async function main(): Promise<number> {
   try {
     raw = JSON.parse(await readFile(args.file, 'utf8'))
   } catch (err) {
-    errln(`Failed to read/parse ${args.file}: ${describe(err)}`)
-    return 1
+    const msg = `Failed to read/parse ${args.file}: ${describe(err)}`
+    errln(msg)
+    return jsonFailure(args.json, 'read', [msg], 1)
   }
 
   const validated = validateSpecs(raw)
   if (!validated.ok) {
     errln(`Invalid seed file (${validated.errors.length} problem(s)):`)
     for (const e of validated.errors) errln(`  - ${e}`)
-    return 1
+    return jsonFailure(args.json, 'envelope', validated.errors, 1)
   }
 
   // Directive STRUCTURE, before anything is written and before the token is
@@ -149,14 +171,14 @@ async function main(): Promise<number> {
   if (pre.errors.length > 0) {
     errln(`Invalid directives (${pre.errors.length} problem(s)) — nothing was written:`)
     for (const e of pre.errors) errln(`  - ${e}`)
-    return 2
+    return jsonFailure(args.json, 'directives', pre.errors, 2)
   }
 
   const token = process.env.IMPORT_TOKEN
   if (!args.dryRun && !token) {
     errln('IMPORT_TOKEN is required to write. Set it to your /admin session JWT,')
     errln('or pass --dry-run to preview without authenticating.')
-    return 2
+    return jsonFailure(args.json, 'auth', ['IMPORT_TOKEN is required to write'], 2)
   }
 
   const client = new PayloadRestClient({
@@ -184,14 +206,16 @@ async function main(): Promise<number> {
 
   // Identities this run would create, so a dry-run can resolve intra-file
   // `$ref`s instead of reporting them as failures.
-  const plannedIdentities = new Set<string>()
-  for (const spec of validated.value) {
-    if (!isGlobalSpec(spec)) {
-      plannedIdentities.add(
-        `${spec.collection}:${spec.identity}:${String(spec.data[spec.identity])}`,
-      )
-    }
-  }
+  // Identity → the index of the spec that creates it, so the resolver can tell
+  // a BACKWARD ref (resolvable) from a FORWARD one (which really does fail).
+  const plannedIdentities = new Map<string, number>()
+  validated.value.forEach((spec, i) => {
+    if (isGlobalSpec(spec)) return
+    const key = `${spec.collection}:${spec.identity}:${String(spec.data[spec.identity])}`
+    // First writer wins: if two specs share an identity the earlier one creates
+    // it and the later one updates it.
+    if (!plannedIdentities.has(key)) plannedIdentities.set(key, i)
+  })
 
   // Every spec's outcome, for `--json`. An unattended caller needs to assert on
   // a result, not scrape log lines.
@@ -220,6 +244,7 @@ async function main(): Promise<number> {
         dryRun: args.dryRun,
         allowMissingRefs: args.allowMissingRefs,
         plannedIdentities,
+        specIndex: i,
         log,
         warn,
       })
@@ -278,17 +303,26 @@ async function main(): Promise<number> {
   // on purpose — would otherwise report every other document as an orphan.
   const orphans: Array<{ collection: string; identity: string; values: string[] }> = []
   if (args.checkOrphans && !args.dryRun && aborted === null) {
-    const byCollection = new Map<string, { identity: string; values: Set<string> }>()
+    // Keyed by collection AND identity field. Keying by collection alone took
+    // the identity from whichever spec came first, so a file that upserted one
+    // collection by two different fields would compare values gathered from one
+    // against values read from the other.
+    const byTarget = new Map<
+      string,
+      { collection: string; identity: string; values: Set<string> }
+    >()
     for (const spec of validated.value) {
       if (isGlobalSpec(spec)) continue
-      const entry = byCollection.get(spec.collection) ?? {
+      const key = `${spec.collection}::${spec.identity}`
+      const entry = byTarget.get(key) ?? {
+        collection: spec.collection,
         identity: spec.identity,
         values: new Set<string>(),
       }
       entry.values.add(String(spec.data[spec.identity]))
-      byCollection.set(spec.collection, entry)
+      byTarget.set(key, entry)
     }
-    for (const [collection, { identity, values }] of byCollection) {
+    for (const { collection, identity, values } of byTarget.values()) {
       try {
         const live = await client.listPublishedFieldValues(collection, identity)
         const extra = live.filter((v) => !values.has(v))

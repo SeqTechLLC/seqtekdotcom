@@ -38,15 +38,23 @@ export interface ResolveOptions {
   log: (msg: string) => void
   warn: (msg: string) => void
   /**
-   * Dry-run only. Identities (`collection:field:value`) that EARLIER specs in
-   * this same run would create. A dry-run writes nothing, so a `$ref` to a
-   * document a previous spec would have created could never resolve — and the
-   * run reported failures the docs then told you to ignore ("a --dry-run of
+   * Dry-run only. Identity (`collection:field:value`) → the index of the spec
+   * that creates it. A dry-run writes nothing, so a `$ref` to a document an
+   * EARLIER spec would have created could never resolve, and the run reported
+   * failures the docs then told you to ignore ("a --dry-run of
    * case-studies.json always reports 3 unresolved $refs… not real defects").
-   * Noise a caller is trained to ignore is worse than no check, because the
-   * one real unresolved ref hides in it.
+   * Noise a caller is trained to ignore is worse than no check.
+   *
+   * It is a Map of indexes, not a Set, because ORDER is the whole point. Specs
+   * run sequentially, so a ref pointing FORWARD — at a document a later spec
+   * creates — genuinely fails in a real run, and load order is a documented
+   * constraint of these files. Treating those as resolvable would make the
+   * dry-run under-report the one failure class it exists to catch, which is
+   * worse than the over-reporting it replaced.
    */
-  plannedIdentities?: ReadonlySet<string>
+  plannedIdentities?: ReadonlyMap<string, number>
+  /** Index of the spec being resolved, compared against the map above. */
+  specIndex?: number
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -111,8 +119,12 @@ async function resolveRef(
   // network, deliberately — it is free, and it means a dry-run still answers
   // the intra-file question when the target is slow or unreachable, which is
   // exactly when a rehearsal is most useful.
-  if (opts.dryRun && opts.plannedIdentities) {
-    const planned = values.find((v) => opts.plannedIdentities?.has(`${collection}:${field}:${v}`))
+  if (opts.dryRun && opts.plannedIdentities && opts.specIndex !== undefined) {
+    const here = opts.specIndex
+    const planned = values.find((v) => {
+      const at = opts.plannedIdentities?.get(`${collection}:${field}:${v}`)
+      return at !== undefined && at < here
+    })
     if (planned !== undefined) {
       opts.log(`would resolve ${label} to a doc an earlier spec creates`)
       return `<ref-planned:${collection}:${planned}>`

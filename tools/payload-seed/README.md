@@ -220,8 +220,21 @@ dry-run of `case-studies.json` always printed three unresolved `$ref`s that the
 docs told you to ignore — noise a caller learns to skip past is worse than no
 check, because the one real failure hides in it.
 
-Without a token it still runs (resolving as an anonymous reader, so it sees
-only published documents) and reports `would unknown` rather than guessing.
+Order matters, and the check respects it: a `$ref` pointing at a document a
+**later** spec creates is still reported unresolved, because that is what the
+real run does. Only backward references resolve.
+
+**With a token, a dry-run makes one read per spec** — that is what buys
+create-vs-update. Against an unreachable or cookie-less gated lane, that means
+one timeout per spec rather than an instant offline rehearsal. Unset
+`IMPORT_TOKEN` (or lower `IMPORT_TIMEOUT_MS`) for a purely offline pass; it then
+resolves as an anonymous reader, sees only published documents, and reports
+`would unknown` rather than guessing.
+
+On failure, `--json` still emits an object — `{ ok: false, stage, errors }`
+where `stage` is `read`, `envelope`, `directives` or `auth`. The early exits are
+the most likely outcomes for an unattended caller, so they are the last place
+that should print nothing.
 
 ## What fails before anything is written
 
@@ -266,7 +279,11 @@ To take a document down, say so:
 survive, so it can be re-published. Pass **`--check-orphans`** to have the run
 warn about published documents in the touched collections that the file does not
 mention. It is opt-in because seeding one document on purpose would otherwise
-report every other document as an orphan.
+report every other document as an orphan. Documents already retired
+(`_status: 'draft'`) are **not** reported — the check filters them out
+client-side, since an admin token bypasses the access rule that would otherwise
+do it, and `categories` / `industries` / `locations` have no `_status` field to
+filter on server-side.
 
 ## Failure modes worth knowing
 

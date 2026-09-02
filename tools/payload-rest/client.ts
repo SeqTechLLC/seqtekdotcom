@@ -107,8 +107,8 @@ interface WriteResponse {
 /**
  * Wrap a fetch so every request carries a deadline, and an expired one reports
  * as a timeout rather than a generic `AbortError`. Applied once in the
- * constructor so all call sites inherit it — there are six, and patching them
- * individually is how one gets missed.
+ * constructor so every call site inherits it — patching them individually is how
+ * one gets missed, and the count changes as methods are added.
  */
 function withTimeout(fetchFn: FetchFn, timeoutMs: number): FetchFn {
   return async (input, init) => {
@@ -261,24 +261,54 @@ export class PayloadRestClient {
    * the seeder's own output, because from its point of view nothing was wrong.
    */
   async listPublishedFieldValues(collection: string, field: string): Promise<string[]> {
-    const params = new URLSearchParams({
-      limit: '500',
-      depth: '0',
-      draft: 'false',
-      [`where[${field}][exists]`]: 'true',
-    })
-    const res = await this.fetchFn(`${this.baseUrl}/api/${collection}?${params.toString()}`, {
-      headers: this.authHeaders(),
-    })
-    if (!res.ok) throw await this.toError(res, `list ${collection}`)
-    const json = await this.parseJson<{ docs?: Array<Record<string, unknown>> }>(
-      res,
-      `list ${collection}`,
-    )
-    return (json.docs ?? [])
-      .map((d) => d[field])
-      .filter((v): v is string | number => typeof v === 'string' || typeof v === 'number')
-      .map(String)
+    const out: string[] = []
+    let page = 1
+
+    // Paginate. A single `limit=500` silently truncated past that many rows,
+    // producing FALSE NEGATIVES in the one diagnostic that exists to surface
+    // documents you cannot otherwise see.
+    for (;;) {
+      const params = new URLSearchParams({
+        limit: '200',
+        page: String(page),
+        depth: '0',
+        draft: 'false',
+        [`where[${field}][exists]`]: 'true',
+      })
+      const res = await this.fetchFn(`${this.baseUrl}/api/${collection}?${params.toString()}`, {
+        headers: this.authHeaders(),
+      })
+      if (!res.ok) throw await this.toError(res, `list ${collection}`)
+      const json = await this.parseJson<{
+        docs?: Array<Record<string, unknown>>
+        hasNextPage?: boolean
+      }>(res, `list ${collection}`)
+
+      for (const doc of json.docs ?? []) {
+        // Filter published CLIENT-side, not with `where[_status]`.
+        //
+        // `draft: false` picks the main table over the versions table; it does
+        // NOT exclude rows whose `_status` is 'draft'. Exclusion normally comes
+        // from access control — `publishedOrAuthed` returns a `_status` filter
+        // for anonymous callers — but this runs with IMPORT_TOKEN, an admin
+        // session, for which that access returns `true` and no filter is
+        // applied at all. So retired documents came back and were reported as
+        // live orphans, advising you to unpublish what is already unpublished.
+        //
+        // A server-side `where[_status][equals]=published` would fix that for
+        // drafts-enabled collections and break the rest: `categories`,
+        // `industries` and `locations` have no `_status` field to filter on.
+        // Treating a MISSING `_status` as published is correct for both.
+        const status = doc._status
+        if (status !== undefined && status !== 'published') continue
+        const value = doc[field]
+        if (typeof value === 'string' || typeof value === 'number') out.push(String(value))
+      }
+
+      if (!json.hasNextPage) break
+      page += 1
+    }
+    return out
   }
 
   /** Read an image from disk or URL into bytes, validating type + size. */

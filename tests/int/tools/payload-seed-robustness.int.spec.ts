@@ -190,7 +190,8 @@ describe('dry-run — intra-file refs resolve without the network', () => {
       {
         dryRun: true,
         allowMissingRefs: false,
-        plannedIdentities: new Set(['industries:slug:brand-new']),
+        plannedIdentities: new Map([['industries:slug:brand-new', 0]]),
+        specIndex: 1,
         log: (m) => logs.push(m),
         warn: () => {},
       },
@@ -214,7 +215,38 @@ describe('dry-run — intra-file refs resolve without the network', () => {
         {
           dryRun: true,
           allowMissingRefs: false,
-          plannedIdentities: new Set(['industries:slug:something-else']),
+          plannedIdentities: new Map([['industries:slug:something-else', 0]]),
+          specIndex: 1,
+          log: () => {},
+          warn: () => {},
+        },
+      ),
+    ).rejects.toThrow(/unresolved \$ref/)
+  })
+})
+
+describe('dry-run — order matters', () => {
+  it('does NOT resolve a $ref pointing at a doc a LATER spec creates', async () => {
+    const { resolveData } = await import('../../../tools/payload-seed/resolve')
+    const client = new PayloadRestClient({
+      baseUrl: 'https://example.com',
+      token: 't',
+      fetchFn: async () => okJson({ docs: [] }),
+    })
+
+    // Spec 0 refers to something spec 5 creates. Specs run sequentially, so the
+    // real run fails here — a dry-run that called this resolvable would
+    // under-report the exact failure class it exists to catch, and load order
+    // is a documented constraint of these files.
+    await expect(
+      resolveData(
+        client,
+        { industry: { $ref: { collection: 'industries', field: 'slug', value: 'made-later' } } },
+        {
+          dryRun: true,
+          allowMissingRefs: false,
+          plannedIdentities: new Map([['industries:slug:made-later', 5]]),
+          specIndex: 0,
           log: () => {},
           warn: () => {},
         },
