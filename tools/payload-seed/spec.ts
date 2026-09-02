@@ -60,11 +60,77 @@ function parseStatus(value: unknown, path: string, errors: string[]): SeedStatus
   return 'published'
 }
 
+/**
+ * Damerau-Levenshtein: edit distance that counts an adjacent TRANSPOSITION as
+ * one operation, not two. That matters here — the motivating typo, `stauts`
+ * for `status`, is a single swap and plain Levenshtein scores it 2, the same
+ * as genuinely unrelated words.
+ */
+function editDistance(a: string, b: string): number {
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
+  )
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost)
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1)
+      }
+    }
+  }
+  return d[a.length][b.length]
+}
+
+const KNOWN_KEYS = ['collection', 'global', 'identity', 'data', 'status'] as const
+
+/**
+ * Only `status` and `identity` are checked, and only at distance 1.
+ *
+ * Unknown top-level keys are IGNORED by design — `docs/content-drafts` files
+ * park editorial notes beside `collection`, and `_note` documents a spec in
+ * place. The sharp edge is that a typo in a REAL key is ignored too. But that
+ * is only DANGEROUS for the two keys that have defaults:
+ *
+ *   - `status`   → `parseStatus(undefined)` returns 'published', so
+ *                  `"stauts": "unpublished"` PUBLISHES what you meant to retire.
+ *   - `identity` → falls back to 'slug', silently changing the upsert key.
+ *
+ * A typo in `collection`, `global` or `data` leaves the real key absent, and
+ * all three are required — validation below already rejects those with a clear
+ * message, so widening the net to cover them buys nothing and costs matches.
+ *
+ * Distance 1 with transposition, against two targets, is deliberately narrow.
+ * An earlier cut used distance 2 against all five and rejected `date`, `meta`,
+ * `state` and `entity` — ordinary editorial keys — which would have turned a
+ * file that seeded fine into a hard exit 1, and closed the escape hatch this
+ * docstring promises to keep open.
+ */
+const TYPO_CHECKED_KEYS = ['status', 'identity'] as const
+
+function checkKeyTypos(raw: Record<string, unknown>, path: string, errors: string[]): void {
+  for (const key of Object.keys(raw)) {
+    if ((KNOWN_KEYS as readonly string[]).includes(key)) continue
+    if (key.startsWith('_')) continue // documented escape hatch, e.g. `_note`
+    for (const known of TYPO_CHECKED_KEYS) {
+      if (editDistance(key.toLowerCase(), known) <= 1) {
+        errors.push(
+          `${path}.${key} is not a known key and looks like a typo for "${known}". ` +
+            `Rename it, or prefix it with "_" if it is deliberate metadata.`,
+        )
+        break
+      }
+    }
+  }
+}
+
 function validateOne(raw: unknown, path: string, errors: string[]): SeedSpec | null {
   if (!isObject(raw)) {
     errors.push(`${path} must be an object`)
     return null
   }
+
+  checkKeyTypos(raw, path, errors)
 
   // A `global` key marks this as a global spec; otherwise it's a collection.
   if ('global' in raw) {

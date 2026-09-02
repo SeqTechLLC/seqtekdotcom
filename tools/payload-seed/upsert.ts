@@ -23,6 +23,8 @@ export interface UpsertResult {
   target: string
   operation: 'create' | 'update' | 'global' | 'dry-run'
   id?: DocId
+  /** Dry-run only: what the real run would do. `unknown` without a token. */
+  wouldBe?: 'create' | 'update' | 'unknown'
 }
 
 export async function upsertSpec(
@@ -67,11 +69,22 @@ export async function upsertSpec(
 
   const identityValue = String(data[spec.identity])
   const target = `${spec.collection}:${identityValue}`
-  if (opts.dryRun) return { target, operation: 'dry-run' }
 
-  const existingId = await client.findIdByField(spec.collection, spec.identity, identityValue, {
-    draft: true,
-  })
+  // The find runs in dry-run too, when there is a token to run it with. It is
+  // a read, it changes nothing, and without it a dry-run could not say whether
+  // a spec would CREATE or UPDATE — which is most of what a rehearsal is for.
+  const existingId =
+    opts.dryRun && !client.hasToken
+      ? null
+      : await client.findIdByField(spec.collection, spec.identity, identityValue, { draft: true })
+
+  if (opts.dryRun) {
+    return {
+      target,
+      operation: 'dry-run',
+      wouldBe: client.hasToken ? (existingId !== null ? 'update' : 'create') : 'unknown',
+    }
+  }
   if (existingId !== null) {
     const id = await client.updateDoc(spec.collection, existingId, writeData, { draft: asDraft })
     return { target, operation: 'update', id }

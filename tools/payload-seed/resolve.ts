@@ -37,6 +37,24 @@ export interface ResolveOptions {
   allowMissingRefs: boolean
   log: (msg: string) => void
   warn: (msg: string) => void
+  /**
+   * Dry-run only. Identity (`collection:field:value`) → the index of the spec
+   * that creates it. A dry-run writes nothing, so a `$ref` to a document an
+   * EARLIER spec would have created could never resolve, and the run reported
+   * failures the docs then told you to ignore ("a --dry-run of
+   * case-studies.json always reports 3 unresolved $refs… not real defects").
+   * Noise a caller is trained to ignore is worse than no check.
+   *
+   * It is a Map of indexes, not a Set, because ORDER is the whole point. Specs
+   * run sequentially, so a ref pointing FORWARD — at a document a later spec
+   * creates — genuinely fails in a real run, and load order is a documented
+   * constraint of these files. Treating those as resolvable would make the
+   * dry-run under-report the one failure class it exists to catch, which is
+   * worse than the over-reporting it replaced.
+   */
+  plannedIdentities?: ReadonlyMap<string, number>
+  /** Index of the spec being resolved, compared against the map above. */
+  specIndex?: number
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -94,12 +112,29 @@ async function resolveRef(
           })()
   if (values.length === 0) throw new Error('$ref.value must not be empty')
 
+  const label = `${collection}.${field}=${values.join('|')}`
+
+  // Dry-run: a ref to something an earlier spec in THIS file would create is
+  // resolvable, because that is what the real run does. Checked BEFORE the
+  // network, deliberately — it is free, and it means a dry-run still answers
+  // the intra-file question when the target is slow or unreachable, which is
+  // exactly when a rehearsal is most useful.
+  if (opts.dryRun && opts.plannedIdentities && opts.specIndex !== undefined) {
+    const here = opts.specIndex
+    const planned = values.find((v) => {
+      const at = opts.plannedIdentities?.get(`${collection}:${field}:${v}`)
+      return at !== undefined && at < here
+    })
+    if (planned !== undefined) {
+      opts.log(`would resolve ${label} to a doc an earlier spec creates`)
+      return `<ref-planned:${collection}:${planned}>`
+    }
+  }
+
   for (const value of values) {
     const id = await client.findIdByField(collection, field, value, { draft: true })
     if (id !== null) return id
   }
-
-  const label = `${collection}.${field}=${values.join('|')}`
 
   if (raw.createIfMissing !== undefined) {
     if (!isObject(raw.createIfMissing)) {
@@ -109,8 +144,24 @@ async function resolveRef(
       opts.log(`would create ${collection} (createIfMissing) for unresolved ${label}`)
       return `<ref-create:${collection}:${values[0]}>`
     }
-    const id = await client.createDoc(collection, raw.createIfMissing, { draft: false })
-    opts.log(`created ${collection} (createIfMissing) → ${id}`)
+    // `_status: 'published'` explicitly. `industries`, `locations` and
+    // `services` all carry `versions: { drafts: true }` (`Industries.ts:24`,
+    // `Locations.ts:24`, `Services.ts:30`), so omitting it let Payload default
+    // those rows to a DRAFT while this line logged "created" — and
+    // `publishedOrAuthed` filters drafts out of public reads, so the
+    // auto-created taxonomy never appeared on the site. Same bug the globals
+    // branch of `upsert.ts` already fixed and documented. `categories` has no
+    // `versions` key at all, where the extra field is simply inert.
+    //
+    // `_status` goes FIRST so an author who sets it deliberately in
+    // `createIfMissing` still wins. Spreading it last silently overrode an
+    // explicit value, which is the behaviour this whole change is against.
+    const id = await client.createDoc(
+      collection,
+      { _status: 'published', ...raw.createIfMissing },
+      { draft: false },
+    )
+    opts.log(`created ${collection} (createIfMissing) → ${id} [published]`)
     return id
   }
 

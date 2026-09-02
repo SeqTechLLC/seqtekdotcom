@@ -42,6 +42,15 @@ export interface ClientConfig {
    * ungated environments (local, staging).
    */
   cookie?: string
+  /**
+   * Per-request timeout in ms. Default 60s — generous enough for a 25MB media
+   * upload over a slow link, short enough that a wedged request fails instead
+   * of hanging. There was no timeout at all before: a gated lane reached
+   * without its session cookie left the run stalled indefinitely rather than
+   * erroring, which is the worst outcome for an unattended caller, because a
+   * hang is indistinguishable from slow progress.
+   */
+  timeoutMs?: number
   fetchFn?: FetchFn
 }
 
@@ -79,6 +88,13 @@ export class PayloadRestError extends Error {
     message: string,
     readonly status?: number,
     readonly body?: string,
+    /**
+     * Structural failure kind. `'timeout'` is what the consecutive-timeout
+     * abort branches on — it used to match `/exceeded \d+ms/` against the
+     * message, so rewording the prose would have silently disabled the abort
+     * with no test to catch it.
+     */
+    readonly code?: 'timeout',
   ) {
     super(message)
     this.name = 'PayloadRestError'
@@ -95,17 +111,67 @@ interface WriteResponse {
   doc?: { id: DocId }
 }
 
+/**
+ * Wrap a fetch so every request carries a deadline, and an expired one reports
+ * as a timeout rather than a generic `AbortError`. Applied once in the
+ * constructor so every call site inherits it — patching them individually is how
+ * one gets missed, and the count changes as methods are added.
+ */
+export function timeoutMessage(url: string, timeoutMs: number): string {
+  return (
+    `Request to ${url} exceeded ${timeoutMs}ms. If the target is behind an auth ` +
+    `proxy, a missing or expired session cookie stalls rather than refusing — ` +
+    `check IMPORT_COOKIE first.`
+  )
+}
+
+export function isAbortLike(err: unknown): boolean {
+  const name = (err as { name?: string } | undefined)?.name
+  return name === 'TimeoutError' || name === 'AbortError'
+}
+
+function withTimeout(fetchFn: FetchFn, timeoutMs: number): FetchFn {
+  return async (input, init) => {
+    const timeout = AbortSignal.timeout(timeoutMs)
+    // Preserve a caller's own signal rather than replacing it. Nothing passes
+    // one today, but silently disabling caller cancellation the moment
+    // something does is the kind of latent surprise this file is trying to
+    // stop shipping.
+    const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout
+    try {
+      return await fetchFn(input, { ...(init ?? {}), signal })
+    } catch (err) {
+      if (isAbortLike(err)) {
+        // A caller's own signal aborting is a cancellation, not a timeout —
+        // distinguish them rather than blaming the deadline for both.
+        const cancelled = init?.signal?.aborted === true
+        throw new PayloadRestError(
+          cancelled
+            ? `Request to ${String(input)} was cancelled by the caller.`
+            : timeoutMessage(String(input), timeoutMs),
+          undefined,
+          undefined,
+          cancelled ? undefined : 'timeout',
+        )
+      }
+      throw err
+    }
+  }
+}
+
 export class PayloadRestClient {
   private readonly baseUrl: string
   private readonly token?: string
   private readonly cookie?: string
+  private readonly timeoutMs: number
   private readonly fetchFn: FetchFn
 
   constructor(config: ClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, '')
     this.token = config.token
     this.cookie = config.cookie
-    this.fetchFn = config.fetchFn ?? globalThis.fetch
+    this.timeoutMs = config.timeoutMs ?? 60_000
+    this.fetchFn = withTimeout(config.fetchFn ?? globalThis.fetch, this.timeoutMs)
   }
 
   get hasToken(): boolean {
@@ -143,7 +209,22 @@ export class PayloadRestClient {
         body,
       )
     }
-    return (await res.json()) as T
+    try {
+      return (await res.json()) as T
+    } catch (err) {
+      // `fetch` settles when the HEADERS arrive, so a timeout that fires while
+      // the BODY is still draining throws here, outside the wrapper — and used
+      // to surface as a bare TimeoutError with none of the guidance.
+      if (isAbortLike(err)) {
+        throw new PayloadRestError(
+          timeoutMessage(res.url || this.hostLabel(res), this.timeoutMs),
+          undefined,
+          undefined,
+          'timeout',
+        )
+      }
+      throw err
+    }
   }
 
   /** Response body as text, never throwing — both callers are error paths. */
@@ -210,6 +291,69 @@ export class PayloadRestClient {
     if (!res.ok) throw await this.toError(res, `find ${collection} by ${field}`)
     const json = await this.parseJson<FindResponse>(res, `find ${collection} by ${field}`)
     return json.docs && json.docs.length > 0 ? json.docs[0].id : null
+  }
+
+  /**
+   * Every PUBLISHED value of `field` in a collection, for orphan detection.
+   * Read-only, one request, `depth=0`.
+   *
+   * The seeder is upsert-only: a request file describes what to write, never
+   * what to retire, so deleting a document from a file leaves it live and
+   * unreferenced. That has bitten twice — the `taurex` umbrella stayed
+   * published for weeks, and the nine legacy capability-set services survived
+   * the SVC-2 reseed and stayed in the sitemap. Neither was detectable from
+   * the seeder's own output, because from its point of view nothing was wrong.
+   */
+  async listPublishedFieldValues(collection: string, field: string): Promise<string[]> {
+    const out: string[] = []
+    let page = 1
+
+    // Paginate. A single `limit=500` silently truncated past that many rows,
+    // producing FALSE NEGATIVES in the one diagnostic that exists to surface
+    // documents you cannot otherwise see.
+    for (;;) {
+      const params = new URLSearchParams({
+        limit: '200',
+        page: String(page),
+        depth: '0',
+        draft: 'false',
+        [`where[${field}][exists]`]: 'true',
+      })
+      const res = await this.fetchFn(`${this.baseUrl}/api/${collection}?${params.toString()}`, {
+        headers: this.authHeaders(),
+      })
+      if (!res.ok) throw await this.toError(res, `list ${collection}`)
+      const json = await this.parseJson<{
+        docs?: Array<Record<string, unknown>>
+        hasNextPage?: boolean
+      }>(res, `list ${collection}`)
+
+      for (const doc of json.docs ?? []) {
+        // Filter published CLIENT-side, not with `where[_status]`.
+        //
+        // `draft: false` picks the main table over the versions table; it does
+        // NOT exclude rows whose `_status` is 'draft'. Exclusion normally comes
+        // from access control — `publishedOrAuthed` returns a `_status` filter
+        // for anonymous callers — but this runs with IMPORT_TOKEN, an admin
+        // session, for which that access returns `true` and no filter is
+        // applied at all. So retired documents came back and were reported as
+        // live orphans, advising you to unpublish what is already unpublished.
+        //
+        // A server-side `where[_status][equals]=published` would fix that for
+        // drafts-enabled collections and break the rest: `categories` has no
+        // `versions` key, so no `_status` column to filter on, while
+        // `industries`, `locations` and `services` do. Treating a MISSING
+        // `_status` as published is correct for both shapes.
+        const status = doc._status
+        if (status !== undefined && status !== 'published') continue
+        const value = doc[field]
+        if (typeof value === 'string' || typeof value === 'number') out.push(String(value))
+      }
+
+      if (!json.hasNextPage) break
+      page += 1
+    }
+    return out
   }
 
   /** Read an image from disk or URL into bytes, validating type + size. */
