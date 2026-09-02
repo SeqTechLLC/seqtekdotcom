@@ -71,12 +71,12 @@ export const IN_SCOPE_SEED: InScopeSeed = {
 }
 
 /**
- * ROADMAP SVC-2. `/services` is still a block-composed Page looked up by a fixed
- * slug (`services/page.tsx` hard-codes it), so it stays here. The leaves and
- * groups below it are no longer Pages: every tier resolves off the ONE
- * `services` collection, so a slug needs no code change.
+ * ROADMAP SVC-2 / NAV-1. Every tier — axis, group and leaf — resolves off the
+ * ONE `services` collection at a flat `/services/<slug>`, so a slug needs no
+ * code change. The `/services` overview Page is gone with its route: nothing
+ * linked it once the nav split into two axes, and it is a 301 onto
+ * `/services/what-we-do` now.
  */
-const SERVICE_OVERVIEW_PAGE_SLUG = 'service-overview'
 
 /** Leaf services — `/services/<slug>` resolves these off the `services` collection. */
 const SERVICE_SLUGS = ['localshoring', 'ai-integration', 'digital-transformation'] as const
@@ -115,7 +115,7 @@ export function inScopeRoutes(
     { path: `/case-studies/${seed.caseStudySlug}`, label: 'case-study (detail)' },
     { path: '/insights', label: 'insights (listing)' },
     { path: `/insights/${seed.postSlug}`, label: 'insight (detail)' },
-    { path: '/services', label: 'services (overview)' },
+    // No `/services` — a 301 now, so it has no rendered output to sweep.
     ...SERVICE_SLUGS.map((slug) => ({
       path: `/services/${slug}`,
       label: `service leaf (${slug})`,
@@ -250,19 +250,13 @@ export async function seedInScopeRoutes(
   // the real services content lives in the gitignored docs/content-drafts JSON
   // loaded by tools/payload-seed. The block TYPES get full a11y coverage from
   // the showcase seeder; here we only need each route to 200 and pass the
-  // sweep. overview + digital-transformation keep a featured-case-study block
-  // pointing at the case study seeded just above, so those pages resolve a real
-  // study and never read-timeout on an unseeded id.
-  const servicePage = (
-    title: string,
-    slug: string,
-    layout: Record<string, unknown>[],
-  ): Promise<unknown> =>
-    payload.create({
-      collection: 'pages',
-      data: { title, slug, layout: layout as never, _status: 'published' },
-      overrideAccess: true,
-    })
+  // sweep. digital-transformation keeps a featured-case-study block pointing at
+  // the case study seeded just above, so it resolves a real study and never
+  // read-timeouts on an unseeded id.
+  //
+  // The `servicePage` helper went with the `/services` overview Page it existed
+  // to build: every service route is a `services` doc now, and `/services`
+  // itself is a 301 onto the What We Do axis.
 
   // A leaf is a `services` doc now, not a Page. It leads with a hero because the
   // route owns no <h1> — the body supplies it, same as partners.
@@ -285,22 +279,6 @@ export async function seedInScopeRoutes(
       },
       overrideAccess: true,
     })
-
-  await servicePage('Services', SERVICE_OVERVIEW_PAGE_SLUG, [
-    { blockType: 'content', body: lexical('Four ways SEQTEK helps.') },
-    {
-      blockType: 'nav-cards',
-      cards: [
-        {
-          title: 'Localshoring',
-          description: 'A senior US team.',
-          linkUrl: '/services/localshoring',
-        },
-        { title: 'Workshops', description: 'Start with a workshop.', linkUrl: '/workshops' },
-      ],
-    },
-    { blockType: 'featured-case-study', heading: 'Featured work', caseStudy: caseStudy.id },
-  ])
 
   const localshoring = await serviceDoc('Localshoring', 'localshoring', [
     {
@@ -501,7 +479,6 @@ export async function cleanupInScopeRoutes(
   await del(payload, 'partners', 'slug', seed.partnerSlug)
   await del(payload, 'pages', 'slug', seed.storySlug)
   await del(payload, 'pages', 'slug', seed.localshoringSlug)
-  await del(payload, 'pages', 'slug', SERVICE_OVERVIEW_PAGE_SLUG)
   // SVC-2: the leaves and the group are collection docs, not Pages.
   await del(payload, 'services', 'slug', SERVICE_AXIS_SLUG)
   await del(payload, 'services', 'slug', SERVICE_GROUP_SLUG)

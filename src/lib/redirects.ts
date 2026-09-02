@@ -17,7 +17,13 @@ export const redirectMap: Redirect[] = [
   // /our-story everywhere (nav, title, slug). Internal route→route 301 so old
   // /about links, bookmarks, and any indexed URL survive the rename.
   { source: '/about', destination: '/our-story', permanent: true },
-  { source: '/our-services', destination: '/services', permanent: true },
+  { source: '/our-services', destination: '/services/what-we-do', permanent: true },
+  // `/services` was the four-offering overview (`service-overview` Page). The
+  // two-axis nav links neither it nor anything through it, so it became an
+  // orphan that only legacy traffic reached. The axis page IS the overview of
+  // what we do, so the URL collapses onto it rather than surviving as a second
+  // index above two axes.
+  { source: '/services', destination: '/services/what-we-do', permanent: true },
   // Old-Wix `/workshops` is now an identity (the canonical route IS
   // /workshops since the 2026-06-11 IA correction: ONE Touchstone workshop
   // among three, no branded umbrella) — omitted per the identity-row rule.
@@ -118,72 +124,70 @@ export const redirectMap: Redirect[] = [
   // and /services/digital-transformation, which were `/services/[offering]`
   // Page slugs.
   //
-  // ROADMAP SVC-2 deletes that route, and Brent's structure retires both as
-  // service names, so neither URL comes back — a 301 aimed at either is a
-  // permanent 404, and it breaks the moment this MERGES, not when content
-  // lands. Nothing is live, so they are RETARGETED AT SOURCE rather than
-  // chained through a second hop, and the only service URL that resolves
-  // today is the overview. That also honours the rule in
-  // `redirects.int.spec.ts`: a redirect may target a per-slug page only if
-  // that slug's content exists, otherwise send it to the LISTING.
+  // ROADMAP SVC-2 deleted that route, and Brent's structure retires both as
+  // service names, so neither URL comes back. They pointed at `/services` as
+  // an interim while no service was seeded; the axis page now exists and is
+  // what the nav points at, so they land there directly.
   //
-  // Refine these to the specific group and leaf pages once those are seeded
-  // (ROADMAP SVC-2 residual) — a better destination, not a correctness fix.
+  // ONE hop, deliberately: `/services` itself redirects to the same place a
+  // few lines down, so leaving these on `/services` would chain. Nothing is
+  // live, so redirects are REPLACED rather than layered (Kenn, 2026-08-31).
+  //
   // Leadership/process/PM leaves still land on /workshops, the funnel.
   {
     source: '/organizational-strategy-1-1-1-2',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-1-1-2-1',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-1-1-2-1-1',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-3-1',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-3-1-1',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-1-1-1',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-1-3',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-2-1',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-3',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/organizational-strategy-1-4',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   // The Wix "Technology & Data" pillar page.
   {
     source: '/technology-and-data',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   { source: '/organizational-strategy-1-1', destination: '/workshops', permanent: true },
@@ -198,10 +202,10 @@ export const redirectMap: Redirect[] = [
   // reason given above. These are internal route→route 301s (INTEGRATIONS §9),
   // and they stay ONE hop: `/services/ai-automation` now points straight at
   // /services rather than at a URL that is itself about to 404.
-  { source: '/services/ai-automation', destination: '/services', permanent: true },
+  { source: '/services/ai-automation', destination: '/services/what-we-do', permanent: true },
   {
     source: '/services/technology-data',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   { source: '/services/organizational-strategy', destination: '/workshops', permanent: true },
@@ -209,33 +213,33 @@ export const redirectMap: Redirect[] = [
   // AI Integration URL they used to fold onto no longer exists)
   {
     source: '/services/ai-automation/ai-assisted-modernization',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/services/ai-automation/machine-learning-solutions',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/services/ai-automation/process-automation',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   // technology-data leaves → the /services overview, same reason
   {
     source: '/services/technology-data/application-modernization',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/services/technology-data/cloud-data-engineering',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {
     source: '/services/technology-data/custom-software-development',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   // organizational-strategy leaves → Workshops (the funnel), except
@@ -247,7 +251,7 @@ export const redirectMap: Redirect[] = [
   },
   {
     source: '/services/organizational-strategy/fractional-product-ownership',
-    destination: '/services',
+    destination: '/services/what-we-do',
     permanent: true,
   },
   {

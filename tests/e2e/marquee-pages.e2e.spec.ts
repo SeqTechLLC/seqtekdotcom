@@ -81,7 +81,7 @@ test.describe('US1 — homepage renders the homepage global', () => {
             blockType: 'homepage-hero',
             headline: 'A consulting partner you would want to hire',
             subheadline: 'Strategy, delivery, and localshoring from Tulsa.',
-            primaryCta: { label: 'Explore our services', url: '/services' },
+            primaryCta: { label: 'Explore our services', url: '/services/what-we-do' },
             secondaryCta: { label: 'Book a call', url: '/contact' },
           },
         ] as never,

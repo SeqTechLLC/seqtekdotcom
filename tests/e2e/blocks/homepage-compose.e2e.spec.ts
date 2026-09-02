@@ -19,7 +19,7 @@ const testLayout = [
     blockType: 'homepage-hero',
     headline: HERO_MARKER,
     subheadline: 'Composed through RenderBlocks, not a bespoke template.',
-    primaryCta: { label: 'Explore our services', url: '/services' },
+    primaryCta: { label: 'Explore our services', url: '/services/what-we-do' },
     secondaryCta: { label: 'Book a call', url: '/contact' },
   },
   {

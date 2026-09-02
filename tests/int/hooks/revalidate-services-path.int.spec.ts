@@ -17,7 +17,8 @@ describe('buildRevalidatePlan(services) — one flat namespace', () => {
   it('busts the service page and the services index', () => {
     const plan = buildRevalidatePlan('services', { slug: 'change-management' })
     expect(plan.paths).toContain('/services/change-management')
-    expect(plan.paths).toContain('/services')
+    // `/services` is a redirect now, not a rendered route — nothing to bust.
+    expect(plan.paths).not.toContain('/services')
   })
 
   it('emits no nested pillar path for any tier', () => {

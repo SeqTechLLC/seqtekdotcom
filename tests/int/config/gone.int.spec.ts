@@ -29,7 +29,10 @@ describe('410 retired URL space', () => {
       '/',
       '/insights',
       '/case-studies',
-      '/services',
+      // `/services` moved out of this list: it is a 301 now, not a live page.
+      // G3 asserts the 410 map leaves live routes alone, and a redirecting URL
+      // is neither gone nor live — the axis page below is what to assert on.
+      '/services/what-we-do',
       '/workshops',
       '/team',
       '/contact',

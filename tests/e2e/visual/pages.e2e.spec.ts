@@ -25,7 +25,7 @@ const VIEWPORTS = [
 const ROUTES: { slug: string; path: string }[] = [
   { slug: 'home', path: '/' },
   { slug: 'our-story', path: '/our-story' },
-  { slug: 'services', path: '/services' },
+  // `/services` is a 301 onto the axis page; capture the destination.
   // SVC-2 — `/services/[offering]` and its three hardcoded Page slugs are gone.
   // Every tier of the `services` collection now renders through one template at
   // `/services/<slug>`, so capture one of each: a leaf, a group and the axis
