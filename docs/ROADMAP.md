@@ -269,9 +269,10 @@ The rest of this tier is what has to be true around them.
     can carry one. `pillars` is `required: true, minRows: 1`, so such a document is **invalid until
     re-picked**. Every `service-cards` block set to "By pillar" likewise had its `pillar` NULLed on purpose
     (the old value was a `service_pillars` id, meaningless against `services`). **Scope check before budgeting
-    this: no file in `docs/content-drafts/*.json` currently carries either block**, so on a lane seeded only
-    from those drafts there may be nothing to sweep. The exposure is whatever was authored directly in the
-    admin — check a lane before assuming either number.
+    this: `services.json` carries four `service-cards` and one `service-pillar-cards`, and every one of them
+    already `$ref`s `collection: "services"`** — a re-seed writes valid selections rather than needing a
+    sweep. The exposure is whatever was authored directly in the admin — check a lane before assuming a
+    number.
   - **Write the missing copy** — six of nine leaves and all three group pages (`CONTENT_NEEDS.md` §12).
   - **Localshoring is settled as a destination, and is a TENTH leaf to seed.** One page at
     `/services/localshoring`, a "how we work" leaf rather than a top-level item. **It is not one of Brent's
@@ -447,9 +448,11 @@ before we spend more effort loading content by hand.
   P5-11); what's left is a deploy, Megan's first sign-in (auto-provisions an `editor`), and a short CMS
   quickstart. Do the training **after** 011 lands so she learns the fixed panel, not the current one.
 - **HYG-1 — content data hygiene.** No human input needed; see `CONTENT_NEEDS.md` §10.
-  `industries` is empty while published case studies reference industry IDs (dangling refs) — seed it or drop
-  the relationship; `locations` is empty (needed only if the regional pages get built); delete the
-  `ztest-delete-me` category; case-study `ogImage` is null sitewide. **The empty `industries` now costs more than dangling refs:** `case-study-grid` resolves `source: by-industry` through `caseStudies.industry` (UI-2), so such a block returns zero rows and renders an empty section rather than a visible placeholder. (The missing `teamMembers.title` values were supplied 2026-08-25 and are in `docs/content-drafts/team.json`; they still need seeding to the deployed lanes.)
+  _Lane state, last observed 2026-08-11 against the retired staging account — re-check a live lane before
+  acting on any of it._ `industries` was empty while published case studies referenced industry IDs (dangling
+  refs) — seed it or drop the relationship; `locations` was empty (needed only if the regional pages get
+  built); delete the `ztest-delete-me` category if it is still there (it is no longer in
+  `categories.json`, so a re-seed will not recreate it); case-study `ogImage` was null sitewide. **The empty `industries` now costs more than dangling refs:** `case-study-grid` resolves `source: by-industry` through `caseStudies.industry` (UI-2), so such a block returns zero rows and renders an empty section rather than a visible placeholder. (The missing `teamMembers.title` values were supplied 2026-08-25 and are in `docs/content-drafts/team.json`; they still need seeding to the deployed lanes.)
 - **UI-3 — a new record's default skeleton is publishable placeholder copy.** `TeamMembers.layout`
   defaults to `teamMemberSkeleton`, whose body is literally `About` / _"A short professional bio."_ — and
   seven team members were created and published without anyone overwriting it, so six public
@@ -528,10 +531,10 @@ before we spend more effort loading content by hand.
     success panel and never navigates), `posts.relatedPosts` (a "Read next" picker no route read; every
     instance in the drafts was `[]`), `media.caption` (blocks draw their own).
 
-  **`servicePillars.order` was on that list and was deliberately left in place.** It is already `admin.hidden`,
-  so no editor is being promised anything, and `docs/content-drafts/service-pillars.json` carries real values in
-  it. Dropping it would also mean rewriting `listServicePillars`, whose `sort: 'order'` is its only reader — and
-  that function has no callers, so the honest cleanup there is to delete the function, not the field.
+  **`servicePillars.order` was on that list and is now moot.** SVC-2 absorbed `servicePillars` into `services`
+  and dropped the collection, taking the field with it; `listServicePillars` is gone from the codebase too, so
+  the "delete the function, not the field" cleanup this entry proposed has already happened by other means.
+  `service-pillars.json` survives in the content repo as a dead file — nothing reads it.
 
   **Still open:**
   - `services.icon` and `process-steps.steps.icon` — read, but there is no icon set behind them:

@@ -39,8 +39,9 @@ metadata collections that carry a block-composed body (`caseStudies`, `workshops
 the metadata-collection pattern. Media is served from CloudFront `/media/*` (ADR 0008, spec 009). Services
 were the one exception and that debt is paid (SVC-2): `services` is one collection carrying a `tier` of
 `leaf | group | axis`, every tier renders through `/services/[slug]`, and `servicePillars` was absorbed and
-dropped. The residual is content, not code — the leaves are not seeded yet, so `/services/<slug>` 404s until
-they are.
+dropped. `/services` collapsed onto `/services/what-we-do` (PR #136). The residual is content, not code:
+`services.json` in the content repo holds the full structure and seeds as written, but a deploy never runs the
+seeder, so `/services/<slug>` 404s on a lane until someone does.
 
 **Environments.** Nothing is publicly launched. A merge to `main` builds the image and deploys
 `preview.seqtek.com` (UAT, primary Fargate lane); **publishing** the GitHub Release that Release-Please prepares (as a
@@ -56,6 +57,13 @@ trees live in `src/lib/site-content.ts` and change by deploy, not by publish (AD
 the render path — two by `lib/metadata.ts`, six by the Organization JSON-LD in `lib/structured-data.ts` — and both
 are pinned by tests, so edit the values freely but expect a shape change to fail `organizationLd.int.spec.ts` /
 `metadataOutput.int.spec.ts`.
+
+**Two claims these docs keep getting wrong.** Content state and lane state both drift silently, because
+neither is pinned by a test and neither lives in this repo. So: **committed docs here do not assert what a
+`docs/content-drafts/*.json` file currently holds, or what a deployed lane currently serves.** Check the file
+(it is one `grep` through the symlink) or the lane. Where a doc has to record such a fact, it gets a date and
+reads as an observation, not as a standing truth — an undated "X is empty" or "Y still carries Z" is a bug in
+the doc. Reviewers cite these files as authority; a stale sentence here becomes a blocker on a PR.
 
 **What's active.** Spec 011 (Payload admin UX) US1 shipped in PR #107; US2–US6 (block picker, media thumbnails,
 form legibility, slug-from-title, collection grouping) are open. The bottleneck is content throughput, not
