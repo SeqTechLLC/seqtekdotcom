@@ -358,10 +358,13 @@ never made it back into a draft would seed as the _older_ draft copy. Diff the
 rendered output before trusting the cutover:
 
 ```sh
-# NOTE: no /services/<slug> probe. SVC-2 made those content slugs, and none is
-# seeded yet, so a probe there would 404 on BOTH sides and pass vacuously. Add
-# one once a service is published on the lane you are comparing.
-for p in / /our-story /services /workshops /team \
+# NOTE: no /services or /services/<slug> probe. /services is a 301 onto
+# /services/what-we-do, and curl does not follow it, so both sides would return
+# the same near-empty redirect body and pass vacuously; the axis and leaf slugs
+# are content and are not seeded yet, so those would 404 on both sides for the
+# same reason. Add a probe once a service is published on the lane you are
+# comparing.
+for p in / /our-story /workshops /team \
          /case-studies /insights /contact /localshoring /privacy-policy; do
   a=$(curl -s "https://seqtek-preview.com$p" | sed 's/<[^>]*>//g' | tr -s '[:space:]' ' ')
   b=$(curl -s "https://<new-env>$p"          | sed 's/<[^>]*>//g' | tr -s '[:space:]' ' ')
@@ -521,8 +524,10 @@ Once DNS is in hand:
 4. Set `/seqtek/website/prod/next_public_site_url` to `https://seqtek.com`,
    otherwise `sitemap.xml` and canonical URLs emit the preview domain
 5. **Lower DNS TTL 24 h beforehand**, then repoint
-6. Confirm the 301 map serves (`/about` → `/our-story`, `/our-services` →
-   `/services`) — those preserve the Wix-era URLs
+6. Confirm the redirect map serves. `/our-services` → `/services/what-we-do` is
+   the Wix-era URL; `/about` → `/our-story` and `/services` →
+   `/services/what-we-do` are internal route→route 301s preserving our own
+   older URLs. All three emit 308 (`permanent: true`), not 301
 7. Make `seqtek-preview.com` `noindex` so preview never competes with prod in
    search
 8. ~~Seed the office address into the `siteSettings` global~~ — **retired by
@@ -540,9 +545,12 @@ Once DNS is in hand:
 ```sh
 URL=https://<site>
 curl -s "$URL/api/health" | jq
-for p in / /our-story /services /workshops /team /case-studies /insights /contact; do
+for p in / /our-story /workshops /team /case-studies /insights /contact; do
   printf '%-20s %s\n' "$p" "$(curl -so /dev/null -w '%{http_code}' "$URL$p")"
 done
+# /services redirects to /services/what-we-do. `permanent: true` in redirects.ts
+# means Next emits 308, NOT 301 — expect 308 here, not 200 and not 301.
+printf '%-20s %s\n' /services "$(curl -so /dev/null -w '%{http_code}' "$URL/services")"
 curl -s "$URL/sitemap.xml" | grep -c '<loc>'
 ```
 

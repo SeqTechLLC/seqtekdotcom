@@ -242,7 +242,7 @@ Next 16's `middleware.ts` → `proxy.ts` rename was migrated the same day it app
 disabled the same day. Migrate or document the deferral; do not leave warnings in the
 build output.
 
-**Rationale**: ROADMAP Risk #2. Bleeding edge is a feature, not a liability, only if the
+**Rationale**: the stack constraint in `CLAUDE.md`. Bleeding edge is a feature, not a liability, only if the
 team treats every deprecation as a signal to act.
 
 ## Additional Constraints

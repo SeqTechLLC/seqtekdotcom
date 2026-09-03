@@ -8,7 +8,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 - Payload CMS v3.84+ (embedded in Next.js, Postgres-backed)
 - PostgreSQL (RDS in prod, Docker Compose locally)
 - Tailwind v3 (config-based; v3 chosen over v4 — see `docs/decisions/0001-tailwind-v3.md`)
-- AWS: EC2 + ALB + CloudFront, Docker via ECR, blue-green via ASG
+- AWS: Fargate + ALB + CloudFront, Docker via ECR
 - Identity: Google Workspace (`@seqtechllc.com`) via OAuth plugin (ROADMAP D-14, Phase 1 — see `docs/decisions/0002-auth-strategy.md`)
 
 ## Source of truth
@@ -17,7 +17,7 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 
 - `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com builds once; publishing the GitHub Release promotes that same image → ww3.seqtek.com, no rebuild)
 - `docs/INFRASTRUCTURE_RUNBOOK.md` — step-by-step: fresh AWS account standup, migrating an environment (with data) to another account, `seqtek.com` cutover
-- `docs/ROADMAP.md` — current status, open decisions, phase tracker
+- `docs/ROADMAP.md` — what is still open, in priority order. Open items only; nothing that has shipped
 - `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
 - `docs/LOCAL_DEVELOPMENT.md` — running locally
 - `docs/PAYLOAD_DEVELOPMENT.md` — Payload patterns
@@ -35,32 +35,27 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 **What the site is.** Two content primitives — a block-composed `Page` and a rich-text `Post` — plus typed
 metadata collections that carry a block-composed body (`caseStudies`, `workshops`, `teamMembers`, `partners`,
 `posts`). There are **no bespoke per-type page templates**; everything renders through the shared
-`RenderBlocks` dispatcher (ADR 0009, spec 010 / PR #66). `partners` (PR #99) is the reference implementation of
-the metadata-collection pattern. Media is served from CloudFront `/media/*` (ADR 0008, spec 009). Services
-were the one exception and that debt is paid (SVC-2): `services` is one collection carrying a `tier` of
-`leaf | group | axis`, every tier renders through `/services/[slug]`, and `servicePillars` was absorbed and
-dropped. The residual is content, not code — the leaves are not seeded yet, so `/services/<slug>` 404s until
-they are.
+`RenderBlocks` dispatcher (ADR 0009). `partners` is the reference implementation of the metadata-collection
+pattern. Media is served from CloudFront `/media/*` (ADR 0008). `services` is one collection carrying a `tier`
+of `leaf | group | axis`, all rendering through `/services/[slug]`.
 
 **Environments.** Nothing is publicly launched. A merge to `main` builds the image and deploys
-`preview.seqtek.com` (UAT, primary Fargate lane); **publishing** the GitHub Release that Release-Please prepares (as a
-draft) promotes **that same already-built image** to `ww3.seqtek.com` (production, secondary lane, same stack
-and account) without rebuilding — the release version is the label, the commit SHA is the artifact. Merging the
-release PR itself deploys nothing. `main` is the only deployment branch. Both lanes sit behind an ALB + Cognito gate — the gate is index control, not access
-control: it is what keeps search engines out until cutover. The separate staging account (`seqtek-preview.com`) was
-retired 2026-08-14. `seqtek.com` still serves the old Wix site.
+`preview.seqtek.com` (UAT, primary Fargate lane); **publishing** the GitHub Release that Release-Please prepares
+promotes **that same already-built image** to `ww3.seqtek.com` (production, secondary lane, same stack and
+account) without rebuilding. Merging the release PR itself deploys nothing. `main` is the only deployment
+branch. Both lanes sit behind an ALB + Cognito gate — index control, not access control: it is what keeps
+search engines out until cutover. `seqtek.com` still serves the old Wix site.
 
 **Site chrome is code-owned.** Company name, tagline, phone, email, postal address, social links and both nav
-trees live in `src/lib/site-content.ts` and change by deploy, not by publish (ADR 0010, spec 011 / PR #107). The
-`siteSettings` and `navigation` globals were withdrawn and their tables dropped. Seven of those values are read on
-the render path — two by `lib/metadata.ts`, six by the Organization JSON-LD in `lib/structured-data.ts` — and both
-are pinned by tests, so edit the values freely but expect a shape change to fail `organizationLd.int.spec.ts` /
-`metadataOutput.int.spec.ts`.
+trees live in `src/lib/site-content.ts` and change by deploy, not by publish (ADR 0010). Seven of those values
+are read on the render path and pinned by tests, so edit the values freely but expect a shape change to fail
+`organizationLd.int.spec.ts` / `metadataOutput.int.spec.ts`.
 
-**What's active.** Spec 011 (Payload admin UX) US1 shipped in PR #107; US2–US6 (block picker, media thumbnails,
-form legibility, slug-from-title, collection grouping) are open. The bottleneck is content throughput, not
-features. `docs/ROADMAP.md` is the prioritized list of everything open; `docs/PROJECT_HISTORY.md` is the archive
-of what shipped. Don't re-derive status from git history — read those two.
+**The bottleneck is content throughput, not features.** `docs/ROADMAP.md` is everything open;
+`docs/PROJECT_HISTORY.md` is the archive. Don't re-derive status from git history — read those two.
+
+**Stack constraint.** Next 16 + React 19 + Payload 3.84+ on Postgres 18.3, validated end to end. Payload is the
+harder constraint of the two, so if a minor bump breaks the combo, try downgrading Next before Payload.
 
 ## Conventions
 
@@ -100,12 +95,32 @@ The expectation: open the PNGs for **every page your change touches**, at both v
 
 ## Content loading & deploys
 
-Content lives in the **database**, not in committed code, and **CD does not seed content** — a deploy ships code, never copy or media. **Tool is committed; data is gitignored.** The way to (re)load content, local or remote, is the committed generic seeder driving gitignored JSON request files:
+Content lives in the **database**, not in committed code, and **CD does not seed content** — a deploy ships
+code, never copy or media. **Tool is committed; data is gitignored.**
 
-- **The tool** — `tools/payload-seed` (`npm run payload:seed -- <file.json>`). Upserts any collection or global from a JSON request file over REST, idempotent by an identity field (default `slug`). Directives resolved at write time: `$ref` (relation by slug/field → id, with array fallback / `createIfMissing` / `omitIfMissing`), `$file` (media upload-or-reuse by filename → id), `$lexical` (prose → editorState). An array of specs runs in order, so earlier docs resolve as later refs. `IMPORT_BASE_URL` (default `http://localhost:3100`; the deployed lanes are `https://preview.seqtek.com` / `https://ww3.seqtek.com`) + `IMPORT_TOKEN` (an `/admin` `payload-token` JWT the site owner mints — the deployed lanes have no direct DB access, so REST-with-a-token is the only path; a Cognito-gated lane also needs `IMPORT_COOKIE`, PR #102). `--dry-run` previews; keep the token **out of the repo** (gitleaks blocks it regardless). The shared REST client lives at `tools/payload-rest/client.ts`. **Don't commit remote-push scripts** — the runner is committed once and generic; the data is not.
-- **The data** — `docs/content-drafts/` is a **symlink to the private sibling repo `website-content`** (`~/projects/seqtek-internal/website-content`), which versions the real copy, media and seed files. It is gitignored here because this repo is public; every documented path and command works unchanged through the symlink, and its README says how to recreate the link on a fresh clone. The **tool stays here** — `tools/payload-seed/resolve.ts` imports `textToLexical` from `src/`, `tools/payload-rest/client.ts` mirrors `src/collections/Media.ts` and is shared with `ingest-photos`/`leonardo-images`, and the tests live in this repo's Vitest suite. Contents: `*.json`, **one file per collection or global** (`pages`, `case-studies`, `posts`, `workshops`, `team`, `partners`, `testimonials`, `categories`, `industries`, `services`, `global-*`; `service-pillars.json` is dead after SVC-2 dropped that collection, and `services.json` still carries `pillar` `$ref`s to it, so it will not seed as written). These are the real marketing content (kept out of the public repo). Local dev and the deployed lanes use the SAME files via `IMPORT_BASE_URL`. Reconciled against staging 2026-08-11 and verified portable — no row IDs, every relation a `$ref` (58 docs, 84 refs, 0 unresolved). Load order and the three known staging data defects are in `docs/content-drafts/README.md`; the fresh-environment sequence is `INFRASTRUCTURE_RUNBOOK.md` §2.2. Pre-spec-010 files that carried legacy body fields but no `layout` (seeding them renders an empty body and reports success) are in `docs/content-drafts/_archive/`.
+- **The tool** — `tools/payload-seed` (`npm run payload:seed -- <file.json>`). Upserts any collection or global
+  from a JSON request file over REST, idempotent by an identity field (default `slug`). Directives resolved at
+  write time: `$ref` (relation by slug/field → id), `$file` (media upload-or-reuse by filename → id),
+  `$lexical` (prose → editorState). An array of specs runs in order, so earlier docs resolve as later refs.
+  `IMPORT_BASE_URL` (default `http://localhost:3100`; the lanes are `https://preview.seqtek.com` /
+  `https://ww3.seqtek.com`) + `IMPORT_TOKEN` (an `/admin` `payload-token` JWT the site owner mints — the lanes
+  have no direct DB access, so REST-with-a-token is the only path; a Cognito-gated lane also needs
+  `IMPORT_COOKIE`). `--dry-run` previews. Keep the token out of the repo. The shared REST client is
+  `tools/payload-rest/client.ts`. **Don't commit remote-push scripts** — the runner is generic; the data is not.
+- **The data** — `docs/content-drafts/` is a symlink to the private sibling repo `website-content`
+  (`~/projects/seqtek-internal/website-content`), gitignored here because this repo is public. One JSON file per
+  collection or global. Its README covers load order, known defects and how to recreate the symlink. The tool
+  stays here because it is coupled to `src/` (`resolve.ts` imports `textToLexical`; `payload-rest/client.ts`
+  mirrors `src/collections/Media.ts`) and its tests live in this repo's Vitest suite.
 
-**Test fixtures are committed and generic, separate from real content.** `src/payload/seed/showcase` (`npm run seed:showcase`) builds 1-2 of every block type for the visual/showcase capture; `tests/e2e/helpers/seedInScopeRoutes.ts` seeds minimal generic fixtures for the a11y/in-scope routes. Tests never depend on the gitignored real content. The local dev server (`:3100`) runs different code — don't pull or mutate it mid-session; run your own server on a free port.
+**Content state and lane state are not documented here.** No test pins either and neither lives in this repo,
+so check the file through the symlink, or check the lane.
+
+**Test fixtures are committed and generic, separate from real content.** `src/payload/seed/showcase`
+(`npm run seed:showcase`) builds 1-2 of every block type for the visual capture;
+`tests/e2e/helpers/seedInScopeRoutes.ts` seeds minimal fixtures for the a11y routes. Tests never depend on the
+gitignored real content. The local dev server (`:3100`) runs different code — don't pull or mutate it
+mid-session; run your own server on a free port.
 
 <!-- SPECKIT START -->
 

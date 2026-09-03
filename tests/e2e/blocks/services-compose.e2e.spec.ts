@@ -78,9 +78,14 @@ test('/services/[slug] renders a collection-backed body + breadcrumb', async ({
   // Initial order: ALPHA before BRAVO.
   expect(text.indexOf(ALPHA)).toBeLessThan(text.indexOf(BRAVO))
 
-  // Breadcrumb JSON-LD present on the offering route (Home › Services › offering).
+  // Breadcrumb JSON-LD is Home › <service>, two items. The middle "Services" crumb
+  // went with the /services route it pointed at, so assert the shape rather than
+  // just the presence of a BreadcrumbList — a re-added crumb has to fail here.
   const ld = await page.locator('script[type="application/ld+json"]').allTextContents()
-  expect(ld.some((s) => s.includes('BreadcrumbList'))).toBe(true)
+  const crumbs = ld.map((s) => JSON.parse(s)).find((j) => j['@type'] === 'BreadcrumbList')
+  expect(crumbs).toBeDefined()
+  expect(crumbs.itemListElement).toHaveLength(2)
+  expect(crumbs.itemListElement.map((i: { name: string }) => i.name)).not.toContain('Services')
 
   // A slug matching neither a service nor a group 404s.
   const wrong = await page.goto('/services/not-a-service')

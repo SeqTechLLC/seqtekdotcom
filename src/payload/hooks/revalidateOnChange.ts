@@ -66,7 +66,10 @@ export const buildRevalidatePlan = (
         // axis page above it are all `/services/<slug>`. The nested
         // `/services/[pillar]/[slug]` IA this used to bust was retired in #79;
         // its last machinery went with the servicePillars merge.
-        detailPaths.push(`/services/${s}`, '/services')
+        // No `/services` — it is a 301 onto the axis page now, so there is no
+        // ISR entry behind it to bust. The axis page has its own slug and is
+        // revalidated as itself when it changes.
+        detailPaths.push(`/services/${s}`)
         break
       case 'workshops':
         detailPaths.push(`/workshops/${s}`, '/workshops')

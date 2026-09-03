@@ -61,7 +61,11 @@ export default async function ServicesSlugPage({ params }: Props) {
       <JsonLd
         data={breadcrumbLd([
           { name: 'Home', path: '/' },
-          { name: 'Services', path: '/services' },
+          // No 'Services' crumb. `/services` is a 301 onto the What We Do axis
+          // now, and asserting a parent the IA does not have — and the nav
+          // never links — ships a false hierarchy claim to crawlers. Every tier
+          // sits directly under Home in one flat namespace, which is what the
+          // routing actually says.
           { name: doc.title, path: `/services/${slug}` },
         ])}
       />

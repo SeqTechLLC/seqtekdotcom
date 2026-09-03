@@ -1,4 +1,8 @@
-# SEQTEK Website — Architecture & Technical Design
+# SEQTEK Website — Architecture
+
+> **Compute is mid-port.** The deployed lanes run **Fargate** (see `CLAUDE.md`); the EC2, ASG and
+> blue-green material below describes the stack this replaced and has not been reconciled yet. The
+> Fargate migration is owned by the infra engineer — docs get reconciled after it lands, not before. & Technical Design
 
 **Date:** 2026-06
 **Status:** Living — Phase 5 (staging live)
@@ -69,7 +73,7 @@ Access: Email/password auth with JWT. No public registration. Accounts created b
 
 #### `pages`
 
-Block-composed content pages — the generic primitive (spec 010 / ADR 0009). The catch-all `/[slug]` route renders most of these by slug (About, localshoring, etc.); the `/services` overview is also a `pages` record looked up by a known slug. The per-offering `service-*` Pages are gone — SVC-2 moved every service page into the `services` collection. Source of truth: `src/collections/Pages.ts`.
+Block-composed content pages — the generic primitive (spec 010 / ADR 0009). The catch-all `/[slug]` route renders most of these by slug (About, localshoring, etc.). The per-offering `service-*` Pages are gone — SVC-2 moved every service page into the `services` collection — and the `service-overview` Page went with the `/services` route, which is now a 301 onto `/services/what-we-do`. Source of truth: `src/collections/Pages.ts`.
 
 | Field         | Type   | Notes                                                                               |
 | ------------- | ------ | ----------------------------------------------------------------------------------- |
@@ -123,7 +127,7 @@ The most important content type. Each gets a dedicated page at `/case-studies/[s
 
 #### `services`
 
-Service pages — **block-composed and publicly routed** (ROADMAP SVC-2). `/services/[slug]` renders every row through `RenderBlocks`, so a new service is a publish, not a deploy. It remains a relationship target too (`posts.relatedServices`, `caseStudies.services`, `industries.relevantServices`). The `/services/[pillar]/[slug]` detail route and the later `/services/[offering]` Page-by-slug route are both retired, along with the `service-*` Pages the latter read; `/services` itself is still a `pages` record (`service-overview`).
+Service pages — **block-composed and publicly routed** (ROADMAP SVC-2). `/services/[slug]` renders every row through `RenderBlocks`, so a new service is a publish, not a deploy. It remains a relationship target too (`posts.relatedServices`, `caseStudies.services`, `industries.relevantServices`). The `/services/[pillar]/[slug]` detail route and the later `/services/[offering]` Page-by-slug route are both retired, along with the `service-*` Pages the latter read; `/services` itself is retired too, a 301 onto the `what-we-do` axis row.
 
 | Field                | Type                                  | Notes                                                   |
 | -------------------- | ------------------------------------- | ------------------------------------------------------- |
@@ -324,7 +328,6 @@ All public pages use ISR (Incremental Static Regeneration) — pages are statica
 | ------------------------ | -------------- | ------------------- | ---------------------------------------------------------------- |
 | `/`                      | ISR            | 3600s (1hr)         | Homepage — changes infrequently                                  |
 | `/[slug]`                | ISR            | 3600s               | Catch-all for block-composed `pages` (About, localshoring, etc.) |
-| `/services`              | ISR            | 3600s               | Overview — `pages` record, slug `service-overview`               |
 | `/services/[slug]`       | ISR            | 3600s               | Every `services` tier — leaf, group and axis, one flat namespace |
 | `/case-studies`          | ISR            | 3600s               | Listing                                                          |
 | `/case-studies/[slug]`   | ISR            | 3600s               | Individual case studies                                          |
@@ -967,7 +970,7 @@ EC2 and RDS both live in the same VPC. The Node process maintains a persistent c
 - **Output mode:** `output: 'standalone'` — produces a self-contained build with only the required `node_modules` files. Required for the Docker deployment strategy.
 - **Image optimization:** `remotePatterns` allowlists the S3 bucket hostname (from `S3_BUCKET_HOSTNAME` env var). The env var is validated at runtime in the image loader, not at config load time, so local dev works without S3 credentials.
 - **Security headers:** Applied to all routes — `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` disabling camera/microphone/geolocation. CSP is handled via the Next.js Proxy (see Section 6).
-- **301 redirects:** Old Wix URLs mapped to new routes (`/about-us-1` → `/about`, `/our-services` → `/services`, `/blog-old` → `/insights`, `/touchstone-workshops(/:slug*)` → `/workshops(/:slug*)`). Full redirect map maintained in INTEGRATIONS.md.
+- **301 redirects:** Old Wix URLs mapped to new routes (`/about-us-1` → `/about`, `/our-services` and `/services` → `/services/what-we-do`, `/blog-old` → `/insights`, `/touchstone-workshops(/:slug*)` → `/workshops(/:slug*)`). Full redirect map maintained in INTEGRATIONS.md.
 
 ### Scaling Path
 

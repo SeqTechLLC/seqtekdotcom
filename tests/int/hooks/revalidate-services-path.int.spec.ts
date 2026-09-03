@@ -11,13 +11,15 @@ import { buildRevalidatePlan } from '../../../src/payload/hooks/revalidateOnChan
  * paid for — went with the `servicePillars` merge.
  *
  * What replaces it is the invariant that matters now: every tier is flat, so a
- * save busts its own page and the index, and nothing else.
+ * save busts its own page and nothing else. There is no index path to bust —
+ * `/services` is a redirect, not a rendered route.
  */
 describe('buildRevalidatePlan(services) — one flat namespace', () => {
-  it('busts the service page and the services index', () => {
+  it('busts the service page, and not the retired /services index', () => {
     const plan = buildRevalidatePlan('services', { slug: 'change-management' })
     expect(plan.paths).toContain('/services/change-management')
-    expect(plan.paths).toContain('/services')
+    // `/services` is a redirect now, not a rendered route — nothing to bust.
+    expect(plan.paths).not.toContain('/services')
   })
 
   it('emits no nested pillar path for any tier', () => {

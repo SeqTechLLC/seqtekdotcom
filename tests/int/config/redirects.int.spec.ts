@@ -16,6 +16,10 @@ const EXPECTED_SOURCES = [
   // Internal route→route 301 from the About → Our Story rename.
   '/about',
   '/our-services',
+  // The four-offering overview, collapsed onto the What We Do axis once the
+  // two-axis nav stopped linking it (NAV-1). Not an INTEGRATIONS §9 Wix source
+  // — an internal route→route 301, same class as /about above.
+  '/services',
   '/touchstone-workshops',
   '/touchstone-workshops/:slug*',
   '/blog-old',
@@ -115,12 +119,12 @@ const KNOWN_DETAIL_DESTINATIONS = new Set<string>([
   '/workshops/touchstone',
   '/workshops/re-alignment',
   '/workshops/five-dysfunctions',
-  // ROADMAP SVC-2 deliberately adds NO service slug here. `/services/<slug>`
-  // resolves off the `services` collection now, and no service is seeded yet —
-  // so listing one would be widening this allowlist to admit the exact defect
-  // RM3 exists to catch, which is what an earlier cut of this PR did. Every
-  // service redirect targets the `/services` LISTING instead. Add a slug here
-  // only once a published service carries it.
+  // The axis page, added once a published service actually carried the slug —
+  // which is the condition the previous comment here set. `what-we-do` is a
+  // `tier: 'axis'` row in `services.json`, seeded alongside the deploy like
+  // every other lane's content. Same standard as the workshop entries above:
+  // listed because the content exists, not because the route shape allows it.
+  '/services/what-we-do',
   // Verified against docs/content-drafts/posts.json.
   '/insights/the-skill-shift',
 ])
@@ -164,6 +168,18 @@ describe('301 redirect map', () => {
   it('RM4 — covers exactly the non-identity INTEGRATIONS §9 sources', () => {
     const sources = redirectMap.map((r) => r.source).sort()
     expect(sources).toEqual([...EXPECTED_SOURCES].sort())
+  })
+
+  it('never chains — no destination is also a source', () => {
+    // The module header's ONE-hop rule: redirects are REPLACED, not layered.
+    // 22 entries point at /services/what-we-do and /services is itself a
+    // source, so an edit aiming anything back at /services would silently
+    // reintroduce a chain. Wildcard destinations are compared bare.
+    const sources = new Set(redirectMap.map((r) => r.source))
+    const chained = redirectMap
+      .filter((r) => sources.has(r.destination.replace(/\/:[a-zA-Z]+\*$/, '')))
+      .map((r) => `${r.source} → ${r.destination}`)
+    expect(chained).toEqual([])
   })
 
   it('has no duplicate sources', () => {

@@ -768,7 +768,8 @@ All redirects configured in `next.config.ts` `redirects()`. These preserve any S
 | ------------------------------------------------------- | --------------------------------------------- | --------- |
 | `/about-us-1`                                           | `/our-story`                                  | Yes       |
 | `/about`                                                | `/our-story`                                  | Yes       |
-| `/our-services`                                         | `/services`                                   | Yes       |
+| `/our-services`                                         | `/services/what-we-do`                        | Yes       |
+| `/services`                                             | `/services/what-we-do`                        | Yes       |
 | `/touchstone-workshops`, `/touchstone-workshops/:slug*` | `/workshops`, `/workshops/:slug*`             | Yes       |
 | `/blog-old`                                             | `/insights`                                   | Yes       |
 | `/blog-old/:path*`                                      | `/insights/:path*`                            | Yes       |

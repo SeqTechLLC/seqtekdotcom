@@ -16,7 +16,7 @@ Four failure states need explicit design: a missing page (404), a server-side ex
 - **File:** `app/not-found.tsx`
 - **Triggered when:** Next.js can't match the requested path, OR a server component explicitly calls `notFound()` (e.g., a case study slug doesn't resolve in Payload).
 - **Layout:** Full site header and footer present. No breadcrumbs — there is no location to anchor them to.
-- **Content blocks:** Clear heading, brief one-sentence explanation, three destination cards (Home, Services, Case Studies), and a "Book a Strategy Call" CTA as the secondary path per the CTA hierarchy in CONTENT-REQUIREMENTS §9.
+- **Content blocks:** Clear heading, brief one-sentence explanation, three destination cards (Home, What We Do, Case Studies), and a "Book a Strategy Call" CTA as the secondary path per the CTA hierarchy in CONTENT-REQUIREMENTS §9.
 - **Copy guidance:** Not jokey. SEQTEK's voice is consultative — "We couldn't find that page." beats "Oops!" every time. All brand voice rules from CONTENT-REQUIREMENTS §5A apply: no "leverage," no "synergies," buyer-centric language only.
 - **Tracking:** `dataLayer.push({ event: 'page_not_found', path: <requested> })` so marketing can see which 404s actually take traffic. High-traffic 404s usually signal a missing redirect from the old Wix URL set.
 

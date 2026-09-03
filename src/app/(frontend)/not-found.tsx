@@ -7,7 +7,7 @@ import { NotFoundTracker } from '@/components/error/NotFoundTracker'
 
 const DESTINATIONS = [
   { href: '/', title: 'Home', body: 'Start from the top.' },
-  { href: '/services', title: 'Services', body: 'How we help.' },
+  { href: '/services/what-we-do', title: 'What We Do', body: 'How we help.' },
   { href: '/case-studies', title: 'Case studies', body: 'Work we have shipped.' },
 ]
 
