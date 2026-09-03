@@ -246,11 +246,13 @@ The rest of this tier is what has to be true around them.
   than two once that is done; before it, it is worse. Any future collection merge inherits this.
 
   What is left is **data and copy**, which a deploy never ships:
-  - **Seed Brent's nine services and three groups** (`CONTENT_NEEDS.md` §12) into the collections via
-    `tools/payload-seed`. The gitignored `docs/content-drafts/services.json` still holds the OLD nine
-    (the capability set) and `service-pillars.json` the old three pillars, and neither carries the `items`
-    list the group tier needs. **Until that runs, `/services/<leaf>` 404s on a lane** — the code ships ahead
-    of the content, as it always does here.
+  - **Seed Brent's services and groups** (`CONTENT_NEEDS.md` §12) into the collection via
+    `tools/payload-seed`. The gitignored `docs/content-drafts/services.json` now holds that structure —
+    three groups, ten leaves and both axes, with the legacy capability-set nine explicitly retired — so it is
+    ready to load; `service-pillars.json` is dead with the collection it fed. **Until the seed runs,
+    `/services/<slug>` 404s on a lane, and that now includes the axis the 21 legacy redirects and `/services`
+    itself point at** — the code ships ahead of the content, as it always does here. Nothing is launched and
+    both lanes sit behind Cognito, so this is a run-the-seeder step, not a live defect.
   - **Retarget the 20 Wix redirects** that point at `/services/ai-integration` and
     `/services/digital-transformation`. Those were Page-backed offering URLs; under Brent's structure neither
     survives as a service name, so both destinations become 404s the moment the new content lands. _(The nav
