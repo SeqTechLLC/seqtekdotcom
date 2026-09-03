@@ -31,6 +31,11 @@
 import { expect, test } from '@playwright/test'
 
 const POST_DEPLOY_URL = process.env.POST_DEPLOY_URL
+// Set by deploy.yml only on the release/promotion path, where it is the exact
+// value `RELEASE_VERSION` was deployed with. Empty on a merge to `main` — that
+// path deploys the primary lane, which carries no release by design — and the
+// assertion below is skipped when it is empty.
+const EXPECT_RELEASE_VERSION = process.env.EXPECT_RELEASE_VERSION
 const COGNITO_HOSTED_UI_PATTERN = /\.auth\.[a-z0-9-]+\.amazoncognito\.com\//
 
 test.describe('post-deploy smoke', () => {
@@ -39,9 +44,21 @@ test.describe('post-deploy smoke', () => {
   test('GET /api/health returns 200 with status=ok', async ({ request }) => {
     const res = await request.get(`${POST_DEPLOY_URL}/api/health`)
     expect(res.status(), 'health endpoint must be 200 on every lane, gated or not').toBe(200)
-    const body = (await res.json()) as { status?: string; db?: string }
+    const body = (await res.json()) as { status?: string; db?: string; release?: string | null }
     expect(body.status).toBe('ok')
     expect(body.db).toBe('ok')
+
+    // A promotion that reports no release is the #122 defect: the deploy
+    // succeeds, the lane serves the right image, and `release` comes back null
+    // because RELEASE_VERSION reached `cdk deploy` empty. Nothing asserted it,
+    // so it shipped green. Pin the exact value, not just non-null — a wrong
+    // label is as bad as a missing one.
+    if (EXPECT_RELEASE_VERSION) {
+      expect(
+        body.release,
+        `promoted lane must report the release it was deployed with (${EXPECT_RELEASE_VERSION})`,
+      ).toBe(EXPECT_RELEASE_VERSION)
+    }
   })
 
   test('GET / responds (public homepage, or the Cognito gate if this lane is gated)', async ({
