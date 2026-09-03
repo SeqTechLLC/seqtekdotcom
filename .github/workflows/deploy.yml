@@ -208,6 +208,13 @@ jobs:
       'preview' }}
     outputs:
       site-url: ${{ steps.site.outputs.url }}
+      # Release path ONLY. `resolve` is skipped when IS_RELEASE != 'true', so
+      # this is empty on a merge to `main` — which is what the smoke job wants:
+      # that path deploys the PRIMARY lane, which carries no release and must
+      # not be asserted against one. Deliberately not `|| pinprod...`: that
+      # would hand the smoke job production's pinned release while it is
+      # testing preview.
+      release-version: ${{ steps.resolve.outputs.release-tag }}
     env:
       # IS_RELEASE distinguishes "merge to `main` — only the PRIMARY
       # (preview.seqtek.com) lane moves" from "release or manual prod
@@ -700,7 +707,20 @@ jobs:
           # — the same pinning discipline as the image tag, and for the same
           # reason: re-synthing re-renders that task definition, so a deploy
           # that omitted it would wipe it.
-          RELEASE_VERSION: ${{ env.IS_RELEASE == 'true' && steps.img.outputs.version-tag ||
+          # From the RESOLVER, not from the ref. A published release carries its
+          # version in the ref, but a promotion dispatched from the Actions UI
+          # has no tag — the version comes from the image that was resolved. The
+          # resolver handles both and emits the answer; reading the ref directly
+          # left production with an empty RELEASE_VERSION on every dispatch.
+          #
+          # The `||` arm does NOT rescue an empty release-tag: `pinprod` is
+          # skipped whenever IS_RELEASE is true, so on this path both arms are
+          # empty and RELEASE_VERSION reaches cdk empty. That is intended —
+          # promoting an image with no version tag (a `target:` naming a commit
+          # or branch that predates version tagging) should clear the label
+          # rather than leave a stale one naming a release this image is not.
+          # The resolver warns when it happens.
+          RELEASE_VERSION: ${{ env.IS_RELEASE == 'true' && steps.resolve.outputs.release-tag ||
             steps.pinprod.outputs.pinned-release-version }}
         run: |
           set -euo pipefail
@@ -789,6 +809,10 @@ jobs:
           # into the external-server branch of the config.
           POST_DEPLOY_URL: ${{ needs.deploy.outputs.site-url }}
           PLAYWRIGHT_BASE_URL: ${{ needs.deploy.outputs.site-url }}
+          # Empty on the non-release path, and the spec skips the assertion
+          # when it is empty. Set on a release or a dispatched promotion, where
+          # it pins the exact value /api/health must report back.
+          EXPECT_RELEASE_VERSION: ${{ needs.deploy.outputs.release-version }}
         run: npx playwright test tests/e2e/post-deploy-smoke.e2e.spec.ts
 
       - name: Upload Playwright report
