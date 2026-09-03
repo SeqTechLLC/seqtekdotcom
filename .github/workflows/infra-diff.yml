@@ -28,9 +28,9 @@ jobs:
     name: cdk diff
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -45,7 +45,7 @@ jobs:
       # always misleading. main and Preview both deploy SeqtekPreview* now,
       # so this ONE diff is what either push will actually change.
       - name: Configure AWS credentials (preview OIDC role, read-only diff)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/SeqtekPreviewDeploy
           aws-region: us-east-1
@@ -60,7 +60,7 @@ jobs:
             > diff-preview.txt 2>&1 || true
 
       - name: Post or update PR comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
