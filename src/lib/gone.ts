@@ -33,7 +33,7 @@ export const GONE_HTML = `<!doctype html>
 <ul>
 <li><a href="/insights">Insights</a></li>
 <li><a href="/case-studies">Case studies</a></li>
-<li><a href="/services">Services</a></li>
+<li><a href="/services/what-we-do">What We Do</a></li>
 <li><a href="/contact">Contact</a></li>
 </ul>
 </main></body></html>`

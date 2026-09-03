@@ -29,12 +29,11 @@ const url = (path: string): string => `${SITE_URL}${path}`
 // it is the retiring `service-*` Pages, excluded from the flat-page loop below.
 // `service-overview` because `/services` now 301s onto the axis page and the
 // Page behind it is retired; the other three because SVC-2 deleted
-// `/services/[offering]`, the only route that ever rendered them. Dropping them from this set would not make
-// them unreachable, it would ADVERTISE them at `/service-ai-integration` —
-// flat URLs that were never canonical and that retire on the next content seed
-// (ROADMAP SVC-2 residual). Delete a RETIRING entry when its Page record goes —
-// but `service-overview` is NOT retiring and must stay: `/services` still reads
-// it as that route's body. Hence the name is about the sitemap, not about fate.
+// `/services/[offering]`, the only route that ever rendered them. Dropping
+// them from this set would not make them unreachable, it would ADVERTISE them
+// at `/service-ai-integration` — flat URLs that were never canonical and that
+// retire on the next content seed (ROADMAP SVC-2 residual). Delete an entry
+// when its Page record goes.
 const SERVICE_PAGE_SLUGS_NOT_IN_SITEMAP = new Set([
   // `/services` is a 301 onto `/services/what-we-do` now, so the overview Page
   // is unreachable and its flat slug must not be advertised either — a

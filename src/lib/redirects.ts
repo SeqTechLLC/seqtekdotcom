@@ -198,10 +198,10 @@ export const redirectMap: Redirect[] = [
   // The retired 3-pillar / 9-service IA. Pillar slugs and the nine leaf service
   // slugs were read live from the DB before finalizing. Workshops is the primary
   // funnel, so the organizational-strategy pillar + its workshop/strategy leaves
-  // land on /workshops; everything else lands on the /services overview for the
+  // land on /workshops; everything else lands on the What We Do axis for the
   // reason given above. These are internal route→route 301s (INTEGRATIONS §9),
-  // and they stay ONE hop: `/services/ai-automation` now points straight at
-  // /services rather than at a URL that is itself about to 404.
+  // and they stay ONE hop: `/services/ai-automation` points straight at
+  // `/services/what-we-do` rather than at `/services`, which is itself a 301.
   { source: '/services/ai-automation', destination: '/services/what-we-do', permanent: true },
   {
     source: '/services/technology-data',
@@ -209,7 +209,7 @@ export const redirectMap: Redirect[] = [
     permanent: true,
   },
   { source: '/services/organizational-strategy', destination: '/workshops', permanent: true },
-  // ai-automation leaves → the /services overview (see the note above: the
+  // ai-automation leaves → the What We Do axis (see the note above: the
   // AI Integration URL they used to fold onto no longer exists)
   {
     source: '/services/ai-automation/ai-assisted-modernization',
@@ -226,7 +226,7 @@ export const redirectMap: Redirect[] = [
     destination: '/services/what-we-do',
     permanent: true,
   },
-  // technology-data leaves → the /services overview, same reason
+  // technology-data leaves → the What We Do axis, same reason
   {
     source: '/services/technology-data/application-modernization',
     destination: '/services/what-we-do',
@@ -243,7 +243,7 @@ export const redirectMap: Redirect[] = [
     permanent: true,
   },
   // organizational-strategy leaves → Workshops (the funnel), except
-  // fractional-product-ownership, which lands on the /services overview
+  // fractional-product-ownership, which lands on the What We Do axis
   {
     source: '/services/organizational-strategy/team-workshops',
     destination: '/workshops',

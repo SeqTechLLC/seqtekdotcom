@@ -70,13 +70,11 @@ export const IN_SCOPE_SEED: InScopeSeed = {
   mediaAlt: 'a11y in-scope seed image',
 }
 
-/**
- * ROADMAP SVC-2 / NAV-1. Every tier — axis, group and leaf — resolves off the
- * ONE `services` collection at a flat `/services/<slug>`, so a slug needs no
- * code change. The `/services` overview Page is gone with its route: nothing
- * linked it once the nav split into two axes, and it is a 301 onto
- * `/services/what-we-do` now.
- */
+// ROADMAP SVC-2 / NAV-1. Every tier — axis, group and leaf — resolves off the
+// ONE `services` collection at a flat `/services/<slug>`, so a slug needs no
+// code change. The `/services` overview Page is gone with its route: nothing
+// linked it once the nav split into two axes, and it is a 301 onto
+// `/services/what-we-do` now.
 
 /** Leaf services — `/services/<slug>` resolves these off the `services` collection. */
 const SERVICE_SLUGS = ['localshoring', 'ai-integration', 'digital-transformation'] as const
@@ -253,10 +251,6 @@ export async function seedInScopeRoutes(
   // sweep. digital-transformation keeps a featured-case-study block pointing at
   // the case study seeded just above, so it resolves a real study and never
   // read-timeouts on an unseeded id.
-  //
-  // The `servicePage` helper went with the `/services` overview Page it existed
-  // to build: every service route is a `services` doc now, and `/services`
-  // itself is a 301 onto the What We Do axis.
 
   // A leaf is a `services` doc now, not a Page. It leads with a hero because the
   // route owns no <h1> — the body supplies it, same as partners.
