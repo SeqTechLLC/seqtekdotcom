@@ -266,7 +266,7 @@ jobs:
 
       # On a release, build the TAGGED commit, not whatever main has drifted
       # to since the release PR merged.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
           # The release path walks back from the tag to the nearest ancestor
@@ -281,7 +281,7 @@ jobs:
           fetch-tags: true
 
       - name: Configure AWS credentials (${{ env.ENV_NAME }} OIDC role)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID || vars.AWS_ACCOUNT_ID }}:role/${{ env.ROLE_NAME }}
           aws-region: ${{ env.AWS_REGION }}
@@ -350,7 +350,7 @@ jobs:
       - name: Set up Docker Buildx
         # Build-only; a release promotes an existing image.
         if: ${{ env.IS_RELEASE != 'true' }}
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # NOT on the release path. A release PROMOTES an image that a `main`
       # push already built, tested on preview, and pushed to ECR under its
@@ -361,7 +361,7 @@ jobs:
       # is not guaranteed to yield an identical image.
       - name: Build + push image
         if: ${{ env.IS_RELEASE != 'true' }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64
@@ -405,7 +405,7 @@ jobs:
             BUILD_COMMIT=${{ steps.img.outputs.sha-tag }}
             BUILD_VERSION=${{ steps.img.outputs.build-version }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -789,9 +789,9 @@ jobs:
       image: mcr.microsoft.com/playwright:v1.58.2-jammy
       options: --ipc=host
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -817,7 +817,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: post-deploy-playwright-report
           path: playwright-report/
