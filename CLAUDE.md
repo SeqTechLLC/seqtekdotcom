@@ -8,7 +8,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 - Payload CMS v3.84+ (embedded in Next.js, Postgres-backed)
 - PostgreSQL (RDS in prod, Docker Compose locally)
 - Tailwind v3 (config-based; v3 chosen over v4 — see `docs/decisions/0001-tailwind-v3.md`)
-- AWS: EC2 + ALB + CloudFront, Docker via ECR, blue-green via ASG
+- AWS: Fargate + ALB + CloudFront, Docker via ECR
 - Identity: Google Workspace (`@seqtechllc.com`) via OAuth plugin (ROADMAP D-14, Phase 1 — see `docs/decisions/0002-auth-strategy.md`)
 
 ## Source of truth
@@ -54,8 +54,8 @@ are read on the render path and pinned by tests, so edit the values freely but e
 **The bottleneck is content throughput, not features.** `docs/ROADMAP.md` is everything open;
 `docs/PROJECT_HISTORY.md` is the archive. Don't re-derive status from git history — read those two.
 
-**Stack constraint.** Next 16 + React 19 + Payload 3.84+ on Postgres 18.3. If a minor bump breaks the combo,
-**downgrade Next first**, not Payload.
+**Stack constraint.** Next 16 + React 19 + Payload 3.84+ on Postgres 18.3, validated end to end. Payload is the
+harder constraint of the two, so if a minor bump breaks the combo, try downgrading Next before Payload.
 
 ## Conventions
 

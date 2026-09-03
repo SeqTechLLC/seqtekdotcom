@@ -51,13 +51,19 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
 - **NAV-1 — dropdown panels, then the pages under them.** The panel component shipped (#129) against today's
   routes. What is left is the group and leaf data, which cannot land until the routes exist — header links to
   unbuilt routes is the #126 defect at the top of every page. **Sequence: SVC-2 first, then the nav data.**
-  - Both top-level items ("What we do", "How we work") get a panel. A second panel is a data entry.
   - `tests/e2e/layout.e2e.spec.ts` (~:28-35) asserts all six top-level items are visible **links**. If an axis
     item becomes a button that opens a panel, that assertion changes shape.
+  - **A group's URL is optional, and that is what de-risks the second panel.** A group with no URL renders as
+    a heading and nothing more, so "how we work" can ship with headless groups and earn pages later. Brent
+    asked for all three "what we do" groups to be clickable, so on that panel every group takes a URL. The
+    panel already renders a group either way (#129) — what changes is how much copy has to exist first.
+  - **Decide whether the leaf namespace stays named `/services/`.** It was worth asking once the axis labels
+    settled, and they have. All leaves share ONE flat namespace whichever axis they hang off — that is not
+    optional, because a leaf reachable from both panels must resolve to one URL. Only the name is open.
   - The a11y gate is the cost, not the CSS: click/tap to open (hover-only fails WCAG 2.2 §1.4.13), no focus
     trap. `tests/e2e/a11y.e2e.spec.ts` sweeps at zero axe violations.
 
-- **SVC-2 residual — the content.** The code shipped (P5-31, #136). A deploy never runs the seeder, so:
+- **SVC-2 residual — the content.** The code shipped (P5-31 / #131, and P5-41 / #136 for the `/services` fold). A deploy never runs the seeder, so:
   - **Seed the services content** (`CONTENT_NEEDS.md` §12) via `tools/payload-seed`. Until it runs,
     `/services/<slug>` 404s on a lane — including the axis that `/services` and the legacy Wix 301s point at.
     Nothing is launched and both lanes are Cognito-gated, so this is a step to run, not a live defect.
@@ -71,6 +77,12 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     documents are invalid until re-picked. A re-seed repairs whatever the seed files cover; the exposure is
     what was authored directly in the admin. Check a lane.
   - **Write the missing copy** — six of nine leaves and all three group pages (`CONTENT_NEEDS.md` §12).
+    **A group page needs a reason to exist:** if it is only a list of its own children it is a worse version
+    of the menu that got you there. That is the bar. Flag it early if a grouping produces a heading nothing
+    can be written about.
+  - **Refine the 21 Wix service 301s once the leaves are seeded.** They all land on the axis today, which is
+    the honest interim target. `/technology-and-data` should reach the data page rather than the axis.
+    Cheaper before the DNS cutover: nothing is live, so these are retargeted at source rather than layered.
 
   **Carry forward:** absorbing tiers into one collection means every relationship pointing at that collection
   has to constrain to a tier, or the pickers offer nonsense. Six fields pointed at `services`; without
@@ -171,8 +183,8 @@ Every content change is still a developer task. This tier fixes that before we l
   content load. Individual fixes have shipped; the sweep itself never has. Recurring class: Leonardo mid-post
   figures live only in the DB, so any post re-seed strips them (`tools/leonardo-images`).
 - **CL-1 — load the drafted content.** A seeder run, not authoring: the values block onto `/our-story`, the
-  testimonial re-seed, the curated photo picks (`tools/ingest-photos`), the six blog bodies, and the three
-  staged Taurex studies. The `teamMembers` slice is done on preview and **not yet on production** — the seeder
+  testimonial re-seed, the curated photo picks (C-8, `tools/ingest-photos`), the six blog bodies, and the
+  three staged Taurex studies. The `teamMembers` slice is done on preview and **not yet on production** — the seeder
   runs against `ww3` separately. Run against a gated lane with `IMPORT_TOKEN` + `IMPORT_COOKIE` (#102).
 - **C-7 — Taurex sign-off (via Andrew).** The highest-leverage content conversation: four written studies
   become publishable, all three outstanding `pendingQuote` slots are Taurex people, and it clears the
@@ -290,7 +302,7 @@ Real work, none of it blocking a launch. Ordered by expected return.
   as deliberate; replace the `(record.layout ?? []) as never` casts in the block-rendered detail routes with a
   typed `BlockLike[]` adapter.
 - **CI Actions cost.** The remaining per-run cost is the ~11-minute Playwright + axe + Lighthouse job — gate it
-  behind ready-for-review PRs so draft pushes skip it. The org Actions spending limit was hit 2026-06-16.
+  behind ready-for-review PRs so draft pushes skip it. (The org Actions spending limit was hit 2026-06-16; taking the repo public resolved it, since Actions are free there.)
 - **Small stuff.** Backfill the `ws` / `happy-dom` `_overridesNotes` entries (issue #75); decide autoplay vs
   manual-only if a testimonial carousel is ever built.
 

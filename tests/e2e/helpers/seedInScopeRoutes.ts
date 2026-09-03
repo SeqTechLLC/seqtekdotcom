@@ -242,8 +242,7 @@ export async function seedInScopeRoutes(
     overrideAccess: true,
   })
 
-  // /services + /services/<offering> — the four block-composed Pages of the
-  // four-offering IA (feat/services-restructure). These are GENERIC test
+  // /services/<slug> — one `services` row per tier. These are GENERIC test
   // fixtures (a representative mix of blocks), not the real marketing copy —
   // the real services content lives in the gitignored docs/content-drafts JSON
   // loaded by tools/payload-seed. The block TYPES get full a11y coverage from

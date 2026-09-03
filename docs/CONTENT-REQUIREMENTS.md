@@ -85,7 +85,6 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 │
 ├── /localshoring                                    The Localshoring Model (standalone top-level page — the model explainer; distinct from the /services/localshoring offering)
 │
-├── /services                                        Services Overview — still a `pages` record (`service-overview`)
 │   ├── /services/<axis>                             e.g. "What We Do" — tier `axis`, the nav target
 │   ├── /services/<group>                            The three groups — tier `group`, each holding ordered services
 │   └── /services/<leaf>                             The nine services + localshoring — tier `leaf`
@@ -827,7 +826,7 @@ Per Google Search Central (2024 site migration guidance) and Moz: **failing to i
 | Old URL (Wix)                          | New URL                                       | Notes                            |
 | -------------------------------------- | --------------------------------------------- | -------------------------------- |
 | `/about-us-1`                          | `/about`                                      |                                  |
-| `/our-services`                        | `/services`                                   |                                  |
+| `/our-services`                        | `/services/what-we-do`                        |                                  |
 | `/touchstone-workshops(/[slug])`       | `/workshops(/[slug])`                         | IA corrected 2026-06-11 (PR #49) |
 | `/blog-old`                            | `/insights`                                   |                                  |
 | `/blog-old/[slug]`                     | `/insights/[slug]`                            | Match individual post slugs      |
