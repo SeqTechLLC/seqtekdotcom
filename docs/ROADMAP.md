@@ -170,6 +170,13 @@ Every content change is still a developer task. This tier fixes that before we l
     block-only signature does not carry.
   - **The gate covers block controls, not collection fields.** Nothing has audited the collections' own fields
     the same way. Sequencing: `docs/planning/block-output-contract.md`.
+- **Publishing a group does not bust the axis page that renders it.** `services` is the only routed
+  collection whose revalidate plan names no listing path — correct in itself, since `/services` is a
+  redirect now. But the axis page took over the overview role, and its `service-pillar-cards` block renders
+  the `tier: 'group'` rows through a depth-2 populate, so publishing or renaming a group refreshes neither
+  that page's data cache nor its CloudFront copy. Bounded by `revalidate: 3600` on a gated, unlaunched
+  site. The fix wants the axis slugs, which are content — so it needs a query in `revalidateOnChange`,
+  not a hardcoded slug.
 - **Re-link `industry-grid` and `locations-list` cards** when IND-1 and the locations route ship. The cards are
   one call site; `revalidateOnChange.ts:135-141` is the other. **The two disagree on the name** — the hook says
   `/consulting/<slug>`, the block said `/locations/<slug>`. Settle that before either route is built.

@@ -85,12 +85,13 @@ Hierarchical page structure. ~55-60 pages at launch. Organized as a topic cluste
 │
 ├── /localshoring                                    The Localshoring Model (standalone top-level page — the model explainer; distinct from the /services/localshoring offering)
 │
-│   ├── /services/<axis>                             e.g. "What We Do" — tier `axis`, the nav target
-│   ├── /services/<group>                            The three groups — tier `group`, each holding ordered services
-│   └── /services/<leaf>                             The nine services + localshoring — tier `leaf`
+├── /services/<axis>                                 e.g. "What We Do" — tier `axis`, the nav target
+├── /services/<group>                                The three groups — tier `group`, each holding ordered services
+├── /services/<leaf>                                 The nine services + localshoring — tier `leaf`
 │       (SVC-2: one flat namespace, one `services` collection, three tiers. The
 │        four-peer IA and its `service-*` Pages are retired; slugs are content,
-│        not code. Brent's structure is in §12. Workshops stays at /workshops.)
+│        not code. Brent's structure is in §12. Workshops stays at /workshops.
+│        `/services` itself is a redirect onto the axis, not a route.)
 │
 ├── /workshops/                                      Workshops Landing (IA corrected 2026-06-11: ONE Touchstone workshop among three)
 │   ├── /workshops/touchstone

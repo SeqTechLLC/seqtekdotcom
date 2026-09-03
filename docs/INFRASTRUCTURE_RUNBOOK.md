@@ -524,8 +524,10 @@ Once DNS is in hand:
 4. Set `/seqtek/website/prod/next_public_site_url` to `https://seqtek.com`,
    otherwise `sitemap.xml` and canonical URLs emit the preview domain
 5. **Lower DNS TTL 24 h beforehand**, then repoint
-6. Confirm the 301 map serves (`/about` → `/our-story`, `/our-services` and
-   `/services` → `/services/what-we-do`) — those preserve the Wix-era URLs
+6. Confirm the redirect map serves. `/our-services` → `/services/what-we-do` is
+   the Wix-era URL; `/about` → `/our-story` and `/services` →
+   `/services/what-we-do` are internal route→route 301s preserving our own
+   older URLs. All three emit 308 (`permanent: true`), not 301
 7. Make `seqtek-preview.com` `noindex` so preview never competes with prod in
    search
 8. ~~Seed the office address into the `siteSettings` global~~ — **retired by
@@ -546,7 +548,8 @@ curl -s "$URL/api/health" | jq
 for p in / /our-story /workshops /team /case-studies /insights /contact; do
   printf '%-20s %s\n' "$p" "$(curl -so /dev/null -w '%{http_code}' "$URL$p")"
 done
-# /services is a 301 onto /services/what-we-do — expect 301, not 200
+# /services redirects to /services/what-we-do. `permanent: true` in redirects.ts
+# means Next emits 308, NOT 301 — expect 308 here, not 200 and not 301.
 printf '%-20s %s\n' /services "$(curl -so /dev/null -w '%{http_code}' "$URL/services")"
 curl -s "$URL/sitemap.xml" | grep -c '<loc>'
 ```

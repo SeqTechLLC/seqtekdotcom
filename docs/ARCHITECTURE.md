@@ -1,4 +1,8 @@
-# SEQTEK Website — Architecture & Technical Design
+# SEQTEK Website — Architecture
+
+> **Compute is mid-port.** The deployed lanes run **Fargate** (see `CLAUDE.md`); the EC2, ASG and
+> blue-green material below describes the stack this replaced and has not been reconciled yet. The
+> Fargate migration is owned by the infra engineer — docs get reconciled after it lands, not before. & Technical Design
 
 **Date:** 2026-06
 **Status:** Living — Phase 5 (staging live)

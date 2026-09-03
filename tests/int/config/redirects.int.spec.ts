@@ -170,6 +170,18 @@ describe('301 redirect map', () => {
     expect(sources).toEqual([...EXPECTED_SOURCES].sort())
   })
 
+  it('never chains — no destination is also a source', () => {
+    // The module header's ONE-hop rule: redirects are REPLACED, not layered.
+    // 22 entries point at /services/what-we-do and /services is itself a
+    // source, so an edit aiming anything back at /services would silently
+    // reintroduce a chain. Wildcard destinations are compared bare.
+    const sources = new Set(redirectMap.map((r) => r.source))
+    const chained = redirectMap
+      .filter((r) => sources.has(r.destination.replace(/\/:[a-zA-Z]+\*$/, '')))
+      .map((r) => `${r.source} → ${r.destination}`)
+    expect(chained).toEqual([])
+  })
+
   it('has no duplicate sources', () => {
     const sources = redirectMap.map((r) => r.source)
     expect(new Set(sources).size).toBe(sources.length)
