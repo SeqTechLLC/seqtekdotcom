@@ -116,20 +116,23 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     Product Ownership, Strategy & Roadmap Alignment, Discovery & Team Workshops); some map onto items he named
     and may need to come back out.
 
-- **IND-1 — six industry pages.** Healthcare, FinTech, Oil & Gas, Energy, Manufacturing, plus Aerospace.
-  Non-profit is explicitly out. Build Energy first — it has the most case-study proof.
-  - **One taxonomy.** The industry pages and `case-study-grid`'s `by-industry` source read the same collection,
-    so the six marketing industries become the canonical slugs and the existing per-client case-study refs
-    remap onto them. Endurance Lift / NovaMud / Taurex → Oil & Gas; WellChecked → Energy.
-  - **Hogan is open.** Its vertical is psychometrics, which is not one of the six. Left tagged as-is. Settle it
-    before the collection is seeded. It surfaces a constraint: an industry that exists for tagging but should
-    not get a page needs a way not to route — publish state is the lever, since `/industries/[slug]` builds
-    from published records only.
-  - **Four of the six have no proof.** Healthcare, FinTech, Manufacturing and Aerospace carry no case study.
-    Either PROOF-1 lands one each, or the pages ship in the order the proof does. Recorded in
-    `CONTENT_NEEDS.md` §11.
-  - **Re-link the cards.** `industry-grid` cards were unlinked in #126. `revalidateOnChange.ts:135-141` already
-    builds invalidation paths for the route, and the `seo.*` group on `industries` un-hides here.
+- **IND-1 — industry pages. Wiring done; the copy is not.** Seven industries: Oil and Gas, Energy,
+  Manufacturing, Healthcare, FinTech, Aerospace, and Leadership and Training. Non-profit is explicitly out.
+  - **The mechanism shipped.** `industries` carries a `layout` blocks field, `/industries/[slug]` renders it
+    through `RenderBlocks` off the collection, the four INERT-1 field groups are un-hidden, `industry-grid`
+    cards are re-linked, and the sitemap derives the URLs. Publishing a new industry needs no deploy.
+  - **One taxonomy, settled.** The five previous slugs were invented one per engagement, not marketing
+    industries. All seven case studies were re-tagged onto the canonical set and the old five unpublished —
+    `unpublished` keeps the row as a working tag while its URL 404s. **Hogan resolved to Leadership and
+    Training** rather than being forced into one of Brent's six.
+  - **Nav placement was a measurement.** Industries is a fourth group in the What We Do panel, not a seventh
+    top-level item: the header row is capped at 1024px and already measures ~1002px with six items, so a
+    seventh overflows by ~78px at every desktop width. Re-measure before adding anything else to the header.
+  - **What is left is the copy.** All seven bodies are placeholders and say so on the page.
+  - **Four of the seven have no proof** — Healthcare, FinTech, Manufacturing and Aerospace carry no case
+    study, so their `case-study-grid` renders an empty section. That is deliberate: it makes the gap visible
+    rather than letting a page assert expertise with nothing behind it. Either PROOF-1 lands one each, or
+    those four stay drafts until it does. `CONTENT_NEEDS.md` §11.
 
 - **BOOK-1 — book-a-call widget, routing to Daniel.** The blocks shipped (#124). What is missing:
   - **Daniel's real HubSpot meetings URL** (Megan, portal config). The only URL in the repo is a fixture. The
