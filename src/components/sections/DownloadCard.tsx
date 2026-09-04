@@ -64,7 +64,7 @@ export function DownloadCard({
 }: DownloadCardProps) {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-container-lg gap-8 rounded-md border border-border-subtle bg-surface p-6 shadow-sm md:grid-cols-2">
+      <div className="mx-auto grid max-w-container-xl gap-8 rounded-md border border-border-subtle bg-surface p-6 shadow-sm md:grid-cols-2">
         {isFullMedia(coverImage) && coverImage.url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

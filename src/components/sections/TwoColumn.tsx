@@ -49,7 +49,7 @@ export function TwoColumn({ mediaPosition, body, media, cta }: TwoColumnProps) {
 
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
+      <div className="mx-auto grid max-w-container-xl gap-10 lg:grid-cols-2 lg:items-center">
         {mediaPosition === 'left' ? (
           <>
             {mediaEl}

@@ -26,7 +26,7 @@ export function MissionVisionValues({
 
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg space-y-12">
+      <div className="mx-auto max-w-container-xl space-y-12">
         <div className="grid gap-8 md:grid-cols-2">
           <div>
             <p className="text-caption uppercase tracking-wide text-accent-strong">Mission</p>

@@ -60,7 +60,7 @@ export function Gallery({ heading, items, layout = 'grid', columns = '3' }: Gall
 
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? <h2 className="mb-6 text-h3 font-semibold">{heading}</h2> : null}
         {layout === 'carousel' ? (
           <div className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2">

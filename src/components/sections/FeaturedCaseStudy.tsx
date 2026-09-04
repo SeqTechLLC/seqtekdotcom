@@ -23,7 +23,7 @@ export function FeaturedCaseStudy({ heading, caseStudy }: FeaturedCaseStudyProps
   if (!isDoc(caseStudy)) return null
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <p className="text-caption uppercase tracking-wide text-accent-strong">
           {heading ?? 'Featured case study'}
         </p>

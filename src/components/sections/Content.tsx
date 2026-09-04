@@ -29,7 +29,7 @@ export function Content({ width = 'standard', body, background = 'none' }: Conte
           column is centered within the page rail, NOT left-justified. Body copy
           keeps its 65ch measure and is centered, so it shares a vertical axis
           with everything else on the page. */}
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <div className={`${widthCls} mx-auto`}>
           <RichText data={body} className="mx-auto" />
         </div>

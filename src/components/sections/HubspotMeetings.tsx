@@ -23,7 +23,7 @@ export function HubspotMeetings({ meetingUrl, heading }: HubspotMeetingsProps) {
       {/* booking_complete seam (spec 008 US3, contract D3) — dormant until the
           inline Meetings embed posts onMeetingBookSucceeded. */}
       <BookingCompleteSeam meetingUrl={meetingUrl} />
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <h2 className="text-h2 font-bold">{heading ?? 'Book a time'}</h2>
         <div className="mt-8 rounded-md border border-border-subtle bg-surface-subtle p-8 text-center">
           <p className="text-body-lg text-text-secondary">

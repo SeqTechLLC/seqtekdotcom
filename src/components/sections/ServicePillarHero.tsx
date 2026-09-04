@@ -32,7 +32,7 @@ export function ServicePillarHero({
 }: ServicePillarHeroProps) {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
+      <div className="mx-auto grid max-w-container-xl gap-10 lg:grid-cols-2 lg:items-center">
         <div>
           <p className="text-caption uppercase tracking-wide text-accent-strong">{pillarName}</p>
           <h1 className="mt-2 text-h1 font-bold">{headline}</h1>

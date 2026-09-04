@@ -114,7 +114,7 @@ export function Hero({
           a measure cap so it wraps editorially instead of spanning the
           container; subheadline capped likewise. */}
       {isSplit ? (
-        <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
+        <div className="mx-auto grid max-w-container-xl gap-10 lg:grid-cols-2 lg:items-center">
           <div className={alignmentCls}>
             {copy}
             {ctas}
@@ -128,7 +128,7 @@ export function Hero({
           />
         </div>
       ) : (
-        <div className={`mx-auto max-w-container-lg ${alignmentCls}`}>
+        <div className={`mx-auto max-w-container-xl ${alignmentCls}`}>
           {copy}
           {variant === 'with-image' && image ? (
             <ResponsiveImage

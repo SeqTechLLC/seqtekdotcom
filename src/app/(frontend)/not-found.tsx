@@ -15,7 +15,7 @@ export default function NotFound() {
   return (
     <div
       data-testid="not-found"
-      className="mx-auto max-w-container-lg px-4 py-24 text-center md:px-6"
+      className="mx-auto max-w-container-xl px-4 py-24 text-center md:px-6"
     >
       <NotFoundTracker />
       <p className="text-small font-semibold uppercase tracking-wide text-text-muted">Error 404</p>

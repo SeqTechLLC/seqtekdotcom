@@ -33,7 +33,7 @@ export function PartnerGrid({ items, headingLevel = 'h3' }: PartnerGridProps) {
   if (docs.length === 0) return null
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {docs.map((p, i) => (
             <li key={p.id ?? p.slug ?? i}>

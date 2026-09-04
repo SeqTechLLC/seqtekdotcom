@@ -37,8 +37,8 @@ export function ContactCta({
       <div
         className={
           meeting
-            ? 'mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center'
-            : 'mx-auto max-w-container-lg'
+            ? 'mx-auto grid max-w-container-xl gap-10 lg:grid-cols-2 lg:items-center'
+            : 'mx-auto max-w-container-xl'
         }
       >
         <div>

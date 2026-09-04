@@ -22,7 +22,7 @@ const WIDTH_CLASSES: Record<NonNullable<ImageProps['width']>, string> = {
   narrow: 'max-w-2xl',
   standard: 'max-w-3xl',
   wide: 'max-w-5xl',
-  full: 'max-w-container-lg',
+  full: 'max-w-container-xl',
 }
 
 // Alignment positions the figure within the page rail. Center is the default
@@ -43,7 +43,7 @@ export function Image({ image, caption, width = 'standard', alignment = 'center'
 
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <figure className={`${widthCls} ${alignCls}`}>
           <ResponsiveImage
             media={image}

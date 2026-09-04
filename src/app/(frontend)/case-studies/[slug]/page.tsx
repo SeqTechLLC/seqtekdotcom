@@ -80,7 +80,7 @@ export default async function CaseStudyPage({ params }: Props) {
       {/* Fire-once case_study_view (spec 008 US3, contract D2). */}
       <TrackView slug={slug} title={caseStudy.title} />
 
-      <article data-testid="case-study" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
+      <article data-testid="case-study" className="mx-auto max-w-container-xl px-4 py-16 md:px-6">
         <header className={`${readingCol} mb-12`}>
           {industry?.title ? (
             <p className="text-small font-semibold uppercase tracking-wide text-text-muted">

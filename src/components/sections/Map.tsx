@@ -26,7 +26,7 @@ const isAllowed = (url: string): boolean => {
 export function Map({ heading, embedUrl, caption, height = 400 }: MapProps) {
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
         <figure className="mt-6">
           <div

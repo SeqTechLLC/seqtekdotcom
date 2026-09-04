@@ -57,7 +57,7 @@ export function Tabs({ heading, tabs }: TabsProps) {
 
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? (
           <h2 id={`${base}-heading`} className="text-h3 font-semibold">
             {heading}

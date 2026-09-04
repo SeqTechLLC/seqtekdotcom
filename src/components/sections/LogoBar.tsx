@@ -30,7 +30,7 @@ export function LogoBar({ heading, logos, treatment = 'grayscale-on-color-hover'
       : 'grayscale opacity-70 transition hover:opacity-100 hover:grayscale-0'
   return (
     <section className="border-y border-border-subtle bg-surface-subtle px-4 py-10 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? (
           <p className="text-center text-caption uppercase tracking-wide text-text-muted">
             {heading}
