@@ -182,10 +182,14 @@ export const getHomepage = withReadTimeout(
           // `_status: published` constraint for an anonymous read rather than
           // denying it, so the homepage still resolves. Payload's local API
           // defaults this to TRUE and threads it into the dataloader key for
-          // every related document, so without it a hand-picked relation
-          // populates a full DRAFT — `featured-case-study`, `testimonial-block`,
-          // `logo-bar` and `industry-grid` all take one. That contradicted
-          // invariant C2 above and is how a draft could reach a public card.
+          // every related document, so without it a hand-picked relation to a
+          // DRAFTS-ENABLED collection populates a full draft. On the homepage
+          // that is `featured-case-study` and `industry-grid`. (Not every
+          // hand-picked relation is exposed: `logo-bar` points at `media`,
+          // whose read is `() => true`, and `testimonials` has no drafts at all
+          // — its access filters on `isActive`, not `_status`.) Missing this
+          // contradicted invariant C2 above and is how a draft could reach a
+          // public card.
           return (await payload.findGlobal({
             slug: 'homepage',
             depth: 2,

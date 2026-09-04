@@ -119,15 +119,22 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
 - **IND-1 — industry pages. Wiring done; the copy is not.** Seven industries: Oil and Gas, Energy,
   Manufacturing, Healthcare, FinTech, Aerospace, and Leadership and Training. Non-profit is explicitly out.
   - **The mechanism shipped.** `industries` carries a `layout` blocks field, `/industries/[slug]` renders it
-    through `RenderBlocks` off the collection, the four INERT-1 field groups are un-hidden, `industry-grid`
-    cards are re-linked, and the sitemap derives the URLs. Publishing a new industry needs no deploy.
+    through `RenderBlocks` off the collection, `industry-grid` cards are re-linked, and the sitemap derives
+    the URLs. Publishing a new industry needs no deploy. Of the four INERT-1 groups only `seo` is un-hidden —
+    the route renders `layout` blocks and nothing else, so `description`, `relevantServices` and
+    `clientLogos` still have no reader. Un-hide each one in the change that ships its consumer.
   - **One taxonomy, settled.** The five previous slugs were invented one per engagement, not marketing
     industries. All seven case studies were re-tagged onto the canonical set and the old five unpublished —
     `unpublished` keeps the row as a working tag while its URL 404s. **Hogan resolved to Leadership and
     Training** rather than being forced into one of Brent's six.
-  - **Nav placement was a measurement.** Industries is a fourth group in the What We Do panel, not a seventh
-    top-level item: the header row is capped at 1024px and already measures ~1002px with six items, so a
-    seventh overflows by ~78px at every desktop width. Re-measure before adding anything else to the header.
+  - **Nav placement was a measurement, and the header changed to fit it.** Industries is a **seventh
+    top-level item** with `/industries` (a `pages` doc on the `/[slug]` catch-all) as its destination.
+    Making it fit took two changes, both measured on the rendered header: the row container went `lg` →
+    **`xl`** (1024 → 1280px), because it caps the row regardless of window width and every multi-word label
+    wrapped at 1440 without it; and the desktop nav moved to the **`xl` breakpoint**, because at a 1024px
+    viewport the container is viewport-bound (1024 − 64px padding = 960px) and no max-width helps — so
+    1024–1279 renders the drawer. **Re-measure before adding anything else to the header**, against the
+    1280px cap, not the old 1024.
   - **What is left is the copy.** All seven bodies are placeholders and say so on the page.
   - **Four of the seven have no proof** — Healthcare, FinTech, Manufacturing and Aerospace carry no case
     study, so their `case-study-grid` renders an empty section. That is deliberate: it makes the gap visible
@@ -224,9 +231,9 @@ Every content change is still a developer task. This tier fixes that before we l
   `browserslist` past the affected range, leaving **one high** — `fast-uri` under `payload`, with a patched
   version available — plus one low (`postcss-selector-parser` under `tailwindcss`/`postcss-nested`). Both are
   transitive, so the fix is a bump of the parent or a `package.json#overrides` pin.
-- **Re-link `industry-grid` and `locations-list` cards** when IND-1 and the locations route ship. The cards are
-  one call site; `revalidateOnChange.ts:135-141` is the other. **The two disagree on the name** — the hook says
-  `/consulting/<slug>`, the block said `/locations/<slug>`. Settle that before either route is built.
+- **Re-link `locations-list` cards** when the locations route ships. (`industry-grid` was re-linked with
+  IND-1.) **The hook and the block disagree on the name** — `revalidateOnChange` says `/consulting/<slug>`,
+  the block said `/locations/<slug>`. Settle that before the route is built.
 
 ---
 

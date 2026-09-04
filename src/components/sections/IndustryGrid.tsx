@@ -15,18 +15,25 @@ interface IndustryGridProps {
 const isDoc = (v: unknown): v is IndustryDoc =>
   typeof v === 'object' && v !== null && 'title' in (v as object)
 
-// A populated relation is NOT guaranteed to be published, so the card cannot
-// link on `isDoc` alone. On the Pages path the read is `findPublishedBySlug`
-// (overrideAccess: false), so a draft comes back as a bare id and `isDoc`
-// rejects it. On the HOMEPAGE path it does not: `getHomepage` calls
-// `findGlobal` without `overrideAccess`, Payload's local API defaults it to
-// true, and the relationship populates a full draft doc — whose URL
-// `/industries/[slug]` 404s, because that route reads published-only.
+// A populated relation is not guaranteed to be published, so the card cannot
+// link on `isDoc` alone.
 //
-// So a draft loses its LINK, not its card. Dropping the card entirely would
-// also work, but it makes the block's output depend on a field
-// (`_status`) that a caller may not have selected — and a grid that renders
-// nothing looks identical to an inert control.
+// On the PUBLIC paths this is already closed at the read: `findPublishedBySlug`
+// and `getHomepage` both pass `overrideAccess: false`, so a draft comes back as
+// a bare id and `isDoc` rejects it — no card at all. (`getHomepage` only gained
+// that in this PR; before it, Payload's local API defaulted `overrideAccess` to
+// true and a draft populated in full. Do not remove it.)
+//
+// The guard below is what covers the PREVIEW path, which is not closed at the
+// read: `getDraftBySlug` uses `overrideAccess: true` by design, so a draft DOES
+// populate there and would otherwise link at a URL `/industries/[slug]` 404s,
+// because that route reads published-only.
+//
+// A draft therefore loses its LINK, not its card — the `<div>` branch below
+// still renders it. Dropping the card entirely was tried and reverted: it makes
+// the block's output depend on a field (`_status`) a caller may not have
+// selected, and a grid that renders nothing is indistinguishable from an inert
+// control to `blockOutputContract`.
 const isLinkable = (d: IndustryDoc): boolean => Boolean(d.slug) && d._status !== 'draft'
 
 export function IndustryGrid({ heading, industries }: IndustryGridProps) {
@@ -39,9 +46,8 @@ export function IndustryGrid({ heading, industries }: IndustryGridProps) {
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* ROADMAP IND-1 — re-linked. These were unlinked in #126 because
               `/industries/<slug>` did not exist and every card was a 404; the
-              route ships with this change. `isPublished` above is what keeps
-              that true: a tag-only industry left as a draft never produces a
-              card, so the link can never point at a URL the route 404s. */}
+              route ships with this change. `isLinkable` above is what keeps
+              that true: a draft renders as a plain card, never as a link. */}
           {docs.map((d) => (
             <li key={d.id ?? d.slug}>
               {/* `<a>` is transparent content, so the heading belongs in flow

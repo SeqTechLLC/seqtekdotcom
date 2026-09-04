@@ -21,7 +21,7 @@ export const IndustryGrid: Block = {
       minRows: 2,
       admin: {
         description:
-          'At least two, drawn as cards in the order you pick them. Each card links to that industry page. Only PUBLISHED industries get a card, so an industry kept as a draft to tag case studies never appears here.',
+          'At least two, drawn as cards in the order you pick them. Each card links to that industry page. An industry kept as a draft to tag case studies is not linked — on the live site it does not appear at all, and in preview it shows as a plain card.',
       },
     },
   ],
