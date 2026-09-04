@@ -168,7 +168,8 @@ export const navigation: Navigation = {
     // The second axis. One group, so no group title renders — the trigger is
     // the heading. Workshops keeps its own top-level URL as the primary funnel;
     // it is listed here because this is the axis it belongs to, not duplicated
-    // as a seventh top-level item.
+    // as its own top-level item. (Industries IS one — see below — but Workshops
+    // is a funnel page under an axis, not an axis of its own.)
     {
       label: 'How We Work',
       url: '/services/how-we-work',

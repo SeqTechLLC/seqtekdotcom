@@ -183,13 +183,20 @@ export const getHomepage = withReadTimeout(
           // denying it, so the homepage still resolves. Payload's local API
           // defaults this to TRUE and threads it into the dataloader key for
           // every related document, so without it a hand-picked relation to a
-          // DRAFTS-ENABLED collection populates a full draft. On the homepage
-          // that is `featured-case-study` and `industry-grid`. (Not every
-          // hand-picked relation is exposed: `logo-bar` points at `media`,
-          // whose read is `() => true`, and `testimonials` has no drafts at all
-          // — its access filters on `isActive`, not `_status`.) Missing this
+          // DRAFTS-ENABLED collection populates a full draft. Missing this
           // contradicted invariant C2 above and is how a draft could reach a
           // public card.
+          //
+          // Deliberately not enumerating which blocks are exposed: `Homepage`
+          // declares `blocks: [...layoutBlocks]`, so EVERY block is available
+          // here and editors recompose the page without a deploy — any list
+          // written today is stale tomorrow. It is more than the obvious ones:
+          // `featured-case-study`, `industry-grid`, `related-posts`,
+          // `workshop-list`, `service-pillar-cards`, and the four
+          // source-driven grids whenever an author sets them to manual, since
+          // `resolveLayout` short-circuits and leaves the depth-2 population
+          // in place. (`logo-bar` and `testimonial-block` are NOT exposed:
+          // `media` reads `() => true` and `testimonials` has no drafts.)
           return (await payload.findGlobal({
             slug: 'homepage',
             depth: 2,

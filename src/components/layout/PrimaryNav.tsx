@@ -153,12 +153,16 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
                   // trigger, so its left edge sits ~32-36% into the viewport and
                   // the space actually available to the right is ~63-67vw, not
                   // 80. With Brent's three groups this is the first data wide
-                  // enough to hit that: measured at the `lg` boundary, an 80vw
-                  // cap put the panel's right edge at 1142px in a 1024px window
-                  // and grew `document.scrollWidth` to 1142 — a horizontal
-                  // scrollbar on every page, for every viewport from 1024 to
-                  // 1279. 62vw keeps the right edge inside the window at 1024,
-                  // 1280 and 1440.
+                  // enough to hit that: an 80vw cap put the panel's right edge
+                  // at 1142px in a 1024px window and grew
+                  // `document.scrollWidth` to 1142 — a horizontal scrollbar on
+                  // every page.
+                  //
+                  // That measurement was taken at the old `lg` boundary. IND-1
+                  // moved the desktop nav to `xl`, so no panel renders below
+                  // 1280 any more and the 1024 case is unreachable — 1280 is
+                  // the narrowest window a panel opens in now, and the cap is
+                  // verified there and at 1440 by `layout.e2e.spec.ts`.
                   className="absolute left-0 top-full z-dropdown mt-1 w-max max-w-[min(62vw,56rem)] rounded-md border border-border-subtle bg-surface p-5 shadow-lg"
                 >
                   <div

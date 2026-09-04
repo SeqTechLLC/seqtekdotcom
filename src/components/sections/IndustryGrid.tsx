@@ -24,10 +24,12 @@ const isDoc = (v: unknown): v is IndustryDoc =>
 // that in this PR; before it, Payload's local API defaulted `overrideAccess` to
 // true and a draft populated in full. Do not remove it.)
 //
-// The guard below is what covers the PREVIEW path, which is not closed at the
-// read: `getDraftBySlug` uses `overrideAccess: true` by design, so a draft DOES
-// populate there and would otherwise link at a URL `/industries/[slug]` 404s,
-// because that route reads published-only.
+// The guard below covers the PREVIEW path, which is not closed at the read:
+// `getDraftBySlug` uses `overrideAccess: true` by design, so a draft DOES
+// populate there. The link would not 404 — draft mode is a cookie that persists
+// across navigation, so the target would resolve the draft too. The reason to
+// withhold it is consistency: preview should show the editor what the public
+// page will look like, and on the public page that card is not a link.
 //
 // A draft therefore loses its LINK, not its card — the `<div>` branch below
 // still renders it. Dropping the card entirely was tried and reverted: it makes

@@ -7,6 +7,7 @@ import { editorConfig } from '../payload/editor/editorConfig'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { seoField } from '../payload/fields/seo'
+import { livePreviewFor } from '../payload/livePreview/url'
 import { layoutBlocks } from '../payload/blocks/layout'
 import { industrySkeleton } from '../payload/seed/skeletons/industry'
 
@@ -15,6 +16,7 @@ export const Industries: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'slug'],
+    livePreview: livePreviewFor('industries'),
   },
   access: {
     read: publishedOrAuthed,

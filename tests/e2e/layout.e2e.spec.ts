@@ -67,7 +67,7 @@ test.describe('Site chrome — desktop viewport', () => {
   })
 
   // ROADMAP NAV-1. The top-level item stays a link and the caret is its own
-  // button, which is why the six-visible-links assertion above still holds.
+  // button, which is why the visible-links assertion above still holds.
   test('a nav panel opens on click, closes on Escape, and hands focus back', async ({ page }) => {
     await page.goto('/')
     const header = page.getByTestId('site-header')

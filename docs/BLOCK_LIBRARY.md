@@ -29,10 +29,10 @@ Payload supports two ways to model page content:
 | `teamMembers`        | **Blocks** (`layout`)                      | spec 010: gained `layout` + drafts/live-preview; new `/team/[slug]` detail renders via `RenderBlocks` + Person JSON-LD                                                                                                                                     |
 | `posts`              | **Structured + inline blocks in richText** | **The sanctioned exception** (ADR 0009): title/excerpt/author fixed; body is rich text with embedded inline blocks                                                                                                                                         |
 | ~~`servicePillars`~~ | **REMOVED (SVC-2)**                        | Absorbed into `services` as `tier: 'group'`; the collection and its tables are gone                                                                                                                                                                        |
-| `industries`         | **Structured**                             | Taxonomy/listing; no body composition                                                                                                                                                                                                                      |
+| `industries`         | **Block-composed** (IND-1)                 | `layout` renders at `/industries/[slug]`; also a taxonomy target                                                                                                                                                                                           |
 | `locations`          | **Structured**                             | Market landing taxonomy; no body composition                                                                                                                                                                                                               |
 
-Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `industries`/`locations` stay structured because they are listing/taxonomy targets; `services` joined the block-composed set under SVC-2 (three tiers in one collection, all routed at `/services/<slug>`) and `servicePillars` was absorbed into it. The old discrete body columns were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011** — `layout` is now the only body.
+Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `locations` stays structured because it is a listing/taxonomy target; `industries` joined the block-composed set under IND-1 (routed at `/industries/<slug>`) and `services` under SVC-2 (three tiers in one collection, all routed at `/services/<slug>`) and `servicePillars` was absorbed into it. The old discrete body columns were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011** — `layout` is now the only body.
 
 ---
 
@@ -669,7 +669,7 @@ The retired `/services/[pillar]/[slug]` pillar→detail IA (the two rows that us
 
 `<Hero variant="text-only">` → category filter chips → `<Pagination>` paginated `<PostGrid>`
 
-### Industry page (`industries` — structured fields)
+### Industry page (`industries` — block-composed since IND-1)
 
 `<Hero>` → `<Prose>` (context) → `<ServiceCards source="manual">` (relevantServices) → `<CaseStudyGrid source="by-industry">` → `<StatsBar>` (industry stats) → `<LogoBar>` (industry logos) → `<CtaSection>`
 

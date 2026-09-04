@@ -141,7 +141,12 @@ describe('C2 — every read in src/lib/payload.ts is access-filtered', () => {
   // behave outside a request scope. Asserting the argument is present is what
   // actually stops the regression — and it generalises to the next reader
   // somebody adds, which pinning `getHomepage` alone would not.
-  const reads = [...payloadCode.matchAll(/payload\.(find|findGlobal)\(/g)].map((m) => {
+  // Deliberately `find\w*|count`, not a list of method names: the hole this test
+  // exists to close was a regex that could not see `findGlobal`. Naming methods
+  // one at a time reproduces that bug for the next reader — `findByID` and
+  // `findVersions` would slip through a `(find|findGlobal)` scan exactly as
+  // `findGlobal` slipped through the `payload\.find\(` one above.
+  const reads = [...payloadCode.matchAll(/payload\.(find\w*|count)\(/g)].map((m) => {
     let depth = 0
     let i = m.index! + m[0].length - 1
     for (; i < payloadCode.length; i++) {
@@ -150,7 +155,14 @@ describe('C2 — every read in src/lib/payload.ts is access-filtered', () => {
     }
     return {
       call: m[1],
-      line: payloadCode.slice(0, m.index!).split('\n').length,
+      // NOT a line number in the real file: `payloadCode` is comment-stripped,
+      // so any offset computed here is wrong by however many comment lines
+      // precede it. Identify the call by its own text instead, which survives
+      // both stripping and edits above it.
+      where: payloadCode
+        .slice(m.index!, i + 1)
+        .replace(/\s+/g, ' ')
+        .slice(0, 60),
       args: payloadCode.slice(m.index!, i + 1),
     }
   })
@@ -159,11 +171,11 @@ describe('C2 — every read in src/lib/payload.ts is access-filtered', () => {
     expect(reads.length).toBeGreaterThanOrEqual(4)
   })
 
-  it.each(reads)('payload.$call at line $line passes overrideAccess', ({ args }) => {
+  it.each(reads)('$where — passes overrideAccess', ({ args }) => {
     expect(args).toContain('overrideAccess')
   })
 
-  it.each(reads)('payload.$call at line $line passes overrideAccess: false', ({ args }) => {
+  it.each(reads)('$where — passes overrideAccess: false', ({ args }) => {
     expect(args).toMatch(/overrideAccess:\s*false/)
   })
 })

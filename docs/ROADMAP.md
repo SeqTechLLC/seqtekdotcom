@@ -22,7 +22,7 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 | **P0** | NAV-1 Dropdown panels + the pages under them                   | Kenn, blocked on Brent |
 |        | SVC-2 Seed the services content                                | Kenn                   |
 |        | SVC-3 Collapse the duplicate Localshoring pages                | Kenn                   |
-|        | IND-1 Six industry pages                                       | Kenn + Brent           |
+|        | IND-1 Seven industry pages                                     | Kenn + Brent           |
 |        | BOOK-1 Book-a-call widget routing to Daniel                    | Kenn, blocked on Megan |
 |        | PROOF-1 Case studies + quotes, on hard dates                   | Megan, Brent escalates |
 |        | AB-1 The alternative "what we do" page, A/B against the menu   | Kenn                   |
@@ -60,7 +60,7 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     panels; top-level items, footer, legal nav and the JSON-LD values stay code-owned. Costs: `SiteHeader`
     becomes async (`listServices()` and its `services_list` tag already exist), and it renders on every page,
     so the revalidation gap below becomes load-bearing rather than cosmetic. Wants an ADR revising 0010.
-  - `tests/e2e/layout.e2e.spec.ts` (~:28-35) asserts all six top-level items are visible **links**. If an axis
+  - `tests/e2e/layout.e2e.spec.ts` (~:28-38) asserts all seven top-level items are visible **links**. If an axis
     item becomes a button that opens a panel, that assertion changes shape.
   - **A group's URL is optional, and that is what de-risks the second panel.** A group with no URL renders as
     a heading and nothing more, so "how we work" can ship with headless groups and earn pages later. Brent
@@ -342,9 +342,11 @@ Real work, none of it blocking a launch. Ordered by expected return.
   (n=1,002): 83% of companies require a security or privacy assessment to purchase (88% enterprise), and 39%
   overall / 50% of enterprise name IT security review as their biggest source of evaluation delay. We have no
   such page.
-- **INERT-1 residual — un-hide `industries` and `locations` metadata.** Their `description`, `seo.*` and
-  related fields are `admin.hidden` because no detail route consumes them. Un-hide each group in the same
-  change that ships the route reading it. `admin.hidden` does not touch REST, so the seeder still writes them.
+- **INERT-1 residual — un-hide the rest of the `industries` and `locations` metadata.** `industries.seo` was
+  un-hidden by IND-1, which shipped the route that reads it. Still hidden and still without a consumer:
+  `industries.description`, `relevantServices` and `clientLogos` (the route renders `layout` blocks only), and
+  every `locations` group. Un-hide each in the change that ships its consumer. `admin.hidden` does not touch
+  REST, so the seeder still writes them.
 - **Regional landing pages (4) + a careers stub.** `/tulsa-consulting`, `/okc-consulting`,
   `/northwest-arkansas-consulting`, `/kansas-city-consulting` are parked on `/localshoring`. Each wants
   market-specific copy, proof and contact (`CONTENT_NEEDS.md` §9). Careers: one "if you want to join us" page
@@ -373,18 +375,18 @@ Real work, none of it blocking a launch. Ordered by expected return.
 
 `CONTENT_NEEDS.md` is the authoritative list — hand _that_ to Hank, Justin and Megan, not this file.
 
-| Item                            | Owner        | State                                                                                                                                               |
-| ------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C-3 Hank + Brent interview copy | Kenn         | Filmed and in edit. Extraction from the transcript, not a scheduling gate — draft off the raw audio, don't wait for the cut.                        |
-| BR-7 / C-2 Photo shoot          | Kenn         | Studio headshots exist and are catalogued. Still to shoot at the September All Hands: group leadership, full team, Kenn's headshot.                 |
-| C-9 Video delivery + placement  | Kenn + Megan | Localshoring explainer and the Hank + Brent partner videos are in edit. Take delivery, upload to the SEQTEK channel, place as `video-embed` blocks. |
-| C-5 Client logo permissions     | Megan + Kenn | Keep: Hogan, BOK, QuickTrip. Drop or refresh: GE, AVB, Change Health. Verify we ever worked with ONEOK / ONE Gas.                                   |
-| C-7 Case-study sign-offs        | Kenn + Megan | Taurex (Andrew) first — see P2. Then Hogan (Ryan) and NovaMud (Sam).                                                                                |
-| BR-5 A sourced projects count   | Leadership   | Or we ship years + markets only — see P2.                                                                                                           |
-| BR-6 Cherokee Nation outreach   | —            | Decided 2026-06-19: no outreach. Listed only because it keeps getting re-asked. Revisit only if the Nation asks.                                    |
-| Industry list                   | Brent        | Outstanding. It did not come with the services email. IND-1 runs on the meeting's five plus Aerospace until he confirms.                            |
-| PROOF-1 case-study chase        | Megan        | Brent escalates. YCS drafting, YouVersion unanswered, NovaMud needs a redo, Hogan open.                                                             |
-| 2026-09-14 go/no-go invite      | Megan        | Add Dana and Trevor.                                                                                                                                |
-| Daniel's HubSpot meetings link  | Megan        | For BOOK-1. Portal config, not code.                                                                                                                |
-| HS-1 HubSpot portal config      | Megan        | See P2.                                                                                                                                             |
-| Written leadership sign-off     | Leadership   | See P3.                                                                                                                                             |
+| Item                            | Owner        | State                                                                                                                                                          |
+| ------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C-3 Hank + Brent interview copy | Kenn         | Filmed and in edit. Extraction from the transcript, not a scheduling gate — draft off the raw audio, don't wait for the cut.                                   |
+| BR-7 / C-2 Photo shoot          | Kenn         | Studio headshots exist and are catalogued. Still to shoot at the September All Hands: group leadership, full team, Kenn's headshot.                            |
+| C-9 Video delivery + placement  | Kenn + Megan | Localshoring explainer and the Hank + Brent partner videos are in edit. Take delivery, upload to the SEQTEK channel, place as `video-embed` blocks.            |
+| C-5 Client logo permissions     | Megan + Kenn | Keep: Hogan, BOK, QuickTrip. Drop or refresh: GE, AVB, Change Health. Verify we ever worked with ONEOK / ONE Gas.                                              |
+| C-7 Case-study sign-offs        | Kenn + Megan | Taurex (Andrew) first — see P2. Then Hogan (Ryan) and NovaMud (Sam).                                                                                           |
+| BR-5 A sourced projects count   | Leadership   | Or we ship years + markets only — see P2.                                                                                                                      |
+| BR-6 Cherokee Nation outreach   | —            | Decided 2026-06-19: no outreach. Listed only because it keeps getting re-asked. Revisit only if the Nation asks.                                               |
+| Industry list                   | Brent        | Outstanding. It did not come with the services email. IND-1 shipped seven (the meeting's five, plus Aerospace and Leadership and Training) — confirm the list. |
+| PROOF-1 case-study chase        | Megan        | Brent escalates. YCS drafting, YouVersion unanswered, NovaMud needs a redo, Hogan open.                                                                        |
+| 2026-09-14 go/no-go invite      | Megan        | Add Dana and Trevor.                                                                                                                                           |
+| Daniel's HubSpot meetings link  | Megan        | For BOOK-1. Portal config, not code.                                                                                                                           |
+| HS-1 HubSpot portal config      | Megan        | See P2.                                                                                                                                                        |
+| Written leadership sign-off     | Leadership   | See P3.                                                                                                                                                        |

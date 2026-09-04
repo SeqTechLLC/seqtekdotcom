@@ -66,6 +66,11 @@ export default async function IndustryPage({ params }: Props) {
       <JsonLd
         data={breadcrumbLd([
           { name: 'Home', path: '/' },
+          // Unlike `/services/[slug]`, which omits its section crumb because
+          // `/services` is a 301 the nav never links, `/industries` is a real
+          // destination and a top-level nav item — so this keeps the
+          // Home > Section > Item shape every other detail route uses.
+          { name: 'Industries', path: '/industries' },
           { name: industry.title, path: `/industries/${slug}` },
         ])}
       />
