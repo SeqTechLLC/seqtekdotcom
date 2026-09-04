@@ -98,7 +98,12 @@ export default async function CaseStudyPage({ params }: Props) {
         {isRelObject(caseStudy.heroImage) ? (
           <ResponsiveImage
             media={caseStudy.heroImage}
-            sizes="(min-width: 1024px) 1024px, 100vw"
+            // The article is `max-w-container-xl` with its padding on the SAME
+            // element, so the content box is min(100vw, 1280) - 48 at md+.
+            // This was `1024px` while the shell was `container-lg`; leaving it
+            // there after the widening made the browser pick the 1024w
+            // derivative for a 1232px slot — a visible upscale on the LCP image.
+            sizes="(min-width: 1280px) 1232px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)"
             className="mb-12 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
             loading="eager"
             fetchPriority="high"

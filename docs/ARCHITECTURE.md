@@ -55,7 +55,7 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 
 All collections are defined in TypeScript. Payload auto-generates the database schema, REST API, GraphQL API, and admin panel from these definitions.
 
-> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011**, which completes the contract half — `layout` is now the only body. The per-type `*ToLayout.ts` composers that performed that migration were deleted with the fields they read; the conversion they existed for is complete, and git history holds them if the mapping is ever needed again. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `locations` stays structured — a relationship/taxonomy target, not publicly routed. **`services` is not, since SVC-2, and neither is `industries` since IND-1**: it is a block-composed collection with a `tier` of `leaf | group | axis`, every tier routed at `/services/[slug]` through `RenderBlocks` like any other. `servicePillars` was absorbed into it and dropped.
+> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`/`services`/`industries`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011**, which completes the contract half — `layout` is now the only body. The per-type `*ToLayout.ts` composers that performed that migration were deleted with the fields they read; the conversion they existed for is complete, and git history holds them if the mapping is ever needed again. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `locations` stays structured — a relationship/taxonomy target, not publicly routed. **`services` is not, since SVC-2**: it is a block-composed collection with a `tier` of `leaf | group | axis`, every tier routed at `/services/[slug]` through `RenderBlocks` like any other. **`industries` is not either, since IND-1** — block-composed and routed at `/industries/[slug]`, though it carries no tier. `servicePillars` was absorbed into it and dropped.
 
 ### Document Collections
 
@@ -240,14 +240,15 @@ Workshop pages at `/workshops/[slug]` (one Touchstone workshop among three; IA c
 
 Industry/vertical taxonomy records, **and block-composed pages since IND-1**: a `layout` blocks array renders at `/industries/[slug]` through `RenderBlocks`, the ADR 0009 Option C shape. Still a relationship target too (`caseStudies.industry`). Publish state doubles as the routing lever — an industry kept as a draft works as a tag while its URL 404s.
 
-| Field              | Type                               | Notes                           |
-| ------------------ | ---------------------------------- | ------------------------------- |
-| `title`            | text                               | e.g., "Energy & Oil/Gas"        |
-| `slug`             | text                               |                                 |
-| `description`      | richText                           | Industry context and challenges |
-| `relevantServices` | relationship -> services (hasMany) |                                 |
-| `clientLogos`      | array of upload (media)            | Industry-specific logos         |
-| `seo`              | group                              |                                 |
+| Field              | Type                               | Notes                                           |
+| ------------------ | ---------------------------------- | ----------------------------------------------- |
+| `title`            | text                               | e.g., "Oil and Gas"                             |
+| `slug`             | text                               |                                                 |
+| `layout`           | blocks                             | The page body (IND-1). Renders via RenderBlocks |
+| `description`      | richText                           | `admin.hidden` — no consumer yet (INERT-1)      |
+| `relevantServices` | relationship -> services (hasMany) | `admin.hidden` — no consumer yet (INERT-1)      |
+| `clientLogos`      | array of upload (media)            | `admin.hidden` — no consumer yet (INERT-1)      |
+| `seo`              | group                              | Read by the route's `generateMetadata`          |
 
 #### `locations`
 

@@ -43,7 +43,7 @@ export function PartnerGrid({ items, headingLevel = 'h3' }: PartnerGridProps) {
                   styles.css — no per-component outline utilities needed. */}
               <Link
                 href={`/partners/${p.slug}`}
-                className="flex h-full flex-col rounded-lg border border-border-subtle bg-surface transition-colors hover:border-border"
+                className="flex h-full flex-col rounded-lg border border-border-subtle bg-surface transition-colors hover:border-border-strong"
               >
                 <div className="flex items-center justify-center border-b border-border-subtle px-6 py-10">
                   {isFullMedia(p.logo) ? (

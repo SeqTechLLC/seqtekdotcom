@@ -53,7 +53,13 @@ export default async function IndustryPage({ params }: Props) {
   const industry = isDraft
     ? ((await getDraftBySlug<Industry>('industries', slug)) ?? published)
     : published
-  if (!industry) notFound()
+  // Not just "does the document exist": `layout` arrived in an ADDITIVE
+  // migration, so an industry created before it is published with an empty
+  // body — and `RenderBlocks` returns nothing for an empty array, which would
+  // serve a 200 with no `<h1>` and no content. The five pre-IND-1 rows are in
+  // exactly that state until the seed retires them, and the seed cannot run
+  // before the deploy because it writes a column this migration creates.
+  if (!industry || !(industry.layout ?? []).length) notFound()
 
   // ROADMAP UI-2: collection-backed blocks resolve their items here, before the
   // layout reaches the synchronous RenderBlocks dispatcher. That is what lets an

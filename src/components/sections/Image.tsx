@@ -47,7 +47,11 @@ export function Image({ image, caption, width = 'standard', alignment = 'center'
         <figure className={`${widthCls} ${alignCls}`}>
           <ResponsiveImage
             media={image}
-            sizes="(min-width: 1024px) 60vw, 100vw"
+            // `full` fills the rail; the other three cap well below it, so the
+            // widest variant sets the request. 60vw was right against a
+            // `container-lg` shell and under-requests against `container-xl`
+            // (864px asked for a 1232px box at 1440).
+            sizes="(min-width: 1280px) 1232px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)"
             className="w-full rounded-lg border border-border-subtle shadow-sm"
           />
           {caption ? (

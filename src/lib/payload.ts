@@ -436,6 +436,41 @@ export const findPublishedSlugs = async (collection: SluggedCollection): Promise
  * filter (`overrideAccess: false`) so drafts never enter the static manifest
  * (invariant R3 / the spec-003 US5 draft-leak invariant on the public side).
  */
+// ROADMAP IND-1. Industries specifically: `layout` was added by an ADDITIVE
+// migration, so rows that predate it are published with no body. The route
+// 404s those (an empty `<article>` with no `<h1>` is not a page), and the
+// sitemap has to agree or it advertises a URL that 404s. Separate reader rather
+// than a predicate on `findPublishedSlugs`, because that one is wrapped in
+// `unstable_cache` keyed by collection and a callback cannot go in a cache key.
+export const findPublishedIndustrySlugsWithBody = async (): Promise<string[]> => {
+  const payload = await getPayloadInstance()
+  const { docs } = await payload.find({
+    collection: 'industries',
+    draft: false,
+    overrideAccess: false,
+    depth: 0,
+    limit: 1000,
+    pagination: false,
+  })
+  return docs
+    .filter((d) => ((d as { layout?: unknown[] | null }).layout ?? []).length > 0)
+    .map((d) => (d as { slug?: string | null }).slug)
+    .filter((s): s is string => typeof s === 'string' && s.length > 0)
+}
+
+export const publishedIndustrySlugsWithBody = withReadTimeout(
+  'publishedIndustrySlugsWithBody',
+  (): Promise<string[]> =>
+    unstable_cache(
+      findPublishedIndustrySlugsWithBody,
+      ['publishedSlugs', 'industries', 'withBody'],
+      {
+        tags: listCacheTags('industries'),
+        revalidate: ONE_HOUR,
+      },
+    )(),
+)
+
 export const publishedSlugsFor = withReadTimeout(
   'publishedSlugsFor',
   (collection: SluggedCollection): Promise<string[]> =>

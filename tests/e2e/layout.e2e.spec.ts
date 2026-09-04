@@ -165,11 +165,15 @@ test.describe('Site chrome — mobile viewport', () => {
     await trigger.click()
     await expect(dialog).toHaveJSProperty('open', true)
 
-    // Nav items rendered inside the dialog.
+    // Nav items rendered inside the dialog. IND-1 moved `PrimaryNav` to the
+    // `xl` breakpoint, so the drawer is now the ONLY nav from 0 to 1279px —
+    // the widest range of viewports on the site. Its item list has to be
+    // asserted as carefully as the desktop one above, including the seventh.
     for (const label of [
       'Our Story',
       'What We Do',
       'How We Work',
+      'Industries',
       'Case Studies',
       'Insights',
       'Contact',

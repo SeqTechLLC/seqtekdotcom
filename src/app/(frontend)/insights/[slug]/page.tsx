@@ -58,7 +58,7 @@ export default async function InsightPage({ params }: Props) {
 
       {/* A text-only essay: one reading column (~768px) CENTERED in the page
           with equal margins — not a narrow column offset to one side. The wider
-          header/footer chrome (container-lg) intentionally frames this narrower
+          header/footer chrome (container-xl) intentionally frames this narrower
           measure, the conventional long-form article layout. */}
       <article data-testid="insight" className="mx-auto max-w-container-md px-4 py-16 md:px-6">
         <header className="mb-10">

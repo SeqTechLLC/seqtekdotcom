@@ -57,7 +57,7 @@ export function IndustryGrid({ heading, industries }: IndustryGridProps) {
               {isLinkable(d) ? (
                 <Link
                   href={`/industries/${d.slug}`}
-                  className="flex h-full flex-col rounded-md border border-border-subtle bg-surface p-5 text-center shadow-xs transition-colors hover:border-border"
+                  className="flex h-full flex-col rounded-md border border-border-subtle bg-surface p-5 text-center shadow-xs transition-colors hover:border-border-strong"
                 >
                   <h3 className="text-h4 font-semibold">{d.title}</h3>
                 </Link>

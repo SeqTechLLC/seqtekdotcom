@@ -109,7 +109,7 @@ export function Hero({
 
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      {/* container-lg: the hero shares the page grid edge with every section
+      {/* container-xl: the hero shares the page grid edge with every section
           below it (two-column, video bands). Headline at display scale with
           a measure cap so it wraps editorially instead of spanning the
           container; subheadline capped likewise. */}
