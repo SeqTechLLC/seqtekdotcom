@@ -177,7 +177,20 @@ export const getHomepage = withReadTimeout(
       unstable_cache(
         async () => {
           const payload = await getPayloadInstance()
-          return (await payload.findGlobal({ slug: 'homepage', depth: 2 })) as Homepage
+          // `overrideAccess: false` matters for the POPULATED RELATIONS, not
+          // for the global itself: `publishedOrAuthedGlobal` returns a
+          // `_status: published` constraint for an anonymous read rather than
+          // denying it, so the homepage still resolves. Payload's local API
+          // defaults this to TRUE and threads it into the dataloader key for
+          // every related document, so without it a hand-picked relation
+          // populates a full DRAFT — `featured-case-study`, `testimonial-block`,
+          // `logo-bar` and `industry-grid` all take one. That contradicted
+          // invariant C2 above and is how a draft could reach a public card.
+          return (await payload.findGlobal({
+            slug: 'homepage',
+            depth: 2,
+            overrideAccess: false,
+          })) as Homepage
         },
         ['global', 'homepage'],
         { tags: globalCacheTags('homepage'), revalidate: ONE_HOUR },
