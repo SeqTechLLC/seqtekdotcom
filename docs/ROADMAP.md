@@ -195,6 +195,28 @@ Every content change is still a developer task. This tier fixes that before we l
   that page's data cache nor its CloudFront copy. Bounded by `revalidate: 3600` on a gated, unlaunched
   site. The fix wants the axis slugs, which are content — so it needs a query in `revalidateOnChange`,
   not a hardcoded slug.
+- **Three top-level nav destinations are not editable without a deploy — deliberately parked 2026-09-04.**
+  `/case-studies`, `/insights` and `/contact` are bespoke route files: their `<h1>`, intro copy and SEO strings
+  are literals. The other three nav destinations (`/our-story`, and both `/services` axes) are documents.
+  ADR 0009 says there should be no bespoke page templates, so these are the remaining exceptions.
+
+  **Converting them is not the small job it looks like.** Each blocks on something real:
+  - `case-study-grid` caps at `limit: max 9` and `post-list` at `max: 12`; the routes bypass that by passing
+    `limit={items.length}`. A block-composed listing would silently drop the 10th case study — content that
+    exists and is in the sitemap but is unreachable from its own listing. P4 plans 4-6 more studies and 3-5
+    more posts, so it is not hypothetical.
+  - Removing the cap means unbounded listings, which means **pagination** — page state in a URL the block does
+    not own. That is a feature, not a schema tweak.
+  - `/contact` is worse: `ContactForm` is a curated six-field schema with HubSpot internal names verified by a
+    live test submit (2026-06-22), including the `inquiry_type` select that routes the lead. The
+    `hubspot-form` block renders generic `DEFAULT_FIELDS` with a hardcoded special case for the Workshop GUID
+    and nothing for contact, and `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID` is unset. Converting would swap the
+    real form for the generic one.
+
+  **Cost of leaving it:** one deploy to reword about six lines of copy, rarely. Revisit when pagination is
+  wanted for its own sake, or when the contact form's field set is being reworked anyway (which would also
+  remove the Workshop hardcode in `HubspotForm.tsx`).
+
 - **Clear the remaining production advisory (issue #132).** Opened at 6 high; today's autoprefixer bump moved
   `browserslist` past the affected range, leaving **one high** — `fast-uri` under `payload`, with a patched
   version available — plus one low (`postcss-selector-parser` under `tailwindcss`/`postcss-nested`). Both are
