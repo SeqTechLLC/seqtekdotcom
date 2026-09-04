@@ -41,7 +41,10 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const industry = await getIndustryBySlug(slug)
-  if (!industry) return {}
+  // Same condition as the page body below: a published industry with no
+  // `layout` is 404, so it must not emit that industry's real title and
+  // canonical URL on the 404 response.
+  if (!industry || !(industry.layout ?? []).length) return {}
   return buildMetadata(industry.seo, { title: industry.title })
 }
 

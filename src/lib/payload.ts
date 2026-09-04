@@ -431,11 +431,6 @@ export const findPublishedSlugs = async (collection: SluggedCollection): Promise
     .filter((s): s is string => typeof s === 'string' && s.length > 0)
 }
 
-/**
- * Published slugs for a collection — feeds `generateStaticParams`. Published
- * filter (`overrideAccess: false`) so drafts never enter the static manifest
- * (invariant R3 / the spec-003 US5 draft-leak invariant on the public side).
- */
 // ROADMAP IND-1. Industries specifically: `layout` was added by an ADDITIVE
 // migration, so rows that predate it are published with no body. The route
 // 404s those (an empty `<article>` with no `<h1>` is not a page), and the
@@ -471,6 +466,11 @@ export const publishedIndustrySlugsWithBody = withReadTimeout(
     )(),
 )
 
+/**
+ * Published slugs for a collection — feeds `generateStaticParams`. Published
+ * filter (`overrideAccess: false`) so drafts never enter the static manifest
+ * (invariant R3 / the spec-003 US5 draft-leak invariant on the public side).
+ */
 export const publishedSlugsFor = withReadTimeout(
   'publishedSlugsFor',
   (collection: SluggedCollection): Promise<string[]> =>

@@ -98,6 +98,20 @@ describe('buildRevalidatePlan — per-collection routing', () => {
   ])('$collection routes to $detailIncludes', ({ collection, slug, detailIncludes }) => {
     const plan = buildRevalidatePlan(collection, { _status: 'published', slug })
     expect(plan.paths).toContain(detailIncludes)
+  })
+
+  // A detail route whose index also lists it has to bust BOTH, or the card goes
+  // stale for `revalidate: 3600` and CloudFront is never invalidated for the
+  // index path. `/industries` is the subtle one: it is a `pages` doc on the
+  // `/[slug]` catch-all rather than a route file, so it does not look like an
+  // index — but it carries an `industry-grid`.
+  it.each([
+    { collection: 'partners' as const, slug: 'p-1', index: '/partners' },
+    { collection: 'industries' as const, slug: 'energy', index: '/industries' },
+    { collection: 'categories' as const, slug: 'ai', index: '/insights' },
+  ])('$collection also busts its index $index', ({ collection, slug, index }) => {
+    const plan = buildRevalidatePlan(collection, { _status: 'published', slug })
+    expect(plan.paths).toContain(index)
     expect(plan.tags).toContain(`${collection}_list`)
     expect(plan.tags).toContain(`${collection}_${slug}`)
   })

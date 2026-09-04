@@ -25,6 +25,26 @@ const WIDTH_CLASSES: Record<NonNullable<ImageProps['width']>, string> = {
   full: 'max-w-container-xl',
 }
 
+// `sizes` per width variant, because one string cannot serve four boxes that
+// differ by ~2x — a single value keyed to the widest variant makes `standard`
+// (the DEFAULT) request the 1600w derivative for a 768px box.
+//
+// Padding lives on the OUTER <section> here (px-4 / md:px-6 / lg:px-8) and the
+// max-width on an inner UNPADDED div, so the box is `min(cap, 100vw - padding)`
+// — a different recipe from the case-study article, which puts both on one
+// element. DESIGN_SYSTEM §11.4: "the two recipes do not commute."
+// Ladder for reference (Media.ts): 640 / 1024 / 1600 / 2400.
+const SIZES: Record<NonNullable<ImageProps['width']>, string> = {
+  // 672px from md up (768 - 48 = 720 >= 672).
+  narrow: '(min-width: 768px) 672px, calc(100vw - 32px)',
+  // 768px from lg up (1024 - 64 = 960 >= 768).
+  standard: '(min-width: 1024px) 768px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
+  // 1024px once 100vw - 64 clears it.
+  wide: '(min-width: 1088px) 1024px, (min-width: 1024px) calc(100vw - 64px), (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
+  // Fills the rail: capped by container-xl at 1344+, viewport-bound below.
+  full: '(min-width: 1344px) 1280px, (min-width: 1024px) calc(100vw - 64px), (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
+}
+
 // Alignment positions the figure within the page rail. Center is the default
 // and keeps it on the shared reading axis; left/right are for asymmetric layouts.
 const ALIGN_CLASSES: Record<NonNullable<ImageProps['alignment']>, string> = {
@@ -47,11 +67,7 @@ export function Image({ image, caption, width = 'standard', alignment = 'center'
         <figure className={`${widthCls} ${alignCls}`}>
           <ResponsiveImage
             media={image}
-            // `full` fills the rail; the other three cap well below it, so the
-            // widest variant sets the request. 60vw was right against a
-            // `container-lg` shell and under-requests against `container-xl`
-            // (864px asked for a 1232px box at 1440).
-            sizes="(min-width: 1280px) 1232px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)"
+            sizes={SIZES[width ?? 'standard']}
             className="w-full rounded-lg border border-border-subtle shadow-sm"
           />
           {caption ? (
