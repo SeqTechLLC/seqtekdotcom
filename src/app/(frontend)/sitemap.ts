@@ -75,6 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       teamSlugs,
       partnerSlugs,
       serviceSlugs,
+      industrySlugs,
     ] = await Promise.all([
       publishedSlugsFor('pages'),
       publishedSlugsFor('caseStudies'),
@@ -83,6 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       publishedSlugsFor('teamMembers'),
       publishedSlugsFor('partners'),
       publishedSlugsFor('services'),
+      publishedSlugsFor('industries'),
     ])
 
     // A page slug that collides with a 301 source (e.g. the audit-seeded
@@ -102,6 +104,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // SVC-2: one flat namespace and one collection, so every tier — axis page,
     // group page and service — is just `/services/<slug>`.
     for (const slug of serviceSlugs) paths.add(`/services/${slug}`)
+    // ROADMAP IND-1. Published-only, like every other loop — an industry that
+    // exists purely to tag case studies stays a draft and never enters the
+    // sitemap or the route.
+    for (const slug of industrySlugs) paths.add(`/industries/${slug}`)
     // ADR 0009 metadata collection — no exclusion set needed here (unlike the
     // `service-*` Pages): a partner's canonical URL IS `/partners/<slug>`.
     // The index is listed only once it has cards. Code ships ahead of content

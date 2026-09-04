@@ -162,6 +162,30 @@ export const navigation: Navigation = {
               { label: 'Agentic AI', url: '/services/agentic-ai' },
             ],
           },
+          // ROADMAP IND-1. Industries sit HERE rather than as a seventh
+          // top-level item, and that is a measurement, not a preference: the
+          // header row is capped at `max-w-container-lg` (1024px) and already
+          // measures ~1002px with six items, the logo at `md:h-8` and the CTA.
+          // A seventh item overflows by ~78px at every desktop width, and
+          // "Industries" is the shortest label that could go there. The panel
+          // grid is `groups.length` columns, so a fourth group is a data edit.
+          //
+          // No group URL: there is no `/industries` listing route, only
+          // `/industries/<slug>` detail pages — the same shape `services` has.
+          // A group without a `url` renders as a heading, which is exactly the
+          // optional-group-URL design NAV-1 built for.
+          {
+            label: 'Industries',
+            items: [
+              { label: 'Oil and Gas', url: '/industries/oil-and-gas' },
+              { label: 'Energy', url: '/industries/energy' },
+              { label: 'Manufacturing', url: '/industries/manufacturing' },
+              { label: 'Healthcare', url: '/industries/healthcare' },
+              { label: 'FinTech', url: '/industries/fintech' },
+              { label: 'Aerospace', url: '/industries/aerospace' },
+              { label: 'Leadership and Training', url: '/industries/leadership-and-training' },
+            ],
+          },
         ],
       },
     },

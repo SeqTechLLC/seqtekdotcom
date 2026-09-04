@@ -7,6 +7,8 @@ import { editorConfig } from '../payload/editor/editorConfig'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { seoField } from '../payload/fields/seo'
+import { layoutBlocks } from '../payload/blocks/layout'
+import { industrySkeleton } from '../payload/seed/skeletons/industry'
 
 export const Industries: CollectionConfig = {
   slug: 'industries',
@@ -52,7 +54,8 @@ export const Industries: CollectionConfig = {
       type: 'richText',
       editor: editorConfig,
       admin: {
-        hidden: true, // ROADMAP INERT-1 — no route reads this yet
+        description:
+          'A short summary of this sector, shown where an industry is described outside its own page.',
       },
     },
     {
@@ -64,7 +67,7 @@ export const Industries: CollectionConfig = {
       filterOptions: () => ({ tier: { equals: 'leaf' } }),
       hasMany: true,
       admin: {
-        hidden: true, // ROADMAP INERT-1 — no route reads this yet
+        description: 'The services this sector buys most often.',
       },
     },
     {
@@ -72,13 +75,25 @@ export const Industries: CollectionConfig = {
       type: 'array',
       labels: { singular: 'Client logo', plural: 'Client logos' },
       admin: {
-        hidden: true, // ROADMAP INERT-1 — no route reads this yet
+        description: 'Client logos to show on this industry page.',
         components: {
           RowLabel: mediaRowLabel({ singular: 'Client logo', uploadField: 'logo' }),
         },
       },
       fields: [{ name: 'logo', type: 'upload', relationTo: 'media', required: true }],
     },
-    seoField({ noun: 'industry', hidden: true }),
+    {
+      name: 'layout',
+      type: 'blocks',
+      label: 'Industry page',
+      labels: { singular: 'Block', plural: 'Blocks' },
+      blocks: [...layoutBlocks],
+      defaultValue: industrySkeleton,
+      admin: {
+        description:
+          'The industry page, built from blocks. A new industry starts from a standard outline; replace the placeholder text in each block.',
+      },
+    },
+    seoField({ noun: 'industry' }),
   ],
 }

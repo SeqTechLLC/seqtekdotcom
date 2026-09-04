@@ -1171,6 +1171,9 @@ export interface Industry {
    * The last part of the web address for this industry, for example "oil-and-gas". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
   slug: string;
+  /**
+   * A short summary of this sector, shown where an industry is described outside its own page.
+   */
   description?: {
     root: {
       type: string;
@@ -1186,12 +1189,70 @@ export interface Industry {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * The services this sector buys most often.
+   */
   relevantServices?: (number | Service)[] | null;
+  /**
+   * Client logos to show on this industry page.
+   */
   clientLogos?:
     | {
         logo: number | Media;
         id?: string | null;
       }[]
+    | null;
+  /**
+   * The industry page, built from blocks. A new industry starts from a standard outline; replace the placeholder text in each block.
+   */
+  layout?:
+    | (
+        | HeroBlock
+        | CaseStudyHeroBlock
+        | ServicePillarHeroBlock
+        | HomepageHeroBlock
+        | ContentBlock
+        | TwoColumnBlock
+        | ImageBlock
+        | GalleryBlock
+        | ProcessStepsBlock
+        | DeliverablesBlock
+        | ComparisonTableBlock
+        | TimelineBlock
+        | FAQBlock
+        | StatsBarBlock
+        | MetricDisplayBlock
+        | LogoBarBlock
+        | FeaturedTestimonialsBlock
+        | TestimonialBlock
+        | ClientLogoGridBlock
+        | CtaSectionBlock
+        | NewsletterCtaBlock
+        | ContactCtaBlock
+        | CaseStudyGridBlock
+        | ServiceCardsBlock
+        | ServicePillarCardsBlock
+        | FeaturedCaseStudyBlock
+        | PostListBlock
+        | RelatedPostsBlock
+        | IndustryGridBlock
+        | LocationsListBlock
+        | WorkshopListBlock
+        | TeamGridBlock
+        | VideoEmbedBlock
+        | MissionVisionValuesBlock
+        | AccordionBlock
+        | TabsBlock
+        | MapBlock
+        | EmbedBlock
+        | DownloadCardBlock
+        | HubspotFormBlock
+        | HubspotMeetingsBlock
+        | BrandTeaserBlock
+        | NavCardsBlock
+        | KeyTakeawaysBlock
+        | TechStackBlock
+      )[]
     | null;
   /**
    * How this industry looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
@@ -3970,6 +4031,55 @@ export interface IndustriesSelect<T extends boolean = true> {
     | {
         logo?: T;
         id?: T;
+      };
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   seo?:
     | T

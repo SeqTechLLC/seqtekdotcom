@@ -15,6 +15,7 @@ import type {
   Workshop,
   TeamMember,
   Partner,
+  Industry,
 } from '@/payload-types'
 
 // spec 004 Phase 2 (Foundational). The ISR correctness of every public route
@@ -148,6 +149,7 @@ type SluggedCollection =
   | 'workshops'
   | 'teamMembers'
   | 'partners'
+  | 'industries'
 
 // ---------------------------------------------------------------------------
 // Chrome globals — layered React.cache → unstable_cache
@@ -281,6 +283,16 @@ export const getPartnerBySlug = withReadTimeout(
       async () => (await findPublishedBySlug('partners', slug)) as Partner | null,
       ['partners', slug],
       { tags: detailCacheTags('partners', slug), revalidate: ONE_HOUR },
+    )(),
+)
+
+export const getIndustryBySlug = withReadTimeout(
+  'getIndustryBySlug',
+  (slug: string): Promise<Industry | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('industries', slug)) as Industry | null,
+      ['industries', slug],
+      { tags: detailCacheTags('industries', slug), revalidate: ONE_HOUR },
     )(),
 )
 
