@@ -87,7 +87,7 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
   }
 
   return (
-    <nav ref={navRef} aria-label="Primary" className="hidden lg:flex" onBlur={onBlur}>
+    <nav ref={navRef} aria-label="Primary" className="hidden xl:flex" onBlur={onBlur}>
       <ul className="flex items-center gap-1">
         {items.map((item, index) => {
           const panel = item.panel

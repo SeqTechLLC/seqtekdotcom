@@ -124,7 +124,7 @@ export function MobileNav({ navItems, ctaButton }: MobileNavProps) {
         aria-label="Open menu"
         aria-haspopup="dialog"
         data-testid="mobile-menu-trigger"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-md text-text-primary transition-colors duration-fast hover:bg-surface-subtle lg:hidden"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-md text-text-primary transition-colors duration-fast hover:bg-surface-subtle xl:hidden"
       >
         <svg
           viewBox="0 0 24 24"

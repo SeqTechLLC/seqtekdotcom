@@ -54,8 +54,9 @@ export const Industries: CollectionConfig = {
       type: 'richText',
       editor: editorConfig,
       admin: {
-        description:
-          'A short summary of this sector, shown where an industry is described outside its own page.',
+        // Still INERT-1: `/industries/[slug]` renders `layout` blocks only, so
+        // nothing reads this. Un-hide it in the change that ships a consumer.
+        hidden: true,
       },
     },
     {
@@ -67,7 +68,7 @@ export const Industries: CollectionConfig = {
       filterOptions: () => ({ tier: { equals: 'leaf' } }),
       hasMany: true,
       admin: {
-        description: 'The services this sector buys most often.',
+        hidden: true, // Still INERT-1 — no consumer; see `description` above.
       },
     },
     {
@@ -75,7 +76,7 @@ export const Industries: CollectionConfig = {
       type: 'array',
       labels: { singular: 'Client logo', plural: 'Client logos' },
       admin: {
-        description: 'Client logos to show on this industry page.',
+        hidden: true, // Still INERT-1 — no consumer; see `description` above.
         components: {
           RowLabel: mediaRowLabel({ singular: 'Client logo', uploadField: 'logo' }),
         },

@@ -16,9 +16,10 @@ import type { Industry } from '@/payload-types'
 // the same shape `partners` established: the slug resolves straight off the
 // `industries` collection, so publishing a new industry needs no code change.
 //
-// This route is what un-hid the collection's `description`, `relevantServices`,
-// `clientLogos` and `seo.*` groups — they were `admin.hidden` under INERT-1
-// precisely because nothing consumed them.
+// This route consumes the collection's `seo` group, which is why that one is
+// no longer `admin.hidden` under INERT-1. `description`, `relevantServices` and
+// `clientLogos` stay hidden: the page renders `layout` blocks only, so nothing
+// reads them yet. Un-hide each in the change that ships its consumer.
 //
 // Publish state is the lever for an industry that exists only to TAG case
 // studies and should not have a page of its own: the read below is

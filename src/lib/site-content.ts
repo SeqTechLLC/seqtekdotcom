@@ -162,30 +162,6 @@ export const navigation: Navigation = {
               { label: 'Agentic AI', url: '/services/agentic-ai' },
             ],
           },
-          // ROADMAP IND-1. Industries sit HERE rather than as a seventh
-          // top-level item, and that is a measurement, not a preference: the
-          // header row is capped at `max-w-container-lg` (1024px) and already
-          // measures ~1002px with six items, the logo at `md:h-8` and the CTA.
-          // A seventh item overflows by ~78px at every desktop width, and
-          // "Industries" is the shortest label that could go there. The panel
-          // grid is `groups.length` columns, so a fourth group is a data edit.
-          //
-          // No group URL: there is no `/industries` listing route, only
-          // `/industries/<slug>` detail pages — the same shape `services` has.
-          // A group without a `url` renders as a heading, which is exactly the
-          // optional-group-URL design NAV-1 built for.
-          {
-            label: 'Industries',
-            items: [
-              { label: 'Oil and Gas', url: '/industries/oil-and-gas' },
-              { label: 'Energy', url: '/industries/energy' },
-              { label: 'Manufacturing', url: '/industries/manufacturing' },
-              { label: 'Healthcare', url: '/industries/healthcare' },
-              { label: 'FinTech', url: '/industries/fintech' },
-              { label: 'Aerospace', url: '/industries/aerospace' },
-              { label: 'Leadership and Training', url: '/industries/leadership-and-training' },
-            ],
-          },
         ],
       },
     },
@@ -212,6 +188,38 @@ export const navigation: Navigation = {
               // one-subject-one-URL rule exists to prevent. Move both together
               // when the leaf is seeded and the Page retires.
               { label: 'Localshoring', url: '/localshoring' },
+            ],
+          },
+        ],
+      },
+    },
+    // ROADMAP IND-1. Industries is a top-level item, and making it fit was two
+    // changes, both measured on the real header rather than reasoned about:
+    // the row container went `lg` (1024px) -> `xl` (1280px), because it caps
+    // the row at 1024 no matter how wide the window is and every multi-word
+    // label wrapped to two lines even at 1440; and the desktop nav moved to the
+    // `xl` breakpoint, because at a 1024px viewport the container is
+    // viewport-bound (1024 - 64px padding = 960px) and no max-width helps.
+    // 1024-1279 gets the drawer, which handles any number of items.
+    //
+    // `/industries` is a `pages` doc served by the `/[slug]` catch-all, not a
+    // route file — verified that the catch-all does match `/industries` even
+    // with an `industries/[slug]/` directory present.
+    {
+      label: 'Industries',
+      url: '/industries',
+      panel: {
+        groups: [
+          {
+            label: 'Industries',
+            items: [
+              { label: 'Oil and Gas', url: '/industries/oil-and-gas' },
+              { label: 'Energy', url: '/industries/energy' },
+              { label: 'Manufacturing', url: '/industries/manufacturing' },
+              { label: 'Healthcare', url: '/industries/healthcare' },
+              { label: 'FinTech', url: '/industries/fintech' },
+              { label: 'Aerospace', url: '/industries/aerospace' },
+              { label: 'Leadership and Training', url: '/industries/leadership-and-training' },
             ],
           },
         ],

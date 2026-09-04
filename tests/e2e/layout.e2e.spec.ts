@@ -29,6 +29,9 @@ test.describe('Site chrome — desktop viewport', () => {
       'Our Story',
       'What We Do',
       'How We Work',
+      // IND-1 added a SEVENTH item. Fitting it moved the row container to `xl`
+      // and the desktop nav to the `xl` breakpoint — see site-content.ts.
+      'Industries',
       'Case Studies',
       'Insights',
       'Contact',
@@ -118,11 +121,12 @@ test.describe('Site chrome — desktop viewport', () => {
   // trigger's left offset grows more slowly. The suite's default 1280 measured
   // 0px over even while the bug was live, so this test sets its own width.
   test('opening the widest nav panel does not widen the document', async ({ page }) => {
-    // 1024 is the `lg` boundary and the worst case, but the cap and the
-    // trigger's offset scale differently, so check across the desktop range
-    // rather than trusting one width. 1280/1440 were hand-checked once; this
-    // makes that permanent.
-    for (const width of [1024, 1280, 1440]) {
+    // 1024 was the boundary until IND-1 moved the desktop nav to `xl`; at that
+    // width there is no panel to open now, only the drawer, which is a
+    // disclosure list and cannot overflow. 1280 is the boundary and the worst
+    // case, because the cap grows with the viewport while the trigger's left
+    // offset grows more slowly.
+    for (const width of [1280, 1440]) {
       await page.setViewportSize({ width, height: 800 })
       await page.goto('/')
       const caret = page.getByTestId('site-header').getByRole('button', { name: 'What We Do menu' })

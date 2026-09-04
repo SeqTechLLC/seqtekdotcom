@@ -1171,9 +1171,6 @@ export interface Industry {
    * The last part of the web address for this industry, for example "oil-and-gas". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
   slug: string;
-  /**
-   * A short summary of this sector, shown where an industry is described outside its own page.
-   */
   description?: {
     root: {
       type: string;
@@ -1189,13 +1186,7 @@ export interface Industry {
     };
     [k: string]: unknown;
   } | null;
-  /**
-   * The services this sector buys most often.
-   */
   relevantServices?: (number | Service)[] | null;
-  /**
-   * Client logos to show on this industry page.
-   */
   clientLogos?:
     | {
         logo: number | Media;
@@ -1927,7 +1918,7 @@ export interface IndustryGridBlock {
    */
   heading?: string | null;
   /**
-   * At least two, drawn as cards in the order you pick them. The cards are not links: the per-industry pages do not exist yet, so they name the industries rather than sending anyone to a dead page (ROADMAP IND-1).
+   * At least two, drawn as cards in the order you pick them. Each card links to that industry page. Only PUBLISHED industries get a card, so an industry kept as a draft to tag case studies never appears here.
    */
   industries: (number | Industry)[];
   id?: string | null;
