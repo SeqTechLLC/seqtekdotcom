@@ -48,9 +48,18 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 
 Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sales-website-alignment.md`.
 
-- **NAV-1 — dropdown panels, then the pages under them.** The panel component shipped (#129) against today's
-  routes. What is left is the group and leaf data, which cannot land until the routes exist — header links to
-  unbuilt routes is the #126 defect at the top of every page. **Sequence: SVC-2 first, then the nav data.**
+- **NAV-1 — the menu is built and wired; what it points at is empty.** The panel shipped (#129) and
+  `site-content.ts` now carries both axes, all three groups and all nine leaves, every one resolving against a
+  published `services` row. The mechanism is done. **The open item is the copy those 13 pages don't have —
+  see SVC-2 below.**
+  - **Open decision: should the axis panels derive from the `services` collection?** Today a new service is a
+    content edit plus a code change to `site-content.ts`, which is the friction ADR 0010 accepted when the nav
+    was six decade-scale items. It is 13 entries now. The hierarchy already exists as typed relations
+    (`tier`, and `items` constrained to `tier: 'leaf'`), so a derived panel builds URLs from `slug` and has no
+    free-text URL field to get wrong — which is the specific risk ADR 0010 rejected. Scope it to the two axis
+    panels; top-level items, footer, legal nav and the JSON-LD values stay code-owned. Costs: `SiteHeader`
+    becomes async (`listServices()` and its `services_list` tag already exist), and it renders on every page,
+    so the revalidation gap below becomes load-bearing rather than cosmetic. Wants an ADR revising 0010.
   - `tests/e2e/layout.e2e.spec.ts` (~:28-35) asserts all six top-level items are visible **links**. If an axis
     item becomes a button that opens a panel, that assertion changes shape.
   - **A group's URL is optional, and that is what de-risks the second panel.** A group with no URL renders as
@@ -64,22 +73,31 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     trap. `tests/e2e/a11y.e2e.spec.ts` sweeps at zero axe violations.
 
 - **SVC-2 residual — the content.** The code shipped (P5-31 / #131, and P5-41 / #136 for the `/services` fold). A deploy never runs the seeder, so:
-  - **Seed the services content** (`CONTENT_NEEDS.md` §12) via `tools/payload-seed`. Until it runs,
-    `/services/<slug>` 404s on a lane — including the axis that `/services` and the legacy Wix 301s point at.
-    Nothing is launched and both lanes are Cognito-gated, so this is a step to run, not a live defect.
-  - **Add Localshoring as a leaf** at `/services/localshoring` — a "how we work" leaf, not one of Brent's nine.
-    Until it exists the header's How We Work panel and the four market links point at the `localshoring` Page.
-    Chrome is code (ADR 0010), so flip all five (`site-content.ts:190`, `:252-255`) in the same commit that
-    seeds the leaf and retires the Page. No internal 301 — nothing is live, so the URL simply changes.
+  - ~~Seed the services content~~ **Done on preview (verified 2026-09-04):** 24 `services` docs, tiers
+    matching the drafts file, both axes and all three groups published, the nine legacy capability-set docs
+    retired to `draft`. `ww3` is a separate run after the next release.
+  - **Flip the five Localshoring links.** The `localshoring` leaf is seeded and published, so
+    `/services/localshoring` resolves today — but `site-content.ts:190` and `:252-255` still point at the old
+    `/localshoring` Page, and their comments still claim the leaf does not exist. Flip all five and retire the
+    Page in one commit. No internal 301 — nothing is live, so the URL simply changes. Overlaps SVC-3: there
+    are currently THREE Localshoring artifacts (the `localshoring` Page, the `service-localshoring` Page, and
+    the service leaf) where there should be one.
   - **Re-pick every block the SVC-2 migration emptied.** `*_rels.service_pillars_id` was dropped across
     thirteen tables, discarding the `pillars` selection on any `service-pillar-cards` block and NULLing
     `service-cards.pillar` wherever the source was "By pillar". `pillars` is `required, minRows: 1`, so those
     documents are invalid until re-picked. A re-seed repairs whatever the seed files cover; the exposure is
     what was authored directly in the admin. Check a lane.
-  - **Write the missing copy** — six of nine leaves and all three group pages (`CONTENT_NEEDS.md` §12).
+  - **Write the copy. This is the P0 item now.** All 13 service pages are seeded as placeholders — measured
+    2026-09-04, every one is a hero plus one content block at **540-850 characters**. The old Wix service
+    pages averaged 348 words, so these are roughly a third of what they replaced. The menu is fully wired and
+    delivers a visitor to a near-empty page, which is the exact failure Hank and Brent both described: a
+    capability list without substance. Ten leaves, three groups, two axes (`CONTENT_NEEDS.md` §12).
     **A group page needs a reason to exist:** if it is only a list of its own children it is a worse version
     of the menu that got you there. That is the bar. Flag it early if a grouping produces a heading nothing
     can be written about.
+  - **`services.json` lists each of the three group slugs twice** — once with a real 3-block layout, once with
+    an empty one. Whichever seeds last wins, so a re-seed can silently blank a group page. Fix in the content
+    repo before the next run.
   - **Refine the 21 Wix service 301s once the leaves are seeded.** They all land on the axis today, which is
     the honest interim target. `/technology-and-data` should reach the data page rather than the axis.
     Cheaper before the DNS cutover: nothing is live, so these are retargeted at source rather than layered.
@@ -177,6 +195,10 @@ Every content change is still a developer task. This tier fixes that before we l
   that page's data cache nor its CloudFront copy. Bounded by `revalidate: 3600` on a gated, unlaunched
   site. The fix wants the axis slugs, which are content — so it needs a query in `revalidateOnChange`,
   not a hardcoded slug.
+- **Clear the remaining production advisory (issue #132).** Opened at 6 high; today's autoprefixer bump moved
+  `browserslist` past the affected range, leaving **one high** — `fast-uri` under `payload`, with a patched
+  version available — plus one low (`postcss-selector-parser` under `tailwindcss`/`postcss-nested`). Both are
+  transitive, so the fix is a bump of the parent or a `package.json#overrides` pin.
 - **Re-link `industry-grid` and `locations-list` cards** when IND-1 and the locations route ship. The cards are
   one call site; `revalidateOnChange.ts:135-141` is the other. **The two disagree on the name** — the hook says
   `/consulting/<slug>`, the block said `/locations/<slug>`. Settle that before either route is built.
