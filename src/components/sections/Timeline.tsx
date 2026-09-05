@@ -20,7 +20,8 @@ export function Timeline({ heading, items }: TimelineProps) {
       <div className="mx-auto max-w-container-xl">
         {/* DESIGN_SYSTEM §11.4: entry bodies are body copy, capped at 65ch and
             centred as a block, with the heading inside the same column. The
-            rule's `pl-6` and the -1.875rem dot ride along with it. */}
+            `border-l-2` hairline's `pl-6` and the -1.875rem dot ride along
+            with it. */}
         <div className="mx-auto max-w-prose">
           {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
           <ol className="mt-8 space-y-8 border-l-2 border-border-strong pl-6">

@@ -41,12 +41,16 @@ export function ContactCta({
             : 'mx-auto max-w-container-xl'
         }
       >
-        {/* DESIGN_SYSTEM §11.4. Two boxes to cap, not one: with the panel this
-            is a grid half (620px at 1280, ~69ch), without it the div is the
-            whole rail (1280px, ~142ch). `mx-auto` only in the single-column
-            case — inside a grid cell the column is already positioned, and
-            centring it there would pull the copy away from the heading. */}
-        <div className={meeting ? 'max-w-prose' : 'mx-auto max-w-prose'}>
+        {/* DESIGN_SYSTEM §11.4. The cap is always centred; only at `lg` does it
+            go flush left. `lg:grid-cols-2` is the ONLY thing that makes the
+            parent two columns, so below 1024px this is a single full-rail grid
+            item — and a grid item with a definite max-width resolves to START,
+            not centre. A bare `max-w-prose` there would left-align a 65ch
+            column above the full-rail scheduling panel: the mismatch §11.4
+            calls "what looks broken", and the bare-`max-w-prose` wrapper it
+            bans by name. At `lg` and up the column shares the grid's left edge
+            with the panel beside it, which is what `lg:mx-0` restores. */}
+        <div className={meeting ? 'mx-auto max-w-prose lg:mx-0' : 'mx-auto max-w-prose'}>
           <h2 className="text-h2 font-bold">{heading}</h2>
           {body ? <p className="mt-4 text-body-lg text-text-secondary">{body}</p> : null}
           <div className="mt-8 flex flex-wrap items-center gap-4">
