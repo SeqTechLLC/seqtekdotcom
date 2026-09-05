@@ -51,27 +51,36 @@ export function CtaSection({
         />
       ) : null}
       <div className={`mx-auto max-w-container-xl ${alignmentCls}`}>
-        <h2 className="text-h2 font-bold">{headline}</h2>
-        {body ? <p className="mt-4 text-body-lg">{body}</p> : null}
-        <div
-          className={`mt-8 flex flex-wrap items-center gap-4 ${variant === 'centered' ? 'justify-center' : ''}`}
-        >
-          {primaryCta?.label && primaryCta?.url ? (
-            <TrackedCtaLink
-              href={primaryCta.url}
-              ctaId="cta-section-primary"
-              location="cta-section"
-              label={primaryCta.label}
-              className={`rounded-md px-5 py-3 font-medium ${isInverse ? 'bg-white text-accent-strong' : 'bg-accent-strong text-white'}`}
-            >
-              {primaryCta.label}
-            </TrackedCtaLink>
-          ) : null}
-          {secondaryCta?.label && secondaryCta?.url ? (
-            <Link href={secondaryCta.url} className="font-medium underline">
-              {secondaryCta.label}
-            </Link>
-          ) : null}
+        {/* DESIGN_SYSTEM §11.4: body copy is capped at the 65ch measure and
+            CENTRED as a block. The headline and the CTA row travel inside the
+            same column rather than staying full-rail, because the rule's other
+            half is that a heading shares its body's left edge — a full-width
+            headline over a centred paragraph is the mismatch it names. Before
+            the container-xl sweep this paragraph ran the full 1024px rail
+            (~114ch at text-body-lg); it would have run 1280px (~142ch). */}
+        <div className="mx-auto max-w-prose">
+          <h2 className="text-h2 font-bold">{headline}</h2>
+          {body ? <p className="mt-4 text-body-lg">{body}</p> : null}
+          <div
+            className={`mt-8 flex flex-wrap items-center gap-4 ${variant === 'centered' ? 'justify-center' : ''}`}
+          >
+            {primaryCta?.label && primaryCta?.url ? (
+              <TrackedCtaLink
+                href={primaryCta.url}
+                ctaId="cta-section-primary"
+                location="cta-section"
+                label={primaryCta.label}
+                className={`rounded-md px-5 py-3 font-medium ${isInverse ? 'bg-white text-accent-strong' : 'bg-accent-strong text-white'}`}
+              >
+                {primaryCta.label}
+              </TrackedCtaLink>
+            ) : null}
+            {secondaryCta?.label && secondaryCta?.url ? (
+              <Link href={secondaryCta.url} className="font-medium underline">
+                {secondaryCta.label}
+              </Link>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>

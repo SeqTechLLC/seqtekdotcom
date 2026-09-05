@@ -37,7 +37,10 @@ export function MissionVisionValues({
             <p className="mt-2 text-body-lg">{vision}</p>
           </div>
         </div>
-        <div>
+        {/* DESIGN_SYSTEM §11.4: only `stacked` puts the descriptions on the
+            full rail (~160ch at 1280). The grid layout is already two columns,
+            so it keeps the rail and the eyebrow travels with whichever it is. */}
+        <div className={valuesLayout === 'stacked' ? 'mx-auto max-w-prose' : undefined}>
           <p className="text-caption uppercase tracking-wide text-accent-strong">Values</p>
           <ul className={valuesCls}>
             {values.map((v, i) => (
