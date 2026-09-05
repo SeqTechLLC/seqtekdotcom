@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Section } from '../ui/Section'
 
 interface WorkshopDoc {
   id?: string | number
@@ -22,37 +23,35 @@ export function WorkshopList({ heading, workshops, headingLevel = 'h3' }: Worksh
   if (docs.length === 0) return null
   const CardHeading = headingLevel
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-        <ol className="mt-8 grid gap-6 md:grid-cols-3">
-          {docs.map((w, i) => {
-            // ROADMAP INERT-2 — a second line used to read `w.subtitle`, which
-            // `workshops` does not have at all. The branch never fired.
-            const card = (
-              <>
-                <p className="text-display font-bold text-accent-strong">{i + 1}</p>
-                <CardHeading className="mt-2 text-h4 font-semibold">{w.title}</CardHeading>
-              </>
-            )
-            return (
-              <li
-                key={w.id ?? w.slug}
-                className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
-              >
-                {w.slug ? (
-                  <Link href={`/workshops/${w.slug}`} className="block h-full p-6">
-                    {card}
-                  </Link>
-                ) : (
-                  <div className="p-6">{card}</div>
-                )}
-              </li>
-            )
-          })}
-        </ol>
-      </div>
-    </section>
+    <Section padding="spacious">
+      {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
+      <ol className="mt-8 grid gap-6 md:grid-cols-3">
+        {docs.map((w, i) => {
+          // ROADMAP INERT-2 — a second line used to read `w.subtitle`, which
+          // `workshops` does not have at all. The branch never fired.
+          const card = (
+            <>
+              <p className="text-display font-bold text-accent-strong">{i + 1}</p>
+              <CardHeading className="mt-2 text-h4 font-semibold">{w.title}</CardHeading>
+            </>
+          )
+          return (
+            <li
+              key={w.id ?? w.slug}
+              className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+            >
+              {w.slug ? (
+                <Link href={`/workshops/${w.slug}`} className="block h-full p-6">
+                  {card}
+                </Link>
+              ) : (
+                <div className="p-6">{card}</div>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    </Section>
   )
 }
 

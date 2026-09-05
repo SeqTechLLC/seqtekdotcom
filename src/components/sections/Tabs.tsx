@@ -1,6 +1,7 @@
 'use client'
 
 import { useId, useRef, useState } from 'react'
+import { Section } from '../ui/Section'
 
 interface Tab {
   id?: string | null
@@ -56,64 +57,62 @@ export function Tabs({ heading, tabs }: TabsProps) {
   }
 
   return (
-    <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {heading ? (
-          <h2 id={`${base}-heading`} className="text-h3 font-semibold">
-            {heading}
-          </h2>
-        ) : null}
-        <div
-          role="tablist"
-          // Point at the visible heading rather than copying it: an aria-label
-          // here makes a screen reader announce the same string twice, once for
-          // the <h2> and again for the tablist.
-          aria-labelledby={heading ? `${base}-heading` : undefined}
-          aria-label={heading ? undefined : 'Sections'}
-          className="mt-6 flex flex-wrap gap-2 border-b border-border-subtle"
-        >
-          {tabs.map((t, i) => {
-            const selected = i === current
-            return (
-              <button
-                key={t.id ?? i}
-                ref={(el) => {
-                  buttons.current[i] = el
-                }}
-                type="button"
-                role="tab"
-                id={`${base}-tab-${i}`}
-                aria-selected={selected}
-                aria-controls={`${base}-panel-${i}`}
-                tabIndex={selected ? 0 : -1}
-                onClick={() => setActive(i)}
-                onKeyDown={(event) => onKeyDown(event, i)}
-                className={`-mb-px rounded-t-md border-b-2 px-3 py-2 text-small font-medium transition ${
-                  selected
-                    ? 'border-accent-strong text-text-primary'
-                    : 'border-transparent text-text-secondary hover:border-border-strong hover:text-text-primary'
-                }`}
-              >
-                {t.label}
-              </button>
-            )
-          })}
-        </div>
-        {tabs.map((t, i) => (
-          <div
-            key={t.id ?? i}
-            role="tabpanel"
-            id={`${base}-panel-${i}`}
-            aria-labelledby={`${base}-tab-${i}`}
-            tabIndex={0}
-            hidden={i !== current}
-            className="mt-6"
-          >
-            <p className="text-body text-text-secondary">{t.body}</p>
-          </div>
-        ))}
+    <Section padding="default">
+      {heading ? (
+        <h2 id={`${base}-heading`} className="text-h3 font-semibold">
+          {heading}
+        </h2>
+      ) : null}
+      <div
+        role="tablist"
+        // Point at the visible heading rather than copying it: an aria-label
+        // here makes a screen reader announce the same string twice, once for
+        // the <h2> and again for the tablist.
+        aria-labelledby={heading ? `${base}-heading` : undefined}
+        aria-label={heading ? undefined : 'Sections'}
+        className="mt-6 flex flex-wrap gap-2 border-b border-border-subtle"
+      >
+        {tabs.map((t, i) => {
+          const selected = i === current
+          return (
+            <button
+              key={t.id ?? i}
+              ref={(el) => {
+                buttons.current[i] = el
+              }}
+              type="button"
+              role="tab"
+              id={`${base}-tab-${i}`}
+              aria-selected={selected}
+              aria-controls={`${base}-panel-${i}`}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => setActive(i)}
+              onKeyDown={(event) => onKeyDown(event, i)}
+              className={`-mb-px rounded-t-md border-b-2 px-3 py-2 text-small font-medium transition ${
+                selected
+                  ? 'border-accent-strong text-text-primary'
+                  : 'border-transparent text-text-secondary hover:border-border-strong hover:text-text-primary'
+              }`}
+            >
+              {t.label}
+            </button>
+          )
+        })}
       </div>
-    </section>
+      {tabs.map((t, i) => (
+        <div
+          key={t.id ?? i}
+          role="tabpanel"
+          id={`${base}-panel-${i}`}
+          aria-labelledby={`${base}-tab-${i}`}
+          tabIndex={0}
+          hidden={i !== current}
+          className="mt-6"
+        >
+          <p className="text-body text-text-secondary">{t.body}</p>
+        </div>
+      ))}
+    </Section>
   )
 }
 

@@ -1,4 +1,5 @@
 import { ResponsiveImage } from '../ui/ResponsiveImage'
+import { Section } from '../ui/Section'
 
 interface MediaLike {
   url?: string | null
@@ -59,29 +60,24 @@ export function Gallery({ heading, items, layout = 'grid', columns = '3' }: Gall
   if (figures.length === 0) return null
 
   return (
-    <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="mb-6 text-h3 font-semibold">{heading}</h2> : null}
-        {layout === 'carousel' ? (
-          <div className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2">
-            {figures.map((f, i) => (
-              <div
-                key={i}
-                className="min-w-[80%] shrink-0 snap-start sm:min-w-[48%] lg:min-w-[32%]"
-              >
-                <Figure item={f} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className={`grid grid-cols-1 gap-6 ${GRID_COLUMN_CLASSES[columns ?? '3']}`}>
-            {figures.map((f, i) => (
-              <Figure key={i} item={f} />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+    <Section padding="default">
+      {heading ? <h2 className="mb-6 text-h3 font-semibold">{heading}</h2> : null}
+      {layout === 'carousel' ? (
+        <div className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2">
+          {figures.map((f, i) => (
+            <div key={i} className="min-w-[80%] shrink-0 snap-start sm:min-w-[48%] lg:min-w-[32%]">
+              <Figure item={f} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={`grid grid-cols-1 gap-6 ${GRID_COLUMN_CLASSES[columns ?? '3']}`}>
+          {figures.map((f, i) => (
+            <Figure key={i} item={f} />
+          ))}
+        </div>
+      )}
+    </Section>
   )
 }
 

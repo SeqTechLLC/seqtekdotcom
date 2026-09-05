@@ -1,4 +1,7 @@
 import { ResponsiveImage } from '../ui/ResponsiveImage'
+import { Section } from '../ui/Section'
+import { SHELL_RAIL } from '@/lib/layoutGeometry'
+import { RAIL_CLASS } from '../ui/Section'
 
 interface MediaLike {
   url?: string | null
@@ -22,7 +25,9 @@ const WIDTH_CLASSES: Record<NonNullable<ImageProps['width']>, string> = {
   narrow: 'max-w-2xl',
   standard: 'max-w-3xl',
   wide: 'max-w-5xl',
-  full: 'max-w-container-lg',
+  // The widest variant IS the shell rail, so it must move with it rather
+  // than restate it — that restatement is what this refactor removes.
+  full: RAIL_CLASS[SHELL_RAIL],
 }
 
 // Alignment positions the figure within the page rail. Center is the default
@@ -42,20 +47,18 @@ export function Image({ image, caption, width = 'standard', alignment = 'center'
   const alignCls = ALIGN_CLASSES[alignment ?? 'center']
 
   return (
-    <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        <figure className={`${widthCls} ${alignCls}`}>
-          <ResponsiveImage
-            media={image}
-            sizes="(min-width: 1024px) 60vw, 100vw"
-            className="w-full rounded-lg border border-border-subtle shadow-sm"
-          />
-          {caption ? (
-            <figcaption className="mt-3 text-small text-text-secondary">{caption}</figcaption>
-          ) : null}
-        </figure>
-      </div>
-    </section>
+    <Section padding="default">
+      <figure className={`${widthCls} ${alignCls}`}>
+        <ResponsiveImage
+          media={image}
+          sizes="(min-width: 1024px) 60vw, 100vw"
+          className="w-full rounded-lg border border-border-subtle shadow-sm"
+        />
+        {caption ? (
+          <figcaption className="mt-3 text-small text-text-secondary">{caption}</figcaption>
+        ) : null}
+      </figure>
+    </Section>
   )
 }
 

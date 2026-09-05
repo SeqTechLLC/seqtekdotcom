@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { ResponsiveImage } from '../ui/ResponsiveImage'
+import { Section } from '../ui/Section'
 
 type Cta = { label?: string | null; url?: string | null; variant?: string | null } | null
 
@@ -108,13 +109,16 @@ export function Hero({
   )
 
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      {/* container-lg: the hero shares the page grid edge with every section
-          below it (two-column, video bands). Headline at display scale with
-          a measure cap so it wraps editorially instead of spanning the
-          container; subheadline capped likewise. */}
+    // The hero shares the page grid edge with every section below it (two-column,
+    // video bands), so it takes the shell rail like everything else. Headline at
+    // display scale keeps its own measure cap so it wraps editorially rather than
+    // spanning the rail; subheadline likewise.
+    <Section
+      padding="spacious"
+      innerClassName={isSplit ? 'grid gap-10 lg:grid-cols-2 lg:items-center' : alignmentCls}
+    >
       {isSplit ? (
-        <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
+        <>
           <div className={alignmentCls}>
             {copy}
             {ctas}
@@ -126,9 +130,9 @@ export function Hero({
             loading="eager"
             fetchPriority="high"
           />
-        </div>
+        </>
       ) : (
-        <div className={`mx-auto max-w-container-lg ${alignmentCls}`}>
+        <>
           {copy}
           {variant === 'with-image' && image ? (
             <ResponsiveImage
@@ -153,9 +157,9 @@ export function Hero({
             </div>
           ) : null}
           {ctas}
-        </div>
+        </>
       )}
-    </section>
+    </Section>
   )
 }
 

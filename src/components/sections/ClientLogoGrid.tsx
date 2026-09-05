@@ -1,3 +1,5 @@
+import { Section } from '../ui/Section'
+
 interface MediaLike {
   url?: string | null
   alt?: string | null
@@ -27,32 +29,30 @@ const COL_CLASSES: Record<NonNullable<ClientLogoGridProps['columns']>, string> =
 export function ClientLogoGrid({ heading, logos, columns = '4' }: ClientLogoGridProps) {
   const colCls = COL_CLASSES[columns ?? '4']
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-        <ul className={`mt-8 grid gap-4 sm:gap-5 ${colCls}`}>
-          {logos.map((item, i) => {
-            if (!isFullMedia(item.logo) || !item.logo.url) return null
-            return (
-              <li
-                key={item.id ?? i}
-                className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border-subtle bg-surface px-6 py-10"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.logo.url}
-                  alt={item.logo.alt ?? item.caption ?? ''}
-                  className="h-16 w-auto object-contain md:h-20"
-                />
-                {item.caption ? (
-                  <span className="text-caption text-text-muted">{item.caption}</span>
-                ) : null}
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-    </section>
+    <Section padding="spacious">
+      {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
+      <ul className={`mt-8 grid gap-4 sm:gap-5 ${colCls}`}>
+        {logos.map((item, i) => {
+          if (!isFullMedia(item.logo) || !item.logo.url) return null
+          return (
+            <li
+              key={item.id ?? i}
+              className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border-subtle bg-surface px-6 py-10"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.logo.url}
+                alt={item.logo.alt ?? item.caption ?? ''}
+                className="h-16 w-auto object-contain md:h-20"
+              />
+              {item.caption ? (
+                <span className="text-caption text-text-muted">{item.caption}</span>
+              ) : null}
+            </li>
+          )
+        })}
+      </ul>
+    </Section>
   )
 }
 
