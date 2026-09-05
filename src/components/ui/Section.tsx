@@ -66,6 +66,12 @@ type SectionProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & {
   className?: string
   /** Classes for the INNER rail div — grid/flex the block lays out inside it. */
   innerClassName?: string
+  /**
+   * Content that belongs to the section but not to the rail — a full-bleed
+   * background image, typically `absolute inset-0`. Rendered before the rail
+   * div so it sits behind the content without inheriting the max-width.
+   */
+  bleed?: ReactNode
   children: ReactNode
 }
 
@@ -76,6 +82,7 @@ export function Section({
   rail = SHELL_RAIL,
   className,
   innerClassName,
+  bleed,
   children,
   ...rest
 }: SectionProps) {
@@ -90,6 +97,7 @@ export function Section({
       )}
       {...rest}
     >
+      {bleed}
       <div className={cn('mx-auto', RAIL_CLASS[rail], innerClassName)}>{children}</div>
     </section>
   )

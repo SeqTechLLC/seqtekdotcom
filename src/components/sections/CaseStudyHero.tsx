@@ -1,5 +1,11 @@
 import { ResponsiveImage } from '../ui/ResponsiveImage'
 import { Section } from '../ui/Section'
+import { boxSizes } from '@/lib/layoutGeometry'
+
+// A `lg:grid-cols-2` media column: half the box above lg, the whole box below.
+// Derived so it tracks the shell rail instead of restating a vw fraction that
+// only happened to be right at the old width.
+const HALF_RAIL_SIZES = boxSizes({ fraction: 0.5 })
 
 interface MediaLike {
   url?: string | null
@@ -48,7 +54,7 @@ export function CaseStudyHero({ eyebrow, headline, metric, heroImage }: CaseStud
       {isFullMedia(heroImage) && heroImage.url ? (
         <ResponsiveImage
           media={heroImage}
-          sizes="(min-width: 1024px) 50vw, 100vw"
+          sizes={HALF_RAIL_SIZES}
           className="w-full rounded-md"
           loading="eager"
           fetchPriority="high"

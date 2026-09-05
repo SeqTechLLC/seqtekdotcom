@@ -2,6 +2,18 @@ import Link from 'next/link'
 
 import { ResponsiveImage } from '../ui/ResponsiveImage'
 import { Section } from '../ui/Section'
+import { gridSizes } from '@/lib/layoutGeometry'
+
+// Only the `cards` layout reaches ResponsiveImage — `compact` renders a fixed
+// 96px avatar — so there is one geometry here, not two. Derived anyway, so it
+// follows the rail rather than needing a human to re-check a vw fraction.
+const CARD_SIZES = gridSizes({
+  columns: [
+    [1024, 3],
+    [640, 2],
+    [0, 1],
+  ],
+})
 
 interface PhotoDoc {
   url?: string | null
@@ -73,7 +85,7 @@ export function TeamGrid({
                     // instead of the 2400px original.
                     <ResponsiveImage
                       media={{ ...m.photo, alt: m.photo.alt ?? m.name ?? '' }}
-                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      sizes={CARD_SIZES}
                       className="aspect-[4/3] w-full object-cover"
                     />
                   )

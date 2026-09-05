@@ -2,6 +2,15 @@ import Link from 'next/link'
 
 import { ResponsiveImage } from '../ui/ResponsiveImage'
 import { Section } from '../ui/Section'
+import { boxSizes } from '@/lib/layoutGeometry'
+
+// A `lg:grid-cols-2` media column: half the box above lg, the whole box below.
+// Derived so it tracks the shell rail instead of restating a vw fraction that
+// only happened to be right at the old width.
+const HALF_RAIL_SIZES = boxSizes({ fraction: 0.5 })
+
+// The non-split variants put the image across the whole rail.
+const FULL_RAIL_SIZES = boxSizes()
 
 type Cta = { label?: string | null; url?: string | null; variant?: string | null } | null
 
@@ -125,7 +134,7 @@ export function Hero({
           </div>
           <ResponsiveImage
             media={image}
-            sizes="(min-width: 1024px) 50vw, 100vw"
+            sizes={HALF_RAIL_SIZES}
             className="w-full rounded-lg border border-border-subtle shadow-sm"
             loading="eager"
             fetchPriority="high"
@@ -137,7 +146,7 @@ export function Hero({
           {variant === 'with-image' && image ? (
             <ResponsiveImage
               media={image}
-              sizes="100vw"
+              sizes={FULL_RAIL_SIZES}
               className="mt-8 w-full rounded-lg border border-border-subtle shadow-sm"
               loading="eager"
               fetchPriority="high"

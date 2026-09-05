@@ -231,28 +231,24 @@ describe('regression witnesses — the strings that shipped', () => {
     expect(rungFor(resolveVw(SHIPPED, 1440) * 2)).toBe(1024)
   })
 
-  it('over-served the 4-up team grid it was applied to (picked 1024w for a 604px need)', () => {
-    const cell = cellWidth(boxAt(1440), 4, GAP[6])
-    expect(cell).toBeCloseTo(302, 0)
-    expect(rungFor(cell * 2)).toBe(640)
-    expect(rungFor(resolveVw(SHIPPED, 1440) * 2)).toBe(1024)
+  it('was, by luck, correct for the 3-up grid — which is why it survived review', () => {
+    // TeamGrid used the same string and was NEVER defective: its `compact`
+    // layout renders a fixed 96px avatar rather than a ResponsiveImage, so the
+    // string only ever served the 3-up `cards` grid, where it over-declares but
+    // still lands on the same rung. Recorded because a string being right in one
+    // block and wrong in another, for reasons invisible at either call site, is
+    // the whole argument for deriving it.
+    const cell = cellWidth(boxAt(1440), 3, GAP[6])
+    expect(rungFor(cell * 2)).toBe(rungFor(resolveVw(SHIPPED, 1440) * 2))
   })
 
-  it('the derived strings get both right', () => {
+  it('the derived string gets the 2-up case the shipped one missed', () => {
     const two = gridSizes({
       columns: [
         [640, 2],
         [0, 1],
       ],
     })
-    const four = gridSizes({
-      columns: [
-        [1024, 4],
-        [640, 2],
-        [0, 1],
-      ],
-    })
     expect(rungFor(resolveSizes(two, 1440) * 2)).toBe(1600)
-    expect(rungFor(resolveSizes(four, 1440) * 2)).toBe(640)
   })
 })
