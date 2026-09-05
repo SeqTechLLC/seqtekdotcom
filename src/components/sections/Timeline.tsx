@@ -1,3 +1,6 @@
+import { Section } from '../ui/Section'
+import { ReadingColumn } from '../ui/ReadingColumn'
+
 interface TimelineItem {
   id?: string | null
   date: string
@@ -16,8 +19,8 @@ const hasUrl = (v: unknown): v is { url: string; alt?: string | null } =>
 
 export function Timeline({ heading, items }: TimelineProps) {
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+    <Section padding="spacious">
+      <ReadingColumn>
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ol className="mt-8 space-y-8 border-l-2 border-border-strong pl-6">
           {items.map((item, i) => (
@@ -37,8 +40,8 @@ export function Timeline({ heading, items }: TimelineProps) {
             </li>
           ))}
         </ol>
-      </div>
-    </section>
+      </ReadingColumn>
+    </Section>
   )
 }
 

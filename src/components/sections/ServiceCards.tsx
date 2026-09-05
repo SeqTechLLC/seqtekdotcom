@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Section } from '../ui/Section'
 
 interface ServiceDoc {
   id?: string | number
@@ -37,35 +38,33 @@ export function ServiceCards({ heading, manualItems, headingLevel }: ServiceCard
   // block accessible whatever an editor leaves blank.
   const CardHeading = headingLevel ?? (heading ? 'h3' : 'h2')
   return (
-    <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-        <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {docs.map((s) => {
-            const card = (
-              <>
-                {s.icon ? <p className="text-h3 text-accent-strong">{s.icon}</p> : null}
-                <CardHeading className="mt-2 text-h4 font-semibold">{s.title}</CardHeading>
-              </>
-            )
-            return (
-              <li
-                key={s.id ?? s.slug}
-                className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
-              >
-                {s.slug ? (
-                  <Link href={`/services/${s.slug}`} className="block h-full p-6">
-                    {card}
-                  </Link>
-                ) : (
-                  <div className="p-6">{card}</div>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-    </section>
+    <Section padding="spacious" background="subtle">
+      {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
+      <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {docs.map((s) => {
+          const card = (
+            <>
+              {s.icon ? <p className="text-h3 text-accent-strong">{s.icon}</p> : null}
+              <CardHeading className="mt-2 text-h4 font-semibold">{s.title}</CardHeading>
+            </>
+          )
+          return (
+            <li
+              key={s.id ?? s.slug}
+              className="group rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+            >
+              {s.slug ? (
+                <Link href={`/services/${s.slug}`} className="block h-full p-6">
+                  {card}
+                </Link>
+              ) : (
+                <div className="p-6">{card}</div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Section>
   )
 }
 

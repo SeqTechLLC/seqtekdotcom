@@ -2,6 +2,7 @@ import { HubspotLeadForm } from '@/components/forms/HubspotLeadForm'
 import { WorkshopInquiryForm } from '@/components/forms/WorkshopInquiryForm'
 import { type FormFieldConfig } from '@/lib/hubspot/fields'
 import { WORKSHOP_FORM_ID } from '@/lib/hubspot/forms'
+import { Section } from '../ui/Section'
 
 interface HubspotFormProps {
   heading?: string | null
@@ -35,21 +36,19 @@ const DEFAULT_FIELDS: FormFieldConfig[] = [
 
 export function HubspotForm({ heading, description, formId }: HubspotFormProps) {
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-        {description ? (
-          <p className="mt-3 max-w-2xl text-body-lg text-text-secondary">{description}</p>
-        ) : null}
-        <div className="mt-8">
-          {formId === WORKSHOP_FORM_ID ? (
-            <WorkshopInquiryForm />
-          ) : (
-            <HubspotLeadForm formId={formId} fields={DEFAULT_FIELDS} />
-          )}
-        </div>
+    <Section padding="spacious">
+      {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
+      {description ? (
+        <p className="mt-3 max-w-2xl text-body-lg text-text-secondary">{description}</p>
+      ) : null}
+      <div className="mt-8">
+        {formId === WORKSHOP_FORM_ID ? (
+          <WorkshopInquiryForm />
+        ) : (
+          <HubspotLeadForm formId={formId} fields={DEFAULT_FIELDS} />
+        )}
       </div>
-    </section>
+    </Section>
   )
 }
 

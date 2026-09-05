@@ -51,7 +51,7 @@ Net (post-spec-010): every non-blog detail type **and** the homepage global rend
 
 Pure React, no Payload coupling. Used by sections and pages.
 
-The real surface is small — five primitives. (Earlier drafts of this doc listed Card/Badge/Tag/Avatar/Icon/Section/Breadcrumbs/Pagination/ScrollToTop and a `ui/form/` subdir; none of those were built. Form UI lives in `src/components/forms/`, see §7.)
+The real surface is small — seven primitives. `Section` and `ReadingColumn` were built in ADR 0012, which moved the page shell and the §11.4 reading measure out of 46 hand-written copies and into one owner each. (Earlier drafts of this doc also listed Card/Badge/Tag/Avatar/Icon/Breadcrumbs/Pagination/ScrollToTop and a `ui/form/` subdir; none of those were built. Form UI lives in `src/components/forms/`, see §7.)
 
 | Component         | Props                                                          | Variants                                                             | Notes                                                                                                                   |
 | ----------------- | -------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |

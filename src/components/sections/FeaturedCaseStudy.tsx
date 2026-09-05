@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Section } from '../ui/Section'
 
 interface CaseStudyDoc {
   id?: string | number
@@ -22,37 +23,35 @@ const isMedia = (v: unknown): v is { url: string; alt?: string | null } =>
 export function FeaturedCaseStudy({ heading, caseStudy }: FeaturedCaseStudyProps) {
   if (!isDoc(caseStudy)) return null
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        <p className="text-caption uppercase tracking-wide text-accent-strong">
-          {heading ?? 'Featured case study'}
-        </p>
-        <div className="mt-4 grid gap-10 lg:grid-cols-2 lg:items-center">
-          {isMedia(caseStudy.heroImage) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={caseStudy.heroImage.url}
-              alt={caseStudy.heroImage.alt ?? caseStudy.title ?? ''}
-              className="w-full rounded-md"
-            />
+    <Section padding="spacious">
+      <p className="text-caption uppercase tracking-wide text-accent-strong">
+        {heading ?? 'Featured case study'}
+      </p>
+      <div className="mt-4 grid gap-10 lg:grid-cols-2 lg:items-center">
+        {isMedia(caseStudy.heroImage) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={caseStudy.heroImage.url}
+            alt={caseStudy.heroImage.alt ?? caseStudy.title ?? ''}
+            className="w-full rounded-md"
+          />
+        ) : null}
+        <div>
+          <h2 className="text-h2 font-bold">{caseStudy.title}</h2>
+          {caseStudy.subtitle ? (
+            <p className="mt-3 text-body-lg text-text-secondary">{caseStudy.subtitle}</p>
           ) : null}
-          <div>
-            <h2 className="text-h2 font-bold">{caseStudy.title}</h2>
-            {caseStudy.subtitle ? (
-              <p className="mt-3 text-body-lg text-text-secondary">{caseStudy.subtitle}</p>
-            ) : null}
-            {caseStudy.slug ? (
-              <Link
-                href={`/case-studies/${caseStudy.slug}`}
-                className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
-              >
-                Read the case study
-              </Link>
-            ) : null}
-          </div>
+          {caseStudy.slug ? (
+            <Link
+              href={`/case-studies/${caseStudy.slug}`}
+              className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+            >
+              Read the case study
+            </Link>
+          ) : null}
         </div>
       </div>
-    </section>
+    </Section>
   )
 }
 

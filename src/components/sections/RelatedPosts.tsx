@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Section } from '../ui/Section'
 
 interface PostDoc {
   id?: string | number
@@ -25,30 +26,28 @@ export function RelatedPosts({ heading, manualItems, limit = 3 }: RelatedPostsPr
   // renders nothing, the same as every other collection-backed block.
   if (docs.length === 0) return null
   return (
-    <section className="border-t border-border-subtle px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        <h2 className="text-h3 font-semibold">{heading ?? 'Related posts'}</h2>
-        <ul className="mt-6 grid gap-4 md:grid-cols-3">
-          {docs.map((p) => {
-            const card = <h3 className="text-body font-semibold">{p.title}</h3>
-            return (
-              <li
-                key={p.id ?? p.slug}
-                className="group rounded-md border border-border-subtle bg-surface-subtle transition hover:border-border-strong hover:shadow-sm"
-              >
-                {p.slug ? (
-                  <Link href={`/insights/${p.slug}`} className="block h-full p-4">
-                    {card}
-                  </Link>
-                ) : (
-                  <div className="p-4">{card}</div>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-    </section>
+    <Section padding="default" border="top">
+      <h2 className="text-h3 font-semibold">{heading ?? 'Related posts'}</h2>
+      <ul className="mt-6 grid gap-4 md:grid-cols-3">
+        {docs.map((p) => {
+          const card = <h3 className="text-body font-semibold">{p.title}</h3>
+          return (
+            <li
+              key={p.id ?? p.slug}
+              className="group rounded-md border border-border-subtle bg-surface-subtle transition hover:border-border-strong hover:shadow-sm"
+            >
+              {p.slug ? (
+                <Link href={`/insights/${p.slug}`} className="block h-full p-4">
+                  {card}
+                </Link>
+              ) : (
+                <div className="p-4">{card}</div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Section>
   )
 }
 

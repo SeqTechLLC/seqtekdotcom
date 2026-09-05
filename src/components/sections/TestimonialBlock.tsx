@@ -1,3 +1,5 @@
+import { Section } from '../ui/Section'
+
 interface TestimonialDoc {
   quote?: string | null
   personName?: string | null
@@ -39,27 +41,37 @@ export function TestimonialBlock({ testimonial, layout = 'centered' }: Testimoni
 
   if (layout === 'centered') {
     return (
-      <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-container-md flex-col items-center text-center">
-          {photoEl}
-          <blockquote className="mt-6 text-h3 font-semibold">&ldquo;{quote}&rdquo;</blockquote>
-          {attribution}
-        </div>
-      </section>
+      <Section
+        padding="spacious"
+        background="subtle"
+        rail="md"
+        innerClassName="flex flex-col items-center text-center"
+      >
+        {photoEl}
+        <blockquote className="mt-6 text-h3 font-semibold">&ldquo;{quote}&rdquo;</blockquote>
+        {attribution}
+      </Section>
     )
   }
 
   const flexCls = layout === 'with-photo-right' ? 'flex-row-reverse' : 'flex-row'
   return (
-    <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
-      <div className={`mx-auto flex max-w-container-lg items-start gap-8 ${flexCls}`}>
-        {photoEl}
-        <div>
-          <blockquote className="text-h3 font-semibold">&ldquo;{quote}&rdquo;</blockquote>
-          {attribution}
-        </div>
+    <Section
+      padding="spacious"
+      background="subtle"
+      innerClassName={`flex items-start justify-center gap-8 ${flexCls}`}
+    >
+      {photoEl}
+      <div>
+        {/* The cap goes on the blockquote, not a wrapper: `max-w-prose` is 65ch
+            and `ch` resolves against the element's OWN font size, so on a
+            wrapper inheriting 16px this would cap ~42ch of text-h3 display
+            type. `justify-center` above keeps the photo-and-quote unit on the
+            page's centre axis once the quote stops filling the rail. */}
+        <blockquote className="max-w-prose text-h3 font-semibold">&ldquo;{quote}&rdquo;</blockquote>
+        {attribution}
       </div>
-    </section>
+    </Section>
   )
 }
 

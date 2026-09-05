@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Section } from '../ui/Section'
 
 interface VideoEmbedProps {
   provider: 'youtube' | 'vimeo'
@@ -40,54 +41,52 @@ export function VideoEmbed({ provider, videoId, title, eyebrow, thumbnail }: Vid
   const poster = isMedia(thumbnail) ? thumbnail : null
 
   return (
-    <section className="bg-surface-subtle px-4 py-14 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {eyebrow ? (
-          <p className="mb-4 text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
-        ) : null}
-        <figure className="overflow-hidden rounded-md border border-border-subtle bg-surface-elevated shadow-sm">
-          <div className="aspect-video bg-surface-inverse">
-            {poster && !playing ? (
-              <button
-                type="button"
-                onClick={() => setPlaying(true)}
-                aria-label={`Play video: ${title}`}
-                className="group relative block h-full w-full"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={poster.url}
-                  alt={poster.alt ?? title}
-                  className="h-full w-full object-cover"
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  {/* ring + shadow, not just an opaque fill: a white pill on
-                      a pale poster disappears otherwise. */}
-                  <span className="rounded-full bg-white/90 px-6 py-3 text-h3 font-bold text-text-primary shadow-lg ring-1 ring-black/10 transition group-hover:bg-white">
-                    ▶ Play
-                  </span>
-                </span>
-              </button>
-            ) : (
-              <iframe
-                src={buildSrc(provider, videoId, playing)}
-                title={title}
-                className="h-full w-full"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-                loading="lazy"
-                // no-referrer breaks YouTube (player error 153): the embed
-                // must send its origin for YouTube to validate the embedder.
-                referrerPolicy="strict-origin-when-cross-origin"
+    <Section padding="none" background="subtle" className="py-14">
+      {eyebrow ? (
+        <p className="mb-4 text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
+      ) : null}
+      <figure className="overflow-hidden rounded-md border border-border-subtle bg-surface-elevated shadow-sm">
+        <div className="aspect-video bg-surface-inverse">
+          {poster && !playing ? (
+            <button
+              type="button"
+              onClick={() => setPlaying(true)}
+              aria-label={`Play video: ${title}`}
+              className="group relative block h-full w-full"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={poster.url}
+                alt={poster.alt ?? title}
+                className="h-full w-full object-cover"
               />
-            )}
-          </div>
-        </figure>
-      </div>
-    </section>
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                {/* ring + shadow, not just an opaque fill: a white pill on
+                      a pale poster disappears otherwise. */}
+                <span className="rounded-full bg-white/90 px-6 py-3 text-h3 font-bold text-text-primary shadow-lg ring-1 ring-black/10 transition group-hover:bg-white">
+                  ▶ Play
+                </span>
+              </span>
+            </button>
+          ) : (
+            <iframe
+              src={buildSrc(provider, videoId, playing)}
+              title={title}
+              className="h-full w-full"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              loading="lazy"
+              // no-referrer breaks YouTube (player error 153): the embed
+              // must send its origin for YouTube to validate the embedder.
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          )}
+        </div>
+      </figure>
+    </Section>
   )
 }
 
