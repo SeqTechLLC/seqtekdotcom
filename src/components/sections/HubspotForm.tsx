@@ -36,7 +36,7 @@ const DEFAULT_FIELDS: FormFieldConfig[] = [
 export function HubspotForm({ heading, description, formId }: HubspotFormProps) {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         {description ? (
           <p className="mt-3 max-w-2xl text-body-lg text-text-secondary">{description}</p>

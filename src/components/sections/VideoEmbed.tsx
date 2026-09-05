@@ -41,7 +41,7 @@ export function VideoEmbed({ provider, videoId, title, eyebrow, thumbnail }: Vid
 
   return (
     <section className="bg-surface-subtle px-4 py-14 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {eyebrow ? (
           <p className="mb-4 text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
         ) : null}

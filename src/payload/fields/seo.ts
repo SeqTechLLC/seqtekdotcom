@@ -36,12 +36,12 @@ interface SeoFieldOptions {
    */
   summaryFallback?: string
   /**
-   * Hide the whole group from the admin (ROADMAP INERT-1). `industries` and
-   * `locations` have no detail route, so nothing ever calls `buildMetadata`
-   * with their `seo` group. The columns stay (those routes are on the roadmap
-   * as IND-1); the control goes, because an editor filling it in today changes
-   * nothing. `services` left this set under SVC-2 — `/services/[slug]` reads
-   * its `seo`, so the group is un-hidden there.
+   * Hide the whole group from the admin (ROADMAP INERT-1). `locations` has no
+   * detail route, so nothing ever calls `buildMetadata` with its `seo` group.
+   * The columns stay (that route is on the roadmap); the control goes, because
+   * an editor filling it in today changes nothing. `services` left this set
+   * under SVC-2 and `industries` under IND-1 — `/services/[slug]` and
+   * `/industries/[slug]` read their `seo`, so the group is un-hidden there.
    *
    * `admin.hidden` only hides — the REST API still reads and writes the group,
    * so `tools/payload-seed` and `docs/content-drafts/*.json` are unaffected.

@@ -28,7 +28,7 @@ export function ClientLogoGrid({ heading, logos, columns = '4' }: ClientLogoGrid
   const colCls = COL_CLASSES[columns ?? '4']
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ul className={`mt-8 grid gap-4 sm:gap-5 ${colCls}`}>
           {logos.map((item, i) => {

@@ -22,7 +22,30 @@ const WIDTH_CLASSES: Record<NonNullable<ImageProps['width']>, string> = {
   narrow: 'max-w-2xl',
   standard: 'max-w-3xl',
   wide: 'max-w-5xl',
-  full: 'max-w-container-lg',
+  full: 'max-w-container-xl',
+}
+
+// `sizes` per width variant, because one string cannot serve four boxes that
+// differ by ~2x — a single value keyed to the widest variant makes `standard`
+// (the DEFAULT) request the 1600w derivative for a 768px box.
+//
+// Padding lives on the OUTER <section> here (px-4 / md:px-6 / lg:px-8) and the
+// max-width on an inner UNPADDED div, so the box is `min(cap, 100vw - padding)`
+// — a different recipe from the case-study article, which puts both on one
+// element. DESIGN_SYSTEM §11.4: "the two recipes do not commute."
+// Ladder for reference (Media.ts): 640 / 1024 / 1600 / 2400.
+const SIZES: Record<NonNullable<ImageProps['width']>, string> = {
+  // 672px from md up (768 - 48 = 720 >= 672).
+  narrow: '(min-width: 768px) 672px, calc(100vw - 32px)',
+  // 768px from 816 up (816 - 48 = 768). Not 1024: the md padding is 48px, so
+  // the cap is reached inside the md band, and declaring `100vw - 48px` across
+  // all of 768-1023 asks for up to 975px for a 768px box — one rung too far
+  // (2400w instead of 1600w) at DPR 2.
+  standard: '(min-width: 816px) 768px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
+  // 1024px once 100vw - 64 clears it.
+  wide: '(min-width: 1088px) 1024px, (min-width: 1024px) calc(100vw - 64px), (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
+  // Fills the rail: capped by container-xl at 1344+, viewport-bound below.
+  full: '(min-width: 1344px) 1280px, (min-width: 1024px) calc(100vw - 64px), (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
 }
 
 // Alignment positions the figure within the page rail. Center is the default
@@ -43,11 +66,11 @@ export function Image({ image, caption, width = 'standard', alignment = 'center'
 
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <figure className={`${widthCls} ${alignCls}`}>
           <ResponsiveImage
             media={image}
-            sizes="(min-width: 1024px) 60vw, 100vw"
+            sizes={SIZES[width ?? 'standard']}
             className="w-full rounded-lg border border-border-subtle shadow-sm"
           />
           {caption ? (

@@ -28,7 +28,7 @@ export function StatsBar({ heading, items }: StatsBarProps) {
     }[Math.min(list.length, 5)] ?? 'sm:grid-cols-3 lg:grid-cols-5'
   return (
     <section className="bg-surface-inverse px-4 py-12 text-text-inverse md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
         <dl className={`mt-6 grid gap-8 ${colsCls}`}>
           {list.map((item, i) => (

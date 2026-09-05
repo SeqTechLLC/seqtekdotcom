@@ -25,7 +25,7 @@ interface ComparisonTableProps {
 export function ComparisonTable({ heading, columns, rows, bestForRow }: ComparisonTableProps) {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <h2 className="text-h2 font-bold">{heading}</h2>
         <div className="mt-8 overflow-x-auto">
           <table className="min-w-full border-collapse text-left">

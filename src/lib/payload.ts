@@ -15,6 +15,7 @@ import type {
   Workshop,
   TeamMember,
   Partner,
+  Industry,
 } from '@/payload-types'
 
 // spec 004 Phase 2 (Foundational). The ISR correctness of every public route
@@ -148,6 +149,7 @@ type SluggedCollection =
   | 'workshops'
   | 'teamMembers'
   | 'partners'
+  | 'industries'
 
 // ---------------------------------------------------------------------------
 // Chrome globals — layered React.cache → unstable_cache
@@ -175,7 +177,32 @@ export const getHomepage = withReadTimeout(
       unstable_cache(
         async () => {
           const payload = await getPayloadInstance()
-          return (await payload.findGlobal({ slug: 'homepage', depth: 2 })) as Homepage
+          // `overrideAccess: false` matters for the POPULATED RELATIONS, not
+          // for the global itself: `publishedOrAuthedGlobal` returns a
+          // `_status: published` constraint for an anonymous read rather than
+          // denying it, so the homepage still resolves. Payload's local API
+          // defaults this to TRUE and threads it into the dataloader key for
+          // every related document, so without it a hand-picked relation to a
+          // DRAFTS-ENABLED collection populates a full draft. Missing this
+          // contradicted invariant C2 above and is how a draft could reach a
+          // public card.
+          //
+          // The exposure is EVERY block, not a subset: `Homepage` declares
+          // `blocks: [...layoutBlocks]`, so editors recompose the page without
+          // a deploy and this guard has to hold for whatever they pick. The
+          // names below are worked examples of that reach, not a registry to
+          // keep current — it is more than the obvious ones:
+          // `featured-case-study`, `industry-grid`, `related-posts`,
+          // `workshop-list`, `service-pillar-cards`, and the four
+          // source-driven grids whenever an author sets them to manual, since
+          // `resolveLayout` short-circuits and leaves the depth-2 population
+          // in place. (`logo-bar` and `testimonial-block` cannot leak either
+          // way: `media` reads `() => true` and `testimonials` has no drafts.)
+          return (await payload.findGlobal({
+            slug: 'homepage',
+            depth: 2,
+            overrideAccess: false,
+          })) as Homepage
         },
         ['global', 'homepage'],
         { tags: globalCacheTags('homepage'), revalidate: ONE_HOUR },
@@ -281,6 +308,16 @@ export const getPartnerBySlug = withReadTimeout(
       async () => (await findPublishedBySlug('partners', slug)) as Partner | null,
       ['partners', slug],
       { tags: detailCacheTags('partners', slug), revalidate: ONE_HOUR },
+    )(),
+)
+
+export const getIndustryBySlug = withReadTimeout(
+  'getIndustryBySlug',
+  (slug: string): Promise<Industry | null> =>
+    unstable_cache(
+      async () => (await findPublishedBySlug('industries', slug)) as Industry | null,
+      ['industries', slug],
+      { tags: detailCacheTags('industries', slug), revalidate: ONE_HOUR },
     )(),
 )
 
@@ -394,6 +431,41 @@ export const findPublishedSlugs = async (collection: SluggedCollection): Promise
     .map((d) => (d as { slug?: string | null }).slug)
     .filter((s): s is string => typeof s === 'string' && s.length > 0)
 }
+
+// ROADMAP IND-1. Industries specifically: `layout` was added by an ADDITIVE
+// migration, so rows that predate it are published with no body. The route
+// 404s those (an empty `<article>` with no `<h1>` is not a page), and the
+// sitemap has to agree or it advertises a URL that 404s. Separate reader rather
+// than a predicate on `findPublishedSlugs`, because that one is wrapped in
+// `unstable_cache` keyed by collection and a callback cannot go in a cache key.
+export const findPublishedIndustrySlugsWithBody = async (): Promise<string[]> => {
+  const payload = await getPayloadInstance()
+  const { docs } = await payload.find({
+    collection: 'industries',
+    draft: false,
+    overrideAccess: false,
+    depth: 0,
+    limit: 1000,
+    pagination: false,
+  })
+  return docs
+    .filter((d) => ((d as { layout?: unknown[] | null }).layout ?? []).length > 0)
+    .map((d) => (d as { slug?: string | null }).slug)
+    .filter((s): s is string => typeof s === 'string' && s.length > 0)
+}
+
+export const publishedIndustrySlugsWithBody = withReadTimeout(
+  'publishedIndustrySlugsWithBody',
+  (): Promise<string[]> =>
+    unstable_cache(
+      findPublishedIndustrySlugsWithBody,
+      ['publishedSlugs', 'industries', 'withBody'],
+      {
+        tags: listCacheTags('industries'),
+        revalidate: ONE_HOUR,
+      },
+    )(),
+)
 
 /**
  * Published slugs for a collection — feeds `generateStaticParams`. Published

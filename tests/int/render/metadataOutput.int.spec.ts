@@ -104,6 +104,7 @@ describe('buildMetadata call sites are enumerated', () => {
     '[slug]/page.tsx',
     'case-studies/[slug]/page.tsx',
     'case-studies/page.tsx',
+    'industries/[slug]/page.tsx',
     'insights/[slug]/page.tsx',
     'insights/page.tsx',
     'page.tsx',

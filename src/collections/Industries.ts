@@ -7,12 +7,16 @@ import { editorConfig } from '../payload/editor/editorConfig'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { seoField } from '../payload/fields/seo'
+import { livePreviewFor } from '../payload/livePreview/url'
+import { layoutBlocks } from '../payload/blocks/layout'
+import { industrySkeleton } from '../payload/seed/skeletons/industry'
 
 export const Industries: CollectionConfig = {
   slug: 'industries',
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'slug'],
+    livePreview: livePreviewFor('industries'),
   },
   access: {
     read: publishedOrAuthed,
@@ -52,7 +56,9 @@ export const Industries: CollectionConfig = {
       type: 'richText',
       editor: editorConfig,
       admin: {
-        hidden: true, // ROADMAP INERT-1 — no route reads this yet
+        // Still INERT-1: `/industries/[slug]` renders `layout` blocks only, so
+        // nothing reads this. Un-hide it in the change that ships a consumer.
+        hidden: true,
       },
     },
     {
@@ -64,7 +70,7 @@ export const Industries: CollectionConfig = {
       filterOptions: () => ({ tier: { equals: 'leaf' } }),
       hasMany: true,
       admin: {
-        hidden: true, // ROADMAP INERT-1 — no route reads this yet
+        hidden: true, // Still INERT-1 — no consumer; see `description` above.
       },
     },
     {
@@ -72,13 +78,25 @@ export const Industries: CollectionConfig = {
       type: 'array',
       labels: { singular: 'Client logo', plural: 'Client logos' },
       admin: {
-        hidden: true, // ROADMAP INERT-1 — no route reads this yet
+        hidden: true, // Still INERT-1 — no consumer; see `description` above.
         components: {
           RowLabel: mediaRowLabel({ singular: 'Client logo', uploadField: 'logo' }),
         },
       },
       fields: [{ name: 'logo', type: 'upload', relationTo: 'media', required: true }],
     },
-    seoField({ noun: 'industry', hidden: true }),
+    {
+      name: 'layout',
+      type: 'blocks',
+      label: 'Industry page',
+      labels: { singular: 'Block', plural: 'Blocks' },
+      blocks: [...layoutBlocks],
+      defaultValue: industrySkeleton,
+      admin: {
+        description:
+          'The industry page, built from blocks. A new industry starts from a standard outline; replace the placeholder text in each block.',
+      },
+    },
+    seoField({ noun: 'industry' }),
   ],
 }

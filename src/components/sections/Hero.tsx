@@ -109,12 +109,12 @@ export function Hero({
 
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      {/* container-lg: the hero shares the page grid edge with every section
+      {/* container-xl: the hero shares the page grid edge with every section
           below it (two-column, video bands). Headline at display scale with
           a measure cap so it wraps editorially instead of spanning the
           container; subheadline capped likewise. */}
       {isSplit ? (
-        <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
+        <div className="mx-auto grid max-w-container-xl gap-10 lg:grid-cols-2 lg:items-center">
           <div className={alignmentCls}>
             {copy}
             {ctas}
@@ -128,7 +128,7 @@ export function Hero({
           />
         </div>
       ) : (
-        <div className={`mx-auto max-w-container-lg ${alignmentCls}`}>
+        <div className={`mx-auto max-w-container-xl ${alignmentCls}`}>
           {copy}
           {variant === 'with-image' && image ? (
             <ResponsiveImage

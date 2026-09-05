@@ -33,7 +33,7 @@ export function PartnerGrid({ items, headingLevel = 'h3' }: PartnerGridProps) {
   if (docs.length === 0) return null
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {docs.map((p, i) => (
             <li key={p.id ?? p.slug ?? i}>
@@ -43,7 +43,7 @@ export function PartnerGrid({ items, headingLevel = 'h3' }: PartnerGridProps) {
                   styles.css — no per-component outline utilities needed. */}
               <Link
                 href={`/partners/${p.slug}`}
-                className="flex h-full flex-col rounded-lg border border-border-subtle bg-surface transition-colors hover:border-border"
+                className="flex h-full flex-col rounded-lg border border-border-subtle bg-surface transition-colors hover:border-border-strong"
               >
                 <div className="flex items-center justify-center border-b border-border-subtle px-6 py-10">
                   {isFullMedia(p.logo) ? (

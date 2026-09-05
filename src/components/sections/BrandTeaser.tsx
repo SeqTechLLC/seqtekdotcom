@@ -25,7 +25,7 @@ export function BrandTeaser({ headline, body, linkLabel, linkUrl, image }: Brand
       <div
         className={
           hasImage
-            ? 'mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center'
+            ? 'mx-auto grid max-w-container-xl gap-10 lg:grid-cols-2 lg:items-center'
             : 'mx-auto max-w-container-md text-center'
         }
       >

@@ -30,7 +30,7 @@ export function NavCards({ cards }: NavCardsProps) {
         : 'sm:grid-cols-2 lg:grid-cols-3'
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <ul className={`grid gap-6 ${gridCls}`}>
           {cards.map((c, i) => (
             <li

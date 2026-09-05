@@ -21,7 +21,7 @@ export function LocationsList({ heading, locations }: LocationsListProps) {
   if (docs.length === 0) return null
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <h2 className="text-h2 font-bold">{heading ?? 'Where we work'}</h2>
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* ROADMAP SVC-2 — these cards used to link to `/locations/<slug>`,

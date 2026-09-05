@@ -26,7 +26,7 @@ export function RelatedPosts({ heading, manualItems, limit = 3 }: RelatedPostsPr
   if (docs.length === 0) return null
   return (
     <section className="border-t border-border-subtle px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <h2 className="text-h3 font-semibold">{heading ?? 'Related posts'}</h2>
         <ul className="mt-6 grid gap-4 md:grid-cols-3">
           {docs.map((p) => {

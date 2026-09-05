@@ -121,6 +121,9 @@ export function inScopeRoutes(
     // Same flat namespace, different collection — SVC-2's group branch.
     { path: `/services/${SERVICE_GROUP_SLUG}`, label: 'service group' },
     { path: `/services/${SERVICE_AXIS_SLUG}`, label: 'service axis' },
+    // ROADMAP IND-1 — the detail route. There is no `/industries` listing
+    // route, so the sweep covers the detail page only, same as services.
+    { path: `/industries/${seed.industrySlug}`, label: 'industry (detail)' },
     { path: '/workshops', label: 'workshops (listing)' },
     { path: `/workshops/${seed.workshopSlug}`, label: 'workshop (detail)' },
     // ADR 0009 metadata collection (feat/partners-accesseva) — the index is new
@@ -165,9 +168,27 @@ export async function seedInScopeRoutes(
     overrideAccess: true,
   })
 
+  // ROADMAP IND-1: an industry is a routed page now, not only a taxonomy
+  // target, so this fixture needs a body and a published status or
+  // `/industries/<slug>` 404s in the a11y sweep below.
   const industry = await payload.create({
     collection: 'industries',
-    data: { title: 'Energy', slug: seed.industrySlug },
+    data: {
+      title: 'Energy',
+      slug: seed.industrySlug,
+      layout: [
+        {
+          blockType: 'hero',
+          variant: 'text-only',
+          alignment: 'left',
+          eyebrow: 'Industry',
+          headline: 'Energy',
+          subheadline: 'What this sector needs from a technology partner.',
+        },
+        { blockType: 'content', body: lexical('What we do in this sector.') },
+      ] as never,
+      _status: 'published',
+    },
     overrideAccess: true,
   })
 

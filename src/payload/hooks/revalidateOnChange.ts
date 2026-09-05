@@ -83,7 +83,12 @@ export const buildRevalidatePlan = (
         detailPaths.push(`/partners/${s}`, '/partners')
         break
       case 'industries':
-        detailPaths.push(`/industries/${s}`)
+        // The detail route plus the index that lists it. `/industries` is a
+        // `pages` doc on the `/[slug]` catch-all rather than a route file, but
+        // it carries an `industry-grid`, so publishing or unpublishing an
+        // industry changes it — without this the card sits stale for up to
+        // `revalidate: 3600` and CloudFront is never invalidated for that path.
+        detailPaths.push(`/industries/${s}`, '/industries')
         break
       case 'locations':
         detailPaths.push(`/consulting/${s}`)

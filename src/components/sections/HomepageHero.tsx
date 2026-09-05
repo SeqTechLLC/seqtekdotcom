@@ -37,7 +37,7 @@ export function HomepageHero({
           className="absolute inset-0 h-full w-full object-cover opacity-40"
         />
       ) : null}
-      <div className="relative mx-auto max-w-container-lg px-4 py-24 md:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-container-xl px-4 py-24 md:px-6 lg:px-8">
         {eyebrow ? (
           <p className="text-caption uppercase tracking-wide text-accent">{eyebrow}</p>
         ) : null}

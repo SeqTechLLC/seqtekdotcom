@@ -49,7 +49,7 @@ export function TeamGrid({
   const CardHeading = headingLevel
   return (
     <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         {docs.length === 0 ? null : (
           <ul

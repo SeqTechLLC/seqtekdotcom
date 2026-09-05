@@ -38,7 +38,7 @@ export function ServiceCards({ heading, manualItems, headingLevel }: ServiceCard
   const CardHeading = headingLevel ?? (heading ? 'h3' : 'h2')
   return (
     <section className="bg-surface-subtle px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
         <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {docs.map((s) => {

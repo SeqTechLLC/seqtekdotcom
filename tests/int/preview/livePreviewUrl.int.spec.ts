@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import {
@@ -25,7 +27,7 @@ describe('isPreviewCollection', () => {
   // spec 010 (R6): workshops + teamMembers gain live preview alongside the
   // original four (type-generic cross-cutting wiring). ADR 0009 metadata
   // collection `partners` joins them. ROADMAP SVC-2 restores `services`, which
-  // is a routed block-composed collection again.
+  // is a routed block-composed collection again. IND-1 adds `industries`.
   it.each([
     'pages',
     'posts',
@@ -34,6 +36,7 @@ describe('isPreviewCollection', () => {
     'workshops',
     'teamMembers',
     'partners',
+    'industries',
   ] as const)('accepts %s', (slug) => {
     expect(isPreviewCollection(slug)).toBe(true)
   })
@@ -42,9 +45,10 @@ describe('isPreviewCollection', () => {
     expect(isPreviewCollection(slug)).toBe(false)
   })
 
-  it('PREVIEW_COLLECTIONS is exactly the seven supported collections', () => {
+  it('PREVIEW_COLLECTIONS is exactly the eight supported collections', () => {
     // SVC-2 re-added `services`: spec 011 T017 had dropped it while it had no
     // public route, and `/services/[slug]` gives it one for all three tiers.
+    // IND-1 added `industries` for the same reason.
     expect(new Set(PREVIEW_COLLECTIONS)).toEqual(
       new Set([
         'pages',
@@ -54,8 +58,29 @@ describe('isPreviewCollection', () => {
         'workshops',
         'teamMembers',
         'partners',
+        'industries',
       ]),
     )
+  })
+
+  // The structural defect that let `industries` ship a dead draft branch:
+  // `src/lib/preview.ts` declares its OWN union, also called
+  // `PreviewCollection`, and nothing tied the two together. IND-1 added
+  // `industries` to that one and not to this one, so `getDraftBySlug` accepted
+  // it while `/preview/[collection]/[slug]` answered `404 unsupported
+  // collection` — the route's whole draft path was unreachable.
+  it('the two PreviewCollection unions agree', () => {
+    const previewTs = readFileSync(
+      resolve(import.meta.dirname, '../../../src/lib/preview.ts'),
+      'utf8',
+    )
+    const block = previewTs.slice(
+      previewTs.indexOf('export type PreviewCollection'),
+      previewTs.indexOf('export const getDraftBySlug'),
+    )
+    const declared = [...block.matchAll(/\|\s*'([a-zA-Z]+)'/g)].map((m) => m[1])
+    expect(declared.length).toBeGreaterThan(0)
+    expect(new Set(declared)).toEqual(new Set(PREVIEW_COLLECTIONS))
   })
 })
 

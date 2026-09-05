@@ -435,7 +435,7 @@ Component code does not re-implement focus styling unless overriding for a speci
 | ---------------- | --------- | ---------------------------------------------- |
 | `container-sm`   | `640px`   | Long-form reading (blog posts)                 |
 | `container-md`   | `768px`   | Standard content (about, services)             |
-| `container-lg`   | `1024px`  | Media-heavy (case study with images)           |
+| `container-lg`   | `1024px`  | Legacy. The site shell moved to `xl` (IND-1)   |
 | `container-xl`   | `1280px`  | Default site container — most pages            |
 | `container-full` | `100%`    | Full-bleed sections (hero backgrounds, footer) |
 
@@ -453,7 +453,7 @@ Per §4, three section padding tokens (`section-tight`, `section-default`, `sect
 
 **Body copy is a left-justified block, capped at the `prose` measure (`max-w-prose`, 65ch), and CENTERED as a block within its container.** This is a hard rule.
 
-- **The rule lives in the block components, not in templates (FR-009, ADR 0009).** After spec 010 every non-blog page renders its body through `RenderBlocks`, so the reading-column wrapper is owned by the block render components (`src/components/sections/Content.tsx`, `Image.tsx`, `Gallery.tsx`, `Deliverables.tsx`, …): each wraps its content in `mx-auto max-w-container-lg` with the centred reading measure inside. Fix the wrapper in one block and that layout is fixed everywhere it renders — the "four-templates-one-bug" problem ADR 0009 cites. The only sanctioned exception is the bespoke Posts (insights) article template. Verify by **measuring element boxes** at desktop+mobile via the visual harness, not by reasoning from classes (memory: "measure, don't reason").
+- **The rule lives in the block components, not in templates (FR-009, ADR 0009).** After spec 010 every non-blog page renders its body through `RenderBlocks`, so the reading-column wrapper is owned by the block render components (`src/components/sections/Content.tsx`, `Image.tsx`, `Gallery.tsx`, `Deliverables.tsx`, …): each wraps its content in `mx-auto max-w-container-xl` with the centred reading measure inside. Fix the wrapper in one block and that layout is fixed everywhere it renders — the "four-templates-one-bug" problem ADR 0009 cites. The only sanctioned exception is the bespoke Posts (insights) article template. Verify by **measuring element boxes** at desktop+mobile via the visual harness, not by reasoning from classes (memory: "measure, don't reason").
 - **Why 65ch:** the `@tailwindcss/typography` `prose` class caps line length at 65ch — the readable measure (~50–75 chars/line). Keep it. Do **not** widen body copy past it.
 - **Center the block, not the text.** Use `mx-auto` (auto side margins) so the column sits on the page's centre axis. Never use `text-center` on body copy or headings — centered _text_ (ragged both edges) looks broken; we want left-justified text in a centred block.
 - **Different widths are fine if everything is centred.** A full-width hero, a wide metrics grid, and a 65ch body column can coexist — as long as they all share one vertical centre axis (concentric). What looks broken is **left-justifying** mismatched widths (wide title, narrower hero, narrower body all hugging the left edge with ragged right edges).
@@ -465,10 +465,10 @@ Per §4, three section padding tokens (`section-tight`, `section-default`, `sect
 
 Every grid component (`TeamGrid`, `PartnerGrid`, `PostList`, `CaseStudyGrid`, `WorkshopList`, …) is
 **self-containering**: a full-bleed `<section className="px-4 py-16 md:px-6 lg:px-8">` wrapping an
-`<div className="mx-auto max-w-container-lg">`. That is the block contract — a block renders correctly
+`<div className="mx-auto max-w-container-xl">`. That is the block contract — a block renders correctly
 at full page width and needs no help from its caller.
 
-So a listing page must **not** wrap the grid in a second `mx-auto max-w-container-lg px-4 …` container.
+So a listing page must **not** wrap the grid in a second `mx-auto max-w-container-xl px-4 …` container.
 Doing so nests two padded containers and insets the grid from the page's own `h1` by the inner section's
 padding — measured at **32px on desktop, 16px on mobile**, on all five listing routes at once
 (ROADMAP UI-1 follow-up, `PROJECT_HISTORY` P5-29). Note the two recipes do not commute: padding + max-width
@@ -479,7 +479,7 @@ on the **same** element lands at a different x than padding on an outer element 
 ```tsx
 <div data-testid="…">                                     {/* no container, no padding */}
   <header className="px-4 pt-16 md:px-6 lg:px-8">         {/* the block's own recipe … */}
-    <div className="mx-auto max-w-container-lg">          {/* … both halves of it */}
+    <div className="mx-auto max-w-container-xl">          {/* … both halves of it */}
       <h1 …/>
     </div>
   </header>

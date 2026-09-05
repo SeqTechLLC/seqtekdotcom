@@ -18,7 +18,7 @@ export function Embed({ title, url, caption, height = 600 }: EmbedProps) {
 
   return (
     <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+      <div className="mx-auto max-w-container-xl">
         <figure>
           <div
             className="overflow-hidden rounded-md border border-border-subtle"
