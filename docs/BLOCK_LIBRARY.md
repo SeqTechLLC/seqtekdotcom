@@ -671,7 +671,13 @@ The retired `/services/[pillar]/[slug]` pillar→detail IA (the two rows that us
 
 ### Industry page (`industries` — block-composed since IND-1)
 
-`<Hero>` → `<Prose>` (context) → `<ServiceCards source="manual">` (relevantServices) → `<CaseStudyGrid source="by-industry">` → `<StatsBar>` (industry stats) → `<LogoBar>` (industry logos) → `<CtaSection>`
+`hero` → `content` (sector context) → `service-cards` set to manual → `case-study-grid` set to `by-industry` → `stats-bar` → `logo-bar` → `cta-section`
+
+Every part of that is authored in the block. The recipe used to map three of
+these to industry fields — `description`, `relevantServices`, `clientLogos` —
+but those are still INERT-1: hidden, with no consumer on the render path
+(`Industries.ts`). `industry` is the one field a block reads, and only
+`case-study-grid` reads it.
 
 ### Market landing (`locations` — structured fields)
 

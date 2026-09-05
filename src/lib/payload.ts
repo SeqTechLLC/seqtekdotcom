@@ -187,16 +187,17 @@ export const getHomepage = withReadTimeout(
           // contradicted invariant C2 above and is how a draft could reach a
           // public card.
           //
-          // Deliberately not enumerating which blocks are exposed: `Homepage`
-          // declares `blocks: [...layoutBlocks]`, so EVERY block is available
-          // here and editors recompose the page without a deploy — any list
-          // written today is stale tomorrow. It is more than the obvious ones:
+          // The exposure is EVERY block, not a subset: `Homepage` declares
+          // `blocks: [...layoutBlocks]`, so editors recompose the page without
+          // a deploy and this guard has to hold for whatever they pick. The
+          // names below are worked examples of that reach, not a registry to
+          // keep current — it is more than the obvious ones:
           // `featured-case-study`, `industry-grid`, `related-posts`,
           // `workshop-list`, `service-pillar-cards`, and the four
           // source-driven grids whenever an author sets them to manual, since
           // `resolveLayout` short-circuits and leaves the depth-2 population
-          // in place. (`logo-bar` and `testimonial-block` are NOT exposed:
-          // `media` reads `() => true` and `testimonials` has no drafts.)
+          // in place. (`logo-bar` and `testimonial-block` cannot leak either
+          // way: `media` reads `() => true` and `testimonials` has no drafts.)
           return (await payload.findGlobal({
             slug: 'homepage',
             depth: 2,

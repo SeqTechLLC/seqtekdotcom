@@ -37,8 +37,11 @@ const WIDTH_CLASSES: Record<NonNullable<ImageProps['width']>, string> = {
 const SIZES: Record<NonNullable<ImageProps['width']>, string> = {
   // 672px from md up (768 - 48 = 720 >= 672).
   narrow: '(min-width: 768px) 672px, calc(100vw - 32px)',
-  // 768px from lg up (1024 - 64 = 960 >= 768).
-  standard: '(min-width: 1024px) 768px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
+  // 768px from 816 up (816 - 48 = 768). Not 1024: the md padding is 48px, so
+  // the cap is reached inside the md band, and declaring `100vw - 48px` across
+  // all of 768-1023 asks for up to 975px for a 768px box — one rung too far
+  // (2400w instead of 1600w) at DPR 2.
+  standard: '(min-width: 816px) 768px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
   // 1024px once 100vw - 64 clears it.
   wide: '(min-width: 1088px) 1024px, (min-width: 1024px) calc(100vw - 64px), (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)',
   // Fills the rail: capped by container-xl at 1344+, viewport-bound below.

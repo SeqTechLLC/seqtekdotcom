@@ -149,6 +149,35 @@ test.describe('Site chrome — desktop viewport', () => {
   })
 })
 
+// IND-1 moved `PrimaryNav` from `lg` to `xl` to fit a seventh top-level item,
+// which made the drawer the only nav from 0 to 1279px. Nothing exercised the
+// upper half of that band: the suite default is 1280, the drawer is asserted
+// at 390 below, and the visual harness captures 1440/390 — so 1024-1279, the
+// range whose behaviour this PR actually changed, had no coverage at all.
+// 1024 is the old breakpoint and the exact width that used to show the
+// desktop nav, which makes it the regression that would slip through.
+test.describe('Site chrome — narrow desktop (below the xl nav breakpoint)', () => {
+  test.use({ viewport: { width: 1024, height: 800 } })
+
+  test('drawer is the only nav between the lg and xl breakpoints', async ({ page }) => {
+    await page.goto('/')
+
+    // `PrimaryNav` is `hidden xl:flex`, so it must not be visible here.
+    const header = page.getByTestId('site-header')
+    await expect(header.getByRole('navigation', { name: /primary/i })).toBeHidden()
+
+    // The trigger is `xl:hidden`, so it is the nav at this width, and it opens.
+    const trigger = page.getByTestId('mobile-menu-trigger')
+    await expect(trigger).toBeVisible()
+
+    const dialog = page.getByTestId('mobile-menu')
+    await expect(dialog).toHaveJSProperty('open', false)
+    await trigger.click()
+    await expect(dialog).toHaveJSProperty('open', true)
+    await expect(dialog.getByRole('link', { name: 'Industries' })).toBeVisible()
+  })
+})
+
 test.describe('Site chrome — mobile viewport', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
