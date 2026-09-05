@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
 import { Section } from '../ui/Section'
+import { ReadingColumn } from '../ui/ReadingColumn'
 
 type Cta = { label?: string | null; url?: string | null } | null
 
@@ -34,7 +35,7 @@ export function ContactCta({
       padding="spacious"
       innerClassName={meeting ? 'grid gap-10 lg:grid-cols-2 lg:items-center' : undefined}
     >
-      <div>
+      <ReadingColumn flushFrom={meeting ? 'lg' : undefined}>
         <h2 className="text-h2 font-bold">{heading}</h2>
         {body ? <p className="mt-4 text-body-lg text-text-secondary">{body}</p> : null}
         <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -55,7 +56,7 @@ export function ContactCta({
             </Link>
           ) : null}
         </div>
-      </div>
+      </ReadingColumn>
       {meeting ? (
         <div className="rounded-md border border-border-subtle bg-surface-subtle p-6 text-center">
           <p className="text-caption uppercase tracking-wide text-accent-strong">Book a time</p>

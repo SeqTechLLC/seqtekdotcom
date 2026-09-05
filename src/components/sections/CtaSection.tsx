@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
 import { Section } from '../ui/Section'
+import { ReadingColumn } from '../ui/ReadingColumn'
 
 type Cta = { label?: string | null; url?: string | null } | null
 
@@ -51,28 +52,30 @@ export function CtaSection({
           className="absolute inset-0 -z-10 h-full w-full object-cover opacity-30"
         />
       ) : null}
-      <h2 className="text-h2 font-bold">{headline}</h2>
-      {body ? <p className="mt-4 text-body-lg">{body}</p> : null}
-      <div
-        className={`mt-8 flex flex-wrap items-center gap-4 ${variant === 'centered' ? 'justify-center' : ''}`}
-      >
-        {primaryCta?.label && primaryCta?.url ? (
-          <TrackedCtaLink
-            href={primaryCta.url}
-            ctaId="cta-section-primary"
-            location="cta-section"
-            label={primaryCta.label}
-            className={`rounded-md px-5 py-3 font-medium ${isInverse ? 'bg-white text-accent-strong' : 'bg-accent-strong text-white'}`}
-          >
-            {primaryCta.label}
-          </TrackedCtaLink>
-        ) : null}
-        {secondaryCta?.label && secondaryCta?.url ? (
-          <Link href={secondaryCta.url} className="font-medium underline">
-            {secondaryCta.label}
-          </Link>
-        ) : null}
-      </div>
+      <ReadingColumn>
+        <h2 className="text-h2 font-bold">{headline}</h2>
+        {body ? <p className="mt-4 text-body-lg">{body}</p> : null}
+        <div
+          className={`mt-8 flex flex-wrap items-center gap-4 ${variant === 'centered' ? 'justify-center' : ''}`}
+        >
+          {primaryCta?.label && primaryCta?.url ? (
+            <TrackedCtaLink
+              href={primaryCta.url}
+              ctaId="cta-section-primary"
+              location="cta-section"
+              label={primaryCta.label}
+              className={`rounded-md px-5 py-3 font-medium ${isInverse ? 'bg-white text-accent-strong' : 'bg-accent-strong text-white'}`}
+            >
+              {primaryCta.label}
+            </TrackedCtaLink>
+          ) : null}
+          {secondaryCta?.label && secondaryCta?.url ? (
+            <Link href={secondaryCta.url} className="font-medium underline">
+              {secondaryCta.label}
+            </Link>
+          ) : null}
+        </div>
+      </ReadingColumn>
     </Section>
   )
 }

@@ -59,11 +59,16 @@ export function TestimonialBlock({ testimonial, layout = 'centered' }: Testimoni
     <Section
       padding="spacious"
       background="subtle"
-      innerClassName={`flex items-start gap-8 ${flexCls}`}
+      innerClassName={`flex items-start justify-center gap-8 ${flexCls}`}
     >
       {photoEl}
       <div>
-        <blockquote className="text-h3 font-semibold">&ldquo;{quote}&rdquo;</blockquote>
+        {/* The cap goes on the blockquote, not a wrapper: `max-w-prose` is 65ch
+            and `ch` resolves against the element's OWN font size, so on a
+            wrapper inheriting 16px this would cap ~42ch of text-h3 display
+            type. `justify-center` above keeps the photo-and-quote unit on the
+            page's centre axis once the quote stops filling the rail. */}
+        <blockquote className="max-w-prose text-h3 font-semibold">&ldquo;{quote}&rdquo;</blockquote>
         {attribution}
       </div>
     </Section>

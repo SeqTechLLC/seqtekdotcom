@@ -29,7 +29,7 @@ export type RailSize = keyof typeof RAIL
  * constant, and `layoutGeometry.int.spec.ts` re-checks every derived geometry
  * against the media ladder when it moves.
  */
-export const SHELL_RAIL: RailSize = 'lg'
+export const SHELL_RAIL: RailSize = 'xl'
 
 /**
  * Horizontal section padding, as [minWidth, totalHorizontalPadding].
@@ -75,7 +75,7 @@ export function paddingAt(viewport: number): number {
 }
 
 /** The content box (inside padding, capped by the rail) at a viewport width. */
-export function boxAt(viewport: number, rail: RailSize = 'xl'): number {
+export function boxAt(viewport: number, rail: RailSize = SHELL_RAIL): number {
   return Math.min(RAIL[rail], viewport - paddingAt(viewport))
 }
 
@@ -90,7 +90,7 @@ export function cellWidth(box: number, columns: number, gapPx: number): number {
  * viewport-relative expression — which is exactly where a `sizes` string needs
  * its crossover, and exactly what hand-written strings kept getting wrong.
  */
-export function railCrossover(rail: RailSize = 'xl'): number {
+export function railCrossover(rail: RailSize = SHELL_RAIL): number {
   const cap = RAIL[rail]
   for (const [min, pad] of PADDING_STEPS) {
     const viewport = cap + pad
@@ -108,7 +108,7 @@ const round = (n: number) => Math.round(n * 100) / 100
  * per (column step x padding step) band below it, expressed as
  * `calc((100vw - <padding + gaps>px) / <columns>)`.
  */
-export function gridSizes({ rail = 'xl', columns, gap = 6 }: GridSizesArgs): string {
+export function gridSizes({ rail = SHELL_RAIL, columns, gap = 6 }: GridSizesArgs): string {
   const gapPx = GAP[gap]
   const cap = RAIL[rail]
   const crossover = railCrossover(rail)
@@ -145,7 +145,7 @@ export function gridSizes({ rail = 'xl', columns, gap = 6 }: GridSizesArgs): str
  * media half. `cap` is a px width; omit for the full rail.
  */
 export function boxSizes({
-  rail = 'xl',
+  rail = SHELL_RAIL,
   cap,
   fraction = 1,
 }: {

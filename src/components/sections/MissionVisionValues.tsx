@@ -1,4 +1,6 @@
 import { Section } from '../ui/Section'
+import type { ReactNode } from 'react'
+import { ReadingColumn } from '../ui/ReadingColumn'
 
 interface ValueItem {
   id?: string | null
@@ -11,6 +13,11 @@ interface MissionVisionValuesProps {
   vision: string
   values: ValueItem[]
   layout?: 'grid' | 'stacked' | null
+}
+
+/** The measure applies to `stacked` only, so the wrapper is conditional. */
+function ValuesColumn({ stacked, children }: { stacked: boolean; children: ReactNode }) {
+  return stacked ? <ReadingColumn>{children}</ReadingColumn> : <div>{children}</div>
 }
 
 export function MissionVisionValues({
@@ -38,7 +45,9 @@ export function MissionVisionValues({
           <p className="mt-2 text-body-lg">{vision}</p>
         </div>
       </div>
-      <div>
+      {/* Only `stacked` puts the descriptions on the undivided rail, so only it
+          needs the measure; the default grid is already two columns. */}
+      <ValuesColumn stacked={valuesLayout === 'stacked'}>
         <p className="text-caption uppercase tracking-wide text-accent-strong">Values</p>
         <ul className={valuesCls}>
           {values.map((v, i) => (
@@ -48,7 +57,7 @@ export function MissionVisionValues({
             </li>
           ))}
         </ul>
-      </div>
+      </ValuesColumn>
     </Section>
   )
 }

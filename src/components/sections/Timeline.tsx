@@ -1,4 +1,5 @@
 import { Section } from '../ui/Section'
+import { ReadingColumn } from '../ui/ReadingColumn'
 
 interface TimelineItem {
   id?: string | null
@@ -19,25 +20,27 @@ const hasUrl = (v: unknown): v is { url: string; alt?: string | null } =>
 export function Timeline({ heading, items }: TimelineProps) {
   return (
     <Section padding="spacious">
-      {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
-      <ol className="mt-8 space-y-8 border-l-2 border-border-strong pl-6">
-        {items.map((item, i) => (
-          <li key={item.id ?? i} className="relative">
-            <span className="absolute -left-[1.875rem] top-1.5 h-3 w-3 rounded-full bg-accent-strong" />
-            <p className="text-caption uppercase tracking-wide text-text-muted">{item.date}</p>
-            <h3 className="mt-1 text-h4 font-semibold">{item.title}</h3>
-            <p className="mt-2 text-body text-text-secondary">{item.body}</p>
-            {hasUrl(item.image) ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={item.image.url}
-                alt={item.image.alt ?? ''}
-                className="mt-3 w-full max-w-md rounded-md"
-              />
-            ) : null}
-          </li>
-        ))}
-      </ol>
+      <ReadingColumn>
+        {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
+        <ol className="mt-8 space-y-8 border-l-2 border-border-strong pl-6">
+          {items.map((item, i) => (
+            <li key={item.id ?? i} className="relative">
+              <span className="absolute -left-[1.875rem] top-1.5 h-3 w-3 rounded-full bg-accent-strong" />
+              <p className="text-caption uppercase tracking-wide text-text-muted">{item.date}</p>
+              <h3 className="mt-1 text-h4 font-semibold">{item.title}</h3>
+              <p className="mt-2 text-body text-text-secondary">{item.body}</p>
+              {hasUrl(item.image) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.image.url}
+                  alt={item.image.alt ?? ''}
+                  className="mt-3 w-full max-w-md rounded-md"
+                />
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </ReadingColumn>
     </Section>
   )
 }

@@ -10,6 +10,7 @@ import {
   paddingAt,
   railCrossover,
   RAIL,
+  SHELL_RAIL,
   type ColumnStep,
   type RailSize,
 } from '@/lib/layoutGeometry'
@@ -60,7 +61,7 @@ function expectNoRungDrift(
   sizes: string,
   geometry: { rail?: RailSize; columns: ReadonlyArray<ColumnStep>; gap?: keyof typeof GAP },
 ) {
-  const { rail = 'xl', columns, gap = 6 } = geometry
+  const { rail = SHELL_RAIL, columns, gap = 6 } = geometry
   const columnsAt = (vw: number) => {
     for (const [min, n] of columns) if (vw >= min) return n
     return columns[columns.length - 1][1]
