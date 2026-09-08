@@ -75,7 +75,12 @@ Two tests make it a floor rather than a sweep:
   `Media.ts` and `Section.tsx`, since the suite uses `MEDIA_LADDER` as its own
   ground truth.
 - `tests/int/layout/shellOwnership.int.spec.ts` fails any block that restates
-  the rail, restates the section padding, or types a literal `sizes`.
+  the rail, restates the section padding, or types a literal `sizes` — **and any
+  route file under `src/app/(frontend)` that names a `container-*` token.** The
+  route half was added after the rail move left five listing-page headers at
+  `container-lg` while their grids moved to `container-xl`, putting every `h1`
+  128px right of its own card grid. Route chrome is the same shell; a guard that
+  only scanned `src/components/sections` could not see it.
 
 ## Consequences
 
@@ -86,6 +91,14 @@ ladder automatically.
 
 **A stale `sizes` fails a test instead of a review.** Reading those strings told
 six reviewers nothing, twice including the author. Resolving them is mechanical.
+
+**Route chrome is in scope too.** `Container` is the shell for anything that is
+not a block — the five listing headers, the case-study and insight articles, the
+contact page, `error.tsx`, `not-found.tsx`. A deliberate narrow column is the
+same owner with a size (`<Container size="md">`), never a hand-written
+`mx-auto max-w-container-md`. Fixing this also removed the §11.5
+double-container on `/case-studies/[slug]`, where blocks had been rendering into
+912px while deriving `sizes` from the 1280px rail.
 
 **Blocks give up some local freedom.** A block that genuinely needs a shell
 outside Section's vocabulary must extend Section rather than hand-roll — that is

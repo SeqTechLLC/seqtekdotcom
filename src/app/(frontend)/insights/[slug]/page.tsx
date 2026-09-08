@@ -11,6 +11,7 @@ import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RichText } from '@/components/richText/RichText'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import type { Post } from '@/payload-types'
+import { Container } from '@/components/ui/Container'
 
 // spec 004 Phase 8 (T029). Insights detail (Shape C) — richText `content`
 // through the existing RichText renderer + the inline-block registry (the
@@ -60,45 +61,47 @@ export default async function InsightPage({ params }: Props) {
           with equal margins — not a narrow column offset to one side. The wider
           header/footer chrome (container-lg) intentionally frames this narrower
           measure, the conventional long-form article layout. */}
-      <article data-testid="insight" className="mx-auto max-w-container-md px-4 py-16 md:px-6">
-        <header className="mb-10">
-          <h1 className="text-h1 font-bold" data-testid="insight-title">
-            {post.title}
-          </h1>
-          <div className="mt-4 flex flex-wrap gap-x-3 text-small text-text-muted">
-            {author?.name ? <span>By {author.name}</span> : null}
-            {post.publishedAt ? (
-              <time dateTime={post.publishedAt}>
-                {new Date(post.publishedAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </time>
-            ) : null}
-          </div>
-        </header>
+      <Container size="md">
+        <article data-testid="insight" className="py-16">
+          <header className="mb-10">
+            <h1 className="text-h1 font-bold" data-testid="insight-title">
+              {post.title}
+            </h1>
+            <div className="mt-4 flex flex-wrap gap-x-3 text-small text-text-muted">
+              {author?.name ? <span>By {author.name}</span> : null}
+              {post.publishedAt ? (
+                <time dateTime={post.publishedAt}>
+                  {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+              ) : null}
+            </div>
+          </header>
 
-        {isRelObject(post.featuredImage) ? (
-          <ResponsiveImage
-            media={post.featuredImage}
-            sizes="(min-width: 768px) 768px, 100vw"
-            className="mb-10 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
-            loading="eager"
-            fetchPriority="high"
-          />
-        ) : null}
+          {isRelObject(post.featuredImage) ? (
+            <ResponsiveImage
+              media={post.featuredImage}
+              sizes="(min-width: 768px) 768px, 100vw"
+              className="mb-10 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
+              loading="eager"
+              fetchPriority="high"
+            />
+          ) : null}
 
-        {post.content ? (
-          // Body is a centered 65ch reading column. Keep the `prose` 65ch cap for
-          // readability and center it with `mx-auto` so the body shares a vertical
-          // axis with the (wider, also-centered) title and hero — concentric, not
-          // left-justified. See DESIGN_SYSTEM.md "Reading column".
-          <div data-testid="insight-content">
-            <RichText data={post.content} className="mx-auto" />
-          </div>
-        ) : null}
-      </article>
+          {post.content ? (
+            // Body is a centered 65ch reading column. Keep the `prose` 65ch cap for
+            // readability and center it with `mx-auto` so the body shares a vertical
+            // axis with the (wider, also-centered) title and hero — concentric, not
+            // left-justified. See DESIGN_SYSTEM.md "Reading column".
+            <div data-testid="insight-content">
+              <RichText data={post.content} className="mx-auto" />
+            </div>
+          ) : null}
+        </article>
+      </Container>
     </>
   )
 }

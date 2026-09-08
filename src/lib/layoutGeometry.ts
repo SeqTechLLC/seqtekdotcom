@@ -9,7 +9,7 @@
  * count while serving two or three, because nothing could check them.
  *
  * So the numbers live here and `sizes` is DERIVED. A rail change is one edit
- * below, and `gridSizes.int.spec.ts` fails on anything the change invalidates.
+ * below, and `layoutGeometry.int.spec.ts` fails on anything the change invalidates.
  */
 
 /** Rail caps. Mirrors `maxWidth.container-*` in tailwind.config.mjs. */

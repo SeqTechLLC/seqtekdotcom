@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { ContactForm } from '@/components/forms/ContactForm'
+import { Container } from '@/components/ui/Container'
 
 // Static route: no Payload data, so static metadata (no `seo` group). When the
 // contact page gains CMS-managed copy, switch to a `pages` doc + generateMetadata.
@@ -12,8 +13,8 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md">
+    <section className="py-16">
+      <Container size="md">
         <h1 className="text-h1 font-bold">Let&rsquo;s talk</h1>
         <p className="mt-3 text-body-lg text-text-secondary">
           Tell us what you&rsquo;re working on. We&rsquo;ll point you to the right person and follow
@@ -22,7 +23,7 @@ export default function ContactPage() {
         <div className="mt-10">
           <ContactForm />
         </div>
-      </div>
+      </Container>
     </section>
   )
 }

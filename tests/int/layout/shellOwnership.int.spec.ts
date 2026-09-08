@@ -17,12 +17,24 @@ import { describe, expect, it } from 'vitest'
  */
 
 const SECTIONS_DIR = path.resolve('src/components/sections')
+const ROUTES_DIR = path.resolve('src/app/(frontend)')
 
 const BLOCK_FILES = readdirSync(SECTIONS_DIR)
   .filter((f) => f.endsWith('.tsx') && f !== 'RenderBlocks.tsx')
   .sort()
 
 const read = (file: string) => readFileSync(path.join(SECTIONS_DIR, file), 'utf8')
+
+/** Every route file under `src/app/(frontend)`, recursively. */
+function routeFiles(dir: string = ROUTES_DIR): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const full = path.join(dir, e.name)
+    if (e.isDirectory()) return routeFiles(full)
+    return e.name.endsWith('.tsx') ? [full] : []
+  })
+}
+
+const ROUTE_FILES = routeFiles().sort()
 
 /** Strip comments so prose ABOUT the old pattern doesn't trip the guard. */
 const code = (src: string) =>
@@ -50,4 +62,30 @@ describe('shell ownership — blocks take their shell from Section', () => {
     // shell and is re-checked against the media ladder by its own suite.
     expect(code(read(file))).not.toMatch(/sizes="/)
   })
+})
+
+/**
+ * Route chrome is the same shell, and it drifted once already.
+ *
+ * The five listing pages each hand-wrote `mx-auto max-w-container-lg` for their
+ * `<header>`, with a comment explaining that they restate the block's recipe
+ * "so the two resolve to the same x". When `SHELL_RAIL` moved to `xl` the
+ * blocks followed and the headers did not, putting every `h1` 128px right of
+ * its own card grid — measured, on all five routes. The guard above never saw
+ * it because it only scanned `src/components/sections`.
+ */
+describe('shell ownership — route chrome takes the same shell', () => {
+  it('finds the route files it is meant to be guarding', () => {
+    expect(ROUTE_FILES.length).toBeGreaterThan(10)
+  })
+
+  it.each(ROUTE_FILES.map((f) => [path.relative(ROUTES_DIR, f), f] as const))(
+    '%s does not restate the rail',
+    (_name, full) => {
+      // `Container` and `Section` own the rail. A route that names a
+      // `container-*` token directly has opted out and will be left behind by
+      // the next `SHELL_RAIL` change, exactly as these five were.
+      expect(code(readFileSync(full, 'utf8'))).not.toMatch(/max-w-container-/)
+    },
+  )
 })

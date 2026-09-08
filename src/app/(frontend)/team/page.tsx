@@ -4,6 +4,7 @@ import { listTeamMembers } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { TeamGrid } from '@/components/sections/TeamGrid'
 import { byLeadershipThenOrder } from '@/lib/resolveLayout'
+import { Container } from '@/components/ui/Container'
 
 // spec 004 US3 (T019). `/team` lists `teamMembers` leadership-first, then by
 // `order`. The collection is public-read with NO drafts and NO `seo` group, so
@@ -28,19 +29,20 @@ export default async function TeamPage() {
 
   return (
     <div data-testid="team">
-      {/* The grid below is a self-containering block section (px-4 md:px-6
-          lg:px-8 around an `mx-auto max-w-container-lg` inner div). Wrapping it
-          in a SECOND padded container inset the grid from this header by 32px
-          at desktop / 16px at mobile. The header therefore uses the block's own
-          container recipe rather than its own, so the two resolve to the same
-          x. */}
-      <header className="px-4 pt-16 md:px-6 lg:px-8">
-        <div className="mx-auto max-w-container-lg">
+      {/* The grid below is a self-containering block section, so wrapping it in
+          a second padded container would inset it from this header. The header
+          therefore takes the SAME shell as the block — `ui/Container`, which
+          reads `SHELL_RAIL` — rather than restating the recipe. Restating it is
+          what left these five headers at container-lg when the blocks moved to
+          container-xl, putting every h1 128px right of its own grid (ADR
+          0012). */}
+      <header className="pt-16">
+        <Container>
           <h1 className="text-h1 font-bold">Our team</h1>
           <p className="mt-4 text-body-lg text-text-secondary">
             Senior practitioners who do the work, in the markets we serve.
           </p>
-        </div>
+        </Container>
       </header>
       <TeamGrid layout="cards" manualItems={ordered} headingLevel="h2" />
     </div>

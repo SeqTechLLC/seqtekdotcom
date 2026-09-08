@@ -26,9 +26,12 @@ import {
 /**
  * These tests exist because six review rounds could not catch a stale `sizes`
  * string by reading it. `Gallery` shipped one string for a 2-, 3- and 4-column
- * grid, and `TeamGrid` still ships one for a 3- and a 4-column layout; in both
- * the widest case the browser picked a derivative one rung too small and
- * upscaled. Reading the string tells you nothing — you have to resolve it at a
+ * grid; at the widest case the browser picked a derivative one rung too small
+ * and upscaled. `TeamGrid` used the SAME string and was never defective, for a
+ * reason invisible at either call site — see the witness below. That is the
+ * argument for deriving these rather than reviewing them.
+ *
+ * Reading a `sizes` string tells you nothing: you have to resolve it at a
  * viewport, multiply by DPR, and compare against the ladder. So that is what
  * the suite does, rather than asserting on string equality.
  */
@@ -96,17 +99,23 @@ describe('layout geometry — the shell, written down once', () => {
   })
 
   it('the box is viewport-bound below the rail and capped above it', () => {
+    // Expressed against SHELL_RAIL, not a hard-coded `xl`. ADR 0012 claims
+    // moving the shell is one line; that is only true if the module's own
+    // assertions move with it, so nothing here names a rail the shell might
+    // not be on.
     expect(boxAt(390)).toBe(358)
     expect(boxAt(1024)).toBe(960)
-    expect(boxAt(1344)).toBe(RAIL.xl)
-    expect(boxAt(1920)).toBe(RAIL.xl)
+    expect(boxAt(railCrossover())).toBe(RAIL[SHELL_RAIL])
+    expect(boxAt(RAIL[SHELL_RAIL] + 640)).toBe(RAIL[SHELL_RAIL])
   })
 
   it('the rail crossover is where 100vw - padding reaches the cap', () => {
+    // Checked for every rail, so the set stays correct whichever one is current.
     expect(railCrossover('xl')).toBe(1344)
     expect(railCrossover('lg')).toBe(1088)
-    expect(boxAt(railCrossover('xl') - 1)).toBeLessThan(RAIL.xl)
-    expect(boxAt(railCrossover('xl'))).toBe(RAIL.xl)
+    expect(railCrossover('md')).toBe(816)
+    expect(boxAt(railCrossover() - 1)).toBeLessThan(RAIL[SHELL_RAIL])
+    expect(boxAt(railCrossover())).toBe(RAIL[SHELL_RAIL])
   })
 })
 
@@ -170,15 +179,19 @@ describe('gridSizes — no rung drift at any viewport or DPR', () => {
   }
 
   it('distinguishes column counts a single hand-written string used to share', () => {
+    // Pinned to `xl` on purpose: this documents the configuration the defect
+    // shipped in, so it must NOT drift with SHELL_RAIL.
     // The Gallery/TeamGrid defect in one assertion: 2-up and 4-up cannot be
     // served by the same string, because their cells differ by more than a rung.
     const two = gridSizes({
+      rail: 'xl',
       columns: [
         [640, 2],
         [0, 1],
       ],
     })
     const four = gridSizes({
+      rail: 'xl',
       columns: [
         [1024, 4],
         [640, 2],
@@ -228,7 +241,7 @@ describe('regression witnesses — the strings that shipped', () => {
   }
 
   it('under-served the 2-up gallery it was applied to (picked 1024w for a 1256px cell)', () => {
-    const cell = cellWidth(boxAt(1440), 2, GAP[6])
+    const cell = cellWidth(boxAt(1440, 'xl'), 2, GAP[6])
     expect(cell).toBeCloseTo(628, 0)
     expect(rungFor(cell * 2)).toBe(1600)
     expect(rungFor(resolveVw(SHIPPED, 1440) * 2)).toBe(1024)
@@ -241,12 +254,13 @@ describe('regression witnesses — the strings that shipped', () => {
     // still lands on the same rung. Recorded because a string being right in one
     // block and wrong in another, for reasons invisible at either call site, is
     // the whole argument for deriving it.
-    const cell = cellWidth(boxAt(1440), 3, GAP[6])
+    const cell = cellWidth(boxAt(1440, 'xl'), 3, GAP[6])
     expect(rungFor(cell * 2)).toBe(rungFor(resolveVw(SHIPPED, 1440) * 2))
   })
 
   it('the derived string gets the 2-up case the shipped one missed', () => {
     const two = gridSizes({
+      rail: 'xl',
       columns: [
         [640, 2],
         [0, 1],
@@ -312,6 +326,10 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     file: string
     /** Must appear verbatim in `file` — this is binding (2). */
     classes: string
+    /** The whole `sizes={...}` expression, pinned so swapping the value fails. */
+    expression: string
+    /** Extra files that must carry the same expression and classes. */
+    alsoIn?: string[]
     /** Imported from the component — this is binding (1). */
     sizes: string
     cell: (viewport: number) => number
@@ -320,11 +338,18 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
       name: 'split media column (Hero, CaseStudyHero, TwoColumn, ServicePillarHero)',
       file: 'src/components/sections/Hero.tsx',
       classes: 'grid gap-10 lg:grid-cols-2 lg:items-center',
+      expression: 'sizes={SPLIT_MEDIA_SIZES}',
+      alsoIn: [
+        'src/components/sections/CaseStudyHero.tsx',
+        'src/components/sections/TwoColumn.tsx',
+        'src/components/sections/ServicePillarHero.tsx',
+      ],
       sizes: SPLIT_MEDIA_SIZES,
       cell: (vw) => (vw >= 1024 ? cellWidth(boxAt(vw), 2, GAP[10]) : boxAt(vw)),
     },
     {
       name: 'gallery carousel slide',
+      expression: 'sizes={CAROUSEL_SIZES}',
       file: 'src/components/sections/Gallery.tsx',
       classes: 'min-w-[80%] shrink-0 snap-start sm:min-w-[48%] lg:min-w-[32%]',
       sizes: CAROUSEL_SIZES,
@@ -332,6 +357,7 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     },
     {
       name: 'gallery grid, 2 columns',
+      expression: "sizes={GRID_SIZES[columns ?? '3']}",
       file: 'src/components/sections/Gallery.tsx',
       classes: "'2': 'sm:grid-cols-2'",
       sizes: GRID_SIZES['2'],
@@ -339,6 +365,7 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     },
     {
       name: 'gallery grid, 3 columns',
+      expression: "sizes={GRID_SIZES[columns ?? '3']}",
       file: 'src/components/sections/Gallery.tsx',
       classes: "'3': 'sm:grid-cols-2 lg:grid-cols-3'",
       sizes: GRID_SIZES['3'],
@@ -346,6 +373,7 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     },
     {
       name: 'gallery grid, 4 columns',
+      expression: "sizes={GRID_SIZES[columns ?? '3']}",
       file: 'src/components/sections/Gallery.tsx',
       classes: "'4': 'sm:grid-cols-2 lg:grid-cols-4'",
       sizes: GRID_SIZES['4'],
@@ -353,6 +381,7 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     },
     {
       name: 'team grid cards',
+      expression: 'sizes={CARD_SIZES}',
       file: 'src/components/sections/TeamGrid.tsx',
       classes: 'sm:grid-cols-2 lg:grid-cols-3',
       sizes: CARD_SIZES,
@@ -360,13 +389,31 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     },
     {
       name: 'image block, standard variant',
+      expression: "sizes={SIZES[width ?? 'standard']}",
       file: 'src/components/sections/Image.tsx',
       classes: "standard: 'max-w-3xl'",
       sizes: IMAGE_SIZES.standard,
       cell: (vw) => Math.min(768, boxAt(vw)),
     },
     {
+      name: 'image block, narrow variant',
+      file: 'src/components/sections/Image.tsx',
+      classes: "narrow: 'max-w-2xl'",
+      expression: "sizes={SIZES[width ?? 'standard']}",
+      sizes: IMAGE_SIZES.narrow,
+      cell: (vw) => Math.min(672, boxAt(vw)),
+    },
+    {
+      name: 'image block, wide variant',
+      file: 'src/components/sections/Image.tsx',
+      classes: "wide: 'max-w-5xl'",
+      expression: "sizes={SIZES[width ?? 'standard']}",
+      sizes: IMAGE_SIZES.wide,
+      cell: (vw) => Math.min(1024, boxAt(vw)),
+    },
+    {
       name: 'image block, full variant',
+      expression: "sizes={SIZES[width ?? 'standard']}",
       file: 'src/components/sections/Image.tsx',
       classes: 'full: RAIL_CLASS[SHELL_RAIL]',
       sizes: IMAGE_SIZES.full,
@@ -376,10 +423,20 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
 
   for (const site of CALL_SITES) {
     it(`${site.name} still renders the layout its sizes assumes`, () => {
-      expect(
-        source(site.file),
-        `${site.file} no longer contains ${site.classes} — the layout changed, so its geometry must too`,
-      ).toContain(site.classes)
+      for (const file of [site.file, ...(site.alsoIn ?? [])]) {
+        const src = source(file)
+        expect(
+          src,
+          `${file} no longer contains ${site.classes} — the layout changed, so its geometry must too`,
+        ).toContain(site.classes)
+        // The whole expression, not a bare token: an unused import is only a
+        // WARNING here and `npm run lint` sets no --max-warnings, so a token
+        // check survives swapping the value out from under it.
+        expect(
+          src,
+          `${file} no longer passes ${site.expression} — its sizes is no longer the value this test checks`,
+        ).toContain(site.expression)
+      }
     })
 
     it(`${site.name} never drifts a rung`, () => {

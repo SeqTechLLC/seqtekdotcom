@@ -84,15 +84,28 @@ export function Hero({
   // it drew the identical stacked hero and the picker offered the same layout
   // twice under two names. It now does what it says: copy beside the image.
   const isSplit = variant === 'split' && image !== null
+  const isCentered = alignment === 'center'
 
   const copy = (
     <>
       {eyebrow ? (
         <p className="text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
       ) : null}
-      <h1 className="mt-3 max-w-3xl text-display font-bold md:text-display-xl">{headline}</h1>
+      {/* DESIGN_SYSTEM §11.4: these are capped measures, so a centred hero has
+          to centre THEM, not just the text inside them. Without `mx-auto` here
+          the headline box stayed flush left inside a centred rail — an offset
+          the container-xl move doubled. */}
+      <h1
+        className={`mt-3 max-w-3xl text-display font-bold md:text-display-xl ${isCentered ? 'mx-auto' : ''}`}
+      >
+        {headline}
+      </h1>
       {subheadline ? (
-        <p className="mt-5 max-w-2xl text-body-lg text-text-secondary">{subheadline}</p>
+        <p
+          className={`mt-5 max-w-2xl text-body-lg text-text-secondary ${isCentered ? 'mx-auto' : ''}`}
+        >
+          {subheadline}
+        </p>
       ) : null}
     </>
   )

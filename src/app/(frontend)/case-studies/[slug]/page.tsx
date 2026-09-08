@@ -14,6 +14,8 @@ import { resolveLayout } from '@/lib/resolveLayout'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import { TrackView } from '@/components/analytics/TrackView'
 import type { CaseStudy } from '@/payload-types'
+import { Container } from '@/components/ui/Container'
+import { boxSizes } from '@/lib/layoutGeometry'
 
 // spec 004 US2 + spec 010 (ADR 0009): the case-study body is block-composed and
 // rendered via RenderBlocks. Kept metadata (industry eyebrow, title, subtitle,
@@ -80,52 +82,61 @@ export default async function CaseStudyPage({ params }: Props) {
       {/* Fire-once case_study_view (spec 008 US3, contract D2). */}
       <TrackView slug={slug} title={caseStudy.title} />
 
-      <article data-testid="case-study" className="mx-auto max-w-container-lg px-4 py-16 md:px-6">
-        <header className={`${readingCol} mb-12`}>
-          {industry?.title ? (
-            <p className="text-small font-semibold uppercase tracking-wide text-text-muted">
-              {industry.title}
-            </p>
-          ) : null}
-          <h1 className="mt-2 text-h1 font-bold" data-testid="case-study-title">
-            {caseStudy.title}
-          </h1>
-          {caseStudy.subtitle ? (
-            <p className="mt-4 text-body-lg text-text-secondary">{caseStudy.subtitle}</p>
-          ) : null}
-        </header>
+      {/* DESIGN_SYSTEM §11.5: blocks are self-containering, so the article must
+          NOT wrap them in a second padded container — that inset every block on
+          this route and, since ADR 0012, had them deriving `sizes` from the
+          1280px rail while rendering into 912px. The prose that is NOT a block
+          gets its own `Container`; `RenderBlocks` sits outside it. */}
+      <article data-testid="case-study" className="py-16">
+        <Container>
+          <header className={`${readingCol} mb-12`}>
+            {industry?.title ? (
+              <p className="text-small font-semibold uppercase tracking-wide text-text-muted">
+                {industry.title}
+              </p>
+            ) : null}
+            <h1 className="mt-2 text-h1 font-bold" data-testid="case-study-title">
+              {caseStudy.title}
+            </h1>
+            {caseStudy.subtitle ? (
+              <p className="mt-4 text-body-lg text-text-secondary">{caseStudy.subtitle}</p>
+            ) : null}
+          </header>
 
-        {isRelObject(caseStudy.heroImage) ? (
-          <ResponsiveImage
-            media={caseStudy.heroImage}
-            sizes="(min-width: 1024px) 1024px, 100vw"
-            className="mb-12 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
-            loading="eager"
-            fetchPriority="high"
-          />
-        ) : null}
+          {isRelObject(caseStudy.heroImage) ? (
+            <ResponsiveImage
+              media={caseStudy.heroImage}
+              sizes={boxSizes()}
+              className="mb-12 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
+              loading="eager"
+              fetchPriority="high"
+            />
+          ) : null}
+        </Container>
 
         <RenderBlocks blocks={layout} />
 
         {related.length ? (
-          <section
-            data-testid="case-study-related"
-            className={`${readingCol} border-t border-border-subtle pt-8`}
-          >
-            <h2 className="mb-4 text-h4 font-semibold">Related work</h2>
-            <ul className="flex flex-col gap-2">
-              {related.map((rel) => (
-                <li key={rel.id}>
-                  <Link
-                    className="text-link underline hover:text-link-hover"
-                    href={`/case-studies/${rel.slug}`}
-                  >
-                    {rel.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <Container>
+            <section
+              data-testid="case-study-related"
+              className={`${readingCol} border-t border-border-subtle pt-8`}
+            >
+              <h2 className="mb-4 text-h4 font-semibold">Related work</h2>
+              <ul className="flex flex-col gap-2">
+                {related.map((rel) => (
+                  <li key={rel.id}>
+                    <Link
+                      className="text-link underline hover:text-link-hover"
+                      href={`/case-studies/${rel.slug}`}
+                    >
+                      {rel.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </Container>
         ) : null}
       </article>
     </>

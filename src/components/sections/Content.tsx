@@ -9,6 +9,11 @@ interface ContentProps {
   background?: 'none' | 'subtle' | 'accent' | null
 }
 
+// These are READING MEASURES, not the shell: `wide` stays 1024px because it is
+// a measure for long-form prose, while `Image`'s `full` variant tracks
+// SHELL_RAIL because "full" means the rail. They were coincidentally equal
+// before ADR 0012 moved the rail; a page alternating a wide Content band with a
+// full Image now steps 128px per side at the image, which is intended.
 const WIDTH_CLASSES: Record<NonNullable<ContentProps['width']>, string> = {
   narrow: 'max-w-2xl',
   standard: 'max-w-3xl',

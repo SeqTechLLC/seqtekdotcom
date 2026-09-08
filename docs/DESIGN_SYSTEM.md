@@ -464,28 +464,37 @@ Per §4, three section padding tokens (`section-tight`, `section-default`, `sect
 ### 11.5 Listing pages: never double-container a block
 
 Every grid component (`TeamGrid`, `PartnerGrid`, `PostList`, `CaseStudyGrid`, `WorkshopList`, …) is
-**self-containering**: a full-bleed `<section className="px-4 py-16 md:px-6 lg:px-8">` wrapping an
-`<div className="mx-auto max-w-container-lg">`. That is the block contract — a block renders correctly
-at full page width and needs no help from its caller.
+**self-containering**: since ADR 0012 that means it renders through `ui/Section`, which owns the padding
+and the rail. That is the block contract — a block renders correctly at full page width and needs no help
+from its caller.
 
-So a listing page must **not** wrap the grid in a second `mx-auto max-w-container-lg px-4 …` container.
-Doing so nests two padded containers and insets the grid from the page's own `h1` by the inner section's
-padding — measured at **32px on desktop, 16px on mobile**, on all five listing routes at once
-(ROADMAP UI-1 follow-up, `PROJECT_HISTORY` P5-29). Note the two recipes do not commute: padding + max-width
-on the **same** element lands at a different x than padding on an outer element with the max-width inside it.
+So a listing page must **not** wrap the grid in a second padded container. Doing so nests two padded
+containers and insets the grid from the page's own `h1` — measured at **32px on desktop, 16px on mobile**,
+on all five listing routes at once (ROADMAP UI-1 follow-up, `PROJECT_HISTORY` P5-29). Note the two recipes
+do not commute: padding + max-width on the **same** element lands at a different x than padding on an outer
+element with the max-width inside it.
+
+**Do not hand-write the recipe for the header either.** These five headers restated it as
+`mx-auto max-w-container-lg`, with a comment explaining that they matched the block deliberately — and
+when ADR 0012 moved the rail the blocks followed and the headers did not, putting every `h1` **128px right
+of its own grid**. Use `ui/Container`, which reads the same `SHELL_RAIL` the blocks do.
+`tests/int/layout/shellOwnership.int.spec.ts` now fails any route file that names a `container-*` token.
 
 **The shape:**
 
 ```tsx
-<div data-testid="…">                                     {/* no container, no padding */}
-  <header className="px-4 pt-16 md:px-6 lg:px-8">         {/* the block's own recipe … */}
-    <div className="mx-auto max-w-container-lg">          {/* … both halves of it */}
+<div data-testid="…">                     {/* no container, no padding */}
+  <header className="pt-16">              {/* vertical rhythm only … */}
+    <Container>                           {/* … the shell comes from the owner */}
       <h1 …/>
-    </div>
+    </Container>
   </header>
-  <TeamGrid … />                                          {/* full width; contains itself */}
+  <TeamGrid … />                          {/* full width; contains itself */}
 </div>
 ```
+
+A narrower column is the same owner with a size: `<Container size="md">` for the long-form article
+measure (`insights/[slug]`), never a hand-written `mx-auto max-w-container-md`.
 
 This is §11.4's "a section's heading travels with its body" applied at page level: the page header and the
 grid resolve to the same x and the same column width. Verify by measuring `getBoundingClientRect().x` on
