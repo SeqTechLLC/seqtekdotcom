@@ -198,6 +198,14 @@ export const getHomepage = withReadTimeout(
           // `resolveLayout` short-circuits and leaves the depth-2 population
           // in place. (`logo-bar` and `testimonial-block` cannot leak either
           // way: `media` reads `() => true` and `testimonials` has no drafts.)
+          // COST, recorded because the obvious remedy is a trap. At depth 2 an
+          // `industry-grid` relation now carries each industry's full block
+          // `layout` (IND-1), not the small taxonomy row it used to. Amortized
+          // by the hourly `unstable_cache` above, so not a correctness problem.
+          // But `defaultPopulate` on `Industries` — the natural fix — would
+          // strip `layout`, and `IndustryGrid.isLinkable` reads it to decide
+          // whether a card may link. Trimming here silently unlinks every card;
+          // `industryGridLinking.int.spec.ts` is what catches that.
           return (await payload.findGlobal({
             slug: 'homepage',
             depth: 2,

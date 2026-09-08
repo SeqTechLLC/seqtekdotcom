@@ -139,20 +139,20 @@ describe('C2 — every read in src/lib/payload.ts is access-filtered', () => {
   // Source-level, deliberately: the defect is an ARGUMENT going missing, and
   // the readers are wrapped in `unstable_cache` + React `cache`, which do not
   // behave outside a request scope. Asserting the argument is present is what
-  // actually stops the regression — and, WITHIN THIS FILE, it generalises to
-  // the next reader
+  // actually stops the regression — and it generalises to the next reader
   // somebody adds, which pinning `getHomepage` alone would not.
+  //
   // Deliberately `find\w*|count`, not a list of method names: the hole this test
   // exists to close was a regex that could not see `findGlobal`. Naming methods
-  // File-scoped, deliberately: a `payload.find`/`findGlobal` in a ROUTE file is
-  // invisible here. `src/app/(frontend)/page.tsx` has one today and it is
-  // correct — the draft-mode preview reader, which wants `overrideAccess: true`.
-  // Widening the scan means allowlisting those, which is a bigger change than
-  // this guard is buying.
-  //
   // one at a time reproduces that bug for the next reader — `findByID` and
   // `findVersions` would slip through a `(find|findGlobal)` scan exactly as
   // `findGlobal` slipped through the `payload\.find\(` one above.
+  //
+  // FILE-SCOPED, and only this file: a `payload.find`/`findGlobal` in a ROUTE
+  // file is invisible here. `src/app/(frontend)/page.tsx` has one today and it
+  // is correct — the draft-mode preview reader, which wants
+  // `overrideAccess: true`. Widening the scan to the render path means
+  // allowlisting those, which is a bigger change than this guard is buying.
   const reads = [...payloadCode.matchAll(/payload\.(find\w*|count)\(/g)].map((m) => {
     let depth = 0
     let i = m.index! + m[0].length - 1
