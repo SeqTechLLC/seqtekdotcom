@@ -441,12 +441,27 @@ export const findPublishedSlugs = async (collection: SluggedCollection): Promise
     .filter((s): s is string => typeof s === 'string' && s.length > 0)
 }
 
-// ROADMAP IND-1. Industries specifically: `layout` was added by an ADDITIVE
-// migration, so rows that predate it are published with no body. The route
-// 404s those (an empty `<article>` with no `<h1>` is not a page), and the
-// sitemap has to agree or it advertises a URL that 404s. Separate reader rather
-// than a predicate on `findPublishedSlugs`, because that one is wrapped in
-// `unstable_cache` keyed by collection and a callback cannot go in a cache key.
+// ROADMAP IND-1. Industries specifically: the sitemap must not advertise a URL
+// the route 404s, and `/industries/[slug]` 404s an industry with no body.
+//
+// CORRECTED — the premise this was written on is false, and believing it cost a
+// lane deploy. It said rows predating the additive `layout` migration are
+// published with no body. They are not: `Industries.layout` carries
+// `industrySkeleton` as its `defaultValue`, the Drizzle adapter leaves a
+// block field UNASSIGNED (not `[]`) when the row has no block rows, and
+// Payload's afterRead applies a default to any `undefined` field. So every
+// published industry reads back with a body, and this filter currently selects
+// the same set as `findPublishedSlugs`.
+//
+// Kept anyway, deliberately: it is the cheap half of a promise that becomes
+// load-bearing the moment the `defaultValue` is removed or a row is written
+// with an explicit `[]` (which does NOT trigger the default). Do not read it as
+// evidence that bodyless published industries 404 — they serve placeholder
+// copy. `skeletonDefaultValue.int.spec.ts` pins the mechanism.
+//
+// Separate reader rather than a predicate on `findPublishedSlugs`, because that
+// one is wrapped in `unstable_cache` keyed by collection and a callback cannot
+// go in a cache key.
 export const findPublishedIndustrySlugsWithBody = async (): Promise<string[]> => {
   const payload = await getPayloadInstance()
   const { docs } = await payload.find({

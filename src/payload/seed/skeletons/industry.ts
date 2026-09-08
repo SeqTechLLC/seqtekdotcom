@@ -1,6 +1,8 @@
 import { buildLexical } from '../showcase/lexical'
 
-// ADR 0009 — default block skeleton for NEW industry records. Sourced by
+// ADR 0009 — default block skeleton for an industry `layout`. Payload applies a
+// `defaultValue` on READ as well as create, so this also fills any existing row
+// whose `layout` was never written — see `skeletonDefaultValue.int.spec.ts`. Sourced by
 // `Industries.layout`'s `defaultValue`. Fully editable after create; uniformity
 // comes from this content-level template, never from a render template.
 //
@@ -11,8 +13,11 @@ import { buildLexical } from '../showcase/lexical'
 // ROADMAP IND-1's bar for an industry page is the same one a group page has to
 // clear: a page that only asserts "we work in X" is worse than no page. The
 // proof section is a `case-study-grid` set to `by-industry`, which fills itself
-// from whatever is tagged to that industry — so an industry with no case study
-// renders a visibly empty section rather than a claim with nothing behind it.
+// from whatever is tagged to that industry. It renders NOTHING when there is
+// nothing tagged — a bare "Selected work" heading over empty space was itself a
+// claim with nothing behind it, so the grid now bows out entirely
+// (`gridEmptyState.int.spec.tsx`). The bar above is therefore met by ADDING
+// proof, never by the section appearing.
 //
 // It is NOT in this skeleton, and cannot be: the block's `industry` field is
 // `requiredWhen(source === 'by-industry')` (see `requiredWhen` on the block's `industry` field in `CaseStudyGrid.ts`), and a

@@ -592,7 +592,9 @@ Four blocks let an author pick a **source** instead of hand-picking rows:
 | `team-grid`       | `filter` | `leadership-only`, `all`              | `listTeamMembers` |
 | `post-list`       | `source` | `latest`, `by-category`               | `listPosts`       |
 | `case-study-grid` | `source` | `latest`, `by-industry`, `by-service` | `listCaseStudies` |
-| `service-cards`   | `source` | `by-pillar`                           | `listServices`    |
+
+> Both `case-study-grid` and `industry-grid` render **nothing** when they resolve to no items — heading included. A source-driven grid fills at render, so an author never sees the empty state while editing; publishing a bare heading over empty space is a claim with nothing behind it (`gridEmptyState.int.spec.tsx`).
+> | `service-cards` | `source` | `by-pillar` | `listServices` |
 
 **`src/lib/resolveLayout.ts` is where those selects are consumed.** Every route that renders a
 `layout` awaits `resolveLayout(doc.layout)` before handing it to `RenderBlocks`, and the resolver fills

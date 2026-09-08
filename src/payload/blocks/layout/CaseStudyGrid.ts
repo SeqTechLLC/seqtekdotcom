@@ -83,7 +83,10 @@ export const CaseStudyGrid: Block = {
       defaultValue: 3,
       min: 1,
       max: 9,
-      admin: { description: 'Caps the grid at this many cards, whichever way it is filled.' },
+      admin: {
+        description:
+          'Caps the grid at this many cards, whichever way it is filled. If it ends up with none — a by-industry source with nothing tagged to it yet, say — the whole section is left out, heading included, rather than published as an empty promise.',
+      },
     },
   ],
 }

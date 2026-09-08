@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { Industries } from '../../../src/collections/Industries'
 import { collections } from '../../../src/collections'
 import { industrySkeleton } from '../../../src/payload/seed/skeletons/industry'
-import { SKELETON_PLACEHOLDER_COPY } from '../render/noPlaceholderCopy.int.spec'
+import { SKELETON_PLACEHOLDER_COPY } from '../helpers/skeletonPlaceholderCopy'
 
 /**
  * A `defaultValue` skeleton is applied on READ, not just on create.
@@ -55,14 +55,30 @@ describe('a defaultValue skeleton is placeholder content that ships on read', ()
     // Same contract `noPlaceholderCopy` enforces for skeletons generally, but
     // asserted here against the SPECIFIC skeleton that reaches published rows
     // without an editor ever opening them.
+    // Gated on the same COPY_FIELDS whitelist `noPlaceholderCopy` uses, not on
+    // "any dotted string". A broader walker would fail on a media filename or a
+    // videoUrl, and the remediation it suggests — add it to
+    // SKELETON_PLACEHOLDER_COPY — would pollute the list the K8 sweep greps
+    // rendered HTML against.
+    const COPY_FIELDS = [
+      'text',
+      'subheadline',
+      'headline',
+      'heading',
+      'body',
+      'description',
+      'label',
+    ]
     const strings: string[] = []
     const walk = (node: unknown): void => {
       if (Array.isArray(node)) return node.forEach(walk)
       if (node === null || typeof node !== 'object') return
-      for (const v of Object.values(node as Record<string, unknown>)) {
+      const record = node as Record<string, unknown>
+      for (const key of COPY_FIELDS) {
+        const v = record[key]
         if (typeof v === 'string' && /[.:]/.test(v)) strings.push(v)
-        else walk(v)
       }
+      Object.values(record).forEach(walk)
     }
     walk(industrySkeleton())
     const untracked = strings.filter(
