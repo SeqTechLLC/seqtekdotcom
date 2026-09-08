@@ -22,7 +22,7 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 | **P0** | NAV-1 Dropdown panels + the pages under them                   | Kenn, blocked on Brent |
 |        | SVC-2 Seed the services content                                | Kenn                   |
 |        | SVC-3 Collapse the duplicate Localshoring pages                | Kenn                   |
-|        | IND-1 Six industry pages                                       | Kenn + Brent           |
+|        | IND-1 Seven industry pages                                     | Kenn + Brent           |
 |        | BOOK-1 Book-a-call widget routing to Daniel                    | Kenn, blocked on Megan |
 |        | PROOF-1 Case studies + quotes, on hard dates                   | Megan, Brent escalates |
 |        | AB-1 The alternative "what we do" page, A/B against the menu   | Kenn                   |
@@ -48,10 +48,19 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 
 Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sales-website-alignment.md`.
 
-- **NAV-1 — dropdown panels, then the pages under them.** The panel component shipped (#129) against today's
-  routes. What is left is the group and leaf data, which cannot land until the routes exist — header links to
-  unbuilt routes is the #126 defect at the top of every page. **Sequence: SVC-2 first, then the nav data.**
-  - `tests/e2e/layout.e2e.spec.ts` (~:28-35) asserts all six top-level items are visible **links**. If an axis
+- **NAV-1 — the menu is built and wired; what it points at is empty.** The panel shipped (#129) and
+  `site-content.ts` now carries both axes, all three groups and all nine leaves, every one resolving against a
+  published `services` row. The mechanism is done. **The open item is the copy those 13 pages don't have —
+  see SVC-2 below.**
+  - **Open decision: should the axis panels derive from the `services` collection?** Today a new service is a
+    content edit plus a code change to `site-content.ts`, which is the friction ADR 0010 accepted when the nav
+    was six decade-scale items. It is 13 entries now. The hierarchy already exists as typed relations
+    (`tier`, and `items` constrained to `tier: 'leaf'`), so a derived panel builds URLs from `slug` and has no
+    free-text URL field to get wrong — which is the specific risk ADR 0010 rejected. Scope it to the two axis
+    panels; top-level items, footer, legal nav and the JSON-LD values stay code-owned. Costs: `SiteHeader`
+    becomes async (`listServices()` and its `services_list` tag already exist), and it renders on every page,
+    so the revalidation gap below becomes load-bearing rather than cosmetic. Wants an ADR revising 0010.
+  - `tests/e2e/layout.e2e.spec.ts` (~:28-38) asserts all seven top-level items are visible **links**. If an axis
     item becomes a button that opens a panel, that assertion changes shape.
   - **A group's URL is optional, and that is what de-risks the second panel.** A group with no URL renders as
     a heading and nothing more, so "how we work" can ship with headless groups and earn pages later. Brent
@@ -64,22 +73,31 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     trap. `tests/e2e/a11y.e2e.spec.ts` sweeps at zero axe violations.
 
 - **SVC-2 residual — the content.** The code shipped (P5-31 / #131, and P5-41 / #136 for the `/services` fold). A deploy never runs the seeder, so:
-  - **Seed the services content** (`CONTENT_NEEDS.md` §12) via `tools/payload-seed`. Until it runs,
-    `/services/<slug>` 404s on a lane — including the axis that `/services` and the legacy Wix 301s point at.
-    Nothing is launched and both lanes are Cognito-gated, so this is a step to run, not a live defect.
-  - **Add Localshoring as a leaf** at `/services/localshoring` — a "how we work" leaf, not one of Brent's nine.
-    Until it exists the header's How We Work panel and the four market links point at the `localshoring` Page.
-    Chrome is code (ADR 0010), so flip all five (`site-content.ts:190`, `:252-255`) in the same commit that
-    seeds the leaf and retires the Page. No internal 301 — nothing is live, so the URL simply changes.
+  - ~~Seed the services content~~ **Done on preview (verified 2026-09-04):** 24 `services` docs, tiers
+    matching the drafts file, both axes and all three groups published, the nine legacy capability-set docs
+    retired to `draft`. `ww3` is a separate run after the next release.
+  - **Flip the five Localshoring links.** The `localshoring` leaf is seeded and published, so
+    `/services/localshoring` resolves today — but `site-content.ts:190` and `:252-255` still point at the old
+    `/localshoring` Page, and their comments still claim the leaf does not exist. Flip all five and retire the
+    Page in one commit. No internal 301 — nothing is live, so the URL simply changes. Overlaps SVC-3: there
+    are currently THREE Localshoring artifacts (the `localshoring` Page, the `service-localshoring` Page, and
+    the service leaf) where there should be one.
   - **Re-pick every block the SVC-2 migration emptied.** `*_rels.service_pillars_id` was dropped across
     thirteen tables, discarding the `pillars` selection on any `service-pillar-cards` block and NULLing
     `service-cards.pillar` wherever the source was "By pillar". `pillars` is `required, minRows: 1`, so those
     documents are invalid until re-picked. A re-seed repairs whatever the seed files cover; the exposure is
     what was authored directly in the admin. Check a lane.
-  - **Write the missing copy** — six of nine leaves and all three group pages (`CONTENT_NEEDS.md` §12).
+  - **Write the copy. This is the P0 item now.** All 13 service pages are seeded as placeholders — measured
+    2026-09-04, every one is a hero plus one content block at **540-850 characters**. The old Wix service
+    pages averaged 348 words, so these are roughly a third of what they replaced. The menu is fully wired and
+    delivers a visitor to a near-empty page, which is the exact failure Hank and Brent both described: a
+    capability list without substance. Ten leaves, three groups, two axes (`CONTENT_NEEDS.md` §12).
     **A group page needs a reason to exist:** if it is only a list of its own children it is a worse version
     of the menu that got you there. That is the bar. Flag it early if a grouping produces a heading nothing
     can be written about.
+  - **`services.json` lists each of the three group slugs twice** — once with a real 3-block layout, once with
+    an empty one. Whichever seeds last wins, so a re-seed can silently blank a group page. Fix in the content
+    repo before the next run.
   - **Refine the 21 Wix service 301s once the leaves are seeded.** They all land on the axis today, which is
     the honest interim target. `/technology-and-data` should reach the data page rather than the axis.
     Cheaper before the DNS cutover: nothing is live, so these are retargeted at source rather than layered.
@@ -98,20 +116,30 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     Product Ownership, Strategy & Roadmap Alignment, Discovery & Team Workshops); some map onto items he named
     and may need to come back out.
 
-- **IND-1 — six industry pages.** Healthcare, FinTech, Oil & Gas, Energy, Manufacturing, plus Aerospace.
-  Non-profit is explicitly out. Build Energy first — it has the most case-study proof.
-  - **One taxonomy.** The industry pages and `case-study-grid`'s `by-industry` source read the same collection,
-    so the six marketing industries become the canonical slugs and the existing per-client case-study refs
-    remap onto them. Endurance Lift / NovaMud / Taurex → Oil & Gas; WellChecked → Energy.
-  - **Hogan is open.** Its vertical is psychometrics, which is not one of the six. Left tagged as-is. Settle it
-    before the collection is seeded. It surfaces a constraint: an industry that exists for tagging but should
-    not get a page needs a way not to route — publish state is the lever, since `/industries/[slug]` builds
-    from published records only.
-  - **Four of the six have no proof.** Healthcare, FinTech, Manufacturing and Aerospace carry no case study.
-    Either PROOF-1 lands one each, or the pages ship in the order the proof does. Recorded in
-    `CONTENT_NEEDS.md` §11.
-  - **Re-link the cards.** `industry-grid` cards were unlinked in #126. `revalidateOnChange.ts:135-141` already
-    builds invalidation paths for the route, and the `seo.*` group on `industries` un-hides here.
+- **IND-1 — industry pages. Wiring done; the copy is not.** Seven industries: Oil and Gas, Energy,
+  Manufacturing, Healthcare, FinTech, Aerospace, and Leadership and Training. Non-profit is explicitly out.
+  - **The mechanism shipped.** `industries` carries a `layout` blocks field, `/industries/[slug]` renders it
+    through `RenderBlocks` off the collection, `industry-grid` cards are re-linked, and the sitemap derives
+    the URLs. Publishing a new industry needs no deploy. Of the four INERT-1 groups only `seo` is un-hidden —
+    the route renders `layout` blocks and nothing else, so `description`, `relevantServices` and
+    `clientLogos` still have no reader. Un-hide each one in the change that ships its consumer.
+  - **One taxonomy, settled.** The five previous slugs were invented one per engagement, not marketing
+    industries. All seven case studies were re-tagged onto the canonical set and the old five unpublished —
+    `unpublished` keeps the row as a working tag while its URL 404s. **Hogan resolved to Leadership and
+    Training** rather than being forced into one of Brent's six.
+  - **Nav placement was a measurement, and the header changed to fit it.** Industries is a **seventh
+    top-level item** with `/industries` (a `pages` doc on the `/[slug]` catch-all) as its destination.
+    Making it fit took two changes, both measured on the rendered header: the row container went `lg` →
+    **`xl`** (1024 → 1280px), because it caps the row regardless of window width and every multi-word label
+    wrapped at 1440 without it; and the desktop nav moved to the **`xl` breakpoint**, because at a 1024px
+    viewport the container is viewport-bound (1024 − 64px padding = 960px) and no max-width helps — so
+    1024–1279 renders the drawer. **Re-measure before adding anything else to the header**, against the
+    1280px cap, not the old 1024.
+  - **What is left is the copy.** All seven bodies are placeholders and say so on the page.
+  - **Four of the seven have no proof** — Healthcare, FinTech, Manufacturing and Aerospace carry no case
+    study, so their `case-study-grid` renders an empty section. That is deliberate: it makes the gap visible
+    rather than letting a page assert expertise with nothing behind it. Either PROOF-1 lands one each, or
+    those four stay drafts until it does. `CONTENT_NEEDS.md` §11.
 
 - **BOOK-1 — book-a-call widget, routing to Daniel.** The blocks shipped (#124). What is missing:
   - **Daniel's real HubSpot meetings URL** (Megan, portal config). The only URL in the repo is a fixture. The
@@ -177,9 +205,35 @@ Every content change is still a developer task. This tier fixes that before we l
   that page's data cache nor its CloudFront copy. Bounded by `revalidate: 3600` on a gated, unlaunched
   site. The fix wants the axis slugs, which are content — so it needs a query in `revalidateOnChange`,
   not a hardcoded slug.
-- **Re-link `industry-grid` and `locations-list` cards** when IND-1 and the locations route ship. The cards are
-  one call site; `revalidateOnChange.ts:135-141` is the other. **The two disagree on the name** — the hook says
-  `/consulting/<slug>`, the block said `/locations/<slug>`. Settle that before either route is built.
+- **Three top-level nav destinations are not editable without a deploy — deliberately parked 2026-09-04.**
+  `/case-studies`, `/insights` and `/contact` are bespoke route files: their `<h1>`, intro copy and SEO strings
+  are literals. The other three nav destinations (`/our-story`, and both `/services` axes) are documents.
+  ADR 0009 says there should be no bespoke page templates, so these are the remaining exceptions.
+
+  **Converting them is not the small job it looks like.** Each blocks on something real:
+  - `case-study-grid` caps at `limit: max 9` and `post-list` at `max: 12`; the routes bypass that by passing
+    `limit={items.length}`. A block-composed listing would silently drop the 10th case study — content that
+    exists and is in the sitemap but is unreachable from its own listing. P4 plans 4-6 more studies and 3-5
+    more posts, so it is not hypothetical.
+  - Removing the cap means unbounded listings, which means **pagination** — page state in a URL the block does
+    not own. That is a feature, not a schema tweak.
+  - `/contact` is worse: `ContactForm` is a curated six-field schema with HubSpot internal names verified by a
+    live test submit (2026-06-22), including the `inquiry_type` select that routes the lead. The
+    `hubspot-form` block renders generic `DEFAULT_FIELDS` with a hardcoded special case for the Workshop GUID
+    and nothing for contact, and `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID` is unset. Converting would swap the
+    real form for the generic one.
+
+  **Cost of leaving it:** one deploy to reword about six lines of copy, rarely. Revisit when pagination is
+  wanted for its own sake, or when the contact form's field set is being reworked anyway (which would also
+  remove the Workshop hardcode in `HubspotForm.tsx`).
+
+- **Clear the remaining production advisory (issue #132).** Opened at 6 high; today's autoprefixer bump moved
+  `browserslist` past the affected range, leaving **one high** — `fast-uri` under `payload`, with a patched
+  version available — plus one low (`postcss-selector-parser` under `tailwindcss`/`postcss-nested`). Both are
+  transitive, so the fix is a bump of the parent or a `package.json#overrides` pin.
+- **Re-link `locations-list` cards** when the locations route ships. (`industry-grid` was re-linked with
+  IND-1.) **The hook and the block disagree on the name** — `revalidateOnChange` says `/consulting/<slug>`,
+  the block said `/locations/<slug>`. Settle that before the route is built.
 
 ---
 
@@ -288,9 +342,11 @@ Real work, none of it blocking a launch. Ordered by expected return.
   (n=1,002): 83% of companies require a security or privacy assessment to purchase (88% enterprise), and 39%
   overall / 50% of enterprise name IT security review as their biggest source of evaluation delay. We have no
   such page.
-- **INERT-1 residual — un-hide `industries` and `locations` metadata.** Their `description`, `seo.*` and
-  related fields are `admin.hidden` because no detail route consumes them. Un-hide each group in the same
-  change that ships the route reading it. `admin.hidden` does not touch REST, so the seeder still writes them.
+- **INERT-1 residual — un-hide the rest of the `industries` and `locations` metadata.** `industries.seo` was
+  un-hidden by IND-1, which shipped the route that reads it. Still hidden and still without a consumer:
+  `industries.description`, `relevantServices` and `clientLogos` (the route renders `layout` blocks only), and
+  every `locations` group. Un-hide each in the change that ships its consumer. `admin.hidden` does not touch
+  REST, so the seeder still writes them.
 - **Regional landing pages (4) + a careers stub.** `/tulsa-consulting`, `/okc-consulting`,
   `/northwest-arkansas-consulting`, `/kansas-city-consulting` are parked on `/localshoring`. Each wants
   market-specific copy, proof and contact (`CONTENT_NEEDS.md` §9). Careers: one "if you want to join us" page
@@ -319,18 +375,18 @@ Real work, none of it blocking a launch. Ordered by expected return.
 
 `CONTENT_NEEDS.md` is the authoritative list — hand _that_ to Hank, Justin and Megan, not this file.
 
-| Item                            | Owner        | State                                                                                                                                               |
-| ------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C-3 Hank + Brent interview copy | Kenn         | Filmed and in edit. Extraction from the transcript, not a scheduling gate — draft off the raw audio, don't wait for the cut.                        |
-| BR-7 / C-2 Photo shoot          | Kenn         | Studio headshots exist and are catalogued. Still to shoot at the September All Hands: group leadership, full team, Kenn's headshot.                 |
-| C-9 Video delivery + placement  | Kenn + Megan | Localshoring explainer and the Hank + Brent partner videos are in edit. Take delivery, upload to the SEQTEK channel, place as `video-embed` blocks. |
-| C-5 Client logo permissions     | Megan + Kenn | Keep: Hogan, BOK, QuickTrip. Drop or refresh: GE, AVB, Change Health. Verify we ever worked with ONEOK / ONE Gas.                                   |
-| C-7 Case-study sign-offs        | Kenn + Megan | Taurex (Andrew) first — see P2. Then Hogan (Ryan) and NovaMud (Sam).                                                                                |
-| BR-5 A sourced projects count   | Leadership   | Or we ship years + markets only — see P2.                                                                                                           |
-| BR-6 Cherokee Nation outreach   | —            | Decided 2026-06-19: no outreach. Listed only because it keeps getting re-asked. Revisit only if the Nation asks.                                    |
-| Industry list                   | Brent        | Outstanding. It did not come with the services email. IND-1 runs on the meeting's five plus Aerospace until he confirms.                            |
-| PROOF-1 case-study chase        | Megan        | Brent escalates. YCS drafting, YouVersion unanswered, NovaMud needs a redo, Hogan open.                                                             |
-| 2026-09-14 go/no-go invite      | Megan        | Add Dana and Trevor.                                                                                                                                |
-| Daniel's HubSpot meetings link  | Megan        | For BOOK-1. Portal config, not code.                                                                                                                |
-| HS-1 HubSpot portal config      | Megan        | See P2.                                                                                                                                             |
-| Written leadership sign-off     | Leadership   | See P3.                                                                                                                                             |
+| Item                            | Owner        | State                                                                                                                                                          |
+| ------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C-3 Hank + Brent interview copy | Kenn         | Filmed and in edit. Extraction from the transcript, not a scheduling gate — draft off the raw audio, don't wait for the cut.                                   |
+| BR-7 / C-2 Photo shoot          | Kenn         | Studio headshots exist and are catalogued. Still to shoot at the September All Hands: group leadership, full team, Kenn's headshot.                            |
+| C-9 Video delivery + placement  | Kenn + Megan | Localshoring explainer and the Hank + Brent partner videos are in edit. Take delivery, upload to the SEQTEK channel, place as `video-embed` blocks.            |
+| C-5 Client logo permissions     | Megan + Kenn | Keep: Hogan, BOK, QuickTrip. Drop or refresh: GE, AVB, Change Health. Verify we ever worked with ONEOK / ONE Gas.                                              |
+| C-7 Case-study sign-offs        | Kenn + Megan | Taurex (Andrew) first — see P2. Then Hogan (Ryan) and NovaMud (Sam).                                                                                           |
+| BR-5 A sourced projects count   | Leadership   | Or we ship years + markets only — see P2.                                                                                                                      |
+| BR-6 Cherokee Nation outreach   | —            | Decided 2026-06-19: no outreach. Listed only because it keeps getting re-asked. Revisit only if the Nation asks.                                               |
+| Industry list                   | Brent        | Outstanding. It did not come with the services email. IND-1 shipped seven (the meeting's five, plus Aerospace and Leadership and Training) — confirm the list. |
+| PROOF-1 case-study chase        | Megan        | Brent escalates. YCS drafting, YouVersion unanswered, NovaMud needs a redo, Hogan open.                                                                        |
+| 2026-09-14 go/no-go invite      | Megan        | Add Dana and Trevor.                                                                                                                                           |
+| Daniel's HubSpot meetings link  | Megan        | For BOOK-1. Portal config, not code.                                                                                                                           |
+| HS-1 HubSpot portal config      | Megan        | See P2.                                                                                                                                                        |
+| Written leadership sign-off     | Leadership   | See P3.                                                                                                                                                        |

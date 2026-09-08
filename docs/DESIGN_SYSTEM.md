@@ -435,7 +435,7 @@ Component code does not re-implement focus styling unless overriding for a speci
 | ---------------- | --------- | ---------------------------------------------- |
 | `container-sm`   | `640px`   | Long-form reading (blog posts)                 |
 | `container-md`   | `768px`   | Standard content (about, services)             |
-| `container-lg`   | `1024px`  | Media-heavy (case study with images)           |
+| `container-lg`   | `1024px`  | Legacy. The shell moved to `xl` (ADR 0012)     |
 | `container-xl`   | `1280px`  | Default site container — most pages            |
 | `container-full` | `100%`    | Full-bleed sections (hero backgrounds, footer) |
 

@@ -39,6 +39,10 @@ const ROUTES: { slug: string; path: string }[] = [
   { slug: 'service-leaf', path: '/services/localshoring' },
   { slug: 'service-group', path: '/services/technology-and-data' },
   { slug: 'service-axis', path: '/services/what-we-do' },
+  // IND-1 — one industry detail page. Like the service group/axis entries, this
+  // lands with the content seed; the harness skips a route that is not there
+  // yet rather than failing.
+  { slug: 'industry', path: '/industries/oil-and-gas' },
   { slug: 'service-axis-how', path: '/services/how-we-work' },
   { slug: 'case-studies', path: '/case-studies' },
   { slug: 'insights', path: '/insights' },
