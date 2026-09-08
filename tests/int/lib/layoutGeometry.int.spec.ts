@@ -2,6 +2,10 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 
+import { CAROUSEL_SIZES, GRID_SIZES } from '@/components/sections/Gallery'
+import { SIZES as IMAGE_SIZES } from '@/components/sections/Image'
+import { CARD_SIZES } from '@/components/sections/TeamGrid'
+
 import {
   boxAt,
   boxSizes,
@@ -14,6 +18,7 @@ import {
   railCrossover,
   RAIL,
   SHELL_RAIL,
+  SPLIT_MEDIA_SIZES,
   type ColumnStep,
   type RailSize,
 } from '@/lib/layoutGeometry'
@@ -251,121 +256,6 @@ describe('regression witnesses — the strings that shipped', () => {
   })
 })
 
-/**
- * The gap that let two regressions ship green.
- *
- * The suite above proves `gridSizes(X)` is correct FOR X. It never reads a
- * component, so it cannot know whether X describes that block's actual grid
- * classes. `shellOwnership.int.spec.ts` only forbids a literal `sizes="`, so a
- * wrong DERIVED value passes both. And the visual harness captures at 1440 and
- * 390 at DPR 1 — two of the only viewports where the bad string happened not to
- * drift, so "142 of 143 frames byte-identical" was fully consistent with the
- * regression being present.
- *
- * So this table restates each real call site's layout FROM ITS CLASS STRINGS,
- * quoted in the comment, and checks the geometry the block actually passes.
- * When a block's classes change, this is what fails.
- */
-describe('call-site geometry — what each block actually renders', () => {
-  const CALL_SITES: Array<{
-    name: string
-    classes: string
-    sizes: string
-    cell: (viewport: number) => number
-  }> = [
-    {
-      // Hero / CaseStudyHero / TwoColumn / ServicePillarHero:
-      // innerClassName="grid gap-10 lg:grid-cols-2 lg:items-center"
-      name: 'half-rail media column (lg:grid-cols-2, gap-10)',
-      classes: 'grid gap-10 lg:grid-cols-2',
-      sizes: gridSizes({
-        columns: [
-          [1024, 2],
-          [0, 1],
-        ],
-        gap: 10,
-      }),
-      cell: (vw) => (vw >= 1024 ? cellWidth(boxAt(vw), 2, GAP[10]) : boxAt(vw)),
-    },
-    {
-      // Gallery: min-w-[80%] sm:min-w-[48%] lg:min-w-[32%]
-      name: 'carousel slide (80% / 48% / 32%)',
-      classes: 'min-w-[80%] sm:min-w-[48%] lg:min-w-[32%]',
-      sizes: boxSizes({
-        fraction: [
-          [1024, 0.32],
-          [640, 0.48],
-          [0, 0.8],
-        ],
-      }),
-      cell: (vw) => boxAt(vw) * (vw >= 1024 ? 0.32 : vw >= 640 ? 0.48 : 0.8),
-    },
-    {
-      // Gallery grid, columns='2': sm:grid-cols-2 with NO lg override.
-      name: 'gallery 2-up (sm:grid-cols-2, no lg override)',
-      classes: 'grid-cols-1 sm:grid-cols-2 gap-6',
-      sizes: gridSizes({
-        columns: [
-          [640, 2],
-          [0, 1],
-        ],
-      }),
-      cell: (vw) => cellWidth(boxAt(vw), vw >= 640 ? 2 : 1, GAP[6]),
-    },
-    {
-      // TeamGrid cards: sm:grid-cols-2 lg:grid-cols-3, gap-6.
-      name: 'team grid cards (sm:grid-cols-2 lg:grid-cols-3)',
-      classes: 'sm:grid-cols-2 lg:grid-cols-3 gap-6',
-      sizes: gridSizes({
-        columns: [
-          [1024, 3],
-          [640, 2],
-          [0, 1],
-        ],
-      }),
-      cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 3 : vw >= 640 ? 2 : 1, GAP[6]),
-    },
-    {
-      // Image block, `standard`: max-w-3xl inside the rail.
-      name: 'image block, standard variant (max-w-3xl)',
-      classes: 'max-w-3xl',
-      sizes: boxSizes({ cap: 768 }),
-      cell: (vw) => Math.min(768, boxAt(vw)),
-    },
-  ]
-
-  for (const site of CALL_SITES) {
-    it(`${site.name} never drifts a rung`, () => {
-      for (const vw of VIEWPORTS) {
-        const actual = site.cell(vw)
-        const declared = resolveSizes(site.sizes, vw)
-        for (const dpr of DPRS) {
-          expect(
-            rungFor(declared * dpr),
-            `${site.classes} @ ${vw}px ${dpr}x: declared ${declared.toFixed(0)}px for a ${actual.toFixed(0)}px cell`,
-          ).toBe(rungFor(actual * dpr))
-        }
-      }
-    })
-  }
-
-  it('rejects the constant-fraction string that shipped for the half-rail column', () => {
-    // The regression, pinned: a constant 0.5 under-declares below `lg`, where
-    // the parent is still one implicit column and the image fills the box.
-    const constant = boxSizes({ fraction: 0.5 })
-    const actualAt390 = boxAt(390)
-    expect(rungFor(resolveSizes(constant, 390) * 2)).not.toBe(rungFor(actualAt390 * 2))
-  })
-})
-
-/**
- * `layoutGeometry` centralises the numbers, but it does so by MIRRORING three
- * other files. That is the PR's own failure mode reappearing at a new seam: a
- * restated fact cannot be checked. It matters more than usual here because the
- * suite above uses `MEDIA_LADDER` as ground truth for `rungFor`, so a change to
- * `Media.ts` alone would leave every assertion green while every real string
- * mis-selects its derivative.
- */
 describe('the mirrored constants match their sources', () => {
   const source = (p: string) => readFileSync(path.resolve(p), 'utf8')
 
@@ -395,5 +285,127 @@ describe('the mirrored constants match their sources', () => {
       '768:48',
       '0:32',
     ])
+  })
+})
+
+/**
+ * The binding the last two rounds kept claiming and not having.
+ *
+ * The suite at the top proves `gridSizes(X)` is correct FOR X. That is not the
+ * same as proving a block passes the right X, and an earlier version of this
+ * file re-typed each block's arguments in the test — so reverting the real
+ * regression into `Hero.tsx` left all 163 assertions green. A test that cannot
+ * fail for the defect it was written for is worse than no test, because the
+ * comment above it tells the next reader to stop checking by hand.
+ *
+ * Two bindings, in both directions:
+ *
+ *  1. `sizes` is IMPORTED from the component, so a wrong value there fails here.
+ *  2. the grid classes are read out of the component's source, so changing the
+ *     layout without changing the geometry also fails here.
+ */
+describe('call-site geometry — bound to the components, not re-typed', () => {
+  const source = (p: string) => readFileSync(path.resolve(p), 'utf8')
+
+  const CALL_SITES: Array<{
+    name: string
+    file: string
+    /** Must appear verbatim in `file` — this is binding (2). */
+    classes: string
+    /** Imported from the component — this is binding (1). */
+    sizes: string
+    cell: (viewport: number) => number
+  }> = [
+    {
+      name: 'split media column (Hero, CaseStudyHero, TwoColumn, ServicePillarHero)',
+      file: 'src/components/sections/Hero.tsx',
+      classes: 'grid gap-10 lg:grid-cols-2 lg:items-center',
+      sizes: SPLIT_MEDIA_SIZES,
+      cell: (vw) => (vw >= 1024 ? cellWidth(boxAt(vw), 2, GAP[10]) : boxAt(vw)),
+    },
+    {
+      name: 'gallery carousel slide',
+      file: 'src/components/sections/Gallery.tsx',
+      classes: 'min-w-[80%] shrink-0 snap-start sm:min-w-[48%] lg:min-w-[32%]',
+      sizes: CAROUSEL_SIZES,
+      cell: (vw) => boxAt(vw) * (vw >= 1024 ? 0.32 : vw >= 640 ? 0.48 : 0.8),
+    },
+    {
+      name: 'gallery grid, 2 columns',
+      file: 'src/components/sections/Gallery.tsx',
+      classes: "'2': 'sm:grid-cols-2'",
+      sizes: GRID_SIZES['2'],
+      cell: (vw) => cellWidth(boxAt(vw), vw >= 640 ? 2 : 1, GAP[6]),
+    },
+    {
+      name: 'gallery grid, 3 columns',
+      file: 'src/components/sections/Gallery.tsx',
+      classes: "'3': 'sm:grid-cols-2 lg:grid-cols-3'",
+      sizes: GRID_SIZES['3'],
+      cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 3 : vw >= 640 ? 2 : 1, GAP[6]),
+    },
+    {
+      name: 'gallery grid, 4 columns',
+      file: 'src/components/sections/Gallery.tsx',
+      classes: "'4': 'sm:grid-cols-2 lg:grid-cols-4'",
+      sizes: GRID_SIZES['4'],
+      cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 4 : vw >= 640 ? 2 : 1, GAP[6]),
+    },
+    {
+      name: 'team grid cards',
+      file: 'src/components/sections/TeamGrid.tsx',
+      classes: 'sm:grid-cols-2 lg:grid-cols-3',
+      sizes: CARD_SIZES,
+      cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 3 : vw >= 640 ? 2 : 1, GAP[6]),
+    },
+    {
+      name: 'image block, standard variant',
+      file: 'src/components/sections/Image.tsx',
+      classes: "standard: 'max-w-3xl'",
+      sizes: IMAGE_SIZES.standard,
+      cell: (vw) => Math.min(768, boxAt(vw)),
+    },
+    {
+      name: 'image block, full variant',
+      file: 'src/components/sections/Image.tsx',
+      classes: 'full: RAIL_CLASS[SHELL_RAIL]',
+      sizes: IMAGE_SIZES.full,
+      cell: (vw) => boxAt(vw),
+    },
+  ]
+
+  for (const site of CALL_SITES) {
+    it(`${site.name} still renders the layout its sizes assumes`, () => {
+      expect(
+        source(site.file),
+        `${site.file} no longer contains ${site.classes} — the layout changed, so its geometry must too`,
+      ).toContain(site.classes)
+    })
+
+    it(`${site.name} never drifts a rung`, () => {
+      for (const vw of VIEWPORTS) {
+        const actual = site.cell(vw)
+        const declared = resolveSizes(site.sizes, vw)
+        for (const dpr of DPRS) {
+          expect(
+            rungFor(declared * dpr),
+            `${site.file} @ ${vw}px ${dpr}x: declared ${declared.toFixed(0)}px for a ${actual.toFixed(0)}px cell`,
+          ).toBe(rungFor(actual * dpr))
+        }
+      }
+    })
+  }
+
+  it('the four split-media blocks all use the one shared constant', () => {
+    // They re-typed the same geometry four times before, which is how one wrong
+    // fraction landed in all four at once.
+    for (const f of ['Hero', 'CaseStudyHero', 'TwoColumn', 'ServicePillarHero']) {
+      expect(source(`src/components/sections/${f}.tsx`), f).toContain('SPLIT_MEDIA_SIZES')
+    }
+  })
+
+  it('rejects the constant-fraction string that shipped for the split column', () => {
+    const constant = boxSizes({ fraction: 0.5 })
+    expect(rungFor(resolveSizes(constant, 390) * 2)).not.toBe(rungFor(boxAt(390) * 2))
   })
 })

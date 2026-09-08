@@ -171,6 +171,10 @@ export function boxSizes({
   const steps: ReadonlyArray<FractionStep> =
     typeof fraction === 'number' ? [[0, fraction]] : [...fraction].sort((a, b) => b[0] - a[0])
 
+  // An empty array would crash on `steps[0]` below — and these are module-level
+  // constants, so that is an import-time crash, not a render-time one.
+  if (steps.length === 0) throw new Error('boxSizes: `fraction` steps must not be empty')
+
   const fractionAt = (viewport: number): number => {
     for (const [min, f] of steps) if (viewport >= min) return f
     return steps[steps.length - 1][1]
@@ -180,20 +184,33 @@ export function boxSizes({
   const topFraction = steps[0][1]
   const effective = capped * topFraction
 
-  // Where `(100vw - padding) * fraction` first reaches the capped width.
-  let crossover = capped + paddingAt(RAIL[rail])
+  // Where `100vw - padding` first reaches the capped width. The last
+  // PADDING_STEPS entry is [0, 32], so `candidate >= min` always holds and the
+  // loop always assigns — no initializer needed.
+  let crossover: number
   for (const [min, pad] of PADDING_STEPS) {
-    const candidate = capped + pad
-    if (candidate >= min) {
-      crossover = candidate
-      break
-    }
+    crossover = capped + pad
+    if (crossover >= min) break
   }
-  const arms: string[] = [`(min-width: ${crossover}px) ${round(effective)}px`]
+
+  // A fraction step at or above the crossover would be silently dropped by the
+  // `m < crossover` filter below while the fixed arm used steps[0] regardless —
+  // a 2x under-declaration emitted with no error, in the module written to make
+  // exactly that impossible. No current caller does it; refuse rather than
+  // guess what was meant.
+  const topBand = steps[0][0]
+  if (topBand >= crossover!) {
+    throw new Error(
+      `boxSizes: fraction step at ${topBand}px is at or above the ${crossover!}px rail crossover, ` +
+        `where the box stops growing — the band would be silently dropped`,
+    )
+  }
+
+  const arms: string[] = [`(min-width: ${crossover!}px) ${round(effective)}px`]
 
   // A band starts wherever either the padding or the fraction changes.
   const breaks = [...new Set([...steps.map(([m]) => m), ...PADDING_STEPS.map(([m]) => m)])]
-    .filter((m) => m < crossover)
+    .filter((m) => m < crossover!)
     .sort((a, b) => b - a)
 
   for (const min of breaks) {
@@ -204,3 +221,22 @@ export function boxSizes({
   }
   return arms.join(', ')
 }
+
+/**
+ * The `lg:grid-cols-2` media column shared by `Hero`, `CaseStudyHero`,
+ * `TwoColumn` and `ServicePillarHero`: half the box above `lg`, the WHOLE box
+ * below, because `lg:grid-cols-2` is the only thing making the parent two
+ * columns.
+ *
+ * Defined once here rather than four times in the blocks — four copies of a
+ * geometry is the restatement this module exists to remove, and it is also what
+ * let the constant-fraction bug land in all four at once. The call-site test
+ * imports THIS value, so a change here is checked against the rendered cell.
+ */
+export const SPLIT_MEDIA_SIZES = gridSizes({
+  columns: [
+    [1024, 2],
+    [0, 1],
+  ],
+  gap: 10,
+})

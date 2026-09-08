@@ -66,8 +66,14 @@ Two tests make it a floor rather than a sweep:
 
 - `tests/int/lib/layoutGeometry.int.spec.ts` resolves each derived `sizes`
   string the way a browser does — first match wins — at 15 viewports and 2 DPRs,
-  and asserts the selected derivative is the one the real cell needs. It carries
-  witnesses for the strings that actually shipped.
+  and asserts the selected derivative is the one the real cell needs. Crucially
+  it **imports the constants from the block modules** rather than re-typing
+  their arguments, and asserts each block's grid classes still appear in its
+  source; a version of this suite that re-typed them passed while the real
+  regression was reintroduced, which is the failure mode worth naming. It also
+  pins `RAIL`, `MEDIA_LADDER` and `PADDING_STEPS` to `tailwind.config.mjs`,
+  `Media.ts` and `Section.tsx`, since the suite uses `MEDIA_LADDER` as its own
+  ground truth.
 - `tests/int/layout/shellOwnership.int.spec.ts` fails any block that restates
   the rail, restates the section padding, or types a literal `sizes`.
 
@@ -75,7 +81,8 @@ Two tests make it a floor rather than a sweep:
 
 **Moving the shell is one line.** The `container-lg` → `container-xl` change
 that took 44 files and six review rounds is now an edit to `SHELL_RAIL`, and the
-geometry suite re-checks every derived string against the ladder automatically.
+geometry suite re-derives every block's string and re-checks it against the
+ladder automatically.
 
 **A stale `sizes` fails a test instead of a review.** Reading those strings told
 six reviewers nothing, twice including the author. Resolving them is mechanical.

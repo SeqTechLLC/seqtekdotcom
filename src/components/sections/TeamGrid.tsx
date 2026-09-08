@@ -7,7 +7,7 @@ import { gridSizes } from '@/lib/layoutGeometry'
 // Only the `cards` layout reaches ResponsiveImage — `compact` renders a fixed
 // 96px avatar — so there is one geometry here, not two. Derived anyway, so it
 // follows the rail rather than needing a human to re-check a vw fraction.
-const CARD_SIZES = gridSizes({
+export const CARD_SIZES = gridSizes({
   columns: [
     [1024, 3],
     [640, 2],

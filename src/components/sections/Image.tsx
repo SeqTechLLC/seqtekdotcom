@@ -1,6 +1,5 @@
 import { ResponsiveImage } from '../ui/ResponsiveImage'
-import { Section } from '../ui/Section'
-import { RAIL_CLASS } from '../ui/Section'
+import { RAIL_CLASS, Section } from '../ui/Section'
 import { boxSizes, SHELL_RAIL } from '@/lib/layoutGeometry'
 
 interface MediaLike {
@@ -34,7 +33,7 @@ const WIDTH_CLASSES: Record<NonNullable<ImageProps['width']>, string> = {
 // variant's real cap. One string cannot serve four boxes that differ by ~2x:
 // keyed to the widest, `standard` (the DEFAULT) requests a derivative two
 // rungs beyond its 768px box.
-const SIZES: Record<NonNullable<ImageProps['width']>, string> = {
+export const SIZES: Record<NonNullable<ImageProps['width']>, string> = {
   narrow: boxSizes({ cap: 672 }),
   standard: boxSizes({ cap: 768 }),
   wide: boxSizes({ cap: 1024 }),
