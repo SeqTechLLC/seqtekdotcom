@@ -207,7 +207,7 @@ Every content change is still a developer task. This tier fixes that before we l
   not a hardcoded slug.
 - **Three top-level nav destinations are not editable without a deploy — deliberately parked 2026-09-04.**
   `/case-studies`, `/insights` and `/contact` are bespoke route files: their `<h1>`, intro copy and SEO strings
-  are literals. The other three nav destinations (`/our-story`, and both `/services` axes) are documents.
+  are literals. The other four nav destinations (`/our-story`, and both `/services` axes) are documents.
   ADR 0009 says there should be no bespoke page templates, so these are the remaining exceptions.
 
   **Converting them is not the small job it looks like.** Each blocks on something real:

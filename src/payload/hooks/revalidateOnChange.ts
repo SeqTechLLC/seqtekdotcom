@@ -83,12 +83,37 @@ export const buildRevalidatePlan = (
         detailPaths.push(`/partners/${s}`, '/partners')
         break
       case 'industries':
-        // The detail route plus the index that lists it. `/industries` is a
-        // `pages` doc on the `/[slug]` catch-all rather than a route file, but
-        // it carries an `industry-grid`, so publishing or unpublishing an
-        // industry changes it — without this the card sits stale for up to
-        // `revalidate: 3600` and CloudFront is never invalidated for that path.
+        // The detail route plus the index that lists it.
+        //
+        // `/industries` needs BOTH a path and a tag, and they do different
+        // jobs: `paths` reach only `invalidateCloudFrontPaths`, while
+        // `revalidateTag` runs on `tags` alone. `/industries` is a `pages` doc
+        // on the `/[slug]` catch-all, so its payload is cached under
+        // `detailCacheTags('pages', 'industries')` — which shares nothing with
+        // this collection's `industries_*` tags. Pushing the path alone purged
+        // the CDN and left the origin re-rendering from the hour-old page
+        // payload: the card stayed stale while the sitemap, tagged
+        // `industries_list`, advertised the URL immediately. The CDN purge made
+        // it look like the refresh had already happened.
+        //
+        // `industry-grid` is not in RESOLVED_BLOCK_TYPES, so its cards are the
+        // depth-2 relations embedded in that cached payload rather than a
+        // re-read at render — which is why the page tag is the only thing that
+        // moves them.
+        //
+        // LIMIT, stated rather than implied: this busts the known index. The
+        // block is available to any page, and a grid embedded somewhere else
+        // still waits out `revalidate: 3600`. Busting those needs a query for
+        // pages carrying the block, which this hook does not do for any
+        // collection.
         detailPaths.push(`/industries/${s}`, '/industries')
+        // Inlined rather than imported: `detailCacheTags` lives in
+        // `@/lib/payload`, which pulls React `cache` and the whole reader
+        // module into this Payload hook. The hook already builds its own tags
+        // the same way (`${collection}_${s}` below). Only the per-slug tag is
+        // needed — the payload is cached under both, and `pages_list` would
+        // bust every page.
+        tags.push('pages_industries')
         break
       case 'locations':
         detailPaths.push(`/consulting/${s}`)

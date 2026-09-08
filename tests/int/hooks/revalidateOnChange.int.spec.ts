@@ -116,6 +116,17 @@ describe('buildRevalidatePlan — per-collection routing', () => {
     expect(plan.tags).toContain(`${collection}_${slug}`)
   })
 
+  // The above is necessary and NOT sufficient, which cost a review round.
+  // `paths` reach only CloudFront; `revalidateTag` runs on `tags`. `/industries`
+  // is a `pages` doc, so its payload is cached under `pages_industries` — a tag
+  // no `industries_*` change emits. Pushing the path alone purged the CDN and
+  // left the origin serving the hour-old page: the card stayed stale while the
+  // sitemap, tagged `industries_list`, advertised the URL immediately.
+  it('busts the pages-doc cache behind /industries, not just the CDN path', () => {
+    const plan = buildRevalidatePlan('industries', { _status: 'published', slug: 'energy' })
+    expect(plan.tags).toContain('pages_industries')
+  })
+
   it('includes both old and new slug paths when slug changes', () => {
     const plan = buildRevalidatePlan(
       'posts',

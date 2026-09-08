@@ -227,21 +227,23 @@ inbound, so YouVersion stays a wanted case study and does not anchor a page.
 Every one of these is an assertion of expertise, and the meeting's own rule is that a claim we cannot point
 at loses at our size. Here is what each has behind it **today**:
 
-| Industry          | Case-study proof we hold                          | What we need                                                     |
-| ----------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| **Oil & Gas**     | Endurance Lift, NovaMud, Taurex ×3                | Named sign-off (the §1.F chase). Proof is not the problem here.  |
-| **Energy**        | WellChecked                                       | One more, ideally with a metric.                                 |
-| **Healthcare**    | **none**                                          | A client, a story, or the page waits.                            |
-| **FinTech**       | **none** — BOK is the obvious candidate           | BOK as a case study (reopened 2026-08-31), or a logo at minimum. |
-| **Manufacturing** | **none** — Taurex is arguably here as well as O&G | Confirm whether Taurex reads as manufacturing, or find another.  |
-| **Aerospace**     | **none**                                          | Have we done aerospace work at all? Hank/Brent to confirm.       |
+| Industry                    | Case-study proof we hold                          | What we need                                                       |
+| --------------------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
+| **Oil & Gas**               | Endurance Lift, NovaMud, Taurex ×3                | Named sign-off (the §1.F chase). Proof is not the problem here.    |
+| **Energy**                  | WellChecked                                       | One more, ideally with a metric.                                   |
+| **Healthcare**              | **none**                                          | A client, a story, or the page waits.                              |
+| **FinTech**                 | **none** — BOK is the obvious candidate           | BOK as a case study (reopened 2026-08-31), or a logo at minimum.   |
+| **Manufacturing**           | **none** — Taurex is arguably here as well as O&G | Confirm whether Taurex reads as manufacturing, or find another.    |
+| **Aerospace**               | **none**                                          | Have we done aerospace work at all? Hank/Brent to confirm.         |
+| **Leadership and Training** | **none** — Touchstone is the obvious anchor       | Confirm the workshop practice reads as an industry, not a service. |
 
-**The ask, in one line:** four of the seven industries have nothing to point at. Either PROOF-1 lands a study
+**The ask, in one line:** five of the seven industries have nothing to point at. Either PROOF-1 lands a study
 per industry, or the pages ship in the order the proof does.
 
-**Open, not a request:** **Hogan Assessments** does not fit any of Brent's six — its vertical is psychometrics,
-and the nearest honest bucket is something like leadership development or talent. Left as-is for now rather
-than forced into a marketing industry.
+**Open, not a request:** **Hogan Assessments** does not fit any of the seven cleanly — its vertical is
+psychometrics, and the nearest honest bucket is leadership development or talent. IND-1 shipped
+`/industries/leadership-and-training`, which is the closest home it has; whether Hogan belongs there or stays
+uncategorised is Brent's call, not a content gap.
 
 ---
 

@@ -51,6 +51,15 @@ describe('IndustryGrid — a card links only where the route resolves', () => {
     expect(linkFor(industry({ layout: undefined }))).toBeNull()
   })
 
+  it('does not link a published industry whose body is NULL', () => {
+    // The state the whole predicate was written for, and the one the earlier
+    // spec left unasserted: the five pre-IND-1 rows are published with a NULL
+    // `layout` after the additive migration. The generated `Industry` type
+    // declares `layout?: (…)[] | null`, so null is a real shape, not a
+    // hypothetical.
+    expect(linkFor(industry({ layout: null }))).toBeNull()
+  })
+
   it('does not link a draft, even with a body', () => {
     expect(linkFor(industry({ _status: 'draft' }))).toBeNull()
   })
@@ -58,7 +67,12 @@ describe('IndustryGrid — a card links only where the route resolves', () => {
   it('still renders the card in every unlinked case', () => {
     // A card losing its LINK must not lose the card — dropping it entirely
     // makes the block's output depend on a field the caller may not select.
-    for (const over of [{ layout: [] }, { layout: undefined }, { _status: 'draft' as const }]) {
+    for (const over of [
+      { layout: [] },
+      { layout: undefined },
+      { layout: null },
+      { _status: 'draft' as const },
+    ]) {
       const { container } = render(<IndustryGrid industries={[industry(over) as never]} />)
       expect(container.textContent).toContain('Oil and Gas')
       expect(container.querySelectorAll('li')).toHaveLength(1)
