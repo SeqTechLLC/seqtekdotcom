@@ -39,7 +39,7 @@ export function CaseStudyGrid({
   // Rendering the heading alone put a bare "Selected work" on an industry page
   // with nothing beneath it: a promise of proof with no proof, which is the one
   // thing CONTENT_NEEDS §11 says loses at our size. It is not hypothetical —
-  // four of the seven industries have no case study to point at, so every one
+  // five of the seven industries have no case study to point at, so every one
   // of them would ship that heading, and a `by-industry` grid fills itself at
   // render, so an editor never sees the empty state while authoring.
   if (docs.length === 0) return null

@@ -460,7 +460,10 @@ export const findPublishedSlugs = async (collection: SluggedCollection): Promise
 // block rows then re-reads the row it just wrote, handing the skeleton straight
 // back. Do not read this filter as evidence that bodyless published industries
 // 404 — they serve placeholder copy. `skeletonDefaultValue.int.spec.ts` pins
-// both the mechanism and that trigger.
+// the trigger and the five-collection blast radius; it does NOT exercise a
+// Payload read, so the `afterRead` behaviour itself is pinned by nothing here.
+// A Payload bump that changed default-on-read would leave CI green and quietly
+// make every comment in this thread wrong again.
 //
 // Separate reader rather than a predicate on `findPublishedSlugs`, because that
 // one is wrapped in `unstable_cache` keyed by collection and a callback cannot

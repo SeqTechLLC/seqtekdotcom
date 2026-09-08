@@ -136,11 +136,11 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     1024–1279 renders the drawer. **Re-measure before adding anything else to the header**, against the
     1280px cap, not the old 1024.
   - **What is left is the copy.** All seven bodies are placeholders and say so on the page.
-  - **Four of the seven have no proof** — Healthcare, FinTech, Manufacturing and Aerospace carry no case
-    study. Their `case-study-grid` now renders **nothing at all** — heading included — rather than an empty
+  - **Five of the seven have no proof** — Healthcare, FinTech, Manufacturing, Aerospace and Leadership and
+    Training carry no case study. Their `case-study-grid` now renders **nothing at all** — heading included — rather than an empty
     section: a bare "Selected work" over empty space was itself a claim with nothing behind it. So the gap is
     no longer self-advertising on the page, which makes the publish decision a human one: either PROOF-1 lands
-    a study each, or those four stay drafts until it does. `CONTENT_NEEDS.md` §11.
+    a study each, or those five stay drafts until it does. `CONTENT_NEEDS.md` §11.
 
 - **BOOK-1 — book-a-call widget, routing to Daniel.** The blocks shipped (#124). What is missing:
   - **Daniel's real HubSpot meetings URL** (Megan, portal config). The only URL in the repo is a fixture. The

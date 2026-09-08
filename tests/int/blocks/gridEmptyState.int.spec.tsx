@@ -16,7 +16,7 @@ import { IndustryGrid } from '../../../src/components/sections/IndustryGrid'
  * The data was repairable, but the shape is not a one-off. These grids resolve
  * their items at RENDER (`source: by-industry`, `latest`, `by-service`), so an
  * author never sees the empty state while editing — and per CONTENT_NEEDS §11,
- * four of the seven industries have no case study to point at, so four pages
+ * five of the seven industries have no case study to point at, so five pages
  * would have shipped a heading promising proof that does not exist. That
  * document's own rule is that a claim we cannot point at loses at our size.
  */
