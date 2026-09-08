@@ -168,7 +168,8 @@ export const navigation: Navigation = {
     // The second axis. One group, so no group title renders — the trigger is
     // the heading. Workshops keeps its own top-level URL as the primary funnel;
     // it is listed here because this is the axis it belongs to, not duplicated
-    // as a seventh top-level item.
+    // as its own top-level item. (Industries IS one — see below — but Workshops
+    // is a funnel page under an axis, not an axis of its own.)
     {
       label: 'How We Work',
       url: '/services/how-we-work',
@@ -188,6 +189,38 @@ export const navigation: Navigation = {
               // one-subject-one-URL rule exists to prevent. Move both together
               // when the leaf is seeded and the Page retires.
               { label: 'Localshoring', url: '/localshoring' },
+            ],
+          },
+        ],
+      },
+    },
+    // ROADMAP IND-1. Industries is a top-level item, and making it fit was two
+    // changes, both measured on the real header rather than reasoned about:
+    // the desktop nav moved to the `xl` breakpoint, because at a 1024px viewport
+    // the container is viewport-bound (1024 - 64px padding = 960px) and no
+    // max-width helps. (The row container's `lg` -> `xl` move is NOT here: the
+    // header renders a bare `<Container>` and inherits `SHELL_RAIL` from
+    // `src/lib/layoutGeometry.ts` — ADR 0012 owns that number now.)
+    // 1024-1279 gets the drawer, which handles any number of items.
+    //
+    // `/industries` is a `pages` doc served by the `/[slug]` catch-all, not a
+    // route file — verified that the catch-all does match `/industries` even
+    // with an `industries/[slug]/` directory present.
+    {
+      label: 'Industries',
+      url: '/industries',
+      panel: {
+        groups: [
+          {
+            label: 'Industries',
+            items: [
+              { label: 'Oil and Gas', url: '/industries/oil-and-gas' },
+              { label: 'Energy', url: '/industries/energy' },
+              { label: 'Manufacturing', url: '/industries/manufacturing' },
+              { label: 'Healthcare', url: '/industries/healthcare' },
+              { label: 'FinTech', url: '/industries/fintech' },
+              { label: 'Aerospace', url: '/industries/aerospace' },
+              { label: 'Leadership and Training', url: '/industries/leadership-and-training' },
             ],
           },
         ],

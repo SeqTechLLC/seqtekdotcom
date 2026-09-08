@@ -29,6 +29,9 @@ test.describe('Site chrome — desktop viewport', () => {
       'Our Story',
       'What We Do',
       'How We Work',
+      // IND-1 added a SEVENTH item. Fitting it moved the row container to `xl`
+      // and the desktop nav to the `xl` breakpoint — see site-content.ts.
+      'Industries',
       'Case Studies',
       'Insights',
       'Contact',
@@ -64,7 +67,7 @@ test.describe('Site chrome — desktop viewport', () => {
   })
 
   // ROADMAP NAV-1. The top-level item stays a link and the caret is its own
-  // button, which is why the six-visible-links assertion above still holds.
+  // button, which is why the visible-links assertion above still holds.
   test('a nav panel opens on click, closes on Escape, and hands focus back', async ({ page }) => {
     await page.goto('/')
     const header = page.getByTestId('site-header')
@@ -118,11 +121,12 @@ test.describe('Site chrome — desktop viewport', () => {
   // trigger's left offset grows more slowly. The suite's default 1280 measured
   // 0px over even while the bug was live, so this test sets its own width.
   test('opening the widest nav panel does not widen the document', async ({ page }) => {
-    // 1024 is the `lg` boundary and the worst case, but the cap and the
-    // trigger's offset scale differently, so check across the desktop range
-    // rather than trusting one width. 1280/1440 were hand-checked once; this
-    // makes that permanent.
-    for (const width of [1024, 1280, 1440]) {
+    // 1024 was the boundary until IND-1 moved the desktop nav to `xl`; at that
+    // width there is no panel to open now, only the drawer, which is a
+    // disclosure list and cannot overflow. 1280 is the boundary and the worst
+    // case, because the cap grows with the viewport while the trigger's left
+    // offset grows more slowly.
+    for (const width of [1280, 1440]) {
       await page.setViewportSize({ width, height: 800 })
       await page.goto('/')
       const caret = page.getByTestId('site-header').getByRole('button', { name: 'What We Do menu' })
@@ -145,6 +149,35 @@ test.describe('Site chrome — desktop viewport', () => {
   })
 })
 
+// IND-1 moved `PrimaryNav` from `lg` to `xl` to fit a seventh top-level item,
+// which made the drawer the only nav from 0 to 1279px. Nothing exercised the
+// upper half of that band: the suite default is 1280, the drawer is asserted
+// at 390 below, and the visual harness captures 1440/390 — so 1024-1279, the
+// range whose behaviour this PR actually changed, had no coverage at all.
+// 1024 is the old breakpoint and the exact width that used to show the
+// desktop nav, which makes it the regression that would slip through.
+test.describe('Site chrome — narrow desktop (below the xl nav breakpoint)', () => {
+  test.use({ viewport: { width: 1024, height: 800 } })
+
+  test('drawer is the only nav between the lg and xl breakpoints', async ({ page }) => {
+    await page.goto('/')
+
+    // `PrimaryNav` is `hidden xl:flex`, so it must not be visible here.
+    const header = page.getByTestId('site-header')
+    await expect(header.getByRole('navigation', { name: /primary/i })).toBeHidden()
+
+    // The trigger is `xl:hidden`, so it is the nav at this width, and it opens.
+    const trigger = page.getByTestId('mobile-menu-trigger')
+    await expect(trigger).toBeVisible()
+
+    const dialog = page.getByTestId('mobile-menu')
+    await expect(dialog).toHaveJSProperty('open', false)
+    await trigger.click()
+    await expect(dialog).toHaveJSProperty('open', true)
+    await expect(dialog.getByRole('link', { name: 'Industries' })).toBeVisible()
+  })
+})
+
 test.describe('Site chrome — mobile viewport', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
@@ -161,11 +194,15 @@ test.describe('Site chrome — mobile viewport', () => {
     await trigger.click()
     await expect(dialog).toHaveJSProperty('open', true)
 
-    // Nav items rendered inside the dialog.
+    // Nav items rendered inside the dialog. IND-1 moved `PrimaryNav` to the
+    // `xl` breakpoint, so the drawer is now the ONLY nav from 0 to 1279px —
+    // the widest range of viewports on the site. Its item list has to be
+    // asserted as carefully as the desktop one above, including the seventh.
     for (const label of [
       'Our Story',
       'What We Do',
       'How We Work',
+      'Industries',
       'Case Studies',
       'Insights',
       'Contact',

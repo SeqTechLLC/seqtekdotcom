@@ -8,6 +8,7 @@ export type PreviewCollection =
   | 'workshops'
   | 'teamMembers'
   | 'partners'
+  | 'industries'
 
 export const PREVIEW_COLLECTIONS: readonly PreviewCollection[] = [
   'pages',
@@ -17,6 +18,7 @@ export const PREVIEW_COLLECTIONS: readonly PreviewCollection[] = [
   'workshops',
   'teamMembers',
   'partners',
+  'industries',
 ] as const
 
 type DocLike = { slug?: string }
@@ -35,6 +37,14 @@ const PUBLIC_PATH_BUILDERS: Record<PreviewCollection, (doc: DocLike) => string |
   workshops: (doc) => (doc.slug ? `/workshops/${doc.slug}` : null),
   teamMembers: (doc) => (doc.slug ? `/team/${doc.slug}` : null),
   partners: (doc) => (doc.slug ? `/partners/${doc.slug}` : null),
+  // ROADMAP IND-1, and the same trap `services` fell into above: the route
+  // implements the full draft path (`getDraftBySlug`, PreviewBanner, and
+  // IndustryGrid's preview-only link guard), and `src/lib/preview.ts` has its
+  // own `PreviewCollection` union that already lists `industries` — but THIS
+  // union is what `/preview/[collection]/[slug]` gates on, so without the entry
+  // that whole branch is unreachable dead code and an editor gets
+  // `404 unsupported collection`.
+  industries: (doc) => (doc.slug ? `/industries/${doc.slug}` : null),
 }
 
 const SITE_URL = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3100'

@@ -1,6 +1,6 @@
 # Content We Still Need — Authoritative List
 
-**Owner:** Kenn Williamson · **Last updated:** 2026-08-31 (**§12 added** — Brent's emailed services structure, the authoritative nine-in-three that supersedes the transcript's "roughly fifteen". The 2026-08-31 sales alignment reopened **BOK / QuickTrip / ONEOK** as case-study targets, and added **§11** — the six industry pages and the proof each one still lacks. Prior pass 2026-07-27: the **Hank and Brent interviews are filmed**, along with the localshoring content — all in edit, so §1 and §2 are now transcript-extraction work rather than asks; the case-study target set corrected to **three** clients with **Taurex** promoted to first chase and **Well Checked** demoted to a logo item; the **All Hands moved to September**, shifting §3. Prior pass 2026-06-30: reconciled against a live crawl of every staging route + the Payload REST inventory; added §9 "Missing pages — linked but 404" from the link audit; marked the Contact form GUID and Brent's live bio draft as resolved)
+**Owner:** Kenn Williamson · **Last updated:** 2026-08-31 (**§12 added** — Brent's emailed services structure, the authoritative nine-in-three that supersedes the transcript's "roughly fifteen". The 2026-08-31 sales alignment reopened **BOK / QuickTrip / ONEOK** as case-study targets, and added **§11** — the industry pages and the proof each one still lacks (settled at **seven** on 2026-09-04, Leadership and Training added for Hogan). Prior pass 2026-07-27: the **Hank and Brent interviews are filmed**, along with the localshoring content — all in edit, so §1 and §2 are now transcript-extraction work rather than asks; the case-study target set corrected to **three** clients with **Taurex** promoted to first chase and **Well Checked** demoted to a logo item; the **All Hands moved to September**, shifting §3. Prior pass 2026-06-30: reconciled against a live crawl of every staging route + the Payload REST inventory; added §9 "Missing pages — linked but 404" from the link audit; marked the Contact form GUID and Brent's live bio draft as resolved)
 **Purpose:** the single source of truth for content the website is still waiting on. Hand this to Hank, Justin, and Megan. If a request isn't on this list, we don't need it — see "Already decided / do not re-ask" below. This supersedes the scattered gap notes in `docs/content-drafts/CONTENT_GAPS.md` (dated 2026-06-11, now stale — its snapshot shows services/case-studies/insights empty, all of which are live) and the long-lead `C-*` rows in `ROADMAP.md`.
 
 **State of the site (2026-06-30):** the technology is essentially done. A full crawl of staging returns **36 live pages** (homepage, 5 case studies, 5 insights, 11 team bios, 4 service pages, 3 workshops, localshoring, about, contact, privacy) — every one with real, substantial, professionally-rendered copy (no lorem, no "coming soon", no missing alt text). The block migration is complete and most copy/photos are loaded. What remains is (1) a small set of **human inputs** (Hank interview, named client quotes, the photo/video shoot), and (2) a handful of **stub pages that are linked in the nav/footer but 404** (new §9 below). Everything else is _loading_ work the dev side does without you.
@@ -218,7 +218,7 @@ Found in the live Payload inventory on 2026-06-30. None require leadership input
 
 ---
 
-## 11. Industry pages — the six, and the proof each one needs
+## 11. Industry pages — the seven, and the proof each one needs
 
 Decided at the 2026-08-31 sales alignment (Healthcare, FinTech, Oil & Gas, Energy, Manufacturing) plus
 **Aerospace**, added the same day. **Non-profit is explicitly excluded** — Brent does not want non-profit
@@ -227,21 +227,23 @@ inbound, so YouVersion stays a wanted case study and does not anchor a page.
 Every one of these is an assertion of expertise, and the meeting's own rule is that a claim we cannot point
 at loses at our size. Here is what each has behind it **today**:
 
-| Industry          | Case-study proof we hold                          | What we need                                                     |
-| ----------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| **Oil & Gas**     | Endurance Lift, NovaMud, Taurex ×3                | Named sign-off (the §1.F chase). Proof is not the problem here.  |
-| **Energy**        | WellChecked                                       | One more, ideally with a metric.                                 |
-| **Healthcare**    | **none**                                          | A client, a story, or the page waits.                            |
-| **FinTech**       | **none** — BOK is the obvious candidate           | BOK as a case study (reopened 2026-08-31), or a logo at minimum. |
-| **Manufacturing** | **none** — Taurex is arguably here as well as O&G | Confirm whether Taurex reads as manufacturing, or find another.  |
-| **Aerospace**     | **none**                                          | Have we done aerospace work at all? Hank/Brent to confirm.       |
+| Industry                    | Case-study proof we hold                          | What we need                                                       |
+| --------------------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
+| **Oil & Gas**               | Endurance Lift, NovaMud, Taurex ×3                | Named sign-off (the §1.F chase). Proof is not the problem here.    |
+| **Energy**                  | WellChecked                                       | One more, ideally with a metric.                                   |
+| **Healthcare**              | **none**                                          | A client, a story, or the page waits.                              |
+| **FinTech**                 | **none** — BOK is the obvious candidate           | BOK as a case study (reopened 2026-08-31), or a logo at minimum.   |
+| **Manufacturing**           | **none** — Taurex is arguably here as well as O&G | Confirm whether Taurex reads as manufacturing, or find another.    |
+| **Aerospace**               | **none**                                          | Have we done aerospace work at all? Hank/Brent to confirm.         |
+| **Leadership and Training** | **none** — Touchstone is the obvious anchor       | Confirm the workshop practice reads as an industry, not a service. |
 
-**The ask, in one line:** four of the six industries have nothing to point at. Either PROOF-1 lands a study
+**The ask, in one line:** five of the seven industries have nothing to point at. Either PROOF-1 lands a study
 per industry, or the pages ship in the order the proof does.
 
-**Open, not a request:** **Hogan Assessments** does not fit any of the six — its vertical is psychometrics,
-and the nearest honest bucket is something like leadership development or talent. Left as-is for now rather
-than forced into a marketing industry.
+**Open, not a request:** **Hogan Assessments** does not fit any of the seven cleanly — its vertical is
+psychometrics, and the nearest honest bucket is leadership development or talent. IND-1 shipped
+`/industries/leadership-and-training`, which is the closest home it has; whether Hogan belongs there or stays
+uncategorised is Brent's call, not a content gap.
 
 ---
 

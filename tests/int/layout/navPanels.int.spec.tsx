@@ -54,7 +54,7 @@ const CTA = { label: 'Book a Call', url: '/contact' }
  * The int environment loads no CSS, so `getComputedStyle(el).display` reports
  * `none` whether or not such a class is present and cannot see the regression.
  * The class list can. The `(?:[a-z0-9-]+:)*` prefix matters most of all — this
- * is a `hidden lg:flex` nav, so `lg:grid` is the likeliest reintroduction, and
+ * is a `hidden xl:flex` nav, so `xl:grid` is the likeliest reintroduction, and
  * an unanchored pattern is blind to exactly that shape.
  */
 const DISPLAY_UTILITY =

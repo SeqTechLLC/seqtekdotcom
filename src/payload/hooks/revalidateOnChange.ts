@@ -83,7 +83,40 @@ export const buildRevalidatePlan = (
         detailPaths.push(`/partners/${s}`, '/partners')
         break
       case 'industries':
-        detailPaths.push(`/industries/${s}`)
+        // The detail route plus the index that lists it.
+        //
+        // `/industries` needs a TAG, and the path alone was never going to do
+        // it. `paths` reach only `invalidateCloudFrontPaths`; `revalidateTag`
+        // runs on `tags`. `/industries` is a `pages` doc on the `/[slug]`
+        // catch-all, so its payload is cached by `getPageBySlug` under
+        // `detailCacheTags('pages', 'industries')` — which shares nothing with
+        // this collection's `industries_*` tags. Without the tag, publishing an
+        // industry left the Next data cache holding the hour-old page, so a
+        // card that had just gained a body stayed unlinked for up to
+        // `revalidate: 3600` while the sitemap, tagged `industries_list`,
+        // advertised the URL immediately.
+        //
+        // Note what the path push does NOT buy: `edge-stack.ts` sets
+        // `defaultBehavior.cachePolicy = CACHING_DISABLED`, so HTML routes are
+        // never in the CloudFront cache and there is no `/industries` entry to
+        // purge. The path is pushed for consistency with every other case and
+        // to stay correct if that policy ever changes; the tag is what actually
+        // refreshes the page today.
+        //
+        // `industry-grid` is not in RESOLVED_BLOCK_TYPES, so its cards are the
+        // depth-2 relations embedded in that cached payload rather than a
+        // re-read at render — which is why the containing document's tag is the
+        // only lever that moves them.
+        //
+        // LIMIT, stated rather than implied: this busts the known index. The
+        // same block on the HOMEPAGE would be cached under
+        // `globalCacheTags('homepage')` = `['homepage_list']`, which an
+        // industries change does not emit either — latent rather than live,
+        // since `industry-grid` appears in exactly one document today (the
+        // `industries` page), but a global is the container class to check
+        // first, not another page.
+        detailPaths.push(`/industries/${s}`, '/industries')
+        tags.push('pages_industries')
         break
       case 'locations':
         detailPaths.push(`/consulting/${s}`)
@@ -104,7 +137,10 @@ export const buildRevalidatePlan = (
     detailPaths.push('/')
   }
 
-  return { tags, paths: Array.from(new Set([...detailPaths, '/sitemap.xml'])) }
+  return {
+    tags: Array.from(new Set(tags)),
+    paths: Array.from(new Set([...detailPaths, '/sitemap.xml'])),
+  }
 }
 
 const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {

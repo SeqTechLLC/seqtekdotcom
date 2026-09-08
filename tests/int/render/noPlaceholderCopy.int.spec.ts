@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { caseStudySkeleton } from '../../../src/payload/seed/skeletons/caseStudy'
+import { industrySkeleton } from '../../../src/payload/seed/skeletons/industry'
 import { partnerSkeleton } from '../../../src/payload/seed/skeletons/partner'
 import { teamMemberSkeleton } from '../../../src/payload/seed/skeletons/teamMember'
 import { workshopSkeleton } from '../../../src/payload/seed/skeletons/workshop'
@@ -35,13 +36,41 @@ export const SKELETON_PLACEHOLDER_COPY = [
   'The measurable outcome the work delivered.',
   'Describe the workshop: the outcome it drives and how it runs.',
   'What this partner does and why SEQTEK works with them.',
+  'What this sector needs from a technology partner, in one or two sentences.',
+  'The problems this sector brings us, and what our work on them looks like.',
+  // Found only once the collector stopped looking at lexical `text` alone.
+  // Both were shipping, on published pages, invisible to the guard that exists
+  // to list them.
+  'Tell us about your team and we will follow up with dates.',
+  'What this partnership gives clients, in one or two sentences.',
+] as const
+
+/** Fields on a block (not a lexical node) that carry human-readable copy. */
+const COPY_FIELDS = [
+  'text',
+  'subheadline',
+  'headline',
+  // `heading` is a live field name (workshopSkeleton). Nothing is missed today
+  // only because its values carry no `.` or `:` and the SENTENCE gate drops
+  // them — a future skeleton putting a sentence there would reopen exactly the
+  // blindness this list was widened to close.
+  'heading',
+  'body',
+  'description',
+  'label',
 ] as const
 
 const collectText = (node: unknown, out: string[]): void => {
   if (Array.isArray(node)) return node.forEach((n) => collectText(n, out))
   if (node === null || typeof node !== 'object') return
   const record = node as Record<string, unknown>
-  if (typeof record.text === 'string') out.push(record.text)
+  // `text` is the lexical node's field, but a skeleton also carries plain
+  // string copy on the block itself — `subheadline`, `body`, `description`.
+  // Collecting only `text` made the industry skeleton's `subheadline`
+  // placeholder invisible to a guard whose docstring calls itself complete.
+  for (const key of COPY_FIELDS) {
+    if (typeof record[key] === 'string') out.push(record[key] as string)
+  }
   Object.values(record).forEach((v) => collectText(v, out))
 }
 
@@ -57,6 +86,7 @@ describe('UI-3 — the skeleton placeholder inventory stays complete', () => {
     caseStudy: caseStudySkeleton(),
     workshop: workshopSkeleton(),
     partner: partnerSkeleton(),
+    industry: industrySkeleton(),
   }
 
   // Headings are structural scaffolding an editor fills under; the sentences

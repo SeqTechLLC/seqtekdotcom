@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-import { publishedSlugsFor } from '@/lib/payload'
+import { publishedIndustrySlugsWithBody, publishedSlugsFor } from '@/lib/payload'
 import { redirectMap } from '@/lib/redirects'
 
 // spec 004 T043. Dynamic sitemap from published slugs across the in-scope
@@ -75,6 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       teamSlugs,
       partnerSlugs,
       serviceSlugs,
+      industrySlugs,
     ] = await Promise.all([
       publishedSlugsFor('pages'),
       publishedSlugsFor('caseStudies'),
@@ -83,6 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       publishedSlugsFor('teamMembers'),
       publishedSlugsFor('partners'),
       publishedSlugsFor('services'),
+      publishedIndustrySlugsWithBody(),
     ])
 
     // A page slug that collides with a 301 source (e.g. the audit-seeded
@@ -102,6 +104,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // SVC-2: one flat namespace and one collection, so every tier — axis page,
     // group page and service — is just `/services/<slug>`.
     for (const slug of serviceSlugs) paths.add(`/services/${slug}`)
+    // ROADMAP IND-1. Published-only like every other loop, AND body-only: the
+    // `layout` field arrived in an additive migration, so an industry created
+    // before it is published with no body and the route 404s it. Listing such a
+    // URL here would advertise a 404 for the whole deploy-before-seed window.
+    for (const slug of industrySlugs) paths.add(`/industries/${slug}`)
     // ADR 0009 metadata collection — no exclusion set needed here (unlike the
     // `service-*` Pages): a partner's canonical URL IS `/partners/<slug>`.
     // The index is listed only once it has cards. Code ships ahead of content
