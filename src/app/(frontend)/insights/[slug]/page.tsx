@@ -12,6 +12,7 @@ import { RichText } from '@/components/richText/RichText'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import type { Post } from '@/payload-types'
 import { Container } from '@/components/ui/Container'
+import { boxSizes } from '@/lib/layoutGeometry'
 
 // spec 004 Phase 8 (T029). Insights detail (Shape C) — richText `content`
 // through the existing RichText renderer + the inline-block registry (the
@@ -59,7 +60,7 @@ export default async function InsightPage({ params }: Props) {
 
       {/* A text-only essay: one reading column (~768px) CENTERED in the page
           with equal margins — not a narrow column offset to one side. The wider
-          header/footer chrome (container-lg) intentionally frames this narrower
+          header/footer chrome (SHELL_RAIL) intentionally frames this narrower
           measure, the conventional long-form article layout. */}
       <Container size="md">
         <article data-testid="insight" className="py-16">
@@ -84,7 +85,7 @@ export default async function InsightPage({ params }: Props) {
           {isRelObject(post.featuredImage) ? (
             <ResponsiveImage
               media={post.featuredImage}
-              sizes="(min-width: 768px) 768px, 100vw"
+              sizes={boxSizes({ rail: 'md' })}
               className="mb-10 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
               loading="eager"
               fetchPriority="high"

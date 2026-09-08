@@ -88,4 +88,20 @@ describe('shell ownership — route chrome takes the same shell', () => {
       expect(code(readFileSync(full, 'utf8'))).not.toMatch(/max-w-container-/)
     },
   )
+
+  it.each(ROUTE_FILES.map((f) => [path.relative(ROUTES_DIR, f), f] as const))(
+    '%s derives any sizes attribute rather than typing one',
+    (_name, full) => {
+      // The blocks guard has always forbidden a literal `sizes="`; the route
+      // guard did not, which is how `insights/[slug]`'s hero stayed hand-written
+      // while its `case-studies/[slug]` sibling was derived in the same commit.
+      //
+      // Scoped to VIEWPORT-RELATIVE literals. The defect is a geometry
+      // hand-computed against the rail, and only a `vw`/`calc(100vw …)` value
+      // is that. A constant like `sizes="160px"` on a fixed 128px avatar
+      // (`team/[slug]`) is not rail-derived and would be made worse, not
+      // better, by routing it through `boxSizes`.
+      expect(code(readFileSync(full, 'utf8'))).not.toMatch(/sizes="[^"]*(?:vw|100vw)/)
+    },
+  )
 })

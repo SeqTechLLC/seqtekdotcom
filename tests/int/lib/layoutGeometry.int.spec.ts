@@ -312,11 +312,24 @@ describe('the mirrored constants match their sources', () => {
  * fail for the defect it was written for is worse than no test, because the
  * comment above it tells the next reader to stop checking by hand.
  *
- * Two bindings, in both directions:
+ * Three bindings. Stated precisely, because this docblock overclaimed in three
+ * consecutive review rounds and the reviewer disproved it twice by injection:
  *
- *  1. `sizes` is IMPORTED from the component, so a wrong value there fails here.
+ *  1. `sizes` is imported — from the BLOCK module for `GRID_SIZES`,
+ *     `CAROUSEL_SIZES`, `CARD_SIZES` and `IMAGE_SIZES`, but from
+ *     `@/lib/layoutGeometry` for `SPLIT_MEDIA_SIZES`, which four blocks share.
+ *     So for that one site this binding alone proves only that the LIBRARY
+ *     constant is self-consistent.
  *  2. the grid classes are read out of the component's source, so changing the
- *     layout without changing the geometry also fails here.
+ *     layout without changing the geometry fails here.
+ *  3. the whole `sizes={...}` EXPRESSION is pinned in each component's source —
+ *     and for the split-media site this is what actually holds the line, since
+ *     a bare token check survived swapping the value out from under it (an
+ *     unused import is only a warning, and `npm run lint` sets no
+ *     `--max-warnings`).
+ *
+ * Both injections the reviewer used now fail: swapping `sizes={SPLIT_MEDIA_SIZES}`
+ * in `Hero.tsx`, and changing `TwoColumn`'s `lg:grid-cols-2` to `md:grid-cols-2`.
  */
 describe('call-site geometry — bound to the components, not re-typed', () => {
   const source = (p: string) => readFileSync(path.resolve(p), 'utf8')
