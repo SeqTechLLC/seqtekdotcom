@@ -113,9 +113,14 @@ export function gridSizes({ rail = SHELL_RAIL, columns, gap = 6 }: GridSizesArgs
   const cap = RAIL[rail]
   const crossover = railCrossover(rail)
 
+  // Sorted here rather than trusted: `columnsAt` returns on first match, so an
+  // ascending array would silently emit a wrong string — the exact class of
+  // silent geometry error this module exists to prevent. Callers may pass any
+  // order.
+  const steps = [...columns].sort((a, b) => b[0] - a[0])
   const columnsAt = (viewport: number): number => {
-    for (const [min, n] of columns) if (viewport >= min) return n
-    return columns[columns.length - 1][1]
+    for (const [min, n] of steps) if (viewport >= min) return n
+    return steps[steps.length - 1][1]
   }
 
   const arms: string[] = [
@@ -125,7 +130,7 @@ export function gridSizes({ rail = SHELL_RAIL, columns, gap = 6 }: GridSizesArgs
   // Every breakpoint below the crossover where either the column count or the
   // padding changes starts a new band. Deduped and sorted largest-first so the
   // browser's first-match-wins evaluation picks the right arm.
-  const breaks = [...new Set([...columns.map(([m]) => m), ...PADDING_STEPS.map(([m]) => m)])]
+  const breaks = [...new Set([...steps.map(([m]) => m), ...PADDING_STEPS.map(([m]) => m)])]
     .filter((m) => m < crossover)
     .sort((a, b) => b - a)
 
@@ -139,10 +144,20 @@ export function gridSizes({ rail = SHELL_RAIL, columns, gap = 6 }: GridSizesArgs
   return arms.join(', ')
 }
 
+/** A share of the box that changes at a breakpoint: `[minWidth, fraction]`. */
+export type FractionStep = readonly [number, number]
+
 /**
- * `sizes` for a single (non-grid) element that fills the rail, optionally
- * capped narrower than it — the `Image` block's width variants, a hero's
- * media half. `cap` is a px width; omit for the full rail.
+ * `sizes` for a single (non-grid) element — the `Image` block's width variants,
+ * a carousel slide sized in percentages.
+ *
+ * `fraction` may be a constant OR per-breakpoint steps. That distinction is the
+ * whole point: an element whose share of the box changes at a breakpoint (a
+ * `lg:grid-cols-2` media column is 100% below lg and 50% above; a carousel
+ * slide runs 80% / 48% / 32%) cannot be described by one number, and declaring
+ * the narrow share across every viewport UNDER-declares on small screens, where
+ * the browser then picks a derivative too small and upscales. Prefer
+ * `gridSizes` whenever the element really is a grid cell.
  */
 export function boxSizes({
   rail = SHELL_RAIL,
@@ -151,24 +166,40 @@ export function boxSizes({
 }: {
   rail?: RailSize
   cap?: number
-  fraction?: number
+  fraction?: number | ReadonlyArray<FractionStep>
 } = {}): string {
-  const effective = Math.min(RAIL[rail], cap ?? RAIL[rail]) * fraction
-  const arms: string[] = []
-  // Where `(100vw - padding) * fraction` first reaches the effective width.
-  let crossover = Math.ceil(effective / fraction) + paddingAt(RAIL[rail])
+  const steps: ReadonlyArray<FractionStep> =
+    typeof fraction === 'number' ? [[0, fraction]] : [...fraction].sort((a, b) => b[0] - a[0])
+
+  const fractionAt = (viewport: number): number => {
+    for (const [min, f] of steps) if (viewport >= min) return f
+    return steps[steps.length - 1][1]
+  }
+
+  const capped = Math.min(RAIL[rail], cap ?? RAIL[rail])
+  const topFraction = steps[0][1]
+  const effective = capped * topFraction
+
+  // Where `(100vw - padding) * fraction` first reaches the capped width.
+  let crossover = capped + paddingAt(RAIL[rail])
   for (const [min, pad] of PADDING_STEPS) {
-    const candidate = Math.ceil(effective / fraction) + pad
+    const candidate = capped + pad
     if (candidate >= min) {
       crossover = candidate
       break
     }
   }
-  arms.push(`(min-width: ${crossover}px) ${round(effective)}px`)
-  for (const [min, pad] of PADDING_STEPS) {
-    if (min >= crossover) continue
-    const expr =
-      fraction === 1 ? `calc(100vw - ${pad}px)` : `calc((100vw - ${pad}px) * ${round(fraction)})`
+  const arms: string[] = [`(min-width: ${crossover}px) ${round(effective)}px`]
+
+  // A band starts wherever either the padding or the fraction changes.
+  const breaks = [...new Set([...steps.map(([m]) => m), ...PADDING_STEPS.map(([m]) => m)])]
+    .filter((m) => m < crossover)
+    .sort((a, b) => b - a)
+
+  for (const min of breaks) {
+    const pad = paddingAt(min)
+    const f = fractionAt(min)
+    const expr = f === 1 ? `calc(100vw - ${pad}px)` : `calc((100vw - ${pad}px) * ${round(f)})`
     arms.push(min === 0 ? expr : `(min-width: ${min}px) ${expr}`)
   }
   return arms.join(', ')

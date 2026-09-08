@@ -1,8 +1,7 @@
 import { ResponsiveImage } from '../ui/ResponsiveImage'
 import { Section } from '../ui/Section'
-import { SHELL_RAIL } from '@/lib/layoutGeometry'
 import { RAIL_CLASS } from '../ui/Section'
-import { boxSizes } from '@/lib/layoutGeometry'
+import { boxSizes, SHELL_RAIL } from '@/lib/layoutGeometry'
 
 interface MediaLike {
   url?: string | null

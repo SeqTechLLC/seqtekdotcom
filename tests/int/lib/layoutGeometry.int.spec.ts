@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -7,6 +9,7 @@ import {
   GAP,
   gridSizes,
   MEDIA_LADDER,
+  PADDING_STEPS,
   paddingAt,
   railCrossover,
   RAIL,
@@ -197,12 +200,6 @@ describe('boxSizes — single elements that fill or cap the rail', () => {
       }
     }
   })
-
-  it('a half-rail media column declares half, not the whole rail', () => {
-    const half = boxSizes({ fraction: 0.5 })
-    expect(resolveSizes(half, 1440)).toBeCloseTo(640, 0)
-    expect(resolveSizes(half, 390)).toBeCloseTo(179, 0)
-  })
 })
 
 describe('regression witnesses — the strings that shipped', () => {
@@ -251,5 +248,152 @@ describe('regression witnesses — the strings that shipped', () => {
       ],
     })
     expect(rungFor(resolveSizes(two, 1440) * 2)).toBe(1600)
+  })
+})
+
+/**
+ * The gap that let two regressions ship green.
+ *
+ * The suite above proves `gridSizes(X)` is correct FOR X. It never reads a
+ * component, so it cannot know whether X describes that block's actual grid
+ * classes. `shellOwnership.int.spec.ts` only forbids a literal `sizes="`, so a
+ * wrong DERIVED value passes both. And the visual harness captures at 1440 and
+ * 390 at DPR 1 — two of the only viewports where the bad string happened not to
+ * drift, so "142 of 143 frames byte-identical" was fully consistent with the
+ * regression being present.
+ *
+ * So this table restates each real call site's layout FROM ITS CLASS STRINGS,
+ * quoted in the comment, and checks the geometry the block actually passes.
+ * When a block's classes change, this is what fails.
+ */
+describe('call-site geometry — what each block actually renders', () => {
+  const CALL_SITES: Array<{
+    name: string
+    classes: string
+    sizes: string
+    cell: (viewport: number) => number
+  }> = [
+    {
+      // Hero / CaseStudyHero / TwoColumn / ServicePillarHero:
+      // innerClassName="grid gap-10 lg:grid-cols-2 lg:items-center"
+      name: 'half-rail media column (lg:grid-cols-2, gap-10)',
+      classes: 'grid gap-10 lg:grid-cols-2',
+      sizes: gridSizes({
+        columns: [
+          [1024, 2],
+          [0, 1],
+        ],
+        gap: 10,
+      }),
+      cell: (vw) => (vw >= 1024 ? cellWidth(boxAt(vw), 2, GAP[10]) : boxAt(vw)),
+    },
+    {
+      // Gallery: min-w-[80%] sm:min-w-[48%] lg:min-w-[32%]
+      name: 'carousel slide (80% / 48% / 32%)',
+      classes: 'min-w-[80%] sm:min-w-[48%] lg:min-w-[32%]',
+      sizes: boxSizes({
+        fraction: [
+          [1024, 0.32],
+          [640, 0.48],
+          [0, 0.8],
+        ],
+      }),
+      cell: (vw) => boxAt(vw) * (vw >= 1024 ? 0.32 : vw >= 640 ? 0.48 : 0.8),
+    },
+    {
+      // Gallery grid, columns='2': sm:grid-cols-2 with NO lg override.
+      name: 'gallery 2-up (sm:grid-cols-2, no lg override)',
+      classes: 'grid-cols-1 sm:grid-cols-2 gap-6',
+      sizes: gridSizes({
+        columns: [
+          [640, 2],
+          [0, 1],
+        ],
+      }),
+      cell: (vw) => cellWidth(boxAt(vw), vw >= 640 ? 2 : 1, GAP[6]),
+    },
+    {
+      // TeamGrid cards: sm:grid-cols-2 lg:grid-cols-3, gap-6.
+      name: 'team grid cards (sm:grid-cols-2 lg:grid-cols-3)',
+      classes: 'sm:grid-cols-2 lg:grid-cols-3 gap-6',
+      sizes: gridSizes({
+        columns: [
+          [1024, 3],
+          [640, 2],
+          [0, 1],
+        ],
+      }),
+      cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 3 : vw >= 640 ? 2 : 1, GAP[6]),
+    },
+    {
+      // Image block, `standard`: max-w-3xl inside the rail.
+      name: 'image block, standard variant (max-w-3xl)',
+      classes: 'max-w-3xl',
+      sizes: boxSizes({ cap: 768 }),
+      cell: (vw) => Math.min(768, boxAt(vw)),
+    },
+  ]
+
+  for (const site of CALL_SITES) {
+    it(`${site.name} never drifts a rung`, () => {
+      for (const vw of VIEWPORTS) {
+        const actual = site.cell(vw)
+        const declared = resolveSizes(site.sizes, vw)
+        for (const dpr of DPRS) {
+          expect(
+            rungFor(declared * dpr),
+            `${site.classes} @ ${vw}px ${dpr}x: declared ${declared.toFixed(0)}px for a ${actual.toFixed(0)}px cell`,
+          ).toBe(rungFor(actual * dpr))
+        }
+      }
+    })
+  }
+
+  it('rejects the constant-fraction string that shipped for the half-rail column', () => {
+    // The regression, pinned: a constant 0.5 under-declares below `lg`, where
+    // the parent is still one implicit column and the image fills the box.
+    const constant = boxSizes({ fraction: 0.5 })
+    const actualAt390 = boxAt(390)
+    expect(rungFor(resolveSizes(constant, 390) * 2)).not.toBe(rungFor(actualAt390 * 2))
+  })
+})
+
+/**
+ * `layoutGeometry` centralises the numbers, but it does so by MIRRORING three
+ * other files. That is the PR's own failure mode reappearing at a new seam: a
+ * restated fact cannot be checked. It matters more than usual here because the
+ * suite above uses `MEDIA_LADDER` as ground truth for `rungFor`, so a change to
+ * `Media.ts` alone would leave every assertion green while every real string
+ * mis-selects its derivative.
+ */
+describe('the mirrored constants match their sources', () => {
+  const source = (p: string) => readFileSync(path.resolve(p), 'utf8')
+
+  it('RAIL matches tailwind.config.mjs maxWidth.container-*', () => {
+    const config = source('tailwind.config.mjs')
+    for (const [name, width] of Object.entries(RAIL)) {
+      expect(config, `container-${name}`).toContain(`'container-${name}': '${width}px'`)
+    }
+  })
+
+  it('MEDIA_LADDER matches the Media collection BREAKPOINTS', () => {
+    const media = source('src/collections/Media.ts')
+    const widths = [...media.matchAll(/\{\s*name:\s*'[a-z]+',\s*width:\s*(\d+)\s*\}/g)].map((m) =>
+      Number(m[1]),
+    )
+    expect(widths.length).toBeGreaterThan(0)
+    expect([...widths].sort((a, b) => a - b)).toEqual([...MEDIA_LADDER])
+  })
+
+  it('PADDING_STEPS matches the padding Section actually renders', () => {
+    // Section writes the triple as a literal because Tailwind must see it, so
+    // the binding has to be an assertion rather than a shared constant.
+    const section = source('src/components/ui/Section.tsx')
+    expect(section).toContain("'px-4 md:px-6 lg:px-8'")
+    expect(PADDING_STEPS.map(([min, pad]) => `${min}:${pad}`)).toEqual([
+      '1024:64',
+      '768:48',
+      '0:32',
+    ])
   })
 })

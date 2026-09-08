@@ -43,15 +43,24 @@ export function CtaSection({
   const alignmentCls = variant === 'centered' ? 'text-center' : 'text-left'
 
   return (
-    <Section padding="spacious" className={wrapperCls} innerClassName={alignmentCls}>
-      {background === 'image' && isFullMedia(backgroundImage) && backgroundImage.url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={backgroundImage.url}
-          alt={backgroundImage.alt ?? ''}
-          className="absolute inset-0 -z-10 h-full w-full object-cover opacity-30"
-        />
-      ) : null}
+    <Section
+      padding="spacious"
+      className={wrapperCls}
+      innerClassName={alignmentCls}
+      // `bleed`, not a child: an `absolute inset-0` image inside the rail div
+      // only escapes it because that div is `position: static` today. Adding
+      // `relative` to `innerClassName` would silently clip it to the rail.
+      bleed={
+        background === 'image' && isFullMedia(backgroundImage) && backgroundImage.url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={backgroundImage.url}
+            alt={backgroundImage.alt ?? ''}
+            className="absolute inset-0 -z-10 h-full w-full object-cover opacity-30"
+          />
+        ) : null
+      }
+    >
       <ReadingColumn>
         <h2 className="text-h2 font-bold">{headline}</h2>
         {body ? <p className="mt-4 text-body-lg">{body}</p> : null}

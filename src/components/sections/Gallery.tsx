@@ -23,6 +23,10 @@ interface GalleryProps {
   columns?: '2' | '3' | '4' | null
 }
 
+// Tailwind must see whole class names, so the classes stay literal — but they
+// are keyed off the SAME steps that produce `sizes` below, and the test suite
+// checks the pair against the rendered cell. Stating the fact twice ten lines
+// apart is better than 46 files apart, but only the test makes them agree.
 const GRID_COLUMN_CLASSES: Record<NonNullable<GalleryProps['columns']>, string> = {
   '2': 'sm:grid-cols-2',
   '3': 'sm:grid-cols-2 lg:grid-cols-3',
@@ -56,8 +60,17 @@ const GRID_SIZES: Record<NonNullable<GalleryProps['columns']>, string> = {
   '4': gridSizes({ columns: GRID_COLUMN_STEPS['4'] }),
 }
 
-// The carousel ignores `columns` and sizes slides as a percentage of the box.
-const CAROUSEL_SIZES = boxSizes({ fraction: 0.32 })
+// The carousel ignores `columns` and sizes slides as a percentage of the box —
+// but as THREE percentages, matching `min-w-[80%] sm:min-w-[48%] lg:min-w-[32%]`
+// on the slide below. A single 0.32 is right only in the top band and
+// under-declares in the other two.
+const CAROUSEL_SIZES = boxSizes({
+  fraction: [
+    [1024, 0.32],
+    [640, 0.48],
+    [0, 0.8],
+  ],
+})
 
 const isFullMedia = (value: unknown): value is MediaLike =>
   typeof value === 'object' && value !== null && 'url' in (value as object)

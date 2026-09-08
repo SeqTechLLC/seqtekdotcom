@@ -27,7 +27,7 @@ export function Accordion({ heading, items }: AccordionProps) {
                     ▾
                   </span>
                 </summary>
-                <p className="pb-3 max-w-prose text-body text-text-secondary">{item.body}</p>
+                <p className="pb-3 text-body text-text-secondary">{item.body}</p>
               </details>
             </li>
           ))}
