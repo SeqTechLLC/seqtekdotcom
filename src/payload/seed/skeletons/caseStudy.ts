@@ -1,6 +1,8 @@
 import { buildLexical } from '../showcase/lexical'
 
-// spec 010 US2 (FR-008) — default block skeleton for NEW case-study records.
+// spec 010 US2 (FR-008) — default block skeleton for a case-study `layout`. Payload applies
+// a `defaultValue` on READ as well as create, so this also fills any existing
+// row whose `layout` was never written — see `skeletonDefaultValue.int.spec.ts`.
 // Sourced by `CaseStudies.layout`'s `defaultValue`. Fully editable after create.
 export const caseStudySkeleton = (): Array<Record<string, unknown>> => [
   {

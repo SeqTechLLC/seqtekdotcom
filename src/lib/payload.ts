@@ -453,11 +453,14 @@ export const findPublishedSlugs = async (collection: SluggedCollection): Promise
 // published industry reads back with a body, and this filter currently selects
 // the same set as `findPublishedSlugs`.
 //
-// Kept anyway, deliberately: it is the cheap half of a promise that becomes
-// load-bearing the moment the `defaultValue` is removed or a row is written
-// with an explicit `[]` (which does NOT trigger the default). Do not read it as
-// evidence that bodyless published industries 404 — they serve placeholder
-// copy. `skeletonDefaultValue.int.spec.ts` pins the mechanism.
+// Kept anyway, deliberately: it is the cheap half of a promise, and removing
+// the `defaultValue` re-arms it. That is the ONLY trigger on this stack —
+// blocks live in child tables keyed by `_parent_id`, so "written as `[]`" and
+// "never written" are the same state at rest, and the write path deletes all
+// block rows then re-reads the row it just wrote, handing the skeleton straight
+// back. Do not read this filter as evidence that bodyless published industries
+// 404 — they serve placeholder copy. `skeletonDefaultValue.int.spec.ts` pins
+// both the mechanism and that trigger.
 //
 // Separate reader rather than a predicate on `findPublishedSlugs`, because that
 // one is wrapped in `unstable_cache` keyed by collection and a callback cannot

@@ -56,9 +56,9 @@ export default async function IndustryPage({ params }: Props) {
   const industry = isDraft
     ? ((await getDraftBySlug<Industry>('industries', slug)) ?? published)
     : published
-  // Not just "does the document exist": `layout` arrived in an ADDITIVE
-  // body — and `RenderBlocks` returns nothing for an empty array, which would
-  // serve a 200 with no `<h1>` and no content.
+  // Not just "does the document exist": an industry with an empty `layout` has
+  // no body, and `RenderBlocks` returns nothing for an empty array — which
+  // would serve a 200 with no `<h1>` and no content.
   //
   // CORRECTED after the first lane deploy. This guard does NOT catch the case
   // it was written for. `Industries.layout` carries `industrySkeleton` as its

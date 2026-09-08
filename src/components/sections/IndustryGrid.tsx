@@ -75,9 +75,11 @@ export function IndustryGrid({ heading, industries }: IndustryGridProps) {
       <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* ROADMAP IND-1 — re-linked. These were unlinked in #126 because
             `/industries/<slug>` did not exist and every card was a 404; the
-            route ships with this change. `isLinkable` above is what keeps
-            that true: anything the route would 404 — a draft, or a published
-            industry with no body yet — renders as a plain card, never a link. */}
+            route ships with this change. `isLinkable` above is the guard: a
+            draft never links. A published industry effectively always does —
+            see the correction there — because a skeleton `defaultValue` gives
+            it a body on read, so the link resolves even before anyone writes
+            the page. */}
         {docs.map((d) => (
           <li key={d.id ?? d.slug}>
             {/* `<a>` is transparent content, so the heading belongs in flow

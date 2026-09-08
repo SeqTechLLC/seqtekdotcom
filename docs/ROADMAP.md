@@ -137,9 +137,10 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     1280px cap, not the old 1024.
   - **What is left is the copy.** All seven bodies are placeholders and say so on the page.
   - **Four of the seven have no proof** — Healthcare, FinTech, Manufacturing and Aerospace carry no case
-    study, so their `case-study-grid` renders an empty section. That is deliberate: it makes the gap visible
-    rather than letting a page assert expertise with nothing behind it. Either PROOF-1 lands one each, or
-    those four stay drafts until it does. `CONTENT_NEEDS.md` §11.
+    study. Their `case-study-grid` now renders **nothing at all** — heading included — rather than an empty
+    section: a bare "Selected work" over empty space was itself a claim with nothing behind it. So the gap is
+    no longer self-advertising on the page, which makes the publish decision a human one: either PROOF-1 lands
+    a study each, or those four stay drafts until it does. `CONTENT_NEEDS.md` §11.
 
 - **BOOK-1 — book-a-call widget, routing to Daniel.** The blocks shipped (#124). What is missing:
   - **Daniel's real HubSpot meetings URL** (Megan, portal config). The only URL in the repo is a fixture. The
@@ -182,11 +183,17 @@ Every content change is still a developer task. This tier fixes that before we l
   seed `industries` or drop the relationship (published case studies reference industry IDs, and
   `case-study-grid`'s `by-industry` source returns zero rows against an empty collection); seed `locations` if
   the regional pages get built; delete the `ztest-delete-me` category; give case studies an `ogImage`.
-- **UI-3 — a new record's default skeleton is publishable placeholder copy.** `TeamMembers.layout` defaults to
-  `teamMemberSkeleton`, whose body reads as finished prose — seven members were published without overwriting
-  it. The copy half is done; the code half is not, because the flaw is the skeleton design. The same pattern
-  exists for `caseStudy`, `workshop` and `partner`. **Decide:** ship skeletons as empty blocks, mark skeleton
-  text so a publish check can catch it, or add a placeholder guard to the K8 sweep.
+- **UI-3 — a skeleton `defaultValue` is publishable placeholder copy, on READ as well as create.**
+  `TeamMembers.layout` defaults to `teamMemberSkeleton`, whose body reads as finished prose — seven members
+  were published without overwriting it. The same pattern exists for `caseStudy`, `workshop`, `partner` and
+  now `industries` — five collections, pinned by `skeletonDefaultValue.int.spec.ts`.
+  **Scope corrected:** this is not only about NEW records. Payload applies a `defaultValue` when a field reads
+  back `undefined`, and the Drizzle adapter leaves a blocks field unassigned when the row has no block rows —
+  so adding `layout` to a collection that ALREADY has published rows gives every one of them a skeleton body
+  on the next read. That is what put five `<h1>Industry name</h1>` pages on the preview lane after IND-1
+  deployed; they were retired by unpublishing. The copy half is done; the code half is not, because the flaw
+  is the skeleton design. **Decide:** ship skeletons as empty blocks, mark skeleton text so a publish check
+  can catch it, or add a placeholder guard to the K8 sweep.
 - **INERT-2 residual — controls whose renderer does nothing with them.** The gate
   (`tests/int/blocks/blockOutputContract.int.spec.tsx`) holds every block in `layoutBlocks` to three promises:
   no developer phrase reaches body text, every control changes the output, every select option draws something

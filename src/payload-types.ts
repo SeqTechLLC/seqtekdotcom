@@ -1558,7 +1558,7 @@ export interface CaseStudyGridBlock {
    */
   heading?: string | null;
   /**
-   * How this block picks its case studies. "Latest", "By industry" and "By service" fill themselves in and stay current as you publish; "Manual" uses exactly the studies you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
+   * How this block picks its case studies. "Latest", "By industry" and "By service" fill themselves in and stay current as you publish; "Manual" uses exactly the studies you pick below. Anything you have picked below is IGNORED unless this is set to "Manual". If a self-filling source finds nothing — a sector with no case study tagged to it yet, say — the whole section is left out, heading included, rather than published as an empty promise.
    */
   source: 'manual' | 'latest' | 'by-industry' | 'by-service';
   /**
@@ -1574,7 +1574,7 @@ export interface CaseStudyGridBlock {
    */
   service?: (number | null) | Service;
   /**
-   * Caps the grid at this many cards, whichever way it is filled. If it ends up with none — a by-industry source with nothing tagged to it yet, say — the whole section is left out, heading included, rather than published as an empty promise.
+   * Caps the grid at this many cards, whichever way it is filled.
    */
   limit?: number | null;
   id?: string | null;
@@ -1918,7 +1918,7 @@ export interface IndustryGridBlock {
    */
   heading?: string | null;
   /**
-   * At least two, drawn as cards in the order you pick them. Each card links to that industry page. An industry kept as a draft to tag case studies is not linked — on the live site it does not appear at all, and in preview it shows as a plain card. Note that a published industry ALWAYS links, even if nobody has written its page yet: a new industry starts from a standard outline, so the page exists and shows placeholder text until you replace it.
+   * At least two, drawn as cards in the order you pick them. Each card links to that industry page. An industry kept as a draft to tag case studies is not linked — on the live site it does not appear at all, and in preview it shows as a plain card. Note that a published industry links even if nobody has written its page yet: a new industry starts from a standard outline, so the page exists and shows placeholder text until you replace it.
    */
   industries: (number | Industry)[];
   id?: string | null;

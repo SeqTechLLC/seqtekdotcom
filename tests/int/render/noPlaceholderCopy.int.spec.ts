@@ -29,8 +29,6 @@ import { SKELETON_PLACEHOLDER_COPY } from '../helpers/skeletonPlaceholderCopy'
  * the failure this catches.
  */
 
-export { SKELETON_PLACEHOLDER_COPY } from '../helpers/skeletonPlaceholderCopy'
-
 /** Fields on a block (not a lexical node) that carry human-readable copy. */
 const COPY_FIELDS = [
   'text',
