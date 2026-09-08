@@ -15,7 +15,7 @@ import { buildLexical } from '../showcase/lexical'
 // renders a visibly empty section rather than a claim with nothing behind it.
 //
 // It is NOT in this skeleton, and cannot be: the block's `industry` field is
-// `requiredWhen(source === 'by-industry')` (`CaseStudyGrid.ts:63`), and a
+// `requiredWhen(source === 'by-industry')` (see `requiredWhen` on the block's `industry` field in `CaseStudyGrid.ts`), and a
 // `defaultValue` has no document id to point at — a self-referential grid would
 // save as a required-and-empty relation. So the seeded industries carry the
 // grid (see the content repo's `industries.json`) and an admin-created one

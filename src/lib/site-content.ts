@@ -196,11 +196,11 @@ export const navigation: Navigation = {
     },
     // ROADMAP IND-1. Industries is a top-level item, and making it fit was two
     // changes, both measured on the real header rather than reasoned about:
-    // the row container went `lg` (1024px) -> `xl` (1280px), because it caps
-    // the row at 1024 no matter how wide the window is and every multi-word
-    // label wrapped to two lines even at 1440; and the desktop nav moved to the
-    // `xl` breakpoint, because at a 1024px viewport the container is
-    // viewport-bound (1024 - 64px padding = 960px) and no max-width helps.
+    // the desktop nav moved to the `xl` breakpoint, because at a 1024px viewport
+    // the container is viewport-bound (1024 - 64px padding = 960px) and no
+    // max-width helps. (The row container's `lg` -> `xl` move is NOT here: the
+    // header renders a bare `<Container>` and inherits `SHELL_RAIL` from
+    // `src/lib/layoutGeometry.ts` — ADR 0012 owns that number now.)
     // 1024-1279 gets the drawer, which handles any number of items.
     //
     // `/industries` is a `pages` doc served by the `/[slug]` catch-all, not a
