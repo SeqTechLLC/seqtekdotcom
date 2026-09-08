@@ -121,8 +121,10 @@ export function inScopeRoutes(
     // Same flat namespace, different collection — SVC-2's group branch.
     { path: `/services/${SERVICE_GROUP_SLUG}`, label: 'service group' },
     { path: `/services/${SERVICE_AXIS_SLUG}`, label: 'service axis' },
-    // ROADMAP IND-1 — the detail route. There is no `/industries` listing
-    // route, so the sweep covers the detail page only, same as services.
+    // ROADMAP IND-1 — the detail route only. `/industries` IS a real
+    // destination (a `pages` doc on the catch-all, and the new top-level nav
+    // item), but it is not a route file and this helper does not seed the page
+    // behind it, so the sweep covers the detail page — same as services.
     { path: `/industries/${seed.industrySlug}`, label: 'industry (detail)' },
     { path: '/workshops', label: 'workshops (listing)' },
     { path: `/workshops/${seed.workshopSlug}`, label: 'workshop (detail)' },

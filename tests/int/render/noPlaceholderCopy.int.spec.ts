@@ -46,7 +46,19 @@ export const SKELETON_PLACEHOLDER_COPY = [
 ] as const
 
 /** Fields on a block (not a lexical node) that carry human-readable copy. */
-const COPY_FIELDS = ['text', 'subheadline', 'headline', 'body', 'description', 'label'] as const
+const COPY_FIELDS = [
+  'text',
+  'subheadline',
+  'headline',
+  // `heading` is a live field name (workshopSkeleton). Nothing is missed today
+  // only because its values carry no `.` or `:` and the SENTENCE gate drops
+  // them — a future skeleton putting a sentence there would reopen exactly the
+  // blindness this list was widened to close.
+  'heading',
+  'body',
+  'description',
+  'label',
+] as const
 
 const collectText = (node: unknown, out: string[]): void => {
   if (Array.isArray(node)) return node.forEach((n) => collectText(n, out))

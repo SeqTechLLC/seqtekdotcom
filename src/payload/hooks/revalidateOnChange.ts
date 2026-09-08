@@ -85,34 +85,37 @@ export const buildRevalidatePlan = (
       case 'industries':
         // The detail route plus the index that lists it.
         //
-        // `/industries` needs BOTH a path and a tag, and they do different
-        // jobs: `paths` reach only `invalidateCloudFrontPaths`, while
-        // `revalidateTag` runs on `tags` alone. `/industries` is a `pages` doc
-        // on the `/[slug]` catch-all, so its payload is cached under
+        // `/industries` needs a TAG, and the path alone was never going to do
+        // it. `paths` reach only `invalidateCloudFrontPaths`; `revalidateTag`
+        // runs on `tags`. `/industries` is a `pages` doc on the `/[slug]`
+        // catch-all, so its payload is cached by `getPageBySlug` under
         // `detailCacheTags('pages', 'industries')` — which shares nothing with
-        // this collection's `industries_*` tags. Pushing the path alone purged
-        // the CDN and left the origin re-rendering from the hour-old page
-        // payload: the card stayed stale while the sitemap, tagged
-        // `industries_list`, advertised the URL immediately. The CDN purge made
-        // it look like the refresh had already happened.
+        // this collection's `industries_*` tags. Without the tag, publishing an
+        // industry left the Next data cache holding the hour-old page, so a
+        // card that had just gained a body stayed unlinked for up to
+        // `revalidate: 3600` while the sitemap, tagged `industries_list`,
+        // advertised the URL immediately.
+        //
+        // Note what the path push does NOT buy: `edge-stack.ts` sets
+        // `defaultBehavior.cachePolicy = CACHING_DISABLED`, so HTML routes are
+        // never in the CloudFront cache and there is no `/industries` entry to
+        // purge. The path is pushed for consistency with every other case and
+        // to stay correct if that policy ever changes; the tag is what actually
+        // refreshes the page today.
         //
         // `industry-grid` is not in RESOLVED_BLOCK_TYPES, so its cards are the
         // depth-2 relations embedded in that cached payload rather than a
-        // re-read at render — which is why the page tag is the only thing that
-        // moves them.
+        // re-read at render — which is why the containing document's tag is the
+        // only lever that moves them.
         //
         // LIMIT, stated rather than implied: this busts the known index. The
-        // block is available to any page, and a grid embedded somewhere else
-        // still waits out `revalidate: 3600`. Busting those needs a query for
-        // pages carrying the block, which this hook does not do for any
-        // collection.
+        // same block on the HOMEPAGE would be cached under
+        // `globalCacheTags('homepage')` = `['homepage_list']`, which an
+        // industries change does not emit either — latent rather than live,
+        // since `industry-grid` appears in exactly one document today (the
+        // `industries` page), but a global is the container class to check
+        // first, not another page.
         detailPaths.push(`/industries/${s}`, '/industries')
-        // Inlined rather than imported: `detailCacheTags` lives in
-        // `@/lib/payload`, which pulls React `cache` and the whole reader
-        // module into this Payload hook. The hook already builds its own tags
-        // the same way (`${collection}_${s}` below). Only the per-slug tag is
-        // needed — the payload is cached under both, and `pages_list` would
-        // bust every page.
         tags.push('pages_industries')
         break
       case 'locations':
@@ -134,7 +137,10 @@ export const buildRevalidatePlan = (
     detailPaths.push('/')
   }
 
-  return { tags, paths: Array.from(new Set([...detailPaths, '/sitemap.xml'])) }
+  return {
+    tags: Array.from(new Set(tags)),
+    paths: Array.from(new Set([...detailPaths, '/sitemap.xml'])),
+  }
 }
 
 const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {

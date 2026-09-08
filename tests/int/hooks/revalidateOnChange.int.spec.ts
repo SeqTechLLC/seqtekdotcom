@@ -117,11 +117,14 @@ describe('buildRevalidatePlan — per-collection routing', () => {
   })
 
   // The above is necessary and NOT sufficient, which cost a review round.
-  // `paths` reach only CloudFront; `revalidateTag` runs on `tags`. `/industries`
-  // is a `pages` doc, so its payload is cached under `pages_industries` — a tag
-  // no `industries_*` change emits. Pushing the path alone purged the CDN and
-  // left the origin serving the hour-old page: the card stayed stale while the
-  // sitemap, tagged `industries_list`, advertised the URL immediately.
+  // `paths` reach only `invalidateCloudFrontPaths`; `revalidateTag` runs on
+  // `tags`. `/industries` is a `pages` doc, so its payload is cached under
+  // `pages_industries` — a tag no `industries_*` change emits. Without it the
+  // Next data cache served the hour-old page while the sitemap, tagged
+  // `industries_list`, advertised the URL immediately.
+  //
+  // (The path push buys nothing here today: `edge-stack.ts` sets the default
+  // behaviour to CACHING_DISABLED, so HTML routes are never edge-cached.)
   it('busts the pages-doc cache behind /industries, not just the CDN path', () => {
     const plan = buildRevalidatePlan('industries', { _status: 'published', slug: 'energy' })
     expect(plan.tags).toContain('pages_industries')
