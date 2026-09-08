@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
 import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
+import { Section } from '../ui/Section'
+import { ReadingColumn } from '../ui/ReadingColumn'
 
 type Cta = { label?: string | null; url?: string | null } | null
 
@@ -29,59 +31,50 @@ export function ContactCta({
   // placeholder-publishing defect, through a side door.
   const meeting = meetingUrl?.trim() || null
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      {/* Whole-string ternary rather than an appended fragment, matching
-          `BrandTeaser`: `grid` and `gap-10` do nothing on a one-child
-          container, and a leading space inside a branch is easy to delete
-          into `gap-10lg:grid-cols-2`. */}
-      <div
-        className={
-          meeting
-            ? 'mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center'
-            : 'mx-auto max-w-container-lg'
-        }
-      >
-        <div>
-          <h2 className="text-h2 font-bold">{heading}</h2>
-          {body ? <p className="mt-4 text-body-lg text-text-secondary">{body}</p> : null}
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            {primaryCta?.label && primaryCta?.url ? (
-              <TrackedCtaLink
-                href={primaryCta.url}
-                ctaId="contact-cta-primary"
-                location="contact-cta"
-                label={primaryCta.label}
-                className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
-              >
-                {primaryCta.label}
-              </TrackedCtaLink>
-            ) : null}
-            {secondaryCta?.label && secondaryCta?.url ? (
-              <Link href={secondaryCta.url} className="font-medium underline">
-                {secondaryCta.label}
-              </Link>
-            ) : null}
-          </div>
-        </div>
-        {meeting ? (
-          <div className="rounded-md border border-border-subtle bg-surface-subtle p-6 text-center">
-            <p className="text-caption uppercase tracking-wide text-accent-strong">Book a time</p>
-            <p className="mt-2 text-body">Pick a slot and we will send the invitation.</p>
+    <Section
+      padding="spacious"
+      innerClassName={meeting ? 'grid gap-10 lg:grid-cols-2 lg:items-center' : undefined}
+    >
+      <ReadingColumn flushFrom={meeting ? 'lg' : undefined}>
+        <h2 className="text-h2 font-bold">{heading}</h2>
+        {body ? <p className="mt-4 text-body-lg text-text-secondary">{body}</p> : null}
+        <div className="mt-8 flex flex-wrap items-center gap-4">
+          {primaryCta?.label && primaryCta?.url ? (
             <TrackedCtaLink
-              href={meeting}
-              ctaId="contact-cta-booking"
+              href={primaryCta.url}
+              ctaId="contact-cta-primary"
               location="contact-cta"
-              label="See available times"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+              label={primaryCta.label}
+              className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
             >
-              See available times
+              {primaryCta.label}
             </TrackedCtaLink>
-          </div>
-        ) : null}
-      </div>
-    </section>
+          ) : null}
+          {secondaryCta?.label && secondaryCta?.url ? (
+            <Link href={secondaryCta.url} className="font-medium underline">
+              {secondaryCta.label}
+            </Link>
+          ) : null}
+        </div>
+      </ReadingColumn>
+      {meeting ? (
+        <div className="rounded-md border border-border-subtle bg-surface-subtle p-6 text-center">
+          <p className="text-caption uppercase tracking-wide text-accent-strong">Book a time</p>
+          <p className="mt-2 text-body">Pick a slot and we will send the invitation.</p>
+          <TrackedCtaLink
+            href={meeting}
+            ctaId="contact-cta-booking"
+            location="contact-cta"
+            label="See available times"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+          >
+            See available times
+          </TrackedCtaLink>
+        </div>
+      ) : null}
+    </Section>
   )
 }
 

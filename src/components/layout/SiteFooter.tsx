@@ -36,7 +36,7 @@ export function SiteFooter() {
 
   return (
     <footer data-testid="site-footer" className="bg-surface-inverse text-text-inverse">
-      <Container size="lg">
+      <Container>
         {/* Column count is COUPLED to `footerNav.length`: the brand block below
             spans 2 and each nav column spans 1, so the track count must be
             `2 + footerNav.length` or the row leaves dead space on the right.

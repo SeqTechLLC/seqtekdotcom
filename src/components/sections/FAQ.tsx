@@ -1,6 +1,8 @@
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
 import { RichText } from '../richText/RichText'
+import { Section } from '../ui/Section'
+import { ReadingColumn } from '../ui/ReadingColumn'
 
 interface FAQItem {
   id?: string | null
@@ -15,8 +17,12 @@ interface FAQProps {
 
 export function FAQ({ heading, items }: FAQProps) {
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+    <Section padding="spacious">
+      {/* DESIGN_SYSTEM §11.4, as in `Accordion`: `withProse` caps the answer at
+          65ch but does not centre it, so a full-rail question row sat above a
+          left-flush answer. Heading, rules and both halves of every disclosure
+          share one centred measure column. */}
+      <ReadingColumn>
         <h2 className="text-h2 font-bold">{heading ?? 'Frequently asked questions'}</h2>
         <ul className="mt-8 divide-y divide-border-subtle border-y border-border-subtle">
           {items.map((item, i) => (
@@ -35,8 +41,8 @@ export function FAQ({ heading, items }: FAQProps) {
             </li>
           ))}
         </ul>
-      </div>
-    </section>
+      </ReadingColumn>
+    </Section>
   )
 }
 

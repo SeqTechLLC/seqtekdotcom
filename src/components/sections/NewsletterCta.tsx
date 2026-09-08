@@ -1,5 +1,6 @@
 import { HubspotLeadForm } from '@/components/forms/HubspotLeadForm'
 import { type FormFieldConfig } from '@/lib/hubspot/fields'
+import { Section } from '../ui/Section'
 
 interface NewsletterCtaProps {
   heading?: string | null
@@ -25,21 +26,19 @@ const EMAIL_ONLY: FormFieldConfig[] = [
 export function NewsletterCta({ heading, body, formId }: NewsletterCtaProps) {
   if (!formId) return null
   return (
-    <section className="bg-surface-accent px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-md text-center">
-        <h2 className="text-h2 font-bold">{heading ?? 'Subscribe to SEQTEK Insights'}</h2>
-        {body ? <p className="mt-4 text-body-lg text-text-secondary">{body}</p> : null}
-        <div className="mx-auto mt-8 max-w-md text-left">
-          <HubspotLeadForm
-            formId={formId}
-            fields={EMAIL_ONLY}
-            submitLabel="Subscribe"
-            successHeading="You're on the list."
-            successBody="Look for the next SEQTEK Insights in your inbox."
-          />
-        </div>
+    <Section padding="spacious" background="accent" rail="md" innerClassName="text-center">
+      <h2 className="text-h2 font-bold">{heading ?? 'Subscribe to SEQTEK Insights'}</h2>
+      {body ? <p className="mt-4 text-body-lg text-text-secondary">{body}</p> : null}
+      <div className="mx-auto mt-8 max-w-md text-left">
+        <HubspotLeadForm
+          formId={formId}
+          fields={EMAIL_ONLY}
+          submitLabel="Subscribe"
+          successHeading="You're on the list."
+          successBody="Look for the next SEQTEK Insights in your inbox."
+        />
       </div>
-    </section>
+    </Section>
   )
 }
 

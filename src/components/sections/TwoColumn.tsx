@@ -3,6 +3,8 @@ import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical
 
 import { RichText } from '../richText/RichText'
 import { ResponsiveImage } from '../ui/ResponsiveImage'
+import { Section } from '../ui/Section'
+import { SPLIT_MEDIA_SIZES } from '@/lib/layoutGeometry'
 
 interface MediaLike {
   url?: string | null
@@ -29,7 +31,7 @@ export function TwoColumn({ mediaPosition, body, media, cta }: TwoColumnProps) {
     isFullMedia(media) && media.url ? (
       <ResponsiveImage
         media={media}
-        sizes="(min-width: 1024px) 50vw, 100vw"
+        sizes={SPLIT_MEDIA_SIZES}
         className="w-full rounded-lg border border-border-subtle shadow-sm"
       />
     ) : null
@@ -48,21 +50,19 @@ export function TwoColumn({ mediaPosition, body, media, cta }: TwoColumnProps) {
   )
 
   return (
-    <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
-        {mediaPosition === 'left' ? (
-          <>
-            {mediaEl}
-            {bodyEl}
-          </>
-        ) : (
-          <>
-            {bodyEl}
-            {mediaEl}
-          </>
-        )}
-      </div>
-    </section>
+    <Section padding="default" innerClassName="grid gap-10 lg:grid-cols-2 lg:items-center">
+      {mediaPosition === 'left' ? (
+        <>
+          {mediaEl}
+          {bodyEl}
+        </>
+      ) : (
+        <>
+          {bodyEl}
+          {mediaEl}
+        </>
+      )}
+    </Section>
   )
 }
 

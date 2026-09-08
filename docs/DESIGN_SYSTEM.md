@@ -447,45 +447,54 @@ Horizontal padding: `space-4` (16px) at mobile, `space-6` (24px) at `md`, `space
 
 ### 11.3 Section rhythm
 
-Per §4, three section padding tokens (`section-tight`, `section-default`, `section-spacious`). `<Section>` primitive in BLOCK_LIBRARY.md §3 accepts a `padding` prop that maps to these.
+Per §4, three section padding tokens (`section-tight`, `section-default`, `section-spacious`). `ui/Section` accepts a `padding` prop naming these (ADR 0012). Note the divergence: Section maps them to the flat `py-10 / py-12 / py-16` the code actually uses, not the responsive scale §4 describes — which the code has never used. Reconciling that is a deliberate visual change, and it is now a one-file change rather than a 46-file one.
 
 ### 11.4 Reading column (body-copy alignment)
 
 **Body copy is a left-justified block, capped at the `prose` measure (`max-w-prose`, 65ch), and CENTERED as a block within its container.** This is a hard rule.
 
-- **The rule lives in the block components, not in templates (FR-009, ADR 0009).** After spec 010 every non-blog page renders its body through `RenderBlocks`, so the reading-column wrapper is owned by the block render components (`src/components/sections/Content.tsx`, `Image.tsx`, `Gallery.tsx`, `Deliverables.tsx`, …): each wraps its content in `mx-auto max-w-container-lg` with the centred reading measure inside. Fix the wrapper in one block and that layout is fixed everywhere it renders — the "four-templates-one-bug" problem ADR 0009 cites. The only sanctioned exception is the bespoke Posts (insights) article template. Verify by **measuring element boxes** at desktop+mobile via the visual harness, not by reasoning from classes (memory: "measure, don't reason").
+- **The rule lives in the block components, not in templates (FR-009, ADR 0009).** After spec 010 every non-blog page renders its body through `RenderBlocks`, so the reading-column wrapper is owned by the block render components (`src/components/sections/Content.tsx`, `Image.tsx`, `Gallery.tsx`, `Deliverables.tsx`, …): each takes its shell from `ui/Section` and its measure from `ui/ReadingColumn` (ADR 0012). Blocks no longer write either by hand: `tests/int/layout/shellOwnership.int.spec.ts` fails any block that restates the rail or the section padding. Fix the wrapper in one block and that layout is fixed everywhere it renders — the "four-templates-one-bug" problem ADR 0009 cites. The only sanctioned exception is the bespoke Posts (insights) article template. Verify by **measuring element boxes** at desktop+mobile via the visual harness, not by reasoning from classes (memory: "measure, don't reason").
 - **Why 65ch:** the `@tailwindcss/typography` `prose` class caps line length at 65ch — the readable measure (~50–75 chars/line). Keep it. Do **not** widen body copy past it.
 - **Center the block, not the text.** Use `mx-auto` (auto side margins) so the column sits on the page's centre axis. Never use `text-center` on body copy or headings — centered _text_ (ragged both edges) looks broken; we want left-justified text in a centred block.
 - **Different widths are fine if everything is centred.** A full-width hero, a wide metrics grid, and a 65ch body column can coexist — as long as they all share one vertical centre axis (concentric). What looks broken is **left-justifying** mismatched widths (wide title, narrower hero, narrower body all hugging the left edge with ragged right edges).
-- **A section's heading travels with its body.** Put the heading inside the same centred reading column as its paragraphs (e.g. case-study `readingCol = 'mx-auto max-w-prose'`), so the heading and body share a left edge. Don't leave a full-width heading above a centred body.
+- **A section's heading travels with its body.** Put the heading inside the same centred reading column as its paragraphs — in a block, inside the same `<ReadingColumn>` — so the heading and body share a left edge. Don't leave a full-width heading above a centred body.
 
-**Banned:** `max-w-none` on a `prose`/`Prose` block to "fill the column," and any "left-aligned to the shared edge" wrapper. Both are workarounds for a missing `mx-auto` and were the root of repeated alignment churn. To center a body column, pass `className="mx-auto"` to `<RichText>` (forwarded to `<Prose>`) or wrap the section in `mx-auto max-w-prose`.
+**Banned:** `max-w-none` on a `prose`/`Prose` block to "fill the column," and any "left-aligned to the shared edge" wrapper. Both are what `ui/ReadingColumn` exists to make unwritable: it centres by default, and `flush` / `flushFrom` are the only sanctioned exceptions (a column a grid has already positioned). Both are workarounds for a missing `mx-auto` and were the root of repeated alignment churn. In a block, do not hand-write the measure at all — wrap the content in `<ReadingColumn>`, which centres by default. For rich text, pass `className="mx-auto"` to `<RichText>` (forwarded to `<Prose>`). Four page templates still write it directly and are outside `ReadingColumn`'s reach for now — `case-studies/[slug]`, `workshops/[slug]`, `team/[slug]` and `partners/[slug]` — as do `error.tsx` and `not-found.tsx`. (The bespoke Posts template is NOT among them: it uses `mx-auto max-w-container-md` with `<RichText className="mx-auto">`.)
 
 ### 11.5 Listing pages: never double-container a block
 
 Every grid component (`TeamGrid`, `PartnerGrid`, `PostList`, `CaseStudyGrid`, `WorkshopList`, …) is
-**self-containering**: a full-bleed `<section className="px-4 py-16 md:px-6 lg:px-8">` wrapping an
-`<div className="mx-auto max-w-container-lg">`. That is the block contract — a block renders correctly
-at full page width and needs no help from its caller.
+**self-containering**: since ADR 0012 that means it renders through `ui/Section`, which owns the padding
+and the rail. That is the block contract — a block renders correctly at full page width and needs no help
+from its caller.
 
-So a listing page must **not** wrap the grid in a second `mx-auto max-w-container-lg px-4 …` container.
-Doing so nests two padded containers and insets the grid from the page's own `h1` by the inner section's
-padding — measured at **32px on desktop, 16px on mobile**, on all five listing routes at once
-(ROADMAP UI-1 follow-up, `PROJECT_HISTORY` P5-29). Note the two recipes do not commute: padding + max-width
-on the **same** element lands at a different x than padding on an outer element with the max-width inside it.
+So a listing page must **not** wrap the grid in a second padded container. Doing so nests two padded
+containers and insets the grid from the page's own `h1` — measured at **32px on desktop, 16px on mobile**,
+on all five listing routes at once (ROADMAP UI-1 follow-up, `PROJECT_HISTORY` P5-29). Note the two recipes
+do not commute: padding + max-width on the **same** element lands at a different x than padding on an outer
+element with the max-width inside it.
+
+**Do not hand-write the recipe for the header either.** These five headers restated it as
+`mx-auto max-w-container-lg`, with a comment explaining that they matched the block deliberately — and
+when ADR 0012 moved the rail the blocks followed and the headers did not, putting every `h1` **128px right
+of its own grid**. Use `ui/Container`, which reads the same `SHELL_RAIL` the blocks do.
+`tests/int/layout/shellOwnership.int.spec.ts` now fails any route file that names a `container-*` token.
 
 **The shape:**
 
 ```tsx
-<div data-testid="…">                                     {/* no container, no padding */}
-  <header className="px-4 pt-16 md:px-6 lg:px-8">         {/* the block's own recipe … */}
-    <div className="mx-auto max-w-container-lg">          {/* … both halves of it */}
+<div data-testid="…">                     {/* no container, no padding */}
+  <header className="pt-16">              {/* vertical rhythm only … */}
+    <Container>                           {/* … the shell comes from the owner */}
       <h1 …/>
-    </div>
+    </Container>
   </header>
-  <TeamGrid … />                                          {/* full width; contains itself */}
+  <TeamGrid … />                          {/* full width; contains itself */}
 </div>
 ```
+
+A narrower column is the same owner with a size: `<Container size="md">` for the long-form article
+measure (`insights/[slug]`), never a hand-written `mx-auto max-w-container-md`.
 
 This is §11.4's "a section's heading travels with its body" applied at page level: the page header and the
 grid resolve to the same x and the same column width. Verify by measuring `getBoundingClientRect().x` on

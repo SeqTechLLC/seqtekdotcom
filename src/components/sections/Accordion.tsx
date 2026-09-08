@@ -1,3 +1,6 @@
+import { Section } from '../ui/Section'
+import { ReadingColumn } from '../ui/ReadingColumn'
+
 interface AccordionItem {
   id?: string | null
   title: string
@@ -11,8 +14,8 @@ interface AccordionProps {
 
 export function Accordion({ heading, items }: AccordionProps) {
   return (
-    <section className="px-4 py-12 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
+    <Section padding="default">
+      <ReadingColumn>
         {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
         <ul className="mt-6 divide-y divide-border-subtle border-y border-border-subtle">
           {items.map((item, i) => (
@@ -24,13 +27,13 @@ export function Accordion({ heading, items }: AccordionProps) {
                     ▾
                   </span>
                 </summary>
-                <p className="pb-3 max-w-prose text-body text-text-secondary">{item.body}</p>
+                <p className="pb-3 text-body text-text-secondary">{item.body}</p>
               </details>
             </li>
           ))}
         </ul>
-      </div>
-    </section>
+      </ReadingColumn>
+    </Section>
   )
 }
 

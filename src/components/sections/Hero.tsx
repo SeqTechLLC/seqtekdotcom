@@ -1,6 +1,11 @@
 import Link from 'next/link'
 
 import { ResponsiveImage } from '../ui/ResponsiveImage'
+import { Section } from '../ui/Section'
+import { boxSizes, SPLIT_MEDIA_SIZES } from '@/lib/layoutGeometry'
+
+// The non-split variants put the image across the whole rail.
+const FULL_RAIL_SIZES = boxSizes()
 
 type Cta = { label?: string | null; url?: string | null; variant?: string | null } | null
 
@@ -79,15 +84,28 @@ export function Hero({
   // it drew the identical stacked hero and the picker offered the same layout
   // twice under two names. It now does what it says: copy beside the image.
   const isSplit = variant === 'split' && image !== null
+  const isCentered = alignment === 'center'
 
   const copy = (
     <>
       {eyebrow ? (
         <p className="text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
       ) : null}
-      <h1 className="mt-3 max-w-3xl text-display font-bold md:text-display-xl">{headline}</h1>
+      {/* DESIGN_SYSTEM §11.4: these are capped measures, so a centred hero has
+          to centre THEM, not just the text inside them. Without `mx-auto` here
+          the headline box stayed flush left inside a centred rail — an offset
+          the container-xl move doubled. */}
+      <h1
+        className={`mt-3 max-w-3xl text-display font-bold md:text-display-xl ${isCentered ? 'mx-auto' : ''}`}
+      >
+        {headline}
+      </h1>
       {subheadline ? (
-        <p className="mt-5 max-w-2xl text-body-lg text-text-secondary">{subheadline}</p>
+        <p
+          className={`mt-5 max-w-2xl text-body-lg text-text-secondary ${isCentered ? 'mx-auto' : ''}`}
+        >
+          {subheadline}
+        </p>
       ) : null}
     </>
   )
@@ -108,32 +126,35 @@ export function Hero({
   )
 
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      {/* container-lg: the hero shares the page grid edge with every section
-          below it (two-column, video bands). Headline at display scale with
-          a measure cap so it wraps editorially instead of spanning the
-          container; subheadline capped likewise. */}
+    // The hero shares the page grid edge with every section below it (two-column,
+    // video bands), so it takes the shell rail like everything else. Headline at
+    // display scale keeps its own measure cap so it wraps editorially rather than
+    // spanning the rail; subheadline likewise.
+    <Section
+      padding="spacious"
+      innerClassName={isSplit ? 'grid gap-10 lg:grid-cols-2 lg:items-center' : alignmentCls}
+    >
       {isSplit ? (
-        <div className="mx-auto grid max-w-container-lg gap-10 lg:grid-cols-2 lg:items-center">
+        <>
           <div className={alignmentCls}>
             {copy}
             {ctas}
           </div>
           <ResponsiveImage
             media={image}
-            sizes="(min-width: 1024px) 50vw, 100vw"
+            sizes={SPLIT_MEDIA_SIZES}
             className="w-full rounded-lg border border-border-subtle shadow-sm"
             loading="eager"
             fetchPriority="high"
           />
-        </div>
+        </>
       ) : (
-        <div className={`mx-auto max-w-container-lg ${alignmentCls}`}>
+        <>
           {copy}
           {variant === 'with-image' && image ? (
             <ResponsiveImage
               media={image}
-              sizes="100vw"
+              sizes={FULL_RAIL_SIZES}
               className="mt-8 w-full rounded-lg border border-border-subtle shadow-sm"
               loading="eager"
               fetchPriority="high"
@@ -153,9 +174,9 @@ export function Hero({
             </div>
           ) : null}
           {ctas}
-        </div>
+        </>
       )}
-    </section>
+    </Section>
   )
 }
 

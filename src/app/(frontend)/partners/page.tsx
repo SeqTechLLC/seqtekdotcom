@@ -5,6 +5,7 @@ import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { PartnerGrid } from '@/components/sections/PartnerGrid'
+import { Container } from '@/components/ui/Container'
 
 // ADR 0009: the index is generated from `partners` collection metadata (logo,
 // summary, order), so publishing a partner adds its card here automatically.
@@ -31,20 +32,21 @@ export default async function PartnersPage() {
         ])}
       />
       <div data-testid="partners-listing">
-        {/* The grid below is a self-containering block section (px-4 md:px-6
-          lg:px-8 around an `mx-auto max-w-container-lg` inner div). Wrapping it
-          in a SECOND padded container inset the grid from this header by 32px
-          at desktop / 16px at mobile. The header therefore uses the block's own
-          container recipe rather than its own, so the two resolve to the same
-          x. */}
-        <header className="px-4 pt-16 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-container-lg">
+        {/* The grid below is a self-containering block section, so wrapping it in
+          a second padded container would inset it from this header. The header
+          therefore takes the SAME shell as the block — `ui/Container`, which
+          reads `SHELL_RAIL` — rather than restating the recipe. Restating it is
+          what left these five headers at container-lg when the blocks moved to
+          container-xl, putting every h1 128px right of its own grid (ADR
+          0012). */}
+        <header className="pt-16">
+          <Container>
             <h1 className="text-h1 font-bold">Partners</h1>
             <p className="mt-4 text-body-lg text-text-secondary">
               Platforms we have vetted and stand behind, so our clients get the right tool without
               starting the search from scratch.
             </p>
-          </div>
+          </Container>
         </header>
         <PartnerGrid items={partners} headingLevel="h2" />
       </div>

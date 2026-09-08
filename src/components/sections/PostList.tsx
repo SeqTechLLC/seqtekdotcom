@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Section } from '../ui/Section'
 
 interface PostDoc {
   id?: string | number
@@ -30,51 +31,49 @@ export function PostList({ heading, manualItems, limit = 3, headingLevel = 'h3' 
   const docs = (manualItems ?? []).filter(isDoc).slice(0, limit ?? 12)
   const CardHeading = headingLevel
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h2 font-bold">{heading ?? 'Latest insights'}</h2> : null}
-        {docs.length > 0 ? (
-          <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {docs.map((p) => {
-              const card = (
-                <>
-                  {isMedia(p.featuredImage) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.featuredImage.url}
-                      alt={p.featuredImage.alt ?? p.title ?? ''}
-                      className="aspect-[16/9] w-full object-cover"
-                    />
+    <Section padding="spacious">
+      {heading ? <h2 className="text-h2 font-bold">{heading ?? 'Latest insights'}</h2> : null}
+      {docs.length > 0 ? (
+        <ul className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {docs.map((p) => {
+            const card = (
+              <>
+                {isMedia(p.featuredImage) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.featuredImage.url}
+                    alt={p.featuredImage.alt ?? p.title ?? ''}
+                    className="aspect-[16/9] w-full object-cover"
+                  />
+                ) : null}
+                <div className="p-5">
+                  <CardHeading className="text-h4 font-semibold">{p.title}</CardHeading>
+                  {p.excerpt ? (
+                    <p className="mt-2 text-body text-text-secondary">{p.excerpt}</p>
                   ) : null}
-                  <div className="p-5">
-                    <CardHeading className="text-h4 font-semibold">{p.title}</CardHeading>
-                    {p.excerpt ? (
-                      <p className="mt-2 text-body text-text-secondary">{p.excerpt}</p>
-                    ) : null}
-                  </div>
-                </>
-              )
-              // Whole card is the click target. group + transition for a subtle
-              // hover lift; the heading inherits color so it is not a separate link.
-              return (
-                <li
-                  key={p.id ?? p.slug}
-                  className="group overflow-hidden rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
-                >
-                  {p.slug ? (
-                    <Link href={`/insights/${p.slug}`} className="block h-full">
-                      {card}
-                    </Link>
-                  ) : (
-                    card
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        ) : null}
-      </div>
-    </section>
+                </div>
+              </>
+            )
+            // Whole card is the click target. group + transition for a subtle
+            // hover lift; the heading inherits color so it is not a separate link.
+            return (
+              <li
+                key={p.id ?? p.slug}
+                className="group overflow-hidden rounded-md border border-border-subtle bg-surface shadow-xs transition hover:border-border-strong hover:shadow-sm"
+              >
+                {p.slug ? (
+                  <Link href={`/insights/${p.slug}`} className="block h-full">
+                    {card}
+                  </Link>
+                ) : (
+                  card
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      ) : null}
+    </Section>
   )
 }
 

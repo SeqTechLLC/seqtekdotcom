@@ -1,5 +1,6 @@
 import { BookingCompleteSeam } from '@/components/analytics/BookingCompleteSeam'
 import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
+import { Section } from '../ui/Section'
 
 interface HubspotMeetingsProps {
   meetingUrl: string
@@ -19,30 +20,28 @@ interface HubspotMeetingsProps {
  */
 export function HubspotMeetings({ meetingUrl, heading }: HubspotMeetingsProps) {
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-8">
+    <Section padding="spacious">
       {/* booking_complete seam (spec 008 US3, contract D3) — dormant until the
           inline Meetings embed posts onMeetingBookSucceeded. */}
       <BookingCompleteSeam meetingUrl={meetingUrl} />
-      <div className="mx-auto max-w-container-lg">
-        <h2 className="text-h2 font-bold">{heading ?? 'Book a time'}</h2>
-        <div className="mt-8 rounded-md border border-border-subtle bg-surface-subtle p-8 text-center">
-          <p className="text-body-lg text-text-secondary">
-            Pick a slot that suits you and we will send the invitation.
-          </p>
-          <TrackedCtaLink
-            href={meetingUrl}
-            ctaId="hubspot-meetings-booking"
-            location="hubspot-meetings"
-            label="See available times"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
-          >
-            See available times
-          </TrackedCtaLink>
-        </div>
+      <h2 className="text-h2 font-bold">{heading ?? 'Book a time'}</h2>
+      <div className="mt-8 rounded-md border border-border-subtle bg-surface-subtle p-8 text-center">
+        <p className="text-body-lg text-text-secondary">
+          Pick a slot that suits you and we will send the invitation.
+        </p>
+        <TrackedCtaLink
+          href={meetingUrl}
+          ctaId="hubspot-meetings-booking"
+          location="hubspot-meetings"
+          label="See available times"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+        >
+          See available times
+        </TrackedCtaLink>
       </div>
-    </section>
+    </Section>
   )
 }
 

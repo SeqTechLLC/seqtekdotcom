@@ -1,3 +1,5 @@
+import { Section } from '../ui/Section'
+
 interface StatItem {
   id?: string | null
   number: string
@@ -27,24 +29,22 @@ export function StatsBar({ heading, items }: StatsBarProps) {
       5: 'sm:grid-cols-3 lg:grid-cols-5',
     }[Math.min(list.length, 5)] ?? 'sm:grid-cols-3 lg:grid-cols-5'
   return (
-    <section className="bg-surface-inverse px-4 py-12 text-text-inverse md:px-6 lg:px-8">
-      <div className="mx-auto max-w-container-lg">
-        {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
-        <dl className={`mt-6 grid gap-8 ${colsCls}`}>
-          {list.map((item, i) => (
-            <div key={item.id ?? i}>
-              <dt className="text-display font-bold text-accent">
-                {item.number}
-                {item.suffix ? <span className="text-h2">{item.suffix}</span> : null}
-              </dt>
-              <dd className="mt-1 text-small uppercase tracking-wide text-text-inverse/80">
-                {item.label}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
+    <Section padding="default" background="inverse">
+      {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
+      <dl className={`mt-6 grid gap-8 ${colsCls}`}>
+        {list.map((item, i) => (
+          <div key={item.id ?? i}>
+            <dt className="text-display font-bold text-accent">
+              {item.number}
+              {item.suffix ? <span className="text-h2">{item.suffix}</span> : null}
+            </dt>
+            <dd className="mt-1 text-small uppercase tracking-wide text-text-inverse/80">
+              {item.label}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </Section>
   )
 }
 
