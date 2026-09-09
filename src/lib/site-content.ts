@@ -179,18 +179,17 @@ export const navigation: Navigation = {
             label: 'How We Work',
             items: [
               { label: 'Workshops', url: '/workshops' },
-              // ROADMAP SVC-2 / SVC-3. The `/services/localshoring` leaf is
-              // seeded and published now, so it RESOLVES — the comment that
-              // used to sit here, claiming it "lives only in an unseeded
-              // services.json", went stale on 2026-09-04. It is still not the
-              // target, for a different reason: everything the leaf renders is
-              // the placeholder `services.json` seeded, headline included,
-              // reading "PLACEHOLDER COPY — NOT FOR PUBLICATION", while the
-              // `localshoring` Page carries the finished narrative. Resolving
-              // is not the bar; having something to say is. This link and the
-              // four footer market links flip in the SAME change that moves the
-              // copy onto the leaf and retires the Page (SVC-3's
-              // one-subject-one-URL rule) — never on the strength of a 200.
+              // ROADMAP SVC-2 / SVC-3 owns this. The invariant: the target
+              // stays on the `localshoring` PAGE until the leaf carries real
+              // copy, and this link plus the four footer market links flip in
+              // ONE change with the copy move and the Page's retirement —
+              // never on the strength of a 200.
+              //
+              // The previous comment here asserted lane content state and went
+              // stale when the seed ran. CLAUDE.md says content and lane state
+              // are not documented in this repo, and nothing pins them, so the
+              // measured detail lives in the ROADMAP entry instead of being
+              // restated where it will rot again.
               { label: 'Localshoring', url: '/localshoring' },
             ],
           },
@@ -277,13 +276,9 @@ export const navigation: Navigation = {
         // Interim: the four market landing pages aren't built yet, so the city
         // links point at localshoring (our local-delivery model) rather than
         // 404ing. They stay on the `localshoring` PAGE for the same reason the
-        // header link does (see "How We Work" above): the
-        // `/services/localshoring` leaf resolves today, but everything it
-        // renders is placeholder copy marked NOT FOR PUBLICATION, and the Page
-        // is where the real narrative lives. An earlier cut of this PR moved
-        // them and turned four working links into 404s for nothing. All five
-        // move together, when the copy moves onto the leaf and the Page
-        // retires, in that order.
+        // header link does — see "How We Work" above, and ROADMAP SVC-3. An
+        // earlier cut of this PR moved them and turned four working links into
+        // 404s for nothing. All five move together, in that one change.
         // TODO(stub): build /tulsa-consulting etc. as per-market SEO pages
         // (CONTENT_NEEDS §"Missing pages — linked but 404").
         { label: 'Tulsa', url: '/localshoring' },

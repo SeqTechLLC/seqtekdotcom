@@ -84,7 +84,7 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     "PLACEHOLDER COPY — NOT FOR PUBLICATION" plus one content block that opens with the same string and
     then explains, in-band, why the real copy does not exist yet. Resolving is not the bar. Flipping now
     would put the header nav and the four footer market links onto a published page that tells the reader it
-    is not for publication. The five links (`site-content.ts:194` header, `:289-292` footer markets) flip in
+    is not for publication. The five links (in `site-content.ts`: the `How We Work` panel's Localshoring item, and the four market links in the footer's Connect column) flip in
     the same change that moves real copy onto the leaf and retires the Page — that is SVC-3 below. No
     internal 301 — nothing is live, so the URL simply changes.
   - **Re-pick every block the SVC-2 migration emptied.** `*_rels.service_pillars_id` was dropped across
@@ -115,7 +115,12 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     is a structural placeholder so /services/agentic-ai resolves and the navigation can be reviewed end to
     end". Gated, so not indexed and not public — but it is what anyone given a preview link reads. Same class
     of defect as **UI-3**, different mechanism: UI-3 is a `defaultValue` skeleton applied on read, this is
-    seeded body copy. Neither is caught by anything.
+    seeded body copy. **Only the first half is guarded today.**
+    `tests/int/render/noPlaceholderCopy.int.spec.ts` fails when a skeleton grows placeholder copy that is not
+    enumerated in `SKELETON_PLACEHOLDER_COPY` — but that is an inventory-completeness check on the source, not
+    a publish gate, and it never inspects seeded content. Seeded copy is content, and content is not in git,
+    so nothing in this repo could see the fifteen routes above. Closing that half needs a check that reads
+    **rendered output**, which is K8's job.
 
     **Meanwhile the copy that was supposed to be retired is still the best copy on the lane, and still
     served.** The flat `service-*` Pages are excluded from the sitemap but `/[slug]` still renders them:
