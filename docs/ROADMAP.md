@@ -32,7 +32,7 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 |        | HYG-1 Content data hygiene                                     | Kenn                   |
 |        | UI-3 Default skeletons are publishable placeholder copy        | Kenn                   |
 |        | INERT-2 residual — icons, related-posts resolver, field sweep  | Kenn                   |
-| **P2** | K8 Broken-link + broken-image sweep                            | Kenn                   |
+| **P2** | K8 Sweep — tool shipped; links/images clean, copy is not       | Kenn                   |
 |        | CL-1 Load the drafted content                                  | Kenn                   |
 |        | C-7 Taurex sign-off                                            | Kenn + Megan           |
 |        | BR-5 Stats bar                                                 | Leadership             |
@@ -246,10 +246,36 @@ Every content change is still a developer task. This tier fixes that before we l
 
 ## P2 — Soft launch
 
-- **K8 — broken-link + broken-image sweep.** The number-one soft-launch requirement: everything has to go
-  somewhere. Crawl every route at both viewports for dead links and non-painting images, then re-run after each
-  content load. Individual fixes have shipped; the sweep itself never has. Recurring class: Leonardo mid-post
-  figures live only in the DB, so any post re-seed strips them (`tools/leonardo-images`).
+- **K8 — broken-link + broken-image sweep. The tool shipped; run it after every content load.**
+  `npm run sweep` (`tools/link-sweep`) crawls every internal link from `/`, seeded additionally from the
+  sitemap so orphans are reached, at desktop and mobile. Reports dead routes with the pages linking them,
+  images that never paint, placeholder or repo-internal copy in rendered text, missing `alt`, and links that
+  land somewhere else. `--fail-on` turns any category into a CI gate; the default run is a report.
+
+  **First full run — preview lane, 2026-09-09, 60 routes:**
+
+  | Check                       | Result                           |
+  | --------------------------- | -------------------------------- |
+  | Routes returning 200        | **60 / 60**                      |
+  | Dead or unreachable         | **none**                         |
+  | Images that do not paint    | **none**                         |
+  | Images with no `alt`        | **none**                         |
+  | Links landing elsewhere     | **none**                         |
+  | Broken external links       | **none**                         |
+  | Placeholder / internal copy | **77 findings across 23 routes** |
+
+  So the mechanical half of the soft-launch bar is **met** — everything goes somewhere, and every image
+  paints. The only sweep failures are copy, and they are wholly the two known content items: all **15**
+  `/services/*` routes (SVC-2) and all **8** `/industries*` routes, index included (IND-1). Thirteen of the
+  service routes additionally print `CONTENT_NEEDS.md`, a section sign and a roadmap id to the visitor.
+
+  **Do not gate on `placeholders` until that copy is written** — it would be red on purpose every run, and a
+  gate nobody can make green gets ignored. `--fail-on=links,images,alt,redirects` is green today and worth
+  wiring now.
+
+  Recurring class to watch: Leonardo mid-post figures live only in the DB, so any post re-seed strips them
+  (`tools/leonardo-images`). The sweep catches that on the next run rather than at review time.
+
 - **CL-1 — load the drafted content.** A seeder run, not authoring: the values block onto `/our-story`, the
   testimonial re-seed, the curated photo picks (C-8, `tools/ingest-photos`), the six blog bodies, and the
   three staged Taurex studies. The `teamMembers` slice is done on preview and **not yet on production** — the seeder
