@@ -317,7 +317,7 @@ mobile:
 ```bash
 npm run sweep                                          # localhost:3100
 npm run sweep -- --base-url=https://preview.seqtek.com # a lane
-npm run sweep -- --json=sweep.json --external          # full report + outbound links
+npm run sweep -- --json=/tmp/sweep.json --external      # full report + outbound links
 ```
 
 A Cognito-gated lane needs the ALB session from your own browser (DevTools →

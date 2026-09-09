@@ -14,6 +14,15 @@ export interface CategorisedFindings {
   alt: { route: string; viewport: string; src: string }[]
   placeholders: { route: string; label: string; excerpt: string }[]
   external: { url: string; status: number | null }[]
+  /**
+   * Outbound links whose status says the SERVER refused this client rather
+   * than that the page is gone — 401/403/429, and LinkedIn's 999. Reported so
+   * they are visible, kept out of `external` so they cannot fail a build.
+   * Measured: `facebook.com/seqtek/` answers 400 to one user-agent and 200 to
+   * another. A checker cannot tell that apart from a dead page, so it must not
+   * claim to.
+   */
+  unverifiable: { url: string; status: number | null }[]
   redirects: { route: string; to: string; referrers: string[] }[]
 }
 
@@ -24,6 +33,7 @@ export const categorise = (report: SweepReport): CategorisedFindings => {
     alt: [],
     placeholders: [],
     external: [],
+    unverifiable: [],
     redirects: [],
   }
 
@@ -52,8 +62,24 @@ export const categorise = (report: SweepReport): CategorisedFindings => {
     }
   }
 
-  for (const [url, status] of Object.entries(report.externalStatuses)) {
-    if (status !== null && status >= 400) out.external.push({ url, status })
+  // Only when they were actually requested — see `SweepReport.externalChecked`.
+  // And `null` is a FINDING, not a non-result: `crawl.ts` sets it when the
+  // request threw, which is what a dead domain, a DNS failure or a refused
+  // connection look like. Dropping it made the likeliest broken outbound link
+  // on an old site the one shape this could not see, and disagreed with the
+  // internal `links` category above, which treats a null status as dead.
+  if (report.externalChecked) {
+    for (const [url, status] of Object.entries(report.externalStatuses)) {
+      // Gone, or unreachable at all. `null` is the request having thrown —
+      // dead domain, DNS failure, refused connection.
+      // 500-599, not `>= 500`: LinkedIn's bot challenge is status 999, which
+      // an open-ended comparison files as a server error.
+      if (status === null || status === 404 || status === 410 || (status >= 500 && status < 600)) {
+        out.external.push({ url, status })
+      } else if (status >= 400) {
+        out.unverifiable.push({ url, status })
+      }
+    }
   }
 
   return out
@@ -67,6 +93,12 @@ export const format = (report: SweepReport, found: CategorisedFindings): string 
   const ok = report.pages.filter((p) => p.status === 200).length
 
   lines.push(`swept ${report.pages.length} routes on ${report.baseUrl} — ${ok} returned 200`)
+  if (report.notVisited.length > 0) {
+    lines.push(
+      `✗ crawl stopped at --max-pages: ${report.notVisited.length} routes never visited, ` +
+        `starting with ${report.notVisited.slice(0, 3).join(', ')}`,
+    )
+  }
 
   lines.push(heading('dead or unreachable routes', found.links.length))
   for (const item of found.links) {
@@ -96,9 +128,24 @@ export const format = (report: SweepReport, found: CategorisedFindings): string 
   lines.push(heading('images with no alt attribute', found.alt.length))
   for (const item of found.alt) lines.push(`  ${item.route} [${item.viewport}] ${item.src}`)
 
-  if (found.external.length > 0 || Object.keys(report.externalStatuses).length > 0) {
+  const externalSeen = Object.keys(report.externalStatuses).length
+  if (report.externalChecked) {
     lines.push(heading('broken external links', found.external.length))
-    for (const item of found.external) lines.push(`  ${item.status} ${item.url}`)
+    for (const item of found.external) {
+      lines.push(`  ${item.status ?? 'ERR'} ${item.url}`)
+    }
+    if (found.unverifiable.length > 0) {
+      lines.push(
+        `\n– ${found.unverifiable.length} external links could not be verified (bot protection)`,
+      )
+      for (const item of found.unverifiable) lines.push(`  ${item.status} ${item.url}`)
+    }
+  } else if (externalSeen > 0) {
+    // NOT a tick. `externalStatuses` is filled in for every outbound link the
+    // crawl sees, so gating the tick on its size printed "✓ none" after zero
+    // requests — a check that did not run, reporting clean, in the tool whose
+    // whole purpose is to stop that.
+    lines.push(`\n– ${externalSeen} external links not checked (pass --external)`)
   }
 
   return lines.join('\n')

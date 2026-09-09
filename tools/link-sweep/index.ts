@@ -43,6 +43,12 @@ const main = async (): Promise<number> => {
     console.error('--max-pages must be a positive number')
     return 2
   }
+  // Otherwise the gate is armed against a check that never runs, and passes
+  // for that reason — the silent-success failure this tool is about.
+  if (args.failOn.includes('external') && !args.checkExternal) {
+    console.error('--fail-on=external needs --external, or it can never fire')
+    return 2
+  }
 
   const report = await sweep({
     baseUrl: args.baseUrl.replace(/\/$/, ''),

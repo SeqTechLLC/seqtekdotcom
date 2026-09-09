@@ -9,7 +9,7 @@ import {
   INTERNAL_REFERENCE_PATTERNS,
 } from '../../../tools/link-sweep/checks'
 import { parseArgs } from '../../../tools/link-sweep/args'
-import { categorise, countsByCategory } from '../../../tools/link-sweep/report'
+import { categorise, countsByCategory, format } from '../../../tools/link-sweep/report'
 import { SCRAPE_SOURCE, SCROLL_SOURCE, type SweepReport } from '../../../tools/link-sweep/crawl'
 import { SKELETON_PLACEHOLDER_COPY } from '../../../src/payload/seed/skeletons/placeholderCopy'
 
@@ -176,6 +176,13 @@ describe('parseArgs', () => {
     expect(parseArgs(['--fail-on=links,nonsense'], env()).failOn).toEqual(['links'])
   })
 
+  it('keeps --fail-on=external, which index.ts then rejects without --external', () => {
+    // Parsing stays dumb; the combination is refused where the run happens, so
+    // the gate can never be armed against a check that never runs.
+    expect(parseArgs(['--fail-on=external'], env()).checkExternal).toBe(false)
+    expect(parseArgs(['--fail-on=external'], env()).failOn).toEqual(['external'])
+  })
+
   it('collects unknown arguments instead of ignoring them', () => {
     expect(parseArgs(['--basurl=x'], env()).unknown).toEqual(['--basurl=x'])
   })
@@ -186,6 +193,8 @@ describe('categorise', () => {
     baseUrl: ORIGIN,
     startedAt: '',
     finishedAt: '',
+    externalChecked: true,
+    notVisited: [],
     externalStatuses: { 'https://example.com/gone': 404, 'https://example.com/ok': 200 },
     pages: [
       {
@@ -287,5 +296,81 @@ describe('categorise', () => {
 
   it('reports only the external links that actually failed', () => {
     expect(categorise(report).external).toEqual([{ url: 'https://example.com/gone', status: 404 }])
+  })
+
+  /**
+   * `externalStatuses` is filled in for every outbound link the crawl SEES,
+   * checked or not. Both of these were wrong in the first cut, and both were
+   * wrong in the direction of silence.
+   */
+  it('reports nothing external when nothing external was requested', () => {
+    const unchecked: SweepReport = {
+      ...report,
+      externalChecked: false,
+      externalStatuses: { 'https://example.com/gone': null, 'https://example.com/ok': null },
+    }
+    expect(categorise(unchecked).external).toEqual([])
+  })
+
+  it('says the external check was skipped instead of printing a tick', () => {
+    const unchecked: SweepReport = {
+      ...report,
+      externalChecked: false,
+      externalStatuses: { 'https://example.com/gone': null, 'https://example.com/ok': null },
+    }
+    const out = format(unchecked, categorise(unchecked))
+    expect(out).toContain('2 external links not checked (pass --external)')
+    expect(out).not.toContain('✓ broken external links')
+  })
+
+  it('treats a null status as a dead domain, not as a pass', () => {
+    // `crawl.ts` records null when the request threw: DNS failure, refused
+    // connection, timeout. That is the likeliest broken outbound link there is.
+    const dead: SweepReport = {
+      ...report,
+      externalChecked: true,
+      externalStatuses: { 'https://gone.example': null },
+    }
+    expect(categorise(dead).external).toEqual([{ url: 'https://gone.example', status: null }])
+    expect(format(dead, categorise(dead))).toContain('ERR https://gone.example')
+  })
+
+  it('separates "the server refused this client" from "the page is gone"', () => {
+    // Measured against the real lane: linkedin.com/company/seqtek answers 999
+    // to a bare client and 200 to a browser UA; facebook.com/seqtek/ answers
+    // 400 to one UA and 200 to another. Neither is a broken link, and calling
+    // them broken is the false-entry problem the retry docstring warns about.
+    const social: SweepReport = {
+      ...report,
+      externalChecked: true,
+      externalStatuses: {
+        'https://www.linkedin.com/company/seqtek': 999,
+        'https://www.facebook.com/seqtek/': 400,
+        'https://gone.example/page': 404,
+        'https://dead.example': null,
+      },
+    }
+    const found = categorise(social)
+    expect(found.external.map((e) => e.status).sort()).toEqual([404, null])
+    expect(found.unverifiable.map((e) => e.status).sort()).toEqual([400, 999])
+
+    const out = format(social, found)
+    expect(out).toContain('✗ broken external links — 2')
+    expect(out).toContain('could not be verified (bot protection)')
+  })
+
+  it('does not let an unverifiable link fail a --fail-on=external build', () => {
+    const social: SweepReport = {
+      ...report,
+      externalChecked: true,
+      externalStatuses: { 'https://www.linkedin.com/company/seqtek': 999 },
+    }
+    expect(countsByCategory(categorise(social)).external).toBe(0)
+  })
+
+  it('says so when --max-pages cut the crawl short', () => {
+    const truncated: SweepReport = { ...report, notVisited: ['/a', '/b', '/c', '/d'] }
+    const out = format(truncated, categorise(truncated))
+    expect(out).toContain('crawl stopped at --max-pages: 4 routes never visited')
   })
 })

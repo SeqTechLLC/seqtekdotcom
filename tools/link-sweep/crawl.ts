@@ -21,6 +21,14 @@ export interface Viewport {
   height: number
 }
 
+/**
+ * Sent on external requests only. Social platforms answer an unadorned client
+ * with a challenge rather than the page, so checking outbound links without
+ * this reports a working profile as dead.
+ */
+const BROWSER_UA =
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+
 export const DEFAULT_VIEWPORTS: readonly Viewport[] = [
   { name: 'desktop', width: 1440, height: 900 },
   { name: 'mobile', width: 390, height: 844 },
@@ -67,6 +75,15 @@ export interface SweepReport {
   finishedAt: string
   pages: PageResult[]
   externalStatuses: Record<string, number | null>
+  /**
+   * Whether outbound links were actually requested. `externalStatuses` is
+   * populated for every external link the crawl *sees*, regardless — so
+   * without this the report cannot tell "checked, all fine" from "never
+   * checked", and printed the former for the latter.
+   */
+  externalChecked: boolean
+  /** Routes left unvisited because `--max-pages` was reached. */
+  notVisited: string[]
 }
 
 /** `name=value; name2=value2` → Playwright cookies scoped to the target host. */
@@ -104,7 +121,6 @@ const sitemapRoutes = async (baseUrl: string, cookieHeader?: string): Promise<st
     })
     if (!res.ok) return []
     const xml = await res.text()
-    const origin = new URL(baseUrl).origin
     return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
       .map((m) => m[1].trim())
       .flatMap((loc) => {
@@ -117,7 +133,6 @@ const sitemapRoutes = async (baseUrl: string, cookieHeader?: string): Promise<st
           return []
         }
       })
-      .filter((route) => new URL(route, origin).origin === origin)
   } catch {
     return []
   }
@@ -138,6 +153,13 @@ interface ScrapedPage {
 
 /**
  * Runs in the page.
+ *
+ * TEXT COMES FROM `<main>` ONLY (falling back to `<body>`), while links and
+ * images come from the whole document. Chrome repeats on all 60 routes, so
+ * scanning it would multiply one nav typo into sixty findings — but the
+ * consequence is that placeholder copy in the header or footer is invisible
+ * here. `site-content.ts` is code-owned and covered by
+ * `noPlaceholderCopy.int.spec.ts`, which is the other half of that trade.
  *
  * Deliberately free of inner named functions, and shipped as SOURCE rather than
  * as a function reference. Both constraints come from bugs this tool hit on its
@@ -166,7 +188,6 @@ const scrapeFn = (): ScrapedPage => {
       (a) => a.getAttribute('href') ?? '',
     ),
     images: Array.from(document.querySelectorAll('img')).map((img) => {
-      const rect = img.getBoundingClientRect()
       const style = window.getComputedStyle(img)
       return {
         src: img.currentSrc || img.getAttribute('src') || '',
@@ -177,11 +198,12 @@ const scrapeFn = (): ScrapedPage => {
         // every below-the-fold `loading="lazy"` image reports as broken, which
         // is what the first working run did to the footer logo on 20 pages.
         settled: img.complete,
-        displayed:
-          style.display !== 'none' &&
-          style.visibility !== 'hidden' &&
-          rect.width > 0 &&
-          rect.height > 0,
+        // CSS visibility only, deliberately NOT a non-zero box. An <img> that
+        // fails to load and carries no width/height collapses to 0x0 — so
+        // requiring a box skipped exactly the images this check exists to
+        // find. Responsive blocks hidden at one viewport are `display: none`
+        // and still excluded.
+        displayed: style.display !== 'none' && style.visibility !== 'hidden',
       }
     }),
   }
@@ -264,6 +286,7 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
   const contexts: { viewport: Viewport; context: BrowserContext }[] = []
   const pages = new Map<string, PageResult>()
   const externalStatuses: Record<string, number | null> = {}
+  let notVisited: string[] = []
 
   try {
     browser = await chromium.launch()
@@ -287,7 +310,8 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
       }
     }
 
-    for (let i = 0; i < queue.length && pages.size < maxPages; i += 1) {
+    for (let i = 0; i < queue.length; i += 1) {
+      if (pages.size >= maxPages) break
       const route = queue[i]
       onProgress?.(route, i + 1, queue.length)
 
@@ -304,17 +328,25 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
       const internal = new Set<string>()
       const external = new Set<string>()
 
+      // A route is only broken if EVERY viewport failed. Recording the first
+      // error unconditionally filed routes that rendered fine at one width
+      // under "dead or unreachable" — a false entry in the list that matters
+      // most, which is the thing the retry below exists to prevent.
+      let anyScraped = false
+      let firstError: string | undefined
+
       for (const { viewport, context } of contexts) {
         const { status, finalUrl, scraped, error } = await visitWithRetry(context, baseUrl, route)
         // Status is viewport-independent; first one wins, and a later failure
         // must not overwrite a good status with null.
         if (result.status === null) result.status = status
-        if (error && !result.error) result.error = error
+        if (error && !firstError) firstError = error
         if (finalUrl && !result.redirectedTo) {
           const landed = normaliseRoute(new URL(finalUrl).pathname, new URL(finalUrl).search)
           if (landed !== route) result.redirectedTo = landed
         }
         if (!scraped) continue
+        anyScraped = true
 
         result.title ||= scraped.title
         // Text is the same at both viewports for a server-rendered page, so
@@ -341,6 +373,8 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
         if (findings.length > 0) result.imageFindings[viewport.name] = findings
       }
 
+      if (!anyScraped && firstError) result.error = firstError
+
       result.internalLinks = [...internal].sort()
       result.externalLinks = [...external].sort()
 
@@ -364,6 +398,16 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
       for (const ext of external) externalStatuses[ext] ??= null
     }
 
+    // What the ceiling cut off. Reporting `swept N routes` after silently
+    // dropping the rest is the same "a check that did not run looks clean"
+    // failure this tool exists to catch.
+    //
+    // Derived from what was actually visited, NOT from where the loop stopped:
+    // the queue grows during iteration, so slicing at a pre-loop length
+    // reported every link-discovered route as unvisited. It found one — the
+    // tool's truncation reporter caught the tool's truncation reporter.
+    notVisited = queue.filter((route) => !pages.has(route))
+
     // Referrers, so a dead link names the page that has to be edited rather
     // than only the URL that 404s.
     for (const page of pages.values()) {
@@ -376,7 +420,14 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
       const context = contexts[0].context
       for (const url of Object.keys(externalStatuses)) {
         try {
-          const res = await context.request.get(url, { timeout: 15_000, maxRedirects: 5 })
+          const res = await context.request.get(url, {
+            timeout: 15_000,
+            maxRedirects: 5,
+            // Without this LinkedIn answers 999 to every request and the
+            // company page reports as broken. Measured: bare client 999,
+            // this UA 200.
+            headers: { 'user-agent': BROWSER_UA },
+          })
           externalStatuses[url] = res.status()
         } catch {
           externalStatuses[url] = null
@@ -394,5 +445,7 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
     finishedAt: new Date().toISOString(),
     pages: [...pages.values()],
     externalStatuses,
+    externalChecked: checkExternal,
+    notVisited,
   }
 }

@@ -110,21 +110,21 @@ export const scanText = (
   ],
 ): TextFinding[] => {
   const found: TextFinding[] = []
-  const seen = new Set<string>()
 
   for (const phrase of SKELETON_PLACEHOLDER_COPY) {
     const at = text.indexOf(phrase)
-    if (at !== -1 && !seen.has(phrase)) {
-      seen.add(phrase)
+    if (at !== -1) {
       found.push({ label: 'skeleton copy', excerpt: excerptAround(text, at, phrase.length) })
     }
   }
 
+  // One finding per pattern: the `g` flag is stripped so `exec` always starts
+  // at 0 and returns the first match only. (An earlier `seen` set looked like
+  // it enforced this and could not — each phrase and each label is visited
+  // exactly once, so neither guard could ever be false.)
   for (const { label, test } of patterns) {
-    if (seen.has(label)) continue
     const match = new RegExp(test.source, test.flags.replace('g', '')).exec(text)
     if (match) {
-      seen.add(label)
       found.push({ label, excerpt: excerptAround(text, match.index, match[0].length) })
     }
   }

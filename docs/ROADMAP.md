@@ -254,20 +254,26 @@ Every content change is still a developer task. This tier fixes that before we l
 
   **First full run — preview lane, 2026-09-09, 60 routes:**
 
-  | Check                       | Result                           |
-  | --------------------------- | -------------------------------- |
-  | Routes returning 200        | **60 / 60**                      |
-  | Dead or unreachable         | **none**                         |
-  | Images that do not paint    | **none**                         |
-  | Images with no `alt`        | **none**                         |
-  | Links landing elsewhere     | **none**                         |
-  | Broken external links       | **none**                         |
-  | Placeholder / internal copy | **77 findings across 23 routes** |
+  | Check                       | Result                                             |
+  | --------------------------- | -------------------------------------------------- |
+  | Routes returning 200        | **60 / 60**                                        |
+  | Dead or unreachable         | **none**                                           |
+  | Images that do not paint    | **none**                                           |
+  | Images with no `alt`        | **none**                                           |
+  | Links landing elsewhere     | **none**                                           |
+  | Broken external links       | **none of 4 checked** (1 more unverifiable, below) |
+  | Placeholder / internal copy | **77 findings across 23 routes**                   |
 
   So the mechanical half of the soft-launch bar is **met** — everything goes somewhere, and every image
   paints. The only sweep failures are copy, and they are wholly the two known content items: all **15**
   `/services/*` routes (SVC-2) and all **8** `/industries*` routes, index included (IND-1). Thirteen of the
   service routes additionally print `CONTENT_NEEDS.md`, a section sign and a roadmap id to the visitor.
+
+  **One outbound link cannot be verified by a robot and never will be.** `facebook.com/seqtek/` answers 400
+  to one user-agent and 200 to another; `linkedin.com/company/seqtek` answers 999 to a bare client and 200 to
+  a browser. Both profiles are live — checked by hand 2026-09-09. The sweep sends a browser user-agent and
+  files "the server refused this client" statuses under their own heading, outside the failable count.
+  Neither is a defect to fix.
 
   **Do not gate on `placeholders` until that copy is written** — it would be red on purpose every run, and a
   gate nobody can make green gets ignored. `--fail-on=links,images,alt,redirects` is green today and worth
