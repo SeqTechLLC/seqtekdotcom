@@ -192,11 +192,45 @@ jobs:
 
       # gitleaks/gitleaks-action@v2 now requires a paid license for org repos.
       # Run the gitleaks CLI directly instead — same scanner, no license needed.
+      #
+      # Installed from the pinned upstream release, NOT `apt-get install
+      # gitleaks`. On 2026-09-09 that apt package stopped resolving on
+      # ubuntu-latest and this job began failing at the install step, which
+      # `skipped` the scan below. A secret scan that disappears when a distro
+      # drops a package, and reports the disappearance as a step failure rather
+      # than as an unscanned repo, is not a gate. The version and its sha256 are
+      # pinned so an upstream change is a deliberate edit here.
+      #
+      # NOTHING BUMPS THIS. `.github/dependabot.yml` covers `npm` and
+      # `github-actions`, and the latter updates `uses:` refs, not a version
+      # string in a `run:` block's env. For a secret scanner a frozen rule set
+      # is slow decay — new provider token formats ship upstream and never
+      # reach us. Re-check against the latest release when touching this file,
+      # and at minimum before the DNS cutover. Pinned 2026-09-09; 8.30.1 was
+      # then the current release.
       - name: Install gitleaks
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq gitleaks
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          # --retry-all-errors because plain --retry covers only timeouts and
+          # 408/429/5xx; connection-refused, connection-reset and DNS failures
+          # are exactly the flakes this step exists to survive.
+          curl -sSfL --retry 3 --retry-delay 2 --retry-all-errors \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}" \
+            -o "/tmp/${archive}"
+          echo "${GITLEAKS_SHA256}  /tmp/${archive}" | sha256sum --check --strict -
+          tar -xzf "/tmp/${archive}" -C /tmp gitleaks
+          sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
 
+      # `git`, not `detect`. `detect` is a hidden deprecated alias in 8.x - it
+      # still runs, but it is absent from `gitleaks --help`, and a security gate
+      # should not be spelled in a way the tool no longer documents.
       - name: Scan full history
-        run: gitleaks detect --redact --no-banner --log-level warn --exit-code 1
+        run: gitleaks git --redact --no-banner --log-level warn --exit-code 1
 
   int-tests:
     name: Vitest (integration, testcontainers-backed)

@@ -32,7 +32,7 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 |        | HYG-1 Content data hygiene                                     | Kenn                   |
 |        | UI-3 Default skeletons are publishable placeholder copy        | Kenn                   |
 |        | INERT-2 residual — icons, related-posts resolver, field sweep  | Kenn                   |
-| **P2** | K8 Broken-link + broken-image sweep                            | Kenn                   |
+| **P2** | K8 Sweep — tool shipped; links/images clean, copy is not       | Kenn                   |
 |        | CL-1 Load the drafted content                                  | Kenn                   |
 |        | C-7 Taurex sign-off                                            | Kenn + Megan           |
 |        | BR-5 Stats bar                                                 | Leadership             |
@@ -192,8 +192,13 @@ Every content change is still a developer task. This tier fixes that before we l
   so adding `layout` to a collection that ALREADY has published rows gives every one of them a skeleton body
   on the next read. That is what put five `<h1>Industry name</h1>` pages on the preview lane after IND-1
   deployed; they were retired by unpublishing. The copy half is done; the code half is not, because the flaw
-  is the skeleton design. **Decide:** ship skeletons as empty blocks, mark skeleton text so a publish check
-  can catch it, or add a placeholder guard to the K8 sweep.
+  is the skeleton design. **The third option shipped** — `tools/link-sweep` greps rendered HTML for
+  `SKELETON_PLACEHOLDER_COPY`, which moved to `src/payload/seed/skeletons/placeholderCopy.ts` so the source
+  guard and the sweep could share one list. That closes the detection half: a skeleton published unedited is
+  now visible on the next sweep instead of only when someone reads the page. **Still to decide, and it is the
+  design half:** ship skeletons as empty blocks, or mark skeleton text so a publish check can refuse it at
+  the source. Detection after the fact is a weaker guarantee than a `defaultValue` that cannot be published
+  as-is.
 - **INERT-2 residual — controls whose renderer does nothing with them.** The gate
   (`tests/int/blocks/blockOutputContract.int.spec.tsx`) holds every block in `layoutBlocks` to three promises:
   no developer phrase reaches body text, every control changes the output, every select option draws something
@@ -242,10 +247,42 @@ Every content change is still a developer task. This tier fixes that before we l
 
 ## P2 — Soft launch
 
-- **K8 — broken-link + broken-image sweep.** The number-one soft-launch requirement: everything has to go
-  somewhere. Crawl every route at both viewports for dead links and non-painting images, then re-run after each
-  content load. Individual fixes have shipped; the sweep itself never has. Recurring class: Leonardo mid-post
-  figures live only in the DB, so any post re-seed strips them (`tools/leonardo-images`).
+- **K8 — broken-link + broken-image sweep. The tool shipped; run it after every content load.**
+  `npm run sweep` (`tools/link-sweep`) crawls every internal link from `/`, seeded additionally from the
+  sitemap so orphans are reached, at desktop and mobile. Reports dead routes with the pages linking them,
+  images that never paint, placeholder or repo-internal copy in rendered text, missing `alt`, and links that
+  land somewhere else. `--fail-on` turns any category into a CI gate; the default run is a report.
+
+  **First full run — preview lane, 2026-09-09, 60 routes:**
+
+  | Check                       | Result                                             |
+  | --------------------------- | -------------------------------------------------- |
+  | Routes returning 200        | **60 / 60**                                        |
+  | Dead or unreachable         | **none**                                           |
+  | Images that do not paint    | **none**                                           |
+  | Images with no `alt`        | **none**                                           |
+  | Links landing elsewhere     | **none**                                           |
+  | Broken external links       | **none of 4 checked** (1 more unverifiable, below) |
+  | Placeholder / internal copy | **77 findings across 23 routes**                   |
+
+  So the mechanical half of the soft-launch bar is **met** — everything goes somewhere, and every image
+  paints. The only sweep failures are copy, and they are wholly the two known content items: all **15**
+  `/services/*` routes (SVC-2) and all **8** `/industries*` routes, index included (IND-1). Thirteen of the
+  service routes additionally print `CONTENT_NEEDS.md`, a section sign and a roadmap id to the visitor.
+
+  **One outbound link cannot be verified by a robot and never will be.** `facebook.com/seqtek/` answers 400
+  to one user-agent and 200 to another; `linkedin.com/company/seqtek` answers 999 to a bare client and 200 to
+  a browser. Both profiles are live — checked by hand 2026-09-09. The sweep sends a browser user-agent and
+  files "the server refused this client" statuses under their own heading, outside the failable count.
+  Neither is a defect to fix.
+
+  **Do not gate on `placeholders` until that copy is written** — it would be red on purpose every run, and a
+  gate nobody can make green gets ignored. `--fail-on=links,images,alt,redirects` is green today and worth
+  wiring now.
+
+  Recurring class to watch: Leonardo mid-post figures live only in the DB, so any post re-seed strips them
+  (`tools/leonardo-images`). The sweep catches that on the next run rather than at review time.
+
 - **CL-1 — load the drafted content.** A seeder run, not authoring: the values block onto `/our-story`, the
   testimonial re-seed, the curated photo picks (C-8, `tools/ingest-photos`), the six blog bodies, and the
   three staged Taurex studies. The `teamMembers` slice is done on preview and **not yet on production** — the seeder
