@@ -92,14 +92,45 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     `service-cards.pillar` wherever the source was "By pillar". `pillars` is `required, minRows: 1`, so those
     documents are invalid until re-picked. A re-seed repairs whatever the seed files cover; the exposure is
     what was authored directly in the admin. Check a lane.
-  - **Write the copy. This is the P0 item now.** All 13 service pages are seeded as placeholders — measured
-    2026-09-04, every one is a hero plus one content block at **540-850 characters**. The old Wix service
-    pages averaged 348 words, so these are roughly a third of what they replaced. The menu is fully wired and
-    delivers a visitor to a near-empty page, which is the exact failure Hank and Brent both described: a
-    capability list without substance. Ten leaves, three groups, two axes (`CONTENT_NEEDS.md` §12).
-    **A group page needs a reason to exist:** if it is only a list of its own children it is a worse version
-    of the menu that got you there. That is the bar. Flag it early if a grouping produces a heading nothing
-    can be written about.
+  - **Write the copy. This is the P0 item now, and it is worse than "thin" — re-measured on the lane
+    2026-09-09 through the Cognito gate, rendered text not seed files.** All **15** service routes return 200
+    and **every single one prints the literal string `PLACEHOLDER COPY — NOT FOR PUBLICATION` in visible body
+    text.** That includes both axis pages, which are the header nav triggers' own destinations.
+    Main-content character counts of what actually renders:
+
+    | Route                   | Chars   | Notes                                                      |
+    | ----------------------- | ------- | ---------------------------------------------------------- |
+    | `/services/what-we-do`  | **165** | Placeholder subhead + a bare list of the three group names |
+    | `/services/how-we-work` | 360     |                                                            |
+    | 3 group pages           | 473-530 |                                                            |
+    | 10 leaves               | 501-603 |                                                            |
+
+    The old Wix service pages averaged 348 words (~2,000 chars), so these are roughly a quarter of what they
+    replaced. The menu is fully wired and delivers a visitor to a page that tells them it is not for
+    publication — the exact failure Hank and Brent both described, a capability list without substance, made
+    literal.
+
+    **The placeholder text also leaks the repo's own planning notes into rendered output.** The bodies name
+    `CONTENT_NEEDS.md §12` and `§1.B`, say "Brent's nine services", and one of them explains that "this page
+    is a structural placeholder so /services/agentic-ai resolves and the navigation can be reviewed end to
+    end". Gated, so not indexed and not public — but it is what anyone given a preview link reads. Same class
+    of defect as **UI-3**, different mechanism: UI-3 is a `defaultValue` skeleton applied on read, this is
+    seeded body copy. Neither is caught by anything.
+
+    **Meanwhile the copy that was supposed to be retired is still the best copy on the lane, and still
+    served.** The flat `service-*` Pages are excluded from the sitemap but `/[slug]` still renders them:
+    `/service-ai-integration` **2,985 chars**, `/service-digital-transformation` **2,465**,
+    `/service-localshoring` **1,786**, `/localshoring` **1,545** — all real prose, no placeholder markers
+    except `service-localshoring`'s one `[PLACEHOLDER - Hank-gated copy...]` line. Only `/service-overview`
+    404s. So the seed did not replace this content, it **shadowed** it: the good version sits at an
+    unadvertised flat URL and the placeholder sits at the URL the nav points to. Mining these four before
+    writing anything new is the cheapest first move.
+
+    Ten leaves, three groups, two axes (`CONTENT_NEEDS.md` §12). **A group page needs a reason to exist:** if
+    it is only a list of its own children it is a worse version of the menu that got you there — which is
+    exactly what `/services/what-we-do` is today. That is the bar. Flag it early if a grouping produces a
+    heading nothing can be written about.
+
   - **`services.json` lists each of the three group slugs twice** — once with a real 3-block layout, once with
     an empty one. Whichever seeds last wins, so a re-seed can silently blank a group page. Fix in the content
     repo before the next run.
@@ -118,14 +149,17 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     argument, the four markets, the Sequoyah tie-in, and a **named** testimonial (Jeremy Larson, Cross
     Precision Measurement). This is what all five chrome links point at today, and it is the only one of the
     three that is publishable as it stands.
-  - **Page `service-localshoring`** — ~1,380 chars, **unreachable**: `/services/[offering]` was deleted in
-    SVC-2 and the slug is excluded from the sitemap, so nothing links it and nothing should. Its prose
-    carries a live `[PLACEHOLDER - Hank-gated copy...]` marker, but it also holds the one asset the other
-    two lack: a **complete, real `comparison-table` block** (Localshoring / Nearshore / Offshore across
-    overlap hours, cultural fit, seniority, ramp, plus a best-for row). That block is structure and numbers,
-    not Hank-gated voice, so it can move as-is.
-  - **Service leaf `localshoring`** (`/services/localshoring`) — published on preview, entirely placeholder.
-    It owns the URL the IA wants and none of the content.
+  - **Page `service-localshoring`** — 1,786 chars rendered. **Unlinked but not unreachable:**
+    `/services/[offering]` was deleted in SVC-2 and the slug is excluded from the sitemap, but `pages` are
+    flat at `/[slug]`, so `/service-localshoring` still returns 200 and renders. Its prose carries a live
+    `[PLACEHOLDER - Hank-gated copy...]` marker and its hero eyebrow still reads "Technology partnership".
+    It also holds the one asset the other two lack: a **complete, real `comparison-table` block**
+    (Localshoring / Nearshore / Offshore across overlap hours, cultural fit, seniority, ramp, plus a best-for
+    row), confirmed rendering on the lane. That block is structure and numbers, not Hank-gated voice, so it
+    can move as-is.
+  - **Service leaf `localshoring`** (`/services/localshoring`) — published on preview, 522 rendered chars,
+    entirely placeholder, and it prints `CONTENT_NEEDS.md §12` / `§1.B` and "Brent's nine services" on the
+    page. It owns the URL the IA wants and none of the content.
 
   **The URL question is not open** — the flat leaf wins, because cross-listing means one page and two links,
   never two pages, and the flat leaf URL is that rule expressed in routing. **The content call that is left
