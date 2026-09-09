@@ -50,7 +50,7 @@
     "@payloadcms/ui": "^3.87.1",
     "@tailwindcss/typography": "^0.5.16",
     "autoprefixer": "^10.5.4",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "dotenv": "17.4.2",
     "graphql": "^16.8.1",
     "jose": "6.2.3",
