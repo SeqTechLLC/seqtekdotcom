@@ -721,6 +721,29 @@ describe('Users local strategy disabled (T112 / FR-017 / FR-018)', () => {
     expect(auth.disableLocalStrategy).toEqual({ enableFields: true })
   })
 
+  /**
+   * GHSA-jg8r-5jh2-v2xj. Payload's `unlock` access defaults to "any
+   * authenticated user", so an editor could clear another account's lockout.
+   * The advisory is against the default, not a bug, and the remediation is to
+   * declare the control — which means nothing fails if the declaration is ever
+   * dropped. Asserted on the config rather than through the access matrix
+   * above, because `unlock` is not one of that runner's five ops and there is
+   * no `unlock` REST route in `@payloadcms/next` to exercise.
+   *
+   * Inert today (`disableLocalStrategy` means no account ever locks), so this
+   * guards the declaration rather than a reachable behaviour. Sourced from
+   * `docs/ARCHITECTURE.md` §6 like the matrix.
+   */
+  it('Users.access.unlock is declared, and admin-only', () => {
+    const unlock = Users.access?.unlock
+    expect(typeof unlock).toBe('function')
+    const asRole = (roles: string[]) => unlock?.({ req: { user: { roles } } } as never) as boolean
+    expect(asRole(['admin'])).toBe(true)
+    expect(asRole(['editor'])).toBe(false)
+    expect(asRole([])).toBe(false)
+    expect(unlock?.({ req: { user: null } } as never)).toBe(false)
+  })
+
   it('Users.auth.strategies registers only the JWT strategy (no local)', () => {
     expect(isAuthObject(Users.auth)).toBe(true)
     const auth = Users.auth as AuthObject
