@@ -34,6 +34,24 @@ a high+ advisory _not already in the baseline_. So a pre-existing advisory — a
 stale lockfile failing CI on its own, say — can't mask an override's own
 contribution, and a dirty baseline is itself surfaced as "CI is red right now".
 
+### "Stale" is gate-relative, so read it as a recommendation, not an instruction
+
+The verdict is measured against the CI gate, and the gate is `--audit-level=high`.
+So an override that no longer suppresses a **high** but still suppresses a
+**moderate** is reported `STALE` — truthfully, by this definition — while
+removing it would still make the tree worse.
+
+That is not hypothetical. On 2026-09-09 all five security overrides reported
+`STALE`. Dropping the four non-`tsx` scopes together and relocking took the
+production tree from **1 moderate to 6**: the `drizzle-kit > @esbuild-kit/*`
+chain under `@payloadcms/db-postgres` comes straight back, as moderates. They
+were kept.
+
+So: **before acting on a `STALE` verdict, remove the scopes, relock, and read
+the full `npm audit --omit=dev` output — not just the exit code.** A clean gate
+is the floor, not the goal. If a removal trades four lines of config for five
+new moderates, keep the override and note why here.
+
 ## How it works
 
 Every scenario is resolved and audited in a **throwaway temp directory** seeded
