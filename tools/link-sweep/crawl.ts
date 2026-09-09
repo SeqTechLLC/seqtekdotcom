@@ -127,7 +127,13 @@ interface ScrapedPage {
   title: string
   text: string
   hrefs: string[]
-  images: { src: string; alt: string | null; painted: boolean; displayed: boolean }[]
+  images: {
+    src: string
+    alt: string | null
+    painted: boolean
+    settled: boolean
+    displayed: boolean
+  }[]
 }
 
 /**
@@ -166,6 +172,11 @@ const scrapeFn = (): ScrapedPage => {
         src: img.currentSrc || img.getAttribute('src') || '',
         alt: img.getAttribute('alt'),
         painted: img.naturalWidth > 0 && img.naturalHeight > 0,
+        // `complete` is true once the load finished, successfully or not. A
+        // lazy image that has not been requested yet is false — without this,
+        // every below-the-fold `loading="lazy"` image reports as broken, which
+        // is what the first working run did to the footer logo on 20 pages.
+        settled: img.complete,
         displayed:
           style.display !== 'none' &&
           style.visibility !== 'hidden' &&
@@ -177,6 +188,32 @@ const scrapeFn = (): ScrapedPage => {
 }
 
 export const SCRAPE_SOURCE = `(${scrapeFn.toString()})()`
+
+/**
+ * Walk the page so `loading="lazy"` images below the fold are actually
+ * requested. Without this the sweep judges an image that was never asked for,
+ * and `settled` alone would just hide it rather than check it.
+ *
+ * A plain string, not a transpiled function — see SCRAPE_SOURCE above.
+ */
+export const SCROLL_SOURCE = `(async () => {
+  const step = Math.max(200, window.innerHeight)
+  for (let y = 0; y < document.body.scrollHeight; y += step) {
+    window.scrollTo(0, y)
+    await new Promise((resolve) => setTimeout(resolve, 80))
+  }
+  window.scrollTo(0, 0)
+  await new Promise((resolve) => setTimeout(resolve, 200))
+})()`
+
+/**
+ * One transport-level retry. A `net::ERR_NETWORK_CHANGED` on the operator's
+ * laptop is not a finding about the site, and without this it lands in the
+ * report as a dead route — which is worse than a miss, because it teaches the
+ * reader to skim the dead-route list.
+ */
+const isTransient = (message: string): boolean =>
+  /net::ERR_|ECONNRESET|socket hang up|Timeout .* exceeded/i.test(message)
 
 const visit = async (
   context: BrowserContext,
@@ -197,6 +234,8 @@ const visit = async (
     // `load` fires before lazy images settle; give the network a moment but do
     // not fail the page over a long-poll or an analytics beacon that never idles.
     await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {})
+    await page.evaluate(SCROLL_SOURCE).catch(() => {})
+    await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {})
     const scraped = (await page.evaluate(SCRAPE_SOURCE)) as ScrapedPage
     return { status: response?.status() ?? null, finalUrl: page.url(), scraped }
   } catch (error) {
@@ -204,6 +243,16 @@ const visit = async (
   } finally {
     await page.close()
   }
+}
+
+const visitWithRetry = async (
+  context: BrowserContext,
+  baseUrl: string,
+  route: string,
+): Promise<Awaited<ReturnType<typeof visit>>> => {
+  const first = await visit(context, baseUrl, route)
+  if (!first.error || !isTransient(first.error)) return first
+  return visit(context, baseUrl, route)
 }
 
 export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
@@ -256,7 +305,7 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
       const external = new Set<string>()
 
       for (const { viewport, context } of contexts) {
-        const { status, finalUrl, scraped, error } = await visit(context, baseUrl, route)
+        const { status, finalUrl, scraped, error } = await visitWithRetry(context, baseUrl, route)
         // Status is viewport-independent; first one wins, and a later failure
         // must not overwrite a good status with null.
         if (result.status === null) result.status = status
@@ -284,8 +333,9 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
         const findings: ImageFinding[] = []
         for (const img of scraped.images) {
           if (!img.displayed) continue
-          if (!img.painted) findings.push({ src: img.src, alt: img.alt, reason: 'not painting' })
-          else if (img.alt === null)
+          if (img.settled && !img.painted) {
+            findings.push({ src: img.src, alt: img.alt, reason: 'not painting' })
+          } else if (img.alt === null)
             findings.push({ src: img.src, alt: null, reason: 'missing alt' })
         }
         if (findings.length > 0) result.imageFindings[viewport.name] = findings

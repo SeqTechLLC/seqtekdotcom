@@ -10,7 +10,7 @@ import {
 } from '../../../tools/link-sweep/checks'
 import { parseArgs } from '../../../tools/link-sweep/args'
 import { categorise, countsByCategory } from '../../../tools/link-sweep/report'
-import { SCRAPE_SOURCE, type SweepReport } from '../../../tools/link-sweep/crawl'
+import { SCRAPE_SOURCE, SCROLL_SOURCE, type SweepReport } from '../../../tools/link-sweep/crawl'
 import { SKELETON_PLACEHOLDER_COPY } from '../../../src/payload/seed/skeletons/placeholderCopy'
 
 /**
@@ -132,6 +132,16 @@ describe('SCRAPE_SOURCE', () => {
     for (const needle of ['a[href]', 'querySelectorAll("img")', 'naturalWidth', 'innerText']) {
       expect(SCRAPE_SOURCE.replace(/'/g, '"')).toContain(needle)
     }
+  })
+
+  it('reads `complete`, without which every lazy image reports as broken', () => {
+    expect(SCRAPE_SOURCE).toContain('complete')
+  })
+
+  it('has a scroll pass, without which lazy images are never even requested', () => {
+    expect(SCROLL_SOURCE).toContain('scrollTo')
+    expect(SCROLL_SOURCE).toContain('scrollHeight')
+    expect(SCROLL_SOURCE.endsWith(')()')).toBe(true)
   })
 })
 
