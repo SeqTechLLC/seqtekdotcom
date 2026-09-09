@@ -48,13 +48,19 @@ const CARD =
   'flex h-full flex-col rounded-md border border-border-subtle bg-surface p-5 text-center shadow-xs'
 
 // Published is not the same as ROUTABLE. `/industries/[slug]` calls `notFound()`
-// on an industry with an empty `layout`, and the five pre-IND-1 rows are exactly
-// that after this migration: published, body NULL, because the seed cannot run
-// before the deploy that creates the column. The sitemap reader already draws
-// this distinction — `findPublishedIndustrySlugsWithBody` exists so the sitemap
-// does not "advertise a URL that 404s" — and a linked card is the same promise
-// to the same route, so it takes the same predicate. Without the body check
-// this block re-creates the #126 defect it is being re-linked to fix.
+// on an industry with an empty `layout`, so a card must not link to one. The
+// sitemap reader draws the same distinction — `findPublishedIndustrySlugsWithBody`
+// exists so the sitemap does not "advertise a URL that 404s" — and a linked card
+// is the same promise to the same route, so it takes the same predicate.
+//
+// CORRECTED after the first lane deploy: the case this was written for is NOT
+// the one that occurs. `Industries.layout` has `industrySkeleton` as its
+// `defaultValue` and Payload applies that on read, so a pre-IND-1 row comes back
+// with a two-block body, `isLinkable` returns true, and the card links to a page
+// that serves the skeleton's placeholder copy. The body check is still right —
+// it is the cheap half of the promise, and it holds for a genuinely empty
+// layout — but the state it was aimed at is retired by UNPUBLISHING, which is
+// what the content seed does.
 //
 // Depth-2 population returns the full document, so `layout` is present here.
 const isLinkable = (d: IndustryDoc): boolean =>
@@ -69,9 +75,11 @@ export function IndustryGrid({ heading, industries }: IndustryGridProps) {
       <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* ROADMAP IND-1 — re-linked. These were unlinked in #126 because
             `/industries/<slug>` did not exist and every card was a 404; the
-            route ships with this change. `isLinkable` above is what keeps
-            that true: anything the route would 404 — a draft, or a published
-            industry with no body yet — renders as a plain card, never a link. */}
+            route ships with this change. `isLinkable` above is the guard: a
+            draft never links. A published industry effectively always does —
+            see the correction there — because a skeleton `defaultValue` gives
+            it a body on read, so the link resolves even before anyone writes
+            the page. */}
         {docs.map((d) => (
           <li key={d.id ?? d.slug}>
             {/* `<a>` is transparent content, so the heading belongs in flow

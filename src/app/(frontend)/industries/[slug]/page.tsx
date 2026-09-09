@@ -56,12 +56,21 @@ export default async function IndustryPage({ params }: Props) {
   const industry = isDraft
     ? ((await getDraftBySlug<Industry>('industries', slug)) ?? published)
     : published
-  // Not just "does the document exist": `layout` arrived in an ADDITIVE
-  // migration, so an industry created before it is published with an empty
-  // body — and `RenderBlocks` returns nothing for an empty array, which would
-  // serve a 200 with no `<h1>` and no content. The five pre-IND-1 rows are in
-  // exactly that state until the seed retires them, and the seed cannot run
-  // before the deploy because it writes a column this migration creates.
+  // Not just "does the document exist": an industry with an empty `layout` has
+  // no body, and `RenderBlocks` returns nothing for an empty array — which
+  // would serve a 200 with no `<h1>` and no content.
+  //
+  // CORRECTED after the first lane deploy. This guard does NOT catch the case
+  // it was written for. `Industries.layout` carries `industrySkeleton` as its
+  // `defaultValue`, and Payload applies that on READ, so a row created before
+  // the field existed comes back with a two-block body rather than an empty
+  // one. On the lane the five pre-IND-1 rows served HTTP 200 with the
+  // skeleton's placeholder copy — `<h1>Industry name</h1>` — not a 404.
+  //
+  // So an empty `layout` is close to unreachable through Payload, and what
+  // actually retires an industry is UNPUBLISHING it, which the content seed
+  // does. Keep the guard: it is correct for a genuinely empty body and costs
+  // nothing. Do not mistake it for a placeholder guard.
   if (!industry || !(industry.layout ?? []).length) notFound()
 
   // ROADMAP UI-2: collection-backed blocks resolve their items here, before the

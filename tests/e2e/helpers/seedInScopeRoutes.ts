@@ -172,7 +172,12 @@ export async function seedInScopeRoutes(
 
   // ROADMAP IND-1: an industry is a routed page now, not only a taxonomy
   // target, so this fixture needs a body and a published status or
-  // `/industries/<slug>` 404s in the a11y sweep below.
+  // `/industries/<slug>` 404s in the a11y sweep below — the PUBLISHED status is
+  // what that depends on, since a draft is not returned by the published
+  // reader. The body is a separate matter: a skeleton `defaultValue` fills
+  // `layout` on read, so the route would resolve without one. The fixture body
+  // is what gives the sweep real content to measure, not what keeps it off a
+  // 404. See `skeletonDefaultValue.int.spec.ts`.
   const industry = await payload.create({
     collection: 'industries',
     data: {

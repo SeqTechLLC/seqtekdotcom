@@ -1,6 +1,8 @@
 import { buildLexical } from '../showcase/lexical'
 
-// ADR 0009 — default block skeleton for NEW partner records. Sourced by
+// ADR 0009 — default block skeleton for a partner `layout`. Payload applies a
+// `defaultValue` on READ as well as create, so this also fills any existing
+// row whose `layout` was never written — see `skeletonDefaultValue.int.spec.ts`. Sourced by
 // `Partners.layout`'s `defaultValue`. Fully editable after create; uniformity
 // comes from this content-level template, never from a render template.
 //

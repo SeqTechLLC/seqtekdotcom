@@ -41,8 +41,11 @@ describe('IndustryGrid — a card links only where the route resolves', () => {
 
   it('does not link a published industry with an empty body', () => {
     // `/industries/[slug]` calls notFound() on an empty layout, so a link here
-    // would advertise a 404 — the state every pre-IND-1 row is in between the
-    // deploy and the seed.
+    // would advertise a 404. Note this state is hard to reach through Payload:
+    // a skeleton `defaultValue` fills `layout` on read, which is why the
+    // pre-IND-1 rows served placeholder pages rather than 404ing. See
+    // `skeletonDefaultValue.int.spec.ts`. The guard is the cheap half of the
+    // promise, not a description of what those rows did.
     expect(linkFor(industry({ layout: [] }))).toBeNull()
   })
 
@@ -52,11 +55,12 @@ describe('IndustryGrid — a card links only where the route resolves', () => {
   })
 
   it('does not link a published industry whose body is NULL', () => {
-    // The state the whole predicate was written for, and the one the earlier
-    // spec left unasserted: the five pre-IND-1 rows are published with a NULL
-    // `layout` after the additive migration. The generated `Industry` type
-    // declares `layout?: (…)[] | null`, so null is a real shape, not a
-    // hypothetical.
+    // `null` is a real shape — the generated `Industry` type declares
+    // `layout?: (…)[] | null` — so the predicate has to handle it. It is NOT
+    // what the five pre-IND-1 rows did: those read back with a skeleton body
+    // and served placeholder pages (`skeletonDefaultValue.int.spec.ts`). Pinned
+    // because the predicate must stay correct for a shape the types permit,
+    // whether or not the database currently produces it.
     expect(linkFor(industry({ layout: null }))).toBeNull()
   })
 

@@ -1,6 +1,8 @@
 import { buildLexical } from '../showcase/lexical'
 
-// spec 010 US1 (FR-008) — default block skeleton for NEW workshop records.
+// spec 010 US1 (FR-008) — default block skeleton for a workshop `layout`. Payload applies a
+// `defaultValue` on READ as well as create, so this also fills any existing
+// row whose `layout` was never written — see `skeletonDefaultValue.int.spec.ts`.
 // Sourced by `Workshops.layout`'s `defaultValue` so a freshly created workshop
 // is uniform by default (curated starting structure), then fully editable.
 // Not schema-enforced — an editor can rearrange or delete any block.

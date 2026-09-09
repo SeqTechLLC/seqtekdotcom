@@ -104,10 +104,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // SVC-2: one flat namespace and one collection, so every tier — axis page,
     // group page and service — is just `/services/<slug>`.
     for (const slug of serviceSlugs) paths.add(`/services/${slug}`)
-    // ROADMAP IND-1. Published-only like every other loop, AND body-only: the
-    // `layout` field arrived in an additive migration, so an industry created
-    // before it is published with no body and the route 404s it. Listing such a
-    // URL here would advertise a 404 for the whole deploy-before-seed window.
+    // ROADMAP IND-1. Published-only like every other loop, AND body-only, so the
+    // sitemap never advertises a URL the route 404s. Note the reader's own
+    // comment: the body filter is currently a no-op, because a skeleton
+    // `defaultValue` fills `layout` on read for every published industry. It
+    // stays as the cheap half of the promise, not because bodyless rows 404 —
+    // they serve placeholder copy, which is what the IND-1 lane deploy showed.
     for (const slug of industrySlugs) paths.add(`/industries/${slug}`)
     // ADR 0009 metadata collection — no exclusion set needed here (unlike the
     // `service-*` Pages): a partner's canonical URL IS `/partners/<slug>`.

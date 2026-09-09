@@ -594,6 +594,12 @@ Four blocks let an author pick a **source** instead of hand-picking rows:
 | `case-study-grid` | `source` | `latest`, `by-industry`, `by-service` | `listCaseStudies` |
 | `service-cards`   | `source` | `by-pillar`                           | `listServices`    |
 
+Both `case-study-grid` and `industry-grid` render **nothing** when they end up with no items — heading
+included. `case-study-grid` empties through source resolution (a `by-industry` with nothing tagged to it);
+`industry-grid` has no `source` and empties through draft filtering or an unpopulated relation. Either way an
+author never sees it while editing, and publishing a bare heading over empty space is a claim with nothing
+behind it (`gridEmptyState.int.spec.tsx`).
+
 **`src/lib/resolveLayout.ts` is where those selects are consumed.** Every route that renders a
 `layout` awaits `resolveLayout(doc.layout)` before handing it to `RenderBlocks`, and the resolver fills
 each block's `manualItems` from the cached readers in `lib/payload.ts` (so the reads inherit the cache
