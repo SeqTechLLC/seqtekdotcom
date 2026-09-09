@@ -201,8 +201,13 @@ const scrapeFn = (): ScrapedPage => {
         // CSS visibility only, deliberately NOT a non-zero box. An <img> that
         // fails to load and carries no width/height collapses to 0x0 — so
         // requiring a box skipped exactly the images this check exists to
-        // find. Responsive blocks hidden at one viewport are `display: none`
-        // and still excluded.
+        // find.
+        //
+        // Note this reads the IMAGE's own computed style, which an ancestor's
+        // `display: none` does not change. An <img> inside a `hidden md:block`
+        // wrapper is therefore still checked. Nothing in `src/` renders one
+        // that way today, and the failure direction is extra lines in the
+        // non-failable "still loading" note rather than silence.
         displayed: style.display !== 'none' && style.visibility !== 'hidden',
       }
     }),

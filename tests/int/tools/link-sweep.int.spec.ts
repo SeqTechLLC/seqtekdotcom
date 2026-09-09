@@ -172,7 +172,7 @@ describe('parseArgs', () => {
     )
   })
 
-  it('expands --fail-on=all and drops names that are not categories', () => {
+  it('expands --fail-on=all to every category and records that it was a shorthand', () => {
     expect(parseArgs(['--fail-on=all'], env()).failOn).toEqual([
       'links',
       'images',
@@ -182,6 +182,16 @@ describe('parseArgs', () => {
       'redirects',
     ])
     expect(parseArgs(['--fail-on=all'], env()).failOnAll).toBe(true)
+  })
+
+  it('refuses an empty --fail-on rather than gating on nothing', () => {
+    // `--fail-on=` with an unset workflow variable behind it parsed to zero
+    // categories, zero unknowns, and exit 0 — the residue of the typo shape.
+    for (const arg of ['--fail-on=', '--fail-on=,', '--fail-on=  ']) {
+      expect(parseArgs([arg], env()).failOnEmpty, arg).toBe(true)
+    }
+    expect(parseArgs(['--fail-on=links'], env()).failOnEmpty).toBe(false)
+    expect(parseArgs(['--fail-on=all'], env()).failOnEmpty).toBe(false)
   })
 
   it('collects a mistyped category instead of dropping it', () => {

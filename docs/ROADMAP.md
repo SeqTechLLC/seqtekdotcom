@@ -192,8 +192,13 @@ Every content change is still a developer task. This tier fixes that before we l
   so adding `layout` to a collection that ALREADY has published rows gives every one of them a skeleton body
   on the next read. That is what put five `<h1>Industry name</h1>` pages on the preview lane after IND-1
   deployed; they were retired by unpublishing. The copy half is done; the code half is not, because the flaw
-  is the skeleton design. **Decide:** ship skeletons as empty blocks, mark skeleton text so a publish check
-  can catch it, or add a placeholder guard to the K8 sweep.
+  is the skeleton design. **The third option shipped** — `tools/link-sweep` greps rendered HTML for
+  `SKELETON_PLACEHOLDER_COPY`, which moved to `src/payload/seed/skeletons/placeholderCopy.ts` so the source
+  guard and the sweep could share one list. That closes the detection half: a skeleton published unedited is
+  now visible on the next sweep instead of only when someone reads the page. **Still to decide, and it is the
+  design half:** ship skeletons as empty blocks, or mark skeleton text so a publish check can refuse it at
+  the source. Detection after the fact is a weaker guarantee than a `defaultValue` that cannot be published
+  as-is.
 - **INERT-2 residual — controls whose renderer does nothing with them.** The gate
   (`tests/int/blocks/blockOutputContract.int.spec.tsx`) holds every block in `layoutBlocks` to three promises:
   no developer phrase reaches body text, every control changes the output, every select option draws something

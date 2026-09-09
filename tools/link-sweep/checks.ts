@@ -101,9 +101,14 @@ const excerptAround = (text: string, index: number, length: number): string => {
 }
 
 /**
- * Scan one page's visible text. Returns at most one finding per label so a
- * paragraph that says "placeholder" three times is one line in the report, not
- * three — the unit of work is the page, not the occurrence.
+ * Scan one page's visible text.
+ *
+ * At most one finding per PATTERN — a paragraph that says "placeholder" three
+ * times is one line in the report, not three, because the unit of work is the
+ * page rather than the occurrence. The skeleton loop is deliberately not
+ * bound by that: each matching phrase is its own finding, all sharing the
+ * `skeleton copy` label, because the excerpts differ and each names a distinct
+ * string an author still has to replace.
  */
 export const scanText = (
   text: string,

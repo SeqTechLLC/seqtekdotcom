@@ -43,6 +43,14 @@ const main = async (): Promise<number> => {
     console.error('--max-pages must be a positive number')
     return 2
   }
+  // An empty value is the residue of the typo shape: `--fail-on=` parses to
+  // zero categories and zero unknowns, so the gate is armed against nothing and
+  // the run is green. The realistic vector is an unset workflow variable
+  // (`--fail-on=${SWEEP_CATEGORIES}`), not a hand slip.
+  if (args.failOnEmpty) {
+    console.error(`--fail-on was given no categories\nvalid: ${CATEGORIES.join(', ')}, or "all"`)
+    return 2
+  }
   if (args.unknownCategories.length > 0) {
     console.error(
       `--fail-on: not a category: ${args.unknownCategories.join(', ')}\n` +

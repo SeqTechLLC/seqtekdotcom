@@ -5,14 +5,25 @@
 import type { Category } from './report'
 
 export const DEFAULT_BASE_URL = 'http://localhost:3100'
-export const CATEGORIES: readonly Category[] = [
+export const CATEGORIES = [
   'links',
   'images',
   'placeholders',
   'alt',
   'external',
   'redirects',
-]
+] as const
+
+/**
+ * Compile-time completeness. `readonly Category[]` accepted any SUBSET, so a
+ * seventh category added to the union and to `countsByCategory` (which is
+ * enforced, via `Record<Category, number>`) but forgotten here would compile,
+ * and `--fail-on=all` would expand to a list quietly narrower than the word
+ * promises.
+ */
+type UnlistedCategory = Exclude<Category, (typeof CATEGORIES)[number]>
+const _everyCategoryIsListed: UnlistedCategory extends never ? true : never = true
+void _everyCategoryIsListed
 
 export interface CliArgs {
   baseUrl: string
@@ -24,6 +35,8 @@ export interface CliArgs {
   unknownCategories: string[]
   /** `--fail-on=all` rather than a hand-written list — see `index.ts`. */
   failOnAll: boolean
+  /** `--fail-on=` with nothing after it. Refused, rather than gating on nothing. */
+  failOnEmpty: boolean
   help: boolean
   unknown: string[]
 }
@@ -54,6 +67,7 @@ export const parseArgs = (argv: readonly string[], env: NodeJS.ProcessEnv): CliA
     failOn: [],
     unknownCategories: [],
     failOnAll: false,
+    failOnEmpty: false,
     help: false,
     unknown: [],
   }
@@ -78,6 +92,7 @@ export const parseArgs = (argv: readonly string[], env: NodeJS.ProcessEnv): CliA
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean)
+        out.failOnEmpty = names.length === 0
         out.failOn = names.filter((s): s is Category =>
           (CATEGORIES as readonly string[]).includes(s),
         )

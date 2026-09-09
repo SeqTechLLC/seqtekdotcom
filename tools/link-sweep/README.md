@@ -31,6 +31,7 @@ SWEEP_COOKIE='AWSELBAuthSessionCookie-0=…; AWSELBAuthSessionCookie-1=…' \
 | `images`       | An `<img>` that is laid out but never painted (`naturalWidth === 0`)                               |
 | `placeholders` | Placeholder copy or repo-internal references in rendered text                                      |
 | `alt`          | An `<img>` with no `alt` attribute at all                                                          |
+| `redirects`    | A link that resolves, but lands somewhere other than where it points                               |
 | `external`     | An outbound link that is **gone** — 404, 410, 5xx, or no connection at all. Only with `--external` |
 
 ## Why a browser
