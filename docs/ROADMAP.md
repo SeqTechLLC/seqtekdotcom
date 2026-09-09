@@ -234,10 +234,6 @@ Every content change is still a developer task. This tier fixes that before we l
   wanted for its own sake, or when the contact form's field set is being reworked anyway (which would also
   remove the Workshop hardcode in `HubspotForm.tsx`).
 
-- **Clear the remaining production advisory (issue #132).** Opened at 6 high; today's autoprefixer bump moved
-  `browserslist` past the affected range, leaving **one high** — `fast-uri` under `payload`, with a patched
-  version available — plus one low (`postcss-selector-parser` under `tailwindcss`/`postcss-nested`). Both are
-  transitive, so the fix is a bump of the parent or a `package.json#overrides` pin.
 - **Re-link `locations-list` cards** when the locations route ships. (`industry-grid` was re-linked with
   IND-1.) **The hook and the block disagree on the name** — `revalidateOnChange` says `/consulting/<slug>`,
   the block said `/locations/<slug>`. Settle that before the route is built.
@@ -373,8 +369,12 @@ Real work, none of it blocking a launch. Ordered by expected return.
   typed `BlockLike[]` adapter.
 - **CI Actions cost.** The remaining per-run cost is the ~11-minute Playwright + axe + Lighthouse job — gate it
   behind ready-for-review PRs so draft pushes skip it. (The org Actions spending limit was hit 2026-06-16; taking the repo public resolved it, since Actions are free there.)
-- **Small stuff.** Backfill the `ws` / `happy-dom` `_overridesNotes` entries (issue #75); decide autoplay vs
-  manual-only if a testimonial carousel is ever built.
+- **Small stuff.** Correct the `_overridesNotes` entries that have drifted from the overrides they describe —
+  `undici` says `^7.28.0` where the override is `^7.29.0`, and the `ws` note still says it is "pending" on a
+  PR that has landed (issue #75). The keep-or-remove question that issue also raised **is answered**: all
+  five report `STALE`, but removing them takes the production tree from 1 moderate to 6, so they stay — see
+  `tools/check-stale-overrides/README.md`. Also decide autoplay vs manual-only if a testimonial carousel is
+  ever built.
 
 ---
 

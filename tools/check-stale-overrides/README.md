@@ -43,9 +43,15 @@ removing it would still make the tree worse.
 
 That is not hypothetical. On 2026-09-09 all five security overrides reported
 `STALE`. Dropping the four non-`tsx` scopes together and relocking took the
-production tree from **1 moderate to 6**: the `drizzle-kit > @esbuild-kit/*`
-chain under `@payloadcms/db-postgres` comes straight back, as moderates. They
-were kept.
+production tree from **1 distinct advisory to 6**: the
+`drizzle-kit > @esbuild-kit/*` chain under `@payloadcms/db-postgres` comes
+straight back, as moderates. They were kept.
+
+**Mind the unit.** Those are _advisories_. `npm audit`'s own summary line counts
+_affected packages_, so the same two trees print "9 moderate severity
+vulnerabilities" and "13 vulnerabilities" — one advisory fanned across a package
+family. Both numbers are real and they answer different questions; compare
+advisories when deciding whether an override earns its keep.
 
 So: **before acting on a `STALE` verdict, remove the scopes, relock, and read
 the full `npm audit --omit=dev` output — not just the exit code.** A clean gate
