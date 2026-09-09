@@ -308,6 +308,34 @@ curl -X POST http://localhost:3100/api/revalidate \
   -d '{"secret": "<your REVALIDATION_SECRET>", "paths": ["/case-studies"]}'
 ```
 
+### Sweep for broken links, broken images and placeholder copy
+
+ROADMAP K8. Crawls every internal link from `/`, seeded additionally from the
+site's own `/sitemap.xml` so orphaned documents are reached, at desktop and
+mobile:
+
+```bash
+npm run sweep                                          # localhost:3100
+npm run sweep -- --base-url=https://preview.seqtek.com # a lane
+npm run sweep -- --json=/tmp/sweep.json --external      # full report + outbound links
+```
+
+A Cognito-gated lane needs the ALB session from your own browser (DevTools →
+Application → Cookies). **Both halves** — with only cookie 0 the ALB 302s to the
+IdP, and every route then "returns 200" as a Google sign-in page:
+
+```bash
+SWEEP_COOKIE='AWSELBAuthSessionCookie-0=…; AWSELBAuthSessionCookie-1=…' \
+  npm run sweep -- --base-url=https://preview.seqtek.com
+```
+
+Reports dead routes (naming what links to them), images that never paint,
+placeholder or repo-internal copy in rendered text, missing `alt`, and links
+that land somewhere else. Exits 0 unless `--fail-on` names a category. Full
+detail in `tools/link-sweep/README.md`.
+
+Run it after every content load — that is when links and images break.
+
 ---
 
 ## How Local Dev Differs from Production
