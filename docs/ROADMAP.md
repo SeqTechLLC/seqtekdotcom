@@ -76,12 +76,17 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
   - ~~Seed the services content~~ **Done on preview (verified 2026-09-04):** 24 `services` docs, tiers
     matching the drafts file, both axes and all three groups published, the nine legacy capability-set docs
     retired to `draft`. `ww3` is a separate run after the next release.
-  - **Flip the five Localshoring links.** The `localshoring` leaf is seeded and published, so
-    `/services/localshoring` resolves today — but `site-content.ts:190` and `:252-255` still point at the old
-    `/localshoring` Page, and their comments still claim the leaf does not exist. Flip all five and retire the
-    Page in one commit. No internal 301 — nothing is live, so the URL simply changes. Overlaps SVC-3: there
-    are currently THREE Localshoring artifacts (the `localshoring` Page, the `service-localshoring` Page, and
-    the service leaf) where there should be one.
+  - **Flip the five Localshoring links — gated on copy, not on the route (re-checked 2026-09-09).** The
+    `localshoring` leaf is seeded and published, so `/services/localshoring` resolves. The `site-content.ts`
+    comments that claimed the leaf "lives only in an unseeded `services.json`" were stale and are corrected,
+    but the links themselves stay on `/localshoring` for a reason the earlier note missed: **everything the
+    leaf renders is placeholder.** `services.json` seeds it as a hero whose subheadline is
+    "PLACEHOLDER COPY — NOT FOR PUBLICATION" plus one content block that opens with the same string and
+    then explains, in-band, why the real copy does not exist yet. Resolving is not the bar. Flipping now
+    would put the header nav and the four footer market links onto a published page that tells the reader it
+    is not for publication. The five links (`site-content.ts:194` header, `:289-292` footer markets) flip in
+    the same change that moves real copy onto the leaf and retires the Page — that is SVC-3 below. No
+    internal 301 — nothing is live, so the URL simply changes.
   - **Re-pick every block the SVC-2 migration emptied.** `*_rels.service_pillars_id` was dropped across
     thirteen tables, discarding the `pillars` selection on any `service-pillar-cards` block and NULLing
     `service-cards.pillar` wherever the source was "By pillar". `pillars` is `required, minRows: 1`, so those
@@ -107,11 +112,28 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
   `filterOptions` each would have offered an axis as a taggable service. Any future collection merge inherits
   this.
 
-- **SVC-3 — collapse the duplicate Localshoring pages.** Two Page records exist for one subject
-  (`/localshoring` and `/services/localshoring`), both titled "Localshoring". Only the first is linked. Collapse
-  to one page and two links as part of SVC-2, with a 301 from whichever slug loses. Which one wins is a content
-  call. Cross-listing means one page and two links, never two pages — the flat leaf URL is that rule expressed
-  in routing.
+- **SVC-3 — collapse the three Localshoring artifacts.** Not two, three, and the copy audit (2026-09-09)
+  settles most of the "which one wins" question that used to sit here:
+  - **Page `localshoring`** (`/localshoring`) — ~1,520 chars, finished, no placeholders. Offshore/nearshore
+    argument, the four markets, the Sequoyah tie-in, and a **named** testimonial (Jeremy Larson, Cross
+    Precision Measurement). This is what all five chrome links point at today, and it is the only one of the
+    three that is publishable as it stands.
+  - **Page `service-localshoring`** — ~1,380 chars, **unreachable**: `/services/[offering]` was deleted in
+    SVC-2 and the slug is excluded from the sitemap, so nothing links it and nothing should. Its prose
+    carries a live `[PLACEHOLDER - Hank-gated copy...]` marker, but it also holds the one asset the other
+    two lack: a **complete, real `comparison-table` block** (Localshoring / Nearshore / Offshore across
+    overlap hours, cultural fit, seniority, ramp, plus a best-for row). That block is structure and numbers,
+    not Hank-gated voice, so it can move as-is.
+  - **Service leaf `localshoring`** (`/services/localshoring`) — published on preview, entirely placeholder.
+    It owns the URL the IA wants and none of the content.
+
+  **The URL question is not open** — the flat leaf wins, because cross-listing means one page and two links,
+  never two pages, and the flat leaf URL is that rule expressed in routing. **The content call that is left
+  is narrow:** the leaf's body should be the `localshoring` Page's blocks, and whether the
+  `service-localshoring` comparison table comes with them (recommended — it is the strongest asset in the
+  set and it is currently rendered nowhere). Both Pages then retire and the five chrome links flip, in that
+  order, in one change. §1.B's Hank-gated definition is **not** a blocker for the collapse: it would improve
+  the leaf, but the Page's existing copy is already approved and stands on its own.
   - Re-check the four folded capability pages against Brent's grouping (AI-Assisted Modernization, Fractional
     Product Ownership, Strategy & Roadmap Alignment, Discovery & Team Workshops); some map onto items he named
     and may need to come back out.
