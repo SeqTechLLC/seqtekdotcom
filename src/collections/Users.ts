@@ -32,6 +32,19 @@ export const Users: CollectionConfig = {
     read: ({ req: { user } }) => Boolean(user),
     update: ({ req: { user } }) => Boolean(user?.roles?.includes('admin')),
     delete: ({ req: { user } }) => Boolean(user?.roles?.includes('admin')),
+    // GHSA-jg8r-5jh2-v2xj. Payload's `unlock` access defaults to "any
+    // authenticated user", so an editor could clear another account's lockout.
+    // The audit lists no fixed version (the advisory is against the default,
+    // not a bug), and the remediation is to declare the access control — so
+    // declare it, at the same level as `update` and `delete`.
+    //
+    // The exposure here is shape, not effect: `disableLocalStrategy` means
+    // there is no password login, `incrementLoginAttempts` only runs in the
+    // local strategy, and so no account ever locks in the first place. Setting
+    // `maxLoginAttempts: 0` would drop the lock fields outright and close it at
+    // the schema — but that is a column drop and therefore a migration, which
+    // is not worth it for a path nothing reaches. This is the config-only half.
+    unlock: ({ req: { user } }) => Boolean(user?.roles?.includes('admin')),
   },
   hooks: {
     beforeChange: [enforceDomainAllowlist, applyAutoProvisionRole, guardRoleUpdates],
