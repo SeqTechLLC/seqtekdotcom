@@ -200,6 +200,14 @@ jobs:
       # drops a package, and reports the disappearance as a step failure rather
       # than as an unscanned repo, is not a gate. The version and its sha256 are
       # pinned so an upstream change is a deliberate edit here.
+      #
+      # NOTHING BUMPS THIS. `.github/dependabot.yml` covers `npm` and
+      # `github-actions`, and the latter updates `uses:` refs, not a version
+      # string in a `run:` block's env. For a secret scanner a frozen rule set
+      # is slow decay — new provider token formats ship upstream and never
+      # reach us. Re-check against the latest release when touching this file,
+      # and at minimum before the DNS cutover. Pinned 2026-09-09; 8.30.1 was
+      # then the current release.
       - name: Install gitleaks
         env:
           GITLEAKS_VERSION: 8.30.1
@@ -207,7 +215,10 @@ jobs:
         run: |
           set -euo pipefail
           archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          curl -sSfL --retry 3 --retry-delay 2 \
+          # --retry-all-errors because plain --retry covers only timeouts and
+          # 408/429/5xx; connection-refused, connection-reset and DNS failures
+          # are exactly the flakes this step exists to survive.
+          curl -sSfL --retry 3 --retry-delay 2 --retry-all-errors \
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}" \
             -o "/tmp/${archive}"
           echo "${GITLEAKS_SHA256}  /tmp/${archive}" | sha256sum --check --strict -
