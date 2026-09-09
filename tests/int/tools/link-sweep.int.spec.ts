@@ -75,6 +75,14 @@ describe('scanText', () => {
     )
   })
 
+  it('catches a two-digit roadmap id, which `\\d` could not', () => {
+    // `\bSVC-\d\b` needs a word boundary after one digit, so the second
+    // digit defeated it. Every id in use today is single-digit; this keeps it
+    // working when one is not.
+    expect(scanText('Real copy pending SVC-12.').map((f) => f.label)).toContain('roadmap item id')
+    expect(scanText('Tracked as IND-10.').map((f) => f.label)).toContain('roadmap item id')
+  })
+
   it('catches repo-internal references that reached rendered copy', () => {
     const findings = scanText('Real copy is Hank-gated (CONTENT_NEEDS.md §1.B).')
     expect(findings.map((f) => f.label)).toEqual(
@@ -173,7 +181,24 @@ describe('parseArgs', () => {
       'external',
       'redirects',
     ])
-    expect(parseArgs(['--fail-on=links,nonsense'], env()).failOn).toEqual(['links'])
+    expect(parseArgs(['--fail-on=all'], env()).failOnAll).toBe(true)
+  })
+
+  it('collects a mistyped category instead of dropping it', () => {
+    // This assertion is the inverse of the one it replaces. Dropping the name
+    // silently meant `--fail-on=iamges` armed the gate against nothing and the
+    // run exited 0 — the failure this tool exists to catch, in the flag whose
+    // job is to catch it. `index.ts` exits 2 on a non-empty list.
+    const args = parseArgs(['--fail-on=links,imagez,alt'], env())
+    expect(args.failOn).toEqual(['links', 'alt'])
+    expect(args.unknownCategories).toEqual(['imagez'])
+  })
+
+  it('reports every unrecognised name, not just the first', () => {
+    expect(parseArgs(['--fail-on=iamges,lnks'], env()).unknownCategories).toEqual([
+      'iamges',
+      'lnks',
+    ])
   })
 
   it('keeps --fail-on=external, which index.ts then rejects without --external', () => {
@@ -181,6 +206,7 @@ describe('parseArgs', () => {
     // the gate can never be armed against a check that never runs.
     expect(parseArgs(['--fail-on=external'], env()).checkExternal).toBe(false)
     expect(parseArgs(['--fail-on=external'], env()).failOn).toEqual(['external'])
+    expect(parseArgs(['--fail-on=external'], env()).failOnAll).toBe(false)
   })
 
   it('collects unknown arguments instead of ignoring them', () => {
@@ -228,6 +254,35 @@ describe('categorise', () => {
       { route: '/gone', status: 404, referrers: ['/'], error: undefined },
     ])
     expect(found.images).toEqual([{ route: '/', viewport: 'mobile', src: '/media/hero.webp' }])
+  })
+
+  it('reports an image still in flight rather than dropping it from the tick', () => {
+    // An if/else chain judged an unsettled image by neither branch, so the
+    // "images that do not paint — none" tick was printed over a set that had
+    // quietly excluded it.
+    const loading: SweepReport = {
+      ...report,
+      pages: [
+        {
+          route: '/slow',
+          status: 200,
+          referrers: [],
+          title: '',
+          textFindings: [],
+          imageFindings: {
+            desktop: [{ src: '/media/slow.webp', alt: 'Slow', reason: 'still loading' }],
+          },
+          internalLinks: [],
+          externalLinks: [],
+        },
+      ],
+    }
+    const found = categorise(loading)
+    expect(found.stillLoading).toEqual([
+      { route: '/slow', viewport: 'desktop', src: '/media/slow.webp' },
+    ])
+    expect(found.images).toEqual([])
+    expect(format(loading, found)).toContain('1 images had not finished loading when scraped')
   })
 
   it('separates a missing alt from an image that does not paint', () => {

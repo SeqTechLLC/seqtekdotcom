@@ -82,7 +82,10 @@ export const GENERIC_PLACEHOLDER_PATTERNS: readonly PlaceholderPattern[] = [
 export const INTERNAL_REFERENCE_PATTERNS: readonly PlaceholderPattern[] = [
   { label: 'repo doc filename', test: /\b[A-Za-z0-9_-]+\.md\b/ },
   { label: 'section reference', test: /§\s?\d/ },
-  { label: 'roadmap item id', test: /\b(?:ROADMAP|CONTENT_NEEDS|SVC-\d|IND-\d|UI-\d|NAV-\d)\b/ },
+  {
+    label: 'roadmap item id',
+    test: /\b(?:ROADMAP|CONTENT_NEEDS|SVC-\d+|IND-\d+|UI-\d+|NAV-\d+)\b/,
+  },
 ]
 
 export interface TextFinding {

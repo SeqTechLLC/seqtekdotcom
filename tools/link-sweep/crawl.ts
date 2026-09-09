@@ -37,7 +37,7 @@ export const DEFAULT_VIEWPORTS: readonly Viewport[] = [
 export interface ImageFinding {
   src: string
   alt: string | null
-  reason: 'not painting' | 'missing alt'
+  reason: 'not painting' | 'missing alt' | 'still loading'
 }
 
 export interface PageResult {
@@ -365,10 +365,20 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
         const findings: ImageFinding[] = []
         for (const img of scraped.images) {
           if (!img.displayed) continue
-          if (img.settled && !img.painted) {
+          if (!img.settled) {
+            // Judged by neither branch when this was an if/else: an image
+            // still in flight silently left the set the tick is printed over.
+            // The scrape runs after the scroll pass and two networkidle waits,
+            // so this means the network never idled — reported, not failed.
+            findings.push({ src: img.src, alt: img.alt, reason: 'still loading' })
+          } else if (!img.painted) {
             findings.push({ src: img.src, alt: img.alt, reason: 'not painting' })
-          } else if (img.alt === null)
+          }
+          // Independent of the above: a broken image with no `alt` is two
+          // findings, not one, and chaining them hid the second.
+          if (img.alt === null) {
             findings.push({ src: img.src, alt: null, reason: 'missing alt' })
+          }
         }
         if (findings.length > 0) result.imageFindings[viewport.name] = findings
       }

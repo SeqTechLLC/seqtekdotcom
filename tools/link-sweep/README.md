@@ -86,6 +86,12 @@ explicitly rather than printing a tick — a check that did not run must never
 look like a check that passed. `--fail-on=external` without `--external` is
 rejected for the same reason.
 
+**An image still loading when the page is scraped is reported, not judged.** It
+appears under its own "had not finished loading" note rather than in the
+`images` count — the scrape runs after a scroll pass and two `networkidle`
+waits, so it means the network never idled, which is worth seeing but is not a
+claim that the image is broken.
+
 **A robot cannot verify a social link.** Outbound requests carry a browser
 user-agent, because a bare client gets `999` from LinkedIn. Even so, statuses
 that mean _the server refused this client_ rather than _the page is gone_ —
@@ -104,6 +110,12 @@ trustworthy.
 ```bash
 npm run sweep -- --fail-on=links,images   # or --fail-on=all
 ```
+
+A name that is not a category is an **error**, not a silent no-op — `--fail-on=iamges`
+exits 2 rather than arming the gate against nothing and passing. `all` means every
+category that can actually run, so it drops `external` unless `--external` is set;
+naming `external` yourself without `--external` is refused instead, because that is
+a request rather than a shorthand.
 
 So the default run is a report you read, and turning it into a CI gate later is
 a flag rather than a rewrite. Do not gate on `placeholders` until the copy work

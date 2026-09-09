@@ -24,7 +24,7 @@
 
 import { writeFile } from 'node:fs/promises'
 
-import { parseArgs, USAGE } from './args'
+import { CATEGORIES, parseArgs, USAGE } from './args'
 import { DEFAULT_VIEWPORTS, sweep } from './crawl'
 import { categorise, countsByCategory, format } from './report'
 
@@ -43,11 +43,24 @@ const main = async (): Promise<number> => {
     console.error('--max-pages must be a positive number')
     return 2
   }
-  // Otherwise the gate is armed against a check that never runs, and passes
-  // for that reason — the silent-success failure this tool is about.
-  if (args.failOn.includes('external') && !args.checkExternal) {
-    console.error('--fail-on=external needs --external, or it can never fire')
+  if (args.unknownCategories.length > 0) {
+    console.error(
+      `--fail-on: not a category: ${args.unknownCategories.join(', ')}\n` +
+        `valid: ${CATEGORIES.join(', ')}, or "all"`,
+    )
     return 2
+  }
+  // Otherwise the gate is armed against a check that never runs, and passes
+  // for that reason — the silent-success failure this tool is about. `all` is
+  // a shorthand, not a request for `external` specifically, so it drops the
+  // category it cannot run instead of refusing to start.
+  if (args.failOn.includes('external') && !args.checkExternal) {
+    if (!args.failOnAll) {
+      console.error('--fail-on=external needs --external, or it can never fire')
+      return 2
+    }
+    args.failOn = args.failOn.filter((category) => category !== 'external')
+    console.error('note: --fail-on=all excludes `external`, which needs --external')
   }
 
   const report = await sweep({

@@ -12,6 +12,12 @@ export interface CategorisedFindings {
   links: { route: string; status: number | null; referrers: string[]; error?: string }[]
   images: { route: string; viewport: string; src: string }[]
   alt: { route: string; viewport: string; src: string }[]
+  /**
+   * Images whose load had not finished when the page was scraped. Not a
+   * defect claim — reported so the `images` tick is never printed over a set
+   * that quietly excluded something.
+   */
+  stillLoading: { route: string; viewport: string; src: string }[]
   placeholders: { route: string; label: string; excerpt: string }[]
   external: { url: string; status: number | null }[]
   /**
@@ -31,6 +37,7 @@ export const categorise = (report: SweepReport): CategorisedFindings => {
     links: [],
     images: [],
     alt: [],
+    stillLoading: [],
     placeholders: [],
     external: [],
     unverifiable: [],
@@ -53,7 +60,12 @@ export const categorise = (report: SweepReport): CategorisedFindings => {
     }
     for (const [viewport, findings] of Object.entries(page.imageFindings)) {
       for (const finding of findings) {
-        const bucket = finding.reason === 'not painting' ? out.images : out.alt
+        const bucket =
+          finding.reason === 'not painting'
+            ? out.images
+            : finding.reason === 'still loading'
+              ? out.stillLoading
+              : out.alt
         bucket.push({ route: page.route, viewport, src: finding.src })
       }
     }
@@ -112,6 +124,12 @@ export const format = (report: SweepReport, found: CategorisedFindings): string 
 
   lines.push(heading('images that do not paint', found.images.length))
   for (const item of found.images) lines.push(`  ${item.route} [${item.viewport}] ${item.src}`)
+  if (found.stillLoading.length > 0) {
+    lines.push(`\n– ${found.stillLoading.length} images had not finished loading when scraped`)
+    for (const item of found.stillLoading) {
+      lines.push(`  ${item.route} [${item.viewport}] ${item.src}`)
+    }
+  }
 
   lines.push(heading('placeholder or internal copy in rendered text', found.placeholders.length))
   for (const item of found.placeholders) {
