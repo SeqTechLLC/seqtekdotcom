@@ -10,7 +10,7 @@ import {
 } from '../../../tools/link-sweep/checks'
 import { parseArgs } from '../../../tools/link-sweep/args'
 import { categorise, countsByCategory } from '../../../tools/link-sweep/report'
-import type { SweepReport } from '../../../tools/link-sweep/crawl'
+import { SCRAPE_SOURCE, type SweepReport } from '../../../tools/link-sweep/crawl'
 import { SKELETON_PLACEHOLDER_COPY } from '../../../src/payload/seed/skeletons/placeholderCopy'
 
 /**
@@ -107,6 +107,30 @@ describe('scanText', () => {
       ...INTERNAL_REFERENCE_PATTERNS,
     ]) {
       expect(test.test(''), label).toBe(false)
+    }
+  })
+})
+
+describe('SCRAPE_SOURCE', () => {
+  /**
+   * Both of this tool's first two runs failed inside `page.evaluate`, in ways
+   * that reported as a clean site rather than as an error. These pin the shape
+   * that avoids each, and they run through the same transpiler the tool does —
+   * which is the point, since one of the bugs was introduced by the transpiler.
+   */
+  it('is an IIFE, so evaluate returns the object rather than the function', () => {
+    expect(SCRAPE_SOURCE.startsWith('(')).toBe(true)
+    expect(SCRAPE_SOURCE.endsWith(')()')).toBe(true)
+  })
+
+  it('carries no esbuild keepNames helper, which the browser does not define', () => {
+    // `ReferenceError: __name is not defined`, on all 59 routes.
+    expect(SCRAPE_SOURCE).not.toContain('__name')
+  })
+
+  it('still reads the things the sweep depends on', () => {
+    for (const needle of ['a[href]', 'querySelectorAll("img")', 'naturalWidth', 'innerText']) {
+      expect(SCRAPE_SOURCE.replace(/'/g, '"')).toContain(needle)
     }
   })
 })

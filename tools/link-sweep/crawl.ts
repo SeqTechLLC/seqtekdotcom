@@ -131,35 +131,52 @@ interface ScrapedPage {
 }
 
 /**
- * Runs in the page. Must be a real function, not a string: `page.evaluate` with
- * a string evaluates it as an expression and hands back the *function object*,
- * which serialises to `{}` — the first run of this tool reported "7 routes, no
- * findings" for exactly that reason, because every field came back empty and
- * empty reads as clean.
+ * Runs in the page.
+ *
+ * Deliberately free of inner named functions, and shipped as SOURCE rather than
+ * as a function reference. Both constraints come from bugs this tool hit on its
+ * own first two runs:
+ *
+ *   1. `page.evaluate(fn)` with a bare `() => {…}` STRING evaluates to the
+ *      function object, which serialises to `{}` — every field came back empty,
+ *      and empty read as clean: "7 routes, no findings" against a 59-route site.
+ *   2. Passing the function reference instead does not work either. `tsx`
+ *      transpiles with esbuild's keepNames, which wraps every named function in
+ *      a `__name` helper. That helper does not exist in the browser, so the
+ *      inner `const isDisplayed = …` became `ReferenceError: __name is not
+ *      defined` on all 59 routes.
+ *
+ * An IIFE built from `.toString()` avoids both: it evaluates to the object, and
+ * `.toString()` of the outer arrow carries no `__name` as long as nothing
+ * inside it is a named function. Keep it that way — inline callbacks are
+ * anonymous and safe, a `const helper = () => …` is not.
  */
-const scrape = (): ScrapedPage => {
+const scrapeFn = (): ScrapedPage => {
   const main = document.querySelector('main') ?? document.body
-  const isDisplayed = (el: Element): boolean => {
-    const rect = el.getBoundingClientRect()
-    const style = window.getComputedStyle(el)
-    return (
-      style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0
-    )
-  }
   return {
     title: document.title,
     text: (main as HTMLElement).innerText,
     hrefs: Array.from(document.querySelectorAll('a[href]')).map(
       (a) => a.getAttribute('href') ?? '',
     ),
-    images: Array.from(document.querySelectorAll('img')).map((img) => ({
-      src: img.currentSrc || img.getAttribute('src') || '',
-      alt: img.getAttribute('alt'),
-      painted: img.naturalWidth > 0 && img.naturalHeight > 0,
-      displayed: isDisplayed(img),
-    })),
+    images: Array.from(document.querySelectorAll('img')).map((img) => {
+      const rect = img.getBoundingClientRect()
+      const style = window.getComputedStyle(img)
+      return {
+        src: img.currentSrc || img.getAttribute('src') || '',
+        alt: img.getAttribute('alt'),
+        painted: img.naturalWidth > 0 && img.naturalHeight > 0,
+        displayed:
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          rect.width > 0 &&
+          rect.height > 0,
+      }
+    }),
   }
 }
+
+export const SCRAPE_SOURCE = `(${scrapeFn.toString()})()`
 
 const visit = async (
   context: BrowserContext,
@@ -180,7 +197,7 @@ const visit = async (
     // `load` fires before lazy images settle; give the network a moment but do
     // not fail the page over a long-poll or an analytics beacon that never idles.
     await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {})
-    const scraped = await page.evaluate(scrape)
+    const scraped = (await page.evaluate(SCRAPE_SOURCE)) as ScrapedPage
     return { status: response?.status() ?? null, finalUrl: page.url(), scraped }
   } catch (error) {
     return { status: null, finalUrl: null, scraped: null, error: (error as Error).message }
