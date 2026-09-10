@@ -179,15 +179,17 @@ export const navigation: Navigation = {
             label: 'How We Work',
             items: [
               { label: 'Workshops', url: '/workshops' },
-              // Stays on the `localshoring` PAGE, which is seeded and resolves
-              // today — not the planned `/services/localshoring` leaf, which
-              // lives only in an unseeded `services.json`. Same rule as the
-              // market links in the footer: the twelve service links above have
-              // no working target to give up, this one does. Moving it early
-              // would also put two Localshoring URLs in chrome at once, the
-              // dead one in the header, which is what SVC-3's
-              // one-subject-one-URL rule exists to prevent. Move both together
-              // when the leaf is seeded and the Page retires.
+              // ROADMAP SVC-2 / SVC-3 owns this. The invariant: the target
+              // stays on the `localshoring` PAGE until the leaf carries real
+              // copy, and this link plus the four footer market links flip in
+              // ONE change with the copy move and the Page's retirement —
+              // never on the strength of a 200.
+              //
+              // The previous comment here asserted lane content state and went
+              // stale when the seed ran. CLAUDE.md says content and lane state
+              // are not documented in this repo, and nothing pins them, so the
+              // measured detail lives in the ROADMAP entry instead of being
+              // restated where it will rot again.
               { label: 'Localshoring', url: '/localshoring' },
             ],
           },
@@ -273,13 +275,10 @@ export const navigation: Navigation = {
         { label: 'Book a Call', url: '/contact' },
         // Interim: the four market landing pages aren't built yet, so the city
         // links point at localshoring (our local-delivery model) rather than
-        // 404ing. They stay on the `localshoring` PAGE, which is seeded and
-        // resolves today — NOT the planned `/services/localshoring` leaf, which
-        // exists only in an unseeded `services.json`. An earlier cut of this PR
-        // moved them and turned four working links into 404s for nothing; the
-        // twelve new service links above have no working target to give up,
-        // which is not the same trade. Move these when the leaf is seeded and
-        // the Page retires, in that order.
+        // 404ing. They stay on the `localshoring` PAGE for the same reason the
+        // header link does — see "How We Work" above, and ROADMAP SVC-3. An
+        // earlier cut of this PR moved them and turned four working links into
+        // 404s for nothing. All five move together, in that one change.
         // TODO(stub): build /tulsa-consulting etc. as per-market SEO pages
         // (CONTENT_NEEDS §"Missing pages — linked but 404").
         { label: 'Tulsa', url: '/localshoring' },
