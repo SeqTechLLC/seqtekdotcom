@@ -172,50 +172,49 @@ type SluggedCollection =
 
 export const getHomepage = withReadTimeout(
   'getHomepage',
-  cache(
-    async (): Promise<Homepage> =>
-      unstable_cache(
-        async () => {
-          const payload = await getPayloadInstance()
-          // `overrideAccess: false` matters for the POPULATED RELATIONS, not
-          // for the global itself: `publishedOrAuthedGlobal` returns a
-          // `_status: published` constraint for an anonymous read rather than
-          // denying it, so the homepage still resolves. Payload's local API
-          // defaults this to TRUE and threads it into the dataloader key for
-          // every related document, so without it a hand-picked relation to a
-          // DRAFTS-ENABLED collection populates a full draft. Missing this
-          // contradicted invariant C2 above and is how a draft could reach a
-          // public card.
-          //
-          // The exposure is EVERY block, not a subset: `Homepage` declares
-          // `blocks: [...layoutBlocks]`, so editors recompose the page without
-          // a deploy and this guard has to hold for whatever they pick. The
-          // names below are worked examples of that reach, not a registry to
-          // keep current — it is more than the obvious ones:
-          // `featured-case-study`, `industry-grid`, `related-posts`,
-          // `workshop-list`, `service-pillar-cards`, and the four
-          // source-driven grids whenever an author sets them to manual, since
-          // `resolveLayout` short-circuits and leaves the depth-2 population
-          // in place. (`logo-bar` and `testimonial-block` cannot leak either
-          // way: `media` reads `() => true` and `testimonials` has no drafts.)
-          //
-          // COST, recorded because the obvious remedy is a trap. At depth 2 an
-          // `industry-grid` relation now carries each industry's full block
-          // `layout` (IND-1), not the small taxonomy row it used to. Amortized
-          // by the hourly `unstable_cache` above, so not a correctness problem.
-          // But `defaultPopulate` on `Industries` — the natural fix — would
-          // strip `layout`, and `IndustryGrid.isLinkable` reads it to decide
-          // whether a card may link. Trimming here silently unlinks every card;
-          // `industryGridLinking.int.spec.tsx` is what catches that.
-          return (await payload.findGlobal({
-            slug: 'homepage',
-            depth: 2,
-            overrideAccess: false,
-          })) as Homepage
-        },
-        ['global', 'homepage'],
-        { tags: globalCacheTags('homepage'), revalidate: ONE_HOUR },
-      )(),
+  cache(async (): Promise<Homepage> =>
+    unstable_cache(
+      async () => {
+        const payload = await getPayloadInstance()
+        // `overrideAccess: false` matters for the POPULATED RELATIONS, not
+        // for the global itself: `publishedOrAuthedGlobal` returns a
+        // `_status: published` constraint for an anonymous read rather than
+        // denying it, so the homepage still resolves. Payload's local API
+        // defaults this to TRUE and threads it into the dataloader key for
+        // every related document, so without it a hand-picked relation to a
+        // DRAFTS-ENABLED collection populates a full draft. Missing this
+        // contradicted invariant C2 above and is how a draft could reach a
+        // public card.
+        //
+        // The exposure is EVERY block, not a subset: `Homepage` declares
+        // `blocks: [...layoutBlocks]`, so editors recompose the page without
+        // a deploy and this guard has to hold for whatever they pick. The
+        // names below are worked examples of that reach, not a registry to
+        // keep current — it is more than the obvious ones:
+        // `featured-case-study`, `industry-grid`, `related-posts`,
+        // `workshop-list`, `service-pillar-cards`, and the four
+        // source-driven grids whenever an author sets them to manual, since
+        // `resolveLayout` short-circuits and leaves the depth-2 population
+        // in place. (`logo-bar` and `testimonial-block` cannot leak either
+        // way: `media` reads `() => true` and `testimonials` has no drafts.)
+        //
+        // COST, recorded because the obvious remedy is a trap. At depth 2 an
+        // `industry-grid` relation now carries each industry's full block
+        // `layout` (IND-1), not the small taxonomy row it used to. Amortized
+        // by the hourly `unstable_cache` above, so not a correctness problem.
+        // But `defaultPopulate` on `Industries` — the natural fix — would
+        // strip `layout`, and `IndustryGrid.isLinkable` reads it to decide
+        // whether a card may link. Trimming here silently unlinks every card;
+        // `industryGridLinking.int.spec.tsx` is what catches that.
+        return (await payload.findGlobal({
+          slug: 'homepage',
+          depth: 2,
+          overrideAccess: false,
+        })) as Homepage
+      },
+      ['global', 'homepage'],
+      { tags: globalCacheTags('homepage'), revalidate: ONE_HOUR },
+    )(),
   ),
 )
 
@@ -353,61 +352,51 @@ export const findPublishedList = async (
   return docs
 }
 
-export const listCaseStudies = withReadTimeout(
-  'listCaseStudies',
-  (): Promise<CaseStudy[]> =>
-    unstable_cache(
-      async () => (await findPublishedList('caseStudies', { sort: '-publishedAt' })) as CaseStudy[],
-      ['caseStudies', 'list'],
-      { tags: listCacheTags('caseStudies'), revalidate: ONE_HOUR },
-    )(),
+export const listCaseStudies = withReadTimeout('listCaseStudies', (): Promise<CaseStudy[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('caseStudies', { sort: '-publishedAt' })) as CaseStudy[],
+    ['caseStudies', 'list'],
+    { tags: listCacheTags('caseStudies'), revalidate: ONE_HOUR },
+  )(),
 )
 
-export const listPosts = withReadTimeout(
-  'listPosts',
-  (): Promise<Post[]> =>
-    unstable_cache(
-      async () => (await findPublishedList('posts', { sort: '-publishedAt' })) as Post[],
-      ['posts', 'list'],
-      { tags: listCacheTags('posts'), revalidate: ONE_HOUR },
-    )(),
+export const listPosts = withReadTimeout('listPosts', (): Promise<Post[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('posts', { sort: '-publishedAt' })) as Post[],
+    ['posts', 'list'],
+    { tags: listCacheTags('posts'), revalidate: ONE_HOUR },
+  )(),
 )
 
-export const listServices = withReadTimeout(
-  'listServices',
-  (): Promise<Service[]> =>
-    unstable_cache(
-      // depth 0 on purpose. SVC-2 gave `services` a full `layout` AND made
-      // `items` a self-relation, so at any depth above 0 every group drags back
-      // its services as complete documents — whole block trees, duplicated once
-      // per group that cross-lists them — into an hour-long cache entry. The
-      // one consumer, `resolveLayout`, reads `tier` and walks `items` by id.
-      async () => (await findPublishedList('services', { sort: 'order', depth: 0 })) as Service[],
-      ['services', 'list'],
-      { tags: listCacheTags('services'), revalidate: ONE_HOUR },
-    )(),
+export const listServices = withReadTimeout('listServices', (): Promise<Service[]> =>
+  unstable_cache(
+    // depth 0 on purpose. SVC-2 gave `services` a full `layout` AND made
+    // `items` a self-relation, so at any depth above 0 every group drags back
+    // its services as complete documents — whole block trees, duplicated once
+    // per group that cross-lists them — into an hour-long cache entry. The
+    // one consumer, `resolveLayout`, reads `tier` and walks `items` by id.
+    async () => (await findPublishedList('services', { sort: 'order', depth: 0 })) as Service[],
+    ['services', 'list'],
+    { tags: listCacheTags('services'), revalidate: ONE_HOUR },
+  )(),
 )
 
-export const listWorkshops = withReadTimeout(
-  'listWorkshops',
-  (): Promise<Workshop[]> =>
-    unstable_cache(
-      async () => (await findPublishedList('workshops', { sort: 'order' })) as Workshop[],
-      ['workshops', 'list'],
-      { tags: listCacheTags('workshops'), revalidate: ONE_HOUR },
-    )(),
+export const listWorkshops = withReadTimeout('listWorkshops', (): Promise<Workshop[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('workshops', { sort: 'order' })) as Workshop[],
+    ['workshops', 'list'],
+    { tags: listCacheTags('workshops'), revalidate: ONE_HOUR },
+  )(),
 )
 
-export const listTeamMembers = withReadTimeout(
-  'listTeamMembers',
-  (): Promise<TeamMember[]> =>
-    unstable_cache(
-      // `teamMembers` is public-read with no drafts. Leadership-first ordering is
-      // applied at the template (US3) — here we just sort by `order`.
-      async () => (await findPublishedList('teamMembers', { sort: 'order' })) as TeamMember[],
-      ['teamMembers', 'list'],
-      { tags: listCacheTags('teamMembers'), revalidate: ONE_HOUR },
-    )(),
+export const listTeamMembers = withReadTimeout('listTeamMembers', (): Promise<TeamMember[]> =>
+  unstable_cache(
+    // `teamMembers` is public-read with no drafts. Leadership-first ordering is
+    // applied at the template (US3) — here we just sort by `order`.
+    async () => (await findPublishedList('teamMembers', { sort: 'order' })) as TeamMember[],
+    ['teamMembers', 'list'],
+    { tags: listCacheTags('teamMembers'), revalidate: ONE_HOUR },
+  )(),
 )
 
 // ADR 0009 metadata collection: the `/partners` index is generated from these
@@ -415,14 +404,12 @@ export const listTeamMembers = withReadTimeout(
 // `order` is optional, so `name` is the tiebreaker — otherwise partners that
 // share an order (or leave it blank) come back in whatever order Postgres
 // happens to return, and the cached index shuffles between revalidations.
-export const listPartners = withReadTimeout(
-  'listPartners',
-  (): Promise<Partner[]> =>
-    unstable_cache(
-      async () => (await findPublishedList('partners', { sort: ['order', 'name'] })) as Partner[],
-      ['partners', 'list'],
-      { tags: listCacheTags('partners'), revalidate: ONE_HOUR },
-    )(),
+export const listPartners = withReadTimeout('listPartners', (): Promise<Partner[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('partners', { sort: ['order', 'name'] })) as Partner[],
+    ['partners', 'list'],
+    { tags: listCacheTags('partners'), revalidate: ONE_HOUR },
+  )(),
 )
 
 /** Raw published-slug read — exported for the T010 R3 test (see note above). */

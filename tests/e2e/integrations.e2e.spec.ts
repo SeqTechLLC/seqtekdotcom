@@ -69,8 +69,7 @@ test.describe('Third-party integration bootstrap', () => {
       const w = window as unknown as Win
       const queue = Array.isArray(w._hsp) ? w._hsp : []
       const entry = queue.find((e) => Array.isArray(e) && e[0] === 'addPrivacyConsentListener') as
-        | [string, (c: unknown) => void]
-        | undefined
+        [string, (c: unknown) => void] | undefined
       if (!entry) return { registered: false, updated: false }
       const before = w.dataLayer.length
       entry[1]({ allowed: false, categories: { analytics: true, advertisement: false } })

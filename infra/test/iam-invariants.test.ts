@@ -196,8 +196,7 @@ describe('IAM invariants — every stack', () => {
               `OIDC role ${logicalId} in ${name} must declare a sub-claim condition`,
             ).toBeDefined()
             const stringLike = (condition as Record<string, unknown>)?.StringLike as
-              | Record<string, unknown>
-              | undefined
+              Record<string, unknown> | undefined
             expect(
               stringLike?.['token.actions.githubusercontent.com:sub'],
               `OIDC role ${logicalId} in ${name} must pin sub: claim`,

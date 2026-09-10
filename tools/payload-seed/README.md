@@ -100,9 +100,7 @@ A **global** spec updates one global (it has a `global` key instead of
 {
   "global": "homepage",
   "status": "published",
-  "data": {
-    /* ...global fields... */
-  },
+  "data": {/* ...global fields... */},
 }
 ```
 

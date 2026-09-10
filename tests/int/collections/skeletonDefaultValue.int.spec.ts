@@ -36,8 +36,7 @@ import { SKELETON_PLACEHOLDER_COPY } from '../helpers/skeletonPlaceholderCopy'
  */
 describe('a defaultValue skeleton is placeholder content that ships on read', () => {
   const layoutField = Industries.fields.find((f) => 'name' in f && f.name === 'layout') as
-    | { defaultValue?: unknown }
-    | undefined
+    { defaultValue?: unknown } | undefined
 
   it('Industries.layout still carries the skeleton as its defaultValue', () => {
     // If this ever stops being true, the empty-layout 404 guard in

@@ -63,30 +63,31 @@
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.1065.0",
-    "@axe-core/playwright": "^4.11.3",
+    "@aws-sdk/client-s3": "^3.1127.0",
+    "@axe-core/playwright": "^4.13.0",
     "@lhci/cli": "^0.15.1",
-    "@playwright/test": "1.58.2",
-    "@testcontainers/postgresql": "12.0.0",
+    "@playwright/test": "1.63.0",
+    "@testcontainers/postgresql": "12.1.0",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "16.3.0",
+    "@testing-library/react": "16.3.3",
     "@types/heic-convert": "^2.1.1",
-    "@types/node": "22.19.9",
+    "@types/node": "26.4.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
-    "@vitejs/plugin-react": "4.5.2",
+    "@vitejs/plugin-react": "6.1.1",
     "eslint": "^9.16.0",
     "eslint-config-next": "16.3.4",
     "heic-convert": "^2.1.0",
     "husky": "^9.1.7",
-    "jsdom": "28.0.0",
-    "lint-staged": "^17.0.4",
-    "prettier": "^3.4.2",
-    "testcontainers": "12.0.0",
-    "tsx": "4.22.4",
+    "jsdom": "30.0.1",
+    "lint-staged": "^17.5.0",
+    "prettier": "^3.9.6",
+    "testcontainers": "12.1.0",
+    "tsx": "4.23.13",
     "typescript": "5.7.3",
-    "vite-tsconfig-paths": "6.0.5",
-    "vitest": "4.0.18"
+    "vite": "8.3.0",
+    "vite-tsconfig-paths": "6.1.1",
+    "vitest": "5.0.0"
   },
   "overrides": {
     "tsx": "$tsx",
@@ -101,8 +102,7 @@
       "ws": "^8.21.0"
     },
     "next": {
-      "postcss": "^8.5.25",
-      "sharp": "^0.35.4"
+      "postcss": "^8.5.25"
     }
   },
   "_overridesNotes": {
@@ -110,8 +110,7 @@
     "esbuild": "Pinned (under drizzle-kit) to clear the transitive esbuild dev-server advisory that failed the production audit gate in PR #52. Remove once drizzle-kit's dependency tree resolves esbuild to a fixed version on its own — run `npm run check:overrides` to confirm.",
     "ws": "Pinned to ^8.21.0 (under payload and happy-dom) to clear the transitive ws advisory pulled in via @lexical/headless. Remove once payload and happy-dom resolve ws to a non-vulnerable version on their own. NOTE: the `ws` override itself lands on main with PR #66 (feat/010); until then this note is reported as 'pending' by `npm run check:overrides`.",
     "undici": "Pinned to ^7.28.0 (under payload) to clear the transitive undici high-severity advisories GHSA-vmh5-mc38-953g + GHSA-pr7r-676h-xcf6 (vulnerable 7.0.0–7.27.2). Remove once payload resolves undici to >=7.28.0 on its own — run `npm run check:overrides` to confirm.",
-    "postcss": "Pinned to ^8.5.25 (under next, alongside the direct dependency bump) to clear GHSA-r28c-9q8g-f849 (sourceMappingURL path traversal; vulnerable <=8.5.17). next bundles its own postcss, so the direct bump alone left the nested copy vulnerable. Remove once next ships a postcss >=8.5.18.",
-    "sharp": "Pinned to ^0.35.4 (under next, alongside the direct dependency bump) to clear GHSA-f88m-g3jw-g9cj (inherited libvips CVE-2026-33327/33328/35590/35591; vulnerable <0.35.0) and GHSA-rgj7-g3m4-5g8c (inherited libheif GHSA-g89c-p67h-r497 + GHSA-2jg2-4ch7-h545; vulnerable <0.35.4, floor raised 2026-09-09). Semver-major from 0.34.x; next declares sharp optional and resolved its own 0.34.5 copy, so the override is needed as well as the direct bump. Remove once next requires sharp >=0.35.4."
+    "postcss": "Pinned to ^8.5.25 (under next, alongside the direct dependency bump) to clear GHSA-r28c-9q8g-f849 (sourceMappingURL path traversal; vulnerable <=8.5.17). next bundles its own postcss, so the direct bump alone left the nested copy vulnerable. Remove once next ships a postcss >=8.5.18."
   },
   "engines": {
     "node": ">=22.0.0"

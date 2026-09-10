@@ -947,31 +947,15 @@ Hooks are lifecycle functions that run server-side at specific points in a docum
 export const Posts: CollectionConfig = {
   slug: 'posts',
   hooks: {
-    beforeValidate: [
-      /* runs before Payload validates the data */
-    ],
-    beforeChange: [
-      /* runs after validation, before database write */
-    ],
-    afterChange: [
-      /* runs after database write — side effects go here */
-    ],
-    beforeRead: [
-      /* runs before returning data from a query */
-    ],
-    afterRead: [
-      /* runs after data is read, before returning to caller */
-    ],
-    beforeDelete: [
-      /* runs before deletion */
-    ],
-    afterDelete: [
-      /* runs after deletion */
-    ],
+    beforeValidate: [/* runs before Payload validates the data */],
+    beforeChange: [/* runs after validation, before database write */],
+    afterChange: [/* runs after database write — side effects go here */],
+    beforeRead: [/* runs before returning data from a query */],
+    afterRead: [/* runs after data is read, before returning to caller */],
+    beforeDelete: [/* runs before deletion */],
+    afterDelete: [/* runs after deletion */],
   },
-  fields: [
-    /* ... */
-  ],
+  fields: [/* ... */],
 }
 ```
 
