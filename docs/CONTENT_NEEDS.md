@@ -42,7 +42,7 @@
 **F. Client-name + testimonial permissions** — 2–3 clients who'd give a short named quote (ideally one about localshoring); confirmation we can name the flagship client (NovaMud) and cite its metrics. **Named case-study target set (from the 2026-06-24 review), ordered by how likely we are to land the sign-off, with the internal person chasing each:**
 
 - **Taurex** (via **Andrew**) — **chase this one first.** Four Taurex studies are already written (`taurex` live on staging, plus partnership / eticketing / repair drafted with banner art done), and all three outstanding quote slots are Taurex people (Dustin, a field rep or district manager, Chad). One conversation clears the soft-launch "one named, signed study" gate, publishes four studies, and lands three quotes.
-- **Hogan** (via **Ryan**) — a current client; this is **both** a case study **and** a logo on the Industry Leaders strip.
+- **Hogan** — named case study **declined** 2026-09-09. Anonymized study **approved via Brent** 2026-09-10. Logo + partner language granted earlier.
 - **NovaMud** (via **Sam**) — the **flagship** (the existing study, the only one with metrics); need it made specifically about them + permission to name them.
 - **Well Checked** (via **Mike**) — the sign-off is believed easy, but we are lukewarm on the content (2026-07-27). Treat it as a **logo / permission** item, not a case-study chase.
 
