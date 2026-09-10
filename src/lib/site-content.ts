@@ -222,6 +222,7 @@ export const navigation: Navigation = {
               { label: 'Healthcare', url: '/industries/healthcare' },
               { label: 'FinTech', url: '/industries/fintech' },
               { label: 'Aerospace', url: '/industries/aerospace' },
+              { label: 'Retail', url: '/industries/retail' },
               { label: 'Leadership and Training', url: '/industries/leadership-and-training' },
             ],
           },
