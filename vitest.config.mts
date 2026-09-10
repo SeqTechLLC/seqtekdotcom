@@ -21,7 +21,8 @@ export default defineConfig({
     // cache wins on schema setup and they don't race on enum/table creates.
     // Vitest 4 replaced `poolOptions.forks.singleFork` with the pair
     // `maxWorkers: 1` + `isolate: false`; the latter is exactly what keeps
-    // the module cache alive across test files.
+    // the module cache alive across test files. Still the correct pair on
+    // Vitest 5 — both options carry over unchanged.
     pool: 'forks',
     maxWorkers: 1,
     isolate: false,
