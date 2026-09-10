@@ -579,8 +579,7 @@ describe('C4 — a collapsed block row names itself', () => {
     "%s's row label matches labels.singular",
     (slug, block) => {
       const label = block.admin?.components?.Label as
-        | { clientProps?: { name?: string } }
-        | undefined
+        { clientProps?: { name?: string } } | undefined
       expect(label?.clientProps?.name, `${slug} passes no name to BlockRowLabel`).toBe(
         String(block.labels?.singular),
       )
