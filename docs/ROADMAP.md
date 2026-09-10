@@ -217,7 +217,7 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
   **Protocol:** approach with a specific study and a hard date, not "write some success stories"; run it as a
   30-minute recorded call Megan drafts from; CC Brent on every ask, marked `IMPORTANT`; on the third no-reply
   Brent calls them. Megan owns the chase; Brent has backed the escalation.
-  **In flight:** YCS (drafting), YouVersion (no reply), NovaMud (needs a redo), Hogan. Targets added by Hank:
+  **In flight:** YCS (drafting), YouVersion (no reply), NovaMud (needs a redo). Hogan runs anonymized (§1.F). Targets added by Hank:
   BOK, QuickTrip, ONEOK — which reopens what `CONTENT_NEEDS.md` had closed as logo-only.
   **Decide at the go/no-go:** whether a named, signed case study gates the cutover.
 
@@ -486,11 +486,11 @@ Real work, none of it blocking a launch. Ordered by expected return.
 | BR-7 / C-2 Photo shoot          | Kenn         | Studio headshots exist and are catalogued. Still to shoot at the September All Hands: group leadership, full team, Kenn's headshot.                            |
 | C-9 Video delivery + placement  | Kenn + Megan | Localshoring explainer and the Hank + Brent partner videos are in edit. Take delivery, upload to the SEQTEK channel, place as `video-embed` blocks.            |
 | C-5 Client logo permissions     | Megan + Kenn | Keep: Hogan, BOK, QuickTrip. Drop or refresh: GE, AVB, Change Health. Verify we ever worked with ONEOK / ONE Gas.                                              |
-| C-7 Case-study sign-offs        | Kenn + Megan | Taurex (Andrew) first — see P2. Then Hogan (Ryan) and NovaMud (Sam).                                                                                           |
+| C-7 Case-study sign-offs        | Kenn + Megan | Taurex first — see P2. Then NovaMud. Hogan is anonymized, no name sign-off needed.                                                                             |
 | BR-5 A sourced projects count   | Leadership   | Or we ship years + markets only — see P2.                                                                                                                      |
 | BR-6 Cherokee Nation outreach   | —            | Decided 2026-06-19: no outreach. Listed only because it keeps getting re-asked. Revisit only if the Nation asks.                                               |
 | Industry list                   | Brent        | Outstanding. It did not come with the services email. IND-1 shipped seven (the meeting's five, plus Aerospace and Leadership and Training) — confirm the list. |
-| PROOF-1 case-study chase        | Megan        | Brent escalates. YCS drafting, YouVersion unanswered, NovaMud needs a redo, Hogan open.                                                                        |
+| PROOF-1 case-study chase        | Megan        | Brent escalates. YCS drafting, YouVersion unanswered, NovaMud needs a redo. Hogan anonymized.                                                                  |
 | 2026-09-14 go/no-go invite      | Megan        | Add Dana and Trevor.                                                                                                                                           |
 | Daniel's HubSpot meetings link  | Megan        | For BOOK-1. Portal config, not code.                                                                                                                           |
 | HS-1 HubSpot portal config      | Megan        | See P2.                                                                                                                                                        |
