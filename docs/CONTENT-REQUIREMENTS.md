@@ -4,7 +4,7 @@
 **Version:** 2.0 — Marketing-Refined
 **Status:** Reference — Phase 1 implementation
 
-> **This document defines what the site needs, not what it currently has.** For the live build state and the short list of content still outstanding (and what's already drafted/decided), see **`docs/CONTENT_NEEDS.md`** (the authoritative status doc) and the locked-decisions block in **`docs/ROADMAP.md`** §1. Do not read the gap framing here as "missing" — most of it is drafted in `docs/content-drafts/` or already loaded.
+> **This document defines what the site needs, not what it currently has.** For the live build state and the short list of content still outstanding (and what's already drafted/decided), see **`CONTENT_NEEDS.md`** in the private content repo (the authoritative status doc) and the locked-decisions block in **`docs/ROADMAP.md`** §1. Do not read the gap framing here as "missing" — most of it is drafted in `docs/content-drafts/` or already loaded.
 
 **What changed from V1:** This revision restructures the document around buyer psychology and conversion architecture rather than page-by-page checklists. It incorporates current best practices from HubSpot, Nielsen Norman Group, Content Marketing Institute, Gartner B2B buyer research, Google Search Central, Semrush, and Demand Gen Report. The site map is preserved; the strategy behind every page is sharpened.
 

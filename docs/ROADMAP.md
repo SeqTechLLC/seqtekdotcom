@@ -9,7 +9,7 @@ with a `P{N}-*` row in the same commit. Don't check items off in place, don't ke
 that's already made, don't restate what shipped, don't catalogue content. If it isn't listed here, it's done or
 it isn't happening.
 
-**Companion docs.** [`CONTENT_NEEDS.md`](./CONTENT_NEEDS.md) is what we need _from people_; this file tracks the
+**Companion docs.** `CONTENT_NEEDS.md` (private content repo) is what we need _from people_; this file tracks the
 _work_. [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) is the audit trail. [`decisions/`](./decisions/) holds the
 ADRs. Meeting notes live in [`meetings/`](./meetings/).
 
@@ -214,11 +214,7 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
 
 - **PROOF-1 — case studies and attributable quotes, on hard dates.** Every capability claim links to proof, and
   there are fewer proofs than the menu will have items.
-  **Protocol:** approach with a specific study and a hard date, not "write some success stories"; run it as a
-  30-minute recorded call Megan drafts from; CC Brent on every ask, marked `IMPORTANT`; on the third no-reply
-  Brent calls them. Megan owns the chase; Brent has backed the escalation.
-  **In flight:** YCS (drafting), YouVersion (no reply), NovaMud (needs a redo). Hogan runs anonymized (§1.F). Targets added by Hank:
-  BOK, QuickTrip, ONEOK — which reopens what `CONTENT_NEEDS.md` had closed as logo-only.
+  **Protocol, targets and current state:** private content repo, `WAITING_ON_PEOPLE.md`.
   **Decide at the go/no-go:** whether a named, signed case study gates the cutover.
 
 - **AB-1 — the alternative "what we do" page.** Build a page that meets Brent's goal — a visitor understands
@@ -348,7 +344,7 @@ Every content change is still a developer task. This tier fixes that before we l
   testimonial re-seed, the curated photo picks (C-8, `tools/ingest-photos`), the six blog bodies, and the
   three staged Taurex studies. The `teamMembers` slice is done on preview and **not yet on production** — the seeder
   runs against `ww3` separately. Run against a gated lane with `IMPORT_TOKEN` + `IMPORT_COOKIE` (#102).
-- **C-7 — Taurex sign-off (via Andrew).** The highest-leverage content conversation: four written studies
+- **C-7 — Taurex sign-off.** The highest-leverage content conversation: four written studies
   become publishable, all three outstanding `pendingQuote` slots are Taurex people, and it clears the
   soft-launch "one named, signed case study" gate in one call. NovaMud stays the editorial flagship (the only
   study with metrics) but needs its own write-up and naming permission.
@@ -478,20 +474,4 @@ Real work, none of it blocking a launch. Ordered by expected return.
 
 ## Waiting on people
 
-`CONTENT_NEEDS.md` is the authoritative list — hand _that_ to Hank, Justin and Megan, not this file.
-
-| Item                            | Owner        | State                                                                                                                                                          |
-| ------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C-3 Hank + Brent interview copy | Kenn         | Filmed and in edit. Extraction from the transcript, not a scheduling gate — draft off the raw audio, don't wait for the cut.                                   |
-| BR-7 / C-2 Photo shoot          | Kenn         | Studio headshots exist and are catalogued. Still to shoot at the September All Hands: group leadership, full team, Kenn's headshot.                            |
-| C-9 Video delivery + placement  | Kenn + Megan | Localshoring explainer and the Hank + Brent partner videos are in edit. Take delivery, upload to the SEQTEK channel, place as `video-embed` blocks.            |
-| C-5 Client logo permissions     | Megan + Kenn | Keep: Hogan, BOK, QuickTrip. Drop or refresh: GE, AVB, Change Health. Verify we ever worked with ONEOK / ONE Gas.                                              |
-| C-7 Case-study sign-offs        | Kenn + Megan | Taurex first — see P2. Then NovaMud. Hogan is anonymized, no name sign-off needed.                                                                             |
-| BR-5 A sourced projects count   | Leadership   | Or we ship years + markets only — see P2.                                                                                                                      |
-| BR-6 Cherokee Nation outreach   | —            | Decided 2026-06-19: no outreach. Listed only because it keeps getting re-asked. Revisit only if the Nation asks.                                               |
-| Industry list                   | Brent        | Outstanding. It did not come with the services email. IND-1 shipped seven (the meeting's five, plus Aerospace and Leadership and Training) — confirm the list. |
-| PROOF-1 case-study chase        | Megan        | Brent escalates. YCS drafting, YouVersion unanswered, NovaMud needs a redo. Hogan anonymized.                                                                  |
-| 2026-09-14 go/no-go invite      | Megan        | Add Dana and Trevor.                                                                                                                                           |
-| Daniel's HubSpot meetings link  | Megan        | For BOOK-1. Portal config, not code.                                                                                                                           |
-| HS-1 HubSpot portal config      | Megan        | See P2.                                                                                                                                                        |
-| Written leadership sign-off     | Leadership   | See P3.                                                                                                                                                        |
+Tracked in the private content repo: `CONTENT_NEEDS.md` and `WAITING_ON_PEOPLE.md`.
