@@ -22,7 +22,7 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 | **P0** | NAV-1 Dropdown panels + the pages under them                   | Kenn, blocked on Brent |
 |        | SVC-2 Seed the services content                                | Kenn                   |
 |        | SVC-3 Collapse the duplicate Localshoring pages                | Kenn                   |
-|        | IND-1 Seven industry pages                                     | Kenn + Brent           |
+|        | IND-1 Eight industry pages                                     | Kenn + Brent           |
 |        | BOOK-1 Book-a-call widget routing to Daniel                    | Kenn, blocked on Megan |
 |        | PROOF-1 Case studies + quotes, on hard dates                   | Megan, Brent escalates |
 |        | AB-1 The alternative "what we do" page, A/B against the menu   | Kenn                   |
@@ -178,8 +178,8 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     and may need to come back out.
 
 - **IND-1 — industry pages. Wiring done; the copy is not.** Eight industries: Oil and Gas, Energy,
-  Manufacturing, Healthcare, FinTech, Aerospace, Leadership and Training, and Retail (added by Brent
-  2026-09-10). Non-profit is explicitly out.
+  Manufacturing, Healthcare, FinTech, Aerospace, Retail (added by Brent 2026-09-10), and Leadership and
+  Training. Non-profit is explicitly out.
   - **The mechanism shipped.** `industries` carries a `layout` blocks field, `/industries/[slug]` renders it
     through `RenderBlocks` off the collection, `industry-grid` cards are re-linked, and the sitemap derives
     the URLs. Publishing a new industry needs no deploy. Of the four INERT-1 groups only `seo` is un-hidden —
@@ -197,9 +197,9 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     viewport the container is viewport-bound (1024 − 64px padding = 960px) and no max-width helps — so
     1024–1279 renders the drawer. **Re-measure before adding anything else to the header**, against the
     1280px cap, not the old 1024.
-  - **What is left is the copy.** All seven bodies are placeholders and say so on the page.
-  - **Five of the seven have no proof** — Healthcare, FinTech, Manufacturing, Aerospace and Leadership and
-    Training carry no case study. Their `case-study-grid` now renders **nothing at all** — heading included — rather than an empty
+  - **What is left is the copy.** All eight bodies are placeholders and say so on the page.
+  - **Six of the eight have no proof** — Healthcare, FinTech, Manufacturing, Aerospace, Leadership and
+    Training, and Retail carry no case study. Their `case-study-grid` now renders **nothing at all** — heading included — rather than an empty
     section: a bare "Selected work" over empty space was itself a claim with nothing behind it. So the gap is
     no longer self-advertising on the page, which makes the publish decision a human one: either PROOF-1 lands
     a study each, or those five stay drafts until it does. `CONTENT_NEEDS.md` §11.
