@@ -177,8 +177,9 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     Product Ownership, Strategy & Roadmap Alignment, Discovery & Team Workshops); some map onto items he named
     and may need to come back out.
 
-- **IND-1 — industry pages. Wiring done; the copy is not.** Seven industries: Oil and Gas, Energy,
-  Manufacturing, Healthcare, FinTech, Aerospace, and Leadership and Training. Non-profit is explicitly out.
+- **IND-1 — industry pages. Wiring done; the copy is not.** Eight industries: Oil and Gas, Energy,
+  Manufacturing, Healthcare, FinTech, Aerospace, Leadership and Training, and Retail (added by Brent
+  2026-09-10). Non-profit is explicitly out.
   - **The mechanism shipped.** `industries` carries a `layout` blocks field, `/industries/[slug]` renders it
     through `RenderBlocks` off the collection, `industry-grid` cards are re-linked, and the sitemap derives
     the URLs. Publishing a new industry needs no deploy. Of the four INERT-1 groups only `seo` is un-hidden —

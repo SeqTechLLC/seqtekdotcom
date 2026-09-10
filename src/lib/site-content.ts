@@ -223,6 +223,7 @@ export const navigation: Navigation = {
               { label: 'FinTech', url: '/industries/fintech' },
               { label: 'Aerospace', url: '/industries/aerospace' },
               { label: 'Leadership and Training', url: '/industries/leadership-and-training' },
+              { label: 'Retail', url: '/industries/retail' },
             ],
           },
         ],
