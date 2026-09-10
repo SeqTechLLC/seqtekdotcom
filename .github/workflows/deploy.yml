@@ -786,7 +786,7 @@ jobs:
     # hang on bare GH-hosted runners is the reason this job is split out.
     # Bump the tag in lockstep with @playwright/test in package.json.
     container:
-      image: mcr.microsoft.com/playwright:v1.58.2-jammy
+      image: mcr.microsoft.com/playwright:v1.63.0-jammy
       options: --ipc=host
     steps:
       - uses: actions/checkout@v7
