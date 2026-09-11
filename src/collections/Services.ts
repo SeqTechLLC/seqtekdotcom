@@ -9,10 +9,14 @@ import { seoField } from '../payload/fields/seo'
 import { orderField, publishedAtField } from '../payload/fields/publishing'
 import { layoutBlocks } from '../payload/blocks/layout'
 import { livePreviewFor } from '../payload/livePreview/url'
+import { ADMIN_GROUPS } from './groups'
 
 export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
+    group: ADMIN_GROUPS.content,
+    description:
+      'What we sell and how we work, under /services. A top-level menu page holds groups, and a group holds the services themselves.',
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'tier', 'slug', 'order'],
     // SVC-2 made this a routed, block-composed collection again, so it gets the

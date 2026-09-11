@@ -2,6 +2,7 @@ import type { Access, CollectionConfig } from 'payload'
 
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
+import { ADMIN_GROUPS } from './groups'
 
 // Editorial sessions see every testimonial (including inactive). Anon and
 // any future non-editorial roles only see active ones. The previous
@@ -16,6 +17,9 @@ const readActiveOrAuthed: Access = ({ req }) => {
 export const Testimonials: CollectionConfig = {
   slug: 'testimonials',
   admin: {
+    group: ADMIN_GROUPS.reference,
+    description:
+      'Client quotes. These have no page of their own; quote blocks pull them onto other pages.',
     useAsTitle: 'personName',
     defaultColumns: ['personName', 'company', 'isActive'],
   },

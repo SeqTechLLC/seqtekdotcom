@@ -9,10 +9,14 @@ import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { seoField } from '../payload/fields/seo'
 import { publishedAtField } from '../payload/fields/publishing'
+import { ADMIN_GROUPS } from './groups'
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
   admin: {
+    group: ADMIN_GROUPS.content,
+    description:
+      'Articles listed on /insights. Written as flowing text rather than blocks, with a category and a published date.',
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'slug', 'publishedAt', 'updatedAt'],
     livePreview: livePreviewFor('posts'),
