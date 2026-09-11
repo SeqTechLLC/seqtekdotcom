@@ -10,7 +10,7 @@ import {
   BLOCK_CATEGORY_LABELS,
 } from '../../src/payload/blocks/categories'
 import { collections } from '../../src/collections'
-import { ADMIN_GROUP_LABELS } from '../../src/collections/groups'
+import { ADMIN_GROUP_LABELS, ADMIN_GROUPS } from '../../src/collections/groups'
 import { Homepage } from '../../src/globals/Homepage'
 import { richTextBlocks, richTextInlineBlocks } from '../../src/payload/blocks/inline'
 import { layoutBlocks } from '../../src/payload/blocks/layout'
@@ -286,7 +286,7 @@ describe('the category taxonomy', () => {
 /**
  * Spec 011 US6 / T056 — contracts/admin-metadata.md C3.
  *
- * Fifteen entries in one flat sidebar list is a scavenger hunt, and the list
+ * Fourteen entries in one flat sidebar list is a scavenger hunt, and the list
  * view above an unfamiliar collection says nothing about what belongs in it.
  * `admin.group` and `admin.description` are the two places Payload will draw
  * an answer, so every entity declares both.
@@ -338,6 +338,50 @@ describe('C3 — every collection and global declares its purpose', () => {
       description.length,
       `${slug}'s description is too short to say anything`,
     ).toBeGreaterThan(30)
+  })
+})
+
+/**
+ * Spec 011 US6 — the sidebar's HEADING order, which is a property of the
+ * `collections` array rather than of any one collection.
+ *
+ * `groupNavItems` emits each group where it is first seen while walking
+ * `[...collections, ...globals]`, so this array's order is the only thing
+ * keeping **Admin** from drawing above everything an editor opens — which is
+ * exactly what it did before US6 reordered it. Nothing else in the suite
+ * would notice: membership and descriptions are per-entity, and moving
+ * `Users` back to the front leaves every other assertion green.
+ *
+ * Same shape as the block-picker's category-order test above, for the same
+ * reason: an order documented in a comment is aspirational until something
+ * fails when it drifts.
+ */
+describe('C3 — the sidebar draws its headings in the declared order', () => {
+  const EXPECTED_HEADING_ORDER = [ADMIN_GROUPS.content, ADMIN_GROUPS.reference, ADMIN_GROUPS.admin]
+
+  it('collections is ordered so the headings come out editor-first', () => {
+    const encountered: string[] = []
+    for (const collection of collections) {
+      const group = collection.admin?.group
+      if (typeof group === 'string' && !encountered.includes(group)) encountered.push(group)
+    }
+    expect(
+      encountered,
+      'a collection sits outside its group run in src/collections/index.ts — the sidebar headings follow this array, so this reorders the panel',
+    ).toEqual(EXPECTED_HEADING_ORDER)
+  })
+
+  it('the one global joins a heading the collections already opened', () => {
+    // A group whose only member is a global draws at the BOTTOM of the panel,
+    // below `Admin`, because `groupNavItems` appends globals after every
+    // collection. That is why `Homepage` is in `Content`.
+    const collectionGroups = new Set(
+      collections.map((c) => c.admin?.group).filter((g): g is string => typeof g === 'string'),
+    )
+    expect(
+      collectionGroups,
+      `${Homepage.slug} opens a heading no collection uses, so it renders below Admin`,
+    ).toContain(Homepage.admin?.group)
   })
 })
 

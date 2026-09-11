@@ -4,7 +4,7 @@
  * The headings Payload draws in the admin sidebar. `admin.group` is a
  * free-form string in Payload's types, so the allowed set lives here and
  * `tests/int/adminMetadata.int.spec.ts` holds every collection and global to
- * it. Without that pairing a typo silently mints a fifth heading with one
+ * it. Without that pairing a typo silently mints a heading of its own with one
  * entry under it, which looks like a bug in the panel rather than in a config.
  *
  * Sidebar order follows the order each group is FIRST seen in the

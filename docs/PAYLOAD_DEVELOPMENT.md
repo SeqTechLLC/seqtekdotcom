@@ -254,7 +254,7 @@ Every collection and global declares `admin.group` and `admin.description`, and
 `tests/int/adminMetadata.int.spec.ts` fails the config that does not.
 
 - **`admin.group` comes from `src/collections/groups.ts`**, never a literal. Payload
-  types it as `string`, so a typo does not fail a build — it opens a fifth heading with
+  types it as `string`, so a typo does not fail a build — it opens a heading of its own with
   one entry under it, which reads as a bug in the panel rather than in a config. The
   test holds every entity to `ADMIN_GROUP_LABELS`.
 - **`admin.description` is written for an editor**, in one line, saying what belongs in

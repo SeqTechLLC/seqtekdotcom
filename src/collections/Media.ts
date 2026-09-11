@@ -128,6 +128,10 @@ export const Media: CollectionConfig = {
     delete: isAdmin,
     admin: isAdminOrEditor,
   },
+  // US6 gave Media its first `admin` block, so `useAsTitle` and
+  // `defaultColumns` arrive with it rather than as a separate change:
+  // a block declaring only a group and a description would leave the list
+  // view falling back to Payload's upload defaults.
   admin: {
     useAsTitle: 'filename',
     defaultColumns: ['filename', 'alt', 'updatedAt'],
