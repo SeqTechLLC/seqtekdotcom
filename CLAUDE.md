@@ -119,8 +119,10 @@ so check the file through the symlink, or check the lane.
 **Test fixtures are committed and generic, separate from real content.** `src/payload/seed/showcase`
 (`npm run seed:showcase`) builds 1-2 of every block type for the visual capture;
 `tests/e2e/helpers/seedInScopeRoutes.ts` seeds minimal fixtures for the a11y routes. Tests never depend on the
-gitignored real content. The local dev server (`:3100`) runs different code — don't pull or mutate it
-mid-session; run your own server on a free port.
+gitignored real content. A dev server on `:3100` is disposable — it is usually one a previous session
+started and forgot. Restart it, kill it, or switch its branch as needed; `next dev` refuses a second
+instance from the same directory, so stop the first rather than cloning the repo into a worktree. (The
+shared Postgres on `:5432` **is** load-bearing for other projects — that one stays.)
 
 <!-- SPECKIT START -->
 
