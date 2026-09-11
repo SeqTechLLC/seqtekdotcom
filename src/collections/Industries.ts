@@ -10,10 +10,14 @@ import { seoField } from '../payload/fields/seo'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { layoutBlocks } from '../payload/blocks/layout'
 import { industrySkeleton } from '../payload/seed/skeletons/industry'
+import { ADMIN_GROUPS } from './groups'
 
 export const Industries: CollectionConfig = {
   slug: 'industries',
   admin: {
+    group: ADMIN_GROUPS.content,
+    description:
+      'The markets we sell into, under /industries. Case studies tagged with an industry show up on its page automatically.',
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'slug'],
     livePreview: livePreviewFor('industries'),

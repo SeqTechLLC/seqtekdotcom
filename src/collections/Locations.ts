@@ -6,10 +6,14 @@ import { editorConfig } from '../payload/editor/editorConfig'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { seoField } from '../payload/fields/seo'
+import { ADMIN_GROUPS } from './groups'
 
 export const Locations: CollectionConfig = {
   slug: 'locations',
   admin: {
+    group: ADMIN_GROUPS.reference,
+    description:
+      'The markets we serve. Nothing on the site reads these yet, so editing one changes nothing a visitor sees.',
     useAsTitle: 'city',
     // `hasOffice` is admin.hidden (ROADMAP INERT-1), so it cannot be a column.
     defaultColumns: ['city', '_status', 'slug'],

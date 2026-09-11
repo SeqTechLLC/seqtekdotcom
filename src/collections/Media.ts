@@ -11,6 +11,7 @@ import {
   invalidateMediaOnChange,
   invalidateMediaOnDelete,
 } from '../payload/hooks/invalidateMediaOnChange'
+import { ADMIN_GROUPS } from './groups'
 
 // data-model §1.12: 25 MB upload cap. Payload v3 has no collection-level
 // `maxFileSize` field on UploadConfig, so we enforce it in a beforeOperation
@@ -126,6 +127,13 @@ export const Media: CollectionConfig = {
     update: isAdminOrEditor,
     delete: isAdmin,
     admin: isAdminOrEditor,
+  },
+  admin: {
+    useAsTitle: 'filename',
+    defaultColumns: ['filename', 'alt', 'updatedAt'],
+    group: ADMIN_GROUPS.content,
+    description:
+      'Every image and file on the site. Upload once and reuse it anywhere, and write the alt text while you are here.',
   },
   upload: {
     mimeTypes: ALLOWED_MIME,

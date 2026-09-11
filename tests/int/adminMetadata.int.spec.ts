@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { promises as fs } from 'fs'
 import path from 'path'
-import { toWords } from 'payload'
+import { toWords, type CollectionConfig, type GlobalConfig } from 'payload'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -10,6 +10,7 @@ import {
   BLOCK_CATEGORY_LABELS,
 } from '../../src/payload/blocks/categories'
 import { collections } from '../../src/collections'
+import { ADMIN_GROUP_LABELS } from '../../src/collections/groups'
 import { Homepage } from '../../src/globals/Homepage'
 import { richTextBlocks, richTextInlineBlocks } from '../../src/payload/blocks/inline'
 import { layoutBlocks } from '../../src/payload/blocks/layout'
@@ -282,6 +283,64 @@ describe('the category taxonomy', () => {
  * still the first thing after the record's name, which is what the story
  * asked for; the name stays the thing you click. C3 is amended to match.
  */
+/**
+ * Spec 011 US6 / T056 — contracts/admin-metadata.md C3.
+ *
+ * Fifteen entries in one flat sidebar list is a scavenger hunt, and the list
+ * view above an unfamiliar collection says nothing about what belongs in it.
+ * `admin.group` and `admin.description` are the two places Payload will draw
+ * an answer, so every entity declares both.
+ *
+ * `group` is typed `string` by Payload, which means a typo does not fail a
+ * build — it mints a heading with one entry under it and looks like a bug in
+ * the panel. `ADMIN_GROUPS` is the allowed set and this holds the config to it.
+ *
+ * The `hidden` exemption is the contract's: a collection nobody can navigate
+ * to has no heading to sit under.
+ */
+describe('C3 — every collection and global declares its purpose', () => {
+  const entities: readonly (readonly [string, CollectionConfig | GlobalConfig])[] = [
+    ...collections.map((c) => [c.slug, c] as const),
+    [Homepage.slug, Homepage] as const,
+  ].filter(([, entity]) => entity.admin?.hidden !== true)
+
+  it('there are entities to check', () => {
+    expect(entities.length).toBeGreaterThan(0)
+  })
+
+  it.each(entities)('%s sits under a known sidebar heading', (slug, entity) => {
+    const group = entity.admin?.group
+    expect(group, `${slug} declares no admin.group`).toBeDefined()
+    expect(
+      ADMIN_GROUP_LABELS,
+      `${slug}: admin.group "${String(group)}" is not one of ADMIN_GROUPS, so it opens a heading of its own`,
+    ).toContain(group)
+  })
+
+  it.each(entities)('%s says what it is for', (slug, entity) => {
+    const description = entity.admin?.description
+    expect(typeof description, `${slug}: admin.description must be a plain string`).toBe('string')
+    expect(
+      String(description).trim().length,
+      `${slug} has an empty admin.description`,
+    ).toBeGreaterThan(0)
+  })
+
+  it.each(entities)("%s is described in an editor's words, not a schema's", (slug, entity) => {
+    // The failure this catches is a description that restates the slug
+    // ("Pages collection"), which costs a line of sidebar and tells an editor
+    // nothing they could not read off the label above it.
+    const description = String(entity.admin?.description ?? '')
+    expect(description, `${slug}'s description restates its own name`).not.toMatch(
+      /^(the )?[\w ]*collection\b/i,
+    )
+    expect(
+      description.length,
+      `${slug}'s description is too short to say anything`,
+    ).toBeGreaterThan(30)
+  })
+})
+
 describe('C3 — draft collections show publish state by default', () => {
   const draftCollections = collections.filter(
     (collection) =>

@@ -67,19 +67,19 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
-    media: Media;
     pages: Page;
     posts: Post;
     caseStudies: CaseStudy;
     services: Service;
-    teamMembers: TeamMember;
-    testimonials: Testimonial;
-    workshops: Workshop;
-    partners: Partner;
     industries: Industry;
-    locations: Location;
+    workshops: Workshop;
+    teamMembers: TeamMember;
+    partners: Partner;
+    media: Media;
+    testimonials: Testimonial;
     categories: Category;
+    locations: Location;
+    users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -87,19 +87,19 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     caseStudies: CaseStudiesSelect<false> | CaseStudiesSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
-    teamMembers: TeamMembersSelect<false> | TeamMembersSelect<true>;
-    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
-    workshops: WorkshopsSelect<false> | WorkshopsSelect<true>;
-    partners: PartnersSelect<false> | PartnersSelect<true>;
     industries: IndustriesSelect<false> | IndustriesSelect<true>;
-    locations: LocationsSelect<false> | LocationsSelect<true>;
+    workshops: WorkshopsSelect<false> | WorkshopsSelect<true>;
+    teamMembers: TeamMembersSelect<false> | TeamMembersSelect<true>;
+    partners: PartnersSelect<false> | PartnersSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    locations: LocationsSelect<false> | LocationsSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -144,132 +144,8 @@ export interface UserAuthOperations {
   };
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  /**
-   * Shown wherever this account appears in the panel.
-   */
-  name: string;
-  /**
-   * Editors can create, edit and publish content. Admins can do that, and can also delete records and change access here. Accounts themselves are created by signing in with Google, never in this panel.
-   */
-  roles: ('admin' | 'editor')[];
-  /**
-   * Stable identifier from Google. Set on first sign-in; never edited.
-   */
-  googleSub?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  /**
-   * What this image shows, in a sentence, for someone using a screen reader. Describe the content, not the file: "Two engineers at a whiteboard", not "photo 1".
-   */
-  alt: string;
-  prefix?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    mobile_webp?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    mobile_jpeg?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    tablet_webp?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    tablet_jpeg?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    desktop_webp?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    desktop_jpeg?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    wide_webp?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    wide_jpeg?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
-}
-/**
+ * Standalone pages built from blocks, reached at the top level of the site like /our-story. Use one for anything that is not a post, a case study, a service or an industry.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
@@ -426,6 +302,97 @@ export interface HeroBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'hero';
+}
+/**
+ * Every image and file on the site. Upload once and reuse it anywhere, and write the alt text while you are here.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  /**
+   * What this image shows, in a sentence, for someone using a screen reader. Describe the content, not the file: "Two engineers at a whiteboard", not "photo 1".
+   */
+  alt: string;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    mobile_webp?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    mobile_jpeg?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    tablet_webp?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    tablet_jpeg?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    desktop_webp?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    desktop_jpeg?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    wide_webp?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    wide_jpeg?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -989,6 +956,8 @@ export interface FeaturedTestimonialsBlock {
   blockType: 'featured-testimonials';
 }
 /**
+ * Client quotes. These have no page of their own; quote blocks pull them onto other pages.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "testimonials".
  */
@@ -1026,6 +995,8 @@ export interface Testimonial {
   createdAt: string;
 }
 /**
+ * Client work, listed on /case-studies and pulled onto service and industry pages as proof.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "caseStudies".
  */
@@ -1158,6 +1129,8 @@ export interface CaseStudy {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * The markets we sell into, under /industries. Case studies tagged with an industry show up on its page automatically.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "industries".
  */
@@ -1267,6 +1240,8 @@ export interface Industry {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * What we sell and how we work, under /services. A top-level menu page holds groups, and a group holds the services themselves.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "services".
  */
@@ -1670,6 +1645,8 @@ export interface PostListBlock {
   blockType: 'post-list';
 }
 /**
+ * Tags for articles. They group posts on /insights and drive the related-reading links.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories".
  */
@@ -1687,6 +1664,8 @@ export interface Category {
   createdAt: string;
 }
 /**
+ * Articles listed on /insights. Written as flowing text rather than blocks, with a category and a published date.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
@@ -1764,6 +1743,8 @@ export interface Post {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * The people shown on /team. Leadership is flagged separately and sorts to the top.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "teamMembers".
  */
@@ -1943,6 +1924,8 @@ export interface LocationsListBlock {
   blockType: 'locations-list';
 }
 /**
+ * The markets we serve. Nothing on the site reads these yet, so editing one changes nothing a visitor sees.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "locations".
  */
@@ -2017,6 +2000,8 @@ export interface WorkshopListBlock {
   blockType: 'workshop-list';
 }
 /**
+ * Workshop landing pages under /workshops, each with its own registration form.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "workshops".
  */
@@ -2490,6 +2475,8 @@ export interface TechStackBlock {
   blockType: 'tech-stack';
 }
 /**
+ * Technology and delivery partners, shown on /partners.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "partners".
  */
@@ -2597,6 +2584,45 @@ export interface Partner {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Who can sign in to this panel, and what each of them is allowed to do.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  /**
+   * Shown wherever this account appears in the panel.
+   */
+  name: string;
+  /**
+   * Editors can create, edit and publish content. Admins can do that, and can also delete records and change access here. Accounts themselves are created by signing in with Google, never in this panel.
+   */
+  roles: ('admin' | 'editor')[];
+  /**
+   * Stable identifier from Google. Set on first sign-in; never edited.
+   */
+  googleSub?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -2621,14 +2647,6 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
-      } | null)
-    | ({
-        relationTo: 'media';
-        value: number | Media;
-      } | null)
-    | ({
         relationTo: 'pages';
         value: number | Page;
       } | null)
@@ -2645,32 +2663,40 @@ export interface PayloadLockedDocument {
         value: number | Service;
       } | null)
     | ({
-        relationTo: 'teamMembers';
-        value: number | TeamMember;
-      } | null)
-    | ({
-        relationTo: 'testimonials';
-        value: number | Testimonial;
+        relationTo: 'industries';
+        value: number | Industry;
       } | null)
     | ({
         relationTo: 'workshops';
         value: number | Workshop;
       } | null)
     | ({
+        relationTo: 'teamMembers';
+        value: number | TeamMember;
+      } | null)
+    | ({
         relationTo: 'partners';
         value: number | Partner;
       } | null)
     | ({
-        relationTo: 'industries';
-        value: number | Industry;
+        relationTo: 'media';
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
       } | null)
     | ({
         relationTo: 'locations';
         value: number | Location;
       } | null)
     | ({
-        relationTo: 'categories';
-        value: number | Category;
+        relationTo: 'users';
+        value: number | User;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -2713,134 +2739,6 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  roles?: T;
-  googleSub?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  prefix?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-  sizes?:
-    | T
-    | {
-        mobile_webp?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        mobile_jpeg?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        tablet_webp?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        tablet_jpeg?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        desktop_webp?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        desktop_jpeg?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        wide_webp?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        wide_jpeg?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3772,6 +3670,152 @@ export interface ServicesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industries_select".
+ */
+export interface IndustriesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  relevantServices?: T;
+  clientLogos?:
+    | T
+    | {
+        logo?: T;
+        id?: T;
+      };
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workshops_select".
+ */
+export interface WorkshopsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  layout?:
+    | T
+    | {
+        hero?: T | HeroBlockSelect<T>;
+        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
+        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
+        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
+        content?: T | ContentBlockSelect<T>;
+        'two-column'?: T | TwoColumnBlockSelect<T>;
+        image?: T | ImageBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        'process-steps'?: T | ProcessStepsBlockSelect<T>;
+        deliverables?: T | DeliverablesBlockSelect<T>;
+        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        'stats-bar'?: T | StatsBarBlockSelect<T>;
+        'metric-display'?: T | MetricDisplayBlockSelect<T>;
+        'logo-bar'?: T | LogoBarBlockSelect<T>;
+        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
+        'testimonial-block'?: T | TestimonialBlockSelect<T>;
+        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
+        'cta-section'?: T | CtaSectionBlockSelect<T>;
+        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
+        'contact-cta'?: T | ContactCtaBlockSelect<T>;
+        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
+        'service-cards'?: T | ServiceCardsBlockSelect<T>;
+        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
+        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
+        'post-list'?: T | PostListBlockSelect<T>;
+        'related-posts'?: T | RelatedPostsBlockSelect<T>;
+        'industry-grid'?: T | IndustryGridBlockSelect<T>;
+        'locations-list'?: T | LocationsListBlockSelect<T>;
+        'workshop-list'?: T | WorkshopListBlockSelect<T>;
+        'team-grid'?: T | TeamGridBlockSelect<T>;
+        'video-embed'?: T | VideoEmbedBlockSelect<T>;
+        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        accordion?: T | AccordionBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        map?: T | MapBlockSelect<T>;
+        embed?: T | EmbedBlockSelect<T>;
+        'download-card'?: T | DownloadCardBlockSelect<T>;
+        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
+        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
+        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
+        'nav-cards'?: T | NavCardsBlockSelect<T>;
+        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
+        'tech-stack'?: T | TechStackBlockSelect<T>;
+      };
+  facilitator?: T;
+  testimonial?: T;
+  order?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "teamMembers_select".
  */
 export interface TeamMembersSelect<T extends boolean = true> {
@@ -3852,92 +3896,6 @@ export interface TeamMembersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "testimonials_select".
- */
-export interface TestimonialsSelect<T extends boolean = true> {
-  quote?: T;
-  personName?: T;
-  personTitle?: T;
-  company?: T;
-  photo?: T;
-  caseStudy?: T;
-  isActive?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "workshops_select".
- */
-export interface WorkshopsSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  layout?:
-    | T
-    | {
-        hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
-        content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
-        image?: T | ImageBlockSelect<T>;
-        gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
-        accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
-        embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
-        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
-      };
-  facilitator?: T;
-  testimonial?: T;
-  order?: T;
-  seo?:
-    | T
-    | {
-        metaTitle?: T;
-        metaDescription?: T;
-        ogImage?: T;
-      };
-  publishedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "partners_select".
  */
 export interface PartnersSelect<T extends boolean = true> {
@@ -4010,78 +3968,131 @@ export interface PartnersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "industries_select".
+ * via the `definition` "media_select".
  */
-export interface IndustriesSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  description?: T;
-  relevantServices?: T;
-  clientLogos?:
-    | T
-    | {
-        logo?: T;
-        id?: T;
-      };
-  layout?:
-    | T
-    | {
-        hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
-        content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
-        image?: T | ImageBlockSelect<T>;
-        gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
-        accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
-        embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
-        'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
-      };
-  seo?:
-    | T
-    | {
-        metaTitle?: T;
-        metaDescription?: T;
-        ogImage?: T;
-      };
+export interface MediaSelect<T extends boolean = true> {
+  alt?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        mobile_webp?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        mobile_jpeg?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        tablet_webp?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        tablet_jpeg?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        desktop_webp?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        desktop_jpeg?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        wide_webp?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        wide_jpeg?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  quote?: T;
+  personName?: T;
+  personTitle?: T;
+  company?: T;
+  photo?: T;
+  caseStudy?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4113,13 +4124,28 @@ export interface LocationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
+ * via the `definition` "users_select".
  */
-export interface CategoriesSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  roles?: T;
+  googleSub?: T;
   updatedAt?: T;
   createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4162,6 +4188,8 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
+ * The homepage at /, built from blocks. There is only one of it, so it is edited here instead of in a list.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "homepage".
  */

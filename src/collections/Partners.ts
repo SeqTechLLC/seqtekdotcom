@@ -11,6 +11,7 @@ import { livePreviewFor } from '../payload/livePreview/url'
 import { partnerSkeleton } from '../payload/seed/skeletons/partner'
 import { seoField } from '../payload/fields/seo'
 import { orderField, publishedAtField } from '../payload/fields/publishing'
+import { ADMIN_GROUPS } from './groups'
 
 // ADR 0009 Option C ("two primitives + metadata collections"): a partner is a
 // Page + typed metadata. The metadata below is what the `/partners` index card
@@ -23,6 +24,8 @@ export const Partners: CollectionConfig = {
   slug: 'partners',
   labels: { singular: 'Partner', plural: 'Partners' },
   admin: {
+    group: ADMIN_GROUPS.content,
+    description: 'Technology and delivery partners, shown on /partners.',
     useAsTitle: 'name',
     defaultColumns: ['name', '_status', 'url', 'order', 'updatedAt'],
     livePreview: livePreviewFor('partners'),

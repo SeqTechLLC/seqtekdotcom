@@ -4,9 +4,22 @@ import { isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthedGlobal } from '../payload/access/publishedOrAuthed'
 import { layoutBlocks } from '../payload/blocks/layout'
 import { revalidateGlobalOnChange } from '../payload/hooks/revalidateOnChange'
+import { ADMIN_GROUPS } from '../collections/groups'
 
 export const Homepage: GlobalConfig = {
   slug: 'homepage',
+  admin: {
+    // Content, not `site`, and that was a measurement. `groupNavItems` merges
+    // collections and globals by group LABEL, but appends every global after
+    // every collection — so a `Site` heading holding nothing but Homepage
+    // drew BELOW `Admin`, at the bottom of the panel. The most-edited
+    // document on the site is not something to go hunting for under the
+    // sign-in settings. Under `Content` it merges into the group and lands
+    // beside the pages it sits next to in the IA.
+    group: ADMIN_GROUPS.content,
+    description:
+      'The homepage at /, built from blocks. There is only one of it, so it is edited here instead of in a list.',
+  },
   access: {
     read: publishedOrAuthedGlobal,
     update: isAdminOrEditor,

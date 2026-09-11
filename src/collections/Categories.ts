@@ -3,10 +3,14 @@ import type { CollectionConfig } from 'payload'
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
 import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { ADMIN_GROUPS } from './groups'
 
 export const Categories: CollectionConfig = {
   slug: 'categories',
   admin: {
+    group: ADMIN_GROUPS.reference,
+    description:
+      'Tags for articles. They group posts on /insights and drive the related-reading links.',
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug'],
   },
