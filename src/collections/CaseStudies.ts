@@ -10,11 +10,15 @@ import { livePreviewFor } from '../payload/livePreview/url'
 import { caseStudySkeleton } from '../payload/seed/skeletons/caseStudy'
 import { seoField } from '../payload/fields/seo'
 import { publishedAtField } from '../payload/fields/publishing'
+import { ADMIN_GROUPS } from './groups'
 
 export const CaseStudies: CollectionConfig = {
   slug: 'caseStudies',
   labels: { singular: 'Case study', plural: 'Case studies' },
   admin: {
+    group: ADMIN_GROUPS.content,
+    description:
+      'Client work, listed on /case-studies and pulled onto service and industry pages as proof.',
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'slug', 'industry', 'updatedAt'],
     livePreview: livePreviewFor('caseStudies'),

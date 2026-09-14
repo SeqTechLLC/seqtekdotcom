@@ -3,6 +3,7 @@ import { JWTAuthentication } from 'payload'
 
 import { applyAutoProvisionRole, guardRoleUpdates } from '../lib/auth/apply-bootstrap-role'
 import { enforceDomainAllowlist } from '../lib/auth/enforce-domain'
+import { ADMIN_GROUPS } from './groups'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -23,6 +24,8 @@ export const Users: CollectionConfig = {
     strategies: [{ name: 'local-jwt', authenticate: JWTAuthentication }],
   },
   admin: {
+    group: ADMIN_GROUPS.admin,
+    description: 'Who can sign in to this panel, and what each of them is allowed to do.',
     useAsTitle: 'name',
     defaultColumns: ['name', 'email', 'roles'],
   },

@@ -23,19 +23,28 @@ import { Workshops } from './Workshops'
  * covered the moment it is registered, which is the point of a contract test.
  * Importing `payload.config.ts` instead would drag the Postgres adapter, the
  * S3 plugin and sharp into a pure config assertion.
+ *
+ * Spec 011 US6: the ORDER here now decides the order of the sidebar HEADINGS
+ * too, not just the entries. `groupNavItems` emits each `admin.group` at the
+ * position it is first seen, so leading with `Users` put **Admin** above
+ * everything an editor opens. Content first, then the things that feed it,
+ * then the panel's own plumbing.
  */
 export const collections: CollectionConfig[] = [
-  Users,
-  Media,
+  // Content
   Pages,
   Posts,
   CaseStudies,
   Services,
-  TeamMembers,
-  Testimonials,
-  Workshops,
-  Partners,
   Industries,
-  Locations,
+  Workshops,
+  TeamMembers,
+  Partners,
+  Media,
+  // Reference data
+  Testimonials,
   Categories,
+  Locations,
+  // Admin
+  Users,
 ]

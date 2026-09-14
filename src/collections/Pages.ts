@@ -9,10 +9,14 @@ import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { seoField } from '../payload/fields/seo'
 import { publishedAtField } from '../payload/fields/publishing'
+import { ADMIN_GROUPS } from './groups'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
+    group: ADMIN_GROUPS.content,
+    description:
+      'Standalone pages built from blocks, reached at the top level of the site like /our-story. Use one for anything that is not a post, a case study, a service or an industry.',
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'slug', 'updatedAt'],
     livePreview: livePreviewFor('pages'),

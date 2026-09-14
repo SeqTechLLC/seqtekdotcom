@@ -11,11 +11,15 @@ import { livePreviewFor } from '../payload/livePreview/url'
 import { teamMemberSkeleton } from '../payload/seed/skeletons/teamMember'
 import { seoField } from '../payload/fields/seo'
 import { orderField } from '../payload/fields/publishing'
+import { ADMIN_GROUPS } from './groups'
 
 export const TeamMembers: CollectionConfig = {
   slug: 'teamMembers',
   labels: { singular: 'Team member', plural: 'Team members' },
   admin: {
+    group: ADMIN_GROUPS.content,
+    description:
+      'The people shown on /team. Leadership is flagged separately and sorts to the top.',
     useAsTitle: 'name',
     defaultColumns: ['name', '_status', 'title', 'isLeadership', 'order'],
     livePreview: livePreviewFor('teamMembers'),

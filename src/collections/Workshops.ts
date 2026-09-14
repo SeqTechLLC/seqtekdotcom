@@ -10,10 +10,13 @@ import { livePreviewFor } from '../payload/livePreview/url'
 import { workshopSkeleton } from '../payload/seed/skeletons/workshop'
 import { seoField } from '../payload/fields/seo'
 import { orderField, publishedAtField } from '../payload/fields/publishing'
+import { ADMIN_GROUPS } from './groups'
 
 export const Workshops: CollectionConfig = {
   slug: 'workshops',
   admin: {
+    group: ADMIN_GROUPS.content,
+    description: 'Workshop landing pages under /workshops, each with its own registration form.',
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'slug', 'order'],
     livePreview: livePreviewFor('workshops'),

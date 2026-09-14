@@ -232,11 +232,20 @@ Specialty 13 = 45), every card carrying a distinct, legible preview at card size
 
 ### Tests for User Story 6 (MANDATORY) ⚠️
 
-- [ ] T056 [US6] Extend `tests/int/adminMetadata.int.spec.ts` with the remaining contract C3 clauses: every collection and global has an `admin.group` from the allowed set (`Content`, `Reference data`, `Site`, `Admin`) and a non-empty `admin.description`.
+- [x] T056 [US6] Extend `tests/int/adminMetadata.int.spec.ts` with the remaining contract C3 clauses: every collection and global has an `admin.group` from the allowed set (`Content`, `Reference data`, `Site`, `Admin`) and a non-empty `admin.description`.
 
 ### Implementation for User Story 6
 
-- [ ] T057 [US6] Add `admin.group` and `admin.description` to all 14 collections and the one surviving global. Grouping: **Content** — Pages, Posts, Case Studies, Workshops, Team Members, Partners, Media; **Reference data** — Services, Service Pillars, Testimonials, Industries, Locations, Categories; **Site** — Homepage (the only global left after T016); **Admin** — Users. Descriptions written for an editor, not a developer.
+- [x] T057 [US6] Add `admin.group` and `admin.description` to all 14 collections and the one surviving global. Grouping: **Content** — Pages, Posts, Case Studies, Workshops, Team Members, Partners, Media; **Reference data** — Services, Service Pillars, Testimonials, Industries, Locations, Categories; **Site** — Homepage (the only global left after T016); **Admin** — Users. Descriptions written for an editor, not a developer.
+
+  **Grouping corrected on implementation.** T057 was written before SVC-2 (#131) and
+  IND-1 (#140) routed `services` and `industries`. Both are now block-composed
+  collections with public URLs, so both moved from **Reference data** to **Content** —
+  an editor looking for the services pages looks under the pages. `Service Pillars` is
+  gone (SVC-2 folded it into `services`), leaving 13 collections, not 14. `Homepage`
+  moved from **Site** to **Content** for a measured reason: `groupNavItems` appends
+  globals after collections, so a `Site` group holding only `Homepage` drew below
+  `Admin`, at the bottom of the panel. `Site` stays in the allowed set unclaimed.
 
 **Checkpoint**: All six stories independently functional.
 
