@@ -56,6 +56,34 @@ describe('E3 — request id', () => {
     const res = proxy(req('/'))
     expect(res.cookies.get('x-request-id')?.value).toBeTruthy()
   })
+
+  // Why an action gets no cookie: see the Server Action note in `src/proxy.ts`.
+  // Both proxy branches write the cookie, so both CSP modes are checked.
+  it.each(['off', 'report-only'] as const)(
+    'sets no cookie on a Server Action request (CSP %s)',
+    (mode) => {
+      const previous = process.env.CSP_MODE
+      process.env.CSP_MODE = mode
+      try {
+        const action = new NextRequest(new URL('http://localhost/admin/collections/pages/create'), {
+          method: 'POST',
+          headers: { 'next-action': 'form-state-action-id' },
+        })
+        const res = proxy(action)
+        expect(
+          res.headers.get('x-request-id'),
+          'the log correlation header still goes out',
+        ).toBeTruthy()
+        expect(
+          res.cookies.get('x-request-id'),
+          'a Set-Cookie on an action makes Next refresh the page after every action',
+        ).toBeUndefined()
+      } finally {
+        if (previous === undefined) delete process.env.CSP_MODE
+        else process.env.CSP_MODE = previous
+      }
+    },
+  )
 })
 
 describe('E1 — unknown slug resolves to null (route then calls notFound)', () => {

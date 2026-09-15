@@ -5,6 +5,8 @@ import { GONE_HTML, isRetiredPath } from '@/lib/gone'
 const CSP_REPORT_PATH = '/api/csp-report'
 const REQUEST_ID_HEADER = 'x-request-id'
 const HEALTH_PATH = '/api/health'
+// Every Server Action request carries this header (`app-router-headers`).
+const SERVER_ACTION_HEADER = 'next-action'
 
 // spec 004 T038 (ERROR_PAGES §4). Static 503 body for maintenance mode. Kept
 // inline + dependency-free so it renders even when the app can't boot.
@@ -56,6 +58,14 @@ export function proxy(request: NextRequest) {
   // response header for logs, plus a JS-readable cookie so the client error
   // boundaries (error.tsx / global-error.tsx) can surface it for support.
   const requestId = crypto.randomUUID()
+  // No cookie on a Server Action. Next forwards a proxy's Set-Cookie into the
+  // action's request store as a cookie mutation, and a mutated cookie makes the
+  // action answer `x-action-revalidated`, so the client refreshes the route.
+  // This value is new every request, so that was every action — including the
+  // `form-state` action the Payload admin sends as an editor types, where each
+  // refresh re-initialised the form and wiped the input. The error boundaries
+  // read the id the page load set, so an action's own id is not needed.
+  const setIdCookie = !request.headers.has(SERVER_ACTION_HEADER)
 
   const mode = readCspMode()
   const headerName = cspHeaderName(mode)
@@ -64,11 +74,13 @@ export function proxy(request: NextRequest) {
   if (!headerName) {
     const response = NextResponse.next()
     response.headers.set(REQUEST_ID_HEADER, requestId)
-    response.cookies.set(REQUEST_ID_HEADER, requestId, {
-      httpOnly: false,
-      path: '/',
-      sameSite: 'lax',
-    })
+    if (setIdCookie) {
+      response.cookies.set(REQUEST_ID_HEADER, requestId, {
+        httpOnly: false,
+        path: '/',
+        sameSite: 'lax',
+      })
+    }
     return response
   }
 
@@ -93,11 +105,13 @@ export function proxy(request: NextRequest) {
   // client error pages can read them.
   response.headers.set(NONCE_HEADER, nonce)
   response.headers.set(REQUEST_ID_HEADER, requestId)
-  response.cookies.set(REQUEST_ID_HEADER, requestId, {
-    httpOnly: false,
-    path: '/',
-    sameSite: 'lax',
-  })
+  if (setIdCookie) {
+    response.cookies.set(REQUEST_ID_HEADER, requestId, {
+      httpOnly: false,
+      path: '/',
+      sameSite: 'lax',
+    })
+  }
   response.headers.set(headerName, policy)
 
   // Reporting API endpoint group definition (paired with `report-to` in the policy).
