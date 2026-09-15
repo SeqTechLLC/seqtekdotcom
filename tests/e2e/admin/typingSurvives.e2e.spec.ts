@@ -5,22 +5,19 @@ import { useAdminSession, type AdminSession } from '../helpers/adminSession'
 /**
  * The admin keeps what an editor types.
  *
- * Until `src/proxy.ts` stopped setting its `x-request-id` cookie on Server
- * Action requests, every `form-state` action the form sends during typing came
- * back `x-action-revalidated`, the client refreshed the route, and the refresh
- * re-initialised the form from server state: a typed character survived about
- * 100ms. Every other admin spec seeds its values or edits by `fill`, so none of
- * them could see it. This one types.
+ * Pins the Server Action cookie rule in `src/proxy.ts`: a cookie set on an
+ * action makes Next refresh the route, which re-initialises the form and
+ * discards the input.
  *
- * `keyboard.type` rather than `fill`: the defect needed a form-state round trip
+ * `keyboard.type` rather than `fill`: the defect needs a form-state round trip
  * per edit, and `fill` lands the whole value in a single event.
  */
 
 let session: AdminSession
 
-// The create form is one of the heavier admin views against a cold dev server;
-// CI already allows 120s.
-test.describe.configure({ timeout: 90_000 })
+// The create form is one of the heavier admin views against a cold server.
+// Keep CI's 120s (playwright.config.ts) rather than overriding it downward.
+test.describe.configure({ timeout: process.env.CI ? 120_000 : 90_000 })
 
 test.describe('the admin keeps typed input', () => {
   test.beforeAll(async ({ browser, baseURL }) => {
@@ -43,7 +40,10 @@ test.describe('the admin keeps typed input', () => {
     let revalidatedActions = 0
     page.on('response', async (response) => {
       if (!response.request().headers()['next-action']) return
-      if ((await response.allHeaders())['x-action-revalidated']) revalidatedActions++
+      // Only feeds the failure message, so a response that outlives the page at
+      // teardown is ignored rather than surfacing as an unhandled rejection.
+      const headers = await response.allHeaders().catch(() => undefined)
+      if (headers?.['x-action-revalidated']) revalidatedActions++
     })
 
     await page.goto('/admin/collections/pages/create')
@@ -63,8 +63,8 @@ test.describe('the admin keeps typed input', () => {
     await title.click()
     await page.keyboard.type('Typed by an editor', { delay: 50 })
 
-    // This asserts the value STAYS, not that it arrives: the old failure let the
-    // text land and removed it when the refresh completed, so wait that out first.
+    // Asserts the value STAYS, not that it arrives: the failure lets the text
+    // land and removes it once the route refresh completes, so wait that out.
     await page.waitForTimeout(3_000)
     await expect(
       title,

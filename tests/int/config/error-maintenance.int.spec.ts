@@ -57,12 +57,8 @@ describe('E3 — request id', () => {
     expect(res.cookies.get('x-request-id')?.value).toBeTruthy()
   })
 
-  // Next merges a proxy's Set-Cookie into a Server Action's mutable cookies, and a
-  // mutated cookie makes the action answer `x-action-revalidated`: the client then
-  // refreshes the route. With a fresh id every request, that was every action, and
-  // the Payload admin's form re-initialised after each `form-state` round trip,
-  // discarding what the editor typed. Both proxy branches write the cookie, so both
-  // CSP modes are checked.
+  // Why an action gets no cookie: see the Server Action note in `src/proxy.ts`.
+  // Both proxy branches write the cookie, so both CSP modes are checked.
   it.each(['off', 'report-only'] as const)(
     'sets no cookie on a Server Action request (CSP %s)',
     (mode) => {
