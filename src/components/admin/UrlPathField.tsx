@@ -18,8 +18,12 @@ export const UrlPathField: React.FC<SlugFieldClientProps> = (props) => {
   // One `.field-type` around both, so the form's field spacing (applied to
   // `.render-fields > .field-type`) lands once, below the description. A
   // fragment gave SlugField's own `.field-type` that margin, above it.
+  //
+  // `flex: 1 1 auto` is what Payload puts inline on its own fields. Without it
+  // this sits in slugField's row at its content width, visibly narrower than
+  // the fields around it on any form without a sidebar.
   return (
-    <div className="field-type url-path-field">
+    <div className="field-type url-path-field" style={{ flex: '1 1 auto' }}>
       <SlugField {...props} />
       {description ? <FieldDescription description={description} path={props.path} /> : null}
     </div>
