@@ -300,6 +300,22 @@ The collision check lives in the field-level `validate` (which receives `req` an
 
 **Rationale**: FR-022 through FR-024a, research R10.
 
+### Amendment 2026-09-15 — built on Payload's `slugField`
+
+C7 shipped on Payload's built-in `slugField`, through `urlPathField` (`src/payload/fields/slug.ts`), not the
+field shape above:
+
+- **`required: true` stays.** A field's own `validate` replaces Payload's default text validator, which is where
+  `required` is enforced, so removing it changed nothing on the server and made ten slugs nullable in the
+  generated types. `validateSlug` passes an empty value while the hidden `generateSlug` checkbox is on, because the
+  checkbox hook fills it on save.
+- **The slug is derived on save, not while typing,** and the box starts locked behind Unlock and Generate.
+- **Row 3 on a new record:** the checkbox hook slugifies a typed value before the save validates it, so a malformed
+  entry is normalised (`Not Valid` becomes `not-valid`) rather than refused. On an existing record it is refused as
+  specified.
+- **Row 5 is a `beforeChange` field hook,** `rejectSlugCollision`, not `validate`: Payload skips validation on Save
+  Draft, and a colliding draft save otherwise reached only the unique index, whose error names the column.
+
 ---
 
 ## C8 — Non-regression

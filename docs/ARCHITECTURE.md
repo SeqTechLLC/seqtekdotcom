@@ -75,13 +75,13 @@ Access: Email/password auth with JWT. No public registration. Accounts created b
 
 Block-composed content pages — the generic primitive (spec 010 / ADR 0009). The catch-all `/[slug]` route renders most of these by slug (About, localshoring, etc.). The per-offering `service-*` Pages are gone — SVC-2 moved every service page into the `services` collection — and the `service-overview` Page went with the `/services` route, which is now a 301 onto `/services/what-we-do`. Source of truth: `src/collections/Pages.ts`.
 
-| Field         | Type   | Notes                                                                               |
-| ------------- | ------ | ----------------------------------------------------------------------------------- |
-| `title`       | text   | Required                                                                            |
-| `slug`        | text   | Required, unique, indexed; auto-generated from title (`slugFromTitle` beforeChange) |
-| `publishedAt` | date   | Sidebar; a future date forces the doc back to `draft` (`enforceDraftWhenScheduled`) |
-| `layout`      | blocks | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks`             |
-| `seo`         | group  | metaTitle, metaDescription, ogImage                                                 |
+| Field         | Type   | Notes                                                                                                                             |
+| ------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `title`       | text   | Required                                                                                                                          |
+| `slug`        | text   | Required, unique, indexed; derived from the title on save by Payload's `slugField` (`urlPathField`, `src/payload/fields/slug.ts`) |
+| `publishedAt` | date   | Sidebar; a future date forces the doc back to `draft` (`enforceDraftWhenScheduled`)                                               |
+| `layout`      | blocks | **The page body** — a `layoutBlocks` array dispatched by `RenderBlocks`                                                           |
+| `seo`         | group  | metaTitle, metaDescription, ogImage                                                                                               |
 
 Versions: Drafts enabled (`versions: { drafts: true, maxPerDoc: 50 }`). `_status` (`draft`/`published`) gates public reads via `publishedOrAuthed`; live preview is wired (`livePreviewFor('pages')`). There is no discrete `status` select or richText `content` field — the body is the `layout` blocks array.
 
@@ -446,7 +446,6 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   ├── editor/                        # Lexical editor config
 │   │   ├── fields/url.ts                  # Safe-URL-validated field
 │   │   ├── hooks/                         # Payload hooks (beforeChange / afterChange)
-│   │   │   ├── slugFromTitle.ts
 │   │   │   ├── enforceDraftWhenScheduled.ts
 │   │   │   ├── revalidateOnChange.ts      # ISR revalidate + CloudFront path invalidation
 │   │   │   └── invalidateMediaOnChange.ts # Media replace/delete → CloudFront invalidation

@@ -269,6 +269,22 @@ Every collection and global declares `admin.group` and `admin.description`, and
   panel. That is why `Homepage` is in `Content` rather than in a `Site` group of its
   own — under `Site` it rendered below `Admin`.
 
+### URL paths (spec 011 US5)
+
+Every routed collection's `slug` comes from `urlPathField` (`src/payload/fields/slug.ts`), which wraps Payload's
+built-in `slugField`. `urlPathField.int.spec.ts` fails a collection whose `slug` does not.
+
+- **It adds a hidden `generateSlug` checkbox.** Its hook derives the slug from the title on create, and on update
+  only while the checkbox is on, turning it off once a slug exists. The column defaults to `true`, so adding the
+  field to a collection that already has rows needs a backfill to `false` in the same migration; otherwise the next
+  save of every existing record regenerates its slug from its title. See `20260915_183810_us5_builtin_slug_field`.
+- **Save Draft skips validation.** `validateSlug` covers empty and malformed values, which Payload checks only on
+  publish. The collision check is `rejectSlugCollision`, a `beforeChange` field hook, so it runs on draft saves
+  too; a draft save shows the toast but not field errors, so the hook puts its sentence on both.
+- **The slug box starts locked** (Unlock, Generate) and fills on save, not while typing. A value typed on a new
+  record is slugified before validation, so it is normalised rather than refused.
+- **Payload's `SlugField` renders no description;** `src/components/admin/UrlPathField.tsx` wraps it to add one.
+
 ### List-view conventions (spec 011 US3)
 
 Two rules `tests/int/adminMetadata.int.spec.ts` enforces on every collection:

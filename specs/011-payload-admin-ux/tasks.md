@@ -212,13 +212,27 @@ Specialty 13 = 45), every card carrying a distinct, legible preview at card size
 
 ### Tests for User Story 5 (MANDATORY) ⚠️
 
-- [ ] T052 [US5] Write a Playwright admin spec at `tests/e2e/admin/slugFromTitle.e2e.spec.ts` using the T002 fixture, covering all five rows of contract C7: title-only creation derives a slug; an explicitly entered slug is honoured unchanged; renaming a title does not rewrite an existing slug; an invalid slug shows a plain-language format error; **a title deriving an in-use slug is rejected with a message naming the conflicting record and offering an available alternative**.
+- [x] T052 [US5] Write a Playwright admin spec at `tests/e2e/admin/slugFromTitle.e2e.spec.ts` using the T002 fixture, covering all five rows of contract C7: title-only creation derives a slug; an explicitly entered slug is honoured unchanged; renaming a title does not rewrite an existing slug; an invalid slug shows a plain-language format error; **a title deriving an in-use slug is rejected with a message naming the conflicting record and offering an available alternative**.
+
+  **Shipped as `tests/e2e/admin/slugField.e2e.spec.ts`,** on the built-in `slugField`. Row 3 is split into a new
+  record (normalised) and an existing record (refused); row 5 runs on both Save Draft and Publish. See the C7
+  amendment of 2026-09-15.
 
 ### Implementation for User Story 5
 
-- [ ] T053 [US5] Remove `required: true` from the `slug` field in every content collection (`src/collections/Pages.ts`, `Posts.ts`, `CaseStudies.ts`, `Workshops.ts`, `TeamMembers.ts`, `Partners.ts`, `Services.ts`, `ServicePillars.ts`, `Industries.ts`, `Locations.ts`, `Categories.ts`) and adjust `validateSlug` in `src/payload/hooks/slugFromTitle.ts` to return `true` for empty input while still rejecting malformed non-empty values. The generation hook already works server-side (verified in research R10) — `required` was the only thing blocking it from reaching the UI.
-- [ ] T054 [US5] Add collision handling to `validateSlug` in `src/payload/hooks/slugFromTitle.ts` per FR-024a and contract C7: query the collection through `req` for a record already holding the slug (excluding the record being saved), and on conflict return a message naming that record's title and offering the next available alternative. **Auto-suffixing is prohibited** — this site's URL map is curated and backed by a 301 redirect table, so silently minting `/contact-2` produces a junk URL nobody chose. Keep the DB `unique` constraint as the backstop. The check lives in the field `validate`, not in the hook, so it fires identically for derived and hand-typed slugs.
+- [x] T053 [US5] Remove `required: true` from the `slug` field in every content collection (`src/collections/Pages.ts`, `Posts.ts`, `CaseStudies.ts`, `Workshops.ts`, `TeamMembers.ts`, `Partners.ts`, `Services.ts`, `ServicePillars.ts`, `Industries.ts`, `Locations.ts`, `Categories.ts`) and adjust `validateSlug` in `src/payload/hooks/slugFromTitle.ts` to return `true` for empty input while still rejecting malformed non-empty values. The generation hook already works server-side (verified in research R10) — `required` was the only thing blocking it from reaching the UI.
+
+  **Superseded, not taken as written.** `required: true` stays; the empty case is handled in `validateSlug` against
+  `slugField`'s `generateSlug` checkbox. See the C7 amendment of 2026-09-15.
+
+- [x] T054 [US5] Add collision handling to `validateSlug` in `src/payload/hooks/slugFromTitle.ts` per FR-024a and contract C7: query the collection through `req` for a record already holding the slug (excluding the record being saved), and on conflict return a message naming that record's title and offering the next available alternative. **Auto-suffixing is prohibited** — this site's URL map is curated and backed by a 301 redirect table, so silently minting `/contact-2` produces a junk URL nobody chose. Keep the DB `unique` constraint as the backstop. The check lives in the field `validate`, not in the hook, so it fires identically for derived and hand-typed slugs.
+
+  **Shipped as `rejectSlugCollision`, a `beforeChange` field hook,** not in `validateSlug`, because Save Draft
+  skips validation.
+
 - [ ] T055 [US5] Add a `pageSkeleton` default layout at `src/payload/seed/skeletons/page.ts` and wire it as the `defaultValue` of `Pages.layout`, mirroring the existing `caseStudySkeleton` pattern. Use placeholder prose that tells the editor what to replace.
+
+  **Not taken.** A skeleton `defaultValue` on `Pages.layout` is the defect ROADMAP UI-3 exists to remove.
 
 **Checkpoint**: A new editor can start a page without asking what a slug is, and cannot silently collide with an existing URL.
 
