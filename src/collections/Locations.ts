@@ -4,7 +4,7 @@ import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { editorConfig } from '../payload/editor/editorConfig'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
-import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { urlPathField } from '../payload/fields/slug'
 import { seoField } from '../payload/fields/seo'
 import { ADMIN_GROUPS } from './groups'
 
@@ -27,7 +27,6 @@ export const Locations: CollectionConfig = {
   },
   versions: { drafts: true, maxPerDoc: 50 },
   hooks: {
-    beforeChange: [slugFromTitle('city')],
     afterChange: [revalidateOnChange('locations')],
   },
   fields: [
@@ -38,19 +37,11 @@ export const Locations: CollectionConfig = {
       required: true,
       admin: { description: 'The market name, as it appears on a "Where we work" block.' },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      label: 'URL path',
-      required: true,
-      unique: true,
-      index: true,
-      validate: validateSlug,
-      admin: {
-        description:
-          'The last part of the web address for this market, for example "tulsa". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
-      },
-    },
+    urlPathField({
+      useAsSlug: 'city',
+      description:
+        'The last part of the web address for this market, for example "tulsa". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+    }),
     {
       name: 'description',
       type: 'richText',

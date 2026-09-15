@@ -5,7 +5,7 @@ import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { layoutBlocks } from '../payload/blocks/layout'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
-import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { urlPathField } from '../payload/fields/slug'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { workshopSkeleton } from '../payload/seed/skeletons/workshop'
 import { seoField } from '../payload/fields/seo'
@@ -30,7 +30,7 @@ export const Workshops: CollectionConfig = {
   },
   versions: { drafts: true, maxPerDoc: 50 },
   hooks: {
-    beforeChange: [slugFromTitle('title'), enforceDraftWhenScheduled],
+    beforeChange: [enforceDraftWhenScheduled],
     afterChange: [revalidateOnChange('workshops')],
   },
   fields: [
@@ -43,19 +43,11 @@ export const Workshops: CollectionConfig = {
         description: 'What this workshop is called, on the workshops index and its own page.',
       },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      label: 'URL path',
-      required: true,
-      unique: true,
-      index: true,
-      validate: validateSlug,
-      admin: {
-        description:
-          'The last part of the web address for this workshop, for example "ai-readiness". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
-      },
-    },
+    urlPathField({
+      useAsSlug: 'title',
+      description:
+        'The last part of the web address for this workshop, for example "ai-readiness". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+    }),
     {
       // spec 010 / ADR 0009: the universal block-composed body. New records get
       // the default skeleton; the detail route renders this via RenderBlocks.

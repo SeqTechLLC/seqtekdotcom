@@ -5,7 +5,7 @@ import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { editorConfig } from '../payload/editor/editorConfig'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
-import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { urlPathField } from '../payload/fields/slug'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { seoField } from '../payload/fields/seo'
 import { publishedAtField } from '../payload/fields/publishing'
@@ -30,7 +30,7 @@ export const Posts: CollectionConfig = {
   },
   versions: { drafts: true, maxPerDoc: 50 },
   hooks: {
-    beforeChange: [slugFromTitle('title'), enforceDraftWhenScheduled],
+    beforeChange: [enforceDraftWhenScheduled],
     afterChange: [revalidateOnChange('posts')],
   },
   fields: [
@@ -44,19 +44,11 @@ export const Posts: CollectionConfig = {
           'The title of the post, as it appears on the insights index and the post itself.',
       },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      label: 'URL path',
-      required: true,
-      unique: true,
-      index: true,
-      validate: validateSlug,
-      admin: {
-        description:
-          'The last part of the web address for this post, for example "why-localshoring-works". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
-      },
-    },
+    urlPathField({
+      useAsSlug: 'title',
+      description:
+        'The last part of the web address for this post, for example "why-localshoring-works". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+    }),
     {
       name: 'excerpt',
       type: 'textarea',
