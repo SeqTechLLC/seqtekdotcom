@@ -198,39 +198,54 @@ type SluggedCollection =
  * degrading the whole site to an unbranded page is not.
  *
  * So a failed read falls back to the code-owned menu, exactly as an empty
- * collection does. `withReadTimeout` still wraps the call, so the
- * `payload_read_timeout` warn log (contract C-2) is still emitted before the
- * catch swallows the rejection — the telemetry is unchanged, only the blast
- * radius is.
+ * collection does.
+ *
+ * **THE CATCH IS OUTSIDE `withReadTimeout`, AND THAT PLACEMENT IS THE WHOLE
+ * FIX.** A catch inside the wrapped function sees only what the inner read
+ * rejects with; the 5s budget rejection is raised by `Promise.race` in the
+ * wrapper itself (`withReadTimeout`, above) and rethrown from its `catch`, so
+ * an inner catch never observes it. Placed inside, the DB-error half is
+ * handled and the DB-STALL half — the half ADR 0007 exists for — still
+ * escapes. That exact mistake shipped once in this PR and was caught in
+ * review; `readerFallback.int.spec.ts` now pins both halves.
+ *
+ * The telemetry is unchanged: `withReadTimeout` emits the
+ * `payload_read_timeout` warn log (contract C-2) *before* it rethrows, and the
+ * catch below only swallows the rejection afterwards. What changes is the blast
+ * radius, not the observability.
  */
-export const getNavigation = withReadTimeout(
+const readNavigation = withReadTimeout(
   'getNavigation',
-  cache(async (): Promise<NavItem[]> => {
-    try {
-      return await unstable_cache(
-        async () => {
-          const payload = await getPayloadInstance()
-          const { docs } = await payload.find({
-            collection: 'navigation',
-            draft: false,
-            overrideAccess: false,
-            depth: 1,
-            // No `limit`: `pagination: false` already means unbounded, so a
-            // number here reads as a cap that isn't one (same note as
-            // `suggestAlternative` in fields/slug.ts).
-            pagination: false,
-            sort: 'order',
-          })
-          return resolveNavigation(docs as NavigationDoc[])
-        },
-        ['navigation', 'list'],
-        { tags: listCacheTags('navigation'), revalidate: ONE_HOUR },
-      )()
-    } catch {
-      return navigation.mainNav
-    }
-  }),
+  cache(async (): Promise<NavItem[]> =>
+    unstable_cache(
+      async () => {
+        const payload = await getPayloadInstance()
+        const { docs } = await payload.find({
+          collection: 'navigation',
+          draft: false,
+          overrideAccess: false,
+          depth: 1,
+          // No `limit`: `pagination: false` already means unbounded, so a
+          // number here reads as a cap that isn't one (same note as
+          // `suggestAlternative` in fields/slug.ts).
+          pagination: false,
+          sort: 'order',
+        })
+        return resolveNavigation(docs as NavigationDoc[])
+      },
+      ['navigation', 'list'],
+      { tags: listCacheTags('navigation'), revalidate: ONE_HOUR },
+    )(),
+  ),
 )
+
+export const getNavigation = async (): Promise<NavItem[]> => {
+  try {
+    return await readNavigation()
+  } catch {
+    return navigation.mainNav
+  }
+}
 
 export const getHomepage = withReadTimeout(
   'getHomepage',

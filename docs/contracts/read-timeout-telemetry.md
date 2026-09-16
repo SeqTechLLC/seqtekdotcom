@@ -26,6 +26,41 @@ Applied as the **outermost** layer of each exported reader in `src/lib/payload.t
 - **Propagation**: `PayloadReadTimeoutError extends Error`. Thrown out of the reader → nearest Next error boundary → renders the branded `error.tsx` (which already surfaces `x-request-id`). **No new error UI.**
 - **`headers()` placement (load-bearing)**: the `requestId` read happens in the wrapper's `catch`, which runs in the RSC render scope — legal. It MUST NOT be read inside the `unstable_cache` callback (throws). This is why the wrapper is outermost, not at the raw read.
 
+### Amendment 2026-09-16 — one reader catches instead of propagating
+
+C-1 above says a rejected read re-throws "the original error unchanged" and that
+propagation ends at the "nearest Next error boundary → renders the branded
+`error.tsx`. **No new error UI.**" That holds for every reader **except
+`getNavigation`**, added with the `navigation` collection (ADR 0010's
+amendment), which catches and falls back to the code-owned menu in
+`src/lib/site-content.ts`.
+
+**Why the exception is not a weakening of this contract.** Every other cached
+reader is awaited from a PAGE, so its rejection lands on `error.tsx` exactly as
+C-1 describes. `getNavigation` is awaited from `SiteHeader`, which renders in
+`(frontend)/layout.tsx` — and Next is explicit that `error.js` "does **not** wrap
+the `layout.js` or `template.js` above it in the same segment"
+(`next/dist/docs/01-app/03-api-reference/03-file-conventions/error.md`). So for
+this one reader the "nearest error boundary" is not `error.tsx` at all; it is
+`global-error.tsx`, which replaces the whole document and loads none of the app
+CSS. Propagating here would turn a one-page degradation into an unbranded site.
+
+**What is unchanged:** the timeout mechanics and the C-2 warn log. The catch sits
+**outside** `withReadTimeout`, so the budget still fires at
+`READ_TIMEOUT_MS` and the `payload_read_timeout` record is still emitted before
+the rejection is swallowed. Only the propagation changes, and only for this
+reader.
+
+**The placement is load-bearing and has already been got wrong once.** A catch
+placed _inside_ the wrapped function sees only the inner read's rejection; the
+budget rejection is raised by `Promise.race` in the wrapper and never reaches
+it, so the DB-stall half escapes while looking handled. `readerFallback.int.spec.ts`
+pins both halves.
+
+**Revisit if** a second reader is ever called from a layout. At that point this
+is a pattern, not an exception, and wants a named helper rather than a
+hand-rolled try/catch per reader.
+
 ## C-2. Warn-log record (the telemetry contract)
 
 Exactly one stdout line per timeout, via `console.warn(JSON.stringify(record))`:

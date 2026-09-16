@@ -208,6 +208,76 @@ describe('buildRevalidatePlan — navigation is site-wide', () => {
  * `revalidatePath('/', 'layout')`, and the import behind it exists. Asserted
  * where no module registry can take it away.
  */
+/**
+ * A menu item derives its URL from a relationship, and `getNavigation` caches
+ * the DERIVED result under `navigation_list`. So a linked document can break the
+ * header in two ways, and the first cut of this guard only covered one.
+ */
+describe('buildRevalidatePlan — a linked document busts the cached menu', () => {
+  const NAV_LINKABLE = [
+    'pages',
+    'services',
+    'workshops',
+    'industries',
+    'posts',
+    'caseStudies',
+    'partners',
+  ]
+
+  it.each(NAV_LINKABLE)('%s: a slug RENAME busts the menu site-wide', (collection) => {
+    const plan = buildRevalidatePlan(
+      collection,
+      { _status: 'published', slug: 'new-slug' },
+      { _status: 'published', slug: 'old-slug' },
+    )
+    expect(plan.tags).toContain('navigation_list')
+    expect(plan.everything).toBe(true)
+  })
+
+  // The door the rename guard missed: the slug is unchanged, so `slugRenamed`
+  // is false, but the route now 404s (readers are published-only, C2) while the
+  // cached menu keeps serving the URL for up to an hour.
+  it.each(NAV_LINKABLE)('%s: an UNPUBLISH busts the menu site-wide', (collection) => {
+    const plan = buildRevalidatePlan(
+      collection,
+      { _status: 'draft', slug: 'same-slug' },
+      { _status: 'published', slug: 'same-slug' },
+    )
+    expect(plan.tags).toContain('navigation_list')
+    expect(plan.everything).toBe(true)
+  })
+
+  it('an ordinary re-publish does NOT bust the whole site', () => {
+    // The guard must be the published -> draft transition, not any status
+    // change: gating on `hasStatus` would bust every page on every publish.
+    const plan = buildRevalidatePlan(
+      'pages',
+      { _status: 'published', slug: 'same-slug' },
+      { _status: 'published', slug: 'same-slug' },
+    )
+    expect(plan.tags).not.toContain('navigation_list')
+    expect(plan.everything).toBe(false)
+  })
+
+  it('a first publish (no previous doc) does NOT bust the whole site', () => {
+    const plan = buildRevalidatePlan('pages', { _status: 'published', slug: 'brand-new' })
+    expect(plan.tags).not.toContain('navigation_list')
+    expect(plan.everything).toBe(false)
+  })
+
+  it('a collection the menu cannot link to is unaffected by either door', () => {
+    // `teamMembers` is routed but deliberately not in NAV_LINKABLE_COLLECTIONS.
+    for (const previous of [
+      { _status: 'published', slug: 'old' },
+      { _status: 'published', slug: 'jane' },
+    ] as const) {
+      const plan = buildRevalidatePlan('teamMembers', { _status: 'draft', slug: 'jane' }, previous)
+      expect(plan.tags).not.toContain('navigation_list')
+      expect(plan.everything).toBe(false)
+    }
+  })
+})
+
 describe('runRevalidation — the site-wide bust is wired, not just planned', () => {
   const hookSource = readFileSync(
     resolve(process.cwd(), 'src/payload/hooks/revalidateOnChange.ts'),

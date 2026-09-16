@@ -44,9 +44,11 @@ export const buildRevalidatePlan = (
   // guard only applies when `_status` is actually present. (teamMembers gained
   // drafts in spec 010 US2, so it now carries `_status` like the other draftable types.)
   const hasStatus = doc._status !== undefined || previousDoc?._status !== undefined
+  // Hoisted out of the guard below: the nav cache-bust further down needs the
+  // published → draft transition, not just the draft-skip decision.
+  const isPublished = doc._status === 'published'
+  const wasPublished = previousDoc?._status === 'published'
   if (hasStatus) {
-    const isPublished = doc._status === 'published'
-    const wasPublished = previousDoc?._status === 'published'
     // `everything: false` stated rather than left off: the flag is part of the
     // plan's shape, so every branch returns a boolean and a caller reading
     // `plan.everything` never has to tell `false` apart from `undefined`.
@@ -157,11 +159,20 @@ export const buildRevalidatePlan = (
   // dynamic rename handling), so the design's promise that "a slug rename
   // follows it" would hold only eventually.
   //
-  // Only on an actual RENAME: a first publish has no `oldSlug`, and an ordinary
-  // re-publish has both equal, so the common case pays nothing.
+  // TWO DOORS TO THE SAME FAILURE, and the first cut of this guard only shut
+  // one. A rename changes the derived URL; an UNPUBLISH leaves the URL intact
+  // but makes it 404, because the readers are published-only (C2). Either way
+  // the cached menu keeps serving a dead link site-wide until `ONE_HOUR`
+  // expires, which is exactly what `src/lib/nav/resolve.ts` promises does not
+  // happen ("a target unpublished or deleted out from under it is DROPPED").
+  //
+  // Narrow on purpose: the trigger is the published → draft TRANSITION, not any
+  // status change. Gating on `hasStatus` alone would bust the whole site on
+  // every ordinary publish of every linked document.
   const slugRenamed = Boolean(slug && oldSlug && slug !== oldSlug)
+  const unpublished = hasStatus && wasPublished && !isPublished
   const navLinkable = (NAV_LINKABLE_COLLECTIONS as readonly string[]).includes(collection)
-  const navRenameAffectsMenu = slugRenamed && navLinkable
+  const navRenameAffectsMenu = navLinkable && (slugRenamed || unpublished)
   if (navRenameAffectsMenu) tags.push('navigation_list')
 
   const everything = collection === 'navigation' || navRenameAffectsMenu
