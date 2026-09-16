@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
-import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { urlPathField } from '../payload/fields/slug'
 import { ADMIN_GROUPS } from './groups'
 
 export const Categories: CollectionConfig = {
@@ -26,7 +26,6 @@ export const Categories: CollectionConfig = {
     delete: isAdmin,
   },
   hooks: {
-    beforeChange: [slugFromTitle('title')],
     afterChange: [revalidateOnChange('categories')],
   },
   fields: [
@@ -39,18 +38,10 @@ export const Categories: CollectionConfig = {
         description: 'What this topic is called on a post and in a "Posts by category" block.',
       },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      label: 'URL path',
-      required: true,
-      unique: true,
-      index: true,
-      validate: validateSlug,
-      admin: {
-        description:
-          'The last part of the web address for this topic, for example "delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
-      },
-    },
+    urlPathField({
+      useAsSlug: 'title',
+      description:
+        'The last part of the web address for this topic, for example "delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+    }),
   ],
 }

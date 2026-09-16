@@ -27,7 +27,7 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 |        | PROOF-1 Case studies + quotes, on hard dates                   | Megan, Brent escalates |
 |        | AB-1 The alternative "what we do" page, A/B against the menu   | Kenn                   |
 |        | LM-1 Decide what "soft launch" means                           | Kenn                   |
-| **P1** | Spec 011 — Payload admin UX (US5, US6 open)                    | Kenn                   |
+| **P1** | Spec 011 — Payload admin UX (polish tasks open)                | Kenn                   |
 |        | A-1 Megan signs in + editor training                           | Kenn                   |
 |        | HYG-1 Content data hygiene                                     | Kenn                   |
 |        | UI-3 Default skeletons are publishable placeholder copy        | Kenn                   |
@@ -232,8 +232,8 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
 
 Every content change is still a developer task. This tier fixes that before we load more content by hand.
 
-- **Spec 011 — Payload admin UX.** US1–US4 shipped. **Open: US5** slug-from-title with collision handling,
-  **US6** collection grouping. Tasks T052–T065. → `specs/011-payload-admin-ux/spec.md`
+- **Spec 011 — Payload admin UX.** Open: polish tasks T059–T065. T055's default page skeleton is not taken, because
+  it is the defect UI-3 exists to remove. → `specs/011-payload-admin-ux/tasks.md`
 - **A-1 residual — Megan signs in, then editor training.** The auth code shipped (#77). What is left is a
   deploy, her first sign-in (auto-provisions an `editor`), and a short CMS quickstart. Train **after** 011
   lands so she learns the fixed panel.

@@ -6,7 +6,7 @@ import { layoutBlocks } from '../payload/blocks/layout'
 import { httpsUrlValidate } from '../payload/fields/url'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
-import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { urlPathField } from '../payload/fields/slug'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { partnerSkeleton } from '../payload/seed/skeletons/partner'
 import { seoField } from '../payload/fields/seo'
@@ -41,7 +41,7 @@ export const Partners: CollectionConfig = {
   },
   versions: { drafts: true, maxPerDoc: 50 },
   hooks: {
-    beforeChange: [slugFromTitle('name'), enforceDraftWhenScheduled],
+    beforeChange: [enforceDraftWhenScheduled],
     afterChange: [revalidateOnChange('partners')],
   },
   fields: [
@@ -52,19 +52,11 @@ export const Partners: CollectionConfig = {
       required: true,
       admin: { description: 'The partner company name, as they write it themselves.' },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      label: 'URL path',
-      required: true,
-      unique: true,
-      index: true,
-      validate: validateSlug,
-      admin: {
-        description:
-          'The last part of the web address for this partner, for example "microsoft". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
-      },
-    },
+    urlPathField({
+      useAsSlug: 'name',
+      description:
+        'The last part of the web address for this partner, for example "microsoft". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+    }),
     {
       name: 'summary',
       type: 'textarea',

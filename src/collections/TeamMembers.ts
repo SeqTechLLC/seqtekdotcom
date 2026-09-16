@@ -6,7 +6,7 @@ import { layoutBlocks } from '../payload/blocks/layout'
 import { httpsUrlValidate } from '../payload/fields/url'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
-import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { urlPathField } from '../payload/fields/slug'
 import { livePreviewFor } from '../payload/livePreview/url'
 import { teamMemberSkeleton } from '../payload/seed/skeletons/teamMember'
 import { seoField } from '../payload/fields/seo'
@@ -37,7 +37,7 @@ export const TeamMembers: CollectionConfig = {
   },
   versions: { drafts: true, maxPerDoc: 50 },
   hooks: {
-    beforeChange: [slugFromTitle('name'), enforceDraftWhenScheduled],
+    beforeChange: [enforceDraftWhenScheduled],
     afterChange: [revalidateOnChange('teamMembers')],
   },
   fields: [
@@ -50,19 +50,11 @@ export const TeamMembers: CollectionConfig = {
         description: 'The name as this person writes it. Heads their card and their own page.',
       },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      label: 'URL path',
-      required: true,
-      unique: true,
-      index: true,
-      validate: validateSlug,
-      admin: {
-        description:
-          'The last part of the web address for this profile, for example "dana-dudley". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
-      },
-    },
+    urlPathField({
+      useAsSlug: 'name',
+      description:
+        'The last part of the web address for this profile, for example "dana-dudley". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+    }),
     {
       // ROADMAP UI-1: `title` and `role` overlap enough that the grid was
       // rendering the wrong one and the showcase fixtures filled `role` with a

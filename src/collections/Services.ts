@@ -4,7 +4,7 @@ import { isAdmin, isAdminOrEditor } from '../payload/access/byRole'
 import { publishedOrAuthed } from '../payload/access/publishedOrAuthed'
 import { enforceDraftWhenScheduled } from '../payload/hooks/enforceDraftWhenScheduled'
 import { revalidateOnChange } from '../payload/hooks/revalidateOnChange'
-import { slugFromTitle, validateSlug } from '../payload/hooks/slugFromTitle'
+import { urlPathField } from '../payload/fields/slug'
 import { seoField } from '../payload/fields/seo'
 import { orderField, publishedAtField } from '../payload/fields/publishing'
 import { layoutBlocks } from '../payload/blocks/layout'
@@ -33,7 +33,7 @@ export const Services: CollectionConfig = {
   },
   versions: { drafts: true, maxPerDoc: 50 },
   hooks: {
-    beforeChange: [slugFromTitle('title'), enforceDraftWhenScheduled],
+    beforeChange: [enforceDraftWhenScheduled],
     afterChange: [revalidateOnChange('services')],
   },
   fields: [
@@ -71,19 +71,11 @@ export const Services: CollectionConfig = {
       required: true,
       admin: { description: 'What this service is called on service cards and case studies.' },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      label: 'URL path',
-      required: true,
-      unique: true,
-      index: true,
-      validate: validateSlug,
-      admin: {
-        description:
-          'The last part of the web address for this service, for example "software-delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
-      },
-    },
+    urlPathField({
+      useAsSlug: 'title',
+      description:
+        'The last part of the web address for this service, for example "software-delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.',
+    }),
     {
       name: 'icon',
       type: 'text',

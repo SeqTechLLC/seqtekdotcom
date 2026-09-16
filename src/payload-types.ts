@@ -156,6 +156,10 @@ export interface Page {
    */
   title: string;
   /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  /**
    * The last part of the web address for this page, for example "about-us". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
   slug: string;
@@ -1007,6 +1011,10 @@ export interface CaseStudy {
    */
   title: string;
   /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  /**
    * The last part of the web address for this case study, for example "taurex-eticketing". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
   slug: string;
@@ -1141,6 +1149,10 @@ export interface Industry {
    */
   title: string;
   /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  /**
    * The last part of the web address for this industry, for example "oil-and-gas". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
   slug: string;
@@ -1255,6 +1267,10 @@ export interface Service {
    * What this service is called on service cards and case studies.
    */
   title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   /**
    * The last part of the web address for this service, for example "software-delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
@@ -1657,6 +1673,10 @@ export interface Category {
    */
   title: string;
   /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  /**
    * The last part of the web address for this topic, for example "delivery". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
   slug: string;
@@ -1675,6 +1695,10 @@ export interface Post {
    * The title of the post, as it appears on the insights index and the post itself.
    */
   title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   /**
    * The last part of the web address for this post, for example "why-localshoring-works". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
@@ -1754,6 +1778,10 @@ export interface TeamMember {
    * The name as this person writes it. Heads their card and their own page.
    */
   name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   /**
    * The last part of the web address for this profile, for example "dana-dudley". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
@@ -1936,6 +1964,10 @@ export interface Location {
    */
   city: string;
   /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  /**
    * The last part of the web address for this market, for example "tulsa". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
   slug: string;
@@ -2011,6 +2043,10 @@ export interface Workshop {
    * What this workshop is called, on the workshops index and its own page.
    */
   title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   /**
    * The last part of the web address for this workshop, for example "ai-readiness". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
@@ -2487,6 +2523,10 @@ export interface Partner {
    */
   name: string;
   /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  /**
    * The last part of the web address for this partner, for example "microsoft". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
    */
   slug: string;
@@ -2746,6 +2786,7 @@ export interface PayloadMigration {
  */
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
   publishedAt?: T;
   layout?:
@@ -3495,6 +3536,7 @@ export interface TechStackBlockSelect<T extends boolean = true> {
  */
 export interface PostsSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
   excerpt?: T;
   content?: T;
@@ -3520,6 +3562,7 @@ export interface PostsSelect<T extends boolean = true> {
  */
 export interface CaseStudiesSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
   subtitle?: T;
   industry?: T;
@@ -3602,6 +3645,7 @@ export interface CaseStudiesSelect<T extends boolean = true> {
 export interface ServicesSelect<T extends boolean = true> {
   tier?: T;
   title?: T;
+  generateSlug?: T;
   slug?: T;
   icon?: T;
   relatedCaseStudies?: T;
@@ -3674,6 +3718,7 @@ export interface ServicesSelect<T extends boolean = true> {
  */
 export interface IndustriesSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
   description?: T;
   relevantServices?: T;
@@ -3749,6 +3794,7 @@ export interface IndustriesSelect<T extends boolean = true> {
  */
 export interface WorkshopsSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
   layout?:
     | T
@@ -3820,6 +3866,7 @@ export interface WorkshopsSelect<T extends boolean = true> {
  */
 export interface TeamMembersSelect<T extends boolean = true> {
   name?: T;
+  generateSlug?: T;
   slug?: T;
   title?: T;
   role?: T;
@@ -3900,6 +3947,7 @@ export interface TeamMembersSelect<T extends boolean = true> {
  */
 export interface PartnersSelect<T extends boolean = true> {
   name?: T;
+  generateSlug?: T;
   slug?: T;
   summary?: T;
   logo?: T;
@@ -4090,6 +4138,7 @@ export interface TestimonialsSelect<T extends boolean = true> {
  */
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -4100,6 +4149,7 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface LocationsSelect<T extends boolean = true> {
   city?: T;
+  generateSlug?: T;
   slug?: T;
   description?: T;
   address?:

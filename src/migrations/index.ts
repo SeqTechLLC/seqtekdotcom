@@ -16,6 +16,7 @@ import * as migration_20260825_181054_ui2_drop_team_grid_featured from './202608
 import * as migration_20260827_232537_inert2_drop_dead_controls from './20260827_232537_inert2_drop_dead_controls'
 import * as migration_20260901_022953_svc2_services_tiers from './20260901_022953_svc2_services_tiers'
 import * as migration_20260904_155333_ind1_industries_layout from './20260904_155333_ind1_industries_layout'
+import * as migration_20260915_183810_us5_builtin_slug_field from './20260915_183810_us5_builtin_slug_field'
 
 export const migrations = [
   {
@@ -107,5 +108,10 @@ export const migrations = [
     up: migration_20260904_155333_ind1_industries_layout.up,
     down: migration_20260904_155333_ind1_industries_layout.down,
     name: '20260904_155333_ind1_industries_layout',
+  },
+  {
+    up: migration_20260915_183810_us5_builtin_slug_field.up,
+    down: migration_20260915_183810_us5_builtin_slug_field.down,
+    name: '20260915_183810_us5_builtin_slug_field',
   },
 ]

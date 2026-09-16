@@ -879,13 +879,13 @@ src/
     │       └── TestimonialEmbed.ts
     │
     ├── fields/
+    │   ├── slug.ts                          # URL path: Payload's slugField, validated
     │   └── url.ts                           # Shared URL/link group field
     │
     └── hooks/
         ├── enforceDraftWhenScheduled.ts
         ├── invalidateMediaOnChange.ts
-        ├── revalidateOnChange.ts
-        └── slugFromTitle.ts                 # Auto-slug from title
+        └── revalidateOnChange.ts
 ```
 
 ---
