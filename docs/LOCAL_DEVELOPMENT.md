@@ -162,7 +162,7 @@ while verifying spec 011 US4.
 
 ### Staging and prod
 
-Production and staging read `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from AWS Parameter Store at `/seqtek/website/{env}/google_client_{id,secret}` via the EC2 instance profile. See `specs/001-google-oauth-sso/contracts/env-vars.md` for the exact path map.
+Production and staging read `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from AWS Parameter Store at `/seqtek/website/{env}/google_client_{id,secret}` via the EC2 instance profile. See [`contracts/env-vars.md`](./contracts/env-vars.md) for the exact path map.
 
 ---
 

@@ -41,7 +41,7 @@ import { s3Storage } from '@payloadcms/storage-s3'
  * path is forwarded VERBATIM as the S3 object key — the static `media`
  * prefix makes path == key with zero edge configuration. Size variants are
  * flat siblings under the same prefix. See ARCHITECTURE.md §5 and
- * specs/009-media-cloudfront-serving/contracts/media-url.md; changing any
+ * docs/contracts/media-url.md; changing any
  * side of that contract requires changing all three.
  */
 const MEDIA_PREFIX = 'media'

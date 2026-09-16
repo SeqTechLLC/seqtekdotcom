@@ -5,8 +5,7 @@ argument-hint: "A page brief (purpose, sections, audience), optionally a target 
 user-invocable: true
 disable-model-invocation: false
 metadata:
-  spec: "specs/010-block-page-composition"
-  contract: "specs/010-block-page-composition/contracts/authoring-skill.md"
+  contract: "docs/contracts/authoring-skill.md"
   requirement: "FR-010 (US3)"
 ---
 

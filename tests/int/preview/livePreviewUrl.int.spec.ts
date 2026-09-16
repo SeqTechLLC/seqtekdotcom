@@ -10,7 +10,7 @@ import {
   previewBreakpoints,
 } from '../../../src/payload/livePreview/url'
 
-// Contract: specs/003-phase-2-content-models/contracts/live-preview-urls.md
+// Contract: docs/contracts/live-preview-urls.md
 // (T078 / FR-019).
 
 const ORIGINAL_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL

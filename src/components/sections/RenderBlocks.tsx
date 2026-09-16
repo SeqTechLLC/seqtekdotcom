@@ -15,7 +15,7 @@ interface RenderBlocksProps {
 /**
  * Dispatches an array of saved Payload blocks to their registered React
  * renderer. Contract:
- * specs/003-phase-2-content-models/contracts/render-blocks.md (FR-010).
+ * docs/contracts/render-blocks.md (FR-010).
  *
  * - null/undefined/empty → no DOM, no warning.
  * - unknown blockType → silent in prod, single dev warning per render, skip.

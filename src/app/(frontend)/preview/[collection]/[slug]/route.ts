@@ -23,7 +23,7 @@ const EDITORIAL_ROLES = new Set(['admin', 'editor'])
  * gate on `admin`/`editor` roles. No URL-borne secret — see
  * `buildPreviewUrl` for the rationale.
  *
- * Contract: specs/003-phase-2-content-models/contracts/live-preview-urls.md
+ * Contract: docs/contracts/live-preview-urls.md
  */
 export async function GET(
   request: NextRequest,

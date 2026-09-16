@@ -116,7 +116,7 @@ that array is kept sorted by category and a test pins it.
 renders no block description and `labels.singular` is the only text the picker shows or
 searches: `Hero (standard page)`, `Embed (iframe)` and `Testimonial (single)`. Each was
 otherwise a substring of a sibling's name. See ADR 0011 and
-`specs/011-payload-admin-ux/contracts/admin-metadata.md` C1.
+`docs/contracts/admin-metadata.md` C1.
 
 ### 5.1 Hero blocks
 

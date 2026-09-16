@@ -18,8 +18,7 @@ import type { User } from '../../../src/payload-types'
  * Data-driven access matrix iterating 14 collections × 3 roles
  * (public/editor/admin) × 5 ops (read-published, read-draft, create,
  * update, delete) against the Payload Local API. The expected outcome
- * per cell is sourced from `docs/ARCHITECTURE.md` §6 (re-stated in
- * `specs/003-phase-2-content-models/data-model.md` §4). A failure here
+ * per cell is sourced from `docs/ARCHITECTURE.md` §6. A failure here
  * means either the implementation drifted from the doc or vice versa —
  * either way, the same PR fixes both per Constitution III.
  *
