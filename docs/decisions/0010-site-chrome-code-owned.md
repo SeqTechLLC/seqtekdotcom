@@ -26,6 +26,9 @@ the site's phone number in Site Settings, publish, and watch the footer not chan
 **Withdraw both globals entirely — delete them from the Payload config and drop
 their tables. Site chrome is code-owned.**
 
+> **Narrowed 2026-09-16 — see the amendment below.** The header navigation moves to a
+> validated `navigation` collection. Everything else in this decision stands.
+
 Navigation structure, company name, tagline, phone, email, postal address, social
 links and footer text live in `src/lib/site-content.ts` and change by deploy, not by
 publish.
@@ -89,3 +92,49 @@ without a deploy. At that point the right shape is not restoring these globals a
 they were, but a **validated** navigation model: URLs checked against the route table
 and the redirect map at save time, so a bad link cannot publish. That validation is
 the work this ADR is deferring, not the CMS wiring.
+
+## Amendment 2026-09-16 — the header nav leaves; the rest stays
+
+**The revisit condition this ADR named has been met, on its own terms.** It said to
+revisit on "frequent nav restructuring", and specified that the right shape would not be
+restoring the globals but "a **validated** navigation model … so a bad link cannot
+publish."
+
+What changed: the nav was six decade-scale items when this was written. It is now 13
+entries across two axis panels and an industries panel, heading to 16 — Retail was added
+2026-09-10, three more items (Touchstone, CADENCE, Trust Driven Development) are queued,
+and labels are being reworded faster than deploys are wanted for them.
+
+**Narrowed decision.** Code-owned, unchanged:
+
+- the seven chrome values `structured-data.ts` and `metadata.ts` consume — company name,
+  tagline, email, phone, postal address, social links — pinned by
+  `organizationLd.int.spec.ts` and `metadataOutput.int.spec.ts`;
+- footer text, the **footer nav** and the **legal nav** — three consumers between them,
+  and they do not move;
+- the header CTA button.
+
+Moving to a `navigation` collection: **the header nav only** (`mainNav`).
+
+**The validation this ADR deferred is the thing that makes it safe**, and it is not a URL
+checker bolted onto a free-text field. A menu item carries a discriminated type:
+
+- `internal` — a polymorphic relationship to the routed collections. The URL is _derived_
+  from the target's collection and slug, so an item cannot point at a page that does not
+  exist, and a slug rename follows it. The label defaults from the document's title with
+  an optional override, which is most of the churn.
+- `external` — a free-text URL validated by the existing `safeUrlValidate`
+  (`src/payload/fields/url.ts`), which already rejects `javascript:`, `data:` and
+  `vbscript:` at save time. This is the one type that can rot; `tools/link-sweep --external`
+  is what watches it.
+- `heading` — a group label with no link, which the "How We Work" panel already needs.
+
+**The cost this buys is revalidation, not schema.** `SiteHeader` renders on every page, so
+a nav publish has to bust every page rather than one path. `revalidateOnChange` already
+imports `revalidateTag` and already pushes `/`, so this extends the existing hook — but it
+ships in the same change, or editing the menu means waiting an hour to see it.
+
+**Rejected again, for the same reason as 2026-08-21:** a single free-text URL field per
+item, WordPress's "Custom Link" shape applied to every entry. That is precisely the
+unvalidated-URL coupling to the route table and the 301 map this ADR rejected, and nothing
+about the churn argument makes it safer.
