@@ -262,12 +262,14 @@ Every collection and global declares `admin.group` and `admin.description`, and
   rejects a description that only restates the collection's own name.
 - **Heading order follows `src/collections/index.ts`**, not the order in `groups.ts`:
   `groupNavItems` emits each group where it is first seen in the entity list. That
-  array is ordered Content → Reference data → Admin for that reason.
+  array is ordered Content → Site → Reference data → Admin for that reason.
 - **A global lands in whichever group it names, but always after the collections.**
   `groupNavItems` merges collections and globals by group label and appends every
   global last, so a group holding nothing but a global draws at the bottom of the
   panel. That is why `Homepage` is in `Content` rather than in a `Site` group of its
-  own — under `Site` it rendered below `Admin`.
+  own — under `Site` it rendered below `Admin`. `Site` is a drawn heading now, opened
+  by the `navigation` COLLECTION (ADR 0010 amendment), so it lands in place; a global
+  naming it would still append below `Admin`.
 
 ### URL paths (spec 011 US5)
 
@@ -416,14 +418,14 @@ await payload.updateGlobal({
 
 ### When to Use Globals vs. Collections
 
-| Use Case                   | Choice     | Why                                 |
-| -------------------------- | ---------- | ----------------------------------- |
-| Company info, social links | Global     | One instance, site-wide             |
-| Navigation menu structure  | Global     | One nav, used on every page         |
-| Homepage hero/CTA config   | Global     | One homepage                        |
-| Blog posts                 | Collection | Many instances                      |
-| Team members               | Collection | Many instances                      |
-| Testimonials               | Collection | Many instances, reused across pages |
+| Use Case                   | Choice     | Why                                                                              |
+| -------------------------- | ---------- | -------------------------------------------------------------------------------- |
+| Company info, social links | Global     | One instance, site-wide                                                          |
+| Navigation menu structure  | Collection | One doc per top-level button: ordered, separately draftable (ADR 0010 amendment) |
+| Homepage hero/CTA config   | Global     | One homepage                                                                     |
+| Blog posts                 | Collection | Many instances                                                                   |
+| Team members               | Collection | Many instances                                                                   |
+| Testimonials               | Collection | Many instances, reused across pages                                              |
 
 ---
 
