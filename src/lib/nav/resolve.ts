@@ -121,10 +121,21 @@ const resolveGroup = (group: NonNullable<NavigationDoc['groups']>[number]): NavG
     items.push({ label: itemLabel, url: resolved.url })
   }
 
-  // A heading with nothing under it is not a column, it is a stray word in a
-  // dropdown. A LINKED heading with nothing under it still earns its place.
+  // NO LINKS, NO COLUMN — and therefore no caret, since `resolveNavigation`
+  // only attaches a panel when a group survives.
+  //
+  // This used to keep a zero-item column when its heading was linked, on the
+  // theory that a linked heading "earns its place". The renderer disagrees:
+  // `PrimaryNav` suppresses a single column's heading (`showTitle` is
+  // `groups.length > 1`), so that case drew a caret opening an empty box, and
+  // `MobileNav` has the same hole. A button whose dropdown is blank is worse
+  // than one link fewer.
+  //
+  // The cost, stated: a heading's own page stops being reachable from the menu
+  // until something is added under it. That is a half-finished column, and the
+  // remedy is to finish it — or to point a leaf at the same page.
   const headingLink = resolveGroupHeading(group)
-  if (items.length === 0 && !headingLink) return null
+  if (items.length === 0) return null
 
   return headingLink ? { label, url: headingLink.url, items } : { label, items }
 }

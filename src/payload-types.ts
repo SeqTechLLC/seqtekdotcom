@@ -2681,10 +2681,6 @@ export interface Navigation {
      * A full address including https://. Use this only for somewhere off this site — anything on seqtek.com should be picked as a page above.
      */
     url?: string | null;
-    /**
-     * Leave this blank to use the page's own title, so renaming the page renames the menu. Fill it in only when the menu needs shorter or different wording.
-     */
-    label?: string | null;
   };
   /**
    * Leave this empty for a plain button with no dropdown. One row per column: one column gives a simple list, several draw side by side.
@@ -2739,10 +2735,6 @@ export interface Navigation {
            * A full address including https://. Use this only for somewhere off this site — anything on seqtek.com should be picked as a page above.
            */
           url?: string | null;
-          /**
-           * Leave this blank to use the page's own title, so renaming the page renames the menu. Fill it in only when the menu needs shorter or different wording.
-           */
-          label?: string | null;
         };
         items?:
           | {
@@ -2791,7 +2783,7 @@ export interface Navigation {
                  */
                 url?: string | null;
                 /**
-                 * Leave this blank to use the page's own title, so renaming the page renames the menu. Fill it in only when the menu needs shorter or different wording.
+                 * For a page on this site: leave blank to use the page's own title, so renaming the page renames the menu. For a web address: required — there is no page title to borrow, and leaving it blank drops the link from the menu.
                  */
                 label?: string | null;
               };
@@ -4319,7 +4311,6 @@ export interface NavigationSelect<T extends boolean = true> {
         type?: T;
         doc?: T;
         url?: T;
-        label?: T;
       };
   groups?:
     | T
@@ -4331,7 +4322,6 @@ export interface NavigationSelect<T extends boolean = true> {
               type?: T;
               doc?: T;
               url?: T;
-              label?: T;
             };
         items?:
           | T

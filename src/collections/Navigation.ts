@@ -113,6 +113,10 @@ export const Navigation: CollectionConfig = {
               name: 'link',
               label: 'Link',
               description: 'One entry in the column, in the order you arrange them.',
+              // The only position that takes the wording override: a leaf has
+              // no label of its own, so this IS its label. The button and the
+              // column heading above both declare a required one.
+              allowLabelOverride: true,
             }),
           ],
         },

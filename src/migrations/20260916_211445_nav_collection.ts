@@ -25,8 +25,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"id" varchar PRIMARY KEY NOT NULL,
   	"label" varchar,
   	"link_type" "enum_navigation_groups_link_type" DEFAULT 'internal',
-  	"link_url" varchar,
-  	"link_label" varchar
+  	"link_url" varchar
   );
   
   CREATE TABLE "navigation" (
@@ -34,7 +33,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"label" varchar,
   	"link_type" "enum_navigation_link_type" DEFAULT 'internal',
   	"link_url" varchar,
-  	"link_label" varchar,
   	"order" numeric,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -72,7 +70,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"label" varchar,
   	"link_type" "enum__navigation_v_version_groups_link_type" DEFAULT 'internal',
   	"link_url" varchar,
-  	"link_label" varchar,
   	"_uuid" varchar
   );
   
@@ -82,7 +79,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"version_label" varchar,
   	"version_link_type" "enum__navigation_v_version_link_type" DEFAULT 'internal',
   	"version_link_url" varchar,
-  	"version_link_label" varchar,
   	"version_order" numeric,
   	"version_updated_at" timestamp(3) with time zone,
   	"version_created_at" timestamp(3) with time zone,

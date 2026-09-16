@@ -116117,12 +116117,6 @@
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
-        },
-        "link_label": {
-          "name": "link_label",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -116200,12 +116194,6 @@
         },
         "link_url": {
           "name": "link_url",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "link_label": {
-          "name": "link_label",
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
@@ -116736,12 +116724,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "link_label": {
-          "name": "link_label",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
         "_uuid": {
           "name": "_uuid",
           "type": "varchar",
@@ -116830,12 +116812,6 @@
         },
         "version_link_url": {
           "name": "version_link_url",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "version_link_label": {
-          "name": "version_link_label",
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
@@ -137275,6 +137251,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "5c183748-c676-44d7-9c32-c23072db8138",
+  "id": "48465a0a-c23a-49fb-af2e-a12f4c591295",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

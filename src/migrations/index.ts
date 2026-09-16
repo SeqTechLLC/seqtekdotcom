@@ -17,7 +17,7 @@ import * as migration_20260827_232537_inert2_drop_dead_controls from './20260827
 import * as migration_20260901_022953_svc2_services_tiers from './20260901_022953_svc2_services_tiers'
 import * as migration_20260904_155333_ind1_industries_layout from './20260904_155333_ind1_industries_layout'
 import * as migration_20260915_183810_us5_builtin_slug_field from './20260915_183810_us5_builtin_slug_field'
-import * as migration_20260916_173016_nav_collection from './20260916_173016_nav_collection'
+import * as migration_20260916_211445_nav_collection from './20260916_211445_nav_collection'
 
 export const migrations = [
   {
@@ -116,8 +116,8 @@ export const migrations = [
     name: '20260915_183810_us5_builtin_slug_field',
   },
   {
-    up: migration_20260916_173016_nav_collection.up,
-    down: migration_20260916_173016_nav_collection.down,
-    name: '20260916_173016_nav_collection',
+    up: migration_20260916_211445_nav_collection.up,
+    down: migration_20260916_211445_nav_collection.down,
+    name: '20260916_211445_nav_collection',
   },
 ]

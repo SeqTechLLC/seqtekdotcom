@@ -223,7 +223,11 @@ describe('resolveNavigation — structure', () => {
     expect(items.map((i) => i.label)).toEqual(['First', 'Third', 'Alpha', 'Beta'])
   })
 
-  it('drops a stray heading with nothing under it, but keeps a linked one', () => {
+  // NO LINKS, NO COLUMN — including a column whose heading has a page of its
+  // own. An earlier cut kept the linked one on the theory that it earned its
+  // place; `PrimaryNav` suppresses a single column's heading, so that drew a
+  // caret opening an empty box.
+  it('drops a column with no links, linked heading or not', () => {
     const [item] = resolveNavigation([
       {
         label: 'Top',
@@ -234,7 +238,27 @@ describe('resolveNavigation — structure', () => {
         ],
       },
     ])
-    expect(item.panel?.groups.map((g) => g.label)).toEqual(['Linked but empty'])
+    // Every column dropped, so there is no panel — and therefore no caret.
+    expect(item.panel).toBeUndefined()
+    expect(item.url).toBe('/top')
+  })
+
+  it('keeps the columns that do have links, and drops only the empty one', () => {
+    const [item] = resolveNavigation([
+      {
+        label: 'Top',
+        link: internal('pages', 'top'),
+        groups: [
+          { label: 'Empty', link: internal('services', 'group'), items: [] },
+          {
+            label: 'Full',
+            link: internal('services', 'other'),
+            items: [{ link: internal('services', 'leaf', { title: 'Leaf' }) }],
+          },
+        ],
+      },
+    ])
+    expect(item.panel?.groups.map((g) => g.label)).toEqual(['Full'])
   })
 
   it('drops a top-level button whose target no longer resolves', () => {

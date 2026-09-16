@@ -40,6 +40,20 @@ export interface NavLinkFieldArgs {
    * `layout.e2e.spec.ts` pins every top-level entry as a real link.
    */
   allowHeading?: boolean
+  /**
+   * Whether the "Menu wording" override is offered. **Only a leaf takes it.**
+   *
+   * A top-level button and a column heading each declare their own `required`
+   * label on the collection, and that is what the resolver reads
+   * (`resolveNavigation` uses `doc.label`, `resolveGroup` uses `group.label`).
+   * Offering the link's override there too put two wording boxes on one row
+   * with only the other one wired — an editor fills in "Menu wording",
+   * publishes, and nothing changes. That is the inert control ADR 0010 exists
+   * to prevent, so the field is omitted rather than left to mislead.
+   *
+   * A leaf has no label of its own, so there the override IS the label.
+   */
+  allowLabelOverride?: boolean
 }
 
 export const navLinkField = ({
@@ -47,6 +61,7 @@ export const navLinkField = ({
   label,
   description,
   allowHeading = false,
+  allowLabelOverride = false,
 }: NavLinkFieldArgs): GroupField => ({
   name,
   type: 'group',
@@ -134,29 +149,38 @@ export const navLinkField = ({
         },
       }
     })(),
-    // DESTRUCTURED, not spread, because the condition and the validator must
-    // differ. Visible for both link types — on an internal link the wording is
-    // an optional override of the target's title. REQUIRED for an external one,
-    // which has no target document whose title it could fall back to: a blank
-    // label there resolves to `null`, `resolveGroup` drops the row, and the
-    // editor gets a clean publish and a menu entry that simply is not there.
-    // The old help text ("leave this blank to use the page's own title") walked
-    // them straight into it, since that is only true of an internal link.
-    (() => {
-      const { validate, custom } = requiredWhen<{ type?: string }>((d) => d?.type === 'external')
-      return {
-        name: 'label' as const,
-        type: 'text' as const,
-        label: 'Menu wording' as const,
-        custom,
-        validate,
-        admin: {
-          condition: (_data: unknown, siblingData: unknown) =>
-            (siblingData as { type?: string } | undefined)?.type !== 'heading',
-          description:
-            "For a page on this site: leave blank to use the page's own title, so renaming the page renames the menu. For a web address: required — there is no page title to borrow, and leaving it blank drops the link from the menu.",
-        },
-      }
-    })(),
+    // LEAVES ONLY. A top-level button and a column heading carry their own
+    // `required` label on the collection, and that is the one the resolver
+    // reads — rendering this box there too would be a second wording field
+    // with nothing wired to it.
+    ...(allowLabelOverride
+      ? [
+          // DESTRUCTURED, not spread, because the condition and the validator
+          // must differ. Visible for both link types — on an internal link the
+          // wording is an optional override of the target's title. REQUIRED for
+          // an external one, which has no target document whose title it could
+          // fall back to: a blank label there resolves to `null`, `resolveGroup`
+          // drops the row, and the editor gets a clean publish and a menu entry
+          // that simply is not there. The old help text ("leave this blank to
+          // use the page's own title") walked them straight into it, since that
+          // is only true of an internal link.
+          (() => {
+            const { validate, custom } = requiredWhen<{ type?: string }>(
+              (d) => d?.type === 'external',
+            )
+            return {
+              name: 'label' as const,
+              type: 'text' as const,
+              label: 'Menu wording' as const,
+              custom,
+              validate,
+              admin: {
+                description:
+                  "For a page on this site: leave blank to use the page's own title, so renaming the page renames the menu. For a web address: required — there is no page title to borrow, and leaving it blank drops the link from the menu.",
+              },
+            }
+          })(),
+        ]
+      : []),
   ],
 })
