@@ -5,7 +5,7 @@
 > `INFRASTRUCTURE_RUNBOOK.md` supersedes it for a first deploy; §7-§10 (alarm verification, secret
 > rotation, tear-down, troubleshooting) are kept because the runbook has no equivalent.
 
-> **SUPERSEDED (2026-08-10) — see [`docs/INFRASTRUCTURE_RUNBOOK.md`](../../docs/INFRASTRUCTURE_RUNBOOK.md).**
+> **SUPERSEDED (2026-08-10) — see [`docs/INFRASTRUCTURE_RUNBOOK.md`](./INFRASTRUCTURE_RUNBOOK.md).**
 >
 > Kept as the spec-002 record of the original first deploy. Two things here are
 > now wrong: §6 says a merge to `main` deploys production — merges deploy
