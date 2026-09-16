@@ -89,11 +89,20 @@ export const navLinkField = ({
       type: 'relationship',
       relationTo: [...NAV_LINKABLE_COLLECTIONS],
       label: 'Which page',
-      // PUBLISHED ONLY, and that is the guarantee rather than an oversight.
-      // ADR 0010's amendment is that a bad link cannot publish; a draft is a
-      // page that does not exist yet as far as a visitor is concerned. The
-      // cost is ordering — publish the page, then point the menu at it — which
-      // is the same order the 301 map and the sitemap already assume.
+      // PUBLISHED ONLY IN THE ADMIN PICKER — and that scope is the honest
+      // claim. `filterOptions` constrains what the relationship control offers
+      // an editor; it is not a server-side constraint, and the path content
+      // actually arrives by (`tools/payload-seed` writing over REST, per
+      // CLAUDE.md) never consults it. So this narrows the editorial mistake,
+      // it does not make a draft target unrepresentable.
+      //
+      // What holds regardless: the render path fails safe. `getNavigation`
+      // reads with `overrideAccess: false`, so a draft target does not
+      // populate, `resolveLink` finds no slug and the item is dropped. Silent,
+      // but never a link to something a visitor cannot open.
+      //
+      // The cost is ordering — publish the page, then point the menu at it —
+      // which is the same order the 301 map and the sitemap already assume.
       filterOptions: () => ({ _status: { equals: 'published' } }),
       ...requiredWhen<{ type?: string }>((d) => d?.type === 'internal', {
         description:
@@ -125,15 +134,29 @@ export const navLinkField = ({
         },
       }
     })(),
-    {
-      name: 'label',
-      type: 'text',
-      label: 'Menu wording',
-      admin: {
-        condition: (_data, siblingData) => siblingData?.type !== 'heading',
-        description:
-          "Leave this blank to use the page's own title, so renaming the page renames the menu. Fill it in only when the menu needs shorter or different wording.",
-      },
-    },
+    // DESTRUCTURED, not spread, because the condition and the validator must
+    // differ. Visible for both link types — on an internal link the wording is
+    // an optional override of the target's title. REQUIRED for an external one,
+    // which has no target document whose title it could fall back to: a blank
+    // label there resolves to `null`, `resolveGroup` drops the row, and the
+    // editor gets a clean publish and a menu entry that simply is not there.
+    // The old help text ("leave this blank to use the page's own title") walked
+    // them straight into it, since that is only true of an internal link.
+    (() => {
+      const { validate, custom } = requiredWhen<{ type?: string }>((d) => d?.type === 'external')
+      return {
+        name: 'label' as const,
+        type: 'text' as const,
+        label: 'Menu wording' as const,
+        custom,
+        validate,
+        admin: {
+          condition: (_data: unknown, siblingData: unknown) =>
+            (siblingData as { type?: string } | undefined)?.type !== 'heading',
+          description:
+            "For a page on this site: leave blank to use the page's own title, so renaming the page renames the menu. For a web address: required — there is no page title to borrow, and leaving it blank drops the link from the menu.",
+        },
+      }
+    })(),
   ],
 })

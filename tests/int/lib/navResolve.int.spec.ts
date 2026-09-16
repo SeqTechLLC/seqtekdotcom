@@ -158,6 +158,55 @@ describe('resolveNavigation — structure', () => {
     expect(item.panel?.groups[0].url).toBe('/services/ai-and-automation')
   })
 
+  // The gap round 3 named: both existing `type: 'external'` fixtures call
+  // `resolveLink` directly, and the label only decides survival inside
+  // `resolveNavigation`. An external link has no target document, so its own
+  // wording is the ONLY label source — which is why `navLink.ts` now requires
+  // it for that type. These pin the resolver behaviour that makes the
+  // validator necessary.
+  it('renders an external leaf that carries its own wording', () => {
+    const [item] = resolveNavigation([
+      {
+        label: 'Top',
+        link: internal('pages', 'top'),
+        groups: [
+          {
+            label: 'Elsewhere',
+            link: { type: 'heading' },
+            items: [
+              { link: { type: 'external', url: 'https://example.com/pod', label: 'Podcast' } },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(item.panel?.groups[0].items).toEqual([
+      { label: 'Podcast', url: 'https://example.com/pod' },
+    ])
+  })
+
+  it('drops an external leaf with no wording — nothing to label it with', () => {
+    const [item] = resolveNavigation([
+      {
+        label: 'Top',
+        link: internal('pages', 'top'),
+        groups: [
+          {
+            label: 'Elsewhere',
+            link: { type: 'heading' },
+            items: [
+              { link: { type: 'external', url: 'https://example.com/pod' } },
+              { link: internal('pages', 'kept', { title: 'Kept' }) },
+            ],
+          },
+        ],
+      },
+    ])
+    // Only the internal sibling survives. Publishing this state is what
+    // `requiredWhen(type === 'external')` on the label now prevents.
+    expect(item.panel?.groups[0].items).toEqual([{ label: 'Kept', url: '/kept' }])
+  })
+
   it('leaves an item with no groups a plain link, so no caret is drawn', () => {
     const [item] = resolveNavigation([{ label: 'Contact', link: internal('pages', 'contact') }])
     expect(item.panel).toBeUndefined()
