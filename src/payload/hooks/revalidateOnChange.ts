@@ -1,7 +1,8 @@
 import type { CollectionAfterChangeHook, GlobalAfterChangeHook } from 'payload'
-import { revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 import { invalidateCloudFrontPaths } from '../../lib/cloudfront/invalidate'
+import { NAV_LINKABLE_COLLECTIONS } from '../../lib/routes'
 
 interface DocLike {
   _status?: 'draft' | 'published'
@@ -20,6 +21,12 @@ interface PreviousDocLike {
 export interface RevalidatePlan {
   tags: string[]
   paths: string[]
+  /**
+   * The change is site-wide rather than a set of paths. Only `navigation`
+   * sets this: it renders in the root layout, so "which pages changed" is
+   * every page. `runRevalidation` turns it into `revalidatePath('/', 'layout')`.
+   */
+  everything?: boolean
 }
 
 /**
@@ -37,10 +44,15 @@ export const buildRevalidatePlan = (
   // guard only applies when `_status` is actually present. (teamMembers gained
   // drafts in spec 010 US2, so it now carries `_status` like the other draftable types.)
   const hasStatus = doc._status !== undefined || previousDoc?._status !== undefined
+  // Hoisted out of the guard below: the nav cache-bust further down needs the
+  // published → draft transition, not just the draft-skip decision.
+  const isPublished = doc._status === 'published'
+  const wasPublished = previousDoc?._status === 'published'
   if (hasStatus) {
-    const isPublished = doc._status === 'published'
-    const wasPublished = previousDoc?._status === 'published'
-    if (!isPublished && !wasPublished) return { tags: [], paths: [] }
+    // `everything: false` stated rather than left off: the flag is part of the
+    // plan's shape, so every branch returns a boolean and a caller reading
+    // `plan.everything` never has to tell `false` apart from `undefined`.
+    if (!isPublished && !wasPublished) return { tags: [], paths: [], everything: false }
   }
 
   const slug = typeof doc.slug === 'string' ? doc.slug : undefined
@@ -130,16 +142,49 @@ export const buildRevalidatePlan = (
     tags.push(`${collection}_${s}`)
   }
 
-  // spec 011 T016: `siteSettings` / `navigation` dropped from this list with
-  // the globals themselves — site chrome is code-owned now (ADR 0010), so a
-  // chrome change is a deploy, not a publish, and nothing to revalidate.
-  if (collection === 'homepage' || collection === 'testimonials') {
+  // spec 011 T016 dropped `siteSettings` and `navigation` from here along with
+  // the globals themselves. `navigation` came BACK as a COLLECTION in ADR
+  // 0010's 2026-09-16 amendment — the header menu publishes now — and it is the
+  // one entry that cannot be written as a path list: `SiteHeader` renders in
+  // the root layout, so the set of pages a nav publish changes is all of them.
+  // `everything` is how that is said; see `runRevalidation`. `siteSettings`
+  // stays code-owned and stays absent.
+  // A menu item stores a RELATIONSHIP and derives its URL at render
+  // (`src/lib/nav/resolve.ts`), and `getNavigation` caches the derived result
+  // under `navigation_list`. So renaming a linked document's slug changes the
+  // header on every page — but nothing in the plan above says so: a `pages`
+  // publish emits `pages_list` / `pages_<slug>`, never `navigation_list`, and
+  // the menu would serve the old URL until `revalidate: ONE_HOUR` expired. The
+  // old path 404s meanwhile (`src/lib/redirects.ts` is a static Wix map with no
+  // dynamic rename handling), so the design's promise that "a slug rename
+  // follows it" would hold only eventually.
+  //
+  // TWO DOORS TO THE SAME FAILURE, and both have to be shut.
+  // A rename changes the derived URL; an UNPUBLISH leaves the URL intact
+  // but makes it 404, because the readers are published-only (C2). Either way
+  // the cached menu keeps serving a dead link site-wide until `ONE_HOUR`
+  // expires, which is exactly what `src/lib/nav/resolve.ts` promises does not
+  // happen ("a target unpublished or deleted out from under it is DROPPED").
+  //
+  // Narrow on purpose: the trigger is the published → draft TRANSITION, not any
+  // status change. Gating on `hasStatus` alone would bust the whole site on
+  // every ordinary publish of every linked document.
+  const slugRenamed = Boolean(slug && oldSlug && slug !== oldSlug)
+  const unpublished = hasStatus && wasPublished && !isPublished
+  const navLinkable = (NAV_LINKABLE_COLLECTIONS as readonly string[]).includes(collection)
+  const navRenameAffectsMenu = navLinkable && (slugRenamed || unpublished)
+  if (navRenameAffectsMenu) tags.push('navigation_list')
+
+  const everything = collection === 'navigation' || navRenameAffectsMenu
+
+  if (collection === 'homepage' || collection === 'testimonials' || everything) {
     detailPaths.push('/')
   }
 
   return {
     tags: Array.from(new Set(tags)),
     paths: Array.from(new Set([...detailPaths, '/sitemap.xml'])),
+    everything,
   }
 }
 
@@ -150,6 +195,20 @@ const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {
       revalidateTag(tag, { expire: 0 })
     } catch {
       // revalidateTag throws when called outside a request scope in dev — swallow per R-03
+    }
+  }
+  // TWO CALLS, and neither is sufficient alone. The tag above invalidates the
+  // nav's own `unstable_cache` entry (the DATA); this invalidates every page's
+  // already-rendered HTML/RSC entry (the OUTPUT), which still holds the old
+  // menu baked in. Dropping the tag means the re-render reads the stale menu
+  // straight back out of the data cache and re-bakes it; dropping the path
+  // means fresh data nothing re-renders with. Verified against Next 16's
+  // revalidatePath docs: `('/', 'layout')` is the documented whole-site form.
+  if (plan.everything) {
+    try {
+      revalidatePath('/', 'layout')
+    } catch {
+      // Same non-request-scope guard as revalidateTag above (R-03).
     }
   }
   try {

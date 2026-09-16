@@ -62,7 +62,15 @@ const DRAFTABLE_COLLECTIONS = [
 
 // The three draftable globals (per `data-model.md` §2 — siteSettings,
 // homepage, navigation all set `versions: { drafts: true }`).
-// spec 011 T016: siteSettings + navigation withdrawn (ADR 0010).
+// spec 011 T016: siteSettings + navigation withdrawn (ADR 0010), leaving
+// `homepage` as the only draftable GLOBAL.
+//
+// `navigation` came back in ADR 0010's 2026-09-16 amendment, but as a
+// COLLECTION rather than a global — so it does not belong in this list. It is
+// also NOT yet in `DRAFT_SPECS` below, which is a known coverage gap rather
+// than a decision: it is the one drafts-enabled collection this suite does not
+// cover. Exercising it needs a seeded nav row pointing at a draft target plus a
+// depth-1 populated read, which is a fixture job of its own.
 const DRAFTABLE_GLOBALS = ['homepage'] as const
 
 interface DraftSpec {

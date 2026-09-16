@@ -6,6 +6,8 @@ import { headers } from 'next/headers'
 import { getPayload, type Payload } from 'payload'
 
 import config from '@/payload.config'
+import { resolveNavigation, type NavigationDoc } from './nav/resolve'
+import { navigation, type NavItem } from './site-content'
 import type {
   Homepage,
   Page,
@@ -163,12 +165,105 @@ type SluggedCollection =
 // or pollutes the published cache. `withReadTimeout` wraps the OUTSIDE of the
 // cache stack (spec 007 — so headers() is legal in its catch).
 
-// spec 011 T015 (FR-003/FR-005): `getSiteSettings` and `getNavigation` were
-// deleted here. Site chrome is code-owned (ADR 0010) — the header, footer, nav
-// and the seven values the render path used to read from the `siteSettings`
-// global now come from `src/lib/site-content.ts`. `getNavigation` had zero
-// callers even before that; leaving either in place would be the same
-// looks-wired-but-isn't trap one layer down.
+// spec 011 T015 (FR-003/FR-005) deleted `getSiteSettings` and `getNavigation`
+// here when the chrome globals were withdrawn. `getSiteSettings` stays gone:
+// the seven values the render path reads come from `src/lib/site-content.ts`
+// and change by deploy.
+//
+// `getNavigation` is BACK, reading the `navigation` COLLECTION added by ADR
+// 0010's 2026-09-16 amendment. The trap the original note warned about — a
+// reader that looks wired and is not — is the reason it lands in the same
+// change as `SiteHeader` calling it, rather than ahead of it.
+
+/**
+ * The header menu. Published `navigation` rows, or the code-owned tree when
+ * there are none — `resolveNavigation` owns that fallback and explains why it
+ * is load-bearing rather than defensive.
+ *
+ * `depth: 1` is the floor, not a default: each item's target is a polymorphic
+ * relationship, and the slug the URL is derived from (plus the title the label
+ * falls back to) only exist once that relationship is populated. At depth 0
+ * every entry would resolve to a bare id and the whole menu would drop.
+ *
+ * THIS READER NEVER THROWS, and it is the only one that must not. Every other
+ * cached reader is called from a page, so a rejection lands on the branded
+ * `error.tsx` — the propagation contract in
+ * `docs/contracts/read-timeout-telemetry.md` ("No new error UI"). This one is
+ * called from `SiteHeader`, which renders in `(frontend)/layout.tsx`, and Next
+ * is explicit that `error.js` "does not wrap the `layout.js` … above it in the
+ * same segment" (`next/dist/docs/…/file-conventions/error.md`). A throw here
+ * would therefore skip `error.tsx` entirely and take EVERY route to
+ * `global-error.tsx`, which replaces the document and loads none of the app
+ * CSS. A 5s DB stall degrading one page is the accepted cost of ADR 0007;
+ * degrading the whole site to an unbranded page is not.
+ *
+ * So a failed read falls back to the code-owned menu, exactly as an empty
+ * collection does.
+ *
+ * **THE CATCH IS OUTSIDE `withReadTimeout`, AND THAT PLACEMENT IS THE WHOLE
+ * FIX.** A catch inside the wrapped function sees only what the inner read
+ * rejects with; the 5s budget rejection is raised by `Promise.race` in the
+ * wrapper itself (`withReadTimeout`, above) and rethrown from its `catch`, so
+ * an inner catch never observes it. Placed inside, the DB-error half is
+ * handled and the DB-STALL half — the half ADR 0007 exists for — still
+ * escapes, while looking handled. `readerFallback.int.spec.ts` pins both
+ * halves, including a test that the inside placement still throws.
+ *
+ * The telemetry is unchanged: `withReadTimeout` emits the
+ * `payload_read_timeout` warn log (contract C-2) *before* it rethrows, and the
+ * catch below only swallows the rejection afterwards. What changes is the blast
+ * radius, not the observability.
+ */
+const readNavigation = withReadTimeout(
+  'getNavigation',
+  cache(async (): Promise<NavItem[]> =>
+    unstable_cache(
+      async () => {
+        const payload = await getPayloadInstance()
+        const { docs } = await payload.find({
+          collection: 'navigation',
+          draft: false,
+          overrideAccess: false,
+          depth: 1,
+          // No `limit`: `pagination: false` already means unbounded, so a
+          // number here reads as a cap that isn't one (same note as
+          // `suggestAlternative` in fields/slug.ts).
+          pagination: false,
+          sort: 'order',
+        })
+        return resolveNavigation(docs as NavigationDoc[])
+      },
+      ['navigation', 'list'],
+      { tags: listCacheTags('navigation'), revalidate: ONE_HOUR },
+    )(),
+  ),
+)
+
+export const getNavigation = async (): Promise<NavItem[]> => {
+  try {
+    return await readNavigation()
+  } catch (err) {
+    // THE FALLBACK IS SILENT WITHOUT THIS. `withReadTimeout` gates its
+    // `payload_read_timeout` record on `instanceof PayloadReadTimeoutError`
+    // and rethrows everything else unlogged — so a DB outage, an access error
+    // or a malformed row would swap the published menu for the code-owned one
+    // with nothing at all emitted. Once the collection is seeded that means
+    // visitors served a stale menu indefinitely and no signal saying so.
+    //
+    // A timeout emits BOTH records: the C-2 timeout log from the wrapper, and
+    // this one for the fallback it caused. That pairing is the point — one
+    // says the read failed, the other says what the site did about it.
+    console.warn(
+      JSON.stringify({
+        type: 'nav_fallback',
+        ts: new Date().toISOString(),
+        reader: 'getNavigation',
+        reason: err instanceof Error ? err.name : 'unknown',
+      }),
+    )
+    return navigation.mainNav
+  }
+}
 
 export const getHomepage = withReadTimeout(
   'getHomepage',

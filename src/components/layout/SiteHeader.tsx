@@ -3,11 +3,17 @@ import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 import { Button } from '@/components/ui/Button'
 import { navigation, siteSettings } from '@/lib/site-content'
+import { getNavigation } from '@/lib/payload'
 import { MobileNav } from './MobileNav'
 import { PrimaryNav } from './PrimaryNav'
 
-export function SiteHeader() {
-  const { mainNav, ctaButton } = navigation
+// ADR 0010 amendment: the header MENU is content now, so this is async and
+// reads it. Everything else the header draws — the logo, the company name
+// behind its alt text, and the CTA button — is still code-owned chrome from
+// `site-content.ts`, and `SiteFooter` is untouched.
+export async function SiteHeader() {
+  const { ctaButton } = navigation
+  const mainNav = await getNavigation()
 
   return (
     <header

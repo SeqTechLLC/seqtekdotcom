@@ -357,7 +357,16 @@ describe('C3 — every collection and global declares its purpose', () => {
  * fails when it drifts.
  */
 describe('C3 — the sidebar draws its headings in the declared order', () => {
-  const EXPECTED_HEADING_ORDER = [ADMIN_GROUPS.content, ADMIN_GROUPS.reference, ADMIN_GROUPS.admin]
+  // `site` joined this list with the `navigation` collection (ADR 0010's
+  // 2026-09-16 amendment). It sits between Content and Reference data on
+  // purpose: the header menu is something an editor opens, so it belongs above
+  // the taxonomy tables that only feed other collections, and well above Admin.
+  const EXPECTED_HEADING_ORDER = [
+    ADMIN_GROUPS.content,
+    ADMIN_GROUPS.site,
+    ADMIN_GROUPS.reference,
+    ADMIN_GROUPS.admin,
+  ]
 
   it('collections is ordered so the headings come out editor-first', () => {
     const encountered: string[] = []

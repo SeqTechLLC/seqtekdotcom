@@ -47,8 +47,10 @@ account) without rebuilding. Merging the release PR itself deploys nothing. `mai
 branch. Both lanes sit behind an ALB + Cognito gate — index control, not access control: it is what keeps
 search engines out until cutover. `seqtek.com` still serves the old Wix site.
 
-**Site chrome is code-owned.** Company name, tagline, phone, email, postal address, social links and both nav
-trees live in `src/lib/site-content.ts` and change by deploy, not by publish (ADR 0010). Seven of those values
+**Site chrome is code-owned, except the header menu.** Company name, tagline, phone, email, postal address,
+social links, the footer nav and the legal nav live in `src/lib/site-content.ts` and change by deploy, not by
+publish (ADR 0010). The **header** nav moved to a `navigation` collection and publishes (ADR 0010 amendment);
+`site-content.ts` still carries it as the fallback served while that collection is empty. Seven of those values
 are read on the render path and pinned by tests, so edit the values freely but expect a shape change to fail
 `organizationLd.int.spec.ts` / `metadataOutput.int.spec.ts`.
 

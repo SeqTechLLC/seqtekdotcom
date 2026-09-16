@@ -52,6 +52,12 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
   `site-content.ts` now carries both axes, all three groups and all nine leaves, every one resolving against a
   published `services` row. The mechanism is done. **The open item is the copy those 13 pages don't have —
   see SVC-2 below.**
+  - **Shipped 2026-09-16 — see `docs/planning/header-nav-collection.md`** and the amendment to ADR 0010: the
+    header nav is a validated `navigation` collection; footer and legal navs stay code-owned. The mechanism is
+    done — collection, polymorphic targets with derived URLs, whole-site revalidation, migration. **Open: the
+    menu is not seeded.** `getNavigation` falls back to the code-owned tree in `site-content.ts` while the
+    collection is empty, so every lane still serves today's menu until a `navigation.json` lands in the content
+    repo. The bullet below is the superseded framing, kept for its cost analysis.
   - **Open decision: should the axis panels derive from the `services` collection?** Today a new service is a
     content edit plus a code change to `site-content.ts`, which is the friction ADR 0010 accepted when the nav
     was six decade-scale items. It is 13 entries now. The hierarchy already exists as typed relations
@@ -136,9 +142,6 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     exactly what `/services/what-we-do` is today. That is the bar. Flag it early if a grouping produces a
     heading nothing can be written about.
 
-  - **`services.json` lists each of the three group slugs twice** — once with a real 3-block layout, once with
-    an empty one. Whichever seeds last wins, so a re-seed can silently blank a group page. Fix in the content
-    repo before the next run.
   - **Refine the 21 Wix service 301s once the leaves are seeded.** They all land on the axis today, which is
     the honest interim target. `/technology-and-data` should reach the data page rather than the axis.
     Cheaper before the DNS cutover: nothing is live, so these are retargeted at source rather than layered.
