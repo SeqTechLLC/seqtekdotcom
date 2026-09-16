@@ -5,6 +5,7 @@ import { Categories } from './Categories'
 import { Industries } from './Industries'
 import { Locations } from './Locations'
 import { Media } from './Media'
+import { Navigation } from './Navigation'
 import { Pages } from './Pages'
 import { Partners } from './Partners'
 import { Posts } from './Posts'
@@ -41,6 +42,12 @@ export const collections: CollectionConfig[] = [
   TeamMembers,
   Partners,
   Media,
+  // Site — ADR 0010 amendment. `site` was minted for this and stood unclaimed:
+  // it holds site-wide chrome, and the header menu is the first (and so far
+  // only) part of the chrome that publishes rather than deploys. Placed after
+  // Content so the heading draws between Content and Reference data rather
+  // than at the top of the panel.
+  Navigation,
   // Reference data
   Testimonials,
   Categories,

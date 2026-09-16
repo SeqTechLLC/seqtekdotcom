@@ -62,6 +62,17 @@ describe('C1 — collection detail reader tags === buildRevalidatePlan tags', ()
   })
 })
 
+// ADR 0010 amendment. `navigation` is a collection but NOT a slugged/routed
+// one: its rows have no URL of their own, so `getNavigation` is a list reader
+// and the parity that matters is the list tag, not a per-slug one.
+describe('C1 — the navigation list reader matches the plan', () => {
+  it('getNavigation registers exactly the tag a nav publish emits', () => {
+    const planTags = buildRevalidatePlan('navigation', { _status: 'published' }).tags
+    expect(asSet(listCacheTags('navigation'))).toEqual(asSet(planTags))
+    expect(planTags).toEqual(['navigation_list'])
+  })
+})
+
 describe('C3 — global reader tags === buildRevalidatePlan tags', () => {
   it.each(GLOBALS)('%s global reader matches the plan', (globalSlug) => {
     const readerTags = globalCacheTags(globalSlug)

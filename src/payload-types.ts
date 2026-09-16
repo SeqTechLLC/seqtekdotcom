@@ -76,6 +76,7 @@ export interface Config {
     teamMembers: TeamMember;
     partners: Partner;
     media: Media;
+    navigation: Navigation;
     testimonials: Testimonial;
     categories: Category;
     locations: Location;
@@ -96,6 +97,7 @@ export interface Config {
     teamMembers: TeamMembersSelect<false> | TeamMembersSelect<true>;
     partners: PartnersSelect<false> | PartnersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    navigation: NavigationSelect<false> | NavigationSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     locations: LocationsSelect<false> | LocationsSelect<true>;
@@ -2624,6 +2626,190 @@ export interface Partner {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * The buttons across the top of every page, in order, and the dropdown under each one. Changes here go live on publish, without a deploy.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation".
+ */
+export interface Navigation {
+  id: number;
+  /**
+   * The words on the button itself, for example "What We Do". This one is not optional: a top-level button is named by the menu rather than by whatever it points at.
+   */
+  label: string;
+  /**
+   * Every top-level button is a link as well as a menu, so the page behind it is never stranded behind a dropdown.
+   */
+  link: {
+    /**
+     * Pick a page on this site wherever you can, so the link follows the page if its address changes.
+     */
+    type: 'internal' | 'external';
+    /**
+     * Start typing to find a published page. Only published pages are listed: the menu is not allowed to point at something a visitor cannot open.
+     */
+    doc?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'services';
+          value: number | Service;
+        } | null)
+      | ({
+          relationTo: 'workshops';
+          value: number | Workshop;
+        } | null)
+      | ({
+          relationTo: 'industries';
+          value: number | Industry;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null)
+      | ({
+          relationTo: 'caseStudies';
+          value: number | CaseStudy;
+        } | null)
+      | ({
+          relationTo: 'partners';
+          value: number | Partner;
+        } | null);
+    /**
+     * A full address including https://. Use this only for somewhere off this site — anything on seqtek.com should be picked as a page above.
+     */
+    url?: string | null;
+    /**
+     * Leave this blank to use the page's own title, so renaming the page renames the menu. Fill it in only when the menu needs shorter or different wording.
+     */
+    label?: string | null;
+  };
+  /**
+   * Leave this empty for a plain button with no dropdown. One row per column: one column gives a simple list, several draw side by side.
+   */
+  groups?:
+    | {
+        /**
+         * The heading over this column. With only one column it is not drawn at all — the button above is already the heading.
+         */
+        label: string;
+        /**
+         * A column heading may be a link to a page of its own, or just a heading. Choose "just a heading" when there is no page to send people to.
+         */
+        link: {
+          /**
+           * Pick a page on this site wherever you can, so the link follows the page if its address changes. A heading is a column title with nothing to click.
+           */
+          type: 'internal' | 'external' | 'heading';
+          /**
+           * Start typing to find a published page. Only published pages are listed: the menu is not allowed to point at something a visitor cannot open.
+           */
+          doc?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'services';
+                value: number | Service;
+              } | null)
+            | ({
+                relationTo: 'workshops';
+                value: number | Workshop;
+              } | null)
+            | ({
+                relationTo: 'industries';
+                value: number | Industry;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null)
+            | ({
+                relationTo: 'caseStudies';
+                value: number | CaseStudy;
+              } | null)
+            | ({
+                relationTo: 'partners';
+                value: number | Partner;
+              } | null);
+          /**
+           * A full address including https://. Use this only for somewhere off this site — anything on seqtek.com should be picked as a page above.
+           */
+          url?: string | null;
+          /**
+           * Leave this blank to use the page's own title, so renaming the page renames the menu. Fill it in only when the menu needs shorter or different wording.
+           */
+          label?: string | null;
+        };
+        items?:
+          | {
+              /**
+               * One entry in the column, in the order you arrange them.
+               */
+              link: {
+                /**
+                 * Pick a page on this site wherever you can, so the link follows the page if its address changes.
+                 */
+                type: 'internal' | 'external';
+                /**
+                 * Start typing to find a published page. Only published pages are listed: the menu is not allowed to point at something a visitor cannot open.
+                 */
+                doc?:
+                  | ({
+                      relationTo: 'pages';
+                      value: number | Page;
+                    } | null)
+                  | ({
+                      relationTo: 'services';
+                      value: number | Service;
+                    } | null)
+                  | ({
+                      relationTo: 'workshops';
+                      value: number | Workshop;
+                    } | null)
+                  | ({
+                      relationTo: 'industries';
+                      value: number | Industry;
+                    } | null)
+                  | ({
+                      relationTo: 'posts';
+                      value: number | Post;
+                    } | null)
+                  | ({
+                      relationTo: 'caseStudies';
+                      value: number | CaseStudy;
+                    } | null)
+                  | ({
+                      relationTo: 'partners';
+                      value: number | Partner;
+                    } | null);
+                /**
+                 * A full address including https://. Use this only for somewhere off this site — anything on seqtek.com should be picked as a page above.
+                 */
+                url?: string | null;
+                /**
+                 * Leave this blank to use the page's own title, so renaming the page renames the menu. Fill it in only when the menu needs shorter or different wording.
+                 */
+                label?: string | null;
+              };
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Lowest number first in the row of buttons, left to right. Buttons without a number come after the numbered ones, in alphabetical order.
+   */
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * Who can sign in to this panel, and what each of them is allowed to do.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2721,6 +2907,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'navigation';
+        value: number | Navigation;
       } | null)
     | ({
         relationTo: 'testimonials';
@@ -4116,6 +4306,52 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation_select".
+ */
+export interface NavigationSelect<T extends boolean = true> {
+  label?: T;
+  link?:
+    | T
+    | {
+        type?: T;
+        doc?: T;
+        url?: T;
+        label?: T;
+      };
+  groups?:
+    | T
+    | {
+        label?: T;
+        link?:
+          | T
+          | {
+              type?: T;
+              doc?: T;
+              url?: T;
+              label?: T;
+            };
+        items?:
+          | T
+          | {
+              link?:
+                | T
+                | {
+                    type?: T;
+                    doc?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

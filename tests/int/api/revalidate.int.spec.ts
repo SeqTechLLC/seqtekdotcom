@@ -15,8 +15,16 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
  * scope. `invalidateCloudFrontPaths` is mocked so we don't hit AWS.
  */
 
+// `revalidatePath` belongs here even though this file never asserts on it.
+// `vitest.config.mts` runs the int suite with `isolate: false`, so this factory
+// and the one in `tests/int/hooks/revalidateOnChange.int.spec.ts` compete to be
+// the `next/cache` the hook module binds — whichever registers first wins for
+// every file. Omitting it here leaves `revalidatePath` undefined in that shared
+// instance, and a `navigation` publish then throws into `runRevalidation`'s
+// R-03 catch and silently busts nothing.
 vi.mock('next/cache', () => ({
   revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
 }))
 
 vi.mock('@/lib/cloudfront/invalidate', () => ({

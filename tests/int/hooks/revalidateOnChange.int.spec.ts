@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 
 import {
@@ -24,8 +26,14 @@ import {
  * and simulate failure.
  */
 
+// `revalidatePath` is mocked alongside `revalidateTag` because the hook now
+// calls it for the site-wide (`navigation`) case. Leaving it out does not fail
+// loudly — `runRevalidation` wraps the call in the same non-request-scope
+// try/catch as the tag loop, so a missing mock is swallowed and the assertions
+// below would pass while testing nothing.
 vi.mock('next/cache', () => ({
   revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
 }))
 
 // The hook module imports cloudfront via a relative specifier
@@ -150,6 +158,72 @@ describe('buildRevalidatePlan — per-collection routing', () => {
   it('every plan includes /sitemap.xml so generators re-render', () => {
     const plan = buildRevalidatePlan('pages', { _status: 'published', slug: 'about' })
     expect(plan.paths).toContain('/sitemap.xml')
+  })
+})
+
+// ADR 0010 amendment. `navigation` is the only collection whose blast radius is
+// the whole site: `SiteHeader` renders in the root layout, so a menu publish
+// changes every page rather than a list of them.
+describe('buildRevalidatePlan — navigation is site-wide', () => {
+  it('marks a nav publish as everything, and tags the reader the nav registers', () => {
+    const plan = buildRevalidatePlan('navigation', { _status: 'published' })
+    expect(plan.everything).toBe(true)
+    // The tag `getNavigation`'s `unstable_cache` entry is registered under.
+    expect(plan.tags).toContain('navigation_list')
+    expect(plan.paths).toContain('/')
+  })
+
+  it('leaves every other collection alone', () => {
+    for (const collection of ['pages', 'posts', 'services', 'homepage']) {
+      expect(buildRevalidatePlan(collection, { _status: 'published', slug: 'x' }).everything).toBe(
+        false,
+      )
+    }
+  })
+
+  it('still respects the draft guard — an unpublished nav edit busts nothing', () => {
+    const plan = buildRevalidatePlan('navigation', { _status: 'draft' }, { _status: 'draft' })
+    expect(plan.everything).toBe(false)
+    expect(plan.tags).toEqual([])
+    expect(plan.paths).toEqual([])
+  })
+})
+
+/**
+ * SOURCE-LEVEL, which is this repo's own precedent rather than a shortcut —
+ * the same reason `payload-cache-tags.int.spec.ts` greps for
+ * `overrideAccess: false` instead of watching a call happen.
+ *
+ * A spy cannot do this job here. `vitest.config.mts` runs the int suite with
+ * `isolate: false` and a single worker, so the module registry is SHARED across
+ * files: whichever file's `vi.mock('next/cache')` factory registers first is
+ * the instance `revalidateOnChange.ts` binds, and a spy declared in this file
+ * never sees the call when another file (`tests/int/api/revalidate.int.spec.ts`
+ * mocks it too) got there first. That is not hypothetical — the spy version of
+ * this test passed when the file ran alone and failed in the full suite. Worse,
+ * `runRevalidation` swallows the resulting TypeError by design (R-03), so the
+ * miss is silent in both directions.
+ *
+ * What has to hold is the PAIRING: `plan.everything` guards a real
+ * `revalidatePath('/', 'layout')`, and the import behind it exists. Asserted
+ * where no module registry can take it away.
+ */
+describe('runRevalidation — the site-wide bust is wired, not just planned', () => {
+  const hookSource = readFileSync(
+    resolve(process.cwd(), 'src/payload/hooks/revalidateOnChange.ts'),
+    'utf8',
+  )
+
+  it('guards a revalidatePath("/", "layout") behind the everything flag', () => {
+    expect(hookSource).toMatch(/if\s*\(\s*plan\.everything\s*\)/)
+    expect(hookSource).toMatch(/revalidatePath\(\s*['"]\/['"]\s*,\s*['"]layout['"]\s*\)/)
+  })
+
+  it('imports revalidatePath, so the call is not a silently-undefined no-op', () => {
+    // The exact failure the shared registry produces: the name resolves to
+    // undefined, the call throws, R-03's catch eats it, and the menu quietly
+    // does not update for an hour.
+    expect(hookSource).toMatch(/import\s*\{[^}]*revalidatePath[^}]*\}\s*from\s*'next\/cache'/)
   })
 })
 

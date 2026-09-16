@@ -1,5 +1,5 @@
 import type { CollectionAfterChangeHook, GlobalAfterChangeHook } from 'payload'
-import { revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 import { invalidateCloudFrontPaths } from '../../lib/cloudfront/invalidate'
 
@@ -20,6 +20,12 @@ interface PreviousDocLike {
 export interface RevalidatePlan {
   tags: string[]
   paths: string[]
+  /**
+   * The change is site-wide rather than a set of paths. Only `navigation`
+   * sets this: it renders in the root layout, so "which pages changed" is
+   * every page. `runRevalidation` turns it into `revalidatePath('/', 'layout')`.
+   */
+  everything?: boolean
 }
 
 /**
@@ -40,7 +46,10 @@ export const buildRevalidatePlan = (
   if (hasStatus) {
     const isPublished = doc._status === 'published'
     const wasPublished = previousDoc?._status === 'published'
-    if (!isPublished && !wasPublished) return { tags: [], paths: [] }
+    // `everything: false` stated rather than left off: the flag is part of the
+    // plan's shape, so every branch returns a boolean and a caller reading
+    // `plan.everything` never has to tell `false` apart from `undefined`.
+    if (!isPublished && !wasPublished) return { tags: [], paths: [], everything: false }
   }
 
   const slug = typeof doc.slug === 'string' ? doc.slug : undefined
@@ -130,16 +139,23 @@ export const buildRevalidatePlan = (
     tags.push(`${collection}_${s}`)
   }
 
-  // spec 011 T016: `siteSettings` / `navigation` dropped from this list with
-  // the globals themselves — site chrome is code-owned now (ADR 0010), so a
-  // chrome change is a deploy, not a publish, and nothing to revalidate.
-  if (collection === 'homepage' || collection === 'testimonials') {
+  // spec 011 T016 dropped `siteSettings` and `navigation` from here along with
+  // the globals themselves. `navigation` came BACK as a COLLECTION in ADR
+  // 0010's 2026-09-16 amendment — the header menu publishes now — and it is the
+  // one entry that cannot be written as a path list: `SiteHeader` renders in
+  // the root layout, so the set of pages a nav publish changes is all of them.
+  // `everything` is how that is said; see `runRevalidation`. `siteSettings`
+  // stays code-owned and stays absent.
+  const everything = collection === 'navigation'
+
+  if (collection === 'homepage' || collection === 'testimonials' || everything) {
     detailPaths.push('/')
   }
 
   return {
     tags: Array.from(new Set(tags)),
     paths: Array.from(new Set([...detailPaths, '/sitemap.xml'])),
+    everything,
   }
 }
 
@@ -150,6 +166,20 @@ const runRevalidation = async (plan: RevalidatePlan): Promise<void> => {
       revalidateTag(tag, { expire: 0 })
     } catch {
       // revalidateTag throws when called outside a request scope in dev — swallow per R-03
+    }
+  }
+  // TWO CALLS, and neither is sufficient alone. The tag above invalidates the
+  // nav's own `unstable_cache` entry (the DATA); this invalidates every page's
+  // already-rendered HTML/RSC entry (the OUTPUT), which still holds the old
+  // menu baked in. Dropping the tag means the re-render reads the stale menu
+  // straight back out of the data cache and re-bakes it; dropping the path
+  // means fresh data nothing re-renders with. Verified against Next 16's
+  // revalidatePath docs: `('/', 'layout')` is the documented whole-site form.
+  if (plan.everything) {
+    try {
+      revalidatePath('/', 'layout')
+    } catch {
+      // Same non-request-scope guard as revalidateTag above (R-03).
     }
   }
   try {

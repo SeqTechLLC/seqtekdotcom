@@ -17,10 +17,15 @@ export const ADMIN_GROUPS = {
   /** No page of its own; feeds the collections above. */
   reference: 'Reference data',
   /**
-   * One-of-a-kind site-wide documents. Currently unclaimed: `Homepage` is the
-   * only global and it sits in `content`, because `groupNavItems` appends every
-   * global after every collection — a `Site` group holding just the homepage
-   * drew at the bottom of the panel, below `Admin`.
+   * One-of-a-kind site-wide documents. Claimed by `navigation` — the header
+   * menu — in ADR 0010's 2026-09-16 amendment. That is a COLLECTION, so it
+   * draws where `./index.ts` places it, between Content and Reference data.
+   *
+   * `Homepage` still sits in `content` rather than here, for the reason that
+   * has not changed: `groupNavItems` appends every global AFTER every
+   * collection, so a group whose only member is a global draws at the bottom
+   * of the panel, below `Admin`. A global joining this heading now would land
+   * there anyway — the collection above it is what opens the heading early.
    */
   site: 'Site',
   /** Who can get in. Not editor-facing. */

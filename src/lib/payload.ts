@@ -6,6 +6,8 @@ import { headers } from 'next/headers'
 import { getPayload, type Payload } from 'payload'
 
 import config from '@/payload.config'
+import { resolveNavigation, type NavigationDoc } from './nav/resolve'
+import type { NavItem } from './site-content'
 import type {
   Homepage,
   Page,
@@ -163,12 +165,48 @@ type SluggedCollection =
 // or pollutes the published cache. `withReadTimeout` wraps the OUTSIDE of the
 // cache stack (spec 007 — so headers() is legal in its catch).
 
-// spec 011 T015 (FR-003/FR-005): `getSiteSettings` and `getNavigation` were
-// deleted here. Site chrome is code-owned (ADR 0010) — the header, footer, nav
-// and the seven values the render path used to read from the `siteSettings`
-// global now come from `src/lib/site-content.ts`. `getNavigation` had zero
-// callers even before that; leaving either in place would be the same
-// looks-wired-but-isn't trap one layer down.
+// spec 011 T015 (FR-003/FR-005) deleted `getSiteSettings` and `getNavigation`
+// here when the chrome globals were withdrawn. `getSiteSettings` stays gone:
+// the seven values the render path reads come from `src/lib/site-content.ts`
+// and change by deploy.
+//
+// `getNavigation` is BACK, reading the `navigation` COLLECTION added by ADR
+// 0010's 2026-09-16 amendment. The trap the original note warned about — a
+// reader that looks wired and is not — is the reason it lands in the same
+// change as `SiteHeader` calling it, rather than ahead of it.
+
+/**
+ * The header menu. Published `navigation` rows, or the code-owned tree when
+ * there are none — `resolveNavigation` owns that fallback and explains why it
+ * is load-bearing rather than defensive.
+ *
+ * `depth: 1` is the floor, not a default: each item's target is a polymorphic
+ * relationship, and the slug the URL is derived from (plus the title the label
+ * falls back to) only exist once that relationship is populated. At depth 0
+ * every entry would resolve to a bare id and the whole menu would drop.
+ */
+export const getNavigation = withReadTimeout(
+  'getNavigation',
+  cache(async (): Promise<NavItem[]> =>
+    unstable_cache(
+      async () => {
+        const payload = await getPayloadInstance()
+        const { docs } = await payload.find({
+          collection: 'navigation',
+          draft: false,
+          overrideAccess: false,
+          depth: 1,
+          limit: 100,
+          pagination: false,
+          sort: 'order',
+        })
+        return resolveNavigation(docs as NavigationDoc[])
+      },
+      ['navigation', 'list'],
+      { tags: listCacheTags('navigation'), revalidate: ONE_HOUR },
+    )(),
+  ),
+)
 
 export const getHomepage = withReadTimeout(
   'getHomepage',
