@@ -45,11 +45,19 @@ this one reader the "nearest error boundary" is not `error.tsx` at all; it is
 `global-error.tsx`, which replaces the whole document and loads none of the app
 CSS. Propagating here would turn a one-page degradation into an unbranded site.
 
-**What is unchanged:** the timeout mechanics and the C-2 warn log. The catch sits
-**outside** `withReadTimeout`, so the budget still fires at
-`READ_TIMEOUT_MS` and the `payload_read_timeout` record is still emitted before
-the rejection is swallowed. Only the propagation changes, and only for this
-reader.
+**What is unchanged:** the timeout mechanics. The catch sits **outside**
+`withReadTimeout`, so the budget still fires at `READ_TIMEOUT_MS` and the C-2
+`payload_read_timeout` record is emitted before the rejection is swallowed.
+Only the propagation changes, and only for this reader.
+
+**Telemetry, stated precisely.** `withReadTimeout` gates its warn on
+`instanceof PayloadReadTimeoutError` and rethrows anything else **unlogged**, so
+the C-2 record covers the timeout half only. `getNavigation` therefore emits its
+own `nav_fallback` warn in the catch, covering every cause — a DB outage, an
+access error, a malformed row. A timeout produces **both** records: the timeout,
+and the fallback it caused. Without that second record the most consequential
+case is the silent one, since a seeded menu would be replaced by the code-owned
+tree indefinitely with nothing to say so.
 
 **The placement is load-bearing and has already been got wrong once.** A catch
 placed _inside_ the wrapped function sees only the inner read's rejection; the

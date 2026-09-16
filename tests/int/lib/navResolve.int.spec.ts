@@ -158,12 +158,11 @@ describe('resolveNavigation — structure', () => {
     expect(item.panel?.groups[0].url).toBe('/services/ai-and-automation')
   })
 
-  // The gap round 3 named: both existing `type: 'external'` fixtures call
-  // `resolveLink` directly, and the label only decides survival inside
-  // `resolveNavigation`. An external link has no target document, so its own
-  // wording is the ONLY label source — which is why `navLink.ts` now requires
-  // it for that type. These pin the resolver behaviour that makes the
-  // validator necessary.
+  // These go through `resolveNavigation`, not `resolveLink`, because the label
+  // is what decides survival and only the resolver consults it. An external
+  // link has no target document, so its own wording is the ONLY label source —
+  // which is why `navLink.ts` requires it for that type. These pin the
+  // behaviour that makes the validator necessary.
   it('renders an external leaf that carries its own wording', () => {
     const [item] = resolveNavigation([
       {
@@ -224,9 +223,9 @@ describe('resolveNavigation — structure', () => {
   })
 
   // NO LINKS, NO COLUMN — including a column whose heading has a page of its
-  // own. An earlier cut kept the linked one on the theory that it earned its
-  // place; `PrimaryNav` suppresses a single column's heading, so that drew a
-  // caret opening an empty box.
+  // own. Keeping the linked one looks defensible until you read the renderer:
+  // `PrimaryNav` suppresses a single column's heading, so it draws a caret
+  // opening an empty box.
   it('drops a column with no links, linked heading or not', () => {
     const [item] = resolveNavigation([
       {

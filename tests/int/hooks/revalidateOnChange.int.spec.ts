@@ -211,7 +211,7 @@ describe('buildRevalidatePlan — navigation is site-wide', () => {
 /**
  * A menu item derives its URL from a relationship, and `getNavigation` caches
  * the DERIVED result under `navigation_list`. So a linked document can break the
- * header in two ways, and the first cut of this guard only covered one.
+ * header in two ways, and the guard has to cover both.
  */
 describe('buildRevalidatePlan — a linked document busts the cached menu', () => {
   const NAV_LINKABLE = [
@@ -234,9 +234,9 @@ describe('buildRevalidatePlan — a linked document busts the cached menu', () =
     expect(plan.everything).toBe(true)
   })
 
-  // The door the rename guard missed: the slug is unchanged, so `slugRenamed`
-  // is false, but the route now 404s (readers are published-only, C2) while the
-  // cached menu keeps serving the URL for up to an hour.
+  // The second door, and the easier one to miss: the slug is unchanged, so
+  // `slugRenamed` is false, but the route now 404s (readers are published-only,
+  // C2) while the cached menu keeps serving the URL for up to an hour.
   it.each(NAV_LINKABLE)('%s: an UNPUBLISH busts the menu site-wide', (collection) => {
     const plan = buildRevalidatePlan(
       collection,

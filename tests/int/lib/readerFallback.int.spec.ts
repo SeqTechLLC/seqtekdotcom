@@ -20,9 +20,8 @@ import { navigation } from '../../../src/lib/site-content'
  * `error.tsx` and takes EVERY public route to `global-error.tsx`. The fallback
  * therefore has to cover both ways the read can fail.
  *
- * THE BUG THIS PINS, stated plainly because it shipped once in this PR and was
- * caught in review rather than by a test: the first fix put the `try/catch`
- * INSIDE the function `withReadTimeout` wraps. An inner catch sees only what the
+ * THE BUG THIS PINS: putting the `try/catch` INSIDE the function
+ * `withReadTimeout` wraps. An inner catch sees only what the
  * inner read rejects with. The 5s budget rejection is raised by `Promise.race`
  * in the wrapper itself and rethrown from the wrapper's own catch, so it sails
  * straight past an inner handler. Result: DB-error handled, DB-STALL still
@@ -134,6 +133,9 @@ describe('src/lib/payload.ts keeps the catch OUTSIDE the timeout wrapper', () =>
 
   it('falls back to the code-owned menu in its catch', () => {
     const body = src.slice(src.indexOf('export const getNavigation'))
-    expect(body).toMatch(/catch\s*\{[\s\S]*?return navigation\.mainNav/)
+    // The binding is optional in the pattern — the catch does bind the error,
+    // to emit the `nav_fallback` warn — so this tracks the intent (the catch
+    // returns the code-owned menu) rather than one spelling of `catch`.
+    expect(body).toMatch(/catch\s*(?:\([^)]*\)\s*)?\{[\s\S]*?return navigation\.mainNav/)
   })
 })

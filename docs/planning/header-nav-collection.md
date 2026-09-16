@@ -22,8 +22,11 @@ One collection, ordered items, each with a discriminated `type`:
 | `external` | text, validated by `safeUrlValidate` (`src/payload/fields/url.ts`)                                            | as entered                                           |
 | `heading`  | label only                                                                                                    | none — the "How We Work" panel needs headless groups |
 
-Label defaults from the target document's title, with an override field. Relabelling is
-most of the churn, and an override means it never touches the target.
+Label defaults from the target document's title, with an override field **on leaves only**.
+Relabelling is most of the churn, and an override means it never touches the target. A
+top-level button and a column heading each carry their own required label on the
+collection, so offering the override there too would be a second wording box that nothing
+reads.
 
 ## Steps, in order
 
@@ -47,7 +50,7 @@ Steps 1-5 shipped together; step 6 is content and is still open.
    shipped nav — stay green on a fresh CI database. The same fallback is what stops a
    deploy-before-seed from serving a headerless site. The collection is an **override** of
    the code-owned tree, not a replacement for it.
-5. **Migration. Done** — `20260916_173016_nav_collection`; the container runs
+5. **Migration. Done** — `20260916_211445_nav_collection`; the container runs
    `payload migrate` on start.
 6. **Nav becomes content. Open.** Needs a `navigation.json` in the private content repo and
    a slot in `LOAD-ORDER.md`, seeded per lane — the menu will differ between preview and

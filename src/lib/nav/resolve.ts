@@ -134,8 +134,10 @@ const resolveGroup = (group: NonNullable<NavigationDoc['groups']>[number]): NavG
   // The cost, stated: a heading's own page stops being reachable from the menu
   // until something is added under it. That is a half-finished column, and the
   // remedy is to finish it — or to point a leaf at the same page.
-  const headingLink = resolveGroupHeading(group)
   if (items.length === 0) return null
+
+  // Resolved after the guard: a dropped column has no use for its heading.
+  const headingLink = resolveGroupHeading(group)
 
   return headingLink ? { label, url: headingLink.url, items } : { label, items }
 }

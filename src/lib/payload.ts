@@ -206,8 +206,8 @@ type SluggedCollection =
  * wrapper itself (`withReadTimeout`, above) and rethrown from its `catch`, so
  * an inner catch never observes it. Placed inside, the DB-error half is
  * handled and the DB-STALL half — the half ADR 0007 exists for — still
- * escapes. That exact mistake shipped once in this PR and was caught in
- * review; `readerFallback.int.spec.ts` now pins both halves.
+ * escapes, while looking handled. `readerFallback.int.spec.ts` pins both
+ * halves, including a test that the inside placement still throws.
  *
  * The telemetry is unchanged: `withReadTimeout` emits the
  * `payload_read_timeout` warn log (contract C-2) *before* it rethrows, and the
@@ -242,7 +242,25 @@ const readNavigation = withReadTimeout(
 export const getNavigation = async (): Promise<NavItem[]> => {
   try {
     return await readNavigation()
-  } catch {
+  } catch (err) {
+    // THE FALLBACK IS SILENT WITHOUT THIS. `withReadTimeout` gates its
+    // `payload_read_timeout` record on `instanceof PayloadReadTimeoutError`
+    // and rethrows everything else unlogged — so a DB outage, an access error
+    // or a malformed row would swap the published menu for the code-owned one
+    // with nothing at all emitted. Once the collection is seeded that means
+    // visitors served a stale menu indefinitely and no signal saying so.
+    //
+    // A timeout emits BOTH records: the C-2 timeout log from the wrapper, and
+    // this one for the fallback it caused. That pairing is the point — one
+    // says the read failed, the other says what the site did about it.
+    console.warn(
+      JSON.stringify({
+        type: 'nav_fallback',
+        ts: new Date().toISOString(),
+        reader: 'getNavigation',
+        reason: err instanceof Error ? err.name : 'unknown',
+      }),
+    )
     return navigation.mainNav
   }
 }

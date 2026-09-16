@@ -159,8 +159,8 @@ export const buildRevalidatePlan = (
   // dynamic rename handling), so the design's promise that "a slug rename
   // follows it" would hold only eventually.
   //
-  // TWO DOORS TO THE SAME FAILURE, and the first cut of this guard only shut
-  // one. A rename changes the derived URL; an UNPUBLISH leaves the URL intact
+  // TWO DOORS TO THE SAME FAILURE, and both have to be shut.
+  // A rename changes the derived URL; an UNPUBLISH leaves the URL intact
   // but makes it 404, because the readers are published-only (C2). Either way
   // the cached menu keeps serving a dead link site-wide until `ONE_HOUR`
   // expires, which is exactly what `src/lib/nav/resolve.ts` promises does not
