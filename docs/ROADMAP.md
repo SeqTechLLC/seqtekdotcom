@@ -52,6 +52,9 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
   `site-content.ts` now carries both axes, all three groups and all nine leaves, every one resolving against a
   published `services` row. The mechanism is done. **The open item is the copy those 13 pages don't have —
   see SVC-2 below.**
+  - **Decided 2026-09-16 — see `docs/planning/header-nav-collection.md`** and the amendment to ADR 0010: the
+    header nav moves to a validated `navigation` collection, footer and legal navs stay code-owned. The bullet
+    below is the superseded framing, kept for its cost analysis.
   - **Open decision: should the axis panels derive from the `services` collection?** Today a new service is a
     content edit plus a code change to `site-content.ts`, which is the friction ADR 0010 accepted when the nav
     was six decade-scale items. It is 13 entries now. The hierarchy already exists as typed relations
