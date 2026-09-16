@@ -27,26 +27,31 @@ most of the churn, and an override means it never touches the target.
 
 ## Steps, in order
 
-1. **Whole-site revalidation first.** _This is the risk, and it does not exist yet._
-   `buildRevalidatePlan` (`src/payload/hooks/revalidateOnChange.ts`) is a per-collection
-   switch emitting specific paths; nothing busts the whole site. The header renders on
-   every page, so a nav publish must invalidate everything, plus the CloudFront paths.
-   Ship this in the same change or editing the menu means waiting out `revalidate: 3600`.
-2. **The collection.** Needs `admin.group` + `admin.description` or the C3 contract test
-   in `adminMetadata.int.spec.ts` fails. `ADMIN_GROUPS.site` is currently unclaimed and is
-   where this belongs. **No `relationTo: [...]` exists anywhere in this codebase** — the
-   polymorphic pattern is new ground; add a test proving URL derivation per target
-   collection.
-3. **`SiteHeader` becomes async.** It is `export function SiteHeader()` today
-   (`src/components/layout/SiteHeader.tsx:9`) and renders on every page. `SiteFooter` is
-   untouched.
-4. **Fix the e2e contract.** `tests/e2e/layout.e2e.spec.ts:28-41` asserts all seven
-   top-level items are visible **links**. If an axis item becomes a panel-opening button
-   that assertion changes shape, and `a11y.e2e.spec.ts` must stay at zero violations.
-5. **Migration** via `migrate:create`; the container runs `payload migrate` on start.
-6. **Nav becomes content.** Needs a `navigation.json` in the private content repo and a
-   slot in `LOAD-ORDER.md`, seeded per lane — the menu will differ between preview and
-   ww3 until both are seeded.
+Steps 1-5 shipped together; step 6 is content and is still open.
+
+1. **Whole-site revalidation. Done —** and it is **two calls, not one**.
+   `revalidatePath('/', 'layout')` invalidates every page's rendered output, but the nav's
+   own `unstable_cache` entry only dies on its explicit `navigation_list` tag. Dropping the
+   tag means the re-render reads the stale menu back out of the data cache; dropping the
+   path means fresh data nothing re-renders with. `RevalidatePlan` carries an `everything`
+   flag for the one collection whose blast radius is the whole site.
+2. **The collection. Done.** `ADMIN_GROUPS.site`, previously unclaimed. One document per
+   top-level button, each holding its own `groups` → `items` panel, which is the shape
+   `PrimaryNav`/`MobileNav` already consume. Not derived from the `services` tree: the menu
+   cross-lists, omits and reorders independently of the catalogue, and Industries and
+   Insights are in the menu without being services at all.
+3. **`SiteHeader` becomes async. Done.** `SiteFooter` untouched.
+4. **The e2e contract did not need changing**, and that is a design outcome rather than
+   luck. `getNavigation` falls back to `site-content.ts` when the collection is empty, so
+   `layout.e2e.spec.ts` and `navPanels.int.spec.ts` — both of which assert against the real
+   shipped nav — stay green on a fresh CI database. The same fallback is what stops a
+   deploy-before-seed from serving a headerless site. The collection is an **override** of
+   the code-owned tree, not a replacement for it.
+5. **Migration. Done** — `20260916_173016_nav_collection`; the container runs
+   `payload migrate` on start.
+6. **Nav becomes content. Open.** Needs a `navigation.json` in the private content repo and
+   a slot in `LOAD-ORDER.md`, seeded per lane — the menu will differ between preview and
+   ww3 until both are seeded. Until then every lane serves the code-owned tree, unchanged.
 
 ## Open, and not a mechanism problem
 
