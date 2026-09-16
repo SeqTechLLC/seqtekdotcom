@@ -284,6 +284,9 @@ built-in `slugField`. `urlPathField.int.spec.ts` fails a collection whose `slug`
 - **The slug box starts locked** (Unlock, Generate) and fills on save, not while typing. A value typed on a new
   record is slugified before validation, so it is normalised rather than refused.
 - **Payload's `SlugField` renders no description;** `src/components/admin/UrlPathField.tsx` wraps it to add one.
+- **Payload marks `slugField` `@experimental`,** as it does the `SlugField` component: it may change or be
+  removed in a future release. This shipped against the pinned `payload@3.88.0`, and `urlPathField` is the one
+  place to repoint if a bump breaks it.
 
 ### List-view conventions (spec 011 US3)
 

@@ -315,6 +315,8 @@ field shape above:
   specified.
 - **Row 5 is a `beforeChange` field hook,** `rejectSlugCollision`, not `validate`: Payload skips validation on Save
   Draft, and a colliding draft save otherwise reached only the unique index, whose error names the column.
+- **`slugField` is marked `@experimental`** by Payload and may change or be removed; this shipped against the
+  pinned `payload@3.88.0`.
 
 ---
 

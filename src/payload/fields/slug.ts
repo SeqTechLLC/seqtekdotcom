@@ -168,8 +168,11 @@ async function suggestAlternative(
   const neighbours = await req.payload.find({
     collection,
     where: { slug: { like: base } } as Where,
-    limit: MAX_SUGGESTION * 2,
     depth: 0,
+    // Every row sharing the stem, so no taken slug is missed. A `limit` here
+    // would read as a bound and be none: Payload computes
+    // `usePagination = pagination && limit !== 0`, so `pagination: false`
+    // already means unbounded.
     pagination: false,
     overrideAccess: true,
     req,
