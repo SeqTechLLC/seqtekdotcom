@@ -11,7 +11,7 @@
 | 5   | [Hand-off when you don't own the account](#5-hand-off-when-you-dont-own-the-target-account) | Someone else holds AWS admin          |
 
 Design rationale lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) (§ Promotion model,
-§ Environments & isolation). `specs/002-aws-cdk-infrastructure/quickstart.md` was
+§ Environments & isolation). [`INFRASTRUCTURE_QUICKSTART.md`](./INFRASTRUCTURE_QUICKSTART.md) was
 the original first-deploy walkthrough; it is **superseded by this file for the
 first deploy** (it predates the promotion model and describes merges to `main`
 deploying prod), but remains the reference for secret rotation, tear-down, alarm

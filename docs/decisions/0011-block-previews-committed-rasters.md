@@ -94,7 +94,7 @@ The disambiguation intent moved into `labels.singular`, the only editor-visible 
 editor-searchable text on a card, enforced by a rule that no label may duplicate or be
 a substring of another label in the same picker. That is what makes `Hero (standard
 page)`, `Embed (iframe)` and `Testimonial (single)` their current names. Full evidence
-is in `specs/011-payload-admin-ux/contracts/admin-metadata.md` C1.
+is in `docs/contracts/admin-metadata.md` C1.
 
 ## When to revisit
 

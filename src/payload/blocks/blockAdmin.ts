@@ -6,7 +6,7 @@ import { BLOCK_CATEGORY_LABELS, type BlockCategory } from './categories'
 
 /**
  * Spec 011 US2 — the admin presentation every layout block must declare
- * (`specs/011-payload-admin-ux/contracts/admin-metadata.md` C1).
+ * (`docs/contracts/admin-metadata.md` C1).
  *
  * Payload's block picker renders exactly three things per card: the
  * `admin.group` heading, the `admin.images.thumbnail` image, and

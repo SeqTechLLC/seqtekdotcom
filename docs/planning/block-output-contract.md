@@ -157,7 +157,8 @@ After A merges, **B, C and D run in parallel**. They own disjoint files.
 **Lane E runs alone, last.** It is the only schema-bearing lane, and
 `payload migrate:create` generates from the whole schema diff in one pass — two
 lanes generating migrations concurrently produce garbage. (This is why spec
-011's "five migrations" plan was retracted; see `specs/011-payload-admin-ux/tasks.md`.)
+011's "five migrations" plan was retracted in favour of one; see the P5-26 row in
+`docs/PROJECT_HISTORY.md`.)
 
 ### Lane A — the gate
 

@@ -54,8 +54,7 @@ export const Pages: CollectionConfig = {
       // spec 011 T018 (FR-002): the legacy `hero` group was deleted. It sat at
       // the top of every Page form, five editable inputs, consumed by nothing —
       // ADR 0009 moved page openers into the block layout below and the group
-      // was never removed. Verified empty across all 57 rows before the drop
-      // (specs/011-payload-admin-ux/inventory-before.md §3).
+      // was never removed. Verified empty across all 57 rows before the drop.
       name: 'layout',
       type: 'blocks',
       label: 'Page content',

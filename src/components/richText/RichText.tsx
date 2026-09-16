@@ -56,7 +56,7 @@ const internalDocToHref: Parameters<typeof LinkJSXConverter>[0]['internalDocToHr
 
 /**
  * Lexical → JSX converter with block / inline-block dispatch (contract:
- * specs/003-phase-2-content-models/contracts/inline-block-converter.md).
+ * docs/contracts/inline-block-converter.md).
  *
  * Empty input → null. Plain text → semantic JSX inside `<Prose>`.
  * The same registry serves both `blocks` (paragraph-level) and `inlineBlocks`

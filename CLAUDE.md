@@ -28,6 +28,7 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 - `docs/CONTENT_MIGRATION.md` — historical: how the Wix audit was mapped into Payload. The script it specified was deleted in spec 011; kept as provenance for the 301 map and slug rewrites
 - `docs/INTEGRATIONS.md` — HubSpot, GTM, ScoreApp, CSP, SES
 - `docs/ERROR_PAGES.md` — 404, 500, maintenance, slow-request handling
+- `docs/contracts/` — the contracts code and tests cite as the authority (admin metadata, live-preview URLs, render-blocks, consent bridge, media URLs, dataLayer events). Change one only with the code that implements it
 - `docs/decisions/` — Architecture Decision Records (ADRs): non-obvious technical choices, options considered, trade-offs accepted, when to revisit. Read `docs/decisions/README.md` first.
 
 ## Current phase
@@ -123,14 +124,6 @@ gitignored real content. A dev server on `:3100` is disposable — it is usually
 started and forgot. Restart it, kill it, or switch its branch as needed; `next dev` refuses a second
 instance from the same directory, so stop the first rather than cloning the repo into a worktree. (The
 shared Postgres on `:5432` **is** load-bearing for other projects — that one stays.)
-
-<!-- SPECKIT START -->
-
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan:
-`specs/011-payload-admin-ux/plan.md`.
-
-<!-- SPECKIT END -->
 
 <!-- BEGIN:nextjs-agent-rules -->
 

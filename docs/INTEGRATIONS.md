@@ -400,7 +400,7 @@ stable, documented events rather than DOM scraping. Every push routes through a
 single SSR-safe emitter — `pushDataLayer()` in `src/lib/analytics/dataLayer.ts`
 (no-op when `window` is absent; harmless when `NEXT_PUBLIC_GTM_ID` is unset).
 No raw `window.dataLayer.push` at call sites. Payloads carry **no PII** —
-interaction signals only (§1.2). Event contracts: `specs/008-gtm-pixel-activation/contracts/datalayer-events.md`.
+interaction signals only (§1.2). Event contracts: `docs/contracts/datalayer-events.md`.
 
 | Event                     | Payload                                    | Emitted when                                      | Status                                                      |
 | ------------------------- | ------------------------------------------ | ------------------------------------------------- | ----------------------------------------------------------- |
