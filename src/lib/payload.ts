@@ -7,7 +7,7 @@ import { getPayload, type Payload } from 'payload'
 
 import config from '@/payload.config'
 import { resolveNavigation, type NavigationDoc } from './nav/resolve'
-import type { NavItem } from './site-content'
+import { navigation, type NavItem } from './site-content'
 import type {
   Homepage,
   Page,
@@ -184,28 +184,52 @@ type SluggedCollection =
  * relationship, and the slug the URL is derived from (plus the title the label
  * falls back to) only exist once that relationship is populated. At depth 0
  * every entry would resolve to a bare id and the whole menu would drop.
+ *
+ * THIS READER NEVER THROWS, and it is the only one that must not. Every other
+ * cached reader is called from a page, so a rejection lands on the branded
+ * `error.tsx` — the propagation contract in
+ * `docs/contracts/read-timeout-telemetry.md` ("No new error UI"). This one is
+ * called from `SiteHeader`, which renders in `(frontend)/layout.tsx`, and Next
+ * is explicit that `error.js` "does not wrap the `layout.js` … above it in the
+ * same segment" (`next/dist/docs/…/file-conventions/error.md`). A throw here
+ * would therefore skip `error.tsx` entirely and take EVERY route to
+ * `global-error.tsx`, which replaces the document and loads none of the app
+ * CSS. A 5s DB stall degrading one page is the accepted cost of ADR 0007;
+ * degrading the whole site to an unbranded page is not.
+ *
+ * So a failed read falls back to the code-owned menu, exactly as an empty
+ * collection does. `withReadTimeout` still wraps the call, so the
+ * `payload_read_timeout` warn log (contract C-2) is still emitted before the
+ * catch swallows the rejection — the telemetry is unchanged, only the blast
+ * radius is.
  */
 export const getNavigation = withReadTimeout(
   'getNavigation',
-  cache(async (): Promise<NavItem[]> =>
-    unstable_cache(
-      async () => {
-        const payload = await getPayloadInstance()
-        const { docs } = await payload.find({
-          collection: 'navigation',
-          draft: false,
-          overrideAccess: false,
-          depth: 1,
-          limit: 100,
-          pagination: false,
-          sort: 'order',
-        })
-        return resolveNavigation(docs as NavigationDoc[])
-      },
-      ['navigation', 'list'],
-      { tags: listCacheTags('navigation'), revalidate: ONE_HOUR },
-    )(),
-  ),
+  cache(async (): Promise<NavItem[]> => {
+    try {
+      return await unstable_cache(
+        async () => {
+          const payload = await getPayloadInstance()
+          const { docs } = await payload.find({
+            collection: 'navigation',
+            draft: false,
+            overrideAccess: false,
+            depth: 1,
+            // No `limit`: `pagination: false` already means unbounded, so a
+            // number here reads as a cap that isn't one (same note as
+            // `suggestAlternative` in fields/slug.ts).
+            pagination: false,
+            sort: 'order',
+          })
+          return resolveNavigation(docs as NavigationDoc[])
+        },
+        ['navigation', 'list'],
+        { tags: listCacheTags('navigation'), revalidate: ONE_HOUR },
+      )()
+    } catch {
+      return navigation.mainNav
+    }
+  }),
 )
 
 export const getHomepage = withReadTimeout(

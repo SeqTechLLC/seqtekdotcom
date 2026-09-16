@@ -2,6 +2,7 @@ import type { CollectionAfterChangeHook, GlobalAfterChangeHook } from 'payload'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
 import { invalidateCloudFrontPaths } from '../../lib/cloudfront/invalidate'
+import { NAV_LINKABLE_COLLECTIONS } from '../../lib/routes'
 
 interface DocLike {
   _status?: 'draft' | 'published'
@@ -146,7 +147,24 @@ export const buildRevalidatePlan = (
   // the root layout, so the set of pages a nav publish changes is all of them.
   // `everything` is how that is said; see `runRevalidation`. `siteSettings`
   // stays code-owned and stays absent.
-  const everything = collection === 'navigation'
+  // A menu item stores a RELATIONSHIP and derives its URL at render
+  // (`src/lib/nav/resolve.ts`), and `getNavigation` caches the derived result
+  // under `navigation_list`. So renaming a linked document's slug changes the
+  // header on every page — but nothing in the plan above says so: a `pages`
+  // publish emits `pages_list` / `pages_<slug>`, never `navigation_list`, and
+  // the menu would serve the old URL until `revalidate: ONE_HOUR` expired. The
+  // old path 404s meanwhile (`src/lib/redirects.ts` is a static Wix map with no
+  // dynamic rename handling), so the design's promise that "a slug rename
+  // follows it" would hold only eventually.
+  //
+  // Only on an actual RENAME: a first publish has no `oldSlug`, and an ordinary
+  // re-publish has both equal, so the common case pays nothing.
+  const slugRenamed = Boolean(slug && oldSlug && slug !== oldSlug)
+  const navLinkable = (NAV_LINKABLE_COLLECTIONS as readonly string[]).includes(collection)
+  const navRenameAffectsMenu = slugRenamed && navLinkable
+  if (navRenameAffectsMenu) tags.push('navigation_list')
+
+  const everything = collection === 'navigation' || navRenameAffectsMenu
 
   if (collection === 'homepage' || collection === 'testimonials' || everything) {
     detailPaths.push('/')

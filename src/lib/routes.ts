@@ -1,11 +1,21 @@
 /**
- * The one place that knows how a collection's slug becomes a URL.
+ * How a collection's slug becomes a URL — for the NAV, which is the only
+ * consumer of `pathFor` today.
  *
- * This knowledge already existed twice — the `switch` in `buildRevalidatePlan`
- * and the per-collection loops in `sitemap.ts` — and a data-driven nav would
- * have made it three copies. Three copies of a route map is how a menu item
- * ends up pointing at `/insights/<slug>` while the revalidation hook busts
- * `/posts/<slug>` and nobody notices until a publish goes stale.
+ * **It is not yet the single source it should be, and pretending otherwise
+ * would be the more expensive mistake.** The same knowledge still lives in two
+ * other places, each with its own literals: the `switch` in
+ * `buildRevalidatePlan` (`src/payload/hooks/revalidateOnChange.ts`) and the
+ * per-collection loops in `src/app/(frontend)/sitemap.ts`. Neither imports
+ * `pathFor`. The values agree today, and three copies of a route map is how a
+ * menu item ends up pointing at `/insights/<slug>` while the revalidation hook
+ * busts `/posts/<slug>` and nobody notices until a publish goes stale.
+ *
+ * So: editing `ROUTE_PREFIX` moves the MENU's URLs and nothing else. Migrating
+ * the other two is a mechanical follow-up, deliberately not bundled into the
+ * PR that introduced this file — the keystone parity test
+ * (`tests/int/lib/payload-cache-tags.int.spec.ts`) pins the hook's output, so
+ * that change wants its own diff to be read against.
  *
  * `pages` maps to the empty prefix: a Page's canonical URL is `/<slug>` on the
  * `(frontend)/[slug]` catch-all, not under a segment of its own.

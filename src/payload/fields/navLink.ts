@@ -1,5 +1,6 @@
 import type { GroupField } from 'payload'
 
+import { requiredWhen } from '../blocks/conditional'
 import { NAV_LINKABLE_COLLECTIONS } from '../../lib/routes'
 import { safeUrlValidate } from './url'
 
@@ -69,6 +70,20 @@ export const navLinkField = ({
           : 'Pick a page on this site wherever you can, so the link follows the page if its address changes.',
       },
     },
+    // `requiredWhen`, not a bare `admin.condition`. A condition only HIDES a
+    // control; it does not enforce it. Without the validate half an editor
+    // could pick "a page on this site", never choose one, publish with no
+    // error, and the item would then silently vanish from the menu at render
+    // (`resolveLink` returns null and `resolveNavigation` drops it) — with no
+    // feedback anywhere. That is precisely the guarantee ADR 0010's amendment
+    // rests on: a bad link cannot publish. `safeUrlValidate` does not close it
+    // either, since it passes empty through by design (presence is `required`'s
+    // job). Contract C4 clause (3) names this helper for exactly this case.
+    //
+    // The extra `admin` props go in `requiredWhen`'s SECOND ARGUMENT, never as
+    // a sibling `admin:` key — a spread followed by `admin: {...}` replaces the
+    // `condition` the helper returns, which is how `logo-bar.logos` once shipped
+    // validated-but-always-visible.
     {
       name: 'doc',
       type: 'relationship',
@@ -80,23 +95,36 @@ export const navLinkField = ({
       // cost is ordering — publish the page, then point the menu at it — which
       // is the same order the 301 map and the sitemap already assume.
       filterOptions: () => ({ _status: { equals: 'published' } }),
-      admin: {
-        condition: (_data, siblingData) => siblingData?.type === 'internal',
+      ...requiredWhen<{ type?: string }>((d) => d?.type === 'internal', {
         description:
           'Start typing to find a published page. Only published pages are listed: the menu is not allowed to point at something a visitor cannot open.',
-      },
+      }),
     },
-    {
-      name: 'url',
-      type: 'text',
-      label: 'Web address',
-      validate: safeUrlValidate,
-      admin: {
-        condition: (_data, siblingData) => siblingData?.type === 'external',
-        description:
-          'A full address including https://. Use this only for somewhere off this site — anything on seqtek.com should be picked as a page above.',
-      },
-    },
+    // TWO validators, composed — the `Hero.videoUrl` idiom. A bare spread of
+    // `requiredWhen` would REPLACE `safeUrlValidate` (the helper returns its own
+    // `validate`), leaving the field required but no longer protocol-checked, so
+    // a `javascript:` URI would publish. Presence is checked first, then safety.
+    (() => {
+      const { admin, validate, custom } = requiredWhen<{ type?: string }>(
+        (d) => d?.type === 'external',
+        {
+          description:
+            'A full address including https://. Use this only for somewhere off this site — anything on seqtek.com should be picked as a page above.',
+        },
+      )
+      return {
+        name: 'url' as const,
+        type: 'text' as const,
+        label: 'Web address' as const,
+        admin,
+        custom,
+        validate: (value: unknown, args: { data?: unknown; siblingData?: unknown }) => {
+          const requiredCheck = validate(value, args)
+          if (requiredCheck !== true) return requiredCheck
+          return safeUrlValidate(value)
+        },
+      }
+    })(),
     {
       name: 'label',
       type: 'text',
