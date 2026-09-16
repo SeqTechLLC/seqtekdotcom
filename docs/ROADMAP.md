@@ -139,9 +139,6 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     exactly what `/services/what-we-do` is today. That is the bar. Flag it early if a grouping produces a
     heading nothing can be written about.
 
-  - **`services.json` lists each of the three group slugs twice** — once with a real 3-block layout, once with
-    an empty one. Whichever seeds last wins, so a re-seed can silently blank a group page. Fix in the content
-    repo before the next run.
   - **Refine the 21 Wix service 301s once the leaves are seeded.** They all land on the axis today, which is
     the honest interim target. `/technology-and-data` should reach the data page rather than the axis.
     Cheaper before the DNS cutover: nothing is live, so these are retargeted at source rather than layered.
