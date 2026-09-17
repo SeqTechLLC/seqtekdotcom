@@ -79,9 +79,10 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
 - **SVC-2 residual — seed the copy.** The code shipped (P5-31 / #131, P5-41 / #136) and the copy is written
   (P5-46): all 16 `services` docs, Cadence included, carry real copy in the content repo's `services.json`,
   and the eight case studies are tagged with the services they prove. A deploy never runs the seeder, so:
-  - **Preview:** seed `services.json`, `case-studies.json` and `navigation.json` **before** P5-46's code
-    change deploys, or its links land on placeholder copy. `pages.json` unpublishes the `localshoring` Page,
-    so it runs **after** the deploy. `ww3` follows the next release in the same order.
+  - **Preview:** seed `services.json`, `case-studies.json`, `services.json` again (the content repo's
+    `LOAD-ORDER.md` has why) and `navigation.json` **before** P5-46's code change deploys, or its links land on
+    placeholder copy. `pages.json` unpublishes the `localshoring` Page, so it runs **after** the deploy. `ww3`
+    follows the next release in the same order.
   - **Re-pick every block the SVC-2 migration emptied.** `*_rels.service_pillars_id` was dropped across
     thirteen tables, discarding the `pillars` selection on any `service-pillar-cards` block and NULLing
     `service-cards.pillar` wherever the source was "By pillar". `pillars` is `required, minRows: 1`, so those
