@@ -10,9 +10,22 @@
  * read by Payload's built-in JWT strategy — no API key, no schema change.
  */
 
+import { config as loadEnv } from 'dotenv'
 import { readFile } from 'node:fs/promises'
 
 import { PayloadRestClient, PayloadRestError } from '../payload-rest/client'
+
+// `.env.local` before anything reads `process.env`. The gated lanes need
+// IMPORT_COOKIE on every run and it is a long ALB session blob — retyping or
+// re-exporting it per invocation is the kind of friction that gets skipped,
+// and then the run 401s. An explicitly exported value still wins: dotenv does
+// not overwrite a variable that is already set.
+//
+// Same idiom as `tools/ingest-photos`, `tools/leonardo-images` and
+// `tools/e2e/provision-schema`. `.env.local` is gitignored (`.env*.local`);
+// nothing secret is committed by this.
+loadEnv({ path: '.env.local' })
+loadEnv({ path: '.env' })
 
 import { preflight } from './preflight'
 import { resolveData } from './resolve'

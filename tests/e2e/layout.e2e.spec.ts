@@ -23,7 +23,7 @@ test.describe('Site chrome — desktop viewport', () => {
     await expect(header).toBeVisible()
     const primaryNav = header.getByRole('navigation', { name: /primary/i })
     // NAV-1 two-axis IA: "Services" split into "What We Do" (the nine services
-    // in three groups) and "How We Work" (workshops, localshoring). Workshops
+    // in three groups) and "How We Work" (workshops, Cadence, Localshoring). Workshops
     // moved under the second axis rather than staying a seventh top-level item.
     for (const label of [
       'Our Story',
