@@ -49,6 +49,7 @@ const ROUTES: { slug: string; path: string }[] = [
   { slug: 'industries', path: '/industries' },
   { slug: 'industry', path: '/industries/oil-and-gas' },
   { slug: 'service-axis-how', path: '/services/how-we-work' },
+  { slug: 'service-cadence', path: '/services/cadence' },
   { slug: 'case-studies', path: '/case-studies' },
   { slug: 'insights', path: '/insights' },
   { slug: 'team', path: '/team' },

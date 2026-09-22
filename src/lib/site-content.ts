@@ -179,18 +179,10 @@ export const navigation: Navigation = {
             label: 'How We Work',
             items: [
               { label: 'Workshops', url: '/workshops' },
-              // ROADMAP SVC-2 / SVC-3 owns this. The invariant: the target
-              // stays on the `localshoring` PAGE until the leaf carries real
-              // copy, and this link plus the four footer market links flip in
-              // ONE change with the copy move and the Page's retirement —
-              // never on the strength of a 200.
-              //
-              // The previous comment here asserted lane content state and went
-              // stale when the seed ran. CLAUDE.md says content and lane state
-              // are not documented in this repo, and nothing pins them, so the
-              // measured detail lives in the ROADMAP entry instead of being
-              // restated where it will rot again.
-              { label: 'Localshoring', url: '/localshoring' },
+              { label: 'Cadence', url: '/services/cadence' },
+              // SVC-3: the leaf replaced the retired `localshoring` Page. The
+              // four footer market links moved with this one.
+              { label: 'Localshoring', url: '/services/localshoring' },
             ],
           },
         ],
@@ -276,16 +268,13 @@ export const navigation: Navigation = {
         { label: 'Book a Call', url: '/contact' },
         // Interim: the four market landing pages aren't built yet, so the city
         // links point at localshoring (our local-delivery model) rather than
-        // 404ing. They stay on the `localshoring` PAGE for the same reason the
-        // header link does — see "How We Work" above, and ROADMAP SVC-3. An
-        // earlier cut of this PR moved them and turned four working links into
-        // 404s for nothing. All five move together, in that one change.
+        // 404ing.
         // TODO(stub): build /tulsa-consulting etc. as per-market SEO pages
         // (CONTENT_NEEDS §"Missing pages — linked but 404").
-        { label: 'Tulsa', url: '/localshoring' },
-        { label: 'Oklahoma City', url: '/localshoring' },
-        { label: 'Northwest Arkansas', url: '/localshoring' },
-        { label: 'Kansas City', url: '/localshoring' },
+        { label: 'Tulsa', url: '/services/localshoring' },
+        { label: 'Oklahoma City', url: '/services/localshoring' },
+        { label: 'Northwest Arkansas', url: '/services/localshoring' },
+        { label: 'Kansas City', url: '/services/localshoring' },
       ],
     },
   ],

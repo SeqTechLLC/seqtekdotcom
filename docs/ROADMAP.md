@@ -20,8 +20,7 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 | #      | Item                                                           | Owner                  |
 | ------ | -------------------------------------------------------------- | ---------------------- |
 | **P0** | NAV-1 Dropdown panels + the pages under them                   | Kenn, blocked on Brent |
-|        | SVC-2 Seed the services content                                | Kenn                   |
-|        | SVC-3 Collapse the duplicate Localshoring pages                | Kenn                   |
+|        | SVC-2 Seed the services copy to the lanes                      | Kenn                   |
 |        | IND-1 Eight industry pages                                     | Kenn + Brent           |
 |        | BOOK-1 Book-a-call widget routing to Daniel                    | Kenn, blocked on Megan |
 |        | PROOF-1 Case studies + quotes, on hard dates                   | Megan, Brent escalates |
@@ -48,10 +47,9 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 
 Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sales-website-alignment.md`.
 
-- **NAV-1 — the menu is built and wired; what it points at is empty.** The panel shipped (#129) and
+- **NAV-1 — the menu is built and wired.** The panel shipped (#129) and
   `site-content.ts` now carries both axes, all three groups and all nine leaves, every one resolving against a
-  published `services` row. The mechanism is done. **The open item is the copy those 13 pages don't have —
-  see SVC-2 below.**
+  published `services` row. The mechanism is done. **The copy is written; seeding it is SVC-2 below.**
   - **Shipped 2026-09-16 — see `docs/planning/header-nav-collection.md`** and the amendment to ADR 0010: the
     header nav is a validated `navigation` collection; footer and legal navs stay code-owned. The mechanism is
     done — collection, polymorphic targets with derived URLs, whole-site revalidation, migration. **Open: the
@@ -78,107 +76,35 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
   - The a11y gate is the cost, not the CSS: click/tap to open (hover-only fails WCAG 2.2 §1.4.13), no focus
     trap. `tests/e2e/a11y.e2e.spec.ts` sweeps at zero axe violations.
 
-- **SVC-2 residual — the content.** The code shipped (P5-31 / #131, and P5-41 / #136 for the `/services` fold). A deploy never runs the seeder, so:
-  - ~~Seed the services content~~ **Done on preview (verified 2026-09-04):** 24 `services` docs, tiers
-    matching the drafts file, both axes and all three groups published, the nine legacy capability-set docs
-    retired to `draft`. `ww3` is a separate run after the next release.
-  - **Flip the five Localshoring links — gated on copy, not on the route (re-checked 2026-09-09).** The
-    `localshoring` leaf is seeded and published, so `/services/localshoring` resolves. The `site-content.ts`
-    comments that claimed the leaf "lives only in an unseeded `services.json`" were stale and are corrected,
-    but the links themselves stay on `/localshoring` for a reason the earlier note missed: **everything the
-    leaf renders is placeholder.** `services.json` seeds it as a hero whose subheadline is
-    "PLACEHOLDER COPY — NOT FOR PUBLICATION" plus one content block that opens with the same string and
-    then explains, in-band, why the real copy does not exist yet. Resolving is not the bar. Flipping now
-    would put the header nav and the four footer market links onto a published page that tells the reader it
-    is not for publication. The five links (in `site-content.ts`: the `How We Work` panel's Localshoring item, and the four market links in the footer's Connect column) flip in
-    the same change that moves real copy onto the leaf and retires the Page — that is SVC-3 below. No
-    internal 301 — nothing is live, so the URL simply changes.
+- **SVC-2 residual — seed the copy.** The code shipped (P5-31 / #131, P5-41 / #136) and the copy is written
+  (P5-46): all 16 `services` docs, Cadence included, carry real copy in the content repo's `services.json`,
+  and the eight case studies are tagged with the services they prove. A deploy never runs the seeder, so:
+  - **Preview:** seed `services.json`, `case-studies.json`, `services.json` again (the content repo's
+    `LOAD-ORDER.md` has why) and `navigation.json` **before** P5-46's code change deploys, or its links land on
+    placeholder copy. `pages.json` unpublishes five Pages (`localshoring`, `service-localshoring`,
+    `service-ai-integration`, `service-digital-transformation`, `service-overview`), so it runs **after** the
+    deploy. `ww3` follows the next release in the same order.
+  - **Re-check the four folded capability pages against Brent's grouping** (AI-Assisted Modernization,
+    Fractional Product Ownership, Strategy & Roadmap Alignment, Discovery & Team Workshops); some map onto
+    items he named and may need to come back out. Writing the nine leaves did not settle this — none of the
+    four is among them.
   - **Re-pick every block the SVC-2 migration emptied.** `*_rels.service_pillars_id` was dropped across
     thirteen tables, discarding the `pillars` selection on any `service-pillar-cards` block and NULLing
     `service-cards.pillar` wherever the source was "By pillar". `pillars` is `required, minRows: 1`, so those
     documents are invalid until re-picked. A re-seed repairs whatever the seed files cover; the exposure is
     what was authored directly in the admin. Check a lane.
-  - **Write the copy. This is the P0 item now, and it is worse than "thin" — re-measured on the lane
-    2026-09-09 through the Cognito gate, rendered text not seed files.** All **15** service routes return 200
-    and **every single one prints the literal string `PLACEHOLDER COPY — NOT FOR PUBLICATION` in visible body
-    text.** That includes both axis pages, which are the header nav triggers' own destinations.
-    Main-content character counts of what actually renders:
-
-    | Route                   | Chars   | Notes                                                      |
-    | ----------------------- | ------- | ---------------------------------------------------------- |
-    | `/services/what-we-do`  | **165** | Placeholder subhead + a bare list of the three group names |
-    | `/services/how-we-work` | 360     |                                                            |
-    | 3 group pages           | 473-530 |                                                            |
-    | 10 leaves               | 501-603 |                                                            |
-
-    The old Wix service pages averaged 348 words (~2,000 chars), so these are roughly a quarter of what they
-    replaced. The menu is fully wired and delivers a visitor to a page that tells them it is not for
-    publication — the exact failure Hank and Brent both described, a capability list without substance, made
-    literal.
-
-    **The placeholder text also leaks the repo's own planning notes into rendered output.** The bodies name
-    `CONTENT_NEEDS.md §12` and `§1.B`, say "Brent's nine services", and one of them explains that "this page
-    is a structural placeholder so /services/agentic-ai resolves and the navigation can be reviewed end to
-    end". Gated, so not indexed and not public — but it is what anyone given a preview link reads. Same class
-    of defect as **UI-3**, different mechanism: UI-3 is a `defaultValue` skeleton applied on read, this is
-    seeded body copy. **Only the first half is guarded today.**
-    `tests/int/render/noPlaceholderCopy.int.spec.ts` fails when a skeleton grows placeholder copy that is not
-    enumerated in `SKELETON_PLACEHOLDER_COPY` — but that is an inventory-completeness check on the source, not
-    a publish gate, and it never inspects seeded content. Seeded copy is content, and content is not in git,
-    so nothing in this repo could see the fifteen routes above. Closing that half needs a check that reads
-    **rendered output**, which is K8's job.
-
-    **Meanwhile the copy that was supposed to be retired is still the best copy on the lane, and still
-    served.** The flat `service-*` Pages are excluded from the sitemap but `/[slug]` still renders them:
-    `/service-ai-integration` **2,985 chars**, `/service-digital-transformation` **2,465**,
-    `/service-localshoring` **1,786**, `/localshoring` **1,545** — all real prose, no placeholder markers
-    except `service-localshoring`'s one `[PLACEHOLDER - Hank-gated copy...]` line. Only `/service-overview`
-    404s. So the seed did not replace this content, it **shadowed** it: the good version sits at an
-    unadvertised flat URL and the placeholder sits at the URL the nav points to. Mining these four before
-    writing anything new is the cheapest first move.
-
-    Ten leaves, three groups, two axes (`CONTENT_NEEDS.md` §12). **A group page needs a reason to exist:** if
-    it is only a list of its own children it is a worse version of the menu that got you there — which is
-    exactly what `/services/what-we-do` is today. That is the bar. Flag it early if a grouping produces a
-    heading nothing can be written about.
-
-  - **Refine the 21 Wix service 301s once the leaves are seeded.** They all land on the axis today, which is
-    the honest interim target. `/technology-and-data` should reach the data page rather than the axis.
-    Cheaper before the DNS cutover: nothing is live, so these are retargeted at source rather than layered.
+  - **Refine the 21 Wix service 301s.** They all land on the axis today, which is the honest interim target.
+    `/technology-and-data` should reach the data page rather than the axis. Cheaper before the DNS cutover:
+    nothing is live, so these are retargeted at source rather than layered.
+  - **No publish gate reads seeded copy.** `tests/int/render/noPlaceholderCopy.int.spec.ts` guards skeleton
+    source only; a check on rendered output is K8's job.
+  - The axis and group pages link their children with manual `nav-cards` (`service-cards` renders a title
+    only), so renaming a service slug means editing those cards too.
 
   **Carry forward:** absorbing tiers into one collection means every relationship pointing at that collection
   has to constrain to a tier, or the pickers offer nonsense. Six fields pointed at `services`; without
   `filterOptions` each would have offered an axis as a taggable service. Any future collection merge inherits
   this.
-
-- **SVC-3 — collapse the three Localshoring artifacts.** Not two, three, and the copy audit (2026-09-09)
-  settles most of the "which one wins" question that used to sit here:
-  - **Page `localshoring`** (`/localshoring`) — ~1,520 chars, finished, no placeholders. Offshore/nearshore
-    argument, the four markets, the Sequoyah tie-in, and a **named** testimonial (Jeremy Larson, Cross
-    Precision Measurement). This is what all five chrome links point at today, and it is the only one of the
-    three that is publishable as it stands.
-  - **Page `service-localshoring`** — 1,786 chars rendered. **Unlinked but not unreachable:**
-    `/services/[offering]` was deleted in SVC-2 and the slug is excluded from the sitemap, but `pages` are
-    flat at `/[slug]`, so `/service-localshoring` still returns 200 and renders. Its prose carries a live
-    `[PLACEHOLDER - Hank-gated copy...]` marker and its hero eyebrow still reads "Technology partnership".
-    It also holds the one asset the other two lack: a **complete, real `comparison-table` block**
-    (Localshoring / Nearshore / Offshore across overlap hours, cultural fit, seniority, ramp, plus a best-for
-    row), confirmed rendering on the lane. That block is structure and numbers, not Hank-gated voice, so it
-    can move as-is.
-  - **Service leaf `localshoring`** (`/services/localshoring`) — published on preview, 522 rendered chars,
-    entirely placeholder, and it prints `CONTENT_NEEDS.md §12` / `§1.B` and "Brent's nine services" on the
-    page. It owns the URL the IA wants and none of the content.
-
-  **The URL question is not open** — the flat leaf wins, because cross-listing means one page and two links,
-  never two pages, and the flat leaf URL is that rule expressed in routing. **The content call that is left
-  is narrow:** the leaf's body should be the `localshoring` Page's blocks, and whether the
-  `service-localshoring` comparison table comes with them (recommended — it is the strongest asset in the
-  set and it is currently rendered nowhere). Both Pages then retire and the five chrome links flip, in that
-  order, in one change. §1.B's Hank-gated definition is **not** a blocker for the collapse: it would improve
-  the leaf, but the Page's existing copy is already approved and stands on its own.
-  - Re-check the four folded capability pages against Brent's grouping (AI-Assisted Modernization, Fractional
-    Product Ownership, Strategy & Roadmap Alignment, Discovery & Team Workshops); some map onto items he named
-    and may need to come back out.
 
 - **IND-1 — industry pages. Wiring done; the copy is not.** Eight industries: Oil and Gas, Energy,
   Manufacturing, Healthcare, FinTech, Aerospace, Retail (added by Brent 2026-09-10), and Leadership and
