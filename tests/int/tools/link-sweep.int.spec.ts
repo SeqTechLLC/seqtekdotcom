@@ -80,6 +80,17 @@ describe('scanStyle', () => {
     expect(scanStyle(`Intro. ${placeholder} Outro.`)).toEqual([])
     expect(scanText(`Intro. ${placeholder} Outro.`).length).toBeGreaterThan(0)
   })
+
+  it('still reports an em dash that is INSIDE placeholder copy', () => {
+    // The separation is about the scanners, not about suppressing one list:
+    // the canonical seeded marker contains an em dash, so it is honestly both
+    // a placeholder and a style finding, and both clear together when the copy
+    // lands. Pinned because the case above only covers markers that have no
+    // em dash in them.
+    const seeded = 'PLACEHOLDER COPY — NOT FOR PUBLICATION. One line on what this does.'
+    expect(scanStyle(seeded)).toEqual([expect.objectContaining({ label: 'em dash' })])
+    expect(scanText(seeded).length).toBeGreaterThan(0)
+  })
 })
 
 describe('scanText', () => {

@@ -97,6 +97,15 @@ const main = async (): Promise<number> => {
   })
   process.stderr.write(`\r${''.padEnd(80)}\r`)
 
+  // An `--exclude` that matches everything (`--exclude=/`) empties the queue,
+  // and every category then reports `✓ none` — a green run over nothing swept.
+  // The first report line does say `swept 0 routes`, but the EXIT CODE would
+  // still be 0, which is what CI reads.
+  if (report.pages.length === 0) {
+    console.error('no routes were swept — check --exclude, it may match every route')
+    return 2
+  }
+
   const found = categorise(report, args.thinThreshold)
   console.log(format(report, found))
 

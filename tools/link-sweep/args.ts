@@ -20,7 +20,7 @@ export const CATEGORIES = [
 
 /**
  * Compile-time completeness. `readonly Category[]` accepted any SUBSET, so a
- * seventh category added to the union and to `countsByCategory` (which is
+ * category added to the union and to `countsByCategory` (which is
  * enforced, via `Record<Category, number>`) but forgotten here would compile,
  * and `--fail-on=all` would expand to a list quietly narrower than the word
  * promises.

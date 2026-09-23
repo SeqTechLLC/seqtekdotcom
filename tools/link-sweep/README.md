@@ -138,12 +138,17 @@ npm run sweep -- --fail-on=links,images   # or --fail-on=all
 ```
 
 A name that is not a category is an **error**, not a silent no-op — `--fail-on=iamges`
-exits 2 rather than arming the gate against nothing and passing. `all` means every
-category that can actually run, so it drops `external` unless `--external` is set;
-naming `external` yourself without `--external` is refused instead, because that is
-a request rather than a shorthand.
+exits 2 rather than arming the gate against nothing and passing. `all` drops two
+categories, for different reasons: `external` unless `--external` is set, because
+it cannot run (naming `external` yourself without `--external` is refused instead,
+being a request rather than a shorthand); and `thin` always, because it reports a
+measurement rather than a defect and listing routes sit near the threshold by
+nature. Name `thin` explicitly to gate on it.
 
 So the default run is a report you read, and turning it into a CI gate later is
 a flag rather than a rewrite. Do not gate on `placeholders` until the copy work
 is done — it would be red on purpose, every run, and a gate nobody can make
-green gets ignored.
+green gets ignored. Note that `style` **is** in `all` and fires on those same
+pages while the placeholder copy is there: the seeded marker
+`PLACEHOLDER COPY — NOT FOR PUBLICATION` contains an em dash. Both clear
+together when the copy lands.
