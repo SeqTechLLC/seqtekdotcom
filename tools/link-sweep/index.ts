@@ -77,13 +77,14 @@ const main = async (): Promise<number> => {
     cookieHeader: process.env.SWEEP_COOKIE,
     maxPages: args.maxPages,
     checkExternal: args.checkExternal,
+    exclude: args.exclude,
     onProgress: (route, index, total) => {
       process.stderr.write(`\r[${index}/${total}] ${route.padEnd(60).slice(0, 60)}`)
     },
   })
   process.stderr.write(`\r${''.padEnd(80)}\r`)
 
-  const found = categorise(report)
+  const found = categorise(report, args.thinThreshold)
   console.log(format(report, found))
 
   if (args.json) {

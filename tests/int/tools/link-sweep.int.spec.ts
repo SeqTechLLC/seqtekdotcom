@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyHref,
   normaliseRoute,
+  isExcluded,
+  scanStyle,
   scanText,
+  DEFAULT_THIN_COPY_THRESHOLD,
   GENERIC_PLACEHOLDER_PATTERNS,
   INTERNAL_REFERENCE_PATTERNS,
 } from '../../../tools/link-sweep/checks'
@@ -55,6 +58,27 @@ describe('classifyHref', () => {
 
   it('does not treat a different host as internal just because the path matches', () => {
     expect(classifyHref('https://seqtek.com/team', ORIGIN).kind).toBe('external')
+  })
+})
+
+describe('scanStyle', () => {
+  it('finds an em dash in rendered copy', () => {
+    expect(scanStyle('Quality with speed — never lose the beat.')).toEqual([
+      expect.objectContaining({ label: 'em dash' }),
+    ])
+  })
+
+  it('passes copy that uses hyphens and en dashes', () => {
+    expect(scanStyle('A feature-for-feature rebuild, 2023–2024, at a fixed price.')).toEqual([])
+  })
+
+  it('does NOT re-report placeholder copy as a style breach', () => {
+    // `scanStyle` used to share `scanText`, whose skeleton loop runs whatever
+    // patterns are passed — so every placeholder page also landed in the style
+    // list, and the two counts moved together.
+    const placeholder = SKELETON_PLACEHOLDER_COPY[0]
+    expect(scanStyle(`Intro. ${placeholder} Outro.`)).toEqual([])
+    expect(scanText(`Intro. ${placeholder} Outro.`).length).toBeGreaterThan(0)
   })
 })
 
@@ -180,6 +204,8 @@ describe('parseArgs', () => {
       'alt',
       'external',
       'redirects',
+      'style',
+      'thin',
     ])
     expect(parseArgs(['--fail-on=all'], env()).failOnAll).toBe(true)
   })
@@ -219,6 +245,17 @@ describe('parseArgs', () => {
     expect(parseArgs(['--fail-on=external'], env()).failOnAll).toBe(false)
   })
 
+  it('parses --exclude into substrings, ignoring blanks', () => {
+    expect(parseArgs(['--exclude=showcase-,/api'], env()).exclude).toEqual(['showcase-', '/api'])
+    expect(parseArgs(['--exclude=  '], env()).exclude).toEqual([])
+    expect(parseArgs([], env()).exclude).toEqual([])
+  })
+
+  it('takes a thin-copy threshold, defaulting to the shared constant', () => {
+    expect(parseArgs([], env()).thinThreshold).toBe(DEFAULT_THIN_COPY_THRESHOLD)
+    expect(parseArgs(['--thin-threshold=250'], env()).thinThreshold).toBe(250)
+  })
+
   it('collects unknown arguments instead of ignoring them', () => {
     expect(parseArgs(['--basurl=x'], env()).unknown).toEqual(['--basurl=x'])
   })
@@ -238,6 +275,8 @@ describe('categorise', () => {
         status: 200,
         referrers: [],
         title: 'Home',
+        styleFindings: [],
+        textLength: 1200,
         textFindings: [],
         imageFindings: {
           mobile: [{ src: '/media/hero.webp', alt: 'Hero', reason: 'not painting' }],
@@ -250,6 +289,8 @@ describe('categorise', () => {
         status: 404,
         referrers: ['/'],
         title: '',
+        styleFindings: [],
+        textLength: 1200,
         textFindings: [{ label: 'placeholder marker', excerpt: 'PLACEHOLDER' }],
         imageFindings: { desktop: [{ src: '/media/x.webp', alt: null, reason: 'missing alt' }] },
         internalLinks: [],
@@ -278,6 +319,8 @@ describe('categorise', () => {
           status: 200,
           referrers: [],
           title: '',
+          styleFindings: [],
+          textLength: 1200,
           textFindings: [],
           imageFindings: {
             desktop: [{ src: '/media/slow.webp', alt: 'Slow', reason: 'still loading' }],
@@ -304,6 +347,8 @@ describe('categorise', () => {
       placeholders: 1,
       alt: 1,
       external: 1,
+      style: 0,
+      thin: 0,
       redirects: 0,
     })
   })
@@ -317,6 +362,8 @@ describe('categorise', () => {
           status: 200,
           referrers: [],
           title: '',
+          styleFindings: [],
+          textLength: 1200,
           textFindings: [],
           imageFindings: {},
           internalLinks: [],
@@ -344,6 +391,8 @@ describe('categorise', () => {
           status: 200,
           referrers: ['/'],
           title: 'What We Do',
+          styleFindings: [],
+          textLength: 1200,
           textFindings: [],
           imageFindings: {},
           internalLinks: ['/services/strategy-and-alignment'],
@@ -437,5 +486,78 @@ describe('categorise', () => {
     const truncated: SweepReport = { ...report, notVisited: ['/a', '/b', '/c', '/d'] }
     const out = format(truncated, categorise(truncated))
     expect(out).toContain('crawl stopped at --max-pages: 4 routes never visited')
+  })
+})
+
+describe('thin copy', () => {
+  const pageAt = (route: string, status: number, textLength: number) => ({
+    route,
+    status,
+    referrers: [],
+    title: route,
+    textFindings: [],
+    styleFindings: [],
+    textLength,
+    imageFindings: {},
+    internalLinks: [],
+    externalLinks: [],
+  })
+
+  const reportWith = (pages: SweepReport['pages']): SweepReport => ({
+    baseUrl: ORIGIN,
+    startedAt: '',
+    finishedAt: '',
+    externalChecked: false,
+    notVisited: [],
+    externalStatuses: {},
+    pages,
+  })
+
+  it('reports a rendered page below the threshold, with its measurement', () => {
+    const found = categorise(reportWith([pageAt('/services/agentic-ai', 200, 128)]), 600)
+    expect(found.thin).toEqual([{ route: '/services/agentic-ai', chars: 128 }])
+  })
+
+  it('leaves a page at or above the threshold alone', () => {
+    expect(categorise(reportWith([pageAt('/services/cadence', 200, 600)]), 600).thin).toEqual([])
+  })
+
+  it('never counts a dead route as thin — it is already a broken link', () => {
+    // A 404 renders almost nothing, so without this every dead route appeared
+    // in both lists and the thin count tracked the link count.
+    const found = categorise(reportWith([pageAt('/localshoring', 404, 40)]), 600)
+    expect(found.thin).toEqual([])
+    expect(found.links).toHaveLength(1)
+  })
+
+  it('honours a caller-supplied threshold', () => {
+    const report = reportWith([pageAt('/contact', 200, 300)])
+    expect(categorise(report, 600).thin).toHaveLength(1)
+    expect(categorise(report, 200).thin).toHaveLength(0)
+  })
+})
+
+describe('isExcluded', () => {
+  it('matches anywhere in the route, so one argument drops the whole fixture set', () => {
+    // Prefix matching caught the flat pages and missed every collection
+    // fixture, which is most of them.
+    for (const route of [
+      '/showcase-block-faq',
+      '/case-studies/showcase-cut-downtime-in-half',
+      '/workshops/showcase-touchstone-discovery',
+    ]) {
+      expect(isExcluded(route, ['showcase-']), route).toBe(true)
+    }
+    expect(isExcluded('/services/cadence', ['showcase-'])).toBe(false)
+  })
+
+  it('excludes nothing when no prefixes are given', () => {
+    expect(isExcluded('/anything', [])).toBe(false)
+  })
+
+  it('ignores an empty prefix rather than excluding every route', () => {
+    // `--exclude=` splitting to [''] would otherwise match every path and
+    // sweep nothing, reporting a clean site.
+    expect(isExcluded('/services/cadence', [''])).toBe(false)
   })
 })

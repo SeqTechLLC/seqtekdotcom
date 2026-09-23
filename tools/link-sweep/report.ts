@@ -4,9 +4,11 @@
  * the reporting shape changing.
  */
 
+import { DEFAULT_THIN_COPY_THRESHOLD } from './checks'
 import type { SweepReport } from './crawl'
 
-export type Category = 'links' | 'images' | 'placeholders' | 'alt' | 'external' | 'redirects'
+export type Category =
+  'links' | 'images' | 'placeholders' | 'alt' | 'external' | 'redirects' | 'style' | 'thin'
 
 export interface CategorisedFindings {
   links: { route: string; status: number | null; referrers: string[]; error?: string }[]
@@ -19,6 +21,10 @@ export interface CategorisedFindings {
    */
   stillLoading: { route: string; viewport: string; src: string }[]
   placeholders: { route: string; label: string; excerpt: string }[]
+  /** House-style breaches in rendered copy — em dashes. */
+  style: { route: string; label: string; excerpt: string }[]
+  /** Routes whose rendered `<main>` is shorter than the threshold. */
+  thin: { route: string; chars: number }[]
   external: { url: string; status: number | null }[]
   /**
    * Outbound links whose status says the SERVER refused this client rather
@@ -32,13 +38,18 @@ export interface CategorisedFindings {
   redirects: { route: string; to: string; referrers: string[] }[]
 }
 
-export const categorise = (report: SweepReport): CategorisedFindings => {
+export const categorise = (
+  report: SweepReport,
+  thinThreshold: number = DEFAULT_THIN_COPY_THRESHOLD,
+): CategorisedFindings => {
   const out: CategorisedFindings = {
     links: [],
     images: [],
     alt: [],
     stillLoading: [],
     placeholders: [],
+    style: [],
+    thin: [],
     external: [],
     unverifiable: [],
     redirects: [],
@@ -71,6 +82,16 @@ export const categorise = (report: SweepReport): CategorisedFindings => {
     }
     for (const finding of page.textFindings) {
       out.placeholders.push({ route: page.route, label: finding.label, excerpt: finding.excerpt })
+    }
+    for (const finding of page.styleFindings) {
+      out.style.push({ route: page.route, label: finding.label, excerpt: finding.excerpt })
+    }
+    // Only pages that actually rendered. A dead route has no copy to be thin,
+    // and it is already reported under `links` — counting it twice would put
+    // every 404 in a list whose job is to find published pages that say
+    // nothing.
+    if (page.status === 200 && !page.error && page.textLength < thinThreshold) {
+      out.thin.push({ route: page.route, chars: page.textLength })
     }
   }
 
@@ -137,6 +158,15 @@ export const format = (report: SweepReport, found: CategorisedFindings): string 
     lines.push(`      ${item.excerpt}`)
   }
 
+  lines.push(heading('em dashes in rendered copy', found.style.length))
+  for (const item of found.style) {
+    lines.push(`  ${item.route} — ${item.label}`)
+    lines.push(`      ${item.excerpt}`)
+  }
+
+  lines.push(heading('routes with thin copy', found.thin.length))
+  for (const item of found.thin) lines.push(`  ${item.route} — ${item.chars} chars`)
+
   lines.push(heading('links that land somewhere else (redirects)', found.redirects.length))
   for (const item of found.redirects) {
     const from = item.referrers.length > 0 ? ` — linked from ${item.referrers.join(', ')}` : ''
@@ -171,6 +201,8 @@ export const format = (report: SweepReport, found: CategorisedFindings): string 
 
 export const countsByCategory = (found: CategorisedFindings): Record<Category, number> => ({
   links: found.links.length,
+  style: found.style.length,
+  thin: found.thin.length,
   images: found.images.length,
   placeholders: found.placeholders.length,
   alt: found.alt.length,

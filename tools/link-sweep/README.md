@@ -10,7 +10,14 @@ was an opinion rather than a number.
 npm run sweep                                          # localhost:3100
 npm run sweep -- --base-url=https://preview.seqtek.com # a lane
 npm run sweep -- --json=/tmp/sweep.json --external      # full report + external links
+npm run sweep -- --exclude=showcase-                    # skip the seeded block fixtures
 ```
+
+**Locally, pass `--exclude=showcase-`.** `npm run seed:showcase` seeds a page per
+block plus a skeleton fixture in every collection; they are one block or one
+skeleton each, so without the flag they were 25 of the 28 thin routes and every
+skeleton line came back as placeholder copy. A lane has none of them, so the
+flag is a local convenience, not part of the real check.
 
 A Cognito-gated lane needs the ALB session, taken from your own browser
 (DevTools → Application → Cookies) — both halves, or the ALB 302s you to the
@@ -25,14 +32,16 @@ SWEEP_COOKIE='AWSELBAuthSessionCookie-0=…; AWSELBAuthSessionCookie-1=…' \
 
 ## What it checks
 
-| Category       | What counts as a finding                                                                           |
-| -------------- | -------------------------------------------------------------------------------------------------- |
-| `links`        | An internal route that does not return 200. Reported with the pages linking it                     |
-| `images`       | An `<img>` that is laid out but never painted (`naturalWidth === 0`)                               |
-| `placeholders` | Placeholder copy or repo-internal references in rendered text                                      |
-| `alt`          | An `<img>` with no `alt` attribute at all                                                          |
-| `redirects`    | A link that resolves, but lands somewhere other than where it points                               |
-| `external`     | An outbound link that is **gone** — 404, 410, 5xx, or no connection at all. Only with `--external` |
+| Category       | What counts as a finding                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------ |
+| `links`        | An internal route that does not return 200. Reported with the pages linking it                               |
+| `images`       | An `<img>` that is laid out but never painted (`naturalWidth === 0`)                                         |
+| `placeholders` | Placeholder copy or repo-internal references in rendered text                                                |
+| `alt`          | An `<img>` with no `alt` attribute at all                                                                    |
+| `redirects`    | A link that resolves, but lands somewhere other than where it points                                         |
+| `external`     | An outbound link that is **gone** — 404, 410, 5xx, or no connection at all. Only with `--external`           |
+| `style`        | An em dash in rendered copy. Banned in public SEQTEK copy (CLAUDE.md), and nothing else checks seeded bodies |
+| `thin`         | A route whose rendered `<main>` is under `--thin-threshold` (default 600 chars)                              |
 
 ## Why a browser
 
@@ -72,6 +81,21 @@ our own planning vocabulary addressed to a visitor — `CONTENT_NEEDS.md`, `§12
 "Brent's nine services". Different in kind from unfinished copy, so it is
 reported under its own labels. `§` and a bare `*.md` filename do not occur in
 marketing prose, which is why these can run without a suppression list.
+
+## Thin copy is a measurement, not a verdict
+
+`thin` reports the rendered character count of any route under the threshold.
+It exists because a page can return 200, paint every image, carry no
+placeholder marker and still say nothing — which is exactly what fifteen
+service routes did while the rest of this tool ticked green.
+
+Listing routes (`/team`, `/workshops`, `/partners`) and `/contact` sit near the
+threshold by nature: their body is card text or a form. They are meant to
+appear and be dismissed by a person. Do not gate CI on `thin` for that reason —
+`--fail-on=thin` is for a one-off audit of a content push, not the default.
+
+The number replaces the per-route character counts that used to be written into
+`ROADMAP.md` by hand and were wrong the moment anyone seeded.
 
 ## What it does not check
 

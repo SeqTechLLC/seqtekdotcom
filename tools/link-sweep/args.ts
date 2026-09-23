@@ -2,9 +2,11 @@
  * Argument parsing, split out of `index.ts` so it can be tested: importing
  * `index.ts` would run the CLI, which is the point of `index.ts`.
  */
+import { DEFAULT_THIN_COPY_THRESHOLD } from './checks'
 import type { Category } from './report'
 
 export const DEFAULT_BASE_URL = 'http://localhost:3100'
+
 export const CATEGORIES = [
   'links',
   'images',
@@ -12,6 +14,8 @@ export const CATEGORIES = [
   'alt',
   'external',
   'redirects',
+  'style',
+  'thin',
 ] as const
 
 /**
@@ -30,6 +34,10 @@ export interface CliArgs {
   json: string | null
   maxPages: number
   checkExternal: boolean
+  /** Rendered `<main>` chars below which a route is reported as thin. */
+  thinThreshold: number
+  /** Substrings whose routes are skipped, e.g. the local showcase fixtures. */
+  exclude: string[]
   failOn: Category[]
   /** `--fail-on` names that are not categories. A typo must not disarm a gate. */
   unknownCategories: string[]
@@ -49,6 +57,10 @@ export const USAGE = `sweep — ROADMAP K8 broken-link + broken-image sweep
   --external           also check external links (slow)
   --json=<path>        write the full report as JSON
   --max-pages=<n>      crawl ceiling, default 300
+  --thin-threshold=<n> rendered <main> chars below which a route is reported
+                       as thin, default ${DEFAULT_THIN_COPY_THRESHOLD}
+  --exclude=<parts>    skip routes containing any of these, comma separated.
+                       Locally: --exclude=showcase- drops the seeded fixtures
   --fail-on=<list>     exit 1 if any named category has findings
                        (${CATEGORIES.join(', ')}). An unrecognised name is an
                        error, not a silent no-op. "all" is every category that
@@ -64,6 +76,8 @@ export const parseArgs = (argv: readonly string[], env: NodeJS.ProcessEnv): CliA
     json: null,
     maxPages: 300,
     checkExternal: false,
+    thinThreshold: DEFAULT_THIN_COPY_THRESHOLD,
+    exclude: [],
     failOn: [],
     unknownCategories: [],
     failOnAll: false,
@@ -78,6 +92,14 @@ export const parseArgs = (argv: readonly string[], env: NodeJS.ProcessEnv): CliA
     else if (arg.startsWith('--base-url=')) out.baseUrl = arg.slice('--base-url='.length)
     else if (arg.startsWith('--json=')) out.json = arg.slice('--json='.length)
     else if (arg.startsWith('--max-pages=')) out.maxPages = Number(arg.slice('--max-pages='.length))
+    else if (arg.startsWith('--exclude='))
+      out.exclude = arg
+        .slice('--exclude='.length)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    else if (arg.startsWith('--thin-threshold='))
+      out.thinThreshold = Number(arg.slice('--thin-threshold='.length))
     else if (arg.startsWith('--fail-on=')) {
       const raw = arg.slice('--fail-on='.length)
       if (raw === 'all') {
