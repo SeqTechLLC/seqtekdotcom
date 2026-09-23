@@ -24,7 +24,7 @@ import { PayloadRestClient, PayloadRestError } from '../payload-rest/client'
 // Resolved against the repo root, not `process.cwd()`, so a run from another
 // directory still finds it — same as `tools/ingest-photos` and
 // `tools/e2e/provision-schema`. `quiet` keeps dotenv's banner off stdout, which
-// `--json` promises carries the result object and nothing else.
+// under `--json` carries the result object and nothing else.
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../')
 loadEnv({ path: path.join(repoRoot, '.env.local'), quiet: true })
 loadEnv({ path: path.join(repoRoot, '.env'), quiet: true })
