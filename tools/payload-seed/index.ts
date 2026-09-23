@@ -12,20 +12,22 @@
 
 import { config as loadEnv } from 'dotenv'
 import { readFile } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { PayloadRestClient, PayloadRestError } from '../payload-rest/client'
 
-// `.env.local` before anything reads `process.env`. The gated lanes need
-// IMPORT_COOKIE on every run and it is a long ALB session blob — retyping or
-// re-exporting it per invocation is the kind of friction that gets skipped,
-// and then the run 401s. An explicitly exported value still wins: dotenv does
-// not overwrite a variable that is already set.
+// The gated lanes need IMPORT_COOKIE on every run, so read `.env.local` rather
+// than making the caller re-export it. An explicitly exported value still wins:
+// dotenv does not overwrite a variable that is already set.
 //
-// Same idiom as `tools/ingest-photos`, `tools/leonardo-images` and
-// `tools/e2e/provision-schema`. `.env.local` is gitignored (`.env*.local`);
-// nothing secret is committed by this.
-loadEnv({ path: '.env.local' })
-loadEnv({ path: '.env' })
+// Resolved against the repo root, not `process.cwd()`, so a run from another
+// directory still finds it — same as `tools/ingest-photos` and
+// `tools/e2e/provision-schema`. `quiet` keeps dotenv's banner off stdout, which
+// under `--json` carries the result object and nothing else.
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../')
+loadEnv({ path: path.join(repoRoot, '.env.local'), quiet: true })
+loadEnv({ path: path.join(repoRoot, '.env'), quiet: true })
 
 import { preflight } from './preflight'
 import { resolveData } from './resolve'
