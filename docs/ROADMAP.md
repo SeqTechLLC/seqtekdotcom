@@ -84,10 +84,6 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     placeholder copy. `pages.json` unpublishes five Pages (`localshoring`, `service-localshoring`,
     `service-ai-integration`, `service-digital-transformation`, `service-overview`), so it runs **after** the
     deploy. `ww3` follows the next release in the same order.
-  - **Re-check the four folded capability pages against Brent's grouping** (AI-Assisted Modernization,
-    Fractional Product Ownership, Strategy & Roadmap Alignment, Discovery & Team Workshops); some map onto
-    items he named and may need to come back out. Writing the nine leaves did not settle this — none of the
-    four is among them.
   - **Re-pick every block the SVC-2 migration emptied.** `*_rels.service_pillars_id` was dropped across
     thirteen tables, discarding the `pillars` selection on any `service-pillar-cards` block and NULLing
     `service-cards.pillar` wherever the source was "By pillar". `pillars` is `required, minRows: 1`, so those
