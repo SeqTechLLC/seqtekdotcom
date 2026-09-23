@@ -11,7 +11,7 @@ import {
   GENERIC_PLACEHOLDER_PATTERNS,
   INTERNAL_REFERENCE_PATTERNS,
 } from '../../../tools/link-sweep/checks'
-import { parseArgs } from '../../../tools/link-sweep/args'
+import { CATEGORIES, parseArgs } from '../../../tools/link-sweep/args'
 import { categorise, countsByCategory, format } from '../../../tools/link-sweep/report'
 import { SCRAPE_SOURCE, SCROLL_SOURCE, type SweepReport } from '../../../tools/link-sweep/crawl'
 import { SKELETON_PLACEHOLDER_COPY } from '../../../src/payload/seed/skeletons/placeholderCopy'
@@ -205,9 +205,14 @@ describe('parseArgs', () => {
       'external',
       'redirects',
       'style',
-      'thin',
     ])
     expect(parseArgs(['--fail-on=all'], env()).failOnAll).toBe(true)
+    // `thin` is in CATEGORIES — nameable — but deliberately not in `all`:
+    // listing routes sit near the threshold, so a literal `all` would be red
+    // on a healthy site.
+    expect(CATEGORIES).toContain('thin')
+    expect(parseArgs(['--fail-on=all'], env()).failOn).not.toContain('thin')
+    expect(parseArgs(['--fail-on=thin'], env()).failOn).toEqual(['thin'])
   })
 
   it('refuses an empty --fail-on rather than gating on nothing', () => {
@@ -254,6 +259,17 @@ describe('parseArgs', () => {
   it('takes a thin-copy threshold, defaulting to the shared constant', () => {
     expect(parseArgs([], env()).thinThreshold).toBe(DEFAULT_THIN_COPY_THRESHOLD)
     expect(parseArgs(['--thin-threshold=250'], env()).thinThreshold).toBe(250)
+  })
+
+  it('parses a junk or empty threshold to a value the CLI guard rejects', () => {
+    // Both shapes made `textLength < threshold` false for every route, so the
+    // check reported "none" over a site of stubs. `index.ts` exits 2 on them;
+    // what is pinned here is that they never arrive as a usable number.
+    expect(parseArgs(['--thin-threshold=abc'], env()).thinThreshold).toBeNaN()
+    expect(parseArgs(['--thin-threshold='], env()).thinThreshold).toBe(0)
+    for (const bad of [NaN, 0, -1]) {
+      expect(Number.isFinite(bad) && bad >= 1, String(bad)).toBe(false)
+    }
   })
 
   it('collects unknown arguments instead of ignoring them', () => {
@@ -528,6 +544,18 @@ describe('thin copy', () => {
     const found = categorise(reportWith([pageAt('/localshoring', 404, 40)]), 600)
     expect(found.thin).toEqual([])
     expect(found.links).toHaveLength(1)
+  })
+
+  it('falls back to the shared default when no threshold is passed', () => {
+    // `index.ts` always passes one, so this default is the copy with nothing
+    // else behind it.
+    const under = DEFAULT_THIN_COPY_THRESHOLD - 1
+    expect(categorise(reportWith([pageAt('/thin', 200, under)])).thin).toEqual([
+      { route: '/thin', chars: under },
+    ])
+    expect(categorise(reportWith([pageAt('/ok', 200, DEFAULT_THIN_COPY_THRESHOLD)])).thin).toEqual(
+      [],
+    )
   })
 
   it('honours a caller-supplied threshold', () => {

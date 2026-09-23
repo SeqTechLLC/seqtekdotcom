@@ -29,6 +29,13 @@ type UnlistedCategory = Exclude<Category, (typeof CATEGORIES)[number]>
 const _everyCategoryIsListed: UnlistedCategory extends never ? true : never = true
 void _everyCategoryIsListed
 
+/**
+ * Categories `--fail-on=all` deliberately leaves out. Not "cannot run" —
+ * `thin` runs fine; it is that its findings are for a person to read, so
+ * gating the shorthand on it makes the shorthand useless.
+ */
+export const NON_GATING_CATEGORIES: readonly Category[] = ['thin']
+
 export interface CliArgs {
   baseUrl: string
   json: string | null
@@ -65,7 +72,9 @@ export const USAGE = `sweep — ROADMAP K8 broken-link + broken-image sweep
                        (${CATEGORIES.join(', ')}). An unrecognised name is an
                        error, not a silent no-op. "all" is every category that
                        can run: it drops \`external\` unless --external is set,
-                       where naming \`external\` yourself is refused instead.
+                       where naming \`external\` yourself is refused instead,
+                       and always drops \`thin\`, which reports a measurement
+                       rather than a defect. Name \`thin\` to gate on it.
   --help
 
   $SWEEP_COOKIE is sent with every request, for a Cognito-gated lane.`
@@ -104,7 +113,12 @@ export const parseArgs = (argv: readonly string[], env: NodeJS.ProcessEnv): CliA
       const raw = arg.slice('--fail-on='.length)
       if (raw === 'all') {
         out.failOnAll = true
-        out.failOn = [...CATEGORIES]
+        // `thin` is a MEASUREMENT, not a verdict: listing routes and /contact
+        // sit near the threshold by nature, so a literal `all` would keep this
+        // shorthand red on a healthy site and train people to ignore it.
+        // Naming `thin` explicitly still gates on it. (`external` is dropped
+        // in `index.ts` instead, because that one depends on --external.)
+        out.failOn = CATEGORIES.filter((category) => !NON_GATING_CATEGORIES.includes(category))
       } else {
         // Unrecognised names are COLLECTED, not dropped. Silently discarding
         // them let `--fail-on=iamges` arm the gate against nothing and exit 0

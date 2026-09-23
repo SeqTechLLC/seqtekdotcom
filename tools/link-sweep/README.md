@@ -15,9 +15,10 @@ npm run sweep -- --exclude=showcase-                    # skip the seeded block 
 
 **Locally, pass `--exclude=showcase-`.** `npm run seed:showcase` seeds a page per
 block plus a skeleton fixture in every collection; they are one block or one
-skeleton each, so without the flag they were 25 of the 28 thin routes and every
-skeleton line came back as placeholder copy. A lane has none of them, so the
-flag is a local convenience, not part of the real check.
+skeleton each. Measured on a full local crawl of 137 routes: **64 of the 77
+thin routes and 27 of the 35 placeholder findings were fixtures**, and the 13
+real thin routes were buried under them. A lane has none of them, so the flag
+is a local convenience rather than part of the real check.
 
 A Cognito-gated lane needs the ALB session, taken from your own browser
 (DevTools → Application → Cookies) — both halves, or the ALB 302s you to the

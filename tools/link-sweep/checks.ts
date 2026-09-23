@@ -184,8 +184,9 @@ export const scanStyle = (text: string): TextFinding[] => scanPatterns(text, STY
  * `--exclude=showcase-` drops the whole fixture set.
  *
  * Exists because a LOCAL sweep crawls those fixtures — a block or a skeleton
- * each — and they outnumbered the real routes 25 to 3 in the thin-copy list,
- * which is how a useful report becomes one nobody reads.
+ * each. Measured on a full local crawl (137 routes): 64 of the 77 thin routes
+ * and 27 of the 35 placeholder findings were fixtures, which is how a useful
+ * report becomes one nobody reads.
  */
 export const isExcluded = (route: string, needles: readonly string[]): boolean =>
   needles.some((needle) => needle !== '' && route.includes(needle))

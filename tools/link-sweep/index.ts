@@ -43,6 +43,13 @@ const main = async (): Promise<number> => {
     console.error('--max-pages must be a positive number')
     return 2
   }
+  // Same guard, same reason: `Number('abc')` is NaN and `Number('')` is 0, and
+  // BOTH make `textLength < threshold` false for every route — so the thin
+  // check reports "none" over a site of stubs and `--fail-on=thin` exits 0.
+  if (!Number.isFinite(args.thinThreshold) || args.thinThreshold < 1) {
+    console.error('--thin-threshold must be a positive number')
+    return 2
+  }
   // An empty value is the residue of the typo shape: `--fail-on=` parses to
   // zero categories and zero unknowns, so the gate is armed against nothing and
   // the run is green. The realistic vector is an unset workflow variable
@@ -69,6 +76,12 @@ const main = async (): Promise<number> => {
     }
     args.failOn = args.failOn.filter((category) => category !== 'external')
     console.error('note: --fail-on=all excludes `external`, which needs --external')
+  }
+  // Narrowed in `parseArgs`, announced here: a shorthand that quietly covers
+  // less than it says is the same class of problem as a gate armed against
+  // nothing.
+  if (args.failOnAll) {
+    console.error('note: --fail-on=all excludes `thin`; name it explicitly to gate on it')
   }
 
   const report = await sweep({
