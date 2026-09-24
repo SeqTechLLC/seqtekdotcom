@@ -27,6 +27,7 @@ import { KeyTakeaways } from './KeyTakeaways'
 import { LocationsList } from './LocationsList'
 import { LogoBar } from './LogoBar'
 import { Map } from './Map'
+import { MediaText } from './MediaText'
 import { MetricDisplay } from './MetricDisplay'
 import { MissionVisionValues } from './MissionVisionValues'
 import { NavCards } from './NavCards'
@@ -74,6 +75,7 @@ export {
   LocationsList,
   LogoBar,
   Map,
+  MediaText,
   MetricDisplay,
   MissionVisionValues,
   NavCards,
@@ -107,6 +109,7 @@ export const layoutBlocks = [
   ServicePillarHero,
   HomepageHero,
   Content,
+  MediaText,
   TwoColumn,
   Image,
   Gallery,
