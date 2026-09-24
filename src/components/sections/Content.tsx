@@ -1,12 +1,12 @@
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
 import { RichText } from '../richText/RichText'
-import { Section } from '../ui/Section'
+import { Section, type SectionBackground } from '../ui/Section'
 
 interface ContentProps {
   width?: 'narrow' | 'standard' | 'wide' | null
   body: SerializedEditorState | null | undefined
-  background?: 'none' | 'subtle' | 'accent' | null
+  background?: SectionBackground | null
 }
 
 // These are READING MEASURES, not the shell: `wide` stays 1024px because it is
@@ -20,23 +20,19 @@ const WIDTH_CLASSES: Record<NonNullable<ContentProps['width']>, string> = {
   wide: 'max-w-5xl',
 }
 
-const BACKGROUND_CLASSES: Record<NonNullable<ContentProps['background']>, string> = {
-  none: '',
-  subtle: 'bg-surface-subtle',
-  accent: 'bg-accent/5',
-}
-
 export function Content({ width = 'standard', body, background = 'none' }: ContentProps) {
   const widthCls = WIDTH_CLASSES[width ?? 'standard']
-  const bgCls = BACKGROUND_CLASSES[background ?? 'none']
+  // The typography plugin's colours are for a light page; on the dark band the
+  // prose needs its inverted set or the body text disappears.
+  const proseCls = background === 'inverse' ? 'mx-auto prose-invert' : 'mx-auto'
   return (
-    <Section padding="default" className={bgCls}>
+    <Section padding="default" background={background ?? 'none'}>
       {/* Centered reading column (DESIGN_SYSTEM.md "Reading column"): the text
           column is centered within the page rail, NOT left-justified. Body copy
           keeps its 65ch measure and is centered, so it shares a vertical axis
           with everything else on the page. */}
       <div className={`${widthCls} mx-auto`}>
-        <RichText data={body} className="mx-auto" />
+        <RichText data={body} className={proseCls} />
       </div>
     </Section>
   )
