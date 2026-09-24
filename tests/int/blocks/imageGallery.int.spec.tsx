@@ -38,7 +38,6 @@ describe('<Gallery /> block', () => {
       <Gallery
         heading="Proof"
         layout="grid"
-        columns="3"
         items={[
           { image: media('/g/1.jpg'), caption: 'One' },
           { image: media('/g/2.jpg'), caption: 'Two' },
@@ -89,7 +88,6 @@ describe('image + gallery are dispatchable via RenderBlocks', () => {
           {
             blockType: 'gallery',
             layout: 'grid',
-            columns: '2',
             items: [{ image: media('/g/1.jpg') }],
           },
         ]}

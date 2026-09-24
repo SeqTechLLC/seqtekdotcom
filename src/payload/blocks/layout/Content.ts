@@ -3,6 +3,7 @@ import type { Block } from 'payload'
 import { blockAdmin } from '../blockAdmin'
 
 import { editorConfig } from '../../editor/editorConfig'
+import { backgroundField } from '../../fields/blockCopy'
 
 export const Content: Block = {
   slug: 'content',
@@ -36,20 +37,6 @@ export const Content: Block = {
           'The prose of this section. Use the slash menu to drop in a callout, a pull quote, an image or an FAQ between paragraphs.',
       },
     },
-    {
-      name: 'background',
-      type: 'select',
-      label: 'Background',
-      defaultValue: 'none',
-      admin: {
-        description:
-          'Tints the band behind the text so it separates from the sections above and below. Use sparingly, or the page turns into stripes.',
-      },
-      options: [
-        { label: 'None', value: 'none' },
-        { label: 'Subtle', value: 'subtle' },
-        { label: 'Accent', value: 'accent' },
-      ],
-    },
+    backgroundField(),
   ],
 }

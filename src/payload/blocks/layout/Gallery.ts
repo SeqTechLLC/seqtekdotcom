@@ -2,13 +2,13 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
-import { headingField } from '../../fields/blockCopy'
+import { backgroundField, headingField, introField } from '../../fields/blockCopy'
 import { mediaRowLabel } from '../../fields/mediaRowLabel'
 
-// 1..N image gallery block (spec 010 / ADR 0009 gap-fill, FR-005) — the
-// "add a one-to-many picture section to any page layout" block. Workshop
-// `photos[]` migrates here; one-off figures use `image`. Captions + alt come
-// from the Media collection. Per BLOCK_LIBRARY.md §5.2.
+// A set of pictures, or a strip of logos (WordPress "Gallery"). Replaces
+// `logo-bar` and `client-logo-grid` as the `logos` layout. There is no column
+// control: the renderer picks the column count from how many items there are
+// (docs/planning/block-consolidation.md). One-off figures use `image`.
 export const Gallery: Block = {
   slug: 'gallery',
   interfaceName: 'GalleryBlock',
@@ -16,6 +16,7 @@ export const Gallery: Block = {
   admin: blockAdmin('content', 'gallery', 'Gallery'),
   fields: [
     headingField(),
+    introField(),
     {
       name: 'items',
       type: 'array',
@@ -24,7 +25,8 @@ export const Gallery: Block = {
       required: true,
       minRows: 1,
       admin: {
-        description: 'The pictures in this gallery, in the order you arrange them.',
+        description:
+          'The pictures or logos, in the order you arrange them. Add as many as you have; the layout fits the count.',
         components: {
           RowLabel: mediaRowLabel({
             singular: 'Image',
@@ -41,7 +43,8 @@ export const Gallery: Block = {
           label: 'Image',
           required: true,
           admin: {
-            description: 'Pick from Media, or upload. Landscape images sit best in a grid.',
+            description:
+              'Pick from Media, or upload. Landscape photos sit best in a grid; a logo should be a transparent PNG or SVG so it sits on any background.',
           },
         },
         {
@@ -50,7 +53,7 @@ export const Gallery: Block = {
           label: 'Caption',
           admin: {
             description:
-              'Optional line under the image. It also names this row when the list is collapsed.',
+              'Optional line under the image, or a small name under a logo. It also names this row when the list is collapsed.',
           },
         },
       ],
@@ -62,29 +65,14 @@ export const Gallery: Block = {
       defaultValue: 'grid',
       admin: {
         description:
-          'A grid shows every image at once. A carousel puts them in one swipeable row, roughly one image wide on a phone and three on a desktop, which suits a long set.',
+          'A grid shows every picture at once and picks its columns from how many there are. A carousel puts them in one swipeable row, roughly one picture wide on a phone and three on a desktop, which suits a long set. Logos draws client or partner logos in gray, turning to full color when a visitor points at one.',
       },
       options: [
         { label: 'Grid', value: 'grid' },
         { label: 'Carousel', value: 'carousel' },
+        { label: 'Logos', value: 'logos' },
       ],
     },
-    {
-      name: 'columns',
-      type: 'select',
-      label: 'Images per row',
-      defaultValue: '3',
-      options: [
-        { label: '2 columns', value: '2' },
-        { label: '3 columns', value: '3' },
-        { label: '4 columns', value: '4' },
-      ],
-      // Only meaningful for the grid layout; carousel ignores column count.
-      admin: {
-        condition: (_, siblingData) => siblingData?.layout !== 'carousel',
-        description:
-          'How many fit across on a wide screen. Phones always stack. Hidden while the carousel is selected, which ignores it.',
-      },
-    },
+    backgroundField(),
   ],
 }

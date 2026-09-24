@@ -26,6 +26,7 @@ import KeyTakeaways from './KeyTakeaways'
 import LocationsList from './LocationsList'
 import LogoBar from './LogoBar'
 import Map from './Map'
+import MediaText from './MediaText'
 import MetricDisplay from './MetricDisplay'
 import MissionVisionValues from './MissionVisionValues'
 import NavCards from './NavCards'
@@ -56,6 +57,7 @@ export const registry: Record<string, ComponentType<any>> = {
   'service-pillar-hero': ServicePillarHero,
   'homepage-hero': HomepageHero,
   content: Content,
+  'media-text': MediaText,
   'two-column': TwoColumn,
   image: Image,
   gallery: Gallery,

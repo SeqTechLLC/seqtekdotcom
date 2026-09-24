@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
+import { Embed } from '../../../src/components/sections/Embed'
 import { Hero } from '../../../src/components/sections/Hero'
 import { VideoEmbed } from '../../../src/components/sections/VideoEmbed'
 
@@ -16,6 +17,20 @@ describe('third-party embed iframes send the origin referrer', () => {
     const { container } = render(
       <VideoEmbed provider="youtube" videoId="dQw4w9WgXcQ" title="Workshop recap" />,
     )
+    const iframe = container.querySelector('iframe')
+    expect(iframe).not.toBeNull()
+    expect(iframe?.getAttribute('referrerpolicy')).toBe(REQUIRED_POLICY)
+  })
+
+  it.each([
+    { kind: 'video' as const, videoId: 'dQw4w9WgXcQ' },
+    {
+      kind: 'map' as const,
+      url: 'https://www.openstreetmap.org/export/embed.html?bbox=-96%2C36%2C-95.9%2C36.1',
+    },
+    { kind: 'page' as const, url: 'https://example.com' },
+  ])('<Embed kind="$kind" /> iframe uses the required referrer policy', (props) => {
+    const { container } = render(<Embed {...props} title="Embedded" />)
     const iframe = container.querySelector('iframe')
     expect(iframe).not.toBeNull()
     expect(iframe?.getAttribute('referrerpolicy')).toBe(REQUIRED_POLICY)
