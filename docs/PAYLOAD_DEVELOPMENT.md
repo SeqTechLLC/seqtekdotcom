@@ -279,7 +279,7 @@ built-in `slugField`. `urlPathField.int.spec.ts` fails a collection whose `slug`
 - **It adds a hidden `generateSlug` checkbox.** Its hook derives the slug from the title on create, and on update
   only while the checkbox is on, turning it off once a slug exists. The column defaults to `true`, so adding the
   field to a collection that already has rows needs a backfill to `false` in the same migration; otherwise the next
-  save of every existing record regenerates its slug from its title. See `20260915_183810_us5_builtin_slug_field`.
+  save of every existing record regenerates its slug from its title. See `20260915_183810_us5_builtin_slug_field` (in git history since the 2026-09-24 baseline squash).
 - **Save Draft skips validation.** `validateSlug` covers empty and malformed values, which Payload checks only on
   publish. The collision check is `rejectSlugCollision`, a `beforeChange` field hook, so it runs on draft saves
   too; a draft save shows the toast but not field errors, so the hook puts its sentence on both.

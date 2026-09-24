@@ -163,9 +163,8 @@ pages as taggable services. Six fields needed it.
 #### `servicePillars` — REMOVED (SVC-2)
 
 Absorbed into `services` as `tier: 'group'`. The collection, its tables and its
-version history were dropped — see
-`src/migrations/20260901_022953_svc2_services_tiers.ts` for exactly what that
-does to existing rows. A group is now a `services` row: `title`, `slug`,
+version history were dropped (migration `20260901_022953_svc2_services_tiers`,
+in git history since the 2026-09-24 baseline squash). A group is now a `services` row: `title`, `slug`,
 `layout`, `seo` and `order` come from that collection's table above, and the
 old `description` / `heroImage` fields did not carry over (the group page's
 body is blocks now). Nothing points at `servicePillars` any more; a `cards`
