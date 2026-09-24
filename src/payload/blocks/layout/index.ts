@@ -27,6 +27,7 @@ import { HubspotForm } from './HubspotForm'
 import { HubspotMeetings } from './HubspotMeetings'
 import { Image } from './Image'
 import { IndustryGrid } from './IndustryGrid'
+import { Items } from './Items'
 import { KeyTakeaways } from './KeyTakeaways'
 import { LocationsList } from './LocationsList'
 import { LogoBar } from './LogoBar'
@@ -79,6 +80,7 @@ export {
   HubspotMeetings,
   Image,
   IndustryGrid,
+  Items,
   KeyTakeaways,
   LocationsList,
   LogoBar,
@@ -124,6 +126,7 @@ export const layoutBlocks = [
   Image,
   Gallery,
   ProcessSteps,
+  Items,
   Deliverables,
   ComparisonTable,
   Table,
