@@ -142,70 +142,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
-      blockType: 'case-study-hero',
-      variants: [
-        {
-          name: 'default',
-          data: {
-            blockType: 'case-study-hero',
-            eyebrow: 'MANUFACTURING · OPERATIONS',
-            headline: 'Cut downtime in half on three shifts',
-            metric: {
-              number: '52%',
-              label: 'reduction in unplanned downtime',
-              context: 'Measured across 12 production lines over 90 days post-launch.',
-            },
-            heroImage: media.screenshot,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'service-pillar-hero',
-      variants: [
-        {
-          name: 'with-cta',
-          data: {
-            blockType: 'service-pillar-hero',
-            pillarName: 'ORGANIZATIONAL STRATEGY',
-            headline: 'Make the call sooner, with sharper data',
-            subheadline:
-              'Pillar lead: aligning leadership, ops, and product on a single quarterly thesis.',
-            heroImage: media.illustration,
-            primaryCta: { label: 'Talk to a pillar lead', url: '/showcase' },
-          },
-        },
-        {
-          name: 'no-cta',
-          data: {
-            blockType: 'service-pillar-hero',
-            pillarName: 'TECHNOLOGY & DATA',
-            headline: 'Ship the system without inheriting tech debt',
-            subheadline: 'Pillar lead: pragmatic data + platform work that compounds.',
-            heroImage: media.illustration,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'homepage-hero',
-      variants: [
-        {
-          name: 'with-background',
-          data: {
-            blockType: 'homepage-hero',
-            eyebrow: 'DELIVERING TRANSFORMATIVE TECHNOLOGIES',
-            headline: 'Localshoring talent for teams that ship outcomes',
-            subheadline:
-              'Senior engineers in Tulsa, OKC, Northwest Arkansas, and Kansas City. Embedded with your team. No offshore handoffs.',
-            backgroundImage: media.photo,
-            primaryCta: { label: 'Book a call', url: '/showcase' },
-            secondaryCta: { label: 'Take the assessment', url: '/showcase' },
-          },
-        },
-      ],
-    },
-    {
       blockType: 'content',
       variants: [
         {
@@ -365,39 +301,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
-      blockType: 'two-column',
-      variants: [
-        {
-          name: 'media-left',
-          data: {
-            blockType: 'two-column',
-            mediaPosition: 'left',
-            media: media.photo,
-            body: buildLexical([
-              { kind: 'h', tag: 'h2', text: 'Media-left two-column' },
-              {
-                kind: 'p',
-                text: 'Side-by-side content for product proofs, before/after, or testimonial pairings.',
-              },
-            ]),
-            cta: { label: 'See the work', url: '/showcase' },
-          },
-        },
-        {
-          name: 'media-right',
-          data: {
-            blockType: 'two-column',
-            mediaPosition: 'right',
-            media: media.illustration,
-            body: buildLexical([
-              { kind: 'h', tag: 'h2', text: 'Media-right two-column' },
-              { kind: 'p', text: 'Same shape, opposite arrangement.' },
-            ]),
-          },
-        },
-      ],
-    },
-    {
       blockType: 'image',
       variants: [
         {
@@ -539,50 +442,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             layout: 'logos',
             background: 'subtle',
             items: [{ image: media.logo }, { image: media.logo }, { image: media.logo }],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'process-steps',
-      variants: [
-        {
-          name: 'three-steps',
-          data: {
-            blockType: 'process-steps',
-            heading: 'How a Touchstone engagement starts',
-            steps: [
-              {
-                title: 'Discovery week',
-                body: 'A small senior team co-locates with yours to map workflows and surface friction.',
-              },
-              {
-                title: 'Plan of record',
-                body: 'We commit to a four-week plan with named owners and weekly readouts.',
-              },
-              {
-                title: 'Ship and stabilize',
-                body: 'Code lands behind a flag, then ramps. We document the runbooks before we leave.',
-              },
-            ],
-          },
-        },
-        {
-          name: 'six-steps',
-          data: {
-            blockType: 'process-steps',
-            heading: 'Service delivery framework',
-            steps: [
-              { title: 'Listen', body: 'Stakeholder interviews and prior-art review.' },
-              {
-                title: 'Frame',
-                body: 'Synthesize the problem statement, success metric, constraints.',
-              },
-              { title: 'Prototype', body: 'Build the smallest thing that can be tested.' },
-              { title: 'Validate', body: 'Run against real workflows and decision-makers.' },
-              { title: 'Productionize', body: 'Harden, document, monitor.' },
-              { title: 'Handoff', body: 'Train the internal team and exit cleanly.' },
-            ],
           },
         },
       ],
@@ -847,46 +706,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
-      blockType: 'comparison-table',
-      variants: [
-        {
-          name: 'localshoring',
-          data: {
-            blockType: 'comparison-table',
-            heading: 'Localshoring vs offshore vs nearshore',
-            columns: [
-              { label: 'Localshoring', tagline: 'Senior US engineers' },
-              { label: 'Nearshore', tagline: 'LATAM / 1-2h offset' },
-              { label: 'Offshore', tagline: 'APAC / 9-12h offset' },
-            ],
-            rows: [
-              {
-                dimension: 'Hours of overlap',
-                cells: [{ value: '8 hours' }, { value: '5-6 hours' }, { value: '1-2 hours' }],
-              },
-              {
-                dimension: 'Cultural and language fit',
-                cells: [{ value: 'Native' }, { value: 'Strong' }, { value: 'Variable' }],
-              },
-              {
-                dimension: 'Cost vs full-time hire',
-                cells: [{ value: '0.7x' }, { value: '0.5x' }, { value: '0.3x' }],
-              },
-              {
-                dimension: 'Velocity ramp',
-                cells: [{ value: '1-2 weeks' }, { value: '2-4 weeks' }, { value: '6+ weeks' }],
-              },
-            ],
-            bestForRow: [
-              { value: 'Critical roadmap work' },
-              { value: 'Mature platform features' },
-              { value: 'Maintenance + steady-state' },
-            ],
-          },
-        },
-      ],
-    },
-    {
       blockType: 'table',
       variants: [
         {
@@ -967,156 +786,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
-      blockType: 'mission-vision-values',
-      variants: [
-        {
-          name: 'grid',
-          data: {
-            blockType: 'mission-vision-values',
-            mission:
-              'Deliver transformative technologies that help mid-market teams ship outcomes their leadership can stand behind.',
-            vision:
-              'A regional consulting model where senior US engineers and the businesses they serve grow together for decades, not project cycles.',
-            values: [
-              {
-                name: 'Localshoring',
-                description:
-                  'Senior talent in the same time zone and culture, embedded with your team.',
-              },
-              {
-                name: 'Outcomes over hours',
-                description: 'Engagements end when the work works, not when the budget runs.',
-              },
-              {
-                name: 'Plain language',
-                description: 'No jargon, no theatre, no slides that hide what we mean.',
-              },
-              {
-                name: 'Compound trust',
-                description:
-                  'We optimize for the next decade with each client, not the next quarter.',
-              },
-            ],
-            layout: 'grid',
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'timeline',
-      variants: [
-        {
-          name: 'company-milestones',
-          data: {
-            blockType: 'timeline',
-            heading: 'SEQTEK milestones',
-            items: [
-              {
-                date: '1999',
-                title: 'Founded in Tulsa',
-                body: 'Started as a small consulting practice serving regional manufacturers.',
-              },
-              {
-                date: '2008',
-                title: 'First multi-market engagement',
-                body: 'Expanded from Tulsa-only into OKC with a healthcare data project.',
-              },
-              {
-                date: '2018',
-                title: 'Localshoring model formalized',
-                body: 'Named the senior-engineer, in-time-zone delivery model that had been informal until then.',
-              },
-              {
-                date: '2024',
-                title: 'Touchstone workshop series launched',
-                body: 'Three-workshop arc anchoring discovery, alignment, and decision-making for leadership teams.',
-              },
-            ],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'stats-bar',
-      variants: [
-        {
-          name: 'inline',
-          data: {
-            blockType: 'stats-bar',
-            heading: 'By the numbers',
-            items: [
-              { number: '25', label: 'years operating', suffix: '+' },
-              { number: '0.7', label: 'cost vs FTE hire', suffix: 'x' },
-              { number: '52', label: 'reduction in downtime', suffix: '%' },
-              { number: '8', label: 'overlap hours', suffix: 'h' },
-            ],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'logo-bar',
-      variants: [
-        {
-          name: 'inline-grayscale',
-          data: {
-            blockType: 'logo-bar',
-            heading: 'Trusted by leadership teams',
-            logos: [
-              { logo: media.logo },
-              { logo: media.logo },
-              { logo: media.logo },
-              { logo: media.logo },
-              { logo: media.logo },
-            ],
-            treatment: 'grayscale-on-color-hover',
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'featured-testimonials',
-      variants: [
-        {
-          name: 'three-up',
-          data: {
-            blockType: 'featured-testimonials',
-            heading: 'What clients are saying',
-            testimonials: supporting.testimonialIds,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'testimonial-block',
-      variants: [
-        {
-          name: 'centered',
-          data: {
-            blockType: 'testimonial-block',
-            testimonial: supporting.testimonialIds[0],
-            layout: 'centered',
-          },
-        },
-        {
-          name: 'with-photo-left',
-          data: {
-            blockType: 'testimonial-block',
-            testimonial: supporting.testimonialIds[1],
-            layout: 'with-photo-left',
-          },
-        },
-        {
-          name: 'with-photo-right',
-          data: {
-            blockType: 'testimonial-block',
-            testimonial: supporting.testimonialIds[2],
-            layout: 'with-photo-right',
-          },
-        },
-      ],
-    },
-    {
       blockType: 'quote',
       variants: [
         {
@@ -1175,130 +844,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
-      blockType: 'client-logo-grid',
-      variants: [
-        {
-          name: 'four-col',
-          data: {
-            blockType: 'client-logo-grid',
-            heading: 'Industry partners',
-            logos: [
-              { logo: media.logo, caption: 'Manufacturing' },
-              { logo: media.logo, caption: 'Healthcare' },
-              { logo: media.logo, caption: 'FinTech' },
-              { logo: media.logo, caption: 'Energy' },
-              { logo: media.logo, caption: 'Logistics' },
-              { logo: media.logo, caption: 'Education' },
-              { logo: media.logo, caption: 'Public sector' },
-              { logo: media.logo, caption: 'Nonprofits' },
-            ],
-            columns: '4',
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'cta-section',
-      variants: [
-        {
-          name: 'centered',
-          data: {
-            blockType: 'cta-section',
-            variant: 'centered',
-            headline: 'Centered CTA',
-            body: 'Symmetrical CTA used at the end of pages.',
-            primaryCta: { label: 'Book a call', url: '/showcase' },
-            secondaryCta: { label: 'Learn more', url: '/showcase' },
-            background: 'default',
-          },
-        },
-        {
-          name: 'split',
-          data: {
-            blockType: 'cta-section',
-            variant: 'split',
-            headline: 'Split CTA',
-            body: 'Left-aligned CTA pairing with adjacent context above or below.',
-            primaryCta: { label: 'Primary', url: '/showcase' },
-            background: 'default',
-          },
-        },
-        {
-          name: 'inverse',
-          data: {
-            blockType: 'cta-section',
-            variant: 'inverse',
-            headline: 'Inverse CTA',
-            body: 'Brand-color background; high-contrast button.',
-            primaryCta: { label: 'Get started', url: '/showcase' },
-            background: 'accent',
-          },
-        },
-        {
-          name: 'centered-image-bg',
-          data: {
-            blockType: 'cta-section',
-            variant: 'centered',
-            headline: 'Centered CTA with image background',
-            body: 'Image renders behind the copy at reduced opacity.',
-            primaryCta: { label: 'Primary action', url: '/showcase' },
-            background: 'image',
-            backgroundImage: media.photo,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'newsletter-cta',
-      variants: [
-        {
-          name: 'with-body',
-          data: {
-            blockType: 'newsletter-cta',
-            heading: 'Subscribe to SEQTEK Insights',
-            body: 'Quarterly notes on localshoring, mid-market consulting, and what is working in regional tech teams.',
-            formId: '00000000-aaaa-bbbb-cccc-dddddddddddd',
-          },
-        },
-        {
-          // No supporting sentence — the heading has to carry the ask alone.
-          // (A variant with no form GUID would render nothing at all, by
-          // design: there is no way to subscribe without one.)
-          name: 'heading-only',
-          data: {
-            blockType: 'newsletter-cta',
-            heading: 'Stay in the loop',
-            formId: '00000000-aaaa-bbbb-cccc-dddddddddddd',
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'contact-cta',
-      variants: [
-        {
-          name: 'with-meeting-url',
-          data: {
-            blockType: 'contact-cta',
-            heading: 'Talk to a pillar lead',
-            body: 'Tell us what you are trying to ship and we will tell you whether we are the right team for it.',
-            primaryCta: { label: 'Book a call', url: '/contact' },
-            secondaryCta: { label: 'Email us', url: 'mailto:hello@seqtechllc.com' },
-            meetingUrl: 'https://meetings.hubspot.com/seqtek/intro',
-          },
-        },
-        {
-          name: 'no-meeting-url',
-          data: {
-            blockType: 'contact-cta',
-            heading: 'Get in touch',
-            body: 'No HubSpot meetings URL: the section collapses to one full-width column.',
-            primaryCta: { label: 'Contact us', url: '/contact' },
-          },
-        },
-      ],
-    },
-    {
       blockType: 'cta',
       variants: [
         {
@@ -1307,7 +852,7 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             blockType: 'cta',
             action: 'buttons',
             variant: 'centered',
-            background: 'accent',
+            background: 'brand',
             heading: 'Ready when you are',
             body: 'A centered ask with a main button and a lighter second link.',
             primaryCta: { label: 'Book a call', url: '/showcase', variant: 'primary' },
@@ -1494,7 +1039,7 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           },
         },
         {
-          name: 'team-grid',
+          name: 'team-members',
           data: {
             blockType: 'cards',
             heading: 'Leadership',
@@ -1622,219 +1167,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
-      blockType: 'case-study-grid',
-      variants: [
-        {
-          name: 'manual',
-          data: {
-            blockType: 'case-study-grid',
-            heading: 'Recent case studies',
-            source: 'manual',
-            manualItems: supporting.caseStudyIds,
-            limit: 3,
-          },
-        },
-        {
-          name: 'by-industry',
-          data: {
-            blockType: 'case-study-grid',
-            heading: 'By industry',
-            source: 'by-industry',
-            industry: supporting.industryIds[0],
-            limit: 3,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'service-cards',
-      variants: [
-        {
-          name: 'manual',
-          data: {
-            blockType: 'service-cards',
-            heading: 'Services',
-            source: 'manual',
-            manualItems: supporting.serviceIds,
-          },
-        },
-        {
-          name: 'by-pillar',
-          data: {
-            blockType: 'service-cards',
-            heading: 'By pillar',
-            source: 'by-pillar',
-            pillar: supporting.serviceGroupIds[0],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'featured-case-study',
-      variants: [
-        {
-          name: 'default',
-          data: {
-            blockType: 'featured-case-study',
-            heading: 'Featured case study',
-            caseStudy: supporting.caseStudyIds[0],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'post-list',
-      variants: [
-        {
-          name: 'manual',
-          data: {
-            blockType: 'post-list',
-            heading: 'Latest insights',
-            source: 'manual',
-            manualItems: supporting.postIds,
-            limit: 3,
-          },
-        },
-        {
-          name: 'latest',
-          data: {
-            blockType: 'post-list',
-            heading: 'Latest',
-            source: 'latest',
-            limit: 6,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'related-posts',
-      variants: [
-        {
-          name: 'manual',
-          data: {
-            blockType: 'related-posts',
-            heading: 'Related posts',
-            manualItems: supporting.postIds.slice(0, 3),
-          },
-        },
-        {
-          // Capped below the number of posts picked, and with the default
-          // heading. (A variant with nothing picked renders nothing at all, by
-          // design — the block does not fill itself in.)
-          name: 'capped',
-          data: {
-            blockType: 'related-posts',
-            manualItems: supporting.postIds.slice(0, 3),
-            limit: 2,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'industry-grid',
-      variants: [
-        {
-          name: 'four-up',
-          data: {
-            blockType: 'industry-grid',
-            heading: 'Industries we serve',
-            industries: supporting.industryIds,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'locations-list',
-      variants: [
-        {
-          name: 'all-markets',
-          data: {
-            blockType: 'locations-list',
-            heading: 'Where we work',
-            locations: supporting.locationIds,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'workshop-list',
-      variants: [
-        {
-          name: 'touchstone-progression',
-          data: {
-            blockType: 'workshop-list',
-            heading: 'Touchstone workshops',
-            workshops: supporting.workshopIds,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'video-embed',
-      variants: [
-        {
-          name: 'youtube',
-          data: {
-            blockType: 'video-embed',
-            provider: 'youtube',
-            videoId: 'dQw4w9WgXcQ',
-            title: 'YouTube embed example',
-          },
-        },
-        {
-          name: 'with-facade-thumbnail',
-          data: {
-            blockType: 'video-embed',
-            provider: 'youtube',
-            videoId: 'dQw4w9WgXcQ',
-            title: 'Facade-style embed with click-to-load',
-            thumbnail: media.screenshot,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'faq',
-      variants: [
-        {
-          name: 'three-questions',
-          data: {
-            blockType: 'faq',
-            heading: 'Frequently asked questions',
-            items: [
-              {
-                question: 'What is localshoring?',
-                answer: buildLexical([
-                  {
-                    kind: 'p',
-                    text: 'Senior US engineers in the same time zone and culture as your team, embedded for the duration of the engagement. No offshore handoffs.',
-                  },
-                ]),
-              },
-              {
-                question: 'How does pricing work?',
-                answer: buildLexical([
-                  {
-                    kind: 'p',
-                    text: 'Fixed-fee engagements scoped at the start, with clearly named deliverables. No hourly billing.',
-                  },
-                ]),
-              },
-              {
-                question: 'How small an engagement do you accept?',
-                answer: buildLexical([
-                  {
-                    kind: 'p',
-                    text: 'Touchstone workshops start at one week. Full engagements typically start at four weeks of senior-team effort.',
-                  },
-                ]),
-              },
-            ],
-          },
-        },
-      ],
-    },
-    {
       blockType: 'accordion',
       variants: [
         {
@@ -1917,50 +1249,20 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
-      blockType: 'tabs',
-      variants: [
-        {
-          name: 'engagement-models',
-          data: {
-            blockType: 'tabs',
-            heading: 'Engagement models',
-            tabs: [
-              {
-                label: 'Workshop',
-                body: 'One week, on-site or virtual. Fixed fee. Discovery, alignment, or decision-making.',
-              },
-              {
-                label: 'Project',
-                body: 'Four to twelve weeks. Fixed scope. Senior team embedded with yours.',
-              },
-              {
-                label: 'Retained',
-                body: 'Quarterly engagement. Senior leadership pairing for ongoing platform decisions.',
-              },
-            ],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'map',
-      variants: [
-        {
-          name: 'tulsa-osm',
-          data: {
-            blockType: 'map',
-            heading: 'Tulsa headquarters',
-            embedUrl:
-              'https://www.openstreetmap.org/export/embed.html?bbox=-95.999%2C36.149%2C-95.985%2C36.156&layer=mapnik',
-            caption: '12 N Cheyenne Ave, Tulsa, OK 74103',
-            height: 360,
-          },
-        },
-      ],
-    },
-    {
       blockType: 'embed',
       variants: [
+        {
+          name: 'video-vimeo-poster',
+          data: {
+            blockType: 'embed',
+            kind: 'video',
+            provider: 'vimeo',
+            videoId: '76979871',
+            heading: 'A recorded session',
+            title: 'Vimeo embed behind a click-to-load poster',
+            thumbnail: media.screenshot,
+          },
+        },
         {
           name: 'video-youtube-subtle',
           data: {
@@ -1972,17 +1274,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             videoId: 'dQw4w9WgXcQ',
             title: 'YouTube embed example',
             background: 'subtle',
-          },
-        },
-        {
-          name: 'video-vimeo-poster',
-          data: {
-            blockType: 'embed',
-            kind: 'video',
-            provider: 'vimeo',
-            videoId: '76979871',
-            title: 'Vimeo embed behind a click-to-load poster',
-            thumbnail: media.screenshot,
           },
         },
         {
@@ -2026,103 +1317,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
     },
     // ---- Deferred catalog blocks (BLOCK_LIBRARY.md §5.7) ----
     {
-      blockType: 'deliverables',
-      variants: [
-        {
-          name: 'four-deliverables',
-          data: {
-            blockType: 'deliverables',
-            heading: 'What ships from a Touchstone engagement',
-            items: [
-              { label: 'Plan of record with named owners' },
-              { label: 'Weekly Friday readouts (written)' },
-              { label: 'Production-ready code behind a feature flag' },
-              { label: 'Runbook + handoff session for the internal team' },
-            ],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'metric-display',
-      variants: [
-        {
-          name: 'accent',
-          data: {
-            blockType: 'metric-display',
-            number: '0.7x',
-            label: 'Cost vs full-time hire',
-            context: 'Across embedded engagements 4 weeks and longer.',
-            background: 'accent',
-          },
-        },
-        {
-          name: 'inverse',
-          data: {
-            blockType: 'metric-display',
-            number: '8h',
-            label: 'Overlap with US business hours',
-            context: 'Every day. No async-only handoffs.',
-            background: 'inverse',
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'service-pillar-cards',
-      variants: [
-        {
-          name: 'three-pillars',
-          data: {
-            blockType: 'service-pillar-cards',
-            heading: 'Three service pillars',
-            pillars: supporting.serviceGroupIds,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'team-grid',
-      variants: [
-        {
-          name: 'manual-cards',
-          data: {
-            blockType: 'team-grid',
-            heading: 'Leadership',
-            filter: 'leadership-only',
-            layout: 'cards',
-            manualItems: supporting.teamMemberIds,
-          },
-        },
-        {
-          name: 'filter-only',
-          data: {
-            blockType: 'team-grid',
-            heading: 'Featured team',
-            filter: 'all',
-            layout: 'compact',
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'download-card',
-      variants: [
-        {
-          name: 'with-cover',
-          data: {
-            blockType: 'download-card',
-            title: 'Localshoring vs offshore: the 2026 buyer’s guide',
-            description:
-              'A short PDF for engineering and operations leaders comparing total cost, velocity, and risk across the three sourcing models.',
-            coverImage: media.illustration,
-            formId: '00000000-aaaa-bbbb-cccc-dddddddddddd',
-            fileUrl: 'https://example.com/localshoring-guide.pdf',
-          },
-        },
-      ],
-    },
-    {
       blockType: 'hubspot-form',
       variants: [
         {
@@ -2160,112 +1354,6 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             heading: 'A form on the accent band',
             formId: '11111111-aaaa-bbbb-cccc-dddddddddddd',
             background: 'accent',
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'hubspot-meetings',
-      variants: [
-        {
-          name: 'intro-call',
-          data: {
-            blockType: 'hubspot-meetings',
-            heading: 'Book a 30-minute intro call',
-            meetingUrl: 'https://meetings.hubspot.com/seqtek/intro',
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'brand-teaser',
-      variants: [
-        {
-          name: 'sequoyah',
-          data: {
-            blockType: 'brand-teaser',
-            headline: 'Why SEQTEK is named for Sequoyah',
-            body: 'The Cherokee scholar who built a writing system from scratch in the early 1800s. The name signals the kind of patient, generation-spanning work we want to be known for.',
-            linkLabel: 'Read our story',
-            linkUrl: '/our-story',
-            image: media.illustration,
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'nav-cards',
-      variants: [
-        {
-          name: 'three-cards',
-          data: {
-            blockType: 'nav-cards',
-            cards: [
-              {
-                title: 'Our story',
-                description: 'A 25-year arc of how SEQTEK got here.',
-                image: media.photo,
-                linkUrl: '/our-story',
-              },
-              {
-                title: 'The team',
-                description: 'Senior engineers and pillar leads.',
-                image: media.photo,
-                linkUrl: '/team',
-              },
-              {
-                title: 'Localshoring',
-                description: 'The delivery model the company is built on.',
-                image: media.photo,
-                // /about/localshoring was never a built route; the page is flat.
-                linkUrl: '/localshoring',
-              },
-            ],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'key-takeaways',
-      variants: [
-        {
-          name: 'three-takeaways',
-          data: {
-            blockType: 'key-takeaways',
-            heading: 'Key takeaways',
-            items: [
-              {
-                label:
-                  'A senior team in your time zone catches half the problems before they reach a ticket.',
-              },
-              {
-                label: 'Fixed-scope, fixed-fee engagements end at the work, not the budget.',
-              },
-              {
-                label:
-                  'Discovery weeks pay back the most when the team is split across timezones today.',
-              },
-            ],
-          },
-        },
-      ],
-    },
-    {
-      blockType: 'tech-stack',
-      variants: [
-        {
-          name: 'web-platform',
-          data: {
-            blockType: 'tech-stack',
-            heading: 'Technologies in this engagement',
-            items: [
-              { label: 'TypeScript' },
-              { label: 'Next.js', linkUrl: '/services/web-platform' },
-              { label: 'Postgres' },
-              { label: 'AWS' },
-              { label: 'Payload CMS' },
-              { label: 'Tailwind' },
-            ],
           },
         },
       ],

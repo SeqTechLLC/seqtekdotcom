@@ -18,6 +18,7 @@ import * as migration_20260901_022953_svc2_services_tiers from './20260901_02295
 import * as migration_20260904_155333_ind1_industries_layout from './20260904_155333_ind1_industries_layout'
 import * as migration_20260915_183810_us5_builtin_slug_field from './20260915_183810_us5_builtin_slug_field'
 import * as migration_20260916_211445_nav_collection from './20260916_211445_nav_collection'
+import * as migration_20260924_174050_thirteen_blocks from './20260924_174050_thirteen_blocks'
 
 export const migrations = [
   {
@@ -119,5 +120,10 @@ export const migrations = [
     up: migration_20260916_211445_nav_collection.up,
     down: migration_20260916_211445_nav_collection.down,
     name: '20260916_211445_nav_collection',
+  },
+  {
+    up: migration_20260924_174050_thirteen_blocks.up,
+    down: migration_20260924_174050_thirteen_blocks.down,
+    name: '20260924_174050_thirteen_blocks',
   },
 ]

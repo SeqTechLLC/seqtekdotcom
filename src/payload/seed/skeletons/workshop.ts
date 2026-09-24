@@ -17,17 +17,19 @@ export const workshopSkeleton = (): Array<Record<string, unknown>> => [
     ]),
   },
   {
-    blockType: 'deliverables',
+    blockType: 'items',
     heading: 'What you leave with',
-    // The deliverables block requires minRows 3; seed three editable placeholders.
+    layout: 'list',
+    markers: 'none',
     items: [
-      { label: 'First concrete deliverable' },
-      { label: 'Second concrete deliverable' },
-      { label: 'Third concrete deliverable' },
+      { title: 'First concrete deliverable' },
+      { title: 'Second concrete deliverable' },
+      { title: 'Third concrete deliverable' },
     ],
   },
   {
-    blockType: 'contact-cta',
+    blockType: 'cta',
+    action: 'buttons',
     heading: 'Request this workshop',
     body: 'Tell us about your team and we will follow up with dates.',
     primaryCta: { label: 'Book a call', url: '/contact' },

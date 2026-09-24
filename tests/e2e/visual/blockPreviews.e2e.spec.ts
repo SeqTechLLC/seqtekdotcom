@@ -76,7 +76,12 @@ for (const fixture of fixtures) {
     // reach anyway. Hiding the light-DOM host takes its shadow content with
     // it, and matching by tag name also catches a portal injected after this
     // style tag.
-    await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' })
+    // The site header is sticky, so a block taller than the viewport (a video
+    // embed) had the header painted across the top of its preview too.
+    await page.addStyleTag({
+      content:
+        'nextjs-portal { display: none !important; } [data-testid="site-header"] { visibility: hidden !important; }',
+    })
 
     const article = page.getByTestId('page')
     await expect(article).toBeVisible()

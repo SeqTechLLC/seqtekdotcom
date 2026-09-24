@@ -31,8 +31,8 @@ const eyebrow = eyebrowField({
 export const Embed: Block = {
   slug: 'embed',
   interfaceName: 'EmbedBlock',
-  labels: { singular: 'Embed (video or page)', plural: 'Embeds (video or page)' },
-  admin: blockAdmin('specialty', 'embed', 'Embed (video or page)'),
+  labels: { singular: 'Embed (video, map or page)', plural: 'Embeds (video, map or page)' },
+  admin: blockAdmin('specialty', 'embed', 'Embed (video, map or page)'),
   fields: [
     {
       name: 'kind',

@@ -125,7 +125,7 @@ function casesFor(slug: string, fields: AnyField[]): Omit<VariantCase, 'row'>[] 
 /** Enough of a row for the edit view to draw the block's fields. */
 const SEED_ROWS: Record<string, Record<string, unknown>> = {
   hero: { headline: 'Variant fixture hero' },
-  'cta-section': { headline: 'Variant fixture CTA' },
+  cta: { heading: 'Variant fixture CTA', primaryCta: { label: 'Go', url: '/contact' } },
 }
 
 const CASES: VariantCase[] = layoutBlocks

@@ -14,8 +14,8 @@ type HeroSibling = { variant?: string }
 export const Hero: Block = {
   slug: 'hero',
   interfaceName: 'HeroBlock',
-  labels: { singular: 'Hero section', plural: 'Hero sections' },
-  admin: blockAdmin('hero', 'hero', 'Hero section'),
+  labels: { singular: 'Hero', plural: 'Heroes' },
+  admin: blockAdmin('hero', 'hero', 'Hero'),
   fields: [
     {
       name: 'variant',

@@ -94,57 +94,6 @@ export const byLeadershipThenOrder = (a: TeamOrdering, b: TeamOrdering): number 
   return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
 }
 
-async function resolveTeamGrid(block: LayoutBlock): Promise<LayoutBlock> {
-  // `manualItems` is documented on the block as an override that wins over the
-  // filter, so an explicit pick is honoured before any query runs.
-  if (hasManualItems(block)) return block
-  const members = await listTeamMembers()
-  const picked =
-    block.filter === 'leadership-only' ? members.filter((m) => Boolean(m.isLeadership)) : members
-  return { ...block, manualItems: [...picked].sort(byLeadershipThenOrder) }
-}
-
-async function resolvePostList(block: LayoutBlock): Promise<LayoutBlock> {
-  if (block.source === 'manual') return block
-  const posts = await listPosts() // already sorted `-publishedAt`
-  const picked: Post[] =
-    block.source === 'by-category'
-      ? posts.filter((p) => relationListHas(p.categories, block.category))
-      : posts
-  return { ...block, manualItems: picked.slice(0, limitOf(block, 3)) }
-}
-
-async function resolveCaseStudyGrid(block: LayoutBlock): Promise<LayoutBlock> {
-  if (block.source === 'manual') return block
-  const studies = await listCaseStudies() // already sorted `-publishedAt`
-  let picked: CaseStudy[] = studies
-  if (block.source === 'by-industry') {
-    picked = studies.filter((s) => sameRelation(s.industry, block.industry))
-  } else if (block.source === 'by-service') {
-    picked = studies.filter((s) => relationListHas(s.services, block.service))
-  }
-  return { ...block, manualItems: picked.slice(0, limitOf(block, 3)) }
-}
-
-async function resolveServiceCards(block: LayoutBlock): Promise<LayoutBlock> {
-  if (block.source === 'manual') return block
-  const all = await listServices() // already sorted by `order`
-  // SVC-2: `services` holds three tiers. A card list is always services, never
-  // the groups or the axis pages that live alongside them.
-  const leaves = all.filter((s) => s.tier === 'leaf')
-  if (block.source !== 'by-pillar') return { ...block, manualItems: leaves }
-
-  // The relation lives on the GROUP, not the leaf, so this is a lookup rather
-  // than a filter — and the group's chosen ORDER is what renders, where the old
-  // `pillar`-on-the-service model fell back to the services' own `order`.
-  const group = all.find((s) => s.tier === 'group' && sameRelation(s, block.pillar))
-  const byId = new Map(leaves.map((s) => [s.id, s]))
-  const picked = (group?.items ?? [])
-    .map((item) => byId.get(typeof item === 'object' ? item.id : (item as number)))
-    .filter((s): s is Service => !!s)
-  return { ...block, manualItems: picked }
-}
-
 /**
  * The leaf services a group holds, in the group's own order. The relation
  * lives on the GROUP (SVC-2), so this is a lookup rather than a filter. A
@@ -237,10 +186,6 @@ async function resolveCards(block: LayoutBlock): Promise<LayoutBlock> {
  * instead of a silently green gate.
  */
 const RESOLVERS: Record<ResolvedBlockType, (block: LayoutBlock) => Promise<LayoutBlock>> = {
-  'team-grid': resolveTeamGrid,
-  'post-list': resolvePostList,
-  'case-study-grid': resolveCaseStudyGrid,
-  'service-cards': resolveServiceCards,
   cards: resolveCards,
 }
 

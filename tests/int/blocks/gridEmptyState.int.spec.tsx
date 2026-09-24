@@ -3,8 +3,6 @@ import { describe, expect, it } from 'vitest'
 
 import { CARD_COLLECTIONS } from '../../../src/lib/cardCollections'
 import { Cards } from '../../../src/components/sections/Cards'
-import { CaseStudyGrid } from '../../../src/components/sections/CaseStudyGrid'
-import { IndustryGrid } from '../../../src/components/sections/IndustryGrid'
 
 /**
  * A collection-backed grid with nothing to show renders NOTHING — not a heading.
@@ -24,18 +22,6 @@ import { IndustryGrid } from '../../../src/components/sections/IndustryGrid'
  */
 describe('a grid with no items renders nothing at all', () => {
   const cases = [
-    {
-      name: 'CaseStudyGrid',
-      render: (items: unknown[] | null) => (
-        <CaseStudyGrid heading="Selected work" manualItems={items as never} />
-      ),
-    },
-    {
-      name: 'IndustryGrid',
-      render: (items: unknown[] | null) => (
-        <IndustryGrid heading="Sectors" industries={items as never} />
-      ),
-    },
     // The `cards` block, in every collection and both displays. Its lists are
     // the ones most likely to come back empty: they fill themselves at render.
     ...CARD_COLLECTIONS.flatMap((collection) =>
@@ -73,10 +59,11 @@ describe('a grid with no items renders nothing at all', () => {
     })
   }
 
-  it('CaseStudyGrid still renders once it has one real item', () => {
+  it('a case-study grid still renders once it has one real item', () => {
     const { container } = render(
-      <CaseStudyGrid
+      <Cards
         heading="Selected work"
+        collection="caseStudies"
         manualItems={[{ id: 1, title: 'NovaMud', slug: 'novamud' }] as never}
       />,
     )

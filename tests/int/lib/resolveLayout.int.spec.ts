@@ -65,163 +65,6 @@ beforeEach(() => {
   listPartners.mockResolvedValue([])
 })
 
-describe('resolveLayout — team-grid', () => {
-  it('fills leadership-only with the members marked as leadership', async () => {
-    const [block] = await resolveLayout([{ blockType: 'team-grid', filter: 'leadership-only' }])
-    expect(block.manualItems).toEqual([hank, dana])
-  })
-
-  it('fills `all` with every member, leadership first then by order', async () => {
-    const [block] = await resolveLayout([{ blockType: 'team-grid', filter: 'all' }])
-    expect((block.manualItems as (typeof hank)[]).map((m) => m.name)).toEqual([
-      'Hank Haines',
-      'Dana Dudley',
-      'Trevor Staub',
-      'No Order',
-    ])
-  })
-
-  it('honours an explicit manual pick over the filter and issues no query', async () => {
-    const picked = [{ id: 9, name: 'Picked' }]
-    const [block] = await resolveLayout([
-      { blockType: 'team-grid', filter: 'leadership-only', manualItems: picked },
-    ])
-    expect(block.manualItems).toBe(picked)
-    expect(listTeamMembers).not.toHaveBeenCalled()
-  })
-
-  it('treats an empty manual list as "not picked" and falls back to the filter', async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'team-grid', filter: 'leadership-only', manualItems: [] },
-    ])
-    expect(block.manualItems).toEqual([hank, dana])
-  })
-})
-
-describe('resolveLayout — post-list', () => {
-  const a = { id: 1, title: 'A', categories: [10] }
-  const b = { id: 2, title: 'B', categories: [{ id: 20 }] }
-  const c = { id: 3, title: 'C', categories: [10, 20] }
-
-  beforeEach(() => listPosts.mockResolvedValue([a, b, c]))
-
-  it('fills `latest` from the reader, capped by limit', async () => {
-    const [block] = await resolveLayout([{ blockType: 'post-list', source: 'latest', limit: 2 }])
-    expect(block.manualItems).toEqual([a, b])
-  })
-
-  it('defaults the limit to 3 when unset', async () => {
-    const [block] = await resolveLayout([{ blockType: 'post-list', source: 'latest' }])
-    expect(block.manualItems).toHaveLength(3)
-  })
-
-  it('filters by-category across raw ids and populated relations alike', async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'post-list', source: 'by-category', category: 20 },
-    ])
-    expect((block.manualItems as (typeof a)[]).map((p) => p.title)).toEqual(['B', 'C'])
-  })
-
-  it('leaves a manual block untouched', async () => {
-    const manual = { blockType: 'post-list', source: 'manual', manualItems: [a] }
-    const [block] = await resolveLayout([manual])
-    expect(block).toBe(manual)
-    expect(listPosts).not.toHaveBeenCalled()
-  })
-})
-
-describe('resolveLayout — case-study-grid', () => {
-  const one = { id: 1, title: 'One', industry: 5, services: [7] }
-  const two = { id: 2, title: 'Two', industry: { id: 6 }, services: [8, 7] }
-
-  beforeEach(() => listCaseStudies.mockResolvedValue([one, two]))
-
-  it('filters by-industry', async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'case-study-grid', source: 'by-industry', industry: 6 },
-    ])
-    expect(block.manualItems).toEqual([two])
-  })
-
-  it('filters by-service across a hasMany relation', async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'case-study-grid', source: 'by-service', service: 7 },
-    ])
-    expect(block.manualItems).toEqual([one, two])
-  })
-
-  it('fills `latest` with the whole list', async () => {
-    const [block] = await resolveLayout([{ blockType: 'case-study-grid', source: 'latest' }])
-    expect(block.manualItems).toEqual([one, two])
-  })
-})
-
-// ROADMAP SVC-2. The relation lives on the GROUP, and groups live in the SAME
-// collection as the services under `tier`. So this resolver does two things the
-// old `pillar`-on-the-service version did not: it filters the tiers apart, and
-// it walks the group's ordered list rather than filtering the service list.
-describe('resolveLayout — service-cards', () => {
-  const alpha = { id: 1, title: 'Alpha', tier: 'leaf' }
-  const beta = { id: 2, title: 'Beta', tier: 'leaf' }
-  const gamma = { id: 3, title: 'Gamma', tier: 'leaf' }
-  const build = { id: 30, title: 'Build', tier: 'group', items: [gamma, alpha] }
-  const operate = { id: 40, title: 'Operate', tier: 'group', items: [2] }
-  const axis = { id: 50, title: 'What We Do', tier: 'axis', items: [build, operate] }
-
-  beforeEach(() => listServices.mockResolvedValue([alpha, beta, gamma, build, operate, axis]))
-
-  it('resolves by-pillar through the group that holds the services', async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'service-cards', source: 'by-pillar', pillar: 30 },
-    ])
-    expect(block.manualItems).toEqual([gamma, alpha])
-  })
-
-  it("renders in the GROUP's order, not the services' own order", async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'service-cards', source: 'by-pillar', pillar: 30 },
-    ])
-    expect((block.manualItems as { title: string }[]).map((s) => s.title)).toEqual([
-      'Gamma',
-      'Alpha',
-    ])
-  })
-
-  it('accepts a group whose items came back as bare ids', async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'service-cards', source: 'by-pillar', pillar: 40 },
-    ])
-    expect(block.manualItems).toEqual([beta])
-  })
-
-  it('never lists a group or an axis page as if it were a service', async () => {
-    // The whole risk of one collection: three tiers share it, and a card list
-    // is always services.
-    const [block] = await resolveLayout([{ blockType: 'service-cards', source: 'all' }])
-    expect(block.manualItems).toEqual([alpha, beta, gamma])
-  })
-
-  it('lists nothing for an axis page, whose items are groups rather than services', async () => {
-    const [block] = await resolveLayout([
-      { blockType: 'service-cards', source: 'by-pillar', pillar: 50 },
-    ])
-    expect(block.manualItems).toEqual([])
-  })
-
-  it('renders nothing when the block names no group, or an unknown one', async () => {
-    const [none] = await resolveLayout([{ blockType: 'service-cards', source: 'by-pillar' }])
-    expect(none.manualItems).toEqual([])
-    const [missing] = await resolveLayout([
-      { blockType: 'service-cards', source: 'by-pillar', pillar: 999 },
-    ])
-    expect(missing.manualItems).toEqual([])
-  })
-})
-
-// The `cards` block (docs/planning/block-consolidation.md) replaces the ten
-// per-collection grids with one resolver. Whatever the source, the component
-// is handed plain documents in `manualItems`, in the order the matching
-// listing page uses, trimmed by `limit`.
 describe('resolveLayout — cards', () => {
   const titles = (block: LayoutBlock) =>
     (block.manualItems as Array<{ title?: string; name?: string; city?: string }>).map(
@@ -515,18 +358,18 @@ describe('resolveLayout — pass-through', () => {
   it('resolves every block in one layout, preserving order', async () => {
     const out = await resolveLayout([
       { blockType: 'content' },
-      { blockType: 'team-grid', filter: 'leadership-only' },
+      { blockType: 'cards', collection: 'teamMembers', source: 'filtered', leadershipOnly: true },
       { blockType: 'hero' },
     ])
-    expect(out.map((b) => b.blockType)).toEqual(['content', 'team-grid', 'hero'])
+    expect(out.map((b) => b.blockType)).toEqual(['content', 'cards', 'hero'])
     expect(out[1].manualItems).toEqual([hank, dana])
   })
 
   it('propagates a reader failure rather than degrading to an empty section', async () => {
     listTeamMembers.mockRejectedValue(new Error('Payload read "listTeamMembers" exceeded 5000ms'))
-    await expect(resolveLayout([{ blockType: 'team-grid', filter: 'all' }])).rejects.toThrow(
-      /exceeded 5000ms/,
-    )
+    await expect(
+      resolveLayout([{ blockType: 'cards', collection: 'teamMembers', source: 'all' }]),
+    ).rejects.toThrow(/exceeded 5000ms/)
   })
 })
 

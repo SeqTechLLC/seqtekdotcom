@@ -10,7 +10,7 @@ import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
 import { resolveLayout } from '@/lib/resolveLayout'
 import { Cards } from '@/components/sections/Cards'
-import { CtaSection } from '@/components/sections/CtaSection'
+import { Cta } from '@/components/sections/Cta'
 import type { Homepage } from '@/payload-types'
 
 // spec 010 US5 (Phase F) — `/` is driven by the `homepage` GLOBAL's `layout`
@@ -68,9 +68,10 @@ export default async function HomePage() {
         <RenderBlocks blocks={layout} />
 
         <section data-testid="workshop-cta">
-          <CtaSection
+          <Cta
             variant="split"
-            headline="The Touchstone Workshop"
+            background="subtle"
+            heading="The Touchstone Workshop"
             body="A working session that turns AI ambition into an architecture, named epics, and a build sequence."
             primaryCta={{ label: 'Explore the workshop', url: '/workshops/touchstone' }}
           />

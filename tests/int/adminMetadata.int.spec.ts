@@ -603,9 +603,9 @@ describe('C4 — every field is legible without schema knowledge', () => {
   it('the walk covers the whole config', () => {
     // Guards the two suites below from passing vacuously if the flattener
     // stops descending into something. The margin is deliberately tight:
-    // at 300 against an actual 339, dropping `array` recursion loses exactly
-    // 38 fields and still passed.
-    expect(fields.length).toBeGreaterThan(330)
+    // the thirteen-block config (ADR 0013) walks 268, and dropping `array`
+    // recursion alone loses dozens.
+    expect(fields.length).toBeGreaterThan(260)
     // And name the container classes explicitly, so losing one is a named
     // failure rather than a headcount that happens to stay above the line.
     for (const path of [
@@ -618,7 +618,8 @@ describe('C4 — every field is legible without schema knowledge', () => {
         `the flattener stopped descending: nothing matched ${path}`,
       ).toBe(true)
     }
-    expect(new Set(fields.map((f) => f.entity)).size).toBeGreaterThan(50)
+    // 13 blocks + the collections and globals (35 entities at ADR 0013).
+    expect(new Set(fields.map((f) => f.entity)).size).toBeGreaterThan(30)
   })
 
   it('no rendered label is machine text', () => {

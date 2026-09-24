@@ -115,7 +115,9 @@ describe('<Cta action="buttons" /> (from cta-section)', () => {
 
   it('styles the main button by its chosen weight', () => {
     const style = (variant: 'primary' | 'secondary' | 'ghost') =>
-      render(<Cta heading="h" primaryCta={{ label: variant, url: '/x', variant }} />)
+      render(
+        <Cta heading="h" background="none" primaryCta={{ label: variant, url: '/x', variant }} />,
+      )
         .getByRole('link', { name: variant })
         .getAttribute('class')
     expect(style('primary')).toMatch(/bg-accent-strong/)
@@ -137,9 +139,10 @@ describe('<Cta action="buttons" /> (from cta-section)', () => {
     expect(cls).not.toMatch(/text-accent-strong/)
   })
 
-  it('sits on the accent band unless told otherwise', () => {
-    const { container } = render(<Cta {...base} />)
-    expect(container.querySelector('section')?.className).toMatch(/bg-surface-accent/)
+  it('sits on the solid brand band unless told otherwise, with a white main button', () => {
+    const { container, getAllByRole } = render(<Cta {...base} />)
+    expect(container.querySelector('section')?.className).toMatch(/bg-accent-strong/)
+    expect(getAllByRole('link')[0].getAttribute('class')).toMatch(/bg-white/)
   })
 })
 

@@ -84,4 +84,4 @@ Exactly one of:
 }
 ```
 
-Examples in `examples/` are validated by `tests/int/skills/composePage.int.spec.ts`.
+Examples in `examples/` (a market page, and a gap) are validated by `tests/int/skills/composePage.int.spec.ts`.
