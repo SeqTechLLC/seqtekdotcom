@@ -22,6 +22,7 @@ import HubspotForm from './HubspotForm'
 import HubspotMeetings from './HubspotMeetings'
 import Image from './Image'
 import IndustryGrid from './IndustryGrid'
+import Items from './Items'
 import KeyTakeaways from './KeyTakeaways'
 import LocationsList from './LocationsList'
 import LogoBar from './LogoBar'
@@ -60,6 +61,7 @@ export const registry: Record<string, ComponentType<any>> = {
   image: Image,
   gallery: Gallery,
   'process-steps': ProcessSteps,
+  items: Items,
   deliverables: Deliverables,
   'comparison-table': ComparisonTable,
   'mission-vision-values': MissionVisionValues,
