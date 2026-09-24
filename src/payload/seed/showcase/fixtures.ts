@@ -441,6 +441,86 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
+      blockType: 'table',
+      variants: [
+        {
+          name: 'comparison',
+          data: {
+            blockType: 'table',
+            heading: 'Three ways to staff a team',
+            intro:
+              'The same questions asked of each model, with a closing row on who each one suits.',
+            background: 'none',
+            columns: [
+              { label: 'Option A', tagline: 'Same time zone' },
+              { label: 'Option B', tagline: 'A few hours apart' },
+              { label: 'Option C', tagline: 'Half a day apart' },
+            ],
+            rows: [
+              {
+                dimension: 'Hours of overlap',
+                cells: [{ value: '8 hours' }, { value: '5-6 hours' }, { value: '1-2 hours' }],
+              },
+              {
+                dimension: 'Ramp-up time',
+                cells: [{ value: '1-2 weeks' }, { value: '2-4 weeks' }, { value: '6+ weeks' }],
+              },
+              {
+                dimension: 'Relative cost',
+                cells: [{ value: 'Higher' }, { value: 'Middle' }, { value: 'Lower' }],
+              },
+            ],
+            bestForRow: [
+              { value: 'Critical roadmap work' },
+              { value: 'Steady feature work' },
+              { value: 'Maintenance' },
+            ],
+          },
+        },
+        {
+          // Six columns and a short row: wider than a phone, so the frame
+          // scrolls on its own and the missing cell is padded blank.
+          name: 'many-columns',
+          data: {
+            blockType: 'table',
+            heading: 'Plan comparison',
+            background: 'subtle',
+            columns: [
+              { label: 'Starter' },
+              { label: 'Team' },
+              { label: 'Growth' },
+              { label: 'Scale' },
+              { label: 'Enterprise' },
+              { label: 'Custom' },
+            ],
+            rows: [
+              {
+                dimension: 'Seats',
+                cells: [
+                  { value: '1' },
+                  { value: '5' },
+                  { value: '15' },
+                  { value: '50' },
+                  { value: '200' },
+                  { value: 'Any' },
+                ],
+              },
+              {
+                dimension: 'Support',
+                cells: [
+                  { value: 'Email' },
+                  { value: 'Email' },
+                  { value: 'Chat' },
+                  { value: 'Phone' },
+                  { value: 'Named lead' },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    },
+    {
       blockType: 'mission-vision-values',
       variants: [
         {
@@ -591,6 +671,64 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
+      blockType: 'quote',
+      variants: [
+        {
+          name: 'one-testimonial-centered',
+          data: {
+            blockType: 'quote',
+            source: 'testimonials',
+            testimonials: [supporting.testimonialIds[0]],
+            layout: 'centered',
+            background: 'subtle',
+          },
+        },
+        {
+          name: 'with-photo-left',
+          data: {
+            blockType: 'quote',
+            source: 'testimonials',
+            testimonials: [supporting.testimonialIds[1]],
+            layout: 'with-photo-left',
+            background: 'none',
+          },
+        },
+        {
+          name: 'with-photo-right',
+          data: {
+            blockType: 'quote',
+            source: 'testimonials',
+            testimonials: [supporting.testimonialIds[2]],
+            layout: 'with-photo-right',
+            background: 'accent',
+          },
+        },
+        {
+          name: 'grid',
+          data: {
+            blockType: 'quote',
+            heading: 'What clients are saying',
+            intro: 'Several testimonials always sit in a grid, whatever the layout says.',
+            source: 'testimonials',
+            testimonials: supporting.testimonialIds,
+            background: 'none',
+          },
+        },
+        {
+          name: 'typed-pull-quote',
+          data: {
+            blockType: 'quote',
+            source: 'custom',
+            quote: 'Put the people who do the work in the room where the plan gets made.',
+            attribution: 'A founder',
+            role: 'From a keynote',
+            layout: 'centered',
+            background: 'inverse',
+          },
+        },
+      ],
+    },
+    {
       blockType: 'client-logo-grid',
       variants: [
         {
@@ -710,6 +848,125 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             heading: 'Get in touch',
             body: 'No HubSpot meetings URL: the section collapses to one full-width column.',
             primaryCta: { label: 'Contact us', url: '/contact' },
+          },
+        },
+      ],
+    },
+    {
+      blockType: 'cta',
+      variants: [
+        {
+          name: 'buttons-centered',
+          data: {
+            blockType: 'cta',
+            action: 'buttons',
+            variant: 'centered',
+            background: 'accent',
+            heading: 'Ready when you are',
+            body: 'A centered ask with a main button and a lighter second link.',
+            primaryCta: { label: 'Book a call', url: '/showcase', variant: 'primary' },
+            secondaryCta: { label: 'Learn more', url: '/showcase' },
+          },
+        },
+        {
+          name: 'buttons-split',
+          data: {
+            blockType: 'cta',
+            action: 'buttons',
+            variant: 'split',
+            background: 'subtle',
+            heading: 'Copy on the left, buttons on the right',
+            body: 'On a phone the two stack.',
+            primaryCta: { label: 'Get started', url: '/showcase', variant: 'secondary' },
+            secondaryCta: { label: 'See the work', url: '/showcase' },
+          },
+        },
+        {
+          name: 'buttons-inverse',
+          data: {
+            blockType: 'cta',
+            action: 'buttons',
+            variant: 'centered',
+            background: 'inverse',
+            heading: 'The loudest band on the page',
+            body: 'Dark background, with the lighter button styles turned white.',
+            primaryCta: { label: 'Talk to us', url: '/showcase', variant: 'ghost' },
+          },
+        },
+        {
+          name: 'meeting-split',
+          data: {
+            blockType: 'cta',
+            action: 'meeting',
+            variant: 'split',
+            background: 'none',
+            heading: 'Talk to a lead',
+            body: 'Tell us what you are trying to ship and we will tell you whether we are the right team for it.',
+            primaryCta: { label: 'Book a call', url: '/contact', variant: 'primary' },
+            secondaryCta: { label: 'Email us', url: 'mailto:hello@example.com' },
+            meetingUrl: 'https://meetings.hubspot.com/example/intro',
+          },
+        },
+        {
+          name: 'meeting-centered',
+          data: {
+            blockType: 'cta',
+            action: 'meeting',
+            variant: 'centered',
+            background: 'accent',
+            heading: 'Book a 30-minute intro call',
+            meetingUrl: 'https://meetings.hubspot.com/example/intro',
+          },
+        },
+        {
+          name: 'newsletter-centered',
+          data: {
+            blockType: 'cta',
+            action: 'newsletter',
+            variant: 'centered',
+            background: 'accent',
+            heading: 'Subscribe to the newsletter',
+            body: 'Quarterly notes on regional tech teams and what is working.',
+            formId: '00000000-aaaa-bbbb-cccc-dddddddddddd',
+          },
+        },
+        {
+          name: 'newsletter-split-inverse',
+          data: {
+            blockType: 'cta',
+            action: 'newsletter',
+            variant: 'split',
+            background: 'inverse',
+            heading: 'Stay in the loop',
+            formId: '00000000-aaaa-bbbb-cccc-dddddddddddd',
+          },
+        },
+        {
+          name: 'download-split',
+          data: {
+            blockType: 'cta',
+            action: 'download',
+            variant: 'split',
+            background: 'none',
+            heading: 'The buyer’s guide to staffing models',
+            body: 'A short PDF comparing total cost, velocity and risk across three ways to staff a team.',
+            coverImage: media.illustration,
+            formId: '00000000-aaaa-bbbb-cccc-dddddddddddd',
+            fileUrl: 'https://example.com/staffing-guide.pdf',
+          },
+        },
+        {
+          name: 'download-centered',
+          data: {
+            blockType: 'cta',
+            action: 'download',
+            variant: 'centered',
+            background: 'subtle',
+            heading: 'Get the checklist',
+            body: 'One page, twelve questions to ask before you sign a statement of work.',
+            coverImage: media.illustration,
+            formId: '00000000-aaaa-bbbb-cccc-dddddddddddd',
+            fileUrl: 'https://example.com/checklist.pdf',
           },
         },
       ],
@@ -931,22 +1188,78 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       blockType: 'accordion',
       variants: [
         {
-          name: 'generic-disclosure',
+          name: 'accordion',
           data: {
             blockType: 'accordion',
-            heading: 'More details',
+            display: 'accordion',
+            background: 'none',
+            heading: 'Honest answers',
+            intro: 'Each panel opens in place. Answers are rich text.',
             items: [
               {
-                title: 'Engagement timeline',
-                body: 'A typical engagement is 4 to 12 weeks: 1 week of discovery, 2 to 10 weeks of build, 1 week of handoff.',
+                title: 'How long does an engagement take?',
+                body: buildLexical([
+                  {
+                    kind: 'p',
+                    text: 'Usually 4 to 12 weeks: one week of discovery, two to ten of build, one of handoff.',
+                  },
+                ]),
               },
               {
-                title: 'Team composition',
-                body: 'You get a pillar lead, a principal engineer, and 1 to 2 senior engineers depending on scope.',
+                title: 'Who is on the team?',
+                body: buildLexical([
+                  {
+                    kind: 'p',
+                    text: 'A lead, a principal engineer, and one or two senior engineers depending on scope.',
+                  },
+                ]),
               },
               {
-                title: 'Reporting cadence',
-                body: 'Weekly written readouts on Friday afternoon; daily standups as needed.',
+                title: 'How do we hear about progress?',
+                body: buildLexical([
+                  {
+                    kind: 'p',
+                    text: 'A written readout every Friday afternoon, and standups when they help.',
+                  },
+                ]),
+              },
+            ],
+          },
+        },
+        {
+          name: 'tabs',
+          data: {
+            blockType: 'accordion',
+            display: 'tabs',
+            background: 'subtle',
+            heading: 'Ways to work together',
+            items: [
+              {
+                title: 'Workshop',
+                body: buildLexical([
+                  { kind: 'p', text: 'One week, on-site or virtual, at a fixed fee.' },
+                ]),
+              },
+              {
+                title: 'Project',
+                body: buildLexical([
+                  {
+                    kind: 'p',
+                    text: 'Four to twelve weeks of fixed scope, embedded with your team.',
+                  },
+                ]),
+              },
+              {
+                title: 'Retained',
+                body: buildLexical([
+                  { kind: 'p', text: 'A quarterly engagement for ongoing platform decisions.' },
+                ]),
+              },
+              {
+                title: 'Advisory',
+                body: buildLexical([
+                  { kind: 'p', text: 'A few hours a month with a senior lead on call.' },
+                ]),
               },
             ],
           },

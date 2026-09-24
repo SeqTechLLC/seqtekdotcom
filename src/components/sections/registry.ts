@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 
-import Accordion from './Accordion'
+import AccordionBlock from './AccordionBlock'
 import BrandTeaser from './BrandTeaser'
 import CaseStudyGrid from './CaseStudyGrid'
 import CaseStudyHero from './CaseStudyHero'
@@ -8,6 +8,7 @@ import ClientLogoGrid from './ClientLogoGrid'
 import ComparisonTable from './ComparisonTable'
 import ContactCta from './ContactCta'
 import Content from './Content'
+import Cta from './Cta'
 import CtaSection from './CtaSection'
 import Deliverables from './Deliverables'
 import DownloadCard from './DownloadCard'
@@ -32,11 +33,13 @@ import NavCards from './NavCards'
 import NewsletterCta from './NewsletterCta'
 import PostList from './PostList'
 import ProcessSteps from './ProcessSteps'
+import Quote from './Quote'
 import RelatedPosts from './RelatedPosts'
 import ServiceCards from './ServiceCards'
 import ServicePillarCards from './ServicePillarCards'
 import ServicePillarHero from './ServicePillarHero'
 import StatsBar from './StatsBar'
+import Table from './Table'
 import Tabs from './Tabs'
 import TeamGrid from './TeamGrid'
 import TechStack from './TechStack'
@@ -62,6 +65,7 @@ export const registry: Record<string, ComponentType<any>> = {
   'process-steps': ProcessSteps,
   deliverables: Deliverables,
   'comparison-table': ComparisonTable,
+  table: Table,
   'mission-vision-values': MissionVisionValues,
   timeline: Timeline,
   'stats-bar': StatsBar,
@@ -69,10 +73,12 @@ export const registry: Record<string, ComponentType<any>> = {
   'logo-bar': LogoBar,
   'featured-testimonials': FeaturedTestimonials,
   'testimonial-block': TestimonialBlock,
+  quote: Quote,
   'client-logo-grid': ClientLogoGrid,
   'cta-section': CtaSection,
   'newsletter-cta': NewsletterCta,
   'contact-cta': ContactCta,
+  cta: Cta,
   'case-study-grid': CaseStudyGrid,
   'service-cards': ServiceCards,
   'service-pillar-cards': ServicePillarCards,
@@ -85,7 +91,7 @@ export const registry: Record<string, ComponentType<any>> = {
   'team-grid': TeamGrid,
   'video-embed': VideoEmbed,
   faq: FAQ,
-  accordion: Accordion,
+  accordion: AccordionBlock,
   tabs: Tabs,
   map: Map,
   embed: Embed,
