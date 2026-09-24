@@ -577,12 +577,12 @@ see.
 Four shapes are authored once rather than repeated. Use them instead of
 hand-rolling the fields:
 
-| Factory                                                       | File                              | Covers                                                                                        |
-| ------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `seoField({ noun, hidden })`                                  | `src/payload/fields/seo.ts`       | the `seo` group on all 10 collections                                                         |
-| `ctaField({ name, label, description, required, withStyle })` | `src/payload/fields/cta.ts`       | `cta` / `primaryCta` / `secondaryCta` on 6 blocks                                             |
-| `headingField({ required, fallback })`                        | `src/payload/fields/blockCopy.ts` | the `heading` on 29 blocks (`fallback` is the line the renderer substitutes when it is blank) |
-| `eyebrowField()`                                              | `src/payload/fields/blockCopy.ts` | the `eyebrow` on 4 blocks                                                                     |
+| Factory                                                       | File                              | Covers                                                                                       |
+| ------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `seoField({ noun, hidden })`                                  | `src/payload/fields/seo.ts`       | the `seo` group on all 10 collections                                                        |
+| `ctaField({ name, label, description, required, withStyle })` | `src/payload/fields/cta.ts`       | `cta` / `primaryCta` / `secondaryCta` on 3 blocks                                            |
+| `headingField({ required, fallback })`                        | `src/payload/fields/blockCopy.ts` | the `heading` on 9 blocks (`fallback` is the line the renderer substitutes when it is blank) |
+| `eyebrowField()`                                              | `src/payload/fields/blockCopy.ts` | the `eyebrow` on 2 blocks                                                                    |
 
 `seoField` and `ctaField` are schema-identical to the inline definitions they
 replaced: same names, same types, same `relationTo`, so Drizzle generates the
@@ -771,7 +771,8 @@ add one; put the disambiguation in the label. (ADR 0011.)
 Every layout block in this project declares its admin presentation through
 `blockAdmin()` (`src/payload/blocks/blockAdmin.ts`), and every rich-text block through
 `inlineBlockAdmin()`. `tests/int/adminMetadata.int.spec.ts` fails CI otherwise. The
-checklist when adding a block:
+checklist when adding a block (which first needs sign-off and an entry in the pinned list,
+`tests/int/blocks/allowedBlocks.int.spec.ts` — ADR 0013):
 
 1. `admin: blockAdmin('<category>', '<slug>', '<Label>')` — the category must be one
    of the six in `src/payload/blocks/categories.ts`, and the third argument must be
@@ -781,7 +782,7 @@ checklist when adding a block:
 2. Register it in the right run of `layoutBlocks` — that array is sorted by category,
    and the picker draws its headings in registration order.
 3. Give it a label that is unique, and not a substring of any sibling's label, within
-   its own picker. Qualify it if it collides (`Hero (standard page)`).
+   its own picker. Qualify it if it collides.
 4. Build its preview and commit the result:
 
    ```bash

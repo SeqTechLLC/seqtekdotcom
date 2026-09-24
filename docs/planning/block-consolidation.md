@@ -53,4 +53,5 @@ Modelled on WordPress core. `!` = required.
 ## Migration
 
 The content JSON is the source of truth. A one-off script rewrites every `layout` onto the new blocks, and each
-environment rebuilds from the JSON. The Payload migration drops the old block tables; it carries no data transform.
+environment rebuilds from the JSON. The Payload migration (`20260924_174050_thirteen_blocks`) drops the old block tables
+and converts three legacy values in place: hero `with-image`, embed pixel heights, plain-text accordion bodies.

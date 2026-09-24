@@ -13,7 +13,7 @@ A page brief in natural language (purpose, sections, audience), optionally a tar
 ## Output (exactly one of)
 
 1. **A valid `layout`**: an ordered blocks array using **only** existing registered blocks (BLOCK_LIBRARY §5), each block's fields populated, honoring the reading-column rule (DESIGN_SYSTEM §11.4) and the per-type default skeleton (R4) where applicable. Emitted as JSON ready to paste/seed via the Local API upsert pattern — **no bespoke page code**.
-2. **A single named block gap**: when the brief needs a capability no block provides, the specific missing block (name + why) — routed to the block-curation loop (FR-011), not hand-coded.
+2. **A single named block gap**: when the brief needs a capability no block provides, the specific missing block (name + why) — routed to Kenn, not hand-coded. The fix is usually an option on an existing block; a new block needs his sign-off (ADR 0013).
 
 ## Guarantees
 

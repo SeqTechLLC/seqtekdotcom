@@ -30,7 +30,7 @@ ADRs. Meeting notes live in [`meetings/`](./meetings/).
 |        | A-1 Megan signs in + editor training                           | Kenn                   |
 |        | HYG-1 Content data hygiene                                     | Kenn                   |
 |        | UI-3 Default skeletons are publishable placeholder copy        | Kenn                   |
-|        | INERT-2 residual — icons, related-posts resolver, field sweep  | Kenn                   |
+|        | INERT-2 residual — service icon, collection-field sweep        | Kenn                   |
 | **P2** | K8 Sweep — tool shipped; links/images clean, copy is not       | Kenn                   |
 |        | CL-1 Load the drafted content                                  | Kenn                   |
 |        | C-7 Taurex sign-off                                            | Kenn + Megan           |
@@ -84,18 +84,13 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     placeholder copy. `pages.json` unpublishes five Pages (`localshoring`, `service-localshoring`,
     `service-ai-integration`, `service-digital-transformation`, `service-overview`), so it runs **after** the
     deploy. `ww3` follows the next release in the same order.
-  - **Re-pick every block the SVC-2 migration emptied.** `*_rels.service_pillars_id` was dropped across
-    thirteen tables, discarding the `pillars` selection on any `service-pillar-cards` block and NULLing
-    `service-cards.pillar` wherever the source was "By pillar". `pillars` is `required, minRows: 1`, so those
-    documents are invalid until re-picked. A re-seed repairs whatever the seed files cover; the exposure is
-    what was authored directly in the admin. Check a lane.
   - **Refine the 21 Wix service 301s.** They all land on the axis today, which is the honest interim target.
     `/technology-and-data` should reach the data page rather than the axis. Cheaper before the DNS cutover:
     nothing is live, so these are retargeted at source rather than layered.
   - **No publish gate reads seeded copy.** `tests/int/render/noPlaceholderCopy.int.spec.ts` guards skeleton
     source only; a check on rendered output is K8's job.
-  - The axis and group pages link their children with manual `nav-cards` (`service-cards` renders a title
-    only), so renaming a service slug means editing those cards too.
+  - The axis and group pages link their children with hand-typed `items` links, so renaming a service slug
+    means editing those links too.
 
   **Carry forward:** absorbing tiers into one collection means every relationship pointing at that collection
   has to constrain to a tier, or the pickers offer nonsense. Six fields pointed at `services`; without
@@ -106,7 +101,7 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
   Manufacturing, Healthcare, FinTech, Aerospace, Retail (added by Brent 2026-09-10), and Leadership and
   Training. Non-profit is explicitly out.
   - **The mechanism shipped.** `industries` carries a `layout` blocks field, `/industries/[slug]` renders it
-    through `RenderBlocks` off the collection, `industry-grid` cards are re-linked, and the sitemap derives
+    through `RenderBlocks` off the collection, industry cards link to it, and the sitemap derives
     the URLs. Publishing a new industry needs no deploy. Of the four INERT-1 groups only `seo` is un-hidden —
     the route renders `layout` blocks and nothing else, so `description`, `relevantServices` and
     `clientLogos` still have no reader. Un-hide each one in the change that ships its consumer.
@@ -124,7 +119,7 @@ Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sale
     1280px cap, not the old 1024.
   - **What is left is the copy.** All eight bodies are placeholders and say so on the page.
   - **Six of the eight have no proof** — Healthcare, FinTech, Manufacturing, Aerospace, Leadership and
-    Training, and Retail carry no case study. Their `case-study-grid` now renders **nothing at all** — heading included — rather than an empty
+    Training, and Retail carry no case study. Their `cards` block (case studies filtered by industry) renders **nothing at all** — heading included — rather than an empty
     section: a bare "Selected work" over empty space was itself a claim with nothing behind it. So the gap is
     no longer self-advertising on the page, which makes the publish decision a human one: either PROOF-1 lands
     a study each, or those five stay drafts until it does. `CONTENT_NEEDS.md` §11.
@@ -165,8 +160,8 @@ Every content change is still a developer task. This tier fixes that before we l
   deploy, her first sign-in (auto-provisions an `editor`), and a short CMS quickstart. Train **after** 011
   lands so she learns the fixed panel.
 - **HYG-1 — content data hygiene.** No human input needed; see `CONTENT_NEEDS.md` §10. Check a live lane, then:
-  seed `industries` or drop the relationship (published case studies reference industry IDs, and
-  `case-study-grid`'s `by-industry` source returns zero rows against an empty collection); seed `locations` if
+  seed `industries` or drop the relationship (published case studies reference industry IDs, and a `cards`
+  block filtered by industry returns zero rows against an empty collection); seed `locations` if
   the regional pages get built; delete the `ztest-delete-me` category; give case studies an `ogImage`.
 - **UI-3 — a skeleton `defaultValue` is publishable placeholder copy, on READ as well as create.**
   `TeamMembers.layout` defaults to `teamMemberSkeleton`, whose body reads as finished prose — seven members
@@ -188,32 +183,18 @@ Every content change is still a developer task. This tier fixes that before we l
   (`tests/int/blocks/blockOutputContract.int.spec.tsx`) holds every block in `layoutBlocks` to three promises:
   no developer phrase reaches body text, every control changes the output, every select option draws something
   different. Exceptions are declared on the block via `custom: outputContract({...})`. Still open:
-  - `services.icon` and `process-steps.steps.icon` are read, but there is no icon set behind them —
-    `ServiceCards.tsx:36` and `ProcessSteps.tsx:29` print the raw string. Not gate-visible: it does reach the
-    output, just as a string.
-  - `related-posts` has no resolver. It needs the containing document's categories, which `resolveLayout`'s
-    block-only signature does not carry.
+  - `services.icon` is read, but there is no icon set behind it — `src/components/cards/ServiceCards.tsx:38`
+    prints the raw string. Not gate-visible: it does reach the output, just as a string.
   - **The gate covers block controls, not collection fields.** Nothing has audited the collections' own fields
     the same way. Sequencing: `docs/planning/block-output-contract.md`.
-- **Publishing a group does not bust the axis page that renders it.** `services` is the only routed
-  collection whose revalidate plan names no listing path — correct in itself, since `/services` is a
-  redirect now. But the axis page took over the overview role, and its `service-pillar-cards` block renders
-  the `tier: 'group'` rows through a depth-2 populate, so publishing or renaming a group refreshes neither
-  that page's data cache nor its CloudFront copy. Bounded by `revalidate: 3600` on a gated, unlaunched
-  site. The fix wants the axis slugs, which are content — so it needs a query in `revalidateOnChange`,
-  not a hardcoded slug.
 - **Three top-level nav destinations are not editable without a deploy — deliberately parked 2026-09-04.**
   `/case-studies`, `/insights` and `/contact` are bespoke route files: their `<h1>`, intro copy and SEO strings
   are literals. The other four nav destinations (`/our-story`, and both `/services` axes) are documents.
   ADR 0009 says there should be no bespoke page templates, so these are the remaining exceptions.
 
   **Converting them is not the small job it looks like.** Each blocks on something real:
-  - `case-study-grid` caps at `limit: max 9` and `post-list` at `max: 12`; the routes bypass that by passing
-    `limit={items.length}`. A block-composed listing would silently drop the 10th case study — content that
-    exists and is in the sitemap but is unreachable from its own listing. P4 plans 4-6 more studies and 3-5
-    more posts, so it is not hypothetical.
-  - Removing the cap means unbounded listings, which means **pagination** — page state in a URL the block does
-    not own. That is a feature, not a schema tweak.
+  - `cards` has no cap (ADR 0013), so a block-composed listing shows every document. The blocker is
+    **pagination** — page state in a URL the block does not own. That is a feature, not a schema tweak.
   - `/contact` is worse: `ContactForm` is a curated six-field schema with HubSpot internal names verified by a
     live test submit (2026-06-22), including the `inquiry_type` select that routes the lead. The
     `hubspot-form` block renders generic `DEFAULT_FIELDS` with a hardcoded special case for the Workshop GUID
@@ -224,9 +205,9 @@ Every content change is still a developer task. This tier fixes that before we l
   wanted for its own sake, or when the contact form's field set is being reworked anyway (which would also
   remove the Workshop hardcode in `HubspotForm.tsx`).
 
-- **Re-link `locations-list` cards** when the locations route ships. (`industry-grid` was re-linked with
-  IND-1.) **The hook and the block disagree on the name** — `revalidateOnChange` says `/consulting/<slug>`,
-  the block said `/locations/<slug>`. Settle that before the route is built.
+- **Link the location cards** (`src/components/cards/LocationCards.tsx`) when the locations route ships; they
+  are not links today. `revalidateOnChange` builds `/consulting/<slug>`. Settle the URL before the route is
+  built.
 
 ---
 

@@ -265,8 +265,8 @@ image beside the name, so the row answers "which image is this?" too.
 not only the ones with no text field. The 20px thumbnail comes from the same
 document and answers "which image is this?" on a captioned row as much as on a
 bare one, so a caption does not save the request. What the text fields decide is
-the _name_; `logo-bar.logos` and `industries.clientLogos` are the two arrays
-with no other source for it.
+the _name_; `industries.clientLogos` is the one array with no other source
+for it.
 
 **Enforced by**: `tests/int/adminMetadata.int.spec.ts` walks every collection,
 global and block and fails any array with an `upload` child and no `RowLabel`.
