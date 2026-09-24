@@ -1,7 +1,9 @@
 // Add new layout block files here as they land, in BLOCK_LIBRARY.md §5
 // category order. Run `npm run generate:types` and
 // `npm run generate:importmap` after any change (FR-038, FR-039).
-import { Accordion } from './Accordion'
+// The retired `accordion` config (./Accordion) shares this slug; the new block
+// replaces it here, and the old file goes with the rest of the consolidation.
+import { Accordion } from './AccordionBlock'
 import { BrandTeaser } from './BrandTeaser'
 import { CaseStudyGrid } from './CaseStudyGrid'
 import { CaseStudyHero } from './CaseStudyHero'
@@ -9,6 +11,7 @@ import { ClientLogoGrid } from './ClientLogoGrid'
 import { ComparisonTable } from './ComparisonTable'
 import { ContactCta } from './ContactCta'
 import { Content } from './Content'
+import { Cta } from './Cta'
 import { CtaSection } from './CtaSection'
 import { Deliverables } from './Deliverables'
 import { DownloadCard } from './DownloadCard'
@@ -34,11 +37,13 @@ import { NavCards } from './NavCards'
 import { NewsletterCta } from './NewsletterCta'
 import { PostList } from './PostList'
 import { ProcessSteps } from './ProcessSteps'
+import { Quote } from './Quote'
 import { RelatedPosts } from './RelatedPosts'
 import { ServiceCards } from './ServiceCards'
 import { ServicePillarCards } from './ServicePillarCards'
 import { ServicePillarHero } from './ServicePillarHero'
 import { StatsBar } from './StatsBar'
+import { Table } from './Table'
 import { Tabs } from './Tabs'
 import { TeamGrid } from './TeamGrid'
 import { TechStack } from './TechStack'
@@ -57,6 +62,7 @@ export {
   ComparisonTable,
   ContactCta,
   Content,
+  Cta,
   CtaSection,
   Deliverables,
   DownloadCard,
@@ -82,11 +88,13 @@ export {
   NewsletterCta,
   PostList,
   ProcessSteps,
+  Quote,
   RelatedPosts,
   ServiceCards,
   ServicePillarCards,
   ServicePillarHero,
   StatsBar,
+  Table,
   Tabs,
   TeamGrid,
   TechStack,
@@ -116,17 +124,21 @@ export const layoutBlocks = [
   ProcessSteps,
   Deliverables,
   ComparisonTable,
+  Table,
   Timeline,
   FAQ,
+  Accordion,
   StatsBar,
   MetricDisplay,
   LogoBar,
   FeaturedTestimonials,
   TestimonialBlock,
+  Quote,
   ClientLogoGrid,
   CtaSection,
   NewsletterCta,
   ContactCta,
+  Cta,
   CaseStudyGrid,
   ServiceCards,
   ServicePillarCards,
@@ -139,7 +151,6 @@ export const layoutBlocks = [
   TeamGrid,
   VideoEmbed,
   MissionVisionValues,
-  Accordion,
   Tabs,
   Map,
   Embed,
