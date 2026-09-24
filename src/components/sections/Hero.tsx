@@ -2,10 +2,12 @@ import Link from 'next/link'
 
 import { ResponsiveImage } from '../ui/ResponsiveImage'
 import { Section } from '../ui/Section'
-import { boxSizes, SPLIT_MEDIA_SIZES } from '@/lib/layoutGeometry'
+import { SPLIT_MEDIA_SIZES } from '@/lib/layoutGeometry'
 
-// The non-split variants put the image across the whole rail.
-const FULL_RAIL_SIZES = boxSizes()
+// The cover photo runs edge to edge behind the whole band, outside the rail,
+// so its rendered width is the viewport's. There is no shell geometry to
+// derive it from.
+const COVER_SIZES = '100vw'
 
 type Cta = { label?: string | null; url?: string | null; variant?: string | null } | null
 
@@ -18,7 +20,7 @@ interface MediaLike {
 }
 
 interface HeroProps {
-  variant?: 'text-only' | 'with-image' | 'with-video' | 'split' | null
+  variant?: 'text-only' | 'split' | 'cover' | 'with-video' | null
   eyebrow?: string | null
   headline: string
   subheadline?: string | null
@@ -53,8 +55,21 @@ const CTA_VARIANT_CLASS: Record<string, string> = {
   ghost: 'rounded-md px-5 py-3 font-medium text-accent-strong underline hover:no-underline',
 }
 
-const ctaClass = (variant: string | null | undefined): string =>
-  CTA_VARIANT_CLASS[variant ?? 'primary'] ?? CTA_VARIANT_CLASS.primary
+// On the cover the green-700 text and borders above fall to ~3:1 against the
+// scrim, so the outlined and text-only styles turn white. The focus ring moves
+// to green-400: the default green-600 can drop under 3:1 where the scrim sits
+// over a pale patch of photo (DESIGN_SYSTEM §12.3).
+const COVER_FOCUS = 'focus-visible:outline-brand-green-400'
+const COVER_CTA_VARIANT_CLASS: Record<string, string> = {
+  primary: `rounded-md bg-accent-strong px-5 py-3 font-medium text-white ${COVER_FOCUS}`,
+  secondary: `rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10 ${COVER_FOCUS}`,
+  ghost: `rounded-md px-5 py-3 font-medium text-white underline hover:no-underline ${COVER_FOCUS}`,
+}
+
+const ctaClass = (variant: string | null | undefined, cover: boolean): string => {
+  const table = cover ? COVER_CTA_VARIANT_CLASS : CTA_VARIANT_CLASS
+  return table[variant ?? 'primary'] ?? table.primary
+}
 
 const isAllowedVideoUrl = (value: string | null | undefined): value is string => {
   if (!value) return false
@@ -68,7 +83,7 @@ const isAllowedVideoUrl = (value: string | null | undefined): value is string =>
 }
 
 export function Hero({
-  variant = 'text-only',
+  variant = 'split',
   eyebrow,
   headline,
   subheadline,
@@ -84,12 +99,19 @@ export function Hero({
   // it drew the identical stacked hero and the picker offered the same layout
   // twice under two names. It now does what it says: copy beside the image.
   const isSplit = variant === 'split' && image !== null
+  const isCover = variant === 'cover'
   const isCentered = alignment === 'center'
 
   const copy = (
     <>
       {eyebrow ? (
-        <p className="text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
+        // green-200 on the cover: accent-strong is ~3:1 on the scrim, and
+        // green-200 clears AA even where the scrim sits over white.
+        <p
+          className={`text-eyebrow uppercase tracking-wide ${isCover ? 'text-brand-green-200' : 'text-accent-strong'}`}
+        >
+          {eyebrow}
+        </p>
       ) : null}
       {/* DESIGN_SYSTEM §11.4: these are capped measures, so a centred hero has
           to centre THEM, not just the text inside them. Without `mx-auto` here
@@ -102,7 +124,7 @@ export function Hero({
       </h1>
       {subheadline ? (
         <p
-          className={`mt-5 max-w-2xl text-body-lg text-text-secondary ${isCentered ? 'mx-auto' : ''}`}
+          className={`mt-5 max-w-2xl text-body-lg ${isCover ? 'text-white' : 'text-text-secondary'} ${isCentered ? 'mx-auto' : ''}`}
         >
           {subheadline}
         </p>
@@ -111,19 +133,59 @@ export function Hero({
   )
 
   const ctas = (
-    <div className="mt-8 flex flex-wrap items-center gap-4">
+    <div className={`mt-8 flex flex-wrap items-center gap-4 ${isCentered ? 'justify-center' : ''}`}>
       {primaryCta?.label && primaryCta?.url ? (
-        <Link href={primaryCta.url} className={ctaClass(primaryCta.variant)}>
+        <Link href={primaryCta.url} className={ctaClass(primaryCta.variant, isCover)}>
           {primaryCta.label}
         </Link>
       ) : null}
       {secondaryCta?.label && secondaryCta?.url ? (
-        <Link href={secondaryCta.url} className="font-medium underline">
+        <Link
+          href={secondaryCta.url}
+          className={
+            isCover
+              ? `rounded-md border border-white/40 px-5 py-3 font-medium text-white ${COVER_FOCUS}`
+              : 'font-medium underline'
+          }
+        >
           {secondaryCta.label}
         </Link>
       ) : null}
     </div>
   )
+
+  if (isCover) {
+    return (
+      // Ported from the retired homepage hero. The scrim is navy-900 at 80%:
+      // white over it stays above 8:1 even where the photo underneath is pure
+      // white, which keeps the headline and subheadline at AAA whatever image
+      // an editor picks (DESIGN_SYSTEM §12.1). The inverse surface under the
+      // photo keeps the words legible while it loads, or if it never does.
+      <Section
+        padding="none"
+        background="inverse"
+        className="relative overflow-hidden py-24"
+        innerClassName={`relative ${alignmentCls}`}
+        bleed={
+          <>
+            {image ? (
+              <ResponsiveImage
+                media={image}
+                sizes={COVER_SIZES}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+              />
+            ) : null}
+            <div aria-hidden="true" className="absolute inset-0 bg-brand-navy-900/80" />
+          </>
+        }
+      >
+        {copy}
+        {ctas}
+      </Section>
+    )
+  }
 
   return (
     // The hero shares the page grid edge with every section below it (two-column,
@@ -151,15 +213,6 @@ export function Hero({
       ) : (
         <>
           {copy}
-          {variant === 'with-image' && image ? (
-            <ResponsiveImage
-              media={image}
-              sizes={FULL_RAIL_SIZES}
-              className="mt-8 w-full rounded-lg border border-border-subtle shadow-sm"
-              loading="eager"
-              fetchPriority="high"
-            />
-          ) : null}
           {variant === 'with-video' && isAllowedVideoUrl(videoUrl) ? (
             <div className="mt-8 aspect-video">
               <iframe
