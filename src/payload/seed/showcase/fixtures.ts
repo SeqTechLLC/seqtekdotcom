@@ -401,6 +401,265 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       ],
     },
     {
+      blockType: 'items',
+      variants: [
+        {
+          name: 'numbered-cards',
+          data: {
+            blockType: 'items',
+            heading: 'How a project starts',
+            layout: 'grid',
+            markers: 'numbers',
+            style: 'card',
+            items: [
+              { title: 'Listen', body: 'Interviews with the people who do the work today.' },
+              {
+                title: 'Plan',
+                body: 'A short written plan with named owners and a first milestone.',
+              },
+              {
+                title: 'Build',
+                body: 'The smallest useful piece, in front of real users within weeks.',
+              },
+              {
+                title: 'Hand over',
+                body: 'Runbooks and a walkthrough, so your team owns what shipped.',
+              },
+            ],
+          },
+        },
+        {
+          name: 'plain-grid',
+          data: {
+            blockType: 'items',
+            heading: 'What we do',
+            intro: 'Three kinds of work, each run by the people who will do it.',
+            layout: 'grid',
+            style: 'plain',
+            items: [
+              {
+                title: 'Build',
+                body: 'Software that fits how your team already works, shipped in small pieces you can see and use.',
+              },
+              {
+                title: 'Modernize',
+                body: 'Older systems moved onto current ground one piece at a time, without stopping the business.',
+              },
+              {
+                title: 'Advise',
+                body: 'A senior second opinion on the plan, the budget and the risks before the money is spent.',
+              },
+            ],
+          },
+        },
+        {
+          name: 'stats-row',
+          data: {
+            blockType: 'items',
+            heading: 'By the numbers',
+            layout: 'grid',
+            markers: 'custom',
+            background: 'inverse',
+            items: [
+              { marker: '25+', title: 'years in business' },
+              { marker: '0.7x', title: 'cost of a full-time hire' },
+              { marker: '52%', title: 'less unplanned downtime' },
+              { marker: '8h', title: 'shared working hours a day' },
+            ],
+          },
+        },
+        {
+          name: 'single-metric',
+          data: {
+            blockType: 'items',
+            layout: 'grid',
+            markers: 'custom',
+            background: 'accent',
+            items: [
+              {
+                marker: '0.7x',
+                title: 'Cost against a full-time hire',
+                body: 'Across embedded engagements of four weeks or longer.',
+              },
+            ],
+          },
+        },
+        {
+          name: 'linked-cards',
+          data: {
+            blockType: 'items',
+            heading: 'Where to next',
+            layout: 'grid',
+            style: 'card',
+            items: [
+              {
+                title: 'Our story',
+                body: 'How the company got here, and why it stayed.',
+                image: media.photo,
+                link: { url: '/our-story', label: 'Read our story' },
+              },
+              {
+                title: 'The team',
+                body: 'The engineers and leads you would work with.',
+                image: media.photo,
+                link: { url: '/team' },
+              },
+              {
+                title: 'Case studies',
+                body: 'Problems we were handed and what changed after.',
+                image: media.photo,
+                link: { url: '/case-studies', label: 'See the work' },
+              },
+            ],
+          },
+        },
+        {
+          name: 'lettered-line',
+          data: {
+            blockType: 'items',
+            heading: 'Four habits that keep a project honest',
+            layout: 'line',
+            markers: 'custom',
+            items: [
+              {
+                marker: 'S',
+                title: 'Scope',
+                body: 'Agree what is in and what is out before anything is built.',
+              },
+              {
+                marker: 'H',
+                title: 'Hypothesize',
+                body: 'Say what you expect to happen, so the result can prove you wrong.',
+              },
+              {
+                marker: 'I',
+                title: 'Implement',
+                body: 'Build the smallest piece that can test the idea.',
+              },
+              {
+                marker: 'P',
+                title: 'Prove',
+                body: 'Check the result against what you expected, then decide the next step.',
+              },
+            ],
+          },
+        },
+        {
+          name: 'numbered-line',
+          data: {
+            blockType: 'items',
+            heading: 'Three steps to a first release',
+            layout: 'line',
+            markers: 'numbers',
+            items: [
+              {
+                title: 'Map the work',
+                body: 'Walk the current process end to end with the people in it.',
+              },
+              {
+                title: 'Cut the first slice',
+                body: 'Pick the one change that proves the approach.',
+              },
+              {
+                title: 'Ship and measure',
+                body: 'Release it, watch it, and decide what comes next.',
+              },
+            ],
+          },
+        },
+        {
+          name: 'dated-line',
+          data: {
+            blockType: 'items',
+            heading: 'Milestones',
+            layout: 'line',
+            markers: 'custom',
+            items: [
+              {
+                marker: '1999',
+                title: 'Founded',
+                body: 'A two-person practice serving local manufacturers.',
+              },
+              {
+                marker: '2008',
+                title: 'A second city',
+                body: 'The first engagement outside the home market.',
+              },
+              {
+                marker: '2018',
+                title: 'The model gets a name',
+                body: 'An informal way of working, written down.',
+              },
+              {
+                marker: '2024',
+                title: 'Workshops',
+                body: 'A workshop series for leadership teams.',
+              },
+            ],
+          },
+        },
+        {
+          name: 'dotted-line',
+          data: {
+            blockType: 'items',
+            heading: 'What happens after you call',
+            layout: 'line',
+            items: [
+              { title: 'A reply the same day', body: 'From a person, not a queue.' },
+              { title: 'A short call', body: 'Thirty minutes on what you are trying to change.' },
+              { title: 'A written next step', body: 'Whether or not it involves us.' },
+            ],
+          },
+        },
+        {
+          name: 'bullet-list',
+          data: {
+            blockType: 'items',
+            heading: 'What you get',
+            layout: 'list',
+            items: [
+              { title: 'A plan with named owners' },
+              { title: 'Weekly written readouts' },
+              { title: 'Production-ready code behind a feature flag' },
+              { title: 'Runbooks for your team' },
+              { title: 'A handover session' },
+            ],
+          },
+        },
+        {
+          name: 'numbered-list',
+          data: {
+            blockType: 'items',
+            heading: 'Key takeaways',
+            layout: 'list',
+            markers: 'numbers',
+            background: 'subtle',
+            items: [
+              { title: 'A team in your time zone catches problems before they reach a ticket.' },
+              { title: 'Fixed-scope work ends when the work is done, not when the budget is.' },
+              { title: 'A discovery week pays back most when the team is split today.' },
+            ],
+          },
+        },
+        {
+          name: 'tags',
+          data: {
+            blockType: 'items',
+            heading: 'Tools we use',
+            layout: 'tags',
+            items: [
+              { title: 'TypeScript' },
+              { title: 'Next.js', link: { url: '/services' } },
+              { title: 'Postgres' },
+              { title: 'AWS' },
+              { title: 'Payload CMS' },
+              { title: 'Tailwind' },
+            ],
+          },
+        },
+      ],
+    },
+    {
       blockType: 'comparison-table',
       variants: [
         {
