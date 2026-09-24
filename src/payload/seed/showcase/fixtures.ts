@@ -79,16 +79,31 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           },
         },
         {
-          name: 'with-image',
+          name: 'cover-left',
           data: {
             blockType: 'hero',
-            variant: 'with-image',
+            variant: 'cover',
             alignment: 'left',
-            eyebrow: 'WITH-IMAGE',
-            headline: 'Hero with a supporting image',
-            subheadline: 'The image sits below the copy, full container width.',
+            eyebrow: 'COVER · LEFT',
+            headline: 'Words over a full-width photo',
+            subheadline:
+              'A dark scrim sits between the photo and the copy, so the words stay readable whatever the picture.',
             media: media.photo,
             primaryCta: { label: 'Primary action', url: '/showcase', variant: 'primary' },
+            secondaryCta: { label: 'Secondary', url: '/showcase' },
+          },
+        },
+        {
+          name: 'cover-center',
+          data: {
+            blockType: 'hero',
+            variant: 'cover',
+            alignment: 'center',
+            eyebrow: 'COVER · CENTER',
+            headline: 'A centered cover for a campaign page',
+            subheadline: 'The outlined button style turns white on the scrim.',
+            media: media.photo,
+            primaryCta: { label: 'Outlined action', url: '/showcase', variant: 'secondary' },
           },
         },
         {
@@ -111,8 +126,10 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             alignment: 'left',
             eyebrow: 'SPLIT',
             headline: 'Split hero with image',
-            subheadline: 'The same image, set beside the copy instead of below it.',
+            subheadline: 'The image sits beside the copy and stacks under it on a phone.',
             media: media.photo,
+            primaryCta: { label: 'Text-only action', url: '/showcase', variant: 'ghost' },
+            secondaryCta: { label: 'Secondary', url: '/showcase' },
           },
         },
       ],
@@ -232,6 +249,21 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           },
         },
         {
+          name: 'standard-inverse',
+          data: {
+            blockType: 'content',
+            width: 'standard',
+            background: 'inverse',
+            body: buildLexical([
+              { kind: 'h', tag: 'h2', text: 'Standard on the dark band' },
+              {
+                kind: 'p',
+                text: 'The prose switches to its light-on-dark colours so it stays readable.',
+              },
+            ]),
+          },
+        },
+        {
           name: 'with-inline-cta',
           data: {
             blockType: 'content',
@@ -252,6 +284,75 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
                 },
               },
             ]),
+          },
+        },
+      ],
+    },
+    {
+      blockType: 'media-text',
+      variants: [
+        {
+          name: 'media-left',
+          data: {
+            blockType: 'media-text',
+            mediaPosition: 'left',
+            media: media.photo,
+            background: 'none',
+            body: buildLexical([
+              { kind: 'h', tag: 'h2', text: 'One point with a picture' },
+              {
+                kind: 'p',
+                text: 'The image sits on the left and the words on the right; on a phone the image comes first.',
+              },
+            ]),
+            cta: { label: 'See the work', url: '/showcase' },
+          },
+        },
+        {
+          name: 'media-right-subtle',
+          data: {
+            blockType: 'media-text',
+            mediaPosition: 'right',
+            media: media.illustration,
+            background: 'subtle',
+            body: buildLexical([
+              { kind: 'h', tag: 'h2', text: 'The same shape, mirrored' },
+              {
+                kind: 'p',
+                text: 'Alternate the side down a page so it does not read as a ladder.',
+              },
+            ]),
+          },
+        },
+        {
+          name: 'teaser-accent',
+          data: {
+            blockType: 'media-text',
+            mediaPosition: 'left',
+            media: media.screenshot,
+            background: 'accent',
+            body: buildLexical([
+              { kind: 'h', tag: 'h2', text: 'A headline, a paragraph and a link' },
+              {
+                kind: 'p',
+                text: 'The teaser shape: a short heading, two or three sentences, and a button that leads to the full story.',
+              },
+            ]),
+            cta: { label: 'Read the story', url: '/showcase' },
+          },
+        },
+        {
+          name: 'media-right-inverse',
+          data: {
+            blockType: 'media-text',
+            mediaPosition: 'right',
+            media: media.photo,
+            background: 'inverse',
+            body: buildLexical([
+              { kind: 'h', tag: 'h2', text: 'On the dark band' },
+              { kind: 'p', text: 'The prose turns light so it reads against the dark surface.' },
+            ]),
+            cta: { label: 'Primary action', url: '/showcase' },
           },
         },
       ],
@@ -303,13 +404,36 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           },
         },
         {
-          name: 'wide',
+          name: 'wide-accent',
           data: {
             blockType: 'image',
             image: media.screenshot,
             caption: 'Wider measure for product screenshots and diagrams.',
             width: 'wide',
             alignment: 'center',
+            background: 'accent',
+          },
+        },
+        {
+          name: 'narrow-left-subtle',
+          data: {
+            blockType: 'image',
+            image: media.illustration,
+            caption: 'Narrow, set to the left of the page.',
+            width: 'narrow',
+            alignment: 'left',
+            background: 'subtle',
+          },
+        },
+        {
+          name: 'standard-right-inverse',
+          data: {
+            blockType: 'image',
+            image: media.photo,
+            caption: 'Standard, set to the right, on the dark band.',
+            width: 'standard',
+            alignment: 'right',
+            background: 'inverse',
           },
         },
         {
@@ -327,12 +451,12 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       blockType: 'gallery',
       variants: [
         {
-          name: 'grid-three',
+          name: 'grid-four',
           data: {
             blockType: 'gallery',
-            heading: 'What a real workshop looks like',
+            heading: 'Four pictures run four across',
+            intro: 'The grid picks its columns from the count; there is no column setting.',
             layout: 'grid',
-            columns: '3',
             items: [
               { image: media.photo, caption: 'Discovery session' },
               { image: media.screenshot, caption: 'Whiteboard mapping' },
@@ -342,16 +466,72 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
           },
         },
         {
-          name: 'carousel',
+          name: 'grid-five-subtle',
           data: {
             blockType: 'gallery',
-            heading: 'Engagement gallery (carousel)',
+            heading: 'Five pictures run three across',
+            layout: 'grid',
+            background: 'subtle',
+            items: [
+              { image: media.photo, caption: 'One' },
+              { image: media.screenshot, caption: 'Two' },
+              { image: media.illustration, caption: 'Three' },
+              { image: media.photo, caption: 'Four' },
+              { image: media.screenshot, caption: 'Five' },
+            ],
+          },
+        },
+        {
+          name: 'grid-single-accent',
+          data: {
+            blockType: 'gallery',
+            heading: 'A single picture holds a reading width',
+            layout: 'grid',
+            background: 'accent',
+            items: [{ image: media.photo, caption: 'Centred at the standard image measure' }],
+          },
+        },
+        {
+          name: 'carousel-inverse',
+          data: {
+            blockType: 'gallery',
+            heading: 'A carousel on the dark band',
+            intro: 'Swipe or scroll sideways; the row takes keyboard focus.',
             layout: 'carousel',
+            background: 'inverse',
             items: [
               { image: media.photo, caption: 'On-site week one' },
               { image: media.screenshot, caption: 'Build phase' },
               { image: media.illustration, caption: 'Handoff' },
+              { image: media.photo, caption: 'Retrospective' },
             ],
+          },
+        },
+        {
+          name: 'logos-eight',
+          data: {
+            blockType: 'gallery',
+            heading: 'Organizations we have worked with',
+            layout: 'logos',
+            items: [
+              { image: media.logo, caption: 'Example Co.' },
+              { image: media.logo },
+              { image: media.logo, caption: 'Sample Group' },
+              { image: media.logo },
+              { image: media.logo },
+              { image: media.logo, caption: 'Demo Partners' },
+              { image: media.logo },
+              { image: media.logo },
+            ],
+          },
+        },
+        {
+          name: 'logos-three-subtle',
+          data: {
+            blockType: 'gallery',
+            layout: 'logos',
+            background: 'subtle',
+            items: [{ image: media.logo }, { image: media.logo }, { image: media.logo }],
           },
         },
       ],
@@ -999,13 +1179,64 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
       blockType: 'embed',
       variants: [
         {
-          name: 'placeholder-iframe',
+          name: 'video-youtube-subtle',
           data: {
             blockType: 'embed',
-            title: 'Demo embed',
+            kind: 'video',
+            heading: 'A video, embedded directly',
+            eyebrow: 'FROM THE ARCHIVE',
+            provider: 'youtube',
+            videoId: 'dQw4w9WgXcQ',
+            title: 'YouTube embed example',
+            background: 'subtle',
+          },
+        },
+        {
+          name: 'video-vimeo-poster',
+          data: {
+            blockType: 'embed',
+            kind: 'video',
+            provider: 'vimeo',
+            videoId: '76979871',
+            title: 'Vimeo embed behind a click-to-load poster',
+            thumbnail: media.screenshot,
+          },
+        },
+        {
+          name: 'map-short',
+          data: {
+            blockType: 'embed',
+            kind: 'map',
+            heading: 'Where to find us',
+            title: 'Map of an example office',
+            url: 'https://www.openstreetmap.org/export/embed.html?bbox=-95.999%2C36.149%2C-95.985%2C36.156&layer=mapnik',
+            caption: '123 Example Street, Anytown',
+            height: 'short',
+          },
+        },
+        {
+          name: 'page-medium-accent',
+          data: {
+            blockType: 'embed',
+            kind: 'page',
+            title: 'Example embedded page',
             url: 'https://example.com',
-            caption: 'Sandbox iframe placeholder',
-            height: 400,
+            caption: 'Any https page that allows embedding, framed in a sandbox.',
+            height: 'medium',
+            background: 'accent',
+          },
+        },
+        {
+          name: 'page-tall-inverse',
+          data: {
+            blockType: 'embed',
+            kind: 'page',
+            heading: 'A tall frame on the dark band',
+            title: 'Example embedded page, tall',
+            url: 'https://example.com',
+            caption: 'Tall suits a form or a dashboard.',
+            height: 'tall',
+            background: 'inverse',
           },
         },
       ],
@@ -1118,6 +1349,34 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             heading: 'Get in touch',
             description: 'Tell us about your team and what you are trying to ship.',
             formId: '11111111-aaaa-bbbb-cccc-dddddddddddd',
+          },
+        },
+        {
+          name: 'lead-capture-inverse',
+          data: {
+            blockType: 'hubspot-form',
+            heading: 'A form on the dark band',
+            description: 'The form sits on a light panel so its fields keep their contrast.',
+            formId: '11111111-aaaa-bbbb-cccc-dddddddddddd',
+            background: 'inverse',
+          },
+        },
+        {
+          name: 'lead-capture-subtle',
+          data: {
+            blockType: 'hubspot-form',
+            heading: 'A form on the subtle band',
+            formId: '11111111-aaaa-bbbb-cccc-dddddddddddd',
+            background: 'subtle',
+          },
+        },
+        {
+          name: 'lead-capture-accent',
+          data: {
+            blockType: 'hubspot-form',
+            heading: 'A form on the accent band',
+            formId: '11111111-aaaa-bbbb-cccc-dddddddddddd',
+            background: 'accent',
           },
         },
       ],
