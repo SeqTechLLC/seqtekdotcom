@@ -13,7 +13,14 @@
 // runner stops hoisting it.
 import { chromium, type Browser, type BrowserContext, type Cookie } from '@playwright/test'
 
-import { classifyHref, normaliseRoute, scanText, type TextFinding } from './checks'
+import {
+  classifyHref,
+  isExcluded,
+  normaliseRoute,
+  scanStyle,
+  scanText,
+  type TextFinding,
+} from './checks'
 
 export interface Viewport {
   name: string
@@ -54,6 +61,13 @@ export interface PageResult {
   referrers: string[]
   title: string
   textFindings: TextFinding[]
+  /** House-style findings (em dashes). Separate list: a different failure. */
+  styleFindings: TextFinding[]
+  /**
+   * Rendered `<main>` character count, so "this page says almost nothing" is a
+   * measurement in the report rather than a claim in a doc that goes stale.
+   */
+  textLength: number
   imageFindings: Record<string, ImageFinding[]>
   internalLinks: string[]
   externalLinks: string[]
@@ -66,6 +80,8 @@ export interface SweepOptions {
   cookieHeader?: string
   maxPages: number
   checkExternal: boolean
+  /** Routes containing any of these substrings are never crawled. */
+  exclude?: readonly string[]
   onProgress?: (route: string, index: number, total: number) => void
 }
 
@@ -284,6 +300,7 @@ const visitWithRetry = async (
 
 export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
   const { baseUrl, viewports, cookieHeader, maxPages, checkExternal, onProgress } = options
+  const exclude = options.exclude ?? []
   const origin = new URL(baseUrl).origin
   const startedAt = new Date().toISOString()
 
@@ -309,7 +326,7 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
     const queued = new Set<string>()
     const queue: string[] = []
     for (const route of ['/', ...(await sitemapRoutes(baseUrl, cookieHeader))]) {
-      if (!queued.has(route)) {
+      if (!queued.has(route) && !isExcluded(route, exclude)) {
         queued.add(route)
         queue.push(route)
       }
@@ -326,6 +343,8 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
         referrers: [],
         title: '',
         textFindings: [],
+        styleFindings: [],
+        textLength: 0,
         imageFindings: {},
         internalLinks: [],
         externalLinks: [],
@@ -357,6 +376,8 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
         // Text is the same at both viewports for a server-rendered page, so
         // scan once — but scan the viewport that actually returned content.
         if (result.textFindings.length === 0) result.textFindings = scanText(scraped.text)
+        if (result.styleFindings.length === 0) result.styleFindings = scanStyle(scraped.text)
+        result.textLength ||= scraped.text.trim().length
 
         for (const href of scraped.hrefs) {
           const link = classifyHref(href ?? '', origin)
@@ -405,7 +426,7 @@ export const sweep = async (options: SweepOptions): Promise<SweepReport> => {
       pages.set(route, result)
 
       for (const next of internal) {
-        if (!queued.has(next)) {
+        if (!queued.has(next) && !isExcluded(next, exclude)) {
           queued.add(next)
           queue.push(next)
         }

@@ -330,11 +330,20 @@ SWEEP_COOKIE='AWSELBAuthSessionCookie-0=…; AWSELBAuthSessionCookie-1=…' \
 ```
 
 Reports dead routes (naming what links to them), images that never paint,
-placeholder or repo-internal copy in rendered text, missing `alt`, and links
-that land somewhere else. Exits 0 unless `--fail-on` names a category. Full
+placeholder or repo-internal copy in rendered text, em dashes in rendered copy,
+routes whose rendered text is thinner than `--thin-threshold`, missing `alt`,
+and links that land somewhere else. Exits 0 unless `--fail-on` names a category
+(`all` leaves out `thin`, which is a measurement rather than a defect). Full
 detail in `tools/link-sweep/README.md`.
 
-Run it after every content load — that is when links and images break.
+Run it after every content load — that is when links and images break. Locally,
+add `--exclude=showcase-`: `npm run seed:showcase` seeds a page per block plus a
+skeleton fixture in every collection, and they otherwise dominate both the
+placeholder and thin lists.
+
+```bash
+npm run sweep -- --exclude=showcase-
+```
 
 ---
 

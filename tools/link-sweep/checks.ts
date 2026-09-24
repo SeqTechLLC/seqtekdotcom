@@ -88,6 +88,26 @@ export const INTERNAL_REFERENCE_PATTERNS: readonly PlaceholderPattern[] = [
   },
 ]
 
+/**
+ * House style, not unfinished copy — separate from the placeholder patterns
+ * because the failure is different in kind and so is the fix. Em dashes are
+ * banned in public SEQTEK copy (CLAUDE.md); they read as machine-written, and
+ * a seeded body is the one place nothing else checks for them.
+ */
+export const STYLE_PATTERNS: readonly PlaceholderPattern[] = [{ label: 'em dash', test: /—/ }]
+
+/**
+ * A page can be reachable, painted, free of placeholders and still say almost
+ * nothing — which is what fifteen service routes did while every other check
+ * ticked green. Rendered `<main>` text below this is reported so a thin page
+ * has to be looked at rather than inferred from a passing sweep.
+ *
+ * 600 is deliberately below the old Wix service pages (~2,000 chars) and above
+ * the listing routes, whose bodies are card text; it flags a stub, not a page
+ * that is merely shorter than its neighbours.
+ */
+export const DEFAULT_THIN_COPY_THRESHOLD = 600
+
 export interface TextFinding {
   label: string
   /** The matched text plus a little context, for the report. */
@@ -101,12 +121,33 @@ const excerptAround = (text: string, index: number, length: number): string => {
 }
 
 /**
+ * One finding per pattern: the `g` flag is stripped so `exec` always starts at
+ * 0 and returns the first match only. (An earlier `seen` set looked like it
+ * enforced this and could not — each phrase and each label is visited exactly
+ * once, so neither guard could ever be false.)
+ *
+ * Split out so `scanStyle` can reuse it WITHOUT the skeleton-phrase loop below:
+ * sharing `scanText` would have reported every placeholder page as a style
+ * finding too, and the two lists are meant to be different failures.
+ */
+const scanPatterns = (text: string, patterns: readonly PlaceholderPattern[]): TextFinding[] => {
+  const found: TextFinding[] = []
+  for (const { label, test } of patterns) {
+    const match = new RegExp(test.source, test.flags.replace('g', '')).exec(text)
+    if (match) {
+      found.push({ label, excerpt: excerptAround(text, match.index, match[0].length) })
+    }
+  }
+  return found
+}
+
+/**
  * Scan one page's visible text.
  *
  * At most one finding per PATTERN — a paragraph that says "placeholder" three
  * times is one line in the report, not three, because the unit of work is the
- * page rather than the occurrence. The skeleton loop is deliberately not
- * bound by that: each matching phrase is its own finding, all sharing the
+ * page rather than the occurrence. The skeleton loop is deliberately not bound
+ * by that: each matching phrase is its own finding, all sharing the
  * `skeleton copy` label, because the excerpts differ and each names a distinct
  * string an author still has to replace.
  */
@@ -126,16 +167,26 @@ export const scanText = (
     }
   }
 
-  // One finding per pattern: the `g` flag is stripped so `exec` always starts
-  // at 0 and returns the first match only. (An earlier `seen` set looked like
-  // it enforced this and could not — each phrase and each label is visited
-  // exactly once, so neither guard could ever be false.)
-  for (const { label, test } of patterns) {
-    const match = new RegExp(test.source, test.flags.replace('g', '')).exec(text)
-    if (match) {
-      found.push({ label, excerpt: excerptAround(text, match.index, match[0].length) })
-    }
-  }
-
-  return found
+  return [...found, ...scanPatterns(text, patterns)]
 }
+
+/**
+ * Style scan. Same one-finding-per-pattern rule and the same excerpt shape, so
+ * the report prints both lists identically.
+ */
+export const scanStyle = (text: string): TextFinding[] => scanPatterns(text, STYLE_PATTERNS)
+
+/**
+ * Route filter for `--exclude`. SUBSTRING match, not prefix: the block showcase
+ * seeds flat pages at `/showcase-*` AND collection fixtures at
+ * `/case-studies/showcase-*`, `/workshops/showcase-*`, `/team/showcase-*`, so a
+ * prefix rule needed one argument per collection and still missed the next one.
+ * `--exclude=showcase-` drops the whole fixture set.
+ *
+ * Exists because a LOCAL sweep crawls those fixtures — a block or a skeleton
+ * each. Measured on a full local crawl (137 routes): 64 of the 77 thin routes
+ * and 27 of the 35 placeholder findings were fixtures, which is how a useful
+ * report becomes one nobody reads.
+ */
+export const isExcluded = (route: string, needles: readonly string[]): boolean =>
+  needles.some((needle) => needle !== '' && route.includes(needle))
