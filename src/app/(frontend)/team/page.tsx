@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import { listTeamMembers } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
-import { TeamGrid } from '@/components/sections/TeamGrid'
+import { Cards } from '@/components/sections/Cards'
 import { byLeadershipThenOrder } from '@/lib/resolveLayout'
 import { Container } from '@/components/ui/Container'
 
@@ -24,7 +24,7 @@ export default async function TeamPage() {
   const members = await listTeamMembers()
 
   // Leadership first, then by `order` (numeric, undefined last), stable. Shared
-  // with `resolveLayout` so a `team-grid` block set to "All" matches this page.
+  // with `resolveLayout` so a `cards` block listing the team matches this page.
   const ordered = [...members].sort(byLeadershipThenOrder)
 
   return (
@@ -44,7 +44,7 @@ export default async function TeamPage() {
           </p>
         </Container>
       </header>
-      <TeamGrid layout="cards" manualItems={ordered} headingLevel="h2" />
+      <Cards collection="teamMembers" manualItems={ordered} headingLevel="h2" />
     </div>
   )
 }

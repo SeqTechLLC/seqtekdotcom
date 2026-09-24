@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import { listWorkshops } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
-import { WorkshopList } from '@/components/sections/WorkshopList'
+import { Cards } from '@/components/sections/Cards'
 import { Container } from '@/components/ui/Container'
 
 // spec 004 US4 (T023). Workshop listing.
@@ -39,7 +39,7 @@ export default async function WorkshopsPage() {
           </p>
         </Container>
       </header>
-      <WorkshopList workshops={workshops} headingLevel="h2" />
+      <Cards collection="workshops" manualItems={workshops} headingLevel="h2" />
     </div>
   )
 }

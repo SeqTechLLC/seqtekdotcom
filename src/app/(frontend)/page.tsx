@@ -9,7 +9,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
 import { resolveLayout } from '@/lib/resolveLayout'
-import { PostList } from '@/components/sections/PostList'
+import { Cards } from '@/components/sections/Cards'
 import { CtaSection } from '@/components/sections/CtaSection'
 import type { Homepage } from '@/payload-types'
 
@@ -78,7 +78,11 @@ export default async function HomePage() {
 
         {latestPosts.length ? (
           <section data-testid="latest-insights">
-            <PostList heading="Latest insights" manualItems={latestPosts.slice(0, 3)} limit={3} />
+            <Cards
+              collection="posts"
+              heading="Latest insights"
+              manualItems={latestPosts.slice(0, 3)}
+            />
           </section>
         ) : null}
       </div>
