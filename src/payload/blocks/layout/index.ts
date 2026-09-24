@@ -3,6 +3,7 @@
 // `npm run generate:importmap` after any change (FR-038, FR-039).
 import { Accordion } from './Accordion'
 import { BrandTeaser } from './BrandTeaser'
+import { Cards } from './Cards'
 import { CaseStudyGrid } from './CaseStudyGrid'
 import { CaseStudyHero } from './CaseStudyHero'
 import { ClientLogoGrid } from './ClientLogoGrid'
@@ -50,6 +51,7 @@ import { WorkshopList } from './WorkshopList'
 export {
   Accordion,
   BrandTeaser,
+  Cards,
   CaseStudyGrid,
   CaseStudyHero,
   ClientLogoGrid,
@@ -124,6 +126,7 @@ export const layoutBlocks = [
   CtaSection,
   NewsletterCta,
   ContactCta,
+  Cards,
   CaseStudyGrid,
   ServiceCards,
   ServicePillarCards,

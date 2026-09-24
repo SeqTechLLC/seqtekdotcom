@@ -18,6 +18,7 @@ export const RESOLVED_BLOCK_TYPES = [
   'post-list',
   'case-study-grid',
   'service-cards',
+  'cards',
 ] as const
 
 export type ResolvedBlockType = (typeof RESOLVED_BLOCK_TYPES)[number]

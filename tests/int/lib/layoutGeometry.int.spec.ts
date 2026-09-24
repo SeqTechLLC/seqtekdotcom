@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { CAROUSEL_SIZES, GRID_SIZES } from '@/components/sections/Gallery'
 import { SIZES as IMAGE_SIZES } from '@/components/sections/Image'
 import { CARD_SIZES } from '@/components/sections/TeamGrid'
+import { CARD_SIZES as TEAM_CARD_SIZES } from '@/components/cards/TeamCards'
 
 import {
   boxAt,
@@ -356,6 +357,7 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
         'src/components/sections/CaseStudyHero.tsx',
         'src/components/sections/TwoColumn.tsx',
         'src/components/sections/ServicePillarHero.tsx',
+        'src/components/cards/FeaturedCard.tsx',
       ],
       sizes: SPLIT_MEDIA_SIZES,
       cell: (vw) => (vw >= 1024 ? cellWidth(boxAt(vw), 2, GAP[10]) : boxAt(vw)),
@@ -398,6 +400,14 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
       file: 'src/components/sections/TeamGrid.tsx',
       classes: 'sm:grid-cols-2 lg:grid-cols-3',
       sizes: CARD_SIZES,
+      cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 3 : vw >= 640 ? 2 : 1, GAP[6]),
+    },
+    {
+      name: 'cards block, team member cards',
+      expression: 'sizes={CARD_SIZES}',
+      file: 'src/components/cards/TeamCards.tsx',
+      classes: 'sm:grid-cols-2 lg:grid-cols-3',
+      sizes: TEAM_CARD_SIZES,
       cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 3 : vw >= 640 ? 2 : 1, GAP[6]),
     },
     {
