@@ -11,8 +11,10 @@ import type { SectionBackground } from './Section'
  * them inline.
  */
 export interface Tone {
-  /** True on the dark band, where body text is already `text-text-inverse`. */
+  /** True on the dark and brand bands, where body text is already white. */
   inverse: boolean
+  /** True on the solid brand-green band, where the primary button turns white. */
+  brand: boolean
   secondary: string
   muted: string
   /** Meaning-bearing green text (DESIGN_SYSTEM §2.4: never `text-accent`). */
@@ -25,6 +27,7 @@ export interface Tone {
 
 const LIGHT: Omit<Tone, 'highlight'> = {
   inverse: false,
+  brand: false,
   secondary: 'text-text-secondary',
   muted: 'text-text-muted',
   accent: 'text-accent-strong',
@@ -34,6 +37,7 @@ const LIGHT: Omit<Tone, 'highlight'> = {
 
 const DARK: Tone = {
   inverse: true,
+  brand: false,
   secondary: 'text-neutral-200',
   muted: 'text-neutral-300',
   accent: 'text-brand-green-300',
@@ -42,8 +46,20 @@ const DARK: Tone = {
   highlight: 'bg-neutral-800',
 }
 
+const BRAND: Tone = {
+  inverse: true,
+  brand: true,
+  secondary: 'text-brand-green-50',
+  muted: 'text-brand-green-100',
+  accent: 'text-white',
+  rule: 'border-white/30',
+  ruleStrong: 'border-white/50',
+  highlight: 'bg-accent-hover',
+}
+
 export const toneFor = (background: SectionBackground | null | undefined): Tone => {
   if (background === 'inverse') return DARK
+  if (background === 'brand') return BRAND
   // The accent band IS `surface-accent`, so a highlight in that colour vanishes.
   return {
     ...LIGHT,

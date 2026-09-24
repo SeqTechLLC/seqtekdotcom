@@ -188,6 +188,6 @@ export const Cta: Block = {
         httpsUrlValidate,
       ),
     },
-    backgroundField('accent'),
+    backgroundField('brand', { brand: true }),
   ],
 }

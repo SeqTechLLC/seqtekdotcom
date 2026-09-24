@@ -22,7 +22,7 @@ import { SHELL_RAIL, type RailSize } from '@/lib/layoutGeometry'
 export type SectionPadding = 'none' | 'tight' | 'default' | 'spacious'
 
 /** Surface the block sits on. Names are semantic, not colour values. */
-export type SectionBackground = 'none' | 'subtle' | 'accent' | 'inverse'
+export type SectionBackground = 'none' | 'subtle' | 'accent' | 'inverse' | 'brand'
 
 /** Hairlines some blocks use to separate themselves from a neighbour. */
 export type SectionBorder = 'none' | 'y' | 'top'
@@ -40,7 +40,12 @@ const BACKGROUND: Record<SectionBackground, string> = {
   // accent-strong, not `bg-accent`: brand-green-500 fails WCAG AA against
   // white text at 2.39:1. DESIGN_SYSTEM.md §14.
   accent: 'bg-surface-accent',
-  inverse: 'bg-surface-inverse text-text-inverse',
+  // `band-dark` / `band-brand` (styles.css) re-point the text, link and border
+  // tokens, so every block's ordinary classes stay legible on the band.
+  inverse: 'band-dark bg-surface-inverse text-text-inverse',
+  // The solid green close. Only `cta` offers it: white on green-700 is AA, and
+  // green text on it is not, so blocks that colour text green stay off it.
+  brand: 'band-brand bg-accent-strong text-white',
 }
 
 const BORDER: Record<SectionBorder, string> = {

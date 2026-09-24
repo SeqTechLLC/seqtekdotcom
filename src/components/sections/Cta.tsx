@@ -66,7 +66,7 @@ const GATE_FIELDS: FormFieldConfig[] = [
 ]
 
 /** `ctaField`'s three button styles, as `Hero` draws them, plus a dark-band set. */
-const BUTTON_CLASS: Record<'light' | 'dark', Record<ButtonStyle, string>> = {
+const BUTTON_CLASS: Record<'light' | 'dark' | 'brand', Record<ButtonStyle, string>> = {
   light: {
     primary: 'rounded-md bg-accent-strong px-5 py-3 font-medium text-white',
     secondary:
@@ -76,6 +76,12 @@ const BUTTON_CLASS: Record<'light' | 'dark', Record<ButtonStyle, string>> = {
   // Green-700 text on neutral-900 fails AA, so the lighter styles go white.
   dark: {
     primary: 'rounded-md bg-accent-strong px-5 py-3 font-medium text-white',
+    secondary: 'rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10',
+    ghost: 'rounded-md px-5 py-3 font-medium text-white underline hover:no-underline',
+  },
+  // The solid green band: the old CTA's white button with green text.
+  brand: {
+    primary: 'rounded-md bg-white px-5 py-3 font-medium text-accent-strong',
     secondary: 'rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10',
     ghost: 'rounded-md px-5 py-3 font-medium text-white underline hover:no-underline',
   },
@@ -97,7 +103,7 @@ function Buttons({
   const primary = usable(primaryCta) ? primaryCta : null
   const secondary = usable(secondaryCta) ? secondaryCta : null
   if (!primary && !secondary) return null
-  const styles = BUTTON_CLASS[tone.inverse ? 'dark' : 'light']
+  const styles = BUTTON_CLASS[tone.brand ? 'brand' : tone.inverse ? 'dark' : 'light']
   return (
     <div className={cn('flex flex-wrap items-center gap-4', className)}>
       {primary ? (
@@ -183,10 +189,10 @@ export function Cta({
   formId,
   coverImage,
   fileUrl,
-  background = 'accent',
+  background = 'brand',
 }: CtaProps) {
   const act: CtaAction = action ?? 'buttons'
-  const bg: SectionBackground = background ?? 'accent'
+  const bg: SectionBackground = background ?? 'brand'
   const tone = toneFor(bg)
   const split = variant === 'split'
   const form = formId?.trim() || null
