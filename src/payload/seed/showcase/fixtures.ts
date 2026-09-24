@@ -41,6 +41,13 @@ export interface BlockFixture extends AuthoredBlockFixture {
 }
 
 /**
+ * A polymorphic `manualItems` value, as Payload stores it: the `cards` block's
+ * one relationship spans every listable collection, so each pick names its own.
+ */
+const picks = (relationTo: string, ids: Array<string | number>) =>
+  ids.map((value) => ({ relationTo, value }))
+
+/**
  * Returns the canonical fixture set. Add entries here as new blocks land — the
  * seed script will pick them up automatically.
  *
@@ -710,6 +717,210 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             heading: 'Get in touch',
             body: 'No HubSpot meetings URL: the section collapses to one full-width column.',
             primaryCta: { label: 'Contact us', url: '/contact' },
+          },
+        },
+      ],
+    },
+    {
+      // The Query Loop block. One grid per collection first (the preview tool
+      // captures the first variants), then the featured layout per collection:
+      // with a photo, with a logo, and on a panel for the kinds that have none.
+      // Hand-picked where the seeded docs make that deterministic; `all` and
+      // `filtered` where the showcase set is the whole of what they find.
+      blockType: 'cards',
+      variants: [
+        {
+          name: 'case-studies-grid',
+          data: {
+            blockType: 'cards',
+            heading: 'Recent case studies',
+            intro: 'A few engagements, each with the outcome the client measured.',
+            collection: 'caseStudies',
+            source: 'manual',
+            manualItems: picks('caseStudies', supporting.caseStudyIds),
+            display: 'grid',
+          },
+        },
+        {
+          name: 'posts-grid',
+          data: {
+            blockType: 'cards',
+            heading: 'Latest insights',
+            collection: 'posts',
+            source: 'manual',
+            manualItems: picks('posts', supporting.postIds),
+            display: 'grid',
+          },
+        },
+        {
+          name: 'services-by-group',
+          data: {
+            blockType: 'cards',
+            heading: 'Services in this group',
+            collection: 'services',
+            source: 'filtered',
+            serviceGroup: supporting.serviceGroupIds[0],
+            display: 'grid',
+            background: 'subtle',
+          },
+        },
+        {
+          name: 'service-groups',
+          data: {
+            blockType: 'cards',
+            heading: 'Three service groups',
+            collection: 'services',
+            source: 'manual',
+            manualItems: picks('services', supporting.serviceGroupIds),
+            display: 'grid',
+          },
+        },
+        {
+          name: 'industries-grid',
+          data: {
+            blockType: 'cards',
+            heading: 'Industries we serve',
+            collection: 'industries',
+            source: 'manual',
+            manualItems: picks('industries', supporting.industryIds),
+            display: 'grid',
+          },
+        },
+        {
+          name: 'workshops-grid',
+          data: {
+            blockType: 'cards',
+            heading: 'Workshops',
+            collection: 'workshops',
+            source: 'manual',
+            manualItems: picks('workshops', supporting.workshopIds),
+            display: 'grid',
+          },
+        },
+        {
+          name: 'team-grid',
+          data: {
+            blockType: 'cards',
+            heading: 'Leadership',
+            collection: 'teamMembers',
+            source: 'manual',
+            manualItems: picks('teamMembers', supporting.teamMemberIds),
+            display: 'grid',
+          },
+        },
+        {
+          name: 'locations-grid',
+          data: {
+            blockType: 'cards',
+            heading: 'Where we work',
+            collection: 'locations',
+            source: 'manual',
+            manualItems: picks('locations', supporting.locationIds),
+            display: 'grid',
+            background: 'subtle',
+          },
+        },
+        {
+          name: 'partners-grid',
+          data: {
+            blockType: 'cards',
+            heading: 'Partners',
+            collection: 'partners',
+            source: 'manual',
+            manualItems: picks('partners', supporting.partnerIds),
+            display: 'grid',
+          },
+        },
+        {
+          name: 'case-studies-featured',
+          data: {
+            blockType: 'cards',
+            heading: 'Featured work',
+            collection: 'caseStudies',
+            source: 'manual',
+            manualItems: picks('caseStudies', supporting.caseStudyIds),
+            display: 'featured',
+          },
+        },
+        {
+          name: 'posts-featured',
+          data: {
+            blockType: 'cards',
+            heading: 'From the blog',
+            collection: 'posts',
+            source: 'manual',
+            manualItems: picks('posts', supporting.postIds),
+            limit: 2,
+            display: 'featured',
+            background: 'subtle',
+          },
+        },
+        {
+          name: 'services-featured',
+          data: {
+            blockType: 'cards',
+            heading: 'Where most clients start',
+            collection: 'services',
+            source: 'manual',
+            manualItems: picks('services', supporting.serviceIds),
+            display: 'featured',
+          },
+        },
+        {
+          name: 'industries-featured',
+          data: {
+            blockType: 'cards',
+            heading: 'Industries',
+            collection: 'industries',
+            source: 'manual',
+            manualItems: picks('industries', supporting.industryIds),
+            display: 'featured',
+            background: 'accent',
+          },
+        },
+        {
+          name: 'workshops-featured',
+          data: {
+            blockType: 'cards',
+            heading: 'Start with a workshop',
+            collection: 'workshops',
+            source: 'manual',
+            manualItems: picks('workshops', supporting.workshopIds),
+            display: 'featured',
+          },
+        },
+        {
+          name: 'team-featured',
+          data: {
+            blockType: 'cards',
+            heading: 'The people you would work with',
+            collection: 'teamMembers',
+            source: 'manual',
+            manualItems: picks('teamMembers', supporting.teamMemberIds),
+            display: 'featured',
+            background: 'inverse',
+          },
+        },
+        {
+          name: 'locations-featured',
+          data: {
+            blockType: 'cards',
+            heading: 'Markets',
+            collection: 'locations',
+            source: 'manual',
+            manualItems: picks('locations', supporting.locationIds),
+            display: 'featured',
+          },
+        },
+        {
+          name: 'partners-featured',
+          data: {
+            blockType: 'cards',
+            heading: 'Partner spotlight',
+            collection: 'partners',
+            source: 'manual',
+            manualItems: picks('partners', supporting.partnerIds),
+            display: 'featured',
           },
         },
       ],

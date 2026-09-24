@@ -44,6 +44,7 @@ const STUB_SUPPORTING = {
   serviceGroupIds: [0, 0, 0],
   categoryIds: [0, 0, 0],
   teamMemberIds: [0],
+  partnerIds: [0, 0, 0],
 }
 
 const fixtures = getBlockFixtures(STUB_MEDIA, STUB_SUPPORTING)
