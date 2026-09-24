@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 
 import AccordionBlock from './AccordionBlock'
 import BrandTeaser from './BrandTeaser'
+import Cards from './Cards'
 import CaseStudyGrid from './CaseStudyGrid'
 import CaseStudyHero from './CaseStudyHero'
 import ClientLogoGrid from './ClientLogoGrid'
@@ -81,6 +82,7 @@ export const registry: Record<string, ComponentType<any>> = {
   'newsletter-cta': NewsletterCta,
   'contact-cta': ContactCta,
   cta: Cta,
+  cards: Cards,
   'case-study-grid': CaseStudyGrid,
   'service-cards': ServiceCards,
   'service-pillar-cards': ServicePillarCards,

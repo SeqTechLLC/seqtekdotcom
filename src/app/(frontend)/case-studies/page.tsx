@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import { listCaseStudies } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
-import { CaseStudyGrid } from '@/components/sections/CaseStudyGrid'
+import { Cards } from '@/components/sections/Cards'
 import { Container } from '@/components/ui/Container'
 
 // spec 004 US2 (T017). Case-study listing.
@@ -36,7 +36,7 @@ export default async function CaseStudiesPage() {
           </p>
         </Container>
       </header>
-      <CaseStudyGrid manualItems={caseStudies} limit={caseStudies.length} headingLevel="h2" />
+      <Cards collection="caseStudies" manualItems={caseStudies} headingLevel="h2" />
     </div>
   )
 }

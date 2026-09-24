@@ -1,5 +1,15 @@
 import type { CaseStudy, Post, Service } from '../payload-types'
-import { listCaseStudies, listPosts, listServices, listTeamMembers } from './payload'
+import { type CardCollection, isCardCollection, unwrapPicks } from './cardCollections'
+import {
+  listCaseStudies,
+  listIndustries,
+  listLocations,
+  listPartners,
+  listPosts,
+  listServices,
+  listTeamMembers,
+  listWorkshops,
+} from './payload'
 import type { ResolvedBlockType } from './resolvedBlockTypes'
 
 /**
@@ -136,6 +146,90 @@ async function resolveServiceCards(block: LayoutBlock): Promise<LayoutBlock> {
 }
 
 /**
+ * The leaf services a group holds, in the group's own order. The relation
+ * lives on the GROUP (SVC-2), so this is a lookup rather than a filter. A
+ * group that is not published, or not a group, holds nothing.
+ */
+function servicesInGroup(all: Service[], group: unknown): Service[] {
+  const found = all.find((s) => s.tier === 'group' && sameRelation(s, group))
+  const leaves = new Map(all.filter((s) => s.tier === 'leaf').map((s) => [String(s.id), s]))
+  return (found?.items ?? [])
+    .map((item) => leaves.get(String(relationId(item))))
+    .filter((s): s is Service => !!s)
+}
+
+/**
+ * Every published row of `collection` a `cards` block set to "All" or
+ * "Filtered" lists, in the order the matching listing page uses. A blank
+ * filter does not narrow: "Filtered" with nothing chosen reads as "All".
+ */
+async function queryCards(block: LayoutBlock, collection: CardCollection): Promise<unknown[]> {
+  const filtered = block.source === 'filtered'
+  switch (collection) {
+    case 'caseStudies': {
+      let studies: CaseStudy[] = await listCaseStudies() // already `-publishedAt`
+      if (filtered && relationId(block.industry) !== null) {
+        studies = studies.filter((s) => sameRelation(s.industry, block.industry))
+      }
+      if (filtered && relationId(block.service) !== null) {
+        studies = studies.filter((s) => relationListHas(s.services, block.service))
+      }
+      return studies
+    }
+    case 'posts': {
+      const posts = await listPosts() // already `-publishedAt`
+      return filtered && relationId(block.category) !== null
+        ? posts.filter((p) => relationListHas(p.categories, block.category))
+        : posts
+    }
+    case 'services': {
+      const all = await listServices() // already by `order`
+      // SVC-2: "All" means services, never the groups or axis pages that share
+      // the collection. A group's own list is the one way to reach its order.
+      return filtered && relationId(block.serviceGroup) !== null
+        ? servicesInGroup(all, block.serviceGroup)
+        : all.filter((s) => s.tier === 'leaf')
+    }
+    case 'teamMembers': {
+      const members = [...(await listTeamMembers())].sort(byLeadershipThenOrder)
+      return filtered && block.leadershipOnly === true
+        ? members.filter((m) => Boolean(m.isLeadership))
+        : members
+    }
+    case 'industries':
+      return listIndustries() // by title
+    case 'workshops':
+      return listWorkshops() // by `order`
+    case 'locations':
+      return listLocations() // by city
+    case 'partners':
+      return listPartners() // by `order`, then name
+  }
+}
+
+/**
+ * The one resolver for every list of documents (ADR 0009's Query Loop). It
+ * fills `manualItems` with plain documents whichever way the block chose them,
+ * so the component draws exactly what it is handed:
+ *
+ *   - "All" / "Filtered" read the collection through its cached reader;
+ *   - "Manual" keeps the polymorphic picks that belong to the chosen
+ *     collection, in the order they were picked, unwrapped from Payload's
+ *     `{ relationTo, value }`;
+ *   - `limit` then trims whichever list that produced. Blank means all.
+ */
+async function resolveCards(block: LayoutBlock): Promise<LayoutBlock> {
+  if (!isCardCollection(block.collection)) return { ...block, manualItems: [] }
+  const collection = block.collection
+  const items =
+    block.source === 'manual'
+      ? unwrapPicks(block.manualItems, collection)
+      : await queryCards(block, collection)
+  const limit = typeof block.limit === 'number' && block.limit > 0 ? block.limit : undefined
+  return { ...block, manualItems: limit === undefined ? items : items.slice(0, limit) }
+}
+
+/**
  * Keyed by `ResolvedBlockType` rather than `string`: the union is what
  * `blockOutputContract.int.spec.tsx` checks `resolvedUpstream` declarations
  * against, and typing the record this way means deleting a resolver here, or
@@ -147,6 +241,7 @@ const RESOLVERS: Record<ResolvedBlockType, (block: LayoutBlock) => Promise<Layou
   'post-list': resolvePostList,
   'case-study-grid': resolveCaseStudyGrid,
   'service-cards': resolveServiceCards,
+  cards: resolveCards,
 }
 
 /**

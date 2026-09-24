@@ -18,6 +18,7 @@ import type {
   TeamMember,
   Partner,
   Industry,
+  Location,
 } from '@/payload-types'
 
 // spec 004 Phase 2 (Foundational). The ISR correctness of every public route
@@ -429,7 +430,9 @@ export const getIndustryBySlug = withReadTimeout(
 // ---------------------------------------------------------------------------
 
 export const findPublishedList = async (
-  collection: SluggedCollection | 'teamMembers',
+  // `locations` is listed but not slugged-and-routed: a `cards` block lists
+  // markets, and no `/locations/[slug]` route exists to read one by slug.
+  collection: SluggedCollection | 'locations',
   // Payload's `Sort` is `string | string[]`; the array form is how a listing
   // gets a deterministic tiebreaker on a nullable primary sort key.
   opts: { sort?: string | string[]; depth?: number } = {},
@@ -491,6 +494,27 @@ export const listTeamMembers = withReadTimeout('listTeamMembers', (): Promise<Te
     async () => (await findPublishedList('teamMembers', { sort: 'order' })) as TeamMember[],
     ['teamMembers', 'list'],
     { tags: listCacheTags('teamMembers'), revalidate: ONE_HOUR },
+  )(),
+)
+
+// The next two feed a `cards` block set to list every industry or market.
+// Neither collection has an `order` field, so they sort by the name an editor
+// sees. Depth 0: an industry card reads `layout` only to decide whether it may
+// link, and blocks come back inline at any depth; nothing on a market card is
+// a relation.
+export const listIndustries = withReadTimeout('listIndustries', (): Promise<Industry[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('industries', { sort: 'title', depth: 0 })) as Industry[],
+    ['industries', 'list'],
+    { tags: listCacheTags('industries'), revalidate: ONE_HOUR },
+  )(),
+)
+
+export const listLocations = withReadTimeout('listLocations', (): Promise<Location[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('locations', { sort: 'city', depth: 0 })) as Location[],
+    ['locations', 'list'],
+    { tags: listCacheTags('locations'), revalidate: ONE_HOUR },
   )(),
 )
 

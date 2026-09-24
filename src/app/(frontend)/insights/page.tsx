@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import { listPosts } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
-import { PostList } from '@/components/sections/PostList'
+import { Cards } from '@/components/sections/Cards'
 import { Container } from '@/components/ui/Container'
 
 // spec 004 Phase 8 (T028). Insights (posts) listing.
@@ -36,7 +36,7 @@ export default async function InsightsPage() {
           </p>
         </Container>
       </header>
-      <PostList manualItems={posts} limit={posts.length} headingLevel="h2" />
+      <Cards collection="posts" manualItems={posts} headingLevel="h2" />
     </div>
   )
 }

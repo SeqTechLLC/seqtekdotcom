@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
+import { CARD_COLLECTIONS } from '../../../src/lib/cardCollections'
+import { Cards } from '../../../src/components/sections/Cards'
 import { CaseStudyGrid } from '../../../src/components/sections/CaseStudyGrid'
 import { IndustryGrid } from '../../../src/components/sections/IndustryGrid'
 
@@ -34,6 +36,22 @@ describe('a grid with no items renders nothing at all', () => {
         <IndustryGrid heading="Sectors" industries={items as never} />
       ),
     },
+    // The `cards` block, in every collection and both displays. Its lists are
+    // the ones most likely to come back empty: they fill themselves at render.
+    ...CARD_COLLECTIONS.flatMap((collection) =>
+      (['grid', 'featured'] as const).map((display) => ({
+        name: `Cards (${collection}, ${display})`,
+        render: (items: unknown[] | null) => (
+          <Cards
+            heading="Selected work"
+            intro="An intro that must not stand alone either."
+            collection={collection}
+            display={display}
+            manualItems={items}
+          />
+        ),
+      })),
+    ),
   ]
 
   for (const c of cases) {

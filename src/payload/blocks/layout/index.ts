@@ -5,6 +5,7 @@
 // replaces it here, and the old file goes with the rest of the consolidation.
 import { Accordion } from './AccordionBlock'
 import { BrandTeaser } from './BrandTeaser'
+import { Cards } from './Cards'
 import { CaseStudyGrid } from './CaseStudyGrid'
 import { CaseStudyHero } from './CaseStudyHero'
 import { ClientLogoGrid } from './ClientLogoGrid'
@@ -56,6 +57,7 @@ import { WorkshopList } from './WorkshopList'
 export {
   Accordion,
   BrandTeaser,
+  Cards,
   CaseStudyGrid,
   CaseStudyHero,
   ClientLogoGrid,
@@ -139,6 +141,7 @@ export const layoutBlocks = [
   NewsletterCta,
   ContactCta,
   Cta,
+  Cards,
   CaseStudyGrid,
   ServiceCards,
   ServicePillarCards,
