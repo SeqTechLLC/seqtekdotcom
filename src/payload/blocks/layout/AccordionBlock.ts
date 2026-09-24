@@ -7,9 +7,6 @@ import { backgroundField, headingField, introField } from '../../fields/blockCop
 /**
  * Replaces `faq`, `accordion` and `tabs`: titled panels of rich text, either
  * opened in place or switched between as tabs. Emits no FAQPage JSON-LD.
- *
- * Named `AccordionBlock.ts` only because the retired `accordion` config still
- * holds `Accordion.ts` until the consolidation deletes it.
  */
 export const Accordion: Block = {
   slug: 'accordion',

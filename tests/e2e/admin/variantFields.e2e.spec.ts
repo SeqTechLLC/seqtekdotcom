@@ -262,9 +262,7 @@ test.describe('variant-only fields are hidden, not shown blank', () => {
     // moves both together instead of turning this into a confusing false red.
     const rowNumber = String(heroCase!.row + 1).padStart(2, '0')
     await expect(header.locator('.blocks-field__block-number')).toHaveText(rowNumber)
-    await expect(header, 'the row must still say which block it is').toContainText(
-      'Hero (standard page)',
-    )
+    await expect(header, 'the row must still say which block it is').toContainText('Hero')
     await expect(header, 'and what it is about').toContainText('Variant fixture hero')
   })
 

@@ -43,8 +43,9 @@ caps. The list is pinned by a test, and adding to it needs the site owner's sign
 - Any ordinary page composes from the set with no code change. Market pages are the standing test.
 - An LLM composing a page picks from 13 distinct blocks with explicit options instead of 45 overlapping ones.
 - A new look costs an option and a test, not a block, a migration and a picker entry.
-- Cost: one large migration (every old block table dropped) and a rewrite of the content JSON. Environments rebuild
-  from the JSON rather than transforming data in place.
+- Cost: one large migration and a rewrite of the content JSON. The migration drops every old block table and
+  converts three legacy values in place (hero `with-image`, embed pixel heights, plain-text accordion bodies);
+  environments then reload the content from the JSON.
 
 ## Revisit when
 
