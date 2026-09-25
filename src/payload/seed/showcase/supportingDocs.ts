@@ -1,7 +1,8 @@
 /**
  * Showcase supporting docs — minimal seeded records in collections that
  * showcase blocks reference (testimonials, caseStudies, services, posts,
- * industries, locations, workshops, service groups, categories, teamMembers).
+ * industries, locations, workshops, service groups, categories, teamMembers,
+ * partners).
  *
  * Records are tagged with a `[Showcase]` prefix on their useAsTitle field so
  * they can be cleared idempotently. The prefix lives in the title/name so
@@ -24,6 +25,7 @@ export interface SupportingIds {
   workshopIds: Array<string | number>
   categoryIds: Array<string | number>
   teamMemberIds: Array<string | number>
+  partnerIds: Array<string | number>
 }
 
 type CollectionWithStringTitleField =
@@ -36,6 +38,7 @@ type CollectionWithStringTitleField =
   | 'workshops'
   | 'categories'
   | 'teamMembers'
+  | 'partners'
 
 async function clearTagged(
   payload: Payload,
@@ -56,6 +59,7 @@ async function clearTagged(
  * (author=teamMembers, industry=industries), so order from leaf to root.
  */
 export async function clearSupportingDocs(payload: Payload): Promise<void> {
+  await clearTagged(payload, 'partners', 'name')
   await clearTagged(payload, 'posts', 'title')
   await clearTagged(payload, 'caseStudies', 'title')
   await clearTagged(payload, 'services', 'title')
@@ -255,6 +259,32 @@ async function seedWorkshops(payload: Payload) {
   ])
 }
 
+// The `cards` block lists partners, and nothing else in the showcase seeds
+// one. `logo` is required, so they carry the placeholder mark.
+async function seedPartners(payload: Payload, logoId: string | number) {
+  await clearTagged(payload, 'partners', 'name')
+  return createBatch(payload, 'partners', [
+    {
+      name: `${SHOWCASE_TAG}Northwind Cloud`,
+      summary: 'Cloud platform partner for the migrations we run end to end.',
+      logo: logoId,
+      _status: 'published',
+    },
+    {
+      name: `${SHOWCASE_TAG}Contoso Data`,
+      summary: 'Analytics tooling we recommend when a client outgrows spreadsheets.',
+      logo: logoId,
+      _status: 'published',
+    },
+    {
+      name: `${SHOWCASE_TAG}Fabrikam Security`,
+      summary: 'Identity and access partner for regulated environments.',
+      logo: logoId,
+      _status: 'published',
+    },
+  ])
+}
+
 async function createBatch(
   payload: Payload,
   collection: CollectionWithStringTitleField,
@@ -275,6 +305,7 @@ async function createBatch(
 export async function seedSupportingDocs(
   payload: Payload,
   photoId: string | number,
+  logoId: string | number = photoId,
 ): Promise<SupportingIds> {
   const testimonialIds = await seedTestimonials(payload, photoId)
   const categoryIds = await seedCategories(payload)
@@ -302,6 +333,7 @@ export async function seedSupportingDocs(
   const caseStudyIds = await seedCaseStudies(payload, industryIds, photoId)
   const postIds = await seedPosts(payload, teamMemberIds[0]!, photoId)
   const workshopIds = await seedWorkshops(payload)
+  const partnerIds = await seedPartners(payload, logoId)
 
   return {
     testimonialIds,
@@ -314,5 +346,6 @@ export async function seedSupportingDocs(
     serviceGroupIds,
     categoryIds,
     teamMemberIds,
+    partnerIds,
   }
 }

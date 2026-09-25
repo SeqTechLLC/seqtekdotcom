@@ -38,8 +38,8 @@ import type { ComponentType } from 'react'
 
 export const registry: Record<string, ComponentType<any>> = {
   hero: Hero,
-  'case-study-hero': CaseStudyHero,
-  content: ContentBlock,
+  content: Content,
+  'media-text': MediaText,
   // … one entry per layout block in src/payload/blocks/layout/index.ts
 }
 ```

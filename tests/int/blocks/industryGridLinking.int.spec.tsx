@@ -1,10 +1,10 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { IndustryGrid } from '../../../src/components/sections/IndustryGrid'
+import { Cards } from '../../../src/components/sections/Cards'
 
 /**
- * ROADMAP IND-1. `IndustryGrid` cards link to `/industries/<slug>` — that is the
+ * ROADMAP IND-1. Industry cards (the `cards` block, collection `industries`) link to `/industries/<slug>` — that is the
  * behaviour this block exists to deliver, and until this spec it was rendered by
  * nothing in CI: `blockOutputContract` synthesizes industries with no `layout`
  * (`blocks` is absent from `SYNTHESIZABLE_TYPES`), `seedIndustries` seeds four
@@ -20,7 +20,7 @@ import { IndustryGrid } from '../../../src/components/sections/IndustryGrid'
  * silently restore the #126 defect this block was re-linked to fix. That is
  * what these assertions are here to catch.
  */
-describe('IndustryGrid — a card links only where the route resolves', () => {
+describe('industry cards — a card links only where the route resolves', () => {
   const industry = (over: Record<string, unknown> = {}) => ({
     id: 1,
     title: 'Oil and Gas',
@@ -31,7 +31,7 @@ describe('IndustryGrid — a card links only where the route resolves', () => {
   })
 
   const linkFor = (doc: Record<string, unknown>) =>
-    render(<IndustryGrid industries={[doc as never]} />).container.querySelector(
+    render(<Cards collection="industries" manualItems={[doc as never]} />).container.querySelector(
       'a[href="/industries/oil-and-gas"]',
     )
 
@@ -77,7 +77,9 @@ describe('IndustryGrid — a card links only where the route resolves', () => {
       { layout: null },
       { _status: 'draft' as const },
     ]) {
-      const { container } = render(<IndustryGrid industries={[industry(over) as never]} />)
+      const { container } = render(
+        <Cards collection="industries" manualItems={[industry(over) as never]} />,
+      )
       expect(container.textContent).toContain('Oil and Gas')
       expect(container.querySelectorAll('li')).toHaveLength(1)
     }

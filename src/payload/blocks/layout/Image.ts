@@ -2,6 +2,8 @@ import type { Block } from 'payload'
 
 import { blockAdmin } from '../blockAdmin'
 
+import { backgroundField } from '../../fields/blockCopy'
+
 // Single-figure image block (spec 010 / ADR 0009 gap-fill, FR-005). The
 // one-off counterpart to `gallery`: a plain captioned figure droppable into
 // any page layout. Honors the reading-column rule (DESIGN_SYSTEM §11.4) in
@@ -66,5 +68,6 @@ export const Image: Block = {
           'Where a narrower image sits across the page. Center keeps it on the reading axis.',
       },
     },
+    backgroundField(),
   ],
 }

@@ -55,7 +55,6 @@ const galleryBlock = {
   blockType: 'gallery',
   heading: 'Proof',
   layout: 'grid',
-  columns: '2',
   items: [
     { image: media('/g/1.jpg'), caption: 'One' },
     { image: media('/g/2.jpg'), caption: 'Two' },

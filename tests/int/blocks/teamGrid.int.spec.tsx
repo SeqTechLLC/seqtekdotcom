@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { TeamGrid } from '../../../src/components/sections/TeamGrid'
+import { Cards } from '../../../src/components/sections/Cards'
 
 // ROADMAP UI-1 — `teamMembers` carries two overlapping text fields: `title`
 // (the job title) and `role` (a full descriptive sentence). The cards render
@@ -19,25 +19,19 @@ const dana = {
   photo,
 }
 
-describe('<TeamGrid /> card subtitle (UI-1)', () => {
+describe('team cards: card subtitle (UI-1)', () => {
   it('renders the job title, not the descriptive sentence', () => {
-    const { getByText, queryByText } = render(<TeamGrid filter="all" manualItems={[dana]} />)
-    expect(getByText('Dana Dudley')).toBeTruthy()
-    expect(getByText('CTO')).toBeTruthy()
-    expect(queryByText(dana.role)).toBeNull()
-  })
-
-  it('renders the job title in the compact layout too', () => {
     const { getByText, queryByText } = render(
-      <TeamGrid filter="all" layout="compact" manualItems={[dana]} />,
+      <Cards collection="teamMembers" manualItems={[dana]} />,
     )
+    expect(getByText('Dana Dudley')).toBeTruthy()
     expect(getByText('CTO')).toBeTruthy()
     expect(queryByText(dana.role)).toBeNull()
   })
 
   it('shows the name alone when there is no job title — never falls back to `role`', () => {
     const { getByText, queryByText, container } = render(
-      <TeamGrid filter="all" manualItems={[{ ...dana, title: null }]} />,
+      <Cards collection="teamMembers" manualItems={[{ ...dana, title: null }]} />,
     )
     expect(getByText('Dana Dudley')).toBeTruthy()
     expect(queryByText(dana.role)).toBeNull()
@@ -45,12 +39,12 @@ describe('<TeamGrid /> card subtitle (UI-1)', () => {
   })
 
   it('links each card to the member detail route', () => {
-    const { container } = render(<TeamGrid filter="all" manualItems={[dana]} />)
+    const { container } = render(<Cards collection="teamMembers" manualItems={[dana]} />)
     expect(container.querySelector('a')?.getAttribute('href')).toBe('/team/dana-dudley')
   })
 
   it('drops unpopulated relationship rows (depth-0 ids)', () => {
-    const { container } = render(<TeamGrid filter="all" manualItems={[42, 'abc', dana]} />)
+    const { container } = render(<Cards collection="teamMembers" manualItems={[42, 'abc', dana]} />)
     expect(container.querySelectorAll('li')).toHaveLength(1)
   })
 })

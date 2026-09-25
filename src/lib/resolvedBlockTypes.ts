@@ -11,13 +11,6 @@
  * longer satisfies the record; add one without listing it here and the key is
  * rejected. That is a compile error rather than a gate that stays green.
  */
-export const RESOLVED_BLOCK_TYPES = [
-  'team-grid',
-  // BLOCK_LIBRARY calls this the `latest-insights` variant; the block slug is
-  // `post-list` (see src/payload/blocks/layout/PostList.ts).
-  'post-list',
-  'case-study-grid',
-  'service-cards',
-] as const
+export const RESOLVED_BLOCK_TYPES = ['cards'] as const
 
 export type ResolvedBlockType = (typeof RESOLVED_BLOCK_TYPES)[number]

@@ -55,7 +55,7 @@ Versions below are the pinned set from `package.json` after the D-13 stack-valid
 
 All collections are defined in TypeScript. Payload auto-generates the database schema, REST API, GraphQL API, and admin panel from these definitions.
 
-> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`/`services`/`industries`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011**, which completes the contract half — `layout` is now the only body. The per-type `*ToLayout.ts` composers that performed that migration were deleted with the fields they read; the conversion they existed for is complete, and git history holds them if the mapping is ever needed again. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is creating or fixing a block type (`docs/BLOCK_LIBRARY.md` §5.9). `locations` stays structured — a relationship/taxonomy target, not publicly routed. **`services` is not, since SVC-2**: it is a block-composed collection with a `tier` of `leaf | group | axis`, every tier routed at `/services/[slug]` through `RenderBlocks` like any other. `servicePillars` was absorbed into `services` and dropped. **`industries` is not structured either, since IND-1** — block-composed and routed at `/industries/[slug]`, though it carries no tier.
+> **Content model = two primitives (spec 010 / ADR 0009).** Every page on the site renders through one of two shapes: a **block-composed Page** — a `layout` blocks array dispatched by `RenderBlocks` (used by the `pages` collection, the `homepage` global, and the specialized detail collections `workshops`/`caseStudies`/`teamMembers`/`partners`/`services`/`industries`) — or the **Post**, the single sanctioned bespoke richText article body (`posts`, the blog). The specialized collections keep the typed metadata documented in their field tables below (slug, listing image, SEO, relationships, nested URLs) but their _body_ is the `layout` blocks array; the discrete body fields were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011**, which completes the contract half — `layout` is now the only body. The per-type `*ToLayout.ts` composers that performed that migration were deleted with the fields they read; the conversion they existed for is complete, and git history holds them if the mapping is ever needed again. Rearranging or enriching any non-blog page is therefore a content edit with no deploy; the only change that needs code is fixing a block or giving it a new option; a new block needs sign-off (ADR 0013, `docs/BLOCK_LIBRARY.md` §9). `locations` stays structured — a relationship/taxonomy target, not publicly routed. **`services` is not, since SVC-2**: it is a block-composed collection with a `tier` of `leaf | group | axis`, every tier routed at `/services/[slug]` through `RenderBlocks` like any other. `servicePillars` was absorbed into `services` and dropped. **`industries` is not structured either, since IND-1** — block-composed and routed at `/industries/[slug]`, though it carries no tier.
 
 ### Document Collections
 
@@ -163,14 +163,13 @@ pages as taggable services. Six fields needed it.
 #### `servicePillars` — REMOVED (SVC-2)
 
 Absorbed into `services` as `tier: 'group'`. The collection, its tables and its
-version history were dropped — see
-`src/migrations/20260901_022953_svc2_services_tiers.ts` for exactly what that
-does to existing rows. A group is now a `services` row: `title`, `slug`,
+version history were dropped (migration `20260901_022953_svc2_services_tiers`,
+in git history since the 2026-09-24 baseline squash). A group is now a `services` row: `title`, `slug`,
 `layout`, `seo` and `order` come from that collection's table above, and the
 old `description` / `heroImage` fields did not carry over (the group page's
-body is blocks now). Nothing points at `servicePillars` any more; the
-`service-cards` and `service-pillar-cards` blocks both relate to `services`
-filtered to `tier: 'group'`.
+body is blocks now). Nothing points at `servicePillars` any more; a `cards`
+block lists a group's services through its `serviceGroup` filter, which offers
+only `tier: 'group'` rows.
 
 #### `partners`
 
@@ -440,7 +439,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   │   ├── byRole.ts                  # isAdmin, isAdminOrEditor
 │   │   │   └── publishedOrAuthed.ts       # Public reads = published only
 │   │   ├── blocks/                        # Block configs for the layout + inline editors
-│   │   │   ├── layout/                    # Layout block library (Hero, CtaSection, …)
+│   │   │   ├── layout/                    # The 13 layout block configs (Hero, Cta, Cards, …)
 │   │   │   ├── inline/                    # Inline blocks (Callout, Figure, InlineCta, …)
 │   │   │   └── conditional.ts
 │   │   ├── editor/                        # Lexical editor config
@@ -459,6 +458,7 @@ The ISR disk cache lives on the EC2 instance. If the ASG replaces the instance (
 │   │   ├── ui/                            # Primitives: Button, Container, Prose, ResponsiveImage, SmartLink
 │   │   ├── layout/                        # SiteHeader, SiteFooter, MobileNav, SkipToContent, PreviewBanner, ConsentPreferences
 │   │   ├── sections/                      # Block renderers: RenderBlocks + registry.ts + one component per block
+│   │   ├── cards/                         # One card per collection, drawn by the `cards` block
 │   │   ├── richText/                      # Lexical → React serializer
 │   │   ├── forms/                         # HubSpot form wrappers
 │   │   ├── integrations/                  # GTM, HubSpot tracking

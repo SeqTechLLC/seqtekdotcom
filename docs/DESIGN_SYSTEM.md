@@ -135,6 +135,17 @@ The surface and border tokens (plus `--color-text-muted`) were re-pitched to a *
 
 > **The `text-accent` naming trap (spec 007).** Tailwind flattens the color theme, so the utility **`text-accent`** resolves to `accent.DEFAULT` → `--color-accent` → **brand-green-500 (`#72b94d`, 2.4:1 on white — fails AA even for large text)**. It does **not** resolve to the green-700 `--color-text-accent` token (that one is reached via **`text-text-accent`**). The green-500 seed is a legitimate _decorative/illustration_ color only. For any **meaning-bearing accent text** (eyebrows, stat figures, step numbers, inline links, toggle glyphs) use **`text-accent-strong`** (preferred, matches the `bg-accent-strong` CTA fills) — or `text-text-accent` / `text-link`. The same applies to meaning-bearing borders/dividers (`border-accent` → `border-accent-strong`) and solid fills (`bg-accent` → `bg-accent-strong`). Decorative-only accents (e.g. the `bg-accent/5` wash) stay green-500 and are hidden from assistive tech where they'd otherwise be announced. axe `color-contrast` across the seeded in-scope routes is the regression guard.
 
+**Bands.** A block's `background` picks its surface through `ui/Section`: `subtle` → `surface-subtle`, `accent` → `surface-accent`, `inverse` → `surface-inverse`, and `brand` → `accent-strong`. `brand` is the solid green close and only the `cta` block offers it: white on green-700 is AA, green text on it is not. The `inverse` and `brand` bands add a class (`styles.css`) that re-points the text, link and border tokens, so a block's ordinary classes stay legible on them:
+
+| Token                                             | `inverse` (`.band-dark`)  | `brand` (`.band-brand`) |
+| ------------------------------------------------- | ------------------------- | ----------------------- |
+| `--color-text-primary`                            | white                     | white                   |
+| `--color-text-secondary` / `--color-text-muted`   | neutral-200 / neutral-300 | green-50 / green-100    |
+| `--color-text-accent`, `--color-link`             | green-300                 | white                   |
+| `--color-border-subtle` / `--color-border-strong` | neutral-700 / neutral-600 | white at 30% / 50%      |
+
+`accent-strong` is not re-pointed: it is also the button fill, which works on both. A light panel inside a band (`bg-surface`, `bg-surface-elevated`, `bg-surface-subtle` or `bg-white`: a form card, a quote card) gets the page tokens back, so its text is dark again. Classes that are not tokens come from `toneFor(background)` (`src/components/ui/tone.ts`).
+
 ### 2.5 Contrast pairs reference
 
 WCAG 2.2 floor compliance (AA: 4.5:1 body, 3:1 large/UI) for general site content. AAA (7:1 body, 4.5:1 large) for hero copy specifically — see §12 for the page-by-page list.
@@ -453,7 +464,7 @@ Per §4, three section padding tokens (`section-tight`, `section-default`, `sect
 
 **Body copy is a left-justified block, capped at the `prose` measure (`max-w-prose`, 65ch), and CENTERED as a block within its container.** This is a hard rule.
 
-- **The rule lives in the block components, not in templates (FR-009, ADR 0009).** After spec 010 every non-blog page renders its body through `RenderBlocks`, so the reading-column wrapper is owned by the block render components (`src/components/sections/Content.tsx`, `Image.tsx`, `Gallery.tsx`, `Deliverables.tsx`, …): each takes its shell from `ui/Section` and its measure from `ui/ReadingColumn` (ADR 0012). Blocks no longer write either by hand: `tests/int/layout/shellOwnership.int.spec.ts` fails any block that restates the rail or the section padding. Fix the wrapper in one block and that layout is fixed everywhere it renders — the "four-templates-one-bug" problem ADR 0009 cites. The only sanctioned exception is the bespoke Posts (insights) article template. Verify by **measuring element boxes** at desktop+mobile via the visual harness, not by reasoning from classes (memory: "measure, don't reason").
+- **The rule lives in the block components, not in templates (FR-009, ADR 0009).** After spec 010 every non-blog page renders its body through `RenderBlocks`, so the reading-column wrapper is owned by the block render components (`src/components/sections/Content.tsx`, `Image.tsx`, `Gallery.tsx`, `Items.tsx`, …): each takes its shell from `ui/Section` and its measure from `ui/ReadingColumn` (ADR 0012). Blocks no longer write either by hand: `tests/int/layout/shellOwnership.int.spec.ts` fails any block that restates the rail or the section padding. Fix the wrapper in one block and that layout is fixed everywhere it renders — the "four-templates-one-bug" problem ADR 0009 cites. The only sanctioned exception is the bespoke Posts (insights) article template. Verify by **measuring element boxes** at desktop+mobile via the visual harness, not by reasoning from classes (memory: "measure, don't reason").
 - **Why 65ch:** the `@tailwindcss/typography` `prose` class caps line length at 65ch — the readable measure (~50–75 chars/line). Keep it. Do **not** widen body copy past it.
 - **Center the block, not the text.** Use `mx-auto` (auto side margins) so the column sits on the page's centre axis. Never use `text-center` on body copy or headings — centered _text_ (ragged both edges) looks broken; we want left-justified text in a centred block.
 - **Different widths are fine if everything is centred.** A full-width hero, a wide metrics grid, and a 65ch body column can coexist — as long as they all share one vertical centre axis (concentric). What looks broken is **left-justifying** mismatched widths (wide title, narrower hero, narrower body all hugging the left edge with ragged right edges).
@@ -463,10 +474,10 @@ Per §4, three section padding tokens (`section-tight`, `section-default`, `sect
 
 ### 11.5 Listing pages: never double-container a block
 
-Every grid component (`TeamGrid`, `PartnerGrid`, `PostList`, `CaseStudyGrid`, `WorkshopList`, …) is
-**self-containering**: since ADR 0012 that means it renders through `ui/Section`, which owns the padding
-and the rail. That is the block contract — a block renders correctly at full page width and needs no help
-from its caller.
+Every listing renders through the `cards` block (`src/components/sections/Cards.tsx`, drawing each
+collection's card from `src/components/cards/*`), which is **self-containering**: since ADR 0012 that means
+it renders through `ui/Section`, which owns the padding and the rail. That is the block contract — a block
+renders correctly at full page width and needs no help from its caller.
 
 So a listing page must **not** wrap the grid in a second padded container. Doing so nests two padded
 containers and insets the grid from the page's own `h1` — measured at **32px on desktop, 16px on mobile**,
@@ -489,7 +500,7 @@ of its own grid**. Use `ui/Container`, which reads the same `SHELL_RAIL` the blo
       <h1 …/>
     </Container>
   </header>
-  <TeamGrid … />                          {/* full width; contains itself */}
+  <Cards collection="teamMembers" … />    {/* full width; contains itself */}
 </div>
 ```
 

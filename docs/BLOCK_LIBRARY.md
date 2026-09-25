@@ -1,7 +1,8 @@
 # SEQTEK Website — Block & Component Library
 
 **Date:** 2026-05-14
-**Status:** Reference — Phase 1 implementation
+**Updated:** 2026-09-24 — thirteen blocks (ADR 0013)
+**Status:** Reference
 
 This is the engineering bridge between **what** content lives on the site (CONTENT-REQUIREMENTS.md) and **how** Payload + React represent it. It enumerates every block, primitive, and section component, with field schemas and page-composition mappings.
 
@@ -25,21 +26,21 @@ Payload supports two ways to model page content:
 | `homepage` (global)  | **Blocks** (`layout`)                      | spec 010: was structured; now block-composed and editor-reorderable (composer adds the dual-CTA hero defaults)                                                                                                                                             |
 | `caseStudies`        | **Blocks** (`layout`)                      | spec 010: was structured (problem/solution/impact/metrics/…); composed into blocks, typed metadata retained                                                                                                                                                |
 | `services`           | **Blocks** (`layout`)                      | spec 010: was structured; composed. SVC-2: **publicly routed again** at a flat `/services/<slug>`, one collection carrying `tier` (`leaf`/`group`/`axis`). The nested `/services/[pillar]/[slug]` URL and the later four-Pages-by-slug IA are both retired |
-| `workshops`          | **Blocks** (`layout`)                      | spec 010 pilot (US1): the acceptance gate; composed (incl. `gallery` proof photos + `video-embed`)                                                                                                                                                         |
+| `workshops`          | **Blocks** (`layout`)                      | spec 010 pilot (US1): the acceptance gate; composed (incl. `gallery` proof photos + `embed` video)                                                                                                                                                         |
 | `teamMembers`        | **Blocks** (`layout`)                      | spec 010: gained `layout` + drafts/live-preview; new `/team/[slug]` detail renders via `RenderBlocks` + Person JSON-LD                                                                                                                                     |
 | `posts`              | **Structured + inline blocks in richText** | **The sanctioned exception** (ADR 0009): title/excerpt/author fixed; body is rich text with embedded inline blocks                                                                                                                                         |
 | ~~`servicePillars`~~ | **REMOVED (SVC-2)**                        | Absorbed into `services` as `tier: 'group'`; the collection and its tables are gone                                                                                                                                                                        |
 | `industries`         | **Block-composed** (IND-1)                 | `layout` renders at `/industries/[slug]`; also a taxonomy target                                                                                                                                                                                           |
 | `locations`          | **Structured**                             | Market landing taxonomy; no body composition                                                                                                                                                                                                               |
 
-Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is creating or fixing a **block type** (the curation loop, §5.9). `posts` is the one bespoke richText body that remains by design. `locations` stays structured because it is a listing/taxonomy target; `industries` joined the block-composed set under IND-1 (routed at `/industries/<slug>`) and `services` under SVC-2 (three tiers in one collection, all routed at `/services/<slug>`) and `servicePillars` was absorbed into it. The old discrete body columns were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011** — `layout` is now the only body.
+Net (post-spec-010): every non-blog detail type **and** the homepage global render their body from `layout` blocks via `RenderBlocks` — the single render path. Rearranging or enriching any of them is a content edit with no deploy; the only change that needs code is fixing a block or giving it a new option, and a new block needs sign-off (§9, ADR 0013). `posts` is the one bespoke richText body that remains by design. `locations` stays structured because it is a listing/taxonomy target; `industries` joined the block-composed set under IND-1 (routed at `/industries/<slug>`) and `services` under SVC-2 (three tiers in one collection, all routed at `/services/<slug>`) and `servicePillars` was absorbed into it. The old discrete body columns were retained one release (hidden + read-only, expand/contract) and **were dropped in spec 011** — `layout` is now the only body.
 
 ---
 
 ## 2. Conventions
 
-- **Payload slug:** kebab-case, used as `blockType` discriminator (`hero`, `stats-bar`, `cta-section`).
-- **Interface name:** PascalCase suffix `Block` (`HeroBlock`, `StatsBarBlock`).
+- **Payload slug:** kebab-case, used as `blockType` discriminator (`hero`, `media-text`, `hubspot-form`).
+- **Interface name:** PascalCase suffix `Block` (`HeroBlock`, `MediaTextBlock`).
 - **React component:** PascalCase, in `src/components/sections/` for blocks, `src/components/ui/` for primitives.
 - **Renderer:** a single `<RenderBlocks blocks={...} />` component looks up `blockType` and dispatches to the registered React component.
 - **Variants:** prefer a `variant` select field over multiple near-identical blocks. Three blocks become one with a select.
@@ -51,17 +52,21 @@ Net (post-spec-010): every non-blog detail type **and** the homepage global rend
 
 Pure React, no Payload coupling. Used by sections and pages.
 
-The real surface is small — seven primitives. `Section` and `ReadingColumn` were built in ADR 0012, which moved the page shell and the §11.4 reading measure out of 46 hand-written copies and into one owner each. (Earlier drafts of this doc also listed Card/Badge/Tag/Avatar/Icon/Breadcrumbs/Pagination/ScrollToTop and a `ui/form/` subdir; none of those were built. Form UI lives in `src/components/forms/`, see §7.)
+The real surface is small — nine primitives. `Section` and `ReadingColumn` were built in ADR 0012, which moved the page shell and the §11.4 reading measure out of 46 hand-written copies and into one owner each. (Earlier drafts of this doc also listed Card/Badge/Tag/Avatar/Icon/Breadcrumbs/Pagination/ScrollToTop and a `ui/form/` subdir; none of those were built. Form UI lives in `src/components/forms/`, see §7.)
 
-| Component         | Props                                                                | Variants                                                                                                            | Notes                                                                                                                                                                                          |
-| ----------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Button`          | `variant`, `size`, `href`, `cta`, + native button/anchor attrs       | `primary` / `secondary` / `ghost` / `link`; sizes `sm` / `md` / `lg`                                                | Renders `<a>` (via `next/link`) when `href` is set, else `<button>`; link-mode opts into `cta_click` tracking via `cta`                                                                        |
-| `Container`       | `size`, `padded`, + native div attrs                                 | `sm` / `md` / `lg` / `xl` / `full`; defaults to `SHELL_RAIL`                                                        | The shell for page chrome. Same model as `Section` and shares its rail, so the header cannot drift from the blocks below it                                                                    |
-| `Section`         | `padding`, `background`, `border`, `rail`, `innerClassName`, `bleed` | padding `none`/`tight`/`default`/`spacious`; background `none`/`subtle`/`accent`/`inverse`; border `none`/`y`/`top` | The block shell (ADR 0012). Every block uses it; `shellOwnership.int.spec.ts` fails any that does not. `bleed` renders inside the `<section>` but outside the rail, for full-bleed backgrounds |
-| `ReadingColumn`   | `flush`, `flushFrom`, + native div attrs                             | —                                                                                                                   | §11.4's 65ch measure, centred by default. Put the heading inside it, with its body; `flush`/`flushFrom` are for a column a grid has already positioned                                         |
-| `Prose`           | `size`, `tone`                                                       | size `compact` / `default` / `large`; tone `default` / `inverse`                                                    | Typographic wrapper for Lexical output (`@tailwindcss/typography`)                                                                                                                             |
-| `ResponsiveImage` | `media`, `sizes`, `className`, `loading`, `fetchPriority`            | —                                                                                                                   | `<picture>` with webp + jpeg `srcSet` built from the Media collection's responsive sizes                                                                                                       |
-| `SmartLink`       | `href`, `external` (auto-detected), + native anchor attrs            | —                                                                                                                   | Internal hrefs render via `next/link`; off-site hrefs get `rel="noopener noreferrer"`                                                                                                          |
+| Component         | Props                                                                | Variants                                                                                                                    | Notes                                                                                                                                                                                          |
+| ----------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Button`          | `variant`, `size`, `href`, `cta`, + native button/anchor attrs       | `primary` / `secondary` / `ghost` / `link`; sizes `sm` / `md` / `lg`                                                        | Renders `<a>` (via `next/link`) when `href` is set, else `<button>`; link-mode opts into `cta_click` tracking via `cta`                                                                        |
+| `Container`       | `size`, `padded`, + native div attrs                                 | `sm` / `md` / `lg` / `xl` / `full`; defaults to `SHELL_RAIL`                                                                | The shell for page chrome. Same model as `Section` and shares its rail, so the header cannot drift from the blocks below it                                                                    |
+| `Section`         | `padding`, `background`, `border`, `rail`, `innerClassName`, `bleed` | padding `none`/`tight`/`default`/`spacious`; background `none`/`subtle`/`accent`/`inverse`/`brand`; border `none`/`y`/`top` | The block shell (ADR 0012). Every block uses it; `shellOwnership.int.spec.ts` fails any that does not. `bleed` renders inside the `<section>` but outside the rail, for full-bleed backgrounds |
+| `ReadingColumn`   | `flush`, `flushFrom`, + native div attrs                             | —                                                                                                                           | §11.4's 65ch measure, centred by default. Put the heading inside it, with its body; `flush`/`flushFrom` are for a column a grid has already positioned                                         |
+| `Prose`           | `size`, `tone`                                                       | size `compact` / `default` / `large`; tone `default` / `inverse`                                                            | Typographic wrapper for Lexical output (`@tailwindcss/typography`)                                                                                                                             |
+| `ResponsiveImage` | `media`, `sizes`, `className`, `loading`, `fetchPriority`            | —                                                                                                                           | `<picture>` with webp + jpeg `srcSet` built from the Media collection's responsive sizes                                                                                                       |
+| `SmartLink`       | `href`, `external` (auto-detected), + native anchor attrs            | —                                                                                                                           | Internal hrefs render via `next/link`; off-site hrefs get `rel="noopener noreferrer"`                                                                                                          |
+| `TabSet`          | `items` ({key, label, panel}), `labelledBy`, `inverse`               | —                                                                                                                           | Client component; the ARIA tabs pattern behind `accordion`'s `tabs` display                                                                                                                    |
+| `VideoFacade`     | `provider`, `videoId`, `title`, `poster`                             | —                                                                                                                           | 16:9 player; with a poster it shows the still and a Play button and loads the player only on click. Used by `embed`                                                                            |
+
+`tone.ts` is not a component: `toneFor(background)` returns the secondary, muted, accent, rule and highlight classes that stay legible on each `Section` background (DESIGN_SYSTEM §2.4, bands). `brand` is offered by `cta` only.
 
 ---
 
@@ -82,874 +87,376 @@ Not blocks — these are global chrome.
 
 ## 5. Payload block catalog
 
-The complete list of `Block` configs. Each gets:
-
-- A Payload `Block` definition (in `src/payload/blocks/`)
-- A React component (in `src/components/sections/`)
-- Registration in `Pages.layout` (and selectively in inline rich-text where relevant)
-
-Field-type shorthand below maps to PAYLOAD_DEVELOPMENT.md §5.
-
-**The §5.1–§5.6 categories are load-bearing (spec 011 US2).** They are not a docs
-convention any more: each is a heading in the admin block picker, and the assignment
-lives in exactly one place — the block's own `admin.group`, set through
-`blockAdmin()` in `src/payload/blocks/blockAdmin.ts`. The showcase harness derives its
-category from there rather than restating it, `src/payload/blocks/categories.ts` holds
-the canonical slugs and their editor-facing headings, and
-`tests/int/adminMetadata.int.spec.ts` fails CI when a block has no category, no
-preview, a name it shares with a neighbour, or (spec 011 US4) a field whose label reads
-as machine text or whose effect the panel cannot show.
-
-| §   | Category             | Picker heading        |
-| --- | -------------------- | --------------------- |
-| 5.1 | `hero`               | Page openers          |
-| 5.2 | `content`            | Body content          |
-| 5.3 | `social-proof`       | Proof and credibility |
-| 5.4 | `cta`                | Calls to action       |
-| 5.5 | `content-collection` | Lists and collections |
-| 5.6 | `specialty`          | Specialty             |
-
-The picker draws these headings in the order `layoutBlocks` registers its blocks, so
-that array is kept sorted by category and a test pins it.
-
-**Three labels carry a qualifier they would not otherwise need**, because Payload
-renders no block description and `labels.singular` is the only text the picker shows or
-searches: `Hero (standard page)`, `Embed (iframe)` and `Testimonial (single)`. Each was
-otherwise a substring of a sibling's name. See ADR 0011 and
-`docs/contracts/admin-metadata.md` C1.
-
-### 5.1 Hero blocks
-
-#### `hero` — generic hero
-
-| Field          | Type                        | Required    | Notes                                               |
-| -------------- | --------------------------- | ----------- | --------------------------------------------------- |
-| `variant`      | select                      | yes         | `text-only` / `with-image` / `with-video` / `split` |
-| `eyebrow`      | text                        | no          | Small label above headline                          |
-| `headline`     | text                        | yes         | 8-12 words target                                   |
-| `subheadline`  | textarea                    | no          | 1-2 sentences                                       |
-| `media`        | upload (media)              | conditional | Required when variant is `with-image` or `split`    |
-| `videoUrl`     | text                        | conditional | Required when variant is `with-video`               |
-| `primaryCta`   | group (label, url, variant) | no          |                                                     |
-| `secondaryCta` | group (label, url, variant) | no          |                                                     |
-| `alignment`    | select                      | no          | `left` / `center`; default `left`                   |
-
-#### `case-study-hero` — case study page hero
-
-| Field       | Type                           | Required | Notes                       |
-| ----------- | ------------------------------ | -------- | --------------------------- |
-| `eyebrow`   | text                           | yes      | Client/industry             |
-| `headline`  | text                           | yes      | Outcome-focused             |
-| `metric`    | group (number, label, context) | yes      | The headline outcome stat   |
-| `heroImage` | upload (media)                 | yes      | Project-relevant, not stock |
+Thirteen layout blocks (ADR 0013; spec and the old → new mapping: `docs/planning/block-consolidation.md`). Each is
+a config in `src/payload/blocks/layout/`, a renderer in `src/components/sections/`, and an entry in both
+`layoutBlocks` and `registry.ts`. Every collection's `layout` spreads the same `layoutBlocks`, so every block is
+available on every page type. **The config is the source of truth for fields**; this section says what each block
+is for and what its options draw.
 
-#### `service-pillar-hero` — pillar landing hero
-
-Its **own registered block**, not a `hero` variant (earlier drafts of this doc claimed otherwise): config at `src/payload/blocks/layout/ServicePillarHero.ts`, renderer at `src/components/sections/ServicePillarHero.tsx`, wired in both `src/components/sections/registry.ts` and `src/payload/blocks/layout/index.ts`. **Now orphaned** by the services restructure (§1): the pillar-landing IA it served is retired, so it ships in the library but no live page composes it.
-
-### 5.2 Content blocks
-
-#### `content` — rich text section
+**The §5.1–§5.6 categories are load-bearing (spec 011 US2).** Each is a heading in the admin block picker, set
+by the block's `admin.group` through `blockAdmin()` (`src/payload/blocks/blockAdmin.ts`).
+`src/payload/blocks/categories.ts` holds the slugs and headings; `tests/int/adminMetadata.int.spec.ts` fails a
+block with no category, no preview, or a label it shares with a neighbour. The picker draws headings in the order
+`layoutBlocks` registers its blocks, so that array stays sorted by category.
 
-| Field        | Type                                           | Required | Notes                                              |
-| ------------ | ---------------------------------------------- | -------- | -------------------------------------------------- |
-| `width`      | select                                         | no       | `narrow` / `standard` / `wide`; default `standard` |
-| `body`       | richText (Lexical, with inline blocks enabled) | yes      |                                                    |
-| `background` | select                                         | no       | `none` / `subtle` / `accent`                       |
-
-Inline blocks available within the `body` richText:
+| §   | Category             | Picker heading        | Blocks                                                                     |
+| --- | -------------------- | --------------------- | -------------------------------------------------------------------------- |
+| 5.1 | `hero`               | Page openers          | `hero`                                                                     |
+| 5.2 | `content`            | Body content          | `content`, `media-text`, `items`, `image`, `gallery`, `table`, `accordion` |
+| 5.3 | `social-proof`       | Proof and credibility | `quote`                                                                    |
+| 5.4 | `cta`                | Calls to action       | `cta`                                                                      |
+| 5.5 | `content-collection` | Lists and collections | `cards`                                                                    |
+| 5.6 | `specialty`          | Specialty             | `embed`, `hubspot-form`                                                    |
 
-- `inline-cta` (label, url, variant)
-- `testimonial-embed` (relationship → testimonials)
-- `callout` (tone, body)
-- `image-with-caption` (upload, caption, alt — alt sourced from media)
-- `figure` (image + figure caption)
-- `quote-pullquote` (quote, attribution)
-- `disclosure` (summary, body) — accordion for FAQs-in-text
-
-#### `two-column` — content + media side-by-side
-
-| Field           | Type           | Required | Notes            |
-| --------------- | -------------- | -------- | ---------------- |
-| `mediaPosition` | select         | yes      | `left` / `right` |
-| `body`          | richText       | yes      |                  |
-| `media`         | upload (media) | yes      |                  |
-| `cta`           | group          | no       |                  |
-
-#### `image` — single captioned figure (spec 010, FR-005)
+**Shared fields.** Every block except `hero` takes `background`: `none` (default) · `subtle` · `accent` ·
+`inverse`. `cta` adds `brand` and defaults to it; `quote` defaults to `subtle`. The blocks that hold several things
+(`items`, `cards`, `gallery`, `quote`, `table`, `accordion`) take `heading` and `intro`; `cta` (required), `embed` and
+`hubspot-form` take `heading` alone. Buttons are `ctaField` groups `{label, url}`; `hero.primaryCta` and
+`cta.primaryCta` add `variant` (`primary` · `secondary` · `ghost`).
 
-| Field       | Type           | Required | Notes                                                             |
-| ----------- | -------------- | -------- | ----------------------------------------------------------------- |
-| `image`     | upload (media) | yes      | alt sourced from Media collection                                 |
-| `caption`   | text           | no       | rendered as `<figcaption>`                                        |
-| `width`     | select         | no       | `narrow` / `standard` / `wide` / `full`; default `standard`       |
-| `alignment` | select         | no       | `center` / `left` / `right`; default `center` (reading-axis safe) |
+Notation: `!` = required; "when X" = shown only then.
 
-The one-off counterpart to `gallery`. Width variants mirror the `content` reading-column measures so a figure shares the body's vertical axis (DESIGN_SYSTEM §11.4 — owned by the block).
+### 5.1 Page openers
 
-#### `gallery` — 1..N image gallery (spec 010, FR-005)
+#### `hero`
 
-| Field     | Type   | Required       | Notes                                                       |
-| --------- | ------ | -------------- | ----------------------------------------------------------- |
-| `heading` | text   | no             | Optional section heading                                    |
-| `items`   | array  | yes (min 1)    | Each: `image` (upload, required), `caption` (text)          |
-| `layout`  | select | no             | `grid` / `carousel`; default `grid`                         |
-| `columns` | select | no (grid only) | `2` / `3` / `4`; default `3`; hidden when `layout=carousel` |
+The page's opener and its `h1`. `split` with an image is the default; `cover` for the homepage or a campaign page.
 
-The "drop a one-to-many picture section onto any page layout" block. Workshop `photos[]` migrates here; one-off figures use `image`. Unpopulated rows (depth-0 / missing upload) are dropped at render, never thrown.
+- `variant`!: `text-only` · `split` (default; copy beside the image) · `cover` (full-bleed photo under a navy
+  scrim, white text) · `with-video`
+- `eyebrow`, `headline`!, `subheadline`
+- `media` (when `split` or `cover`, and required then)
+- `videoUrl` (when `with-video`, and required then): a `youtube-nocookie.com/embed/` or `player.vimeo.com/video/`
+  address; anything else is dropped at render
+- `primaryCta` {label, url, variant}, `secondaryCta` {label, url}: each optional and independent
+- `alignment`: `left` (default) · `center`
 
-#### `process-steps` — numbered methodology
+Replaces `homepage-hero` (as `cover`), `case-study-hero`, `service-pillar-hero`, and the old `with-image` variant
+(as `split`).
 
-| Field     | Type  | Required           | Notes                                                          |
-| --------- | ----- | ------------------ | -------------------------------------------------------------- |
-| `heading` | text  | no                 | Optional section heading                                       |
-| `steps`   | array | yes (min 2, max 6) | Each step: `number` (auto), `title`, `body`, `icon` (optional) |
+### 5.2 Body content
 
-#### `deliverables` — bulleted list with icons
+#### `content`
 
-| Field     | Type          | Required | Notes        |
-| --------- | ------------- | -------- | ------------ |
-| `heading` | text          | no       |              |
-| `items`   | array of text | yes      | Min 3, max 8 |
+Prose: one idea, a heading and a few paragraphs.
 
-#### `comparison-table` — for localshoring vs nearshore vs offshore
+- `width`: `narrow` · `standard` (default) · `wide`
+- `body`!: rich text
 
-| Field        | Type                 | Required | Notes                                              |
-| ------------ | -------------------- | -------- | -------------------------------------------------- |
-| `heading`    | text                 | yes      |                                                    |
-| `columns`    | array (min 2, max 4) | yes      | `label`, `tagline`                                 |
-| `rows`       | array                | yes      | `dimension`, `cells` (array matching column count) |
-| `bestForRow` | array                | no       | One "best for" cell per column                     |
+Inline blocks in the body (`src/payload/blocks/inline/`): `callout`, `image-with-caption`, `figure`,
+`quote-pullquote`, `testimonial-embed` and `disclosure` at paragraph level; `inline-cta` inline. The text takes the
+centred reading column (DESIGN_SYSTEM §11.4); on `inverse` the prose inverts.
 
-#### `timeline` — interactive company timeline
+#### `media-text`
 
-| Field     | Type  | Required    | Notes                                       |
-| --------- | ----- | ----------- | ------------------------------------------- |
-| `heading` | text  | no          |                                             |
-| `items`   | array | yes (min 2) | `date`, `title`, `body`, `image` (optional) |
+A point that has a picture: the image on one side, rich text and an optional button on the other.
 
-#### `faq` — accordion
+- `media`!
+- `mediaPosition`!: `left` (default) · `right`. On a phone the two stack in this order.
+- `body`!: rich text, opening with a short heading
+- `cta` {label, url}
 
-| Field     | Type  | Required    | Notes                                  |
-| --------- | ----- | ----------- | -------------------------------------- |
-| `heading` | text  | no          | Default "Frequently asked questions"   |
-| `items`   | array | yes (min 2) | `question` (text), `answer` (richText) |
+Replaces `two-column` and `brand-teaser` (the teaser's headline and body become the rich text).
 
-Frontend emits `FAQPage` JSON-LD automatically.
+#### `items`
 
-### 5.3 Social proof blocks
+Several parallel short things: steps, principles, features, stats, a timeline, deliverables, technologies. Any
+count; the layout adjusts to it.
 
-#### `stats-bar` — number callouts
+- `layout`: `grid` (default) · `line` · `list` · `tags`
+- `markers` (not for `tags`): `none` (default) · `numbers` · `custom` (typed on each item: "25+", a letter, a year)
+- `style` (grid only): `plain` (default; a heavy rule over each item) · `card` (a bordered card)
+- `items`! [{`title`!, `body`, `marker` (when `custom`), `image` (grid only), `link` {label, url}}]
 
-| Field     | Type   | Required    | Notes                                                                              |
-| --------- | ------ | ----------- | ---------------------------------------------------------------------------------- |
-| `heading` | text   | no          | Optional eyebrow                                                                   |
-| `source`  | select | no          | `inline` / `from-site-settings` — when `from-site-settings`, pulls canonical stats |
-| `items`   | array  | conditional | Required when `source: inline`. Min 3, max 5. Each: `number`, `label`, `suffix`    |
+| Layout | Draws                                                                                                                                                       |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grid` | Columns follow the count. One item takes the reading column; one item with a custom marker is a display-size headline figure.                               |
+| `line` | Items down a vertical rule. Short markers (a number, a letter) hang in a gutter, so a lettered set spells its word; longer ones (a date) run as a timeline. |
+| `list` | Compact bullets, two columns on a wide screen; with `numbers`, one numbered column.                                                                         |
+| `tags` | Chips. A link makes the chip a link; `body` is not shown.                                                                                                   |
 
-#### `metric-display` — single full-bleed metric
+Replaces `process-steps` (grid, card, numbers), `timeline` (line, dates as markers), `nav-cards` (grid, card,
+linked), `deliverables` (list), `key-takeaways` (list, numbers), `tech-stack` (tags), `stats-bar` and
+`metric-display` (grid, custom markers), and `mission-vision-values` (`content` plus `items`).
 
-| Field        | Type   | Required | Notes                |
-| ------------ | ------ | -------- | -------------------- |
-| `number`     | text   | yes      |                      |
-| `label`      | text   | yes      |                      |
-| `context`    | text   | no       |                      |
-| `background` | select | no       | `accent` / `inverse` |
+#### `image`
 
-#### `logo-bar` — client logo strip
+One captioned figure; the one-off counterpart to `gallery`.
 
-| Field       | Type            | Required | Notes                                             |
-| ----------- | --------------- | -------- | ------------------------------------------------- |
-| `heading`   | text            | no       | Default "Trusted by industry leaders"             |
-| `logos`     | array of upload | no       | The only source; with none the section is omitted |
-| `treatment` | select          | no       | `grayscale-on-color-hover` / `color`              |
+- `image`! (alt text lives on the media record)
+- `caption`
+- `width`: `narrow` · `standard` (default) · `wide` · `full` (the shell rail)
+- `alignment` (not for `full`): `center` (default) · `left` · `right`
 
-> **`source` dropped (PR #127, ROADMAP INERT-2):** its other option, "reuse the homepage set", mapped to an
-> empty list and published an empty band — and there was nothing to reuse, since the `homepage` global carries
-> only a `layout`. With that gone one option remained, so the select went with it.
+Widths mirror `content`'s measures, so a figure shares the body's vertical axis.
 
-#### `testimonial-single` — featured testimonial
+#### `gallery`
 
-| Field         | Type                        | Required | Notes                                               |
-| ------------- | --------------------------- | -------- | --------------------------------------------------- |
-| `testimonial` | relationship → testimonials | yes      |                                                     |
-| `layout`      | select                      | no       | `centered` / `with-photo-left` / `with-photo-right` |
+A set of pictures, or a strip of logos.
 
-#### `testimonial-carousel` — multiple testimonials
+- `items`! [{`image`!, `caption`}]
+- `layout`: `grid` (default) · `carousel` (one swipeable row) · `logos` (grey until pointed at, each on a light card
+  so any band works)
 
-| Field          | Type                                  | Required | Notes        |
-| -------------- | ------------------------------------- | -------- | ------------ |
-| `heading`      | text                                  | no       |              |
-| `testimonials` | relationship → testimonials (hasMany) | yes      | Min 2, max 6 |
+No column control: columns follow the count, and a single picture is held to `image`'s standard measure. Rows whose
+upload did not populate are dropped at render.
 
-> **`autoplay` dropped (PR #127, ROADMAP INERT-2):** the block renders a static grid, so nothing read it.
-> Re-add it with the carousel, not before.
+Replaces `logo-bar` and `client-logo-grid` (as `logos`).
 
-### 5.4 CTA blocks
+#### `table`
 
-#### `cta-section` — standalone CTA
+A real comparison across columns.
 
-| Field             | Type               | Required    | Notes                            |
-| ----------------- | ------------------ | ----------- | -------------------------------- |
-| `variant`         | select             | yes         | `centered` / `split` / `inverse` |
-| `headline`        | text               | yes         |                                  |
-| `body`            | textarea           | no          |                                  |
-| `primaryCta`      | group (label, url) | yes         |                                  |
-| `secondaryCta`    | group (label, url) | no          |                                  |
-| `background`      | select             | no          | `default` / `accent` / `image`   |
-| `backgroundImage` | upload             | conditional | When `background: image`         |
+- `columns`! [{`label`!, `tagline`}]
+- `rows`! [{`dimension`!, `cells`! [{`value`!}]}]: one cell per column, in column order; a short row is padded,
+  extra cells still show
+- `bestForRow` [{`value`!}]: an optional closing "Best for" row
 
-### 5.5 Content collection blocks
+Any number of columns: past the screen width the table scrolls sideways inside its own focusable frame, never the
+page.
 
-#### `featured-case-study` — single highlighted case study
+Replaces `comparison-table`.
 
-| Field       | Type                       | Required | Notes                         |
-| ----------- | -------------------------- | -------- | ----------------------------- |
-| `caseStudy` | relationship → caseStudies | yes      |                               |
-| `heading`   | text                       | no       | Default "Featured case study" |
+#### `accordion`
 
-#### `case-study-grid` — listing of case studies
+Titled panels of rich text: questions and answers, or detail most readers skip.
 
-| Field         | Type                                 | Required    | Notes                                              |
-| ------------- | ------------------------------------ | ----------- | -------------------------------------------------- |
-| `heading`     | text                                 | no          |                                                    |
-| `source`      | select                               | yes         | `manual` / `latest` / `by-industry` / `by-service` |
-| `manualItems` | relationship → caseStudies (hasMany) | conditional |                                                    |
-| `industry`    | relationship → industries            | conditional |                                                    |
-| `service`     | relationship → services              | conditional |                                                    |
-| `limit`       | number                               | no          | Default 3, max 9                                   |
+- `display`!: `accordion` (default; native `<details>`, no script) · `tabs` (one panel at a time, `ui/TabSet`)
+- `items`! [{`title`!, `body`! rich text}]
 
-#### `service-pillar-cards` — 3-up pillar grid
+Emits no `FAQPage` JSON-LD.
 
-| Field     | Type                                                           | Required | Notes           |
-| --------- | -------------------------------------------------------------- | -------- | --------------- |
-| `heading` | text                                                           | no       |                 |
-| `pillars` | relationship → services, filtered to `tier: 'group'` (hasMany) | yes      | Typically all 3 |
+Replaces `faq`, the old `accordion`, and `tabs`.
 
-#### `service-cards` — sub-service grid
+### 5.3 Proof and credibility
 
-| Field         | Type                                                 | Required    | Notes                                  |
-| ------------- | ---------------------------------------------------- | ----------- | -------------------------------------- |
-| `heading`     | text                                                 | no          |                                        |
-| `source`      | select                                               | yes         | `by-pillar` / `manual`                 |
-| `pillar`      | relationship → services, filtered to `tier: 'group'` | conditional | The group whose ordered `items` render |
-| `manualItems` | relationship → services (hasMany)                    | conditional |                                        |
+#### `quote`
 
-#### `team-grid` — team members display
+A client's words, or a pull quote.
 
-| Field         | Type                                 | Required | Notes                                                              |
-| ------------- | ------------------------------------ | -------- | ------------------------------------------------------------------ |
-| `heading`     | text                                 | no       |                                                                    |
-| `filter`      | select                               | yes      | `leadership-only` / `all`, resolved by `resolveLayout` (see below) |
-| `layout`      | select                               | no       | `cards` / `compact`                                                |
-| `manualItems` | relationship → teamMembers (hasMany) | no       | In practice the only path that renders anyone                      |
+- `source`!: `testimonials` (default; name, title, company and photo come from the record) · `custom` (typed here)
+- `testimonials` (when `testimonials`, and required then; many)
+- `quote` (when `custom`, and required then), `attribution`, `role`
+- `layout`: `centered` (default) · `with-photo-left` · `with-photo-right`
 
-Cards show `teamMembers.title` (the job title), never `role` (the one-sentence description) — `role`
-belongs to the `/team/[slug]` header, which renders both. See ROADMAP UI-1 / PROJECT_HISTORY P5-27.
+Only the side `source` names is published. One quote draws large in `layout`; two or more always sit in a grid.
+With no photo on file the photo layouts leave it out. Unpopulated or empty testimonials are dropped.
 
-The `featured` option was **withdrawn** (UI-2): `teamMembers` carries `isLeadership` and `order` and
-nothing else to select on, so it had no backing field and rendered an empty section.
+Replaces `testimonial-block` and `featured-testimonials`.
 
-#### `latest-insights` — blog post cards
+### 5.4 Calls to action
 
-| Field      | Type                      | Required | Notes                     |
-| ---------- | ------------------------- | -------- | ------------------------- |
-| `heading`  | text                      | no       | Default "Latest insights" |
-| `limit`    | number                    | no       | Default 3                 |
-| `category` | relationship → categories | no       | Optional filter           |
+#### `cta`
 
-#### `industry-grid` — industry navigation cards
+The close: one ask, and `action` says what answering it means.
 
-| Field        | Type                                | Required | Notes |
-| ------------ | ----------------------------------- | -------- | ----- |
-| `heading`    | text                                | no       |       |
-| `industries` | relationship → industries (hasMany) | yes      |       |
+- `heading`!, `body`
+- `action`!: `buttons` (default) · `meeting` · `newsletter` · `download`
+- `variant`!: `centered` (default) · `split` (heading left, the action beside it; stacks on a phone)
+- `primaryCta` {label, url, variant}, `secondaryCta` {label, url} (when `buttons` or `meeting`; the main button is
+  required for `buttons`, the second draws as a plain link)
+- `meetingUrl` (when `meeting`, and required then): a HubSpot meetings address. The panel's button opens it in a
+  new tab and mounts the `booking_complete` seam.
+- `formId` (when `newsletter` or `download`, and required then): the HubSpot form GUID, submitted through
+  `HubspotLeadForm`
+- `coverImage`, `fileUrl` (when `download`, and required then)
 
-### 5.6 Specialty blocks
+`download` is a courtesy gate: `fileUrl` appears in the success panel, but it crosses to a client component as a
+prop, so it is in the page source. Treat it as public. A `newsletter` with no `formId` renders nothing.
 
-#### `mission-vision-values` — MVV block (about page)
+Replaces `cta-section`, `contact-cta`, `newsletter-cta`, `download-card` and `hubspot-meetings`.
 
-| Field     | Type     | Required           | Notes                                                                              |
-| --------- | -------- | ------------------ | ---------------------------------------------------------------------------------- |
-| `mission` | textarea | yes                |                                                                                    |
-| `vision`  | textarea | yes                |                                                                                    |
-| `values`  | array    | yes (min 3, max 8) | `name`, `description`                                                              |
-| `layout`  | select   | no                 | `grid` / `stacked` (`tabs` dropped in PR #127 — it rendered identically to `grid`) |
+### 5.5 Lists and collections
 
-#### `markets-map` — 4-market visual
+#### `cards`
 
-> **Category note (spec 011 US2):** Ships as **`locations-list`**, category **`content-collection`** (§5.5 — "Lists and collections" in the picker), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
+Any list of documents, drawn as that collection's card (`src/components/cards/*`). The listing routes
+(`/case-studies`, `/insights`, `/team`, `/workshops`, `/partners`) and the homepage's latest insights render the same
+component.
 
-| Field     | Type                               | Required | Notes |
-| --------- | ---------------------------------- | -------- | ----- |
-| `heading` | text                               | no       |       |
-| `markets` | relationship → locations (hasMany) | yes      |       |
+- `collection`!: `caseStudies` · `posts` · `services` · `industries` · `workshops` · `teamMembers` · `locations` ·
+  `partners`
+- `source`!: `all` (default) · `filtered` · `manual`
+- Filters (when `filtered`): `industry` and `service` for case studies (set both and a study must match both),
+  `category`! for posts, `leadershipOnly` for team members, `serviceGroup`! for services (in the group's order).
+  The other collections have no filter, so `filtered` lists all of them.
+- `manualItems` (when `manual`, and required then): picks from `collection` only, in pick order; a services pick
+  may be a service or a group
+- `limit`: stops the list after this many; blank shows all
+- `display`!: `grid` (default) · `featured` (the first item large, beside its picture; the rest as a grid)
 
-#### `workshop-progression` — 3-workshop sequence visual
+**Resolved at template time.** Every route awaits `resolveLayout(doc.layout)` (`src/lib/resolveLayout.ts`) before
+`RenderBlocks`, and it fills `manualItems` whichever way the block chose: `all` and `filtered` read the cached
+listing readers in `src/lib/payload.ts` (and so inherit their cache tags, hourly revalidation and
+`withReadTimeout`), `manual` unwraps the picks, and `limit` trims. `all` services means leaves only; team members
+sort leadership first, then `order`. A read that times out throws. The component never reads `source` or the
+filters and never touches the database, so `RenderBlocks` stays synchronous. Pinned by
+`tests/int/lib/resolveLayout.int.spec.ts`.
 
-> **Category note (spec 011 US2):** Ships as **`workshop-list`**, category **`content-collection`** (§5.5), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
+**No items, no section**, heading included (`gridEmptyState.int.spec.tsx`): a list that fills itself can come back
+empty long after the editor saw it full. Team cards show `title` (the job title), never `role` (UI-1).
 
-| Field       | Type                               | Required | Notes |
-| ----------- | ---------------------------------- | -------- | ----- |
-| `workshops` | relationship → workshops (hasMany) | yes      | Min 3 |
+Replaces `case-study-grid`, `post-list`, `related-posts`, `industry-grid`, `locations-list`, `workshop-list`,
+`team-grid`, `service-cards`, `service-pillar-cards`, and `featured-case-study` (as `featured`).
 
-#### `video-embed` — YouTube/Vimeo with facade
+### 5.6 Specialty
 
-| Field       | Type   | Required | Notes                                      |
-| ----------- | ------ | -------- | ------------------------------------------ |
-| `provider`  | select | yes      | `youtube` / `vimeo`                        |
-| `videoId`   | text   | yes      |                                            |
-| `title`     | text   | yes      | For caption + a11y                         |
-| `thumbnail` | upload | no       | Custom thumbnail; falls back to provider's |
+#### `embed`
 
-#### `download-card` — lead magnet CTA
+Something from another site, framed on the page.
 
-| Field         | Type     | Required | Notes                                |
-| ------------- | -------- | -------- | ------------------------------------ |
-| `title`       | text     | yes      |                                      |
-| `description` | textarea | yes      |                                      |
-| `coverImage`  | upload   | yes      |                                      |
-| `formId`      | text     | yes      | HubSpot form GUID for gated download |
-| `fileUrl`     | text     | yes      | S3 URL to the asset                  |
+- `kind`!: `video` (default) · `map` · `page`
+- `heading`; `eyebrow` (video only)
+- `title`!: names the frame for screen readers; not drawn
+- Video: `provider`! (`youtube` default · `vimeo`), `videoId`! (the ID only), `thumbnail` (a poster: the page shows
+  the still and loads the player on click, `ui/VideoFacade`)
+- Map or page: `url`! (https), `caption`, `height`: `short` · `medium` (default) · `tall`
 
-> **A courtesy gate, not a real one (PR #125, ROADMAP INERT-2):** the block used to draw a disabled form and
-> print `Asset: <fileUrl>` beside it, so the asset was neither gated nor downloadable. It now mounts the shared
-> `HubspotLeadForm` and reveals the link in the success panel, so a reader does not see it on the page.
-> **The address is still in the page source**: `successCta` is a prop to a client component, so Next serialises
-> it into the RSC flight payload. Anyone viewing source, or any scraper, has the link without submitting.
-> A real gate needs the asset served through a token-bearing route (signed S3 URL) — not built.
+A map must be an OpenStreetMap or Google Maps embed address; any other host renders a notice instead. A page is
+framed in a sandbox without `allow-same-origin`.
 
-#### `newsletter-signup` — inline email capture
+Replaces `video-embed`, `map`, and the old iframe-only `embed`.
 
-> **Category note (spec 011 US2):** Ships as **`newsletter-cta`**, category **`cta`** (§5.4 — "Calls to action"), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
+#### `hubspot-form`
 
-> **Dormant (spec 005, 2026-06-02):** no newsletter program exists and the old site had none, so this block is unused in templates and `NEXT_PUBLIC_HUBSPOT_NEWSLETTER_FORM_ID` was removed. The definition stays in the library; wire it only if a newsletter program starts.
+A full HubSpot form.
 
-> **No longer a mock (PR #125, ROADMAP INERT-2):** it was a disabled input and a caption naming that removed env var. It now mounts the shared `HubspotLeadForm` with one email field, against whatever `formId` the block carries. With no `formId` the whole section is left off the page, so a dormant block publishes nothing rather than a dead form.
+- `heading`, `description`, `formId`! (the HubSpot form GUID)
 
-| Field     | Type     | Required | Notes                                                                |
-| --------- | -------- | -------- | -------------------------------------------------------------------- |
-| `heading` | text     | no       | Default "Subscribe to SEQTEK Insights"                               |
-| `body`    | textarea | no       |                                                                      |
-| `formId`  | text     | yes      | HubSpot form GUID; validated, and the section is omitted without one |
-
-#### `hubspot-form` — full HubSpot form embed
-
-| Field         | Type     | Required | Notes             |
-| ------------- | -------- | -------- | ----------------- |
-| `heading`     | text     | no       |                   |
-| `description` | textarea | no       |                   |
-| `formId`      | text     | yes      | HubSpot form GUID |
-
-> **`submitRedirect` dropped (PR #127, ROADMAP INERT-2):** the form shows an inline success panel and never
-> navigates, so nothing read it.
-
-#### `hubspot-meetings` — booking embed
-
-| Field        | Type | Required | Notes                     |
-| ------------ | ---- | -------- | ------------------------- |
-| `meetingUrl` | text | yes      | Full HubSpot meetings URL |
-| `heading`    | text | no       |                           |
-
-> **A button, not an embed (PR #125, ROADMAP INERT-2):** it used to draw a bordered box printing the raw URL
-> and "loads in production". It now renders a "See available times" button opening that scheduler. The inline
-> iframe would mean shipping HubSpot's `MeetingsEmbedCode.js` and widening the CSP (INTEGRATIONS.md §8);
-> `BookingCompleteSeam` is already wired for it when that happens.
-
-#### `brand-teaser` — Sequoyah story teaser (homepage)
-
-| Field       | Type     | Required | Notes                                                                |
-| ----------- | -------- | -------- | -------------------------------------------------------------------- |
-| `headline`  | text     | yes      |                                                                      |
-| `body`      | textarea | yes      | 2-3 sentences                                                        |
-| `linkLabel` | text     | yes      |                                                                      |
-| `linkUrl`   | text     | yes      | Default `/our-story` (the story lives on the flat `/our-story` Page) |
-| `image`     | upload   | no       |                                                                      |
-
-#### `nav-cards` — 3-up navigation cards (about landing)
-
-| Field   | Type  | Required           | Notes                                      |
-| ------- | ----- | ------------------ | ------------------------------------------ |
-| `cards` | array | yes (min 2, max 4) | `title`, `description`, `image`, `linkUrl` |
-
-#### `key-takeaways` — bulleted lessons (case study)
-
-| Field     | Type          | Required           | Notes                   |
-| --------- | ------------- | ------------------ | ----------------------- |
-| `heading` | text          | no                 | Default "Key takeaways" |
-| `items`   | array of text | yes (min 3, max 6) |                         |
-
-#### `tech-stack` — technology tag display (case study)
-
-| Field     | Type  | Required | Notes                                           |
-| --------- | ----- | -------- | ----------------------------------------------- |
-| `heading` | text  | no       | Default "Technologies"                          |
-| `items`   | array | yes      | `label`, `linkUrl` (optional — to service page) |
-
-#### `related-content` — related case studies / posts / services
-
-> **Category note (spec 011 US2):** Ships as **`related-posts`**, category **`content-collection`** (§5.5), not specialty. Kept in this section under its pre-rename name; see the §5.7 rename table.
-
-| Field     | Type                                                      | Required | Notes |
-| --------- | --------------------------------------------------------- | -------- | ----- |
-| `heading` | text                                                      | no       |       |
-| `items`   | relationship (polymorphic → posts, caseStudies, services) | yes      | Max 3 |
-
-### 5.7 Phase 2 implementation status
-
-Spec 003 Phase 2 (T050–T056) shipped 32 layout blocks. The mapping below reconciles the §5.1–§5.6 catalog above with the implementation in `src/payload/blocks/layout/`. Per Constitution III, this section is authoritative until the catalog tables themselves are rewritten in a follow-up doc pass.
-
-**Renames** (catalog name → implemented slug):
-
-| Catalog name           | Implemented slug        | Note                                                                                             |
-| ---------------------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `testimonial-single`   | `testimonial-block`     | Same field shape; `layout` select includes the catalog's three variants                          |
-| `testimonial-carousel` | `featured-testimonials` | Static grid; the carousel was never built and the `autoplay` field was dropped in PR #127        |
-| `latest-insights`      | `post-list`             | Adds explicit `source` (latest / by-category / manual)                                           |
-| `markets-map`          | `locations-list`        | Renamed to reflect that the Phase 2 renderer is a card grid, not a map; map is `map` block below |
-| `workshop-progression` | `workshop-list`         | Numbered list rendering; horizontal flow can be added without schema change                      |
-| `newsletter-signup`    | `newsletter-cta`        | CTA naming aligns with sibling `contact-cta`                                                     |
-| `related-content`      | `related-posts`         | Phase 2 ships the post-typed variant; polymorphic variant deferred                               |
-
-**New blocks added in Phase 2** (beyond the §5.1–§5.6 catalog, per spec 003 tasks.md T050/T052/T053/T055):
-
-| Slug               | Category     | Purpose                                                                                  |
-| ------------------ | ------------ | ---------------------------------------------------------------------------------------- |
-| `homepage-hero`    | Hero         | Display-size hero with required dual CTAs (homepage row 1 of §6)                         |
-| `client-logo-grid` | Social proof | Denser captioned-logo grid distinct from the linear `logo-bar`                           |
-| `contact-cta`      | CTA          | CTA with optional HubSpot meetings embed affordance (separate intent from `cta-section`) |
-| `accordion`        | Specialty    | Generic disclosure pattern (vs. FAQ which emits FAQPage JSON-LD)                         |
-| `tabs`             | Specialty    | Tab-strip representation; Phase 2 renderer is static (server-rendered)                   |
-| `map`              | Specialty    | Static map iframe (OpenStreetMap / Google Maps allow-list)                               |
-| `embed`            | Specialty    | Generic sandboxed iframe for third-party widgets                                         |
-
-**Catalog blocks landed in the same PR** (built in the second pass after initial deferral): `deliverables` (§5.2), `metric-display` (§5.3), `service-pillar-cards` (§5.5), `team-grid` (§5.5), `download-card` (§5.6), `hubspot-form` (§5.6), `hubspot-meetings` (§5.6), `brand-teaser` (§5.6), `nav-cards` (§5.6), `key-takeaways` (§5.6), `tech-stack` (§5.6).
-
-**Final Phase 2 layout block count: 43** — every block enumerated in §5.1–§5.6 is implemented, plus the 7 additions beyond the catalog from the table above. HubSpot-driven blocks (`hubspot-form`, `hubspot-meetings`, `download-card`, `newsletter-cta`) shipped with static placeholder affordances in the Phase 2 renderer. **That is no longer true (PR #125):** all four now do the real thing — the three form blocks share `HubspotLeadForm` and its live submit path, and `hubspot-meetings` links to the scheduler. What is still deferred is the inline HubSpot _script_ embeds per `docs/INTEGRATIONS.md` §1–§3.
-
-**Spec 010 additions (ADR 0009, FR-005): +2 → 45 blocks.** `image` (§5.2) and `gallery` (§5.2) close the image gap surfaced by the block-coverage audit (§5.8). These are the only new blocks the block-composed-pages migration required.
-
-### 5.8 Block-coverage audit (spec 010 / SC-005)
-
-ADR 0009 retires every bespoke per-type render template (workshops, case studies, services, team, homepage) in favor of `RenderBlocks(layout)`. SC-005 requires that **every capability of each retired template maps to ≥1 existing block — zero capabilities lost.** The audit below is the proof; the only gap was images, closed by `image` + `gallery`.
-
-| Retired template capability                                     | Block(s) that cover it                                                                                           |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Workshop description / format / audience (richText)             | `content`                                                                                                        |
-| Workshop deliverables (array)                                   | `deliverables`                                                                                                   |
-| Workshop photos (1..N images)                                   | **`gallery`** (new)                                                                                              |
-| Workshop recap video                                            | `video-embed`                                                                                                    |
-| Workshop testimonial                                            | `testimonial-block`                                                                                              |
-| Workshop download + inquiry form                                | `download-card`, `hubspot-form`                                                                                  |
-| Case study hero + lead metric                                   | `case-study-hero`                                                                                                |
-| Case study problem / solution / impact (richText)               | `content`                                                                                                        |
-| Case study metrics                                              | `stats-bar`, `metric-display`                                                                                    |
-| Case study technologies                                         | `tech-stack`                                                                                                     |
-| Case study key takeaways                                        | `key-takeaways`                                                                                                  |
-| Service description / approach (richText)                       | `content`                                                                                                        |
-| Service deliverables                                            | `deliverables`                                                                                                   |
-| Service FAQ (preserves FAQPage JSON-LD)                         | `faq`                                                                                                            |
-| Team member bio / narrative                                     | `content`                                                                                                        |
-| Team member expertise / certs / education / facts               | `deliverables`, `key-takeaways`, `content`                                                                       |
-| Team member quote                                               | `testimonial-block`                                                                                              |
-| Homepage hero / stats / featured / brand / logos / testimonials | `homepage-hero`, `stats-bar`, `featured-case-study`, `brand-teaser`, `client-logo-grid`, `featured-testimonials` |
-| One-off figure (any page)                                       | **`image`** (new)                                                                                                |
-
-Result: 0 lost capabilities. The reading-column rule (DESIGN_SYSTEM §11.4) is enforced inside the block components, so it travels with the block onto any page (FR-009).
-
-### 5.9 Block-curation loop — the one code path (spec 010 / ADR 0009 / FR-011)
-
-Under ADR 0009 every non-blog page is `RenderBlocks(layout)`. Rearranging, enriching, or building a page is a **content edit with no deploy**. The single change that legitimately requires code is **adding or fixing a block type** — and once a block lands it is usable on every page type with no per-type code. This is that loop. `image` + `gallery` (the only gap the §5.8 audit found) are its worked example.
-
-1. **Surface the gap.** A page cannot be expressed with the current library — discovered while composing (the [`compose-page`](../.claude/skills/compose-page/SKILL.md) authoring skill emits a single **named block gap** instead of a layout) or by hand. The skill never hand-codes a page; it names exactly one missing block and stops.
-2. **Confirm it is really a gap.** Re-run the §5.8 audit method against the need: does an existing block (or an existing block plus one new field/variant) already cover it? Prefer **extending an existing block** over a new slug when the capability is a variant of something we already render (e.g. a new `content.width` value, a `testimonial-block` layout option). Only a genuinely new capability earns a new block. If more than one capability is missing, close the highest-leverage one first, then re-run the skill.
-3. **Add or fix the block (the only code).** This is the whole code path:
-   - Block config: `src/payload/blocks/layout/<Name>.ts` (kebab-case `slug`), then register it in `src/payload/blocks/layout/index.ts` **and** add it to the exported `layoutBlocks` array.
-   - Render component: `src/components/sections/<Name>.tsx`, then register the slug in `src/components/sections/registry.ts`. The reading-column rule (DESIGN_SYSTEM §11.4) lives **inside the component** so it travels with the block onto every page (FR-009).
-   - Run `npm run generate:types` and `npm run generate:importmap`.
-   - Add the Payload migration for the new block tables (`<collection>_blocks_<slug>*` live **and** `_<collection>_v_blocks_<slug>*` version tables) — never `drizzle-kit push` (Constitution V). Because `layout` is the same `[...layoutBlocks]` array on every collection, the generated migration adds the block's tables for **every** collection at once.
-   - Add a showcase fixture (`src/payload/seed/showcase/fixtures.ts`) and visually verify per CLAUDE.md.
-     The fixture no longer declares a category — it is read from the block's `admin.group`.
-   - Give the block its admin presentation: `admin: blockAdmin('<category>', '<slug>', '<Label>')`,
-     where `<Label>` is the block's own `labels.singular` — one name feeds the preview's alt text,
-     the picker card and the collapsed row's pill (spec 011 US4).
-     Then build its picker preview — `npm run seed:showcase`, `npm run visual:capture`,
-     `npm run block:thumbnails` — and commit the generated `public/block-previews/<slug>.webp`.
-     `tests/int/adminMetadata.int.spec.ts` fails without it (ADR 0011).
-4. **Document it.** Add the block to the §5 catalog (category + field table) and bump the count in §5.7. The §5 category you file it under and the `admin.group` you gave it in step 3 must agree — the picker heading is what an editor actually sees. The registry↔library coupling is guarded by `tests/int/render/registryCoverage.int.spec.ts` (every layout export has a registry entry and vice-versa — no orphans).
-5. **Available everywhere, no per-type code.** Every collection's `layout` field spreads the **same** `layoutBlocks` array and every page renders through the **one** `RenderBlocks` dispatcher, so the new block is immediately usable on pages, workshops, case studies, services, and team with zero per-type code. This reuse property is pinned by `tests/int/blocks/blockReuseAcrossTypes.int.spec.tsx` (the `gallery` worked example renders identically on page + case study + workshop from one definition).
-
-The loop is deliberately the **only** exception to "no code for layout" (SC-006): if a change is not "add or fix a block type," it should not require a deploy.
-
----
-
-### 5.10 Collection-backed blocks resolve at template time (ROADMAP UI-2)
-
-Four blocks let an author pick a **source** instead of hand-picking rows:
-
-| Block             | Field    | Non-manual values                     | Resolved from     |
-| ----------------- | -------- | ------------------------------------- | ----------------- |
-| `team-grid`       | `filter` | `leadership-only`, `all`              | `listTeamMembers` |
-| `post-list`       | `source` | `latest`, `by-category`               | `listPosts`       |
-| `case-study-grid` | `source` | `latest`, `by-industry`, `by-service` | `listCaseStudies` |
-| `service-cards`   | `source` | `by-pillar`                           | `listServices`    |
-
-Both `case-study-grid` and `industry-grid` render **nothing** when they end up with no items — heading
-included. `case-study-grid` empties through source resolution (a `by-industry` with nothing tagged to it);
-`industry-grid` has no `source` and empties through draft filtering or an unpopulated relation. Either way an
-author never sees it while editing, and publishing a bare heading over empty space is a claim with nothing
-behind it (`gridEmptyState.int.spec.tsx`).
-
-**`src/lib/resolveLayout.ts` is where those selects are consumed.** Every route that renders a
-`layout` awaits `resolveLayout(doc.layout)` before handing it to `RenderBlocks`, and the resolver fills
-each block's `manualItems` from the cached readers in `lib/payload.ts` (so the reads inherit the cache
-tags, the hourly revalidation and the `withReadTimeout` guard). An explicit manual pick always wins over
-the source, and a read that times out throws rather than degrading to a silently empty section.
-
-**The render components never read `source`/`filter`.** They draw whatever `manualItems` they are handed
-and nothing else, which is what keeps them pure, synchronous and renderable by React Testing Library —
-`RenderBlocks` stays synchronous, and blocks never touch the database. Adding a new collection-backed
-block means adding a case to `resolveLayout`, not making the component async.
-
-Before UI-2 nothing consumed these selects: a block set to any non-manual source rendered the literal
-string `Source: latest (resolves at template time)` as public body copy. `team-grid` was the worst,
-because `filter` is its one **required** field while `manualItems` is optional — the natural authoring
-path produced the broken page. Pinned by `tests/int/lib/resolveLayout.int.spec.ts`.
+Renders generic lead fields through `HubspotLeadForm`; the Workshop Inquiry GUID renders `WorkshopInquiryForm`
+instead.
 
 ---
 
 ## 6. Page composition matrix
 
-Block order per page type. This is the canonical reference — content layouts should follow these unless there's a documented reason to vary.
+The starting block order per page type: what an editor or the `compose-page` skill begins from, not a render
+template. Only the thirteen blocks. A new case study, workshop, industry, team member or partner starts from its
+skeleton (`src/payload/seed/skeletons/*.ts`, the `layout` `defaultValue`; ROADMAP UI-3).
 
-> **Post-spec-010 note (ADR 0009):** the entries below that describe a type as "structured fields rendered through fixed sequence" (e.g. case study) are **historical** — those bodies are now `layout` blocks rendered by `RenderBlocks`. The per-type composers that produced these orderings during the spec-010 migration were deleted in spec 011 once the fields they read were dropped; the equivalent starting point for a new record is now the per-type skeleton (`src/payload/seed/skeletons/*.ts`, wired as each collection's `layout` `defaultValue`). So this matrix is the **editor's starting block order**, not a hardcoded render template. Component names like `<Prose>`/`<MetricsGrid>`/`<TestimonialSingle>` map to the real block slugs `content`/`metric-display`+`stats-bar`/`testimonial-block` (see §5.7 renames). The old "service pillar landing" / "service detail" rows are retired — both fold into the single **Service offering** entry below (§1: offerings are now four Pages by slug). Only the blog Post still renders a bespoke richText body.
+**Composition rules** (`.claude/skills/compose-page/SKILL.md`):
 
-### Homepage (`homepage` global — `layout` blocks via `RenderBlocks`)
+1. Open with a `split` hero carrying the page's art.
+2. Never two `content` blocks in a row. Prose that lists several things is `items`; one point with a picture is
+   `media-text`.
+3. Keep sections short: a `content` block is one idea, about 150 words at most.
+4. Vary the rhythm: consecutive sections differ in block or layout. Alternate `media-text` sides; separate bands with
+   `background`.
+5. Put proof where the claim is: numbers as an `items` stats row, a client's words as a `quote`, the work as `cards`
+   of case studies.
+6. End with a `cta`.
 
-Spec 010 moved the homepage off structured fields onto an editor-reorderable `layout` blocks array (§1). The order below is the composer's default starting point, not a fixed renderer:
+**Routes that own their header.** Case study, workshop and team member routes render the `h1` themselves, so their
+layouts open without a `hero`. The homepage route appends a `cta` (the Touchstone workshop) and a latest-insights
+`cards` after the layout, so the homepage layout does not end with its own `cta`.
 
-1. `homepage-hero` (above the fold; required dual CTA)
-2. `stats-bar` (`source: from-site-settings`)
-3. `service-pillar-cards` (3-up)
-4. `featured-case-study`
-5. `brand-teaser` (Sequoyah hook)
-6. `client-logo-grid` (`treatment: grayscale-on-color-hover`)
-7. `featured-testimonials` (max 3)
-8. `cta-section` (`variant: split` — Touchstone teaser)
-9. `post-list` (`limit: 3` — latest insights)
-10. `cta-section` (`variant: centered` — dual CTA: book call + assessment)
+| Page type                                      | Block order                                                                                                                                                                                                 |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Homepage (`homepage` global)                   | `hero` (cover) → `items` (grid, custom markers: stats) → `cards` (caseStudies, featured) → `media-text` (the Sequoyah story) → `gallery` (logos) → `quote`                                                  |
+| Service (`services`, leaf)                     | `hero` → `content` (what it is) → `items` (grid, numbers: the approach) → `items` (list, subtle: deliverables) → `quote` → `cards` (caseStudies filtered by this service) → `accordion` (questions) → `cta` |
+| Service group (`services`, group)              | `hero` → `content` → `items` (grid, card: each service, linked) → `quote` → `cards` (caseStudies) → `cta`                                                                                                   |
+| Axis (`services`, axis)                        | `hero` → `content` → `items` (grid, card: each group, linked) → `quote` → `cta`                                                                                                                             |
+| Industry (`industries`)                        | `hero` → `content` (the sector) → `items` (grid: what we do there) → `cards` (caseStudies filtered by industry) → `gallery` (logos) → `cta`                                                                 |
+| Market (`pages`, e.g. `okc-consulting`)        | `hero` → `content` (local context) → `items` (grid, subtle) → `media-text` → `quote` → `cards` (caseStudies) → `cta`                                                                                        |
+| Our Story (`pages`)                            | `hero` → `media-text` → `embed` (video, subtle) → `media-text` (other side) → `items` (grid: values) → `cards` (teamMembers) → `cta`                                                                        |
+| Industries index (`pages`, `industries`)       | `hero` (text-only) → `cards` (industries) → `cta`                                                                                                                                                           |
+| Case study (`caseStudies`; route owns header)  | `content` (the challenge) → `media-text` (the approach) → `items` (grid, custom markers, accent: results) → `content` (the outcome) → `quote` → `items` (tags: technologies) → `cta`                        |
+| Workshop (`workshops`; route owns header)      | `content` (what it is) → `items` (list: what you leave with) → `gallery` (photos) → `embed` (recap video) → `quote` → `hubspot-form` (the inquiry form is the close)                                        |
+| Team member (`teamMembers`; route owns header) | `content` (bio) → `items` (list: expertise, certifications) → `content` → `cta`                                                                                                                             |
+| Partner (`partners`)                           | `hero` → `content` (who they are) → `items` (grid, card: what we do together) → `items` (tags: products) → `cta`                                                                                            |
 
-### About landing (`pages` collection — `layout` blocks)
-
-`hero` → `stats-bar` → `content` (who we are) → `mission-vision-values` → `two-column` (localshoring preview) → `logo-bar` → `nav-cards` (sub-page routing)
-
-### Our Story (`pages` — `layout` blocks)
-
-`hero` → `content` (Sequoyah brand story) → `timeline` (company milestones) → `content` (founding philosophy) → `content` (localshoring origin) → `cta-section` (dual)
-
-### Team (`pages` — `layout` blocks)
-
-`hero` → `team-grid` (filter: leadership-only) → `content` (collective expertise narrative) → `team-grid` (filter: all) → `content` (culture) → `cta-section`
-
-### Localshoring (`pages` — `layout` blocks)
-
-`hero` → `content` (definition + callout) → `comparison-table` → `content` (business case with stats) → `markets-map` → `testimonial-single` → `cta-section`
-
-### Services overview (`pages` — `layout` blocks)
-
-`hero` → `content` (overview) → `service-pillar-cards` → `featured-case-study` → `cta-section`
-
-### Service offering (`pages` — `layout` blocks; one Page per offering, addressed by slug)
-
-The retired `/services/[pillar]/[slug]` pillar→detail IA (the two rows that used to sit here) is replaced by **four offering Pages**, each composed from the block library. Default composer order:
-
-`hero` → `content` (what it is / approach) → `process-steps` → `deliverables` → `featured-case-study` → `faq` → `cta-section`
-
-### Case study (`caseStudies` — structured fields rendered through fixed sequence)
-
-`<CaseStudyHero>` + sidebar (industry, services, technologies) → `<Prose>` (Challenge) → `<Prose>` (Approach) → `<MetricsGrid>` (Results — from `metrics` array) → `<KeyTakeaways>` → `<TechStack>` → `<TestimonialSingle>` → `<RelatedContent type="caseStudies">` → `<CtaSection>`
-
-### Blog post (`posts` — structured fields with inline-block rich text body)
-
-`<BlogPostHeader>` (title, eyebrow, author byline, date, hero image) → `<Prose>` (body with inline CTAs, callouts, testimonial embeds) → `<RelatedContent type="posts">` → `<RelatedContent type="services">` → share buttons
-
-### Blog listing (`/insights`)
-
-`<Hero variant="text-only">` → category filter chips → `<Pagination>` paginated `<PostGrid>`
-
-### Industry page (`industries` — block-composed since IND-1)
-
-`hero` → `content` (sector context) → `service-cards` set to manual → `case-study-grid` set to `by-industry` → `stats-bar` → `logo-bar` → `cta-section`
-
-Every part of that is authored in the block. The recipe used to map three of
-these to industry fields — `description`, `relevantServices`, `clientLogos` —
-but those are still INERT-1: hidden, with no consumer on the render path
-(`Industries.ts`). `industry` is the one field a block reads, and only
-`case-study-grid` reads it.
-
-### Market landing (`locations` — structured fields)
-
-`<Hero>` → `<Prose>` (local context — unique per city) → `<ServiceCards>` (all pillars) → `<CaseStudyGrid source="manual">` (local projects) → office details block → `<CtaSection>`
-
-### Workshop landing (`pages` — `layout` blocks)
-
-`hero` → `content` (program overview) → `workshop-list` (the `WorkshopList` renderer) → `stats-bar` (workshop stats with citations) → `cta-section`
-
-### Workshop detail (`workshops` — structured fields)
-
-`<Hero>` → `<Prose>` (description) → agenda block → `<Deliverables>` → `<Prose>` (audience) → facilitator bio → `<TestimonialSingle>` → `<CtaSection>`
-
-### Contact (`pages`)
-
-`<Hero>` → `<HubspotForm>` → office details → `<CtaSection>` (book a call alternative)
-
-### Contact > Book a Call
-
-`<Hero>` → `<HubspotMeetings>`
+**Not block-composed.** Blog posts (`posts`) are rich text with inline blocks (§5.2). `/case-studies`, `/insights`,
+`/team`, `/workshops` and `/partners` are route files that render a `Container` header over `cards` (DESIGN_SYSTEM
+§11.5). `/contact` is a route file with the curated `ContactForm`.
 
 ---
 
 ## 7. Component file structure
 
-Regenerated from the real tree. Block configs carry **no** `Block` suffix (`Hero.ts`, not `HeroBlock.ts`); each layout/inline config has a matching renderer of the same name, and the slug↔component pairing is test-enforced (`registryCoverage` / `inlineRegistryCoverage`).
+Block configs carry **no** `Block` suffix (`Hero.ts`; `AccordionBlock.ts` is the one exception). Each layout and
+inline config has a renderer, and the slug ↔ component pairing is test-enforced (`registryCoverage` /
+`inlineRegistryCoverage`). The rest of `src/` is in ARCHITECTURE.md.
 
 ```
 src/
 ├── components/
-│   ├── ui/                                  # UI primitives (§3)
-│   │   ├── Button.tsx
-│   │   ├── Container.tsx
-│   │   ├── Prose.tsx
-│   │   ├── ResponsiveImage.tsx
-│   │   └── SmartLink.tsx
-│   │
-│   ├── layout/                              # Global chrome (§4)
-│   │   ├── SiteHeader.tsx
-│   │   ├── SiteFooter.tsx
-│   │   ├── MobileNav.tsx
-│   │   ├── PreviewBanner.tsx
-│   │   ├── ConsentPreferences.tsx
-│   │   └── SkipToContent.tsx
-│   │
-│   ├── sections/                            # Layout block renderers (§5)
-│   │   ├── registry.ts                      # blockType (kebab slug) → component
-│   │   ├── RenderBlocks.tsx                 # Walks layout[] and dispatches via registry
-│   │   ├── Accordion.tsx
-│   │   ├── BrandTeaser.tsx
-│   │   ├── CaseStudyGrid.tsx
-│   │   ├── CaseStudyHero.tsx
-│   │   ├── ClientLogoGrid.tsx
-│   │   ├── ComparisonTable.tsx
-│   │   ├── ContactCta.tsx
-│   │   ├── Content.tsx
-│   │   ├── CtaSection.tsx
-│   │   ├── Deliverables.tsx
-│   │   ├── DownloadCard.tsx
-│   │   ├── Embed.tsx
-│   │   ├── FAQ.tsx
-│   │   ├── FeaturedCaseStudy.tsx
-│   │   ├── FeaturedTestimonials.tsx
-│   │   ├── Gallery.tsx
-│   │   ├── Hero.tsx
-│   │   ├── HomepageHero.tsx
-│   │   ├── HubspotForm.tsx
-│   │   ├── HubspotMeetings.tsx
-│   │   ├── Image.tsx
-│   │   ├── IndustryGrid.tsx
-│   │   ├── KeyTakeaways.tsx
-│   │   ├── LocationsList.tsx
-│   │   ├── LogoBar.tsx
-│   │   ├── Map.tsx
-│   │   ├── MetricDisplay.tsx
-│   │   ├── MissionVisionValues.tsx
-│   │   ├── NavCards.tsx
-│   │   ├── NewsletterCta.tsx
-│   │   ├── PostList.tsx
-│   │   ├── ProcessSteps.tsx
-│   │   ├── RelatedPosts.tsx
-│   │   ├── ServiceCards.tsx
-│   │   ├── ServicePillarCards.tsx
-│   │   ├── ServicePillarHero.tsx
-│   │   ├── StatsBar.tsx
-│   │   ├── Tabs.tsx
-│   │   ├── TeamGrid.tsx
-│   │   ├── TechStack.tsx
-│   │   ├── TestimonialBlock.tsx
-│   │   ├── Timeline.tsx
-│   │   ├── TwoColumn.tsx
-│   │   ├── VideoEmbed.tsx
-│   │   └── WorkshopList.tsx
-│   │
-│   ├── richText/                            # Lexical body + inline block renderers
-│   │   ├── RichText.tsx                     # Lexical → React converter (wraps Prose)
-│   │   └── inline/
-│   │       ├── registry.ts                  # inline blockType → component
-│   │       ├── Callout.tsx
-│   │       ├── Disclosure.tsx
-│   │       ├── Figure.tsx
-│   │       ├── ImageWithCaption.tsx
-│   │       ├── InlineCta.tsx
-│   │       ├── QuotePullquote.tsx
-│   │       └── TestimonialEmbed.tsx
-│   │
-│   ├── forms/                               # React form clients
-│   │   ├── ContactForm.tsx
-│   │   ├── HubspotLeadForm.tsx
-│   │   └── WorkshopInquiryForm.tsx
-│   │
-│   ├── integrations/
-│   │   ├── ConsentDefault.tsx
-│   │   ├── GtmScript.tsx
-│   │   └── HubSpotTracking.tsx
-│   │
-│   ├── analytics/
-│   │   ├── BookingCompleteSeam.tsx
-│   │   ├── TrackedCtaLink.tsx
-│   │   └── TrackView.tsx
-│   │
-│   ├── seo/
-│   │   └── JsonLd.tsx
-│   │
-│   ├── error/
-│   │   ├── NotFoundTracker.tsx
-│   │   └── requestId.ts
-│   │
-│   └── admin/                               # Payload admin-panel customizations
-│       ├── BeforeLoginGoogle.tsx
-│       └── LoginError.tsx
-│
+│   ├── ui/                  # Primitives (§3): Button, Container, Prose, ReadingColumn, ResponsiveImage,
+│   │                        #   Section, SmartLink, TabSet, VideoFacade, tone.ts
+│   ├── layout/              # Global chrome (§4)
+│   ├── sections/            # Layout block renderers (§5)
+│   │   ├── registry.ts      # blockType (kebab slug) → component
+│   │   ├── RenderBlocks.tsx # Walks layout[] and dispatches via registry
+│   │   └── AccordionBlock, Cards, Content, Cta, Embed, Gallery, Hero, HubspotForm, Image, Items,
+│   │       MediaText, Quote, Table (.tsx)
+│   ├── cards/               # One card per collection, behind `cards`: CaseStudy, Industry, Location, Partner,
+│   │                        #   Post, Service, Team, Workshop (…Cards.tsx), FeaturedCard.tsx, types.ts
+│   ├── richText/            # RichText.tsx (Lexical → React) + inline/ renderers and registry
+│   └── forms/               # ContactForm, HubspotLeadForm, WorkshopInquiryForm
+├── lib/
+│   ├── resolveLayout.ts     # Fills `cards` before RenderBlocks (§5.5)
+│   └── cardCollections.ts   # The eight collections `cards` lists
 └── payload/
     ├── blocks/
-    │   ├── conditional.ts                   # Shared conditional-field helpers
-    │   ├── layout/                          # Layout block configs (45)
-    │   │   ├── index.ts                     # Re-exports + the `layoutBlocks` array
-    │   │   ├── Accordion.ts
-    │   │   ├── BrandTeaser.ts
-    │   │   ├── CaseStudyGrid.ts
-    │   │   ├── CaseStudyHero.ts
-    │   │   ├── ClientLogoGrid.ts
-    │   │   ├── ComparisonTable.ts
-    │   │   ├── ContactCta.ts
-    │   │   ├── Content.ts
-    │   │   ├── CtaSection.ts
-    │   │   ├── Deliverables.ts
-    │   │   ├── DownloadCard.ts
-    │   │   ├── Embed.ts
-    │   │   ├── FAQ.ts
-    │   │   ├── FeaturedCaseStudy.ts
-    │   │   ├── FeaturedTestimonials.ts
-    │   │   ├── Gallery.ts
-    │   │   ├── Hero.ts
-    │   │   ├── HomepageHero.ts
-    │   │   ├── HubspotForm.ts
-    │   │   ├── HubspotMeetings.ts
-    │   │   ├── Image.ts
-    │   │   ├── IndustryGrid.ts
-    │   │   ├── KeyTakeaways.ts
-    │   │   ├── LocationsList.ts
-    │   │   ├── LogoBar.ts
-    │   │   ├── Map.ts
-    │   │   ├── MetricDisplay.ts
-    │   │   ├── MissionVisionValues.ts
-    │   │   ├── NavCards.ts
-    │   │   ├── NewsletterCta.ts
-    │   │   ├── PostList.ts
-    │   │   ├── ProcessSteps.ts
-    │   │   ├── RelatedPosts.ts
-    │   │   ├── ServiceCards.ts
-    │   │   ├── ServicePillarCards.ts
-    │   │   ├── ServicePillarHero.ts
-    │   │   ├── StatsBar.ts
-    │   │   ├── Tabs.ts
-    │   │   ├── TeamGrid.ts
-    │   │   ├── TechStack.ts
-    │   │   ├── TestimonialBlock.ts
-    │   │   ├── Timeline.ts
-    │   │   ├── TwoColumn.ts
-    │   │   ├── VideoEmbed.ts
-    │   │   └── WorkshopList.ts
-    │   └── inline/                          # Inline block configs (7)
-    │       ├── index.ts
-    │       ├── Callout.ts
-    │       ├── Disclosure.ts
-    │       ├── Figure.ts
-    │       ├── ImageWithCaption.ts
-    │       ├── InlineCta.ts
-    │       ├── QuotePullquote.ts
-    │       └── TestimonialEmbed.ts
-    │
-    ├── fields/
-    │   ├── slug.ts                          # URL path: Payload's slugField, validated
-    │   └── url.ts                           # Shared URL/link group field
-    │
-    └── hooks/
-        ├── enforceDraftWhenScheduled.ts
-        ├── invalidateMediaOnChange.ts
-        └── revalidateOnChange.ts
+    │   ├── blockAdmin.ts    # Picker category, preview, label
+    │   ├── categories.ts    # The six picker categories (§5)
+    │   ├── conditional.ts   # requiredWhen and other conditional-field helpers
+    │   ├── outputContract.ts # Declared exceptions to the INERT-2 gate
+    │   ├── layout/          # The 13 layout block configs + index.ts (`layoutBlocks`)
+    │   └── inline/          # The 7 inline block configs + index.ts
+    └── fields/              # blockCopy.ts (heading, eyebrow, intro, background), cta.ts, mediaRowLabel.ts,
+                             #   url.ts, seo.ts, slug.ts, …
 ```
 
 ---
 
 ## 8. Render dispatcher
 
-A single dispatcher renders a `layout` array regardless of which blocks appear:
+A route resolves the layout, then hands it to the one dispatcher:
 
-```typescript
-// The map lives in src/components/sections/registry.ts; RenderBlocks.tsx imports it.
-import type { Page } from '@/payload-types'
-
-const registry: Record<string, React.ComponentType<any>> = {
-  hero: Hero,
-  'case-study-hero': CaseStudyHero,
-  content: Content,
-  'two-column': TwoColumn,
-  'process-steps': ProcessSteps,
-  // ... one entry per block
-}
-
-export function RenderBlocks({ blocks }: { blocks: Page['layout'] }) {
-  return (
-    <>
-      {blocks?.map((block, i) => {
-        const Component = registry[block.blockType]
-        if (!Component) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.warn(`Unknown blockType: ${block.blockType}`)
-          }
-          return null
-        }
-        return <Component key={block.id ?? i} {...block} />
-      })}
-    </>
-  )
-}
+```tsx
+const layout = await resolveLayout(doc.layout) // fills `cards` (§5.5)
+return <RenderBlocks blocks={layout} />
 ```
 
-For inline rich-text blocks, the same pattern applies inside the Lexical `RichText` converter (PAYLOAD_DEVELOPMENT.md §7).
+`RenderBlocks` looks each `blockType` up in `registry.ts` and renders the component with the block as props. An
+unknown `blockType` is skipped, with a dev-only warning once per type per render. Contract: `docs/contracts/render-blocks.md`.
+Inline rich-text blocks follow the same pattern inside `RichText` (`docs/contracts/inline-block-converter.md`).
 
 ---
 
 ## 9. Block library hygiene rules
 
-1. **Add a block only when 2+ pages need it.** A one-off block is just a page component. Don't pollute the editor menu.
-2. **Variants over duplication.** If a new "hero with reversed image" appears, add a variant to `hero`, not a new block.
-3. **Required = required.** Don't write fallback renders for fields the schema marks required. Trust Payload validation.
-4. **Inline blocks for _in-flow_ content; layout blocks for _full-width_ sections.** A `pull-quote` inside an article is inline; a `testimonial-single` between sections is a layout block.
-5. **No business logic in blocks.** Blocks render. Data shaping (filtering case studies by industry, sorting posts) happens in the page component or a server-side helper.
-6. **One file per block config.** Easier diffs, easier discovery, no 2,000-line `blocks.ts`.
-7. **A block's name must stand alone in its picker.** Payload draws no description, so `labels.singular`
-   is the whole of what tells two cards apart — and it is also the only thing the picker's search
-   matches. No label may duplicate or be contained in another label offered by the same picker;
-   qualify it instead (`Hero (standard page)`, not `Hero`). Enforced by `adminMetadata.int.spec.ts`.
+1. **The list is pinned at thirteen.** Gate: `tests/int/blocks/allowedBlocks.int.spec.ts`. Adding a block edits that
+   list and needs Kenn's sign-off (ADR 0013).
+2. **A new look is an option, not a block.** Add a select value or a field to the nearest block. A page the set
+   cannot compose goes to Kenn as a gap (the `compose-page` skill's gap output), and the fix is almost always an
+   option.
+3. **No numeric caps.** No `maxRows`, `maxLength` or `max`; no `minRows` above 1. A layout that degrades past N
+   items handles N. Gate: `tests/int/blocks/noCaps.int.spec.ts`.
+4. **Every control changes the output.** Gate: `tests/int/blocks/blockOutputContract.int.spec.tsx` (INERT-2).
+   Exceptions are declared on the block with `custom: outputContract({...})`.
+5. **Required = required.** Don't write fallback renders for fields the schema marks required. Trust Payload
+   validation.
+6. **Inline blocks for _in-flow_ content; layout blocks for _full-width_ sections.** A `quote-pullquote` inside an
+   article is inline; a `quote` between sections is a layout block.
+7. **No data fetching in blocks.** Collection lists resolve in `resolveLayout`; components render what they are
+   handed.
+8. **One file per block config.** Easier diffs, easier discovery.
+9. **A block's name must stand alone in its picker.** Payload draws no description, so `labels.singular` is all
+   that tells two cards apart, and the only thing the picker's search matches. No label may duplicate or be
+   contained in another in the same picker. Enforced by `adminMetadata.int.spec.ts`.
+
+**Changing a block** (an option, a fix): the config, the renderer, a showcase fixture
+(`src/payload/seed/showcase/fixtures.ts`) and a test under `tests/int/blocks/`; then `npm run generate:types`,
+`npm run generate:importmap` and `npx payload migrate:create` (every collection spreads `layoutBlocks`, so the
+migration touches every collection's block tables). If the look changed, rebuild its picker preview:
+`npm run seed:showcase`, `npm run visual:capture`, `npm run block:thumbnails` (ADR 0011; checklist in
+PAYLOAD_DEVELOPMENT.md §6). Visually verify per CLAUDE.md.
 
 ---
 
 ## 10. Open questions for this doc
 
-| ID      | Question                                                                                                                                                                                                                           | Owner                      |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| ~~B-1~~ | **Resolved (ADR 0009 / spec 010).** `layout` is no longer pages-only — every non-blog collection **and** the homepage global spread the same `layoutBlocks` array and render through the one `RenderBlocks` dispatcher (§1, §5.9). | Engineering                |
-| B-2     | Decide whether `featured-case-study` and `featured-testimonials` should be globals (homepage) only, or also reusable on Pages                                                                                                      | Engineering                |
-| B-3     | Should `mission-vision-values` source from `siteSettings` (single source of truth) or accept inline content per page?                                                                                                              | Engineering + Content      |
-| B-4     | `comparison-table` flexibility — fully generic or hardcoded to the 3-model localshoring comparison?                                                                                                                                | Content                    |
-| B-5     | Inline-blocks inside post body — confirm full list and editor UX (slash command vs button bar)                                                                                                                                     | Content lead + Engineering |
+| ID  | Question                                                                                       | Owner                      |
+| --- | ---------------------------------------------------------------------------------------------- | -------------------------- |
+| B-5 | Inline-blocks inside post body — confirm full list and editor UX (slash command vs button bar) | Content lead + Engineering |

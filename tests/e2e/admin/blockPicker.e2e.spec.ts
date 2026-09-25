@@ -10,12 +10,9 @@ import { useAdminSession, type AdminSession } from '../helpers/adminSession'
  * `adminMetadata.int.spec.ts` proves the config is complete. This proves
  * Payload actually draws it: that the categories become headings, that no
  * block lands in the ungrouped bucket, that the previews load rather than
- * 404, and that the four heroes are told apart by name.
- *
- * That last one is the amended FR-011. Payload renders no block description,
- * so `labels.singular` is the whole of what distinguishes one card from
- * another — which makes this the test that would catch a future hero landing
- * beside `Case study hero` with a bare, ambiguous label.
+ * 404, and that the picker's search finds the hero by name (FR-011: Payload
+ * renders no block description, so `labels.singular` is the whole of what an
+ * editor searches).
  */
 
 let session: AdminSession
@@ -85,11 +82,10 @@ test.describe('block picker', () => {
     await expect(drawer.locator('.blocks-drawer__block-group-label')).toHaveText(usedCategories)
   })
 
-  test('the four heroes are distinguishable by name', async ({ page }) => {
+  test('searching "hero" finds the hero', async ({ page }) => {
     await openPicker(page)
     const drawer = picker(page)
 
-    expect(HERO_LABELS.length).toBeGreaterThan(1)
     for (const label of HERO_LABELS) {
       await expect(
         drawer.getByText(label, { exact: true }),
@@ -98,8 +94,7 @@ test.describe('block picker', () => {
     }
 
     // The picker's search is a substring match on the label alone, so a bare
-    // "hero" query must still narrow to the heroes rather than leave one
-    // ambiguous card behind. This is the searchability half of FR-011.
+    // "hero" query must narrow to the hero and nothing else.
     await page.getByPlaceholder(/search for a block/i).fill('hero')
     await expect(drawer.locator('.blocks-drawer__block')).toHaveCount(HERO_LABELS.length)
   })
@@ -117,7 +112,7 @@ test.describe('block picker', () => {
 
     const images = page.locator('.blocks-drawer__default-image img')
     // A block with no thumbnail renders Payload's fallback glyph instead of an
-    // <img>, so the count is itself an assertion that all 45 are wired.
+    // <img>, so the count is itself an assertion that every block is wired.
     await expect(images).toHaveCount(layoutBlocks.length)
 
     const broken = await images.evaluateAll((nodes) =>

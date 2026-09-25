@@ -109,11 +109,17 @@ describe('UI-2 — no render component defers work to a string on the page', () 
   // drop the very text this guard exists to find — verified: a reintroduced
   // deferral string was invisible to `toString()` and visible here.
   const SECTIONS_DIR = join(import.meta.dirname, '../../../src/components/sections')
+  // The `cards` block draws its cards from here, so they print page copy too.
+  const CARDS_DIR = join(import.meta.dirname, '../../../src/components/cards')
+  const renderFiles = (): string[] =>
+    [SECTIONS_DIR, CARDS_DIR].flatMap((dir) =>
+      readdirSync(dir, { recursive: true, encoding: 'utf8' })
+        .filter((f) => f.endsWith('.tsx'))
+        .map((f) => join(dir, f)),
+    )
 
   it('no block render component contains deferred-work text', () => {
-    const offenders = readdirSync(SECTIONS_DIR, { recursive: true, encoding: 'utf8' })
-      .filter((f) => f.endsWith('.tsx'))
-      .filter((f) => DEFERRAL.test(readFileSync(join(SECTIONS_DIR, f), 'utf8')))
+    const offenders = renderFiles().filter((f) => DEFERRAL.test(readFileSync(f, 'utf8')))
     expect(
       offenders,
       `These components print deferred-work text as page copy: ${offenders.join(', ')}. ` +
@@ -122,9 +128,6 @@ describe('UI-2 — no render component defers work to a string on the page', () 
   })
 
   it('reads a non-trivial number of components, so a bad path cannot pass vacuously', () => {
-    const tsx = readdirSync(SECTIONS_DIR, { recursive: true, encoding: 'utf8' }).filter((f) =>
-      f.endsWith('.tsx'),
-    )
-    expect(tsx.length).toBeGreaterThan(30)
+    expect(renderFiles().length).toBeGreaterThan(20)
   })
 })

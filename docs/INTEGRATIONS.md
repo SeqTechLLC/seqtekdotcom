@@ -114,7 +114,7 @@ Content-Type: application/json
 - Success returns `{ inlineMessage }` (or `{ redirectUrl }`); validation failures return `status: "error"` with an `errors[]` array — drive the §1.2 failure-handling state machine off that.
 - `Book a Call` is a Meetings embed (§1.4), not an API form — no GUID. Newsletter was dropped (2026-06-02): no newsletter program, and the old site had none (see spec 005).
 
-> **Open content dependency (not the HubSpot admin's task):** the Workshop landing's lead-magnet asset (the gated download behind `DownloadCard`) is a content-lead decision, tracked separately. The form can ship without it; the download just has nothing to deliver until that asset lands.
+> **Open content dependency (not the HubSpot admin's task):** the Workshop landing's lead-magnet asset (the gated download behind a `cta` block's `download` action) is a content-lead decision, tracked separately. The form can ship without it; the download just has nothing to deliver until that asset lands.
 
 _Verified against the HubSpot Forms API docs + the documented `FORM_HAS_RECAPTCHA_ENABLED` limitation (2026-06)._
 
@@ -412,12 +412,13 @@ interaction signals only (§1.2). Event contracts: `docs/contracts/datalayer-eve
 | `booking_complete`        | `{ event, meetingUrl }`                    | HubSpot Meetings reports `onMeetingBookSucceeded` | **Seam — emission gated** on the real Meetings embed (§1.4) |
 
 `cta_click` is emitted by a single client primitive (`TrackedCtaLink`) that the
-CTA surfaces (`Button` as a CTA, `CtaSection`, `ContactCta`, `InlineCta`) render
+CTA surfaces (`Button` as a CTA, the `cta` block, `InlineCta`) render
 through. `ctaId` is a stable identifier (not the editable label); `location` is
-a coarse placement (`header`, `cta-section`, `contact-cta`, `inline`, …).
-`booking_complete` is wired as a dormant listener seam (`BookingCompleteSeam`)
-that cannot fire until the placeholder `HubspotMeetings` component loads the real
-embed — mirrors the Meta-pixel deferral.
+a coarse placement (`header`, `mobile-nav`, `cta-buttons`, `cta-meeting`, `inline`, …).
+`booking_complete` is wired as a dormant listener seam (`BookingCompleteSeam`,
+mounted by the `cta` block's meeting panel) that cannot fire until the real
+Meetings embed loads; the panel opens the scheduler in a new tab instead — mirrors
+the Meta-pixel deferral.
 
 **Not yet built (out of spec 008 scope):** `newsletter_signup` (no newsletter
 form yet). Add it through the same emitter + union when that surface ships.

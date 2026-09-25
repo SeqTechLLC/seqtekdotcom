@@ -1,4 +1,6 @@
-import type { TextField } from 'payload'
+import type { SelectField, TextField, TextareaField } from 'payload'
+
+import type { SectionBackground } from '../../components/ui/Section'
 
 /**
  * Spec 011 US4 — the two text fields nearly every block repeats.
@@ -66,5 +68,38 @@ export const eyebrowField = ({
     description:
       description ??
       'The small line above the headline, in caps. Two or three words that say what kind of thing this is, e.g. "Case study".',
+  },
+})
+
+/** A short paragraph under a section heading. */
+export const introField = (): TextareaField => ({
+  name: 'intro',
+  type: 'textarea',
+  label: 'Intro',
+  admin: {
+    description:
+      'A sentence or two under the heading. Leave it blank to go straight to the content.',
+  },
+})
+
+/** The band colour behind a section. Maps to `Section`'s `background`. */
+export const backgroundField = (
+  defaultValue: SectionBackground = 'none',
+  { brand = false }: { brand?: boolean } = {},
+): SelectField => ({
+  name: 'background',
+  type: 'select',
+  label: 'Background',
+  defaultValue,
+  options: [
+    { label: 'None (page colour)', value: 'none' },
+    { label: 'Subtle tint', value: 'subtle' },
+    { label: 'Brand accent', value: 'accent' },
+    { label: 'Dark', value: 'inverse' },
+    // Only blocks built for white-on-green offer the solid band (Section.tsx).
+    ...(brand ? [{ label: 'Solid brand green', value: 'brand' }] : []),
+  ],
+  admin: {
+    description: 'The colour band behind this section. Alternate it with the sections around it.',
   },
 })

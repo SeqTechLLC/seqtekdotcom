@@ -9,27 +9,29 @@ import { requiredWhen } from '../conditional'
 
 type HeroSibling = { variant?: string }
 
+// The one page opener (docs/planning/block-consolidation.md). `cover` is the
+// old homepage hero; `split` absorbed the old `with-image`.
 export const Hero: Block = {
   slug: 'hero',
   interfaceName: 'HeroBlock',
-  labels: { singular: 'Hero (standard page)', plural: 'Heroes (standard page)' },
-  admin: blockAdmin('hero', 'hero', 'Hero (standard page)'),
+  labels: { singular: 'Hero', plural: 'Heroes' },
+  admin: blockAdmin('hero', 'hero', 'Hero'),
   fields: [
     {
       name: 'variant',
       type: 'select',
       label: 'Hero style',
       required: true,
-      defaultValue: 'text-only',
+      defaultValue: 'split',
       admin: {
         description:
-          'What sits beside or under the words. "With image" puts the picture under the copy at full width, "Split" sets it alongside; both ask for an image. "With video" asks for a video address, "Text only" asks for neither.',
+          '"Split" sets the words beside a picture and suits most pages. "Cover" lays the words in white over a full-width photo, darkened so they stay readable; use it for the homepage or a campaign page. "With video" puts a video under the words. "Text only" is for a page with no picture at all.',
       },
       options: [
         { label: 'Text only', value: 'text-only' },
-        { label: 'With image', value: 'with-image' },
+        { label: 'Split (words beside a picture)', value: 'split' },
+        { label: 'Cover (words over a photo)', value: 'cover' },
         { label: 'With video', value: 'with-video' },
-        { label: 'Split', value: 'split' },
       ],
     },
     eyebrowField(),
@@ -54,9 +56,9 @@ export const Hero: Block = {
       type: 'upload',
       relationTo: 'media',
       label: 'Image',
-      ...requiredWhen<HeroSibling>((d) => d?.variant === 'with-image' || d?.variant === 'split', {
+      ...requiredWhen<HeroSibling>((d) => d?.variant === 'split' || d?.variant === 'cover', {
         description:
-          'Shown only by the "With image" and "Split" styles. Landscape, at least 1600px wide.',
+          'Shown only by the "Split" and "Cover" styles. "Split" sets it beside the words; "Cover" stretches it behind them, so pick a photo with quiet space where the words fall. Landscape, at least 2000px wide.',
       }),
     },
     (() => {
@@ -95,7 +97,7 @@ export const Hero: Block = {
       defaultValue: 'left',
       admin: {
         description:
-          'Left is the default and easiest to read. Center suits a short headline with no image.',
+          'Left is the default and easiest to read. Center suits a short headline with no picture beside it.',
       },
       options: [
         { label: 'Left', value: 'left' },

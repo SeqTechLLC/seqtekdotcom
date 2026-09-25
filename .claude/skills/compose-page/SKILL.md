@@ -1,12 +1,12 @@
 ---
 name: compose-page
-description: "Compose a net-new SEQTEK page as a block `layout` from the existing block library, or name the single missing block. Use when asked to author, design, lay out, or draft a new page (workshop, case study, service, team, homepage, or a generic page) from a brief. Never hand-codes a page template."
-argument-hint: "A page brief (purpose, sections, audience), optionally a target collection (page | workshop | case-study | service | team | homepage)"
+description: "Compose a SEQTEK page as a block `layout` from the thirteen-block set. Use when asked to author, lay out, or draft a page (service, industry, market, case study, workshop, team member, homepage, or a generic page) from a brief or source material. Never hand-codes a page template and never adds a block."
+argument-hint: "A page brief or source material, optionally a target collection (pages | services | industries | caseStudies | workshops | teamMembers | homepage)"
 user-invocable: true
 disable-model-invocation: false
 metadata:
   contract: "docs/contracts/authoring-skill.md"
-  requirement: "FR-010 (US3)"
+  requirement: "ADR 0013"
 ---
 
 ## User Input
@@ -15,101 +15,73 @@ metadata:
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty). It is a page **brief**: the page's purpose, the sections it needs, its audience, and optionally a target collection.
+The input is a brief or source material for one page. Consider it before proceeding.
 
 ## What this skill does
 
-Turns a page brief into **exactly one** of:
+Turns the brief into a block `layout` (an ordered array of blocks) ready to go into the content JSON and load with
+`tools/payload-seed`. It uses only the thirteen blocks in `src/components/sections/registry.ts`. It never writes page
+code and never adds a block (ADR 0013).
 
-1. A valid block **`layout`** — an ordered array of blocks drawn **only** from the existing block library, each block's fields populated, emitted as JSON ready to seed via the Local API `upsertBySlug` pattern. **No bespoke page code.**
-2. A single named **block gap** — when the brief needs a capability no existing block provides, the one specific missing block (name + why), routed to the block-curation loop, **not** hand-coded.
+If a page genuinely cannot be composed, return a **gap** instead (shape below) and stop. A gap goes to Kenn; it is
+not built without his sign-off, and the fix is almost always an option on an existing block.
 
-This is ADR 0009's rule made operational: rearranging or building a page is a content edit; the only thing that needs code is a **new or fixed block type**. This skill never emits React/template code for a page (SC-006).
+## The blocks
 
+Exact fields: `src/payload/blocks/layout/<Block>.ts`. Spec: `docs/planning/block-consolidation.md`.
 
-## Procedure
+| Block | Use it for |
+| --- | --- |
+| `hero` | The page opener. `split` with an image is the default; `cover` for the homepage or a campaign page; `text-only` only when there is truly no image. |
+| `content` | Prose. Short: one idea, a heading and two or three paragraphs. |
+| `media-text` | A point that has a picture: image on one side, a short heading, text and a link on the other. Alternate left and right. |
+| `items` | Anything that is several parallel things: steps (`numbers`, or `line` down the page), principles or an acronym (`line` + `custom` letters), features (`grid`, plain or card), stats (`grid` + `custom` markers like "25+"), a timeline (`line` + dates), deliverables (`list`), technologies (`tags`). |
+| `cards` | Documents from a collection: case studies, posts, services, industries, workshops, team, locations, partners. Automatic (all, filtered) or hand-picked. `featured` makes the first one large. |
+| `image` / `gallery` | A picture, a set of pictures, or a logo strip (`gallery` layout `logos`). |
+| `quote` | A testimonial, or a pull quote with attribution. |
+| `cta` | The close: buttons, book a meeting, newsletter signup, or a download. |
+| `table` | A real comparison across columns. |
+| `accordion` | FAQs or details, as an accordion or tabs. |
+| `embed` | A video, a map, or an embedded page. |
+| `hubspot-form` | A HubSpot form. |
 
-### 1. Read the authoritative block list
+## Composition rules (these are what keep a page from reading as a wall of text)
 
-`src/components/sections/registry.ts` is the **source of truth** for valid block slugs (the keys of the `registry` object). Read it first.
+1. **Open with a `split` hero** carrying the page's art.
+2. **Never put two `content` blocks in a row.** If a section of prose lists several things, it is an `items` block.
+   If it makes one point that has a picture, it is `media-text`.
+3. **Keep every section short.** A `content` block is one idea of about 150 words at most. Split anything longer.
+4. **Vary the rhythm.** Consecutive sections use different blocks or different layouts. Alternate `media-text` sides,
+   and use `background` (subtle, accent, inverse) to separate bands.
+5. **Put proof where the claim is.** Numbers become an `items` stats row, a client's words become a `quote`, and the
+   work becomes `cards` of case studies.
+6. **End with a `cta`.**
 
-`docs/BLOCK_LIBRARY.md` §5 is the descriptive catalog (what each block is for, its fields, its category) and §6 is the page-composition matrix (which blocks typically build which page). Use it to choose blocks — but note it intentionally uses some friendlier names that are **not** slugs (e.g. it says `testimonial-single`/`testimonial-carousel`, the real slugs are `testimonial-block`/`featured-testimonials`; it says `latest-insights`, the slug is `post-list`; `related-content` → `related-posts`; `markets-map` → `map`; `newsletter-signup` → `newsletter-cta`; `workshop-progression` is a documented concept with no standalone slug). **When the doc and the registry disagree, the registry wins.** Only emit slugs that are keys in `registry`.
+## Facts
 
-### 2. Start from the per-type skeleton (when a target collection is given)
+Copy comes from the source material and the existing content. Never invent a client, a number, a quote, an office, a
+date or a claim. If the page needs a fact nobody has supplied, leave that section out and name the missing fact in
+your response. Public copy has no em dashes. Every image needs plain alt text.
 
-If the brief names one of the collections that has a default skeleton (workshop, case study, team member, partner), read it under `src/payload/seed/skeletons/<type>.ts` and use it as the starting frame — it encodes the expected block order and the per-type SEO/JSON-LD-bearing blocks (hero, testimonial, contact CTA, etc.). A generic `pages` page and the `homepage` global have **no** skeleton; compose from the brief's sections directly. Specialized collections keep their typed metadata (slug, listing image, order, SEO, relationships) outside the `layout`; only the page **body** is composed here.
+## Validate before returning
 
-### 3. Map each section of the brief to a block
+Every `blockType` must be a key in `registry`. Required fields must be present. Relationship and upload values in the
+content JSON use the seeder's directives (`$ref`, `$file`, `$lexical`; see `tools/payload-seed/README.md`).
 
-For each section the brief calls for, pick the **best-fit existing block**:
+## Output
 
-- Opening / banner → `hero` (generic), `case-study-hero`, `service-pillar-hero`, or `homepage-hero` by type.
-- Prose / narrative → `content` (rich text; honors the reading column automatically — see §5). Side-by-side prose + media → `two-column`.
-- Pictures → `image` (single captioned figure) or `gallery` (1..N images).
-- Lists / methodology → `deliverables`, `process-steps`, `timeline`, `comparison-table`.
-- Proof → `stats-bar`, `metric-display`, `logo-bar`/`client-logo-grid`, `testimonial-block`, `featured-testimonials`.
-- Collection rollups → `case-study-grid`, `featured-case-study`, `service-cards`, `service-pillar-cards`, `team-grid`, `industry-grid`, `post-list`, `related-posts`, `workshop-list`.
-- Conversion → `cta-section`, `contact-cta`, `newsletter-cta`, `hubspot-form`, `hubspot-meetings`, `download-card`.
-- Q&A / progressive disclosure → `faq`, `accordion`, `tabs`.
-- Media / external → `video-embed`, `embed`, `map`.
-- Specialty → `mission-vision-values`, `brand-teaser`, `nav-cards`, `key-takeaways`, `tech-stack`, `locations-list`.
-
-Populate each block's fields using its config in `src/payload/blocks/layout/<Block>.ts` for the exact field names and required fields. For `content`/`faq` answers, the body is a Lexical `richText` state (see the example fixtures and `src/payload/seed/showcase/lexical.ts` for the node shape).
-
-### 4. Honor the cross-cutting rules
-
-- **Reading column** (DESIGN_SYSTEM §11.4): enforced **centrally inside the block components**, not per page. Do not add wrapper markup or widths to fake it — just pick the block and, where offered, its `width` (e.g. `content.width`). The block centers the reading axis itself.
-- **AICO / SEO** (CONTENT-REQUIREMENTS §8): for content-collection and homepage pages, include the blocks that carry the page's structured-data and conversion signals (hero, testimonial, stats, contact CTA) so JSON-LD and analytics stay intact.
-- **Public copy**: no em dashes (an AI tell in SEQTEK copy). Every `image`/`gallery` upload needs alt text.
-
-### 5. Decide: layout or gap
-
-- If every section maps to an existing block → emit a **layout**.
-- If a section needs a capability **no** block provides (e.g. a stateful client-side widget, a chart type nothing renders) → emit a **gap** naming the one missing block. Prefer the smallest, most reusable block that closes the gap, and point at the nearest existing block. Do **not** invent a slug into a layout, and do **not** hand-code the page. If more than one capability is missing, name the single highest-leverage one first; the curation loop adds it, then re-run.
-
-### 6. Validate before returning
-
-Every `blockType` you emit in a layout **must** be a key in `registry`. If any is not, it is a gap, not a layout. (`tests/int/skills/composePage.int.spec.ts` enforces exactly this against the committed examples.)
-
-## Output format
-
-Emit a single JSON object. **Exactly one** of these two shapes:
-
-**Layout:**
+Exactly one of:
 
 ```json
-{
-  "kind": "layout",
-  "brief": "<the brief, paraphrased>",
-  "collection": "pages | workshops | caseStudies | services | teamMembers | homepage",
-  "layout": [
-    { "blockType": "<registry slug>", "<field>": "<value>" }
-  ]
-}
+{ "kind": "layout", "brief": "<paraphrased>", "collection": "<collection>", "layout": [{ "blockType": "<slug>" }] }
 ```
-
-**Gap:**
 
 ```json
 {
   "kind": "gap",
-  "brief": "<the brief, paraphrased>",
-  "collection": "pages | workshops | caseStudies | services | teamMembers | homepage",
-  "missingBlock": {
-    "name": "<proposed-new-slug>",
-    "reason": "<what capability is missing and why no existing block covers it>",
-    "nearestExisting": "<closest registry slug, or omit>"
-  }
+  "brief": "<paraphrased>",
+  "missingBlock": { "name": "<what is missing>", "reason": "<why no block or option covers it>", "nearestExisting": "<slug>" }
 }
 ```
 
-`collection` is optional. For a layout, the JSON is ready to paste into a seed/upsert call as the record's `layout`. For a gap, hand the `missingBlock` to the block-curation loop (BLOCK_LIBRARY / FR-011) — adding the block is the one legitimate code path; once it lands, re-run this skill.
-
-## Worked examples
-
-Live, test-guarded examples are in `examples/`:
-
-- [`examples/careers-page.json`](examples/careers-page.json) — a brief fully expressible with existing blocks → a `layout` (hero → content → stats-bar → deliverables → team-grid → faq → contact-cta).
-- [`examples/savings-calculator-gap.json`](examples/savings-calculator-gap.json) — a brief whose centerpiece is an interactive widget no block provides → a single named `savings-calculator` gap.
-
-These files are validated by `tests/int/skills/composePage.int.spec.ts`, so they cannot drift from the registry: every example layout uses only real slugs, and every named gap is a real gap.
+Examples in `examples/` (a market page, and a gap) are validated by `tests/int/skills/composePage.int.spec.ts`.

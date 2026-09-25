@@ -457,6 +457,12 @@ own it.
 
 ## 2.9 Before a destructive migration: snapshot first
 
+**The 2026-09-24 baseline.** The migration history was squashed into one baseline
+(`src/migrations/*_baseline.ts`), so an existing environment's database no longer
+matches it. Deploying it means recreating that database empty, letting the
+container's `payload migrate` apply the baseline, then loading the content JSON in
+the order in the content repo's `LOAD-ORDER.md`.
+
 Some migrations drop columns and tables — spec 011's expand/contract close is the
 first, shipped as `20260824_201317_spec011_drop_inert_fields` plus
 `20260824_214311_spec011_drop_stats_bar_source`. Those are not recoverable by

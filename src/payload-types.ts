@@ -175,50 +175,18 @@ export interface Page {
   layout?:
     | (
         | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
         | ContentBlock
-        | TwoColumnBlock
+        | MediaTextBlock
+        | ItemsBlock
         | ImageBlock
         | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | TimelineBlock
-        | FAQBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | MissionVisionValuesBlock
+        | TableBlock
         | AccordionBlock
-        | TabsBlock
-        | MapBlock
+        | QuoteBlock
+        | CtaBlock
+        | CardsBlock
         | EmbedBlock
-        | DownloadCardBlock
         | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
       )[]
     | null;
   /**
@@ -248,9 +216,9 @@ export interface Page {
  */
 export interface HeroBlock {
   /**
-   * What sits beside or under the words. "With image" puts the picture under the copy at full width, "Split" sets it alongside; both ask for an image. "With video" asks for a video address, "Text only" asks for neither.
+   * "Split" sets the words beside a picture and suits most pages. "Cover" lays the words in white over a full-width photo, darkened so they stay readable; use it for the homepage or a campaign page. "With video" puts a video under the words. "Text only" is for a page with no picture at all.
    */
-  variant: 'text-only' | 'with-image' | 'with-video' | 'split';
+  variant: 'text-only' | 'split' | 'cover' | 'with-video';
   /**
    * The small line above the headline, in caps. Two or three words that say what kind of thing this is, e.g. "Case study".
    */
@@ -264,7 +232,7 @@ export interface HeroBlock {
    */
   subheadline?: string | null;
   /**
-   * Shown only by the "With image" and "Split" styles. Landscape, at least 1600px wide.
+   * Shown only by the "Split" and "Cover" styles. "Split" sets it beside the words; "Cover" stretches it behind them, so pick a photo with quiet space where the words fall. Landscape, at least 2000px wide.
    */
   media?: (number | null) | Media;
   /**
@@ -302,7 +270,7 @@ export interface HeroBlock {
     url?: string | null;
   };
   /**
-   * Left is the default and easiest to read. Center suits a short headline with no image.
+   * Left is the default and easiest to read. Center suits a short headline with no picture beside it.
    */
   alignment?: ('left' | 'center') | null;
   id?: string | null;
@@ -402,133 +370,6 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CaseStudyHeroBlock".
- */
-export interface CaseStudyHeroBlock {
-  /**
-   * The small line above the headline, in caps. Two or three words that say what kind of thing this is, e.g. "Case study".
-   */
-  eyebrow: string;
-  /**
-   * The result this engagement produced, in one line.
-   */
-  headline: string;
-  /**
-   * The one number this study is remembered for. It is set in large type under the headline, against a rule.
-   */
-  metric: {
-    /**
-     * Written as it should read, e.g. "40%", "3x", "$1.2M".
-     */
-    number: string;
-    /**
-     * A few words under the number, e.g. "faster ticket turnaround".
-     */
-    label: string;
-    /**
-     * Optional smaller line, e.g. "in the first six months".
-     */
-    context?: string | null;
-  };
-  /**
-   * Sits beside the headline as the right-hand half of the opening band, not behind it. Landscape, at least 1600px wide.
-   */
-  heroImage: number | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'case-study-hero';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ServicePillarHeroBlock".
- */
-export interface ServicePillarHeroBlock {
-  /**
-   * The small line above the headline naming which pillar this page is, e.g. "Strategy".
-   */
-  pillarName: string;
-  /**
-   * What this pillar does for a client, in a line.
-   */
-  headline: string;
-  /**
-   * One or two sentences under the headline. Optional.
-   */
-  subheadline?: string | null;
-  /**
-   * The image at the top of the pillar page. Landscape, at least 1600px wide.
-   */
-  heroImage: number | Media;
-  /**
-   * Optional. Leave both fields empty and the hero renders without a button.
-   */
-  primaryCta?: {
-    /**
-     * The words on the button. Two to four words reads best, e.g. "Book a call".
-     */
-    label?: string | null;
-    /**
-     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
-     */
-    url?: string | null;
-  };
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'service-pillar-hero';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HomepageHeroBlock".
- */
-export interface HomepageHeroBlock {
-  /**
-   * The small line above the headline, in caps. Two or three words that say what kind of thing this is, e.g. "Case study".
-   */
-  eyebrow?: string | null;
-  /**
-   * The largest line on the site. Say what we do for a client in their words. This is the one sentence most visitors read.
-   */
-  headline: string;
-  /**
-   * One or two sentences under the headline.
-   */
-  subheadline?: string | null;
-  /**
-   * Sits behind the words, so pick something with quiet space where the text falls. Landscape, at least 2000px wide.
-   */
-  backgroundImage?: (number | null) | Media;
-  /**
-   * The homepage asks for one thing above all. This is it.
-   */
-  primaryCta: {
-    /**
-     * The words on the button. Two to four words reads best, e.g. "Book a call".
-     */
-    label: string;
-    /**
-     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
-     */
-    url: string;
-  };
-  /**
-   * The softer path for a visitor who is not ready to talk yet, e.g. "See our work". Required here by design.
-   */
-  secondaryCta: {
-    /**
-     * The words on the button. Two to four words reads best, e.g. "Book a call".
-     */
-    label: string;
-    /**
-     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
-     */
-    url: string;
-  };
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'homepage-hero';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ContentBlock".
  */
 export interface ContentBlock {
@@ -555,24 +396,28 @@ export interface ContentBlock {
     [k: string]: unknown;
   };
   /**
-   * Tints the band behind the text so it separates from the sections above and below. Use sparingly, or the page turns into stripes.
+   * The colour band behind this section. Alternate it with the sections around it.
    */
-  background?: ('none' | 'subtle' | 'accent') | null;
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'content';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TwoColumnBlock".
+ * via the `definition` "MediaTextBlock".
  */
-export interface TwoColumnBlock {
+export interface MediaTextBlock {
   /**
-   * On a phone the columns stack in this order, so "Left" puts the image first and "Right" puts the text first. Alternate the side down a page of these so it does not read as a ladder.
+   * The picture beside the text. Landscape or square.
+   */
+  media: number | Media;
+  /**
+   * On a phone the two stack in this order, so "Left" puts the image first and "Right" puts the text first. Alternate the side down a page of these so it does not read as a ladder.
    */
   mediaPosition: 'left' | 'right';
   /**
-   * The column of prose beside the image.
+   * The words beside the image. Start with a short heading, then a paragraph or two.
    */
   body: {
     root: {
@@ -590,11 +435,7 @@ export interface TwoColumnBlock {
     [k: string]: unknown;
   };
   /**
-   * The image beside the text. Landscape or square.
-   */
-  media: number | Media;
-  /**
-   * Optional. Appears under the text column.
+   * Optional. Appears under the text, e.g. "Read our story". Leave both fields empty for no button.
    */
   cta?: {
     /**
@@ -606,9 +447,81 @@ export interface TwoColumnBlock {
      */
     url?: string | null;
   };
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'two-column';
+  blockType: 'media-text';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ItemsBlock".
+ */
+export interface ItemsBlock {
+  /**
+   * The line that introduces this section. Leave it blank to run the section without a heading.
+   */
+  heading?: string | null;
+  /**
+   * A sentence or two under the heading. Leave it blank to go straight to the content.
+   */
+  intro?: string | null;
+  /**
+   * Grid sets the items side by side, with as many columns as the count suits. A line runs them top to bottom joined by a rule, for steps or dates. A compact list is bullets, two columns on a wide screen. Tags are small chips, like a list of technologies.
+   */
+  layout?: ('grid' | 'line' | 'list' | 'tags') | null;
+  /**
+   * A large marker with each title. Numbers count in the order you arrange the items. "Your own" shows what you type on each item: a figure like "25+", a letter that spells a word down a line, or a year. Hidden for tags.
+   */
+  markers?: ('none' | 'numbers' | 'custom') | null;
+  /**
+   * Only for the grid. Plain reads like an index: a rule, a bold title, a few lines. Cards box each item, which suits items with a picture or a link.
+   */
+  style?: ('plain' | 'card') | null;
+  /**
+   * Add as many as the section needs. The layout adjusts to the count.
+   */
+  items: {
+    /**
+     * A few words. In a row of figures, this is what the figure counts, e.g. "years in Tulsa".
+     */
+    title: string;
+    /**
+     * Optional. One to three sentences under the title. Tags do not show it.
+     */
+    body?: string | null;
+    /**
+     * Shown large with the title: a figure like "25+", a letter, or a year. Shown while markers are set to "Your own".
+     */
+    marker?: string | null;
+    /**
+     * Optional picture above the title, landscape. Only the grid shows it.
+     */
+    image?: (number | null) | Media;
+    /**
+     * Optional. With an address, the title (or the tag) becomes a link. Add link text to also show a "link text →" line under the item; tags do not show it.
+     */
+    link?: {
+      /**
+       * E.g. "Read the case study". Leave it blank to link the title only.
+       */
+      label?: string | null;
+      /**
+       * Where it goes. A page on this site starts with a slash ("/services"); an outside link needs the full https:// address.
+       */
+      url?: string | null;
+    };
+    id?: string | null;
+  }[];
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'items';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -631,6 +544,10 @@ export interface ImageBlock {
    * Where a narrower image sits across the page. Center keeps it on the reading axis.
    */
   alignment?: ('center' | 'left' | 'right') | null;
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'image';
@@ -645,100 +562,54 @@ export interface GalleryBlock {
    */
   heading?: string | null;
   /**
-   * The pictures in this gallery, in the order you arrange them.
+   * A sentence or two under the heading. Leave it blank to go straight to the content.
+   */
+  intro?: string | null;
+  /**
+   * The pictures or logos, in the order you arrange them. Add as many as you have; the layout fits the count.
    */
   items: {
     /**
-     * Pick from Media, or upload. Landscape images sit best in a grid.
+     * Pick from Media, or upload. Landscape photos sit best in a grid; a logo should be a transparent PNG or SVG so it sits on any background.
      */
     image: number | Media;
     /**
-     * Optional line under the image. It also names this row when the list is collapsed.
+     * Optional line under the image, or a small name under a logo. It also names this row when the list is collapsed.
      */
     caption?: string | null;
     id?: string | null;
   }[];
   /**
-   * A grid shows every image at once. A carousel puts them in one swipeable row, roughly one image wide on a phone and three on a desktop, which suits a long set.
+   * A grid shows every picture at once and picks its columns from how many there are. A carousel puts them in one swipeable row, roughly one picture wide on a phone and three on a desktop, which suits a long set. Logos draws client or partner logos in gray, turning to full color when a visitor points at one.
    */
-  layout?: ('grid' | 'carousel') | null;
+  layout?: ('grid' | 'carousel' | 'logos') | null;
   /**
-   * How many fit across on a wide screen. Phones always stack. Hidden while the carousel is selected, which ignores it.
+   * The colour band behind this section. Alternate it with the sections around it.
    */
-  columns?: ('2' | '3' | '4') | null;
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'gallery';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ProcessStepsBlock".
+ * via the `definition` "TableBlock".
  */
-export interface ProcessStepsBlock {
+export interface TableBlock {
   /**
    * The line that introduces this section. Leave it blank to run the section without a heading.
    */
   heading?: string | null;
   /**
-   * Two to six steps, numbered automatically in the order you arrange them.
+   * A sentence or two under the heading. Leave it blank to go straight to the content.
    */
-  steps: {
-    /**
-     * A few words, e.g. "Discovery workshop".
-     */
-    title: string;
-    /**
-     * One or two sentences on what we do and what the client gets.
-     */
-    body: string;
-    /**
-     * Leave this blank. There is no icon set behind it yet, so whatever you type is printed on the page as small text (ROADMAP INERT-2).
-     */
-    icon?: string | null;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'process-steps';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "DeliverablesBlock".
- */
-export interface DeliverablesBlock {
+  intro?: string | null;
   /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * Three to eight concrete things. Nouns, not promises.
-   */
-  items: {
-    /**
-     * One item, e.g. "A prioritised backlog".
-     */
-    label: string;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'deliverables';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ComparisonTableBlock".
- */
-export interface ComparisonTableBlock {
-  /**
-   * The line that introduces this section.
-   */
-  heading: string;
-  /**
-   * One row here becomes one column of the table, left to right. Two to four of them.
+   * One row here becomes one column of the table, left to right. Any number: on a narrow screen a wide table scrolls sideways within itself.
    */
   columns: {
     /**
-     * The column heading, e.g. "Localshoring".
+     * e.g. "Localshoring".
      */
     label: string;
     /**
@@ -748,7 +619,7 @@ export interface ComparisonTableBlock {
     id?: string | null;
   }[];
   /**
-   * One row per thing you are comparing the options on.
+   * One row per thing the columns are compared on.
    */
   rows: {
     /**
@@ -756,7 +627,7 @@ export interface ComparisonTableBlock {
      */
     dimension: string;
     /**
-     * One answer per option, in the same order as the options above. Nothing checks the count, so a row with too few or too many answers renders a misaligned table.
+     * One per column, in the same order as the columns above. A row with fewer is padded with blanks; extra cells still show, under no heading.
      */
     cells: {
       /**
@@ -768,7 +639,7 @@ export interface ComparisonTableBlock {
     id?: string | null;
   }[];
   /**
-   * Optional last row saying who each option suits. Same order and count as the options above.
+   * Optional last row, labelled "Best for", saying who each column suits. Same order as the columns above.
    */
   bestForRow?:
     | {
@@ -779,66 +650,43 @@ export interface ComparisonTableBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'comparison-table';
+  blockType: 'table';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TimelineBlock".
+ * via the `definition` "AccordionBlock".
  */
-export interface TimelineBlock {
+export interface AccordionBlock {
   /**
    * The line that introduces this section. Leave it blank to run the section without a heading.
    */
   heading?: string | null;
   /**
-   * At least two, drawn top to bottom in the order you arrange them.
+   * A sentence or two under the heading. Leave it blank to go straight to the content.
+   */
+  intro?: string | null;
+  /**
+   * Accordion stacks closed panels a reader opens one by one: questions and answers, detail most readers skip. Tabs put the titles in a row and show one panel at a time: alternatives a reader compares.
+   */
+  display: 'accordion' | 'tabs';
+  /**
+   * For questions, write each the way a prospect would ask it and answer it in the first sentence.
    */
   items: {
     /**
-     * Free text, so "1999", "Spring 2018" and "Today" are all fine.
-     */
-    date: string;
-    /**
-     * A few words. It also names this row when the list is collapsed.
+     * The line the reader clicks: a question, or a tab name of a word or two.
      */
     title: string;
     /**
-     * One or two sentences on why it mattered.
+     * What the reader sees once the panel is open.
      */
-    body: string;
-    /**
-     * Optional picture for this entry.
-     */
-    image?: (number | null) | Media;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'timeline';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FAQBlock".
- */
-export interface FAQBlock {
-  /**
-   * The line that introduces this section. Leave it blank and the section reads "Frequently asked questions".
-   */
-  heading?: string | null;
-  /**
-   * At least two. Write the question the way a prospect would actually ask it, so the answer reads as an answer on the page.
-   */
-  items: {
-    /**
-     * In the visitor's words, e.g. "How long does a discovery take?".
-     */
-    question: string;
-    /**
-     * Answer it in the first sentence, then add detail.
-     */
-    answer: {
+    body: {
       root: {
         type: string;
         children: {
@@ -855,111 +703,58 @@ export interface FAQBlock {
     };
     id?: string | null;
   }[];
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'faq';
+  blockType: 'accordion';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "StatsBarBlock".
+ * via the `definition` "QuoteBlock".
  */
-export interface StatsBarBlock {
+export interface QuoteBlock {
   /**
    * The line that introduces this section. Leave it blank to run the section without a heading.
    */
   heading?: string | null;
   /**
-   * Three to five figures, side by side. Only numbers we can stand behind.
+   * A sentence or two under the heading. Leave it blank to go straight to the content.
    */
-  items: {
-    /**
-     * Just the digits and symbol, e.g. "500" or "$1.2M".
-     */
-    number: string;
-    /**
-     * A few words under the figure, e.g. "projects delivered".
-     */
-    label: string;
-    /**
-     * Optional short tail set beside the figure, e.g. "+" or "yrs".
-     */
-    suffix?: string | null;
-    id?: string | null;
-  }[];
+  intro?: string | null;
+  /**
+   * A testimonial brings the person’s name, title, company and photo from its record. "Typed here" is for a pull quote with no testimonial behind it, such as a line from a talk or a post. Only the one you pick is published.
+   */
+  source: 'testimonials' | 'custom';
+  /**
+   * One testimonial is drawn large. Two or more sit in a grid, in the order you pick them. Add them under Testimonials first.
+   */
+  testimonials?: (number | Testimonial)[] | null;
+  /**
+   * The words themselves, without quotation marks. The page adds them.
+   */
+  quote?: string | null;
+  /**
+   * Their name. Leave it blank for an unattributed pull quote.
+   */
+  attribution?: string | null;
+  /**
+   * Title and organisation, e.g. "CEO, Acme Manufacturing". Shown after the name.
+   */
+  role?: string | null;
+  /**
+   * Applies when the block shows a single quote; several always sit in a grid. The photo comes from the testimonial, so a typed quote, or a person with no photo on file, has none and the photo layouts leave it out with the quote left-aligned.
+   */
+  layout?: ('centered' | 'with-photo-left' | 'with-photo-right') | null;
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'stats-bar';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MetricDisplayBlock".
- */
-export interface MetricDisplayBlock {
-  /**
-   * Written as it should read, e.g. "40%", "3x", "$1.2M". Set in very large type.
-   */
-  number: string;
-  /**
-   * A few words under the number, e.g. "faster ticket turnaround".
-   */
-  label: string;
-  /**
-   * Optional smaller line, e.g. "measured over the first six months".
-   */
-  context?: string | null;
-  /**
-   * The color of the band this number sits in. Alternate it from the section above.
-   */
-  background?: ('accent' | 'inverse') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'metric-display';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "LogoBarBlock".
- */
-export interface LogoBarBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * The logos to show, in the order they should read. With none picked the section is left off the page.
-   */
-  logos?:
-    | {
-        /**
-         * Transparent PNG or SVG where possible, so it sits on any background.
-         */
-        logo: number | Media;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Gray keeps a wall of mismatched brand colors calm and is the usual choice. Full color suits a short row of two or three.
-   */
-  treatment?: ('grayscale-on-color-hover' | 'color') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'logo-bar';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FeaturedTestimonialsBlock".
- */
-export interface FeaturedTestimonialsBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * Two to six quotes, drawn together as a grid in the order you pick them. Add them under Testimonials first.
-   */
-  testimonials: (number | Testimonial)[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'featured-testimonials';
+  blockType: 'quote';
 }
 /**
  * Client quotes. These have no page of their own; quote blocks pull them onto other pages.
@@ -1059,50 +854,18 @@ export interface CaseStudy {
   layout?:
     | (
         | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
         | ContentBlock
-        | TwoColumnBlock
+        | MediaTextBlock
+        | ItemsBlock
         | ImageBlock
         | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | TimelineBlock
-        | FAQBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | MissionVisionValuesBlock
+        | TableBlock
         | AccordionBlock
-        | TabsBlock
-        | MapBlock
+        | QuoteBlock
+        | CtaBlock
+        | CardsBlock
         | EmbedBlock
-        | DownloadCardBlock
         | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
       )[]
     | null;
   /**
@@ -1186,50 +949,18 @@ export interface Industry {
   layout?:
     | (
         | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
         | ContentBlock
-        | TwoColumnBlock
+        | MediaTextBlock
+        | ItemsBlock
         | ImageBlock
         | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | TimelineBlock
-        | FAQBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | MissionVisionValuesBlock
+        | TableBlock
         | AccordionBlock
-        | TabsBlock
-        | MapBlock
+        | QuoteBlock
+        | CtaBlock
+        | CardsBlock
         | EmbedBlock
-        | DownloadCardBlock
         | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
       )[]
     | null;
   /**
@@ -1295,50 +1026,18 @@ export interface Service {
   layout?:
     | (
         | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
         | ContentBlock
-        | TwoColumnBlock
+        | MediaTextBlock
+        | ItemsBlock
         | ImageBlock
         | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | TimelineBlock
-        | FAQBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | MissionVisionValuesBlock
+        | TableBlock
         | AccordionBlock
-        | TabsBlock
-        | MapBlock
+        | QuoteBlock
+        | CtaBlock
+        | CardsBlock
         | EmbedBlock
-        | DownloadCardBlock
         | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
       )[]
     | null;
   /**
@@ -1372,156 +1071,44 @@ export interface Service {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TestimonialBlock".
+ * via the `definition` "CtaBlock".
  */
-export interface TestimonialBlock {
-  /**
-   * Pick a testimonial already in the panel. Add it under Testimonials first if it is not there.
-   */
-  testimonial: number | Testimonial;
-  /**
-   * The photo comes from the testimonial itself, so the two photo layouts simply omit it when that person has no photo on file; the quote stays left-aligned.
-   */
-  layout?: ('centered' | 'with-photo-left' | 'with-photo-right') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'testimonial-block';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ClientLogoGridBlock".
- */
-export interface ClientLogoGridBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * At least four. Only logos we have written permission to display.
-   */
-  logos: {
-    /**
-     * Transparent PNG or SVG where possible, so it sits on any background.
-     */
-    logo: number | Media;
-    /**
-     * Optional line under the logo. It also names this row when the list is collapsed.
-     */
-    caption?: string | null;
-    id?: string | null;
-  }[];
-  /**
-   * How many fit across on a wide screen. The logos stay the same height either way, so fewer columns just means more space around them. Phones show two or three across, never one.
-   */
-  columns?: ('3' | '4' | '6') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'client-logo-grid';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CtaSectionBlock".
- */
-export interface CtaSectionBlock {
-  /**
-   * Centered centers the text and buttons. Split and inverse both left-align them; inverse also reverses the colors to make the section the loudest thing on the page.
-   */
-  variant: 'centered' | 'split' | 'inverse';
+export interface CtaBlock {
   /**
    * The ask, in a line. Address the reader directly.
    */
-  headline: string;
-  /**
-   * Optional line under the headline. One sentence is plenty here.
-   */
-  body?: string | null;
-  /**
-   * The action this section exists to get. Required, because the block is a call to action.
-   */
-  primaryCta: {
-    /**
-     * The words on the button. Two to four words reads best, e.g. "Book a call".
-     */
-    label: string;
-    /**
-     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
-     */
-    url: string;
-  };
-  /**
-   * Optional. Leave both fields empty and only the main button is drawn.
-   */
-  secondaryCta?: {
-    /**
-     * The words on the button. Two to four words reads best, e.g. "Book a call".
-     */
-    label?: string | null;
-    /**
-     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
-     */
-    url?: string | null;
-  };
-  /**
-   * What sits behind the section. Choosing "Image" asks for the picture below.
-   */
-  background?: ('default' | 'accent' | 'image') | null;
-  /**
-   * Shown only while the background above is set to "Image". The text sits on top, so pick something with quiet space, at least 2000px wide.
-   */
-  backgroundImage?: (number | null) | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'cta-section';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "NewsletterCtaBlock".
- */
-export interface NewsletterCtaBlock {
-  /**
-   * The line that introduces this section. Leave it blank and the section reads "Subscribe to SEQTEK Insights".
-   */
-  heading?: string | null;
-  /**
-   * Optional line saying what a subscriber gets and how often.
-   */
-  body?: string | null;
-  /**
-   * The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. The form collects an email address and sends it to that form. Required: with no ID there is no way to subscribe, so the whole section is left off the page.
-   */
-  formId: string;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'newsletter-cta';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ContactCtaBlock".
- */
-export interface ContactCtaBlock {
-  /**
-   * The line that introduces this section.
-   */
   heading: string;
   /**
-   * Optional line under the heading saying what happens when they get in touch.
+   * Optional line under the heading. For a download, say what the reader gets: it is what earns the form fill.
    */
   body?: string | null;
   /**
-   * The one action this section is asking for, usually booking a call.
+   * Buttons link anywhere. A meeting adds a panel that opens a HubSpot scheduler. Newsletter and download put a HubSpot form in the section; a download hands over the file once the form is sent.
    */
-  primaryCta: {
+  action: 'buttons' | 'meeting' | 'newsletter' | 'download';
+  /**
+   * Centered stacks everything down the middle. Split puts the heading on the left and the buttons, scheduler, form or download beside it; on a phone the two stack.
+   */
+  variant: 'centered' | 'split';
+  /**
+   * The action this section exists to get. Required for "Click a button"; optional beside a scheduler.
+   */
+  primaryCta?: {
     /**
      * The words on the button. Two to four words reads best, e.g. "Book a call".
      */
-    label: string;
+    label?: string | null;
     /**
      * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
      */
-    url: string;
+    url?: string | null;
+    /**
+     * How much weight the button carries: solid for the one thing you want clicked, outlined for a real but lesser option, text-only when it should not compete with the page.
+     */
+    variant?: ('primary' | 'secondary' | 'ghost') | null;
   };
   /**
-   * An optional lighter alternative, for example emailing instead of booking.
+   * Optional lighter alternative, drawn as a plain link, e.g. emailing instead of booking.
    */
   secondaryCta?: {
     /**
@@ -1534,133 +1121,125 @@ export interface ContactCtaBlock {
     url?: string | null;
   };
   /**
-   * A HubSpot meetings address (https://meetings.hubspot.com/name). Optional: leave it blank and the section is just the heading, sentence and buttons at full width. Filled in, a panel appears beside them with a "See available times" button that opens that scheduler. The calendar is not embedded inline yet.
+   * A HubSpot meetings address, e.g. https://meetings.hubspot.com/name. The panel's "See available times" button opens it in a new tab.
    */
   meetingUrl?: string | null;
+  /**
+   * The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. A newsletter sends an email address to it; a download sends name, email and company.
+   */
+  formId?: string | null;
+  /**
+   * A picture of the thing itself, e.g. the report cover. Portrait or square reads best.
+   */
+  coverImage?: (number | null) | Media;
+  /**
+   * The full https:// address of the file. The form hides it from the page, but it is still present in the page source, so treat this as a public link: the form is a courtesy step most people will take, not a lock. Do not put anything here you would not publish outright.
+   */
+  fileUrl?: string | null;
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse' | 'brand') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'contact-cta';
+  blockType: 'cta';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CaseStudyGridBlock".
+ * via the `definition` "CardsBlock".
  */
-export interface CaseStudyGridBlock {
+export interface CardsBlock {
   /**
    * The line that introduces this section. Leave it blank to run the section without a heading.
    */
   heading?: string | null;
   /**
-   * How this block picks its case studies. "Latest", "By industry" and "By service" fill themselves in and stay current as you publish; "Manual" uses exactly the studies you pick below. Anything you have picked below is IGNORED unless this is set to "Manual". If a self-filling source finds nothing — a sector with no case study tagged to it yet, say — the whole section is left out, heading included, rather than published as an empty promise.
+   * A sentence or two under the heading. Leave it blank to go straight to the content.
    */
-  source: 'manual' | 'latest' | 'by-industry' | 'by-service';
+  intro?: string | null;
   /**
-   * The exact studies, in the order you pick them. Only used while the source above is "Manual".
+   * The kind of thing this section lists. Each draws as its own card: a case study with its photo, a person with their headshot, a market by name. If nothing matches, the whole section is left off the page, heading included.
    */
-  manualItems?: (number | CaseStudy)[] | null;
+  collection:
+    'caseStudies' | 'posts' | 'services' | 'industries' | 'workshops' | 'teamMembers' | 'locations' | 'partners';
   /**
-   * Shows the newest studies whose client is in this sector.
+   * "All of them" and "Filtered" fill themselves in and stay current as you publish. "Pick them by hand" shows exactly the items you choose below, in your order. Case studies, insights, services and team members can be filtered; for anything else, "Filtered" lists all of them.
+   */
+  source: 'all' | 'filtered' | 'manual';
+  /**
+   * Shows the case studies whose client is in this sector. Leave it blank to skip this filter.
    */
   industry?: (number | null) | Industry;
   /**
-   * Shows the newest studies where we delivered this service.
+   * Shows the case studies where we delivered this service. Leave it blank to skip this filter; set both and a study must match both.
    */
   service?: (number | null) | Service;
   /**
-   * Caps the grid at this many cards, whichever way it is filled.
-   */
-  limit?: number | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'case-study-grid';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ServiceCardsBlock".
- */
-export interface ServiceCardsBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * How this block picks its services. "By pillar" fills itself in and stays current as you publish; "Manual" uses exactly the services you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
-   */
-  source: 'by-pillar' | 'manual';
-  /**
-   * Shows the services this group holds, in the order the group arranges them.
-   */
-  pillar?: (number | null) | Service;
-  /**
-   * The exact services, in the order you pick them. Only used while the source above is "Manual".
-   */
-  manualItems?: (number | Service)[] | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'service-cards';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ServicePillarCardsBlock".
- */
-export interface ServicePillarCardsBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * Drawn as cards in the order you pick them. Usually all three.
-   */
-  pillars: (number | Service)[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'service-pillar-cards';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FeaturedCaseStudyBlock".
- */
-export interface FeaturedCaseStudyBlock {
-  /**
-   * The line that introduces this section. Leave it blank and the section reads "Featured case study".
-   */
-  heading?: string | null;
-  /**
-   * The one study to feature here, drawn large. It must already exist and be published for visitors to reach it.
-   */
-  caseStudy: number | CaseStudy;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'featured-case-study';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "PostListBlock".
- */
-export interface PostListBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * How this block picks its posts. "Latest" and "By category" fill themselves in and stay current as you publish; "Manual" uses exactly the posts you pick below. Anything you have picked below is IGNORED unless this is set to "Manual".
-   */
-  source: 'latest' | 'by-category' | 'manual';
-  /**
-   * Shows the newest posts filed under this topic, and keeps up as you publish more.
+   * Shows the insights filed under this topic, newest first.
    */
   category?: (number | null) | Category;
   /**
-   * The exact posts, in the order you pick them. Only used while the source above is "Manual".
+   * Tick to show only the people marked as leadership. Leave it clear to show the whole team, leadership first.
    */
-  manualItems?: (number | Post)[] | null;
+  leadershipOnly?: boolean | null;
   /**
-   * Caps the list at this many posts, whichever way it is filled.
+   * Shows the services this group holds, in the order the group arranges them.
+   */
+  serviceGroup?: (number | null) | Service;
+  /**
+   * The exact items, in the order you pick them. Switch "What to list" and anything picked from the old kind is ignored.
+   */
+  manualItems?:
+    | (
+        | {
+            relationTo: 'caseStudies';
+            value: number | CaseStudy;
+          }
+        | {
+            relationTo: 'posts';
+            value: number | Post;
+          }
+        | {
+            relationTo: 'services';
+            value: number | Service;
+          }
+        | {
+            relationTo: 'industries';
+            value: number | Industry;
+          }
+        | {
+            relationTo: 'workshops';
+            value: number | Workshop;
+          }
+        | {
+            relationTo: 'teamMembers';
+            value: number | TeamMember;
+          }
+        | {
+            relationTo: 'locations';
+            value: number | Location;
+          }
+        | {
+            relationTo: 'partners';
+            value: number | Partner;
+          }
+      )[]
+    | null;
+  /**
+   * Stops the list after this many, whichever way it is filled. Leave it blank to show all of them.
    */
   limit?: number | null;
+  /**
+   * "Grid" draws every item as an equal card. "First one featured" draws the first item large, beside its picture, with the rest as a grid underneath.
+   */
+  display: 'grid' | 'featured';
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'post-list';
+  blockType: 'cards';
 }
 /**
  * Tags for articles. They group posts on /insights and drive the related-reading links.
@@ -1806,50 +1385,18 @@ export interface TeamMember {
   layout?:
     | (
         | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
         | ContentBlock
-        | TwoColumnBlock
+        | MediaTextBlock
+        | ItemsBlock
         | ImageBlock
         | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | TimelineBlock
-        | FAQBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | MissionVisionValuesBlock
+        | TableBlock
         | AccordionBlock
-        | TabsBlock
-        | MapBlock
+        | QuoteBlock
+        | CtaBlock
+        | CardsBlock
         | EmbedBlock
-        | DownloadCardBlock
         | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
       )[]
     | null;
   /**
@@ -1900,58 +1447,158 @@ export interface TeamMember {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "RelatedPostsBlock".
+ * via the `definition` "EmbedBlock".
  */
-export interface RelatedPostsBlock {
+export interface EmbedBlock {
   /**
-   * The line that introduces this section. Leave it blank and the section reads "Related posts".
+   * A YouTube or Vimeo video, a map from OpenStreetMap or Google Maps, or any other web page that allows being shown inside another site. The fields below change to match.
    */
-  heading?: string | null;
-  /**
-   * Pick the posts to offer at the end of the page. This block does not fill itself in from categories: with nothing picked the whole section is left off the page.
-   */
-  manualItems?: (number | Post)[] | null;
-  /**
-   * Caps the list at this many posts.
-   */
-  limit?: number | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'related-posts';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "IndustryGridBlock".
- */
-export interface IndustryGridBlock {
+  kind: 'video' | 'map' | 'page';
   /**
    * The line that introduces this section. Leave it blank to run the section without a heading.
    */
   heading?: string | null;
   /**
-   * At least two, drawn as cards in the order you pick them. Each card links to that industry page. An industry kept as a draft to tag case studies is not linked — on the live site it does not appear at all, and in preview it shows as a plain card. Note that a published industry links even if nobody has written its page yet: a new industry starts from a standard outline, so the page exists and shows placeholder text until you replace it.
+   * Shown only for a video. The small line above it, e.g. "From the podcast". Marks the video as a deliberate interlude rather than decoration.
    */
-  industries: (number | Industry)[];
+  eyebrow?: string | null;
+  /**
+   * Names the video, map or page for screen readers, e.g. "Workshop recap" or "Map of our Tulsa office". Not drawn on screen. For a video, use its real title.
+   */
+  title: string;
+  /**
+   * Shown only for a video. Which service to embed from; it decides how the ID below is read.
+   */
+  provider?: ('youtube' | 'vimeo') | null;
+  /**
+   * Shown only for a video. Just the ID, not the whole address. On YouTube it is the part after "v=" (dQw4w9WgXcQ); on Vimeo it is the digits at the end of the address.
+   */
+  videoId?: string | null;
+  /**
+   * Shown only for a video, and optional. With one set, the page shows this still and a Play button, and loads the video only when a reader clicks it, which keeps YouTube or Vimeo from tracking people who never watch. Leave it blank to embed the player directly.
+   */
+  thumbnail?: (number | null) | Media;
+  /**
+   * Shown only for a map or a web page. The full https:// address to show in the frame. For a map, use the embed address from OpenStreetMap or Google Maps ("Share > Embed a map", then copy the src address); other map hosts are refused and the block shows a notice instead. A web page must allow embedding, and many sites refuse.
+   */
+  url?: string | null;
+  /**
+   * Shown only for a map or a web page, and optional. A visible line under the frame, e.g. the street address.
+   */
+  caption?: string | null;
+  /**
+   * Shown only for a map or a web page. How tall the frame is; a longer page scrolls inside it. Short suits a map, tall a form or a dashboard.
+   */
+  height?: ('short' | 'medium' | 'tall') | null;
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'industry-grid';
+  blockType: 'embed';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "LocationsListBlock".
+ * via the `definition` "HubspotFormBlock".
  */
-export interface LocationsListBlock {
+export interface HubspotFormBlock {
   /**
-   * The line that introduces this section. Leave it blank and the section reads "Where we work".
+   * The line that introduces this section. Leave it blank to run the section without a heading.
    */
   heading?: string | null;
   /**
-   * Drawn as cards in the order you pick them. The cards are not links: the per-location pages do not exist yet, so they name the places rather than sending anyone to a dead page (ROADMAP SVC-2).
+   * Optional line above the form saying what happens after they submit it.
    */
-  locations: (number | Location)[];
+  description?: string | null;
+  /**
+   * Which HubSpot form to embed. Copy the form ID out of HubSpot (Marketing > Forms > Share > embed code); it looks like 12345678-90ab-cdef-1234-567890abcdef.
+   */
+  formId: string;
+  /**
+   * The colour band behind this section. Alternate it with the sections around it.
+   */
+  background?: ('none' | 'subtle' | 'accent' | 'inverse') | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'locations-list';
+  blockType: 'hubspot-form';
+}
+/**
+ * Workshop landing pages under /workshops, each with its own registration form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workshops".
+ */
+export interface Workshop {
+  id: number;
+  /**
+   * What this workshop is called, on the workshops index and its own page.
+   */
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  /**
+   * The last part of the web address for this workshop, for example "ai-readiness". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
+   */
+  slug: string;
+  /**
+   * The workshop page, built from blocks. A new workshop starts from a standard outline; replace the placeholder text in each block.
+   */
+  layout?:
+    | (
+        | HeroBlock
+        | ContentBlock
+        | MediaTextBlock
+        | ItemsBlock
+        | ImageBlock
+        | GalleryBlock
+        | TableBlock
+        | AccordionBlock
+        | QuoteBlock
+        | CtaBlock
+        | CardsBlock
+        | EmbedBlock
+        | HubspotFormBlock
+      )[]
+    | null;
+  /**
+   * The team member who leads this workshop.
+   */
+  facilitator?: (number | null) | TeamMember;
+  /**
+   * Pick a testimonial already in the panel. Add it to Testimonials first if it is not there.
+   */
+  testimonial?: (number | null) | Testimonial;
+  /**
+   * Lowest number first in the /workshops page (a workshop-list block keeps the order you pick there). Records left without a number come after the numbered ones, newest first.
+   */
+  order?: number | null;
+  /**
+   * How this workshop looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
+   */
+  seo?: {
+    /**
+     * The blue headline in a Google result. Leave blank to use the workshop title above. "| SEQTEK" is appended automatically, so do not type it.
+     */
+    metaTitle?: string | null;
+    /**
+     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
+     */
+    metaDescription?: string | null;
+    /**
+     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
+     */
+    ogImage?: (number | null) | Media;
+  };
+  /**
+   * Scheduling only. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
+   */
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * The markets we serve. Nothing on the site reads these yet, so editing one changes nothing a visitor sees.
@@ -2017,502 +1664,6 @@ export interface Location {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "WorkshopListBlock".
- */
-export interface WorkshopListBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * Drawn as cards in the order you pick them. Add them under Workshops first.
-   */
-  workshops: (number | Workshop)[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'workshop-list';
-}
-/**
- * Workshop landing pages under /workshops, each with its own registration form.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "workshops".
- */
-export interface Workshop {
-  id: number;
-  /**
-   * What this workshop is called, on the workshops index and its own page.
-   */
-  title: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  /**
-   * The last part of the web address for this workshop, for example "ai-readiness". Lowercase words joined by hyphens, no spaces. Changing it on something already published breaks every existing link to it.
-   */
-  slug: string;
-  /**
-   * The workshop page, built from blocks. A new workshop starts from a standard outline; replace the placeholder text in each block.
-   */
-  layout?:
-    | (
-        | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
-        | ContentBlock
-        | TwoColumnBlock
-        | ImageBlock
-        | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | TimelineBlock
-        | FAQBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | MissionVisionValuesBlock
-        | AccordionBlock
-        | TabsBlock
-        | MapBlock
-        | EmbedBlock
-        | DownloadCardBlock
-        | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
-      )[]
-    | null;
-  /**
-   * The team member who leads this workshop.
-   */
-  facilitator?: (number | null) | TeamMember;
-  /**
-   * Pick a testimonial already in the panel. Add it to Testimonials first if it is not there.
-   */
-  testimonial?: (number | null) | Testimonial;
-  /**
-   * Lowest number first in the /workshops page (a workshop-list block keeps the order you pick there). Records left without a number come after the numbered ones, newest first.
-   */
-  order?: number | null;
-  /**
-   * How this workshop looks in a Google result and when someone pastes its link into LinkedIn or Slack. Everything here is optional.
-   */
-  seo?: {
-    /**
-     * The blue headline in a Google result. Leave blank to use the workshop title above. "| SEQTEK" is appended automatically, so do not type it.
-     */
-    metaTitle?: string | null;
-    /**
-     * The gray summary under that headline, and the text on a shared link. Google truncates around 155 characters. Leave blank and every search result for this collection shows the same generic company tagline, so it is worth writing.
-     */
-    metaDescription?: string | null;
-    /**
-     * The picture that appears when someone shares this link on LinkedIn, Facebook or Slack. Landscape, at least 1200x630. Without one the shared link renders as text only.
-     */
-    ogImage?: (number | null) | Media;
-  };
-  /**
-   * Scheduling only. A date in the future forces this record back to draft, so it will not go live until that date passes and someone publishes it.
-   */
-  publishedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TeamGridBlock".
- */
-export interface TeamGridBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * Which team members to show. "Leadership only" shows everyone marked as leadership; "All" shows the whole team, leadership first.
-   */
-  filter: 'leadership-only' | 'all';
-  /**
-   * Cards give each person a bordered tile with room to read. Compact fits four across and suits a long team.
-   */
-  layout?: ('cards' | 'compact') | null;
-  /**
-   * Optional. Leave this empty and the filter above chooses the members. Pick people here only when you want an exact set in an exact order — your picks win over the filter.
-   */
-  manualItems?: (number | TeamMember)[] | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'team-grid';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "VideoEmbedBlock".
- */
-export interface VideoEmbedBlock {
-  /**
-   * Which service to embed from. It decides how the ID below is read.
-   */
-  provider: 'youtube' | 'vimeo';
-  /**
-   * Just the ID, not the whole address. On YouTube it is the part after "v=" (dQw4w9WgXcQ); on Vimeo it is the digits at the end of the address.
-   */
-  videoId: string;
-  /**
-   * Names the video for screen readers and search engines. Use the real title of the video.
-   */
-  title: string;
-  /**
-   * The small line above the video, e.g. "From the SEQTEK Podcast". Marks it as a deliberate interlude rather than decoration.
-   */
-  eyebrow?: string | null;
-  /**
-   * Optional. With one set, the page shows this still and a Play button, and loads the video only when a reader clicks it — which keeps YouTube or Vimeo from tracking people who never watch. Leave it blank to embed the player directly.
-   */
-  thumbnail?: (number | null) | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'video-embed';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MissionVisionValuesBlock".
- */
-export interface MissionVisionValuesBlock {
-  /**
-   * What we do and who for, in the words signed off in the brand kit.
-   */
-  mission: string;
-  /**
-   * Where we are going, in the words signed off in the brand kit.
-   */
-  vision: string;
-  /**
-   * Three to eight. Keep them to the set signed off in the brand kit.
-   */
-  values: {
-    /**
-     * One or two words, e.g. "Ownership".
-     */
-    name: string;
-    /**
-     * A sentence on how it shows up in the work, not a dictionary definition.
-     */
-    description: string;
-    id?: string | null;
-  }[];
-  /**
-   * Grid shows the values two across; stacked runs them full width down the page.
-   */
-  layout?: ('grid' | 'stacked') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'mission-vision-values';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "AccordionBlock".
- */
-export interface AccordionBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * Each row is a closed panel a reader clicks to open. Use it for detail most readers will skip.
-   */
-  items: {
-    /**
-     * The line the reader clicks. Keep it short enough to scan.
-     */
-    title: string;
-    /**
-     * What appears when the panel is opened.
-     */
-    body: string;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'accordion';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TabsBlock".
- */
-export interface TabsBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * Two to six sections behind a row of tabs. One is shown at a time and the reader switches between them, so this suits alternatives a reader compares rather than steps they read in order.
-   */
-  tabs: {
-    /**
-     * One or two words. It becomes the tab itself, so keep it short.
-     */
-    label: string;
-    /**
-     * The prose behind that tab. It is shown when the reader picks it.
-     */
-    body: string;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'tabs';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MapBlock".
- */
-export interface MapBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * The embed address from OpenStreetMap or Google Maps ("Share > Embed a map", then copy the src address). Other hosts are refused and the block shows a notice instead.
-   */
-  embedUrl: string;
-  /**
-   * Optional line under the map, e.g. the street address.
-   */
-  caption?: string | null;
-  /**
-   * How tall the map is, in pixels, between 200 and 800.
-   */
-  height?: number | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'map';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "EmbedBlock".
- */
-export interface EmbedBlock {
-  /**
-   * Describes the embedded page for screen readers, e.g. "SEQTEK delivery survey". Not drawn on screen.
-   */
-  title: string;
-  /**
-   * The full https:// address of the page to show in a frame. It must be a page that allows embedding; many sites refuse.
-   */
-  url: string;
-  /**
-   * Optional visible line under the frame.
-   */
-  caption?: string | null;
-  /**
-   * How tall the frame is, in pixels, between 200 and 1200. The embedded page scrolls inside it if it is longer.
-   */
-  height?: number | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'embed';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "DownloadCardBlock".
- */
-export interface DownloadCardBlock {
-  /**
-   * The name of the guide, template or report, as it appears on the card.
-   */
-  title: string;
-  /**
-   * One or two sentences on what the reader gets. This is what earns the form fill.
-   */
-  description: string;
-  /**
-   * A picture of the thing itself, e.g. the report cover. Portrait or square reads best.
-   */
-  coverImage: number | Media;
-  /**
-   * The HubSpot form ID (Marketing > Forms > Share > embed code), e.g. 12345678-90ab-cdef-1234-567890abcdef. Name, email and company go to that form, and the download appears once it is sent.
-   */
-  formId: string;
-  /**
-   * The full https:// address of the file. The form hides it from the page, but it is still present in the page source, so treat this as a public link: the form is a courtesy step that most people will take, not a lock. Do not put anything here you would not publish outright.
-   */
-  fileUrl: string;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'download-card';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HubspotFormBlock".
- */
-export interface HubspotFormBlock {
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  /**
-   * Optional line above the form saying what happens after they submit it.
-   */
-  description?: string | null;
-  /**
-   * Which HubSpot form to embed. Copy the form ID out of HubSpot (Marketing > Forms > Share > embed code); it looks like 12345678-90ab-cdef-1234-567890abcdef.
-   */
-  formId: string;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'hubspot-form';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HubspotMeetingsBlock".
- */
-export interface HubspotMeetingsBlock {
-  /**
-   * The full https:// address of a HubSpot meetings link, e.g. https://meetings.hubspot.com/name. The section draws a "See available times" button that opens that scheduler in a new tab. The calendar is not embedded inline yet.
-   */
-  meetingUrl: string;
-  /**
-   * The line that introduces this section. Leave it blank to run the section without a heading.
-   */
-  heading?: string | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'hubspot-meetings';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BrandTeaserBlock".
- */
-export interface BrandTeaserBlock {
-  /**
-   * The big line of this section.
-   */
-  headline: string;
-  /**
-   * Two or three sentences under the headline.
-   */
-  body: string;
-  /**
-   * The words of the link, e.g. "Read our story".
-   */
-  linkLabel: string;
-  /**
-   * Where the link goes. A page on this site starts with a slash; the default is our story page.
-   */
-  linkUrl: string;
-  /**
-   * Optional picture beside the text. Landscape reads best here.
-   */
-  image?: (number | null) | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'brand-teaser';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "NavCardsBlock".
- */
-export interface NavCardsBlock {
-  /**
-   * Two to four cards sending the reader on to another page.
-   */
-  cards: {
-    /**
-     * Where this card goes, e.g. "Case studies". It also names the row when collapsed.
-     */
-    title: string;
-    /**
-     * One sentence on what the reader finds there.
-     */
-    description: string;
-    /**
-     * Optional picture at the top of the card. Landscape.
-     */
-    image?: (number | null) | Media;
-    /**
-     * Where the card goes. A page on this site starts with a slash, e.g. "/case-studies".
-     */
-    linkUrl: string;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'nav-cards';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "KeyTakeawaysBlock".
- */
-export interface KeyTakeawaysBlock {
-  /**
-   * The line that introduces this section. Leave it blank and the section reads "Key takeaways".
-   */
-  heading?: string | null;
-  /**
-   * Three to six points a reader should leave with. Put this near the top of a long piece so a skimmer gets the argument.
-   */
-  items: {
-    /**
-     * One point, in a full sentence.
-     */
-    label: string;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'key-takeaways';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TechStackBlock".
- */
-export interface TechStackBlock {
-  /**
-   * The line that introduces this section. Leave it blank and the section reads "Technologies".
-   */
-  heading?: string | null;
-  /**
-   * The tools and platforms used, drawn as a row of tags.
-   */
-  items: {
-    /**
-     * The technology as its makers spell it, e.g. "PostgreSQL", ".NET".
-     */
-    label: string;
-    /**
-     * Optional. Makes the tag clickable: a page on this site starts with a slash, an outside reference needs the full https:// address.
-     */
-    linkUrl?: string | null;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'tech-stack';
-}
-/**
  * Technology and delivery partners, shown on /partners.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2550,50 +1701,18 @@ export interface Partner {
   layout?:
     | (
         | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
         | ContentBlock
-        | TwoColumnBlock
+        | MediaTextBlock
+        | ItemsBlock
         | ImageBlock
         | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | TimelineBlock
-        | FAQBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | MissionVisionValuesBlock
+        | TableBlock
         | AccordionBlock
-        | TabsBlock
-        | MapBlock
+        | QuoteBlock
+        | CtaBlock
+        | CardsBlock
         | EmbedBlock
-        | DownloadCardBlock
         | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
       )[]
     | null;
   /**
@@ -2975,50 +2094,18 @@ export interface PagesSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'media-text'?: T | MediaTextBlockSelect<T>;
+        items?: T | ItemsBlockSelect<T>;
         image?: T | ImageBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        table?: T | TableBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cta?: T | CtaBlockSelect<T>;
+        cards?: T | CardsBlockSelect<T>;
         embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
         'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   seo?:
     | T
@@ -3061,66 +2148,6 @@ export interface HeroBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CaseStudyHeroBlock_select".
- */
-export interface CaseStudyHeroBlockSelect<T extends boolean = true> {
-  eyebrow?: T;
-  headline?: T;
-  metric?:
-    | T
-    | {
-        number?: T;
-        label?: T;
-        context?: T;
-      };
-  heroImage?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ServicePillarHeroBlock_select".
- */
-export interface ServicePillarHeroBlockSelect<T extends boolean = true> {
-  pillarName?: T;
-  headline?: T;
-  subheadline?: T;
-  heroImage?: T;
-  primaryCta?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HomepageHeroBlock_select".
- */
-export interface HomepageHeroBlockSelect<T extends boolean = true> {
-  eyebrow?: T;
-  headline?: T;
-  subheadline?: T;
-  backgroundImage?: T;
-  primaryCta?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  secondaryCta?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ContentBlock_select".
  */
 export interface ContentBlockSelect<T extends boolean = true> {
@@ -3132,18 +2159,48 @@ export interface ContentBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TwoColumnBlock_select".
+ * via the `definition` "MediaTextBlock_select".
  */
-export interface TwoColumnBlockSelect<T extends boolean = true> {
+export interface MediaTextBlockSelect<T extends boolean = true> {
+  media?: T;
   mediaPosition?: T;
   body?: T;
-  media?: T;
   cta?:
     | T
     | {
         label?: T;
         url?: T;
       };
+  background?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ItemsBlock_select".
+ */
+export interface ItemsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  intro?: T;
+  layout?: T;
+  markers?: T;
+  style?: T;
+  items?:
+    | T
+    | {
+        title?: T;
+        body?: T;
+        marker?: T;
+        image?: T;
+        link?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+            };
+        id?: T;
+      };
+  background?: T;
   id?: T;
   blockName?: T;
 }
@@ -3156,6 +2213,7 @@ export interface ImageBlockSelect<T extends boolean = true> {
   caption?: T;
   width?: T;
   alignment?: T;
+  background?: T;
   id?: T;
   blockName?: T;
 }
@@ -3165,6 +2223,7 @@ export interface ImageBlockSelect<T extends boolean = true> {
  */
 export interface GalleryBlockSelect<T extends boolean = true> {
   heading?: T;
+  intro?: T;
   items?:
     | T
     | {
@@ -3173,48 +2232,17 @@ export interface GalleryBlockSelect<T extends boolean = true> {
         id?: T;
       };
   layout?: T;
-  columns?: T;
+  background?: T;
   id?: T;
   blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ProcessStepsBlock_select".
+ * via the `definition` "TableBlock_select".
  */
-export interface ProcessStepsBlockSelect<T extends boolean = true> {
+export interface TableBlockSelect<T extends boolean = true> {
   heading?: T;
-  steps?:
-    | T
-    | {
-        title?: T;
-        body?: T;
-        icon?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "DeliverablesBlock_select".
- */
-export interface DeliverablesBlockSelect<T extends boolean = true> {
-  heading?: T;
-  items?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ComparisonTableBlock_select".
- */
-export interface ComparisonTableBlockSelect<T extends boolean = true> {
-  heading?: T;
+  intro?: T;
   columns?:
     | T
     | {
@@ -3240,324 +2268,7 @@ export interface ComparisonTableBlockSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TimelineBlock_select".
- */
-export interface TimelineBlockSelect<T extends boolean = true> {
-  heading?: T;
-  items?:
-    | T
-    | {
-        date?: T;
-        title?: T;
-        body?: T;
-        image?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FAQBlock_select".
- */
-export interface FAQBlockSelect<T extends boolean = true> {
-  heading?: T;
-  items?:
-    | T
-    | {
-        question?: T;
-        answer?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "StatsBarBlock_select".
- */
-export interface StatsBarBlockSelect<T extends boolean = true> {
-  heading?: T;
-  items?:
-    | T
-    | {
-        number?: T;
-        label?: T;
-        suffix?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MetricDisplayBlock_select".
- */
-export interface MetricDisplayBlockSelect<T extends boolean = true> {
-  number?: T;
-  label?: T;
-  context?: T;
   background?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "LogoBarBlock_select".
- */
-export interface LogoBarBlockSelect<T extends boolean = true> {
-  heading?: T;
-  logos?:
-    | T
-    | {
-        logo?: T;
-        id?: T;
-      };
-  treatment?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FeaturedTestimonialsBlock_select".
- */
-export interface FeaturedTestimonialsBlockSelect<T extends boolean = true> {
-  heading?: T;
-  testimonials?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TestimonialBlock_select".
- */
-export interface TestimonialBlockSelect<T extends boolean = true> {
-  testimonial?: T;
-  layout?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ClientLogoGridBlock_select".
- */
-export interface ClientLogoGridBlockSelect<T extends boolean = true> {
-  heading?: T;
-  logos?:
-    | T
-    | {
-        logo?: T;
-        caption?: T;
-        id?: T;
-      };
-  columns?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CtaSectionBlock_select".
- */
-export interface CtaSectionBlockSelect<T extends boolean = true> {
-  variant?: T;
-  headline?: T;
-  body?: T;
-  primaryCta?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  secondaryCta?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  background?: T;
-  backgroundImage?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "NewsletterCtaBlock_select".
- */
-export interface NewsletterCtaBlockSelect<T extends boolean = true> {
-  heading?: T;
-  body?: T;
-  formId?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ContactCtaBlock_select".
- */
-export interface ContactCtaBlockSelect<T extends boolean = true> {
-  heading?: T;
-  body?: T;
-  primaryCta?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  secondaryCta?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  meetingUrl?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CaseStudyGridBlock_select".
- */
-export interface CaseStudyGridBlockSelect<T extends boolean = true> {
-  heading?: T;
-  source?: T;
-  manualItems?: T;
-  industry?: T;
-  service?: T;
-  limit?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ServiceCardsBlock_select".
- */
-export interface ServiceCardsBlockSelect<T extends boolean = true> {
-  heading?: T;
-  source?: T;
-  pillar?: T;
-  manualItems?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ServicePillarCardsBlock_select".
- */
-export interface ServicePillarCardsBlockSelect<T extends boolean = true> {
-  heading?: T;
-  pillars?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FeaturedCaseStudyBlock_select".
- */
-export interface FeaturedCaseStudyBlockSelect<T extends boolean = true> {
-  heading?: T;
-  caseStudy?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "PostListBlock_select".
- */
-export interface PostListBlockSelect<T extends boolean = true> {
-  heading?: T;
-  source?: T;
-  category?: T;
-  manualItems?: T;
-  limit?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "RelatedPostsBlock_select".
- */
-export interface RelatedPostsBlockSelect<T extends boolean = true> {
-  heading?: T;
-  manualItems?: T;
-  limit?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "IndustryGridBlock_select".
- */
-export interface IndustryGridBlockSelect<T extends boolean = true> {
-  heading?: T;
-  industries?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "LocationsListBlock_select".
- */
-export interface LocationsListBlockSelect<T extends boolean = true> {
-  heading?: T;
-  locations?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "WorkshopListBlock_select".
- */
-export interface WorkshopListBlockSelect<T extends boolean = true> {
-  heading?: T;
-  workshops?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TeamGridBlock_select".
- */
-export interface TeamGridBlockSelect<T extends boolean = true> {
-  heading?: T;
-  filter?: T;
-  layout?: T;
-  manualItems?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "VideoEmbedBlock_select".
- */
-export interface VideoEmbedBlockSelect<T extends boolean = true> {
-  provider?: T;
-  videoId?: T;
-  title?: T;
-  eyebrow?: T;
-  thumbnail?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MissionVisionValuesBlock_select".
- */
-export interface MissionVisionValuesBlockSelect<T extends boolean = true> {
-  mission?: T;
-  vision?: T;
-  values?:
-    | T
-    | {
-        name?: T;
-        description?: T;
-        id?: T;
-      };
-  layout?: T;
   id?: T;
   blockName?: T;
 }
@@ -3567,6 +2278,8 @@ export interface MissionVisionValuesBlockSelect<T extends boolean = true> {
  */
 export interface AccordionBlockSelect<T extends boolean = true> {
   heading?: T;
+  intro?: T;
+  display?: T;
   items?:
     | T
     | {
@@ -3574,34 +2287,75 @@ export interface AccordionBlockSelect<T extends boolean = true> {
         body?: T;
         id?: T;
       };
+  background?: T;
   id?: T;
   blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TabsBlock_select".
+ * via the `definition` "QuoteBlock_select".
  */
-export interface TabsBlockSelect<T extends boolean = true> {
+export interface QuoteBlockSelect<T extends boolean = true> {
   heading?: T;
-  tabs?:
+  intro?: T;
+  source?: T;
+  testimonials?: T;
+  quote?: T;
+  attribution?: T;
+  role?: T;
+  layout?: T;
+  background?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CtaBlock_select".
+ */
+export interface CtaBlockSelect<T extends boolean = true> {
+  heading?: T;
+  body?: T;
+  action?: T;
+  variant?: T;
+  primaryCta?:
     | T
     | {
         label?: T;
-        body?: T;
-        id?: T;
+        url?: T;
+        variant?: T;
       };
+  secondaryCta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  meetingUrl?: T;
+  formId?: T;
+  coverImage?: T;
+  fileUrl?: T;
+  background?: T;
   id?: T;
   blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MapBlock_select".
+ * via the `definition` "CardsBlock_select".
  */
-export interface MapBlockSelect<T extends boolean = true> {
+export interface CardsBlockSelect<T extends boolean = true> {
   heading?: T;
-  embedUrl?: T;
-  caption?: T;
-  height?: T;
+  intro?: T;
+  collection?: T;
+  source?: T;
+  industry?: T;
+  service?: T;
+  category?: T;
+  leadershipOnly?: T;
+  serviceGroup?: T;
+  manualItems?: T;
+  limit?: T;
+  display?: T;
+  background?: T;
   id?: T;
   blockName?: T;
 }
@@ -3610,23 +2364,17 @@ export interface MapBlockSelect<T extends boolean = true> {
  * via the `definition` "EmbedBlock_select".
  */
 export interface EmbedBlockSelect<T extends boolean = true> {
+  kind?: T;
+  heading?: T;
+  eyebrow?: T;
   title?: T;
+  provider?: T;
+  videoId?: T;
+  thumbnail?: T;
   url?: T;
   caption?: T;
   height?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "DownloadCardBlock_select".
- */
-export interface DownloadCardBlockSelect<T extends boolean = true> {
-  title?: T;
-  description?: T;
-  coverImage?: T;
-  formId?: T;
-  fileUrl?: T;
+  background?: T;
   id?: T;
   blockName?: T;
 }
@@ -3638,77 +2386,7 @@ export interface HubspotFormBlockSelect<T extends boolean = true> {
   heading?: T;
   description?: T;
   formId?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HubspotMeetingsBlock_select".
- */
-export interface HubspotMeetingsBlockSelect<T extends boolean = true> {
-  meetingUrl?: T;
-  heading?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BrandTeaserBlock_select".
- */
-export interface BrandTeaserBlockSelect<T extends boolean = true> {
-  headline?: T;
-  body?: T;
-  linkLabel?: T;
-  linkUrl?: T;
-  image?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "NavCardsBlock_select".
- */
-export interface NavCardsBlockSelect<T extends boolean = true> {
-  cards?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        image?: T;
-        linkUrl?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "KeyTakeawaysBlock_select".
- */
-export interface KeyTakeawaysBlockSelect<T extends boolean = true> {
-  heading?: T;
-  items?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TechStackBlock_select".
- */
-export interface TechStackBlockSelect<T extends boolean = true> {
-  heading?: T;
-  items?:
-    | T
-    | {
-        label?: T;
-        linkUrl?: T;
-        id?: T;
-      };
+  background?: T;
   id?: T;
   blockName?: T;
 }
@@ -3761,50 +2439,18 @@ export interface CaseStudiesSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'media-text'?: T | MediaTextBlockSelect<T>;
+        items?: T | ItemsBlockSelect<T>;
         image?: T | ImageBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        table?: T | TableBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cta?: T | CtaBlockSelect<T>;
+        cards?: T | CardsBlockSelect<T>;
         embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
         'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   testimonial?: T;
   relatedCaseStudies?: T;
@@ -3836,50 +2482,18 @@ export interface ServicesSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'media-text'?: T | MediaTextBlockSelect<T>;
+        items?: T | ItemsBlockSelect<T>;
         image?: T | ImageBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        table?: T | TableBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cta?: T | CtaBlockSelect<T>;
+        cards?: T | CardsBlockSelect<T>;
         embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
         'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   seo?:
     | T
@@ -3914,50 +2528,18 @@ export interface IndustriesSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'media-text'?: T | MediaTextBlockSelect<T>;
+        items?: T | ItemsBlockSelect<T>;
         image?: T | ImageBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        table?: T | TableBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cta?: T | CtaBlockSelect<T>;
+        cards?: T | CardsBlockSelect<T>;
         embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
         'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   seo?:
     | T
@@ -3982,50 +2564,18 @@ export interface WorkshopsSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'media-text'?: T | MediaTextBlockSelect<T>;
+        items?: T | ItemsBlockSelect<T>;
         image?: T | ImageBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        table?: T | TableBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cta?: T | CtaBlockSelect<T>;
+        cards?: T | CardsBlockSelect<T>;
         embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
         'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   facilitator?: T;
   testimonial?: T;
@@ -4057,50 +2607,18 @@ export interface TeamMembersSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'media-text'?: T | MediaTextBlockSelect<T>;
+        items?: T | ItemsBlockSelect<T>;
         image?: T | ImageBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        table?: T | TableBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cta?: T | CtaBlockSelect<T>;
+        cards?: T | CardsBlockSelect<T>;
         embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
         'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   linkedinUrl?: T;
   email?: T;
@@ -4138,50 +2656,18 @@ export interface PartnersSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'media-text'?: T | MediaTextBlockSelect<T>;
+        items?: T | ItemsBlockSelect<T>;
         image?: T | ImageBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        table?: T | TableBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cta?: T | CtaBlockSelect<T>;
+        cards?: T | CardsBlockSelect<T>;
         embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
         'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   order?: T;
   publishedAt?: T;
@@ -4477,50 +2963,18 @@ export interface Homepage {
   layout?:
     | (
         | HeroBlock
-        | CaseStudyHeroBlock
-        | ServicePillarHeroBlock
-        | HomepageHeroBlock
         | ContentBlock
-        | TwoColumnBlock
+        | MediaTextBlock
+        | ItemsBlock
         | ImageBlock
         | GalleryBlock
-        | ProcessStepsBlock
-        | DeliverablesBlock
-        | ComparisonTableBlock
-        | TimelineBlock
-        | FAQBlock
-        | StatsBarBlock
-        | MetricDisplayBlock
-        | LogoBarBlock
-        | FeaturedTestimonialsBlock
-        | TestimonialBlock
-        | ClientLogoGridBlock
-        | CtaSectionBlock
-        | NewsletterCtaBlock
-        | ContactCtaBlock
-        | CaseStudyGridBlock
-        | ServiceCardsBlock
-        | ServicePillarCardsBlock
-        | FeaturedCaseStudyBlock
-        | PostListBlock
-        | RelatedPostsBlock
-        | IndustryGridBlock
-        | LocationsListBlock
-        | WorkshopListBlock
-        | TeamGridBlock
-        | VideoEmbedBlock
-        | MissionVisionValuesBlock
+        | TableBlock
         | AccordionBlock
-        | TabsBlock
-        | MapBlock
+        | QuoteBlock
+        | CtaBlock
+        | CardsBlock
         | EmbedBlock
-        | DownloadCardBlock
         | HubspotFormBlock
-        | HubspotMeetingsBlock
-        | BrandTeaserBlock
-        | NavCardsBlock
-        | KeyTakeawaysBlock
-        | TechStackBlock
       )[]
     | null;
   _status?: ('draft' | 'published') | null;
@@ -4536,50 +2990,18 @@ export interface HomepageSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
-        'case-study-hero'?: T | CaseStudyHeroBlockSelect<T>;
-        'service-pillar-hero'?: T | ServicePillarHeroBlockSelect<T>;
-        'homepage-hero'?: T | HomepageHeroBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        'two-column'?: T | TwoColumnBlockSelect<T>;
+        'media-text'?: T | MediaTextBlockSelect<T>;
+        items?: T | ItemsBlockSelect<T>;
         image?: T | ImageBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
-        'process-steps'?: T | ProcessStepsBlockSelect<T>;
-        deliverables?: T | DeliverablesBlockSelect<T>;
-        'comparison-table'?: T | ComparisonTableBlockSelect<T>;
-        timeline?: T | TimelineBlockSelect<T>;
-        faq?: T | FAQBlockSelect<T>;
-        'stats-bar'?: T | StatsBarBlockSelect<T>;
-        'metric-display'?: T | MetricDisplayBlockSelect<T>;
-        'logo-bar'?: T | LogoBarBlockSelect<T>;
-        'featured-testimonials'?: T | FeaturedTestimonialsBlockSelect<T>;
-        'testimonial-block'?: T | TestimonialBlockSelect<T>;
-        'client-logo-grid'?: T | ClientLogoGridBlockSelect<T>;
-        'cta-section'?: T | CtaSectionBlockSelect<T>;
-        'newsletter-cta'?: T | NewsletterCtaBlockSelect<T>;
-        'contact-cta'?: T | ContactCtaBlockSelect<T>;
-        'case-study-grid'?: T | CaseStudyGridBlockSelect<T>;
-        'service-cards'?: T | ServiceCardsBlockSelect<T>;
-        'service-pillar-cards'?: T | ServicePillarCardsBlockSelect<T>;
-        'featured-case-study'?: T | FeaturedCaseStudyBlockSelect<T>;
-        'post-list'?: T | PostListBlockSelect<T>;
-        'related-posts'?: T | RelatedPostsBlockSelect<T>;
-        'industry-grid'?: T | IndustryGridBlockSelect<T>;
-        'locations-list'?: T | LocationsListBlockSelect<T>;
-        'workshop-list'?: T | WorkshopListBlockSelect<T>;
-        'team-grid'?: T | TeamGridBlockSelect<T>;
-        'video-embed'?: T | VideoEmbedBlockSelect<T>;
-        'mission-vision-values'?: T | MissionVisionValuesBlockSelect<T>;
+        table?: T | TableBlockSelect<T>;
         accordion?: T | AccordionBlockSelect<T>;
-        tabs?: T | TabsBlockSelect<T>;
-        map?: T | MapBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cta?: T | CtaBlockSelect<T>;
+        cards?: T | CardsBlockSelect<T>;
         embed?: T | EmbedBlockSelect<T>;
-        'download-card'?: T | DownloadCardBlockSelect<T>;
         'hubspot-form'?: T | HubspotFormBlockSelect<T>;
-        'hubspot-meetings'?: T | HubspotMeetingsBlockSelect<T>;
-        'brand-teaser'?: T | BrandTeaserBlockSelect<T>;
-        'nav-cards'?: T | NavCardsBlockSelect<T>;
-        'key-takeaways'?: T | KeyTakeawaysBlockSelect<T>;
-        'tech-stack'?: T | TechStackBlockSelect<T>;
       };
   _status?: T;
   updatedAt?: T;
