@@ -28,7 +28,8 @@ const CARD =
  *
  * `layout` arrives because every reader populates industries without a
  * `select` or `defaultPopulate`. Adding either to `Industries` would unlink
- * every card; `cards.int.spec.tsx` is what catches that.
+ * every card, and no test would notice: `cards.int.spec.tsx` pins this rule on
+ * hand-built docs, not on what the readers return.
  */
 export const isLinkable = (d: IndustryCard): boolean =>
   Boolean(d.slug) && d._status !== 'draft' && (d.layout ?? []).length > 0

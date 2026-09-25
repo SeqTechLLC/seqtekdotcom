@@ -117,7 +117,8 @@ export const Items: Block = {
           type: 'textarea',
           label: 'Text',
           admin: {
-            description: 'Optional. One to three sentences under the title. Tags do not show it.',
+            condition: whenItemsBlock((s) => layoutOf(s) !== 'tags'),
+            description: 'Optional. One to three sentences under the title.',
           },
         },
         {
@@ -146,7 +147,7 @@ export const Items: Block = {
           label: 'Link',
           admin: {
             description:
-              'Optional. With an address, the title (or the tag) becomes a link. Add link text to also show a "link text →" line under the item; tags do not show it.',
+              'Optional. With an address, the title (or the tag) becomes a link. Add link text to also show a "link text →" line under the item.',
           },
           fields: [
             {
@@ -154,6 +155,7 @@ export const Items: Block = {
               type: 'text',
               label: 'Link text',
               admin: {
+                condition: whenItemsBlock((s) => layoutOf(s) !== 'tags'),
                 description: 'E.g. "Read the case study". Leave it blank to link the title only.',
               },
             },

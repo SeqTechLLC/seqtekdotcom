@@ -74,11 +74,12 @@ test.describe('US1 — homepage renders the homepage global', () => {
       slug: 'homepage',
       data: {
         // spec 010 (ADR 0009): the homepage renders its `layout` blocks, not the
-        // legacy `hero` field — seed a homepage-hero block so the composition has
-        // a heading to assert.
+        // legacy `hero` field — seed a hero block so the composition has a
+        // heading to assert.
         layout: [
           {
-            blockType: 'homepage-hero',
+            blockType: 'hero',
+            variant: 'text-only',
             headline: 'A consulting partner you would want to hire',
             subheadline: 'Strategy, delivery, and localshoring from Tulsa.',
             primaryCta: { label: 'Explore our services', url: '/services/what-we-do' },
