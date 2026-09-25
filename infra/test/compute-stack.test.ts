@@ -487,12 +487,53 @@ describe('ComputeStack', () => {
     }
     const t = synthCompute('staging', cfg, undefined, 'latest-staging')
 
-    it('creates exactly one Cognito User Pool, Client, Domain, and UI customization', () => {
+    it('creates exactly one Cognito User Pool, Client, Domain, and branding style', () => {
       t.resourceCountIs('AWS::Cognito::UserPool', 1)
       t.resourceCountIs('AWS::Cognito::UserPoolClient', 1)
       t.resourceCountIs('AWS::Cognito::UserPoolDomain', 1)
-      t.resourceCountIs('AWS::Cognito::UserPoolUICustomizationAttachment', 1)
       t.resourceCountIs('AWS::Cognito::UserPoolIdentityProvider', 1)
+      // Managed login (v2), NOT the classic Hosted UI. The classic
+      // CSS-blob resource must be gone, not merely unused — managed login
+      // ignores it, so leaving one behind would be a lie in the template.
+      t.resourceCountIs('AWS::Cognito::ManagedLoginBranding', 1)
+      t.resourceCountIs('AWS::Cognito::UserPoolUICustomizationAttachment', 0)
+    })
+
+    it('serves the domain with managed login v2 and brands it in SEQTEK colours', () => {
+      t.hasResourceProperties('AWS::Cognito::UserPoolDomain', {
+        ManagedLoginVersion: 2,
+      })
+      // Colours are 8-digit RGBA with no leading '#'; a '#'-prefixed value
+      // is silently ignored by the branding API, so pin the exact format.
+      t.hasResourceProperties('AWS::Cognito::ManagedLoginBranding', {
+        UseCognitoProvidedValues: false,
+        Settings: Match.objectLike({
+          components: Match.objectLike({
+            pageBackground: Match.objectLike({ lightMode: { color: '1f3265ff' } }),
+            primaryButton: Match.objectLike({
+              lightMode: Match.objectLike({
+                defaults: { backgroundColor: '72b94dff', textColor: 'ffffffff' },
+              }),
+            }),
+            form: Match.objectLike({
+              logo: { enabled: true, formInclusion: 'IN', location: 'CENTER', position: 'TOP' },
+            }),
+          }),
+        }),
+        // ColorMode must be LIGHT (and DARK), never DYNAMIC. DYNAMIC
+        // satisfies neither lookup, so the page silently falls back to
+        // Cognito's stock cognito-image-logo-light.svg and the deploy
+        // still reports success — observed on preview 2026-09-25.
+        Assets: Match.arrayWith([
+          Match.objectLike({
+            Category: 'FORM_LOGO',
+            Extension: 'PNG',
+            ColorMode: 'LIGHT',
+            Bytes: Match.anyValue(),
+          }),
+          Match.objectLike({ Category: 'FORM_LOGO', ColorMode: 'DARK' }),
+        ]),
+      })
     })
 
     it('uses an HTTPS (443) listener with a certificate, not the validation-period HTTP/80 one', () => {
