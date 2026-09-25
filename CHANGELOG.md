@@ -1,5 +1,60 @@
 # Changelog
 
+## [0.4.0](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.3.1...v0.4.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **layout:** the site shell is 1280px wide, not 1024px.
+* **services:** /services no longer renders; it 301s to /services/what-we-do.
+* **services:** services and their groups are collections, not hardcoded slugs ([#131](https://github.com/SeqTechLLC/seqtekdotcom/issues/131))
+* **blocks:** drops `logo-bar.source`, `mission-vision-values.layout: 'tabs'`, `featured-testimonials.autoplay`, `hubspot-form.submitRedirect`, `posts.relatedPosts` and `media.caption`. Take an RDS snapshot before deploying (INFRASTRUCTURE_RUNBOOK.md §2.9).
+
+### refactor
+
+* **blocks:** withdraw the controls that render nothing (INERT-2 Lane E) ([#127](https://github.com/SeqTechLLC/seqtekdotcom/issues/127)) ([cff107e](https://github.com/SeqTechLLC/seqtekdotcom/commit/cff107e04937bce789cfa9bad57a8977dc4f2039))
+* **layout:** one source of truth for shell geometry ([#141](https://github.com/SeqTechLLC/seqtekdotcom/issues/141)) ([7ea184f](https://github.com/SeqTechLLC/seqtekdotcom/commit/7ea184f40aee05f82dc85c44f120c6258ad10e15))
+
+
+### Features
+
+* **admin:** block picker categories, previews, and names that disambiguate (spec 011 US2) ([#118](https://github.com/SeqTechLLC/seqtekdotcom/issues/118)) ([4af4a49](https://github.com/SeqTechLLC/seqtekdotcom/commit/4af4a492f751ac5c9651d6b231c6eeb45c6a32f8))
+* **admin:** forms read like English, not like a schema (spec 011 US4) ([#123](https://github.com/SeqTechLLC/seqtekdotcom/issues/123)) ([d04f540](https://github.com/SeqTechLLC/seqtekdotcom/commit/d04f540f7e88b5e53388b86462b3fcc774eb9cf1))
+* **admin:** group the sidebar and say what each collection is for ([#158](https://github.com/SeqTechLLC/seqtekdotcom/issues/158)) ([9fb2f1b](https://github.com/SeqTechLLC/seqtekdotcom/commit/9fb2f1bcfcbf8e341c80df11d2dea015503a5674))
+* **admin:** media previews itself, publish state is a column (spec 011 US3) ([#120](https://github.com/SeqTechLLC/seqtekdotcom/issues/120)) ([a864a63](https://github.com/SeqTechLLC/seqtekdotcom/commit/a864a636fc5dabbe6c07e5cafb5dfa8074306fcc))
+* **admin:** URL paths on Payload's slugField, collisions refused by name ([#165](https://github.com/SeqTechLLC/seqtekdotcom/issues/165)) ([48ce6b4](https://github.com/SeqTechLLC/seqtekdotcom/commit/48ce6b4c055b02ae613a3024d6d8e17d6b33cd48))
+* **blocks:** a gate that fails when a control renders nothing (ROADMAP INERT-2) ([#125](https://github.com/SeqTechLLC/seqtekdotcom/issues/125)) ([19c58a7](https://github.com/SeqTechLLC/seqtekdotcom/commit/19c58a7aea36b1c7eef5bce1206db5f05290f794))
+* **deploy:** one version per build, releases promote one ([#116](https://github.com/SeqTechLLC/seqtekdotcom/issues/116)) ([c429fc5](https://github.com/SeqTechLLC/seqtekdotcom/commit/c429fc52a2f5a8d46cec41358b93070b7b7d1a03))
+* **deploy:** promote by version, SHA, or branch from the Actions UI ([#121](https://github.com/SeqTechLLC/seqtekdotcom/issues/121)) ([c566892](https://github.com/SeqTechLLC/seqtekdotcom/commit/c5668921a8e950cb556a0523eff026447cd3148c))
+* **industries:** industries become routed pages, not just a tag ([#140](https://github.com/SeqTechLLC/seqtekdotcom/issues/140)) ([cf15831](https://github.com/SeqTechLLC/seqtekdotcom/commit/cf15831f3c8d13b2388d388c3356e605c09eae78))
+* **infra:** the gate uses managed login, branded to match seqceres ([#178](https://github.com/SeqTechLLC/seqtekdotcom/issues/178)) ([1fad398](https://github.com/SeqTechLLC/seqtekdotcom/commit/1fad398527f90b25c6c6846c03eabb8c29aed68c))
+* **nav:** add Retail to the industries menu ([#155](https://github.com/SeqTechLLC/seqtekdotcom/issues/155)) ([5b4ce9a](https://github.com/SeqTechLLC/seqtekdotcom/commit/5b4ce9a7e2bf49c8d3ff4b838c7030d238837209))
+* **nav:** Localshoring moves to its service page; Cadence joins How We Work (SVC-3) ([#168](https://github.com/SeqTechLLC/seqtekdotcom/issues/168)) ([f7b965f](https://github.com/SeqTechLLC/seqtekdotcom/commit/f7b965f084cc184b420986808edc1e55f0eaa4a4))
+* **nav:** split Services into the two axes the IA actually has ([#133](https://github.com/SeqTechLLC/seqtekdotcom/issues/133)) ([a20a4b5](https://github.com/SeqTechLLC/seqtekdotcom/commit/a20a4b54ff40c884ee0803b14e4ec4f91a42ff6c))
+* **nav:** the header menu becomes a validated navigation collection ([#167](https://github.com/SeqTechLLC/seqtekdotcom/issues/167)) ([76738e6](https://github.com/SeqTechLLC/seqtekdotcom/commit/76738e6b80b25152914ae1039285f3ee46163264))
+* **nav:** the services menu opens, on both viewports (ROADMAP NAV-1) ([#129](https://github.com/SeqTechLLC/seqtekdotcom/issues/129)) ([10d537d](https://github.com/SeqTechLLC/seqtekdotcom/commit/10d537d64c64ce90c5af5f6cc20d720bc3c3a420))
+* **seed:** make the seeder safe for an unattended caller ([#135](https://github.com/SeqTechLLC/seqtekdotcom/issues/135)) ([4d493da](https://github.com/SeqTechLLC/seqtekdotcom/commit/4d493da604cfaf6b5167c3bb3ccbbb56aac28a86))
+* **services:** collapse /services onto the What We Do axis ([#136](https://github.com/SeqTechLLC/seqtekdotcom/issues/136)) ([ebbaebd](https://github.com/SeqTechLLC/seqtekdotcom/commit/ebbaebd07bfcb52c31c1af3502e0c77ebe6de645))
+* **services:** services and their groups are collections, not hardcoded slugs ([#131](https://github.com/SeqTechLLC/seqtekdotcom/issues/131)) ([f0a363a](https://github.com/SeqTechLLC/seqtekdotcom/commit/f0a363a80245939c843a5cd7d3919c9aefcd8045))
+* **sweep:** report em dashes and thin copy; --exclude for local fixtures ([#173](https://github.com/SeqTechLLC/seqtekdotcom/issues/173)) ([d9d7c85](https://github.com/SeqTechLLC/seqtekdotcom/commit/d9d7c855c5950c6401ab0f9de3712fcbf5df7990))
+* **tools:** the K8 sweep — links and images are clean, copy is not ([#152](https://github.com/SeqTechLLC/seqtekdotcom/issues/152)) ([99d2c19](https://github.com/SeqTechLLC/seqtekdotcom/commit/99d2c199b53e14b56014533e837d69ab401379a0))
+
+
+### Bug Fixes
+
+* **blocks:** contact-cta stops publishing "Configure a HubSpot meetings URL" ([#124](https://github.com/SeqTechLLC/seqtekdotcom/issues/124)) ([9796c8c](https://github.com/SeqTechLLC/seqtekdotcom/commit/9796c8cc716c95f8edfe3f2e7b2d76596208f19e))
+* **blocks:** the tabs tab, the poster plays, the cards stop 404ing (INERT-2) ([#126](https://github.com/SeqTechLLC/seqtekdotcom/issues/126)) ([53e4d63](https://github.com/SeqTechLLC/seqtekdotcom/commit/53e4d63685cbf27dff79eec27e77089491df2374))
+* **ci:** name the PR in Slack alerts instead of the merge ref ([#177](https://github.com/SeqTechLLC/seqtekdotcom/issues/177)) ([f971ca7](https://github.com/SeqTechLLC/seqtekdotcom/commit/f971ca7db62594ea5a4f194f8846917b3b03ab22))
+* **deploy:** take RELEASE_VERSION from the resolver, not the ref ([#122](https://github.com/SeqTechLLC/seqtekdotcom/issues/122)) ([671437f](https://github.com/SeqTechLLC/seqtekdotcom/commit/671437f12ff1959075d3eef98f66a4429d4e7c6e))
+* **deploy:** unblock the release promotion, report release + commit ([#115](https://github.com/SeqTechLLC/seqtekdotcom/issues/115)) ([ede1ba4](https://github.com/SeqTechLLC/seqtekdotcom/commit/ede1ba46aacc8647271f295ebc61a47433b802c1))
+* **deps:** clear the production advisories — relock, not overrides ([#150](https://github.com/SeqTechLLC/seqtekdotcom/issues/150)) ([b10a278](https://github.com/SeqTechLLC/seqtekdotcom/commit/b10a278df214f0ae0cb7a50bd434f4432b520a94))
+* **industries:** a defaultValue skeleton ships on READ, and an empty grid ships nothing ([#147](https://github.com/SeqTechLLC/seqtekdotcom/issues/147)) ([a2b5903](https://github.com/SeqTechLLC/seqtekdotcom/commit/a2b590399955e37d9a8bc64197b312d21ce1310f))
+* **infra:** the gate admits an external reviewer, not just Google ([#175](https://github.com/SeqTechLLC/seqtekdotcom/issues/175)) ([a4a04d9](https://github.com/SeqTechLLC/seqtekdotcom/commit/a4a04d9cf7c464d851e8fc807d6926386802c833))
+* **proxy:** stop the request-id cookie wiping admin input on every edit ([#164](https://github.com/SeqTechLLC/seqtekdotcom/issues/164)) ([023f610](https://github.com/SeqTechLLC/seqtekdotcom/commit/023f610f3cf5fd525e3b10d5f2cd1a674af8e7ae))
+* **release:** stop Release-Please from being able to promote production ([#119](https://github.com/SeqTechLLC/seqtekdotcom/issues/119)) ([02f65d9](https://github.com/SeqTechLLC/seqtekdotcom/commit/02f65d9fa15a3c912fd88cdf4b38a7121259351b))
+* **seed:** keep --json parseable and find .env.local from any cwd ([#171](https://github.com/SeqTechLLC/seqtekdotcom/issues/171)) ([7f262f7](https://github.com/SeqTechLLC/seqtekdotcom/commit/7f262f7be6f748d485cc5950803f92fecb803ac2))
+* **team,blocks:** render job titles, resolve collection-backed blocks at template time ([#117](https://github.com/SeqTechLLC/seqtekdotcom/issues/117)) ([8b09bb2](https://github.com/SeqTechLLC/seqtekdotcom/commit/8b09bb2d8c4ff5f6ee86bdb4d0b663ec2899381e))
+
 ## [0.3.1](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.3.0...v0.3.1) (2026-08-25)
 
 
