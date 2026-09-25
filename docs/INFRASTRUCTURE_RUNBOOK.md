@@ -187,8 +187,16 @@ Staff reach the gate through Google. An outside reviewer (agency, client)
 has no `@seqtechllc.com` Workspace identity and must not be given one, so
 they get an account in the pool's OWN directory instead. The App Client
 offers both — `supportedIdentityProviders: [COGNITO, Google]` in
-`cognito-auth.ts` — so the Hosted UI shows the Google button AND a
+`cognito-auth.ts` — so the sign-in page shows the Google button AND a
 username/password form.
+
+That page is Cognito **managed login** (`ManagedLoginVersion: 2`), not the
+classic Hosted UI. They are different products: managed login renders the
+full-bleed navy page with a centred card, and it ignores
+`UserPoolUICustomizationAttachment` CSS entirely. Branding lives in the
+`CfnManagedLoginBranding` style document in `cognito-auth.ts`, whose
+colours are 8-digit RGBA with **no** leading `#` — a `#`-prefixed value is
+silently ignored rather than rejected.
 
 Do NOT flip the Google OAuth consent screen from Internal to External to
 solve this. Cognito does not filter by hosted domain, so that opens the
