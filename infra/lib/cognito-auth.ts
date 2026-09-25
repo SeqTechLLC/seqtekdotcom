@@ -210,13 +210,24 @@ export class CognitoAuthGate {
       useCognitoProvidedValues: false,
       returnMergedResources: false,
       settings: brandingSettings,
+      // One asset PER colour mode. `DYNAMIC` looks like it should serve
+      // both and does not: the page requests the variant for the mode it
+      // is rendering, finds no LIGHT asset, and silently falls back to
+      // Cognito's stock `cognito-image-logo-light.svg` placeholder — a
+      // deploy that reports success and shows the wrong logo (observed on
+      // preview, 2026-09-25). LIGHT is the one that renders today because
+      // colorSchemeMode is pinned to LIGHT above; DARK is supplied so that
+      // unpinning it later does not silently reintroduce the placeholder.
       assets: [
         {
           category: 'FORM_LOGO',
-          // DYNAMIC lets one asset serve both colour schemes. The lockup
-          // is navy-on-transparent, and the card is white in both modes
-          // here because colorSchemeMode is pinned to LIGHT above.
-          colorMode: 'DYNAMIC',
+          colorMode: 'LIGHT',
+          extension: 'PNG',
+          bytes: LOGO_BASE64,
+        },
+        {
+          category: 'FORM_LOGO',
+          colorMode: 'DARK',
           extension: 'PNG',
           bytes: LOGO_BASE64,
         },

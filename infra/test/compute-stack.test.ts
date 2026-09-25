@@ -520,8 +520,18 @@ describe('ComputeStack', () => {
             }),
           }),
         }),
+        // ColorMode must be LIGHT (and DARK), never DYNAMIC. DYNAMIC
+        // satisfies neither lookup, so the page silently falls back to
+        // Cognito's stock cognito-image-logo-light.svg and the deploy
+        // still reports success — observed on preview 2026-09-25.
         Assets: Match.arrayWith([
-          Match.objectLike({ Category: 'FORM_LOGO', Extension: 'PNG', Bytes: Match.anyValue() }),
+          Match.objectLike({
+            Category: 'FORM_LOGO',
+            Extension: 'PNG',
+            ColorMode: 'LIGHT',
+            Bytes: Match.anyValue(),
+          }),
+          Match.objectLike({ Category: 'FORM_LOGO', ColorMode: 'DARK' }),
         ]),
       })
     })
