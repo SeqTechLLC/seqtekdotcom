@@ -58,11 +58,16 @@ export interface CognitoAuthGateProps {
 /**
  * A Cognito User Pool that gates an ALB listener action behind Google
  * Workspace SSO — "hide this lane from the public internet" without
- * touching the app itself. The App Client is Google-only (no username/
- * password option ever appears on the Hosted UI) and relies on the
- * Google Cloud OAuth client being configured as "Internal" (restricted to
- * the seqtechllc.com Workspace) for the actual @seqtechllc.com
- * restriction — Cognito itself does not enforce a hosted-domain filter.
+ * touching the app itself. Staff sign in with Google, and that path
+ * relies on the Google Cloud OAuth client being configured as "Internal"
+ * (restricted to the seqtechllc.com Workspace) for the actual
+ * @seqtechllc.com restriction — Cognito itself does not enforce a
+ * hosted-domain filter.
+ *
+ * The App Client ALSO offers the pool's own user directory, so an
+ * external reviewer with no Workspace identity can be let in one account
+ * at a time (see `supportedIdentityProviders` below). Creating those
+ * accounts is admin-only; there is no self-service path in.
  *
  * Uses the default Cognito-hosted domain (`<prefix>.auth.<region>.
  * amazoncognito.com`), not a custom domain — avoids any new ACM
@@ -119,10 +124,18 @@ export class CognitoAuthGate {
 
     this.userPoolClient = this.userPool.addClient(`${id}Client`, {
       generateSecret: true, // required for ALB's authenticate-cognito action
-      // GOOGLE-ONLY — the Hosted UI shows a single "Sign in with Google"
-      // button, no username/password form, since that flow was never
-      // enabled above.
-      supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.GOOGLE],
+      // Google for staff, plus the pool's OWN user directory for the
+      // occasional external reviewer (agency, client) who has no
+      // @seqtechllc.com Google identity and must not be given one. The
+      // Hosted UI shows the "Sign in with Google" button AND a username/
+      // password form; the CSS below already styles the form's selectors.
+      // This does NOT open the gate up — `selfSignUpEnabled: false` and
+      // the pool's `AllowAdminCreateUserOnly` mean the only native users
+      // are ones an admin creates by hand, one at a time.
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO,
+        cognito.UserPoolClientIdentityProvider.GOOGLE,
+      ],
       oAuth: {
         flows: { authorizationCodeGrant: true },
         scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL, cognito.OAuthScope.PROFILE],
