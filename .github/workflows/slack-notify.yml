@@ -54,6 +54,13 @@ jobs:
           GITHUB_WORKFLOW_FALLBACK: ${{ github.workflow }}
           # Only present on push events; empty on pull_request / workflow_dispatch.
           COMMIT_MSG: ${{ github.event.head_commit.message }}
+          # Only present on pull_request events; empty otherwise. In a reusable
+          # workflow the `github` context is the CALLER's event, so these
+          # resolve for ci.yml's PR runs.
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
 
@@ -72,7 +79,23 @@ jobs:
           COMMIT_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
           RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
-          SECTION="${EMOJI} *${WORKFLOW_NAME}*: ${WORD}"$'\n'"\`${GITHUB_REF_NAME}\` · <${COMMIT_URL}|${SHORT_SHA}>"
+          COMMIT_LINK="<${COMMIT_URL}|${SHORT_SHA}>"
+
+          if [ -n "$PR_NUMBER" ]; then
+            # On a pull_request run GITHUB_REF_NAME is the merge ref
+            # ("174/merge") and github.event.head_commit does not exist, so
+            # the push-shaped line below renders as "174/merge · 0503185"
+            # with no subject and no way to reach the PR — which is exactly
+            # the message you get when CI fails, when you most need it to be
+            # actionable. Name the PR, link it, and use its title as the
+            # subject.
+            REF_LINE="<${PR_URL}|PR #${PR_NUMBER}> \`${PR_HEAD_REF}\` · ${COMMIT_LINK}"
+            SUBJECT="${PR_TITLE}"
+          else
+            REF_LINE="\`${GITHUB_REF_NAME}\` · ${COMMIT_LINK}"
+          fi
+
+          SECTION="${EMOJI} *${WORKFLOW_NAME}*: ${WORD}"$'\n'"${REF_LINE}"
           if [ -n "$SUBJECT" ]; then
             SECTION="${SECTION} ${SUBJECT}"
           fi
