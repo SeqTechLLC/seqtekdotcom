@@ -511,9 +511,12 @@ describe('ComputeStack', () => {
       expect(httpListeners).toHaveLength(0)
     })
 
-    it('the App Client is Google-only, with a callback/logout URL per gated hostname', () => {
+    it('the App Client offers Google + the native pool, with a callback/logout URL per gated hostname', () => {
+      // COGNITO alongside Google is what lets an external reviewer with no
+      // @seqtechllc.com Workspace identity through the gate on an
+      // admin-created account. Order matters to CloudFormation diffing.
       t.hasResourceProperties('AWS::Cognito::UserPoolClient', {
-        SupportedIdentityProviders: ['Google'],
+        SupportedIdentityProviders: ['COGNITO', 'Google'],
         GenerateSecret: true,
         CallbackURLs: Match.arrayWith([
           'https://seqtek-preview.com/oauth2/idpresponse',

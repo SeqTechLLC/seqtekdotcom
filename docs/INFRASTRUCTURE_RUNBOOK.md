@@ -181,6 +181,53 @@ aws secretsmanager create-secret \
   --secret-string '<client secret>'
 ```
 
+#### 1.3b Letting an external reviewer through the gate
+
+Staff reach the gate through Google. An outside reviewer (agency, client)
+has no `@seqtechllc.com` Workspace identity and must not be given one, so
+they get an account in the pool's OWN directory instead. The App Client
+offers both — `supportedIdentityProviders: [COGNITO, Google]` in
+`cognito-auth.ts` — so the Hosted UI shows the Google button AND a
+username/password form.
+
+Do NOT flip the Google OAuth consent screen from Internal to External to
+solve this. Cognito does not filter by hosted domain, so that opens the
+gate to every Google account on the internet.
+
+The pool sends nothing: `AutoVerifiedAttributes` is null, so there is no
+verification mail and no code to enter. `email_verified=true` marks the
+attribute verified outright. Cognito is also still on `COGNITO_DEFAULT`
+email (NOT the account's SES, which is separately in production access) —
+it would send from `no-reply@verificationemail.com` and a corporate spam
+filter will likely eat it. So suppress the mail and hand the temporary
+password over out of band:
+
+```sh
+aws cognito-idp admin-create-user \
+  --user-pool-id "$(aws cognito-idp list-user-pools --max-results 20 \
+      --query "UserPools[?Name=='seqtek-${ENV}-gate'].Id" --output text)" \
+  --username '<their email>' \
+  --user-attributes Name=email,Value='<their email>' \
+                    Name=email_verified,Value=true \
+  --message-action SUPPRESS \
+  --temporary-password '<8+ chars, upper + lower + number + symbol>'
+```
+
+They sign in at a gated hostname, typing the email into the **username**
+field, and are forced to set their own password on first login. The
+temporary one expires in 7 days (`TemporaryPasswordValidityDays`), so
+create the account when the handover is actually happening.
+
+This grants the SITE as an ordinary visitor and nothing more — `/admin` is
+a separate Payload login on a different Google OAuth client, unaffected by
+pool membership.
+
+Revoke when the engagement ends:
+
+```sh
+aws cognito-idp admin-delete-user --user-pool-id <pool id> --username '<their email>'
+```
+
 ### 1.4 Domain (optional per env)
 
 Prod intentionally runs on the CloudFront default URL until launch —
