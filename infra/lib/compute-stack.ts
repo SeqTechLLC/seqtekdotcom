@@ -20,6 +20,13 @@ export interface ComputeStackProps extends StackProps {
 }
 
 const ECR_REPO_NAME = 'seqtek-website'
+
+// How many PROMOTED (`v`-tagged) images to keep, independent of
+// `ecrRetainCount`, which governs ordinary builds. Deliberately NOT per-env
+// config: this is a floor that protects the running production image from the
+// catch-all rule, not a knob worth tuning per environment. One image per
+// promotion means 20 is a deep rollback range for negligible storage.
+const RELEASED_RETAIN_COUNT = 20
 const APP_PORT = 3000
 
 /**
@@ -97,13 +104,43 @@ export class ComputeStack extends Stack {
       this.ecrRepository = new ecr.Repository(this, 'EcrRepo', {
         repositoryName: ECR_REPO_NAME,
         imageScanOnPush: true,
+        // ORDER IS LOAD-BEARING. A lower-priority rule cannot expire an image
+        // that a higher-priority rule already identified (ECR "Filtering on
+        // all images", Example B), so the `v*` rule below is what shields
+        // released images from the catch-all — not the counts.
         lifecycleRules: [
           {
+            rulePriority: 1,
             description: 'Expire untagged images after 7 days',
             tagStatus: ecr.TagStatus.UNTAGGED,
             maxImageAge: Duration.days(7),
           },
           {
+            // PRODUCTION'S IMAGE LIVES HERE. `deploy.yml`'s promotion step
+            // put-images a `v`-prefixed tag (`v0.3.55`) onto the digest it
+            // promotes; an ordinary `main` build only ever gets `<sha>`,
+            // `<version>` and `latest-<env>`. So `v*` means exactly "this was
+            // promoted to production", and nothing else in the repo carries it.
+            //
+            // Without this rule the catch-all below counts by push date, and
+            // the lanes are MEANT to drift — production deliberately lags
+            // preview — so production's image is always among the oldest.
+            // After ecrRetainCount newer builds it gets deleted out from under
+            // the running service, which then cannot place a task:
+            // CannotPullContainerError, zero healthy targets, ww3 down.
+            // That is not hypothetical; it happened on 2026-09-25 and took
+            // out ww3.seqtek.com (image 02f65d9, pruned while in use).
+            //
+            // Releases are one image per promotion, so keeping this many costs
+            // very little and buys a deep rollback range.
+            rulePriority: 2,
+            description: `Keep the last ${RELEASED_RETAIN_COUNT} promoted (v-tagged) images`,
+            tagStatus: ecr.TagStatus.TAGGED,
+            tagPatternList: ['v*'],
+            maxImageCount: RELEASED_RETAIN_COUNT,
+          },
+          {
+            rulePriority: 3,
             description: 'Keep at most ecrRetainCount tagged images',
             tagStatus: ecr.TagStatus.ANY,
             maxImageCount: cfg.ecrRetainCount,
