@@ -98,7 +98,13 @@ describe('ComputeStack', () => {
       const lifecycle = JSON.parse(
         (repo.Properties as { LifecyclePolicy: { LifecyclePolicyText: string } }).LifecyclePolicy
           .LifecyclePolicyText,
-      ) as { rules: Array<{ description: string; selection: Record<string, unknown> }> }
+      ) as {
+        rules: Array<{
+          rulePriority: number
+          description: string
+          selection: Record<string, unknown>
+        }>
+      }
       expect(lifecycle.rules.length).toBeGreaterThanOrEqual(2)
       const hasUntaggedExpiry = lifecycle.rules.some(
         (r) =>
@@ -115,6 +121,40 @@ describe('ComputeStack', () => {
       )
       expect(hasUntaggedExpiry, 'lifecycle should expire untagged images after 7d').toBe(true)
       expect(hasRetentionLimit, 'lifecycle should retain at most 10 tagged images').toBe(true)
+    })
+
+    it('shields promoted (v-tagged) images from the catch-all rule', () => {
+      // This is the rule that keeps production alive. deploy.yml put-images a
+      // `v`-prefixed tag onto the digest it promotes, and the lanes are meant
+      // to drift, so production's image is always among the OLDEST in the
+      // repo. Without a higher-priority rule identifying it, the `any`
+      // catch-all deletes it after ecrRetainCount newer builds and the running
+      // service can no longer place a task. That took ww3 down on 2026-09-25.
+      const repos = t.findResources('AWS::ECR::Repository')
+      const [, repo] = Object.entries(repos)[0]!
+      const rules = (
+        JSON.parse(
+          (repo.Properties as { LifecyclePolicy: { LifecyclePolicyText: string } }).LifecyclePolicy
+            .LifecyclePolicyText,
+        ) as {
+          rules: Array<{ rulePriority: number; selection: Record<string, unknown> }>
+        }
+      ).rules
+
+      const released = rules.find((r) => r.selection.tagStatus === 'tagged')
+      const catchAll = rules.find((r) => r.selection.tagStatus === 'any')
+
+      expect(released, 'a rule must identify promoted v-tagged images').toBeDefined()
+      expect(released!.selection.tagPatternList).toEqual(['v*'])
+      expect(released!.selection.countType).toBe('imageCountMoreThan')
+
+      // ORDER IS THE PROTECTION. ECR will not let a lower-priority rule expire
+      // an image a higher-priority rule already identified, so the v* rule has
+      // to sort BEFORE the catch-all. Swap these and the policy still applies
+      // cleanly, still passes every other assertion here, and silently stops
+      // protecting production.
+      expect(catchAll, 'the catch-all rule must still exist').toBeDefined()
+      expect(released!.rulePriority).toBeLessThan(catchAll!.rulePriority)
     })
 
     it('creates an internet-facing ALB in public subnets', () => {
