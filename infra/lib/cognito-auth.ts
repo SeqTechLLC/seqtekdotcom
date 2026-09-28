@@ -7,32 +7,28 @@ import * as ssm from 'aws-cdk-lib/aws-ssm'
 import type { Construct } from 'constructs'
 import type { EnvName } from './construct-utils'
 
-// SEQTEK's own white wordmark (no tagline — compact enough for the Hosted
-// UI's banner strip), read once at synth time and inlined into the CSS
-// customization below as a data URI. `AWS::Cognito::
-// UserPoolUICustomizationAttachment` dropped the separate raster
-// `ImageFile` upload the classic Hosted UI used to support (AWS steered
-// that toward the newer, non-CloudFormation "Managed Login" branding API
-// instead) — a CSS `background-image` on `.banner-customizable` is the
-// current way to place a logo without leaving CDK/CloudFormation for a
-// custom resource.
-const LOGO_PATH = join(
-  __dirname,
-  '..',
-  '..',
-  'public',
-  'brand',
-  'White-logo-w-o-tagline-transparent-background.png',
-)
-const LOGO_DATA_URI = `data:image/png;base64,${readFileSync(LOGO_PATH).toString('base64')}`
+// The DEMO | ENVIRONMENT lockup that sits at the top of the sign-in card,
+// read once at synth time and shipped as a base64 `FORM_LOGO` asset on the
+// managed-login branding resource below. Managed login takes real image
+// assets, so unlike the classic Hosted UI this is not a CSS
+// `background-image` data URI — the classic UI's separate raster
+// `ImageFile` upload was dropped and CSS was the only way to place a logo;
+// that constraint is gone here.
+const LOGO_PATH = join(__dirname, '..', '..', 'public', 'brand', 'demo-environment.png')
+const LOGO_BASE64 = readFileSync(LOGO_PATH).toString('base64')
 
 // docs/DESIGN_SYSTEM.md §14 / tailwind.config.mjs — brand-navy-800 and
-// brand-green-500/600. Hex-baked here the same way tailwind.config.mjs
-// bakes them (Cognito's Hosted UI CSS customization has no access to CSS
-// custom properties/theme tokens, just a flat stylesheet).
-const BRAND_NAVY_800 = '#1F3265'
-const BRAND_GREEN_500 = '#72B94D'
-const BRAND_GREEN_600 = '#5A9C3B'
+// brand-green-500/600, hex-baked the same way tailwind.config.mjs bakes
+// them (the branding document is flat JSON with no access to CSS custom
+// properties or theme tokens).
+//
+// Managed login wants 8-digit RGBA hex with NO leading `#` — `1f3265ff`,
+// not `#1F3265`. A `#`-prefixed value is silently rejected, so these are
+// stored in the branding form and converted for nothing else.
+const BRAND_NAVY_800 = '1f3265ff'
+const BRAND_GREEN_500 = '72b94dff'
+const BRAND_GREEN_600 = '5a9c3bff'
+const WHITE = 'ffffffff'
 
 export interface CognitoAuthGateProps {
   envName: EnvName
@@ -58,11 +54,16 @@ export interface CognitoAuthGateProps {
 /**
  * A Cognito User Pool that gates an ALB listener action behind Google
  * Workspace SSO — "hide this lane from the public internet" without
- * touching the app itself. The App Client is Google-only (no username/
- * password option ever appears on the Hosted UI) and relies on the
- * Google Cloud OAuth client being configured as "Internal" (restricted to
- * the seqtechllc.com Workspace) for the actual @seqtechllc.com
- * restriction — Cognito itself does not enforce a hosted-domain filter.
+ * touching the app itself. Staff sign in with Google, and that path
+ * relies on the Google Cloud OAuth client being configured as "Internal"
+ * (restricted to the seqtechllc.com Workspace) for the actual
+ * @seqtechllc.com restriction — Cognito itself does not enforce a
+ * hosted-domain filter.
+ *
+ * The App Client ALSO offers the pool's own user directory, so an
+ * external reviewer with no Workspace identity can be let in one account
+ * at a time (see `supportedIdentityProviders` below). Creating those
+ * accounts is admin-only; there is no self-service path in.
  *
  * Uses the default Cognito-hosted domain (`<prefix>.auth.<region>.
  * amazoncognito.com`), not a custom domain — avoids any new ACM
@@ -113,16 +114,30 @@ export class CognitoAuthGate {
       },
     })
 
+    // NEWER_MANAGED_LOGIN (version 2) rather than the classic Hosted UI.
+    // The two are different products, not a theme switch: managed login is
+    // the one that renders the full-bleed background with a centred card,
+    // and it IGNORES `UserPoolUICustomizationAttachment` CSS entirely.
+    // Branding moves to the `CfnManagedLoginBranding` document below.
     this.userPoolDomain = this.userPool.addDomain(`${id}Domain`, {
       cognitoDomain: { domainPrefix: `seqtek-${envName}-gate` },
+      managedLoginVersion: cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN,
     })
 
     this.userPoolClient = this.userPool.addClient(`${id}Client`, {
       generateSecret: true, // required for ALB's authenticate-cognito action
-      // GOOGLE-ONLY — the Hosted UI shows a single "Sign in with Google"
-      // button, no username/password form, since that flow was never
-      // enabled above.
-      supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.GOOGLE],
+      // Google for staff, plus the pool's OWN user directory for the
+      // occasional external reviewer (agency, client) who has no
+      // @seqtechllc.com Google identity and must not be given one. The
+      // Hosted UI shows the "Sign in with Google" button AND a username/
+      // password form; the CSS below already styles the form's selectors.
+      // This does NOT open the gate up — `selfSignUpEnabled: false` and
+      // the pool's `AllowAdminCreateUserOnly` mean the only native users
+      // are ones an admin creates by hand, one at a time.
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO,
+        cognito.UserPoolClientIdentityProvider.GOOGLE,
+      ],
       oAuth: {
         flows: { authorizationCodeGrant: true },
         scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL, cognito.OAuthScope.PROFILE],
@@ -139,82 +154,90 @@ export class CognitoAuthGate {
     // a Ref/GetAtt. Well-known CDK gotcha for this construct pairing.
     this.userPoolClient.node.addDependency(googleIdp)
 
-    // ----- SEQTEK-branded classic Hosted UI -----
-    // Selectors are Cognito's fixed, documented set for the classic Hosted
-    // UI (not arbitrary CSS scoping) — there is no separate class for the
-    // white sign-in card itself; it's white by Cognito's own built-in
-    // stylesheet already, which happens to match the target design as-is.
-    const css = `
-      .background-customizable {
-        background-color: ${BRAND_NAVY_800};
-      }
-      .banner-customizable {
-        background-color: ${BRAND_NAVY_800};
-        background-image: url('${LOGO_DATA_URI}');
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: contain;
-        height: 64px;
-        padding: 0;
-      }
-      .submitButton-customizable {
-        font-size: 14px;
-        font-weight: bold;
-        height: 40px;
-        width: 100%;
-        color: #fff;
-        background-color: ${BRAND_GREEN_500};
-        border-radius: 6px;
-      }
-      .submitButton-customizable:hover {
-        color: #fff;
-        background-color: ${BRAND_GREEN_600};
-      }
-      .idpButton-customizable {
-        height: 40px;
-        width: 100%;
-        color: #fff;
-        background-color: ${BRAND_GREEN_500};
-        border-radius: 6px;
-      }
-      .idpButton-customizable:hover {
-        color: #fff;
-        background-color: ${BRAND_GREEN_600};
-      }
-      .inputField-customizable {
-        width: 100%;
-        height: 34px;
-        color: #555;
-        background-color: #fff;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
-      .inputField-customizable:focus {
-        border-color: ${BRAND_NAVY_800};
-      }
-      .errorMessage-customizable {
-        padding: 5px;
-        font-size: 14px;
-        width: 100%;
-        background: #f5f5f5;
-        border: 2px solid #d12c29;
-        color: #d12c29;
-      }
-    `
-    const uiCustomization = new cognito.CfnUserPoolUICustomizationAttachment(
-      scope,
-      `${id}UiCustomization`,
-      {
-        userPoolId: this.userPool.userPoolId,
-        clientId: this.userPoolClient.userPoolClientId,
-        css,
+    // ----- SEQTEK-branded managed login -----
+    // Managed login's style document. Only the values that differ from
+    // Cognito's defaults are listed: the API "preserves existing style
+    // settings that you don't specify", so a partial document is the
+    // supported shape, not a shortcut. Everything omitted here — the input
+    // fields, the "Show password" control, the links, the dark-mode
+    // palette — keeps Cognito's default, which already reads correctly
+    // against a white card.
+    const brandingSettings = {
+      categories: {
+        // The gate is a light-mode page on a navy field. Pinning LIGHT
+        // stops a viewer's OS dark-mode preference from flipping the card
+        // to Cognito's dark palette, which would put a dark card on the
+        // dark navy background.
+        global: {
+          colorSchemeMode: 'LIGHT',
+          pageHeader: { enabled: false },
+          pageFooter: { enabled: false },
+        },
+        form: {
+          displayGraphics: true,
+          location: { horizontal: 'CENTER', vertical: 'CENTER' },
+        },
       },
-    )
-    // The customization targets this specific client and needs the
-    // Hosted UI domain to exist first — same "string reference, not a
-    // Ref/GetAtt" ordering gap as the IdP dependency above.
-    uiCustomization.node.addDependency(this.userPoolClient)
-    uiCustomization.node.addDependency(this.userPoolDomain)
+      components: {
+        // Navy fills the whole page; the card sits on top of it.
+        pageBackground: {
+          image: { enabled: false },
+          lightMode: { color: BRAND_NAVY_800 },
+        },
+        // White card, and the FORM_LOGO asset placed inside it at the top.
+        // `formInclusion: 'IN'` is what puts the logo inside the card
+        // rather than floating above it.
+        form: {
+          backgroundImage: { enabled: false },
+          lightMode: { backgroundColor: WHITE },
+          logo: { enabled: true, formInclusion: 'IN', location: 'CENTER', position: 'TOP' },
+        },
+        primaryButton: {
+          lightMode: {
+            defaults: { backgroundColor: BRAND_GREEN_500, textColor: WHITE },
+            hover: { backgroundColor: BRAND_GREEN_600, textColor: WHITE },
+            active: { backgroundColor: BRAND_GREEN_600, textColor: WHITE },
+          },
+        },
+      },
+    }
+
+    const branding = new cognito.CfnManagedLoginBranding(scope, `${id}Branding`, {
+      userPoolId: this.userPool.userPoolId,
+      clientId: this.userPoolClient.userPoolClientId,
+      // false — this style IS customized. Setting it true is mutually
+      // exclusive with `settings`/`assets` and the deploy is rejected.
+      useCognitoProvidedValues: false,
+      returnMergedResources: false,
+      settings: brandingSettings,
+      // One asset PER colour mode. `DYNAMIC` looks like it should serve
+      // both and does not: the page requests the variant for the mode it
+      // is rendering, finds no LIGHT asset, and silently falls back to
+      // Cognito's stock `cognito-image-logo-light.svg` placeholder — a
+      // deploy that reports success and shows the wrong logo (observed on
+      // preview, 2026-09-25). LIGHT is the one that renders today because
+      // colorSchemeMode is pinned to LIGHT above; DARK is supplied so that
+      // unpinning it later does not silently reintroduce the placeholder.
+      assets: [
+        {
+          category: 'FORM_LOGO',
+          colorMode: 'LIGHT',
+          extension: 'PNG',
+          bytes: LOGO_BASE64,
+        },
+        {
+          category: 'FORM_LOGO',
+          colorMode: 'DARK',
+          extension: 'PNG',
+          bytes: LOGO_BASE64,
+        },
+      ],
+    })
+    // Same "string reference, not a Ref/GetAtt" ordering gap as the IdP
+    // dependency above — the branding is attached to a client and a
+    // domain that both have to exist first.
+    branding.node.addDependency(this.userPoolClient)
+    branding.node.addDependency(this.userPoolDomain)
   }
 
   /**
