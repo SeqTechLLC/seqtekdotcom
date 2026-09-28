@@ -13,8 +13,8 @@
 
 > **Status, 2026-09-28.** Only §1.3b and §2.9 match what is deployed: the one `preview`
 > env (`SeqtekPreview*` stacks serving preview.seqtek.com and ww3.seqtek.com), in an AWS
-> account shared with unrelated infrastructure. The rest of §1–§3 and §5 still describe
-> the retired `staging`/`prod` layout and the destroyed seqtek-preview.com, and running
+> account shared with unrelated infrastructure. The Facts section below, the rest of
+> §1–§3, and §5 still describe the retired `staging`/`prod` layout and the destroyed seqtek-preview.com, and running
 > them against this account would collide with or delete live resources. Do not use them
 > until they are rewritten (`ROADMAP.md` P3, Infrastructure).
 
@@ -319,7 +319,7 @@ is nothing to prime.
 
 ### 2.2 Rebuild the content
 
-Once per lane, as in §2.9 steps 6–7: the website owner signs in to the lane's
+Once per lane, as in §2.9 steps 7–8: the website owner signs in to the lane's
 `/admin` first, then loads the content JSON in the content repo's `LOAD-ORDER.md`
 order.
 
@@ -429,7 +429,7 @@ own it.
 
 ---
 
-## 2.9 Before a destructive migration: snapshot first
+## 2.9 Lane databases: rebuild, and snapshot before a migration
 
 ### Rebuilding a lane's database for the 2026-09-24 baseline
 
@@ -438,7 +438,6 @@ that creates every type and table, so it cannot run against a lane's existing
 database. Deployed to a lane that has not been rebuilt (preview at merge, ww3 at
 release publish), `payload migrate` fails and ECS rolls back to the previous image,
 which keeps serving. The rebuild works before that deploy or after it has failed.
-Do each lane just before its own deploy: the lane serves nothing in between.
 
 Both lanes run in the `SeqtekPreview*` stacks in `us-east-1` and share one RDS
 instance; preview's database is `seqtek_preview` and ww3's is `seqtek_prod`. The
@@ -446,18 +445,31 @@ account also runs unrelated infrastructure, another RDS instance included, so
 every command below resolves its target from the stack outputs.
 
 The work splits the way §5 does: the AWS steps need the account admin, the rest
-needs the website owner. The lane stays at zero tasks from the drop until the new
-image deploys, because an old-image task started in between would migrate the old
-schema into the empty database.
+needs the website owner. **The one hazard is an old-image task starting after the
+drop:** it would migrate the old schema into the empty database. So the lane is
+held at zero tasks from the drop until the new image deploys, and nothing else
+deploys in between. Once a lane is rebuilt there is no going back to the old
+image; a problem is fixed forward and the lane reloaded from the content JSON.
 
-**Account admin** (AWS CLI in the account; AWS CloudShell in `us-east-1` works).
+**Website owner, first.** Confirm no Deploy run is in progress or queued. Then,
+until step 5: for preview, merge nothing to `main`; for ww3, hold the release and
+merge nothing under `infra/`.
 
-1. Pick the lane and snapshot the RDS instance. The snapshot holds both lanes'
-   databases.
+**Account admin.** Run the blocks in bash with AWS CLI v2; AWS CloudShell in
+`us-east-1` qualifies. If a command errors or prints something other than the
+value noted beside it, stop and report it. If a `wait` prints "Max attempts
+exceeded", re-run that `wait` once; if it times out again, report it. Nothing
+changes until step 3.
+
+1. Choose the lane, resolve its resources, and check the stack is idle.
 
 ```sh
 export AWS_REGION=us-east-1
-LANE=ServiceName   # preview. For ww3: LANE=SecondaryLaneServiceName
+export LANE=ServiceName
+# For ww3 instead: export LANE=SecondaryLaneServiceName
+```
+
+```sh
 out() { aws cloudformation describe-stacks --stack-name "$1" \
   --query "Stacks[0].Outputs[?OutputKey=='$2'].OutputValue | [0]" --output text; }
 CLUSTER=$(out SeqtekPreviewCompute ClusterName)
@@ -465,25 +477,53 @@ SERVICE=$(out SeqtekPreviewCompute "$LANE")
 DBHOST=$(out SeqtekPreviewData DbEndpointHostname)
 INSTANCE=$(aws rds describe-db-instances --output text \
   --query "DBInstances[?Endpoint.Address=='$DBHOST'].DBInstanceIdentifier | [0]")
+echo "service:  $SERVICE"   # preview: ...AppService...  ww3: ...SecondaryLaneService...
+echo "instance: $INSTANCE"  # an identifier, not None
+aws cloudformation describe-stacks --stack-name SeqtekPreviewCompute \
+  --query 'Stacks[0].StackStatus' --output text   # UPDATE_COMPLETE or UPDATE_ROLLBACK_COMPLETE
+```
+
+A status ending `_IN_PROGRESS` means a deploy is running: wait and re-check. For
+`UPDATE_ROLLBACK_FAILED`, see "If a deploy fails" below.
+
+2. Snapshot the RDS instance. It holds both lanes' databases. If the create fails
+   because the instance is in its 06:00–07:00 UTC backup window, wait and re-run.
+
+```sh
 SNAP=pre-baseline-$(date +%Y%m%d%H%M)
 aws rds create-db-snapshot --db-instance-identifier "$INSTANCE" \
   --db-snapshot-identifier "$SNAP" >/dev/null
-aws rds wait db-snapshot-completed --db-snapshot-identifier "$SNAP"
+aws rds wait db-snapshot-available --db-snapshot-identifier "$SNAP"
+aws rds describe-db-snapshots --db-snapshot-identifier "$SNAP" \
+  --query 'DBSnapshots[0].Status' --output text   # available
 ```
 
-2. Note the lane's task count (1 today), then scale it to zero.
+3. Note the lane's task count, then scale it to zero. Until step 5 lands, preview's
+   `EcsRunningTaskCountLow` and `AlbUnhealthyHost` alarms post to Slack (ww3 has no
+   lane alarm). That is expected; nobody scales the lane back up.
 
 ```sh
 aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
-  --query 'services[0].desiredCount'
+  --query 'services[0].desiredCount'   # 1 today
 aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
   --desired-count 0 >/dev/null
 aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
 ```
 
-3. Drop and recreate the lane's database with a one-off task from the lane's own
+4. Drop and recreate the lane's database with a one-off task from the lane's own
    task definition, which carries the credentials. Its `DB_NAME` is that lane's
-   database, so the other lane's is untouched.
+   database, so the other lane's is untouched, and the script refuses any other
+   name. First re-check the preconditions. `SNAP` is the step 2 snapshot name; in a
+   new shell, set it to the reported name.
+
+```sh
+aws rds describe-db-snapshots --db-snapshot-identifier "${SNAP:?set SNAP to the step 2 snapshot name}" \
+  --query 'DBSnapshots[0].Status' --output text   # available
+aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" --output text \
+  --query 'services[0].[desiredCount, runningCount, pendingCount, length(deployments)]'   # 0 0 0 1
+aws cloudformation describe-stacks --stack-name SeqtekPreviewCompute \
+  --query 'Stacks[0].StackStatus' --output text   # UPDATE_COMPLETE or UPDATE_ROLLBACK_COMPLETE
+```
 
 ```sh
 TASKDEF=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
@@ -492,33 +532,78 @@ aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
   --query 'services[0].networkConfiguration' --output json > net.json
 cat > recreate-db.json <<'EOF'
 {"containerOverrides": [{"name": "AppContainer", "command": ["node", "-e",
-  "const { Client } = require('pg'); const e = process.env; const c = new Client({ connectionString: `postgresql://${e.DB_USER}:${e.DB_PASS}@${e.DB_HOST}:${e.DB_PORT}/postgres?sslmode=require` }); (async () => { await c.connect(); await c.query(`DROP DATABASE IF EXISTS ${e.DB_NAME} WITH (FORCE)`); await c.query(`CREATE DATABASE ${e.DB_NAME}`); await c.end(); })().catch((err) => { console.error(err); process.exit(1); });"]}]}
+  "const { Client } = require('pg'); const e = process.env; if (!['seqtek_preview', 'seqtek_prod'].includes(e.DB_NAME)) { console.error('refusing DB_NAME ' + e.DB_NAME); process.exit(1); } const c = new Client({ connectionString: `postgresql://${e.DB_USER}:${e.DB_PASS}@${e.DB_HOST}:${e.DB_PORT}/postgres?sslmode=require` }); (async () => { await c.connect(); await c.query(`DROP DATABASE IF EXISTS ${e.DB_NAME} WITH (FORCE)`); await c.query(`CREATE DATABASE ${e.DB_NAME}`); await c.end(); console.log('recreated ' + e.DB_NAME); })().catch((err) => { console.error(err); process.exit(1); });"]}]}
 EOF
-TASK=$(aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE \
+read -r TASK FAILURE <<<"$(aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE \
   --task-definition "$TASKDEF" --network-configuration file://net.json \
-  --overrides file://recreate-db.json --query 'tasks[0].taskArn' --output text)
-aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK"
-aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" \
-  --query 'tasks[0].[containers[0].exitCode, stoppedReason]'   # exit code must be 0
+  --overrides file://recreate-db.json \
+  --query '[tasks[0].taskArn, failures[0].reason]' --output text)"
+echo "task: $TASK  failure: $FAILURE"   # an ARN, and None
 ```
 
-Then report the snapshot name and the task count from step 2, and stop. **Do not
-sign in to `/admin`**: on an empty database the first account to sign in becomes
-the admin (`src/lib/auth/apply-bootstrap-role.ts`).
+Continue only if `task` is an ARN. If it is `None`, the task never started and
+nothing has changed: the failure says why; re-run step 4 once it is resolved.
+
+```sh
+aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK"
+aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" --output text \
+  --query 'tasks[0].[containers[0].exitCode, stoppedReason]'   # 0  Essential container in task exited
+```
+
+- Exit code `0`: done. The task's log line reads `recreated seqtek_preview` (or
+  `seqtek_prod`).
+- Exit code `None`: the container never ran (the stopped reason says why, e.g.
+  `CannotPullContainerError`), so the drop never ran. Report it.
+- Any other exit code: re-run step 4; the drop is `IF EXISTS`, so it repeats
+  safely. The output is in `aws logs tail /seqtek/website/preview/app --since 30m`
+  (ww3: `/seqtek/website/preview/prod/app`).
+
+Then report the snapshot name and the task count from step 3, and stop. You may be
+asked back for step 6, or for "If a deploy fails". **Do not sign in to `/admin`**:
+on an empty database the first account to sign in becomes the admin
+(`src/lib/auth/apply-bootstrap-role.ts`).
 
 **Website owner.**
 
-4. Deploy: merge to `main` (preview) or publish the release (ww3), or re-run the
+5. Deploy: merge to `main` (preview) or publish the release (ww3), or re-run the
    failed Deploy run if one already tried. The new image's `payload migrate`
-   applies the baseline to the empty database.
-5. If the deploy's smoke job fails because the lane has no running task, ask the
-   account admin to restore the step 2 count with
-   `aws ecs update-service --desired-count`, then re-run the smoke job.
-6. Sign in to the lane's `/admin` with Google, first. Its `payload-token` cookie is
-   `IMPORT_TOKEN`. The ALB gate's session cookies are `IMPORT_COOKIE`
-   (`tools/payload-seed/README.md`, "Getting `IMPORT_COOKIE`").
-7. Load the content JSON with `npm run payload:seed` in the empty-database order in
+   applies the baseline to the empty database. For ww3, the release must name a
+   build made at or after the baseline merge (#174). The Deploy run's `cdk deploy`
+   step prints the image tag it deployed.
+6. If the smoke job fails because the lane has no running task, the account admin
+   re-runs step 1's blocks, checks the service now carries that new tag, and scales
+   up. Then re-run the smoke job.
+
+```sh
+aws ecs describe-task-definition --output text \
+  --task-definition "$(aws ecs describe-services --cluster "$CLUSTER" \
+    --services "$SERVICE" --query 'services[0].taskDefinition' --output text)" \
+  --query 'taskDefinition.containerDefinitions[0].image'   # ends in the new tag
+aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+  --desired-count 1 >/dev/null
+aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
+```
+
+7. As soon as step 5 is green, sign in to the lane's `/admin` with Google, before
+   anyone else can. Its `payload-token` cookie is `IMPORT_TOKEN`. The ALB gate's
+   session cookies are `IMPORT_COOKIE` (`tools/payload-seed/README.md`, "Getting
+   `IMPORT_COOKIE`").
+8. Load the content JSON with `npm run payload:seed` in the empty-database order in
    the content repo's `LOAD-ORDER.md`. Every file must end `errors=0`.
+
+**If a deploy fails after the rebuild,** ECS rolled the lane back to the old image
+at one task. The account admin re-runs step 1's blocks and checks the stack
+status. If no snapshot was taken yet, run step 2; otherwise set `SNAP` to the
+reported name. If the status is `UPDATE_ROLLBACK_FAILED`, the old image cannot boot
+on the baseline-migrated database, so run steps 3 and 4 first (step 4's stack check
+reads `UPDATE_ROLLBACK_FAILED` here; that is expected), then:
+
+```sh
+aws cloudformation continue-update-rollback --stack-name SeqtekPreviewCompute
+aws cloudformation wait stack-rollback-complete --stack-name SeqtekPreviewCompute
+```
+
+Either way, run steps 3 and 4 again before the website owner retries step 5.
 
 ### Snapshotting before a destructive migration
 
@@ -533,16 +618,17 @@ approval rule. There is no manual step between the merge button and the
 migration, and there is no separate staging lane to rehearse in — that account
 was retired 2026-08-14.
 
-So the one safety step happens **before the merge**, and the account admin takes
-it, since the website owner has no AWS access (§5). Resolve `$INSTANCE` as in step 1
-of the rebuild above:
+So the one safety step happens **before the merge** for preview, and again before
+publishing the release for ww3. The account admin takes it, since the website owner
+has no AWS access (§5). Resolve `$INSTANCE` as in step 1 of the rebuild above; a
+snapshot name takes letters, digits and hyphens only:
 
 ```sh
 aws rds create-db-snapshot \
   --db-instance-identifier "$INSTANCE" \
-  --db-snapshot-identifier pre-<migration-name>
-aws rds wait db-snapshot-completed \
-  --db-snapshot-identifier pre-<migration-name>
+  --db-snapshot-identifier pre-<migration-name-with-hyphens>
+aws rds wait db-snapshot-available \
+  --db-snapshot-identifier pre-<migration-name-with-hyphens>
 ```
 
 That is the whole procedure. Two things make it sufficient rather than thin:
@@ -620,7 +706,8 @@ printf '%-20s %s\n' /services "$(curl -so /dev/null -w '%{http_code}' "$URL/serv
 curl -s "$URL/sitemap.xml" | grep -c '<loc>'
 ```
 
-Then sign in to `/admin` (proves OAuth + DB + secrets), load a media-bearing
+Then sign in to `/admin` (proves OAuth + DB + secrets; after a §2.9 rebuild, the
+website owner signs in first), load a media-bearing
 page (proves S3 + CloudFront OAC), and submit the contact form (proves the
 HubSpot build args survived).
 
@@ -632,7 +719,7 @@ The AWS account belongs to SEQTEK's account admin, and the website owner has no
 credentials in it.
 
 **The current hand-off is §2.9**, rebuilding a lane's database: account admin
-steps 1–3, website owner steps 4–7. The rest of this section is a fresh-account
+steps 1–4, website owner steps 5–8. The rest of this section is a fresh-account
 standup in the retired layout; see the status note at the top.
 
 That splits cleanly, because **the entire content half needs no AWS access at
