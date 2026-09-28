@@ -236,7 +236,7 @@ one migration for the whole set:
   removing the control, so it must NOT be dropped here.**
 
 Reconcile `docs/content-drafts/*.json` in the same change (CLAUDE.md, FR-029)
-and take an RDS snapshot first (`docs/INFRASTRUCTURE_RUNBOOK.md` §2.9).
+and take an RDS snapshot first (`docs/INFRASTRUCTURE_RUNBOOK.md` §2).
 
 ---
 

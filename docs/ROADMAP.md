@@ -333,21 +333,18 @@ Gated on the September All Hands shoot plus the P2 content. Leadership engages h
   invalidation silently skips. Verify after: a media delete produces an entry in
   `aws cloudfront list-invalidations`.
 - **Snapshot the lane before merging** — merging is what deploys, and the container's `CMD` runs
-  `payload migrate` on start. `INFRASTRUCTURE_RUNBOOK.md` §2.9.
-- **Rewrite `INFRASTRUCTURE_RUNBOOK.md` §1–§3 and §5 for the `preview` env.** Audited 2026-09-28: they
-  target the undeployed `prod`/`staging` envs and the destroyed seqtek-preview.com; only §2.9 is current. The
-  cutover needs more than a DNS change:
-  - `cognitoAuthEnabled` is env-wide, so ungating seqtek.com also ungates preview.seqtek.com. A per-lane flag
-    on `secondaryLane` is a small `compute-stack.ts` change; a merge to `main` deploys it.
-  - `seqtek.com` must be the first entry of `secondaryLane.dnsRecordNames`, which drives the CloudFront
-    aliases, the Route 53 records, the ALB host rule, the Cognito callbacks and the lane's
-    `NEXT_PUBLIC_SITE_URL`.
+  `payload migrate` on start. `INFRASTRUCTURE_RUNBOOK.md` §2.
+- **Cutover to seqtek.com (Dom), in a low-traffic window.** What it has to cover:
+  - Ungating ww3 without ungating preview.seqtek.com: `cognitoAuthEnabled` is env-wide today.
+  - `seqtek.com` as the first entry of `secondaryLane.dnsRecordNames`, which drives the CloudFront aliases,
+    the Route 53 records, the ALB host rule, the Cognito callbacks and the lane's `NEXT_PUBLIC_SITE_URL`.
   - The zone's existing `seqtek.com`/`www` records, and the older distribution holding those aliases
-    (`edge-stack.ts` comment), have to come off in the change window.
+    (`edge-stack.ts` comment), come off in the change window.
+  - The shared distribution disables CloudFront caching while the env has a gate, because its cache key has
+    no host (`edge-stack.ts`). Public seqtek.com needs a host-aware cache policy or its own distribution.
 - **Production's database has no deletion guard.** `seqtek_prod` lives on the `preview` env's RDS instance,
   which has no deletion protection and `RemovalPolicy.DESTROY` (`data-stack.ts:111-114`): deleting
   `SeqtekPreviewData` drops it with no final snapshot.
-- DNS cutover in a low-traffic window (Dom).
 - Post-cutover: submit the sitemap to Search Console and verify redirects, validate CloudFront cache behavior,
   test-restore an RDS snapshot, run a full redirect crawl, watch CloudWatch and Search Console for regressions.
 
