@@ -337,8 +337,8 @@ Gated on the September All Hands shoot plus the P2 content. Leadership engages h
 - **Rewrite `INFRASTRUCTURE_RUNBOOK.md` §1–§3 and §5 for the `preview` env.** Audited 2026-09-28: they
   target the undeployed `prod`/`staging` envs and the destroyed seqtek-preview.com; only §2.9 is current. The
   cutover needs more than a DNS change:
-  - `cognitoAuthEnabled` is env-wide, so ungating seqtek.com also ungates preview.seqtek.com. A per-lane gate
-    is a code change.
+  - `cognitoAuthEnabled` is env-wide, so ungating seqtek.com also ungates preview.seqtek.com. A per-lane flag
+    on `secondaryLane` is a small `compute-stack.ts` change; a merge to `main` deploys it.
   - `seqtek.com` must be the first entry of `secondaryLane.dnsRecordNames`, which drives the CloudFront
     aliases, the Route 53 records, the ALB host rule, the Cognito callbacks and the lane's
     `NEXT_PUBLIC_SITE_URL`.
