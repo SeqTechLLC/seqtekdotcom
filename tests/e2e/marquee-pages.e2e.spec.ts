@@ -101,7 +101,7 @@ test.describe('US1 — homepage renders the homepage global', () => {
     expect(res?.status()).toBe(200)
 
     await expect(page.getByTestId('homepage')).toBeVisible()
-    // The homepage-hero block composed from the global's `layout` proves the
+    // The hero composed from the global's `layout` proves the
     // template rendered the composition, not the empty-state placeholder.
     await expect(
       page.getByRole('heading', { name: 'A consulting partner you would want to hire' }),
@@ -427,9 +427,7 @@ test.describe('US5 — localshoring renders via RenderBlocks', () => {
     })
   })
 
-  test('GET /localshoring → 200, comparison-table narrative renders, axe-clean', async ({
-    page,
-  }) => {
+  test('GET /localshoring → 200, comparison table renders, axe-clean', async ({ page }) => {
     await payload.delete({
       collection: 'pages',
       where: { slug: { equals: LOCALSHORING_SLUG } },

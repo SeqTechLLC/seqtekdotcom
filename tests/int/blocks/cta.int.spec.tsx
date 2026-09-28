@@ -20,7 +20,7 @@ const base = {
 // the test process.
 const FORM = 'test-form'
 
-describe('<Cta action="meeting" /> scheduling panel (INERT-2, from contact-cta)', () => {
+describe('<Cta action="meeting" /> scheduling panel', () => {
   const meeting = { ...base, action: 'meeting' as const, variant: 'split' as const }
 
   it('publishes no placeholder copy when there is no meeting URL', () => {
@@ -85,7 +85,7 @@ describe('<Cta action="meeting" /> scheduling panel (INERT-2, from contact-cta)'
   })
 })
 
-describe('<Cta action="buttons" /> (from cta-section)', () => {
+describe('<Cta action="buttons" />', () => {
   it('centres the copy and buttons by default', () => {
     const { container, getByRole } = render(<Cta {...base} />)
     expect(container.querySelector('section > div')?.className).toMatch(/text-center/)

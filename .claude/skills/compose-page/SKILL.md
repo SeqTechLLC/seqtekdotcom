@@ -47,7 +47,9 @@ Exact fields: `src/payload/blocks/layout/<Block>.ts`. Spec: `docs/planning/block
 
 ## Composition rules (these are what keep a page from reading as a wall of text)
 
-1. **Open with a `split` hero** carrying the page's art.
+1. **Open with a `split` hero** carrying the page's art, on pages, the homepage, services, industries and partners,
+   where the hero is the page's `<h1>`. Case studies, workshops and team members render their own header and
+   `<h1>`, so their layout has no hero and opens at h2.
 2. **Never put two `content` blocks in a row.** If a section of prose lists several things, it is an `items` block.
    If it makes one point that has a picture, it is `media-text`.
 3. **Keep every section short.** A `content` block is one idea of about 150 words at most. Split anything longer.
@@ -66,7 +68,9 @@ your response. Public copy has no em dashes. Every image needs plain alt text.
 ## Validate before returning
 
 Every `blockType` must be a key in `registry`. Required fields must be present. Relationship and upload values in the
-content JSON use the seeder's directives (`$ref`, `$file`, `$lexical`; see `tools/payload-seed/README.md`).
+content JSON use the seeder's directives (`$ref`, `$file`, `$lexical`; see `tools/payload-seed/README.md`). A
+`cards` block's `manualItems` entries are each `{ "relationTo": "<collection>", "value": { "$ref": ... } }`; a bare
+id or `$ref` is rejected.
 
 ## Output
 

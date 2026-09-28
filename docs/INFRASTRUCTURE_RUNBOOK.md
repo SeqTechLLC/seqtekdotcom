@@ -479,7 +479,7 @@ edits that are not in the content JSON, then:
    TASKDEF=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
      --query 'services[0].taskDefinition' --output text)
    aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
-     --query 'services[0].networkConfiguration' > net.json
+     --query 'services[0].networkConfiguration' --output json > net.json
    cat > recreate-db.json <<'EOF'
    {"containerOverrides": [{"name": "AppContainer", "command": ["node", "-e",
      "const { Client } = require('pg'); const e = process.env; const c = new Client({ connectionString: `postgresql://${e.DB_USER}:${e.DB_PASS}@${e.DB_HOST}:${e.DB_PORT}/postgres?sslmode=require` }); (async () => { await c.connect(); await c.query(`DROP DATABASE IF EXISTS ${e.DB_NAME} WITH (FORCE)`); await c.query(`CREATE DATABASE ${e.DB_NAME}`); await c.end(); })().catch((err) => { console.error(err); process.exit(1); });"]}]}

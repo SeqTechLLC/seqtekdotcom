@@ -1,4 +1,5 @@
 import type { Block } from 'payload'
+import { valueIsValueWithRelation } from 'payload/shared'
 
 import { CARD_COLLECTIONS, type CardCollection } from '../../../lib/cardCollections'
 import { backgroundField, headingField, introField } from '../../fields/blockCopy'
@@ -18,6 +19,11 @@ const COLLECTION_LABELS: Record<CardCollection, string> = {
   locations: 'Markets',
   partners: 'Partners',
 }
+
+const manualItemsRequired = requiredWhen<CardsSibling>((d) => d?.source === 'manual', {
+  description:
+    'The exact items, in the order you pick them. Switch "What to list" and anything picked from the old kind is ignored.',
+})
 
 /** A filter shows only while it can narrow this block's list. */
 const filtersFor =
@@ -150,10 +156,18 @@ export const Cards: Block = {
         if (relationTo === 'services') return { tier: { in: ['leaf', 'group'] } }
         return true
       },
-      ...requiredWhen<CardsSibling>((d) => d?.source === 'manual', {
-        description:
-          'The exact items, in the order you pick them. Switch "What to list" and anything picked from the old kind is ignored.',
-      }),
+      ...manualItemsRequired,
+      // A custom `validate` displaces Payload's relationship validator, the one
+      // that rejects a bare id, and the Postgres adapter drops any entry without
+      // `relationTo` on write. Reject it here rather than save an empty list.
+      validate: (value: unknown, args: Parameters<typeof manualItemsRequired.validate>[1]) => {
+        const required = manualItemsRequired.validate(value, args)
+        if (required !== true) return required
+        if (Array.isArray(value) && !value.every(valueIsValueWithRelation)) {
+          return 'Each item needs `relationTo` and `value`, e.g. { "relationTo": "caseStudies", "value": 12 }.'
+        }
+        return true
+      },
     },
     {
       name: 'limit',

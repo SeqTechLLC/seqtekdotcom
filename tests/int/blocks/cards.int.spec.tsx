@@ -2,6 +2,7 @@ import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { Cards, type CardsProps } from '../../../src/components/sections/Cards'
+import { Cards as CardsBlock } from '../../../src/payload/blocks/layout/Cards'
 
 /**
  * The `cards` block draws whatever list `resolveLayout` hands it, as the card
@@ -264,5 +265,27 @@ describe('cards — partners', () => {
     })
     expect(el.textContent).toContain('Linked')
     expect(el.textContent).not.toContain('Nowhere')
+  })
+})
+
+describe('cards config — hand-picked items', () => {
+  const manualItems = CardsBlock.fields.find(
+    (f) => 'name' in f && f.name === 'manualItems',
+  ) as unknown as {
+    validate: (v: unknown, a: { siblingData: unknown }) => true | string
+  }
+  const manual = { siblingData: { collection: 'caseStudies', source: 'manual' } }
+
+  it('needs at least one item when the list is hand-picked', () => {
+    expect(manualItems.validate([], manual)).not.toBe(true)
+    expect(manualItems.validate([], { siblingData: { source: 'all' } })).toBe(true)
+  })
+
+  it('rejects a bare id, which the database would drop without an error', () => {
+    expect(manualItems.validate([12], manual)).not.toBe(true)
+    expect(manualItems.validate([{ relationTo: 'caseStudies', value: 12 }, 13], manual)).not.toBe(
+      true,
+    )
+    expect(manualItems.validate([{ relationTo: 'caseStudies', value: 12 }], manual)).toBe(true)
   })
 })
