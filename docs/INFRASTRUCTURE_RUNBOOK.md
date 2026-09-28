@@ -457,32 +457,73 @@ own it.
 
 ## 2.9 Before a destructive migration: snapshot first
 
-**The 2026-09-24 baseline.** The migration history was squashed into one baseline
-(`src/migrations/*_baseline.ts`), so an existing environment's database no longer
-matches it. Deploying it means recreating that database empty, letting the
-container's `payload migrate` apply the baseline, then loading the content JSON in
-the order in the content repo's `LOAD-ORDER.md`.
+### Rebuilding a lane's database for the 2026-09-24 baseline
 
-Some migrations drop columns and tables — spec 011's expand/contract close is the
-first, shipped as `20260824_201317_spec011_drop_inert_fields` plus
-`20260824_214311_spec011_drop_stats_bar_source`. Those are not recoverable by
-re-running anything.
+The migration history was squashed into one baseline (`src/migrations/*_baseline.ts`)
+that creates every type and table, so it cannot run against a lane's existing
+database. The first deploy of it to a lane (preview at merge, ww3 at release
+publish) fails `payload migrate` and ECS rolls back to the previous image, which
+keeps serving. To bring the lane forward, snapshot it (below) if it holds `/admin`
+edits that are not in the content JSON, then:
 
-**Merging IS deploying, and deploying IS migrating.** A push to `main` promotes
-the ww3 lane (`deploy.yml`, `IS_RELEASE`), the container's `CMD` is
-`npx payload migrate && node server.js` (`Dockerfile:134`), and the `preview`
-GitHub Environment has no approval rule. There is no manual step between the
-merge button and the migration, and there is no separate staging lane to
-rehearse in — that account was retired 2026-08-14.
+1. Drop and recreate the lane's database with a one-off task from the lane's own
+   task definition, which already carries the credentials (the lanes have no
+   direct database access):
+
+   ```sh
+   STACK=SeqtekPreviewCompute
+   LANE=ServiceName   # ww3: SecondaryLaneServiceName
+   out() { aws cloudformation describe-stacks --stack-name "$STACK" \
+     --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue | [0]" --output text; }
+   CLUSTER=$(out ClusterName); SERVICE=$(out "$LANE")
+   TASKDEF=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+     --query 'services[0].taskDefinition' --output text)
+   aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+     --query 'services[0].networkConfiguration' > net.json
+   cat > recreate-db.json <<'EOF'
+   {"containerOverrides": [{"name": "AppContainer", "command": ["node", "-e",
+     "const { Client } = require('pg'); const e = process.env; const c = new Client({ connectionString: `postgresql://${e.DB_USER}:${e.DB_PASS}@${e.DB_HOST}:${e.DB_PORT}/postgres?sslmode=require` }); (async () => { await c.connect(); await c.query(`DROP DATABASE IF EXISTS ${e.DB_NAME} WITH (FORCE)`); await c.query(`CREATE DATABASE ${e.DB_NAME}`); await c.end(); })().catch((err) => { console.error(err); process.exit(1); });"]}]}
+   EOF
+   TASK=$(aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE \
+     --task-definition "$TASKDEF" --network-configuration file://net.json \
+     --overrides file://recreate-db.json --query 'tasks[0].taskArn' --output text)
+   aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK"
+   aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" \
+     --query 'tasks[0].containers[0].exitCode'   # must be 0
+   ```
+
+   `DB_NAME` is each lane's own database, so the same override serves both.
+
+2. Re-run the failed Deploy run (`gh run rerun <id>`). The container's
+   `payload migrate` applies the baseline to the empty database.
+3. Sign in to the lane's `/admin` with Google. On an empty database the first
+   account becomes admin (`src/lib/auth/apply-bootstrap-role.ts`), so do this
+   before anyone else does. Its `payload-token` cookie is `IMPORT_TOKEN`; the gate
+   cookie is `IMPORT_COOKIE` (§2.1).
+4. Load the content JSON with `npm run payload:seed` in the empty-database order
+   in the content repo's `LOAD-ORDER.md`. Every file must end `errors=0`.
+
+### Snapshotting before a destructive migration
+
+A migration that drops columns or tables is not recoverable by re-running
+anything.
+
+**Merging IS deploying, and deploying IS migrating.** A push to `main` deploys the
+preview lane and publishing a release deploys ww3 (`deploy.yml`, `IS_RELEASE`).
+Each lane's container command runs `npx payload migrate` before `node server.js`
+(`infra/lib/compute-stack.ts`), and the `preview` GitHub Environment has no
+approval rule. There is no manual step between the merge button and the
+migration, and there is no separate staging lane to rehearse in — that account
+was retired 2026-08-14.
 
 So the one safety step happens **before you press merge**:
 
 ```sh
 aws rds create-db-snapshot \
   --db-instance-identifier <instance> \
-  --db-snapshot-identifier pre-spec011-drop-inert-fields
+  --db-snapshot-identifier pre-<migration-name>
 aws rds wait db-snapshot-completed \
-  --db-snapshot-identifier pre-spec011-drop-inert-fields
+  --db-snapshot-identifier pre-<migration-name>
 ```
 
 That is the whole procedure. Two things make it sufficient rather than thin:
