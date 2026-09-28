@@ -75,8 +75,8 @@ export default async function IndustryPage({ params }: Props) {
 
   // ROADMAP UI-2: collection-backed blocks resolve their items here, before the
   // layout reaches the synchronous RenderBlocks dispatcher. That is what lets an
-  // industry page carry a `case-study-grid` set to `by-industry` and have it
-  // fill itself from whatever is tagged to this industry.
+  // industry page carry a `cards` block of case studies filtered to this
+  // industry and have it fill itself from whatever is tagged to it.
   const layout = (await resolveLayout(industry.layout as never)) as never
 
   return (

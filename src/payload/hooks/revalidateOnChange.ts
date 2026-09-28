@@ -115,18 +115,15 @@ export const buildRevalidatePlan = (
         // to stay correct if that policy ever changes; the tag is what actually
         // refreshes the page today.
         //
-        // `industry-grid` is not in RESOLVED_BLOCK_TYPES, so its cards are the
-        // depth-2 relations embedded in that cached payload rather than a
-        // re-read at render — which is why the containing document's tag is the
-        // only lever that moves them.
+        // A `cards` block that picks industries by hand draws the depth-2
+        // relations embedded in that cached payload rather than a re-read at
+        // render — which is why the containing document's tag is the only
+        // lever that moves them.
         //
         // LIMIT, stated rather than implied: this busts the known index. The
         // same block on the HOMEPAGE would be cached under
         // `globalCacheTags('homepage')` = `['homepage_list']`, which an
-        // industries change does not emit either — latent rather than live,
-        // since `industry-grid` appears in exactly one document today (the
-        // `industries` page), but a global is the container class to check
-        // first, not another page.
+        // industries change does not emit either.
         detailPaths.push(`/industries/${s}`, '/industries')
         tags.push('pages_industries')
         break

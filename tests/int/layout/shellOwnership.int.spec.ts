@@ -43,7 +43,7 @@ const code = (src: string) =>
 describe('shell ownership — blocks take their shell from Section', () => {
   it('finds the block components it is meant to be guarding', () => {
     // A rename that empties this list would make every assertion below vacuous.
-    expect(BLOCK_FILES.length).toBeGreaterThan(40)
+    expect(BLOCK_FILES.length).toBeGreaterThanOrEqual(13) // the thirteen blocks, ADR 0013
   })
 
   it.each(BLOCK_FILES)('%s does not restate the rail', (file) => {

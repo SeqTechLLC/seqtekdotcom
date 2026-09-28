@@ -223,14 +223,12 @@ export function boxSizes({
 }
 
 /**
- * The `lg:grid-cols-2` media column shared by `Hero`, `CaseStudyHero`,
- * `TwoColumn` and `ServicePillarHero`: half the box above `lg`, the WHOLE box
- * below, because `lg:grid-cols-2` is the only thing making the parent two
- * columns.
+ * The `lg:grid-cols-2` media column shared by `Hero`, `MediaText` and
+ * `FeaturedCard`: half the box above `lg`, the WHOLE box below, because
+ * `lg:grid-cols-2` is the only thing making the parent two columns.
  *
- * Defined once here rather than four times in the blocks — four copies of a
- * geometry is the restatement this module exists to remove, and it is also what
- * let the constant-fraction bug land in all four at once. The call-site test
+ * Defined once here rather than in each block, since copies of a geometry are
+ * the restatement this module exists to remove. The call-site test
  * imports THIS value, so a change here is checked against the rendered cell.
  */
 export const SPLIT_MEDIA_SIZES = gridSizes({

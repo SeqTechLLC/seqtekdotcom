@@ -12,10 +12,9 @@ import { useAdminSession, type AdminSession } from '../helpers/adminSession'
  * "Much of the perceived emptiness is fields belonging to variants the editor
  * didn't choose, shown unconditionally" (spec.md US4).
  * `adminMetadata.int.spec.ts` can prove a field DECLARES `admin.condition`;
- * only the browser proves Payload acts on it, which is the half that actually
- * failed: `logo-bar.logos` carried a conditional validator whose `admin` was
- * overwritten by a sibling key, so it validated conditionally and displayed
- * unconditionally for two specs.
+ * only the browser proves Payload acts on it. That is the half that can fail:
+ * a conditional validator whose `admin` is overwritten by a sibling key
+ * validates conditionally and displays unconditionally.
  *
  * **The expectations are computed from the config, not typed out.** Each
  * block's own `condition` predicate is evaluated here, in this process, against
@@ -125,7 +124,7 @@ function casesFor(slug: string, fields: AnyField[]): Omit<VariantCase, 'row'>[] 
 /** Enough of a row for the edit view to draw the block's fields. */
 const SEED_ROWS: Record<string, Record<string, unknown>> = {
   hero: { headline: 'Variant fixture hero' },
-  'cta-section': { headline: 'Variant fixture CTA' },
+  cta: { heading: 'Variant fixture CTA', primaryCta: { label: 'Go', url: '/contact' } },
 }
 
 const CASES: VariantCase[] = layoutBlocks
@@ -249,7 +248,7 @@ test.describe('variant-only fields are hidden, not shown blank', () => {
     // FR-021. `adminMetadata.int.spec.ts` proves the Label component is
     // DECLARED with the right name; only the browser proves it renders, and
     // BlockRowLabel re-creates Payload's own header markup, so a class rename
-    // upstream would degrade all 45 rows with a green suite.
+    // upstream would degrade every row with a green suite.
     const heroCase = CASES.find((c) => c.blockSlug === 'hero')
     expect(heroCase, 'the hero fixture row moved').toBeDefined()
 
@@ -262,9 +261,7 @@ test.describe('variant-only fields are hidden, not shown blank', () => {
     // moves both together instead of turning this into a confusing false red.
     const rowNumber = String(heroCase!.row + 1).padStart(2, '0')
     await expect(header.locator('.blocks-field__block-number')).toHaveText(rowNumber)
-    await expect(header, 'the row must still say which block it is').toContainText(
-      'Hero (standard page)',
-    )
+    await expect(header, 'the row must still say which block it is').toContainText('Hero')
     await expect(header, 'and what it is about').toContainText('Variant fixture hero')
   })
 
@@ -287,12 +284,12 @@ test.describe('variant-only fields are hidden, not shown blank', () => {
     // asynchronously, and clicking into a menu that is not open yet silently
     // does nothing and leaves the control on its previous value.
     await expect(select.locator('.rs__menu')).toBeVisible()
-    await select.locator('.rs__option', { hasText: /^With image$/ }).click()
-    await expect(select.locator('.rs__single-value')).toHaveText('With image')
+    await select.locator('.rs__option', { hasText: /^Split \(words beside a picture\)$/ }).click()
+    await expect(select.locator('.rs__single-value')).toHaveText('Split (words beside a picture)')
 
     await expect(
       fieldControl(page, row, 'media'),
-      'choosing "With image" must reveal the image field',
+      'choosing "Split" must reveal the image field',
     ).toBeVisible({ timeout: 15_000 })
     await expect(fieldControl(page, row, 'videoUrl')).toHaveCount(0)
   })

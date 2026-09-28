@@ -142,7 +142,7 @@ async function main(): Promise<void> {
   const mediaIdMap = await upsertPlaceholderMedia(payload, placeholders)
 
   console.log('[showcase-seed] seeding supporting docs (testimonials, etc.)…')
-  const supporting = await seedSupportingDocs(payload, mediaIdMap.photo)
+  const supporting = await seedSupportingDocs(payload, mediaIdMap.photo, mediaIdMap.logo)
   console.log(`  + ${supporting.testimonialIds.length} testimonials`)
 
   console.log('[showcase-seed] building fixtures…')

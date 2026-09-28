@@ -68,7 +68,7 @@ export const CaseStudies: CollectionConfig = {
       required: true,
       admin: {
         description:
-          'What sector the client is in. A "Case studies by industry" block filters on this.',
+          'What sector the client is in. A Collection cards block listing case studies can filter on this.',
       },
     },
     {
@@ -82,7 +82,7 @@ export const CaseStudies: CollectionConfig = {
       hasMany: true,
       admin: {
         description:
-          'Which services this engagement used. A "Case studies by service" block filters on this.',
+          'Which services this engagement used. A Collection cards block listing case studies can filter on this.',
       },
     },
     {

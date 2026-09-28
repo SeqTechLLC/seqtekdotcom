@@ -67,3 +67,4 @@ A concrete trigger that should reopen this decision (e.g., "we hit X scale," "ve
 | [0010](0010-site-chrome-code-owned.md)           | Site chrome stays code-owned; chrome globals withdrawn | Accepted · revised | 2026-08-21 |
 | [0011](0011-block-previews-committed-rasters.md) | Block picker previews are committed, derived rasters   | Accepted           | 2026-08-26 |
 | [0012](0012-one-shell-geometry.md)               | One source of truth for shell geometry                 | Accepted           | 2026-09-05 |
+| [0013](0013-thirteen-blocks.md)                  | Thirteen blocks, modelled on WordPress core            | Accepted           | 2026-09-24 |

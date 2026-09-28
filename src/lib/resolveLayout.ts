@@ -1,22 +1,23 @@
-import type { CaseStudy, Post, Service } from '../payload-types'
-import { listCaseStudies, listPosts, listServices, listTeamMembers } from './payload'
+import type { CaseStudy, Service } from '../payload-types'
+import { type CardCollection, isCardCollection, unwrapPicks } from './cardCollections'
+import {
+  listCaseStudies,
+  listIndustries,
+  listLocations,
+  listPartners,
+  listPosts,
+  listServices,
+  listTeamMembers,
+  listWorkshops,
+} from './payload'
 import type { ResolvedBlockType } from './resolvedBlockTypes'
 
 /**
  * ROADMAP UI-2 — resolve collection-backed blocks at template time.
  *
- * Four blocks let an author pick a `source`/`filter` (latest posts, case
- * studies by industry, services by pillar, leadership-only team members)
- * instead of hand-picking rows. Nothing ever consumed those selects: the
- * render components only knew how to draw `manualItems`, so a block set to any
- * non-manual source drew the literal string "Source: latest (resolves at
- * template time)" as public body copy. `team-grid` was the worst of them,
- * because `filter` is its one REQUIRED field while `manualItems` is described
- * as an optional override — the natural authoring path produced the broken
- * page.
- *
- * This module is the "template time" those placeholders were deferring to. The
- * routes await it before handing the layout to `RenderBlocks`, so:
+ * A `cards` block set to "All of them" or "Filtered" names what it lists, not
+ * the items; this module turns that choice into items. The routes await it
+ * before handing the layout to `RenderBlocks`, so:
  *
  *   - blocks stay pure, synchronous, presentational components (they render
  *     whatever `manualItems` they are handed and nothing else), which keeps
@@ -25,7 +26,7 @@ import type { ResolvedBlockType } from './resolvedBlockTypes'
  *   - the collection reads go through the existing cached readers in
  *     `lib/payload.ts`, so they inherit the cache tags, the hourly
  *     revalidation and the `withReadTimeout` guard (ADR 0007) for free;
- *   - `source`/`filter` become authoring-time inputs consumed HERE, and are
+ *   - `source` and the filters are authoring-time inputs consumed HERE, and are
  *     not read by any component.
  *
  * A read that times out throws rather than degrading to an empty section: a
@@ -58,14 +59,6 @@ const sameRelation = (a: unknown, b: unknown): boolean => {
 const relationListHas = (values: unknown, target: unknown): boolean =>
   Array.isArray(values) && values.some((value) => sameRelation(value, target))
 
-const hasManualItems = (block: LayoutBlock): boolean =>
-  Array.isArray(block.manualItems) && block.manualItems.length > 0
-
-const limitOf = (block: LayoutBlock, fallback: number): number => {
-  const raw = block.limit
-  return typeof raw === 'number' && raw > 0 ? raw : fallback
-}
-
 /** The two fields the team ordering actually reads. */
 interface TeamOrdering {
   isLeadership?: boolean | null
@@ -74,7 +67,7 @@ interface TeamOrdering {
 
 /**
  * Leadership first, then by `order` (unset last). Shared with `/team` so the
- * listing page and a `team-grid` block set to "All" agree on sequence. Typed
+ * listing page and a `cards` block of team members agree on sequence. Typed
  * structurally rather than as `TeamMember` so it stays callable on any shape
  * carrying the two fields it reads.
  */
@@ -84,55 +77,88 @@ export const byLeadershipThenOrder = (a: TeamOrdering, b: TeamOrdering): number 
   return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
 }
 
-async function resolveTeamGrid(block: LayoutBlock): Promise<LayoutBlock> {
-  // `manualItems` is documented on the block as an override that wins over the
-  // filter, so an explicit pick is honoured before any query runs.
-  if (hasManualItems(block)) return block
-  const members = await listTeamMembers()
-  const picked =
-    block.filter === 'leadership-only' ? members.filter((m) => Boolean(m.isLeadership)) : members
-  return { ...block, manualItems: [...picked].sort(byLeadershipThenOrder) }
-}
-
-async function resolvePostList(block: LayoutBlock): Promise<LayoutBlock> {
-  if (block.source === 'manual') return block
-  const posts = await listPosts() // already sorted `-publishedAt`
-  const picked: Post[] =
-    block.source === 'by-category'
-      ? posts.filter((p) => relationListHas(p.categories, block.category))
-      : posts
-  return { ...block, manualItems: picked.slice(0, limitOf(block, 3)) }
-}
-
-async function resolveCaseStudyGrid(block: LayoutBlock): Promise<LayoutBlock> {
-  if (block.source === 'manual') return block
-  const studies = await listCaseStudies() // already sorted `-publishedAt`
-  let picked: CaseStudy[] = studies
-  if (block.source === 'by-industry') {
-    picked = studies.filter((s) => sameRelation(s.industry, block.industry))
-  } else if (block.source === 'by-service') {
-    picked = studies.filter((s) => relationListHas(s.services, block.service))
-  }
-  return { ...block, manualItems: picked.slice(0, limitOf(block, 3)) }
-}
-
-async function resolveServiceCards(block: LayoutBlock): Promise<LayoutBlock> {
-  if (block.source === 'manual') return block
-  const all = await listServices() // already sorted by `order`
-  // SVC-2: `services` holds three tiers. A card list is always services, never
-  // the groups or the axis pages that live alongside them.
-  const leaves = all.filter((s) => s.tier === 'leaf')
-  if (block.source !== 'by-pillar') return { ...block, manualItems: leaves }
-
-  // The relation lives on the GROUP, not the leaf, so this is a lookup rather
-  // than a filter — and the group's chosen ORDER is what renders, where the old
-  // `pillar`-on-the-service model fell back to the services' own `order`.
-  const group = all.find((s) => s.tier === 'group' && sameRelation(s, block.pillar))
-  const byId = new Map(leaves.map((s) => [s.id, s]))
-  const picked = (group?.items ?? [])
-    .map((item) => byId.get(typeof item === 'object' ? item.id : (item as number)))
+/**
+ * The leaf services a group holds, in the group's own order. The relation
+ * lives on the GROUP (SVC-2), so this is a lookup rather than a filter. A
+ * group that is not published, or not a group, holds nothing.
+ */
+function servicesInGroup(all: Service[], group: unknown): Service[] {
+  const found = all.find((s) => s.tier === 'group' && sameRelation(s, group))
+  const leaves = new Map(all.filter((s) => s.tier === 'leaf').map((s) => [String(s.id), s]))
+  return (found?.items ?? [])
+    .map((item) => leaves.get(String(relationId(item))))
     .filter((s): s is Service => !!s)
-  return { ...block, manualItems: picked }
+}
+
+/**
+ * Every published row of `collection` a `cards` block set to "All" or
+ * "Filtered" lists, in the order the matching listing page uses. A blank
+ * filter does not narrow: "Filtered" with nothing chosen reads as "All".
+ */
+async function queryCards(block: LayoutBlock, collection: CardCollection): Promise<unknown[]> {
+  const filtered = block.source === 'filtered'
+  switch (collection) {
+    case 'caseStudies': {
+      let studies: CaseStudy[] = await listCaseStudies() // already `-publishedAt`
+      if (filtered && relationId(block.industry) !== null) {
+        studies = studies.filter((s) => sameRelation(s.industry, block.industry))
+      }
+      if (filtered && relationId(block.service) !== null) {
+        studies = studies.filter((s) => relationListHas(s.services, block.service))
+      }
+      return studies
+    }
+    case 'posts': {
+      const posts = await listPosts() // already `-publishedAt`
+      return filtered && relationId(block.category) !== null
+        ? posts.filter((p) => relationListHas(p.categories, block.category))
+        : posts
+    }
+    case 'services': {
+      const all = await listServices() // already by `order`
+      // SVC-2: "All" means services, never the groups or axis pages that share
+      // the collection. A group's own list is the one way to reach its order.
+      return filtered && relationId(block.serviceGroup) !== null
+        ? servicesInGroup(all, block.serviceGroup)
+        : all.filter((s) => s.tier === 'leaf')
+    }
+    case 'teamMembers': {
+      const members = [...(await listTeamMembers())].sort(byLeadershipThenOrder)
+      return filtered && block.leadershipOnly === true
+        ? members.filter((m) => Boolean(m.isLeadership))
+        : members
+    }
+    case 'industries':
+      return listIndustries() // by title
+    case 'workshops':
+      return listWorkshops() // by `order`
+    case 'locations':
+      return listLocations() // by city
+    case 'partners':
+      return listPartners() // by `order`, then name
+  }
+}
+
+/**
+ * The one resolver for every list of documents (ADR 0009's Query Loop). It
+ * fills `manualItems` with plain documents whichever way the block chose them,
+ * so the component draws exactly what it is handed:
+ *
+ *   - "All" / "Filtered" read the collection through its cached reader;
+ *   - "Manual" keeps the polymorphic picks that belong to the chosen
+ *     collection, in the order they were picked, unwrapped from Payload's
+ *     `{ relationTo, value }`;
+ *   - `limit` then trims whichever list that produced. Blank means all.
+ */
+async function resolveCards(block: LayoutBlock): Promise<LayoutBlock> {
+  if (!isCardCollection(block.collection)) return { ...block, manualItems: [] }
+  const collection = block.collection
+  const items =
+    block.source === 'manual'
+      ? unwrapPicks(block.manualItems, collection)
+      : await queryCards(block, collection)
+  const limit = typeof block.limit === 'number' && block.limit > 0 ? block.limit : undefined
+  return { ...block, manualItems: limit === undefined ? items : items.slice(0, limit) }
 }
 
 /**
@@ -143,10 +169,7 @@ async function resolveServiceCards(block: LayoutBlock): Promise<LayoutBlock> {
  * instead of a silently green gate.
  */
 const RESOLVERS: Record<ResolvedBlockType, (block: LayoutBlock) => Promise<LayoutBlock>> = {
-  'team-grid': resolveTeamGrid,
-  'post-list': resolvePostList,
-  'case-study-grid': resolveCaseStudyGrid,
-  'service-cards': resolveServiceCards,
+  cards: resolveCards,
 }
 
 /**

@@ -118,13 +118,9 @@ export const Services: CollectionConfig = {
         // GROUPS ONLY, and that is an INERT-2 call rather than a modelling one.
         // An axis holding its groups reads like the obvious other half of this
         // relation, but nothing renders it: `resolveLayout` reaches `.items`
-        // only through a `service-cards` block whose `pillar` is a
-        // `tier: 'group'` row, and `service-pillar-cards` has no `source` field
-        // and no resolver, so it is manual-pick only. Shown on an axis, this
-        // would be a control an editor arranges and no page reflects — the
-        // defect class this collection was rebuilt to remove. It comes back the
-        // moment something reads it (a `source` on `service-pillar-cards`, or a
-        // nav built from data rather than `site-content.ts`).
+        // only through a `cards` block's `serviceGroup` filter, which takes a
+        // group. Shown on an axis, this would be a control an editor arranges
+        // and no page reflects. It comes back the moment something reads it.
         condition: (data) => data?.tier === 'group',
         description:
           'The services shown under this group, in the order you arrange them. The same service may appear under more than one group.',

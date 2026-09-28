@@ -14,7 +14,7 @@ import { BLOCK_CATEGORY_LABELS, type BlockCategory } from './categories'
  * no place on the card for one, which is why the disambiguation clause of C1
  * lives in the label instead. This helper exists so the group heading, the
  * preview path and the collapsed row's label are all derived from one name
- * rather than retyped 45 times. That `name` must match the block's own
+ * rather than retyped per block. That `name` must match the block's own
  * `labels.singular`: `adminMetadata.int.spec.ts` fails the pair if they drift,
  * because the picker card and the collapsed row would then disagree about what
  * the block is called.
@@ -35,7 +35,7 @@ export function blockAdmin(
     disableBlockName: true,
     components: {
       // spec 011 US4 / FR-021 — a collapsed row names itself by its content.
-      // Declared here so all 45 blocks get it from one edit, and so
+      // Declared here so every block gets it from one edit, and so
       // `generate:importmap` has a single entry to resolve.
       Label: {
         clientProps: { name } satisfies BlockRowLabelProps,

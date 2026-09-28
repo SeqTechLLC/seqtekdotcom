@@ -74,11 +74,12 @@ test.describe('US1 — homepage renders the homepage global', () => {
       slug: 'homepage',
       data: {
         // spec 010 (ADR 0009): the homepage renders its `layout` blocks, not the
-        // legacy `hero` field — seed a homepage-hero block so the composition has
-        // a heading to assert.
+        // legacy `hero` field — seed a hero block so the composition has a
+        // heading to assert.
         layout: [
           {
-            blockType: 'homepage-hero',
+            blockType: 'hero',
+            variant: 'text-only',
             headline: 'A consulting partner you would want to hire',
             subheadline: 'Strategy, delivery, and localshoring from Tulsa.',
             primaryCta: { label: 'Explore our services', url: '/services/what-we-do' },
@@ -100,7 +101,7 @@ test.describe('US1 — homepage renders the homepage global', () => {
     expect(res?.status()).toBe(200)
 
     await expect(page.getByTestId('homepage')).toBeVisible()
-    // The homepage-hero block composed from the global's `layout` proves the
+    // The hero composed from the global's `layout` proves the
     // template rendered the composition, not the empty-state placeholder.
     await expect(
       page.getByRole('heading', { name: 'A consulting partner you would want to hire' }),
@@ -144,7 +145,10 @@ test.describe('US3 — team page renders members with photos', () => {
     })
   })
 
-  test('GET /team → 200, TeamGrid renders the member, axe-clean', async ({ page, request }) => {
+  test('GET /team → 200, the team cards render the member, axe-clean', async ({
+    page,
+    request,
+  }) => {
     const media = await payload.create({
       collection: 'media',
       data: { alt: 'US3 marquee headshot' },
@@ -269,8 +273,15 @@ test.describe('US2 — case study renders structured fields', () => {
             body: lexical('We introduced CI/CD and a strangler-fig migration.'),
           },
           { blockType: 'content', body: lexical('Deploys went from quarterly to daily.') },
-          { blockType: 'metric-display', number: '50%', label: 'Faster deploys' },
-          { blockType: 'metric-display', number: '3x', label: 'Release frequency' },
+          {
+            blockType: 'items',
+            layout: 'grid',
+            markers: 'custom',
+            items: [
+              { marker: '50%', title: 'Faster deploys' },
+              { marker: '3x', title: 'Release frequency' },
+            ],
+          },
         ],
         testimonial: testimonial.id,
       },
@@ -363,7 +374,8 @@ test.describe('US4 — workshop detail + placeholder form mounts', () => {
             items: [{ image: proofPhoto.id, caption: 'Working the plan at the whiteboard.' }],
           },
           {
-            blockType: 'video-embed',
+            blockType: 'embed',
+            kind: 'video',
             provider: 'youtube',
             videoId: 'dQw4w9WgXcQ',
             title: 'Workshop recap',
@@ -418,9 +430,7 @@ test.describe('US5 — localshoring renders via RenderBlocks', () => {
     })
   })
 
-  test('GET /localshoring → 200, comparison-table narrative renders, axe-clean', async ({
-    page,
-  }) => {
+  test('GET /localshoring → 200, comparison table renders, axe-clean', async ({ page }) => {
     await payload.delete({
       collection: 'pages',
       where: { slug: { equals: LOCALSHORING_SLUG } },
@@ -433,7 +443,7 @@ test.describe('US5 — localshoring renders via RenderBlocks', () => {
         slug: LOCALSHORING_SLUG,
         layout: [
           {
-            blockType: 'comparison-table',
+            blockType: 'table',
             heading: 'Localshoring vs the alternatives',
             columns: [{ label: 'Localshoring' }, { label: 'Offshore' }],
             rows: [{ dimension: 'Time zone', cells: [{ value: 'Same' }, { value: 'Opposite' }] }],

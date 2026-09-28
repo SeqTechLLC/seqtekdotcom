@@ -12,7 +12,11 @@
  * disagree, the doc wins.
  */
 @layer base {
-  :root {
+  /* A light panel inside a dark or brand band (a form card, a quote card) gets the
+   * page tokens back, so its text is dark again (see .band-dark below). */
+  :root,
+  :is(.band-dark, .band-brand)
+    :is(.bg-surface, .bg-surface-elevated, .bg-surface-subtle, .bg-white) {
     /* Text */
     --color-text-primary: #1c1c31; /* neutral-900 */
     --color-text-secondary: #3e3e47; /* neutral-700 */
@@ -47,6 +51,30 @@
     --font-display: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-body: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', monospace;
+  }
+
+  /* Dark and brand bands re-point the text, link and border tokens, so a block's
+   * ordinary classes stay legible on them (Section.tsx). `accent-strong` is not
+   * re-pointed: it is also the button fill, which already works on both. */
+  .band-dark {
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #d9d9df; /* neutral-200 */
+    --color-text-muted: #bababf; /* neutral-300 */
+    --color-text-accent: #a4d27a; /* brand-green-300 */
+    --color-link: #a4d27a;
+    --color-link-hover: #c8e3ab; /* brand-green-200 */
+    --color-border-subtle: #3e3e47; /* neutral-700 */
+    --color-border-strong: #54545d; /* neutral-600 */
+  }
+  .band-brand {
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #f3f9ec; /* brand-green-50 */
+    --color-text-muted: #e3f1d4; /* brand-green-100 */
+    --color-text-accent: #ffffff;
+    --color-link: #ffffff;
+    --color-link-hover: #f3f9ec;
+    --color-border-subtle: rgb(255 255 255 / 0.3);
+    --color-border-strong: rgb(255 255 255 / 0.5);
   }
 
   body {

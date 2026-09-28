@@ -49,7 +49,7 @@ const HUBSPOT_FRAME = [
 
 const HUBSPOT_IMG = ['*.hubspot.com', '*.hsforms.net'] as const
 
-// Privacy-respecting video embeds (workshop proof sections, VideoEmbed
+// Privacy-respecting video embeds (workshop proof sections, the `embed`
 // block). youtube-nocookie defers cookies until playback; Vimeo's player
 // host is its only embed origin. Iframes only — no script/img surface.
 const VIDEO_FRAME = ['www.youtube-nocookie.com', 'player.vimeo.com'] as const

@@ -1,0 +1,129 @@
+{
+  "kind": "layout",
+  "brief": "A market page for Oklahoma City: what SEQTEK offers businesses there, how Localshoring works, proof, and a way to start. Only facts already in the content: Tulsa-based since 1999, Localshoring as Hank defines it, the published case studies. No invented local clients, offices or numbers. Target collection: pages.",
+  "collection": "pages",
+  "layout": [
+    {
+      "blockType": "hero",
+      "variant": "split",
+      "eyebrow": "Oklahoma City",
+      "headline": "Senior consultants who build the trust first",
+      "subheadline": "SEQTEK has built software for Oklahoma businesses since 1999. The trust comes first, and then the work moves fast.",
+      "media": {
+        "$ref": {
+          "collection": "media",
+          "field": "filename",
+          "value": "hero-localshoring.webp"
+        }
+      },
+      "primaryCta": {
+        "label": "Book a call",
+        "url": "/contact",
+        "variant": "primary"
+      },
+      "secondaryCta": {
+        "label": "See our work",
+        "url": "/case-studies"
+      },
+      "alignment": "left"
+    },
+    {
+      "blockType": "content",
+      "width": "standard",
+      "body": {
+        "root": {
+          "type": "root",
+          "version": 1,
+          "format": "",
+          "indent": 0,
+          "direction": "ltr",
+          "children": [
+            {
+              "type": "heading",
+              "tag": "h2",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "Local means accountable"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "version": 1,
+              "format": "",
+              "indent": 0,
+              "direction": "ltr",
+              "textFormat": 0,
+              "textStyle": "",
+              "children": [
+                {
+                  "type": "text",
+                  "version": 1,
+                  "detail": 0,
+                  "format": 0,
+                  "mode": "normal",
+                  "style": "",
+                  "text": "Localshoring is SEQTEK's consulting model, built on a single principle: the work moves faster when trust is built first."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "blockType": "items",
+      "heading": "How it works",
+      "layout": "grid",
+      "style": "plain",
+      "markers": "none",
+      "background": "subtle",
+      "items": [
+        {
+          "title": "One owner",
+          "body": "A single delivery owner you can call, and the one person the developers answer to."
+        },
+        {
+          "title": "Proof every two to three weeks",
+          "body": "Working software on a steady rhythm instead of status reports."
+        },
+        {
+          "title": "Honest quotes",
+          "body": "We price to the true effort instead of underquoting to win the work."
+        },
+        {
+          "title": "Your hours, your language",
+          "body": "The team works in your time zone, on your schedule."
+        }
+      ]
+    },
+    {
+      "blockType": "cards",
+      "heading": "Work we have delivered",
+      "collection": "caseStudies",
+      "source": "all",
+      "limit": 3
+    },
+    {
+      "blockType": "cta",
+      "action": "buttons",
+      "heading": "Start with a conversation",
+      "body": "Tell us what is in your way. We will tell you honestly whether we are the right team for it.",
+      "primaryCta": {
+        "label": "Book a call",
+        "url": "/contact"
+      },
+      "background": "brand"
+    }
+  ]
+}

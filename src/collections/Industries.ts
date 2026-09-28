@@ -39,7 +39,7 @@ export const Industries: CollectionConfig = {
       type: 'text',
       label: 'Industry name',
       required: true,
-      admin: { description: 'What this sector is called on case studies and in an industry grid.' },
+      admin: { description: 'What this sector is called on case studies and on industry cards.' },
     },
     urlPathField({
       useAsSlug: 'title',

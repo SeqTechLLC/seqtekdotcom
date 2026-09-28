@@ -4,7 +4,7 @@ import { listPartners } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { breadcrumbLd } from '@/lib/structured-data'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { PartnerGrid } from '@/components/sections/PartnerGrid'
+import { Cards } from '@/components/sections/Cards'
 import { Container } from '@/components/ui/Container'
 
 // ADR 0009: the index is generated from `partners` collection metadata (logo,
@@ -48,7 +48,7 @@ export default async function PartnersPage() {
             </p>
           </Container>
         </header>
-        <PartnerGrid items={partners} headingLevel="h2" />
+        <Cards collection="partners" manualItems={partners} headingLevel="h2" />
       </div>
     </>
   )

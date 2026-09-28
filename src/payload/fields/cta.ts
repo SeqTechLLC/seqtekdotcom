@@ -15,7 +15,7 @@ import { safeUrlValidate } from './url'
  * `primary_cta_url` / `primary_cta_variant` columns are unchanged.
  */
 
-/** The button styles `Hero`'s primary CTA offers. Matches `Button`'s variants. */
+/** The button styles a CTA offers when `withStyle` is set. Matches `Button`'s variants. */
 const BUTTON_STYLES: SelectField['options'] = [
   { label: 'Primary (solid)', value: 'primary' },
   { label: 'Secondary (outlined)', value: 'secondary' },
@@ -32,8 +32,8 @@ interface CtaFieldOptions {
   /** Both text and link required, as the block's render path assumes. */
   required?: boolean
   /**
-   * Offer the three button styles. Only `hero.primaryCta` has this today; the
-   * column exists there and nowhere else, so it stays opt-in.
+   * Offer the three button styles. Opt-in, because each use adds a column: the
+   * hero's and the cta block's primary buttons have it.
    */
   withStyle?: boolean
 }

@@ -35,7 +35,8 @@ export const Categories: CollectionConfig = {
       label: 'Topic name',
       required: true,
       admin: {
-        description: 'What this topic is called on a post and in a "Posts by category" block.',
+        description:
+          'What this topic is called on a post and in the topic filter of a Collection cards block.',
       },
     },
     urlPathField({

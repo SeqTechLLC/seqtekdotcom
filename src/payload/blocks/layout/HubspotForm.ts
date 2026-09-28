@@ -4,7 +4,7 @@ import { outputContract } from '../outputContract'
 
 import { blockAdmin } from '../blockAdmin'
 
-import { headingField } from '../../fields/blockCopy'
+import { backgroundField, headingField } from '../../fields/blockCopy'
 import { hubspotFormIdValidate } from '../../fields/url'
 
 // Per BLOCK_LIBRARY.md §5.6. Full HubSpot form embed.
@@ -39,5 +39,6 @@ export const HubspotForm: Block = {
           'Which HubSpot form to embed. Copy the form ID out of HubSpot (Marketing > Forms > Share > embed code); it looks like 12345678-90ab-cdef-1234-567890abcdef.',
       },
     },
+    backgroundField(),
   ],
 }

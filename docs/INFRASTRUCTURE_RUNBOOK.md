@@ -1,21 +1,29 @@
 # Infrastructure Runbook
 
-**Living operational doc.** Five procedures:
+**Living operational doc.**
 
 | §   | Procedure                                                                                   | When                                  |
 | --- | ------------------------------------------------------------------------------------------- | ------------------------------------- |
 | 1   | [Stand up a fresh AWS account](#1-stand-up-a-fresh-aws-account)                             | New account, nothing exists yet       |
 | 2   | [Migrate an environment to another account](#2-migrate-an-environment-to-another-account)   | Moving a running env to a new account |
+| 2.9 | [Rebuild a lane's database](#rebuilding-a-lanes-database-for-the-2026-09-24-baseline)       | A lane's first deploy of the baseline |
 | 3   | [Cut `seqtek.com` over to prod](#3-cut-seqtekcom-over-to-prod)                              | Launch                                |
 | 4   | [Post-change verification](#4-post-change-verification)                                     | After any of the above                |
 | 5   | [Hand-off when you don't own the account](#5-hand-off-when-you-dont-own-the-target-account) | Someone else holds AWS admin          |
+
+> **Status, 2026-09-28.** Only §1.3b and §2.9 match what is deployed: the one `preview`
+> env (`SeqtekPreview*` stacks serving preview.seqtek.com and ww3.seqtek.com), in an AWS
+> account shared with unrelated infrastructure. The rest of §1–§3 and §5 still describe
+> the retired `staging`/`prod` layout and the destroyed seqtek-preview.com, and running
+> them against this account would collide with or delete live resources. Do not use them
+> until they are rewritten (`ROADMAP.md` P3, Infrastructure).
 
 Design rationale lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) (§ Promotion model,
 § Environments & isolation). [`INFRASTRUCTURE_QUICKSTART.md`](./INFRASTRUCTURE_QUICKSTART.md) was
 the original first-deploy walkthrough; it is **superseded by this file for the
 first deploy** (it predates the promotion model and describes merges to `main`
 deploying prod), but remains the reference for secret rotation, tear-down, alarm
-verification and troubleshooting.
+verification and troubleshooting, though it still describes the retired EC2 stack.
 
 ---
 
@@ -304,107 +312,16 @@ Verified 2026-08-10: the drafts reproduce the live site's content **exactly** �
 | `services`       | 9    | 9           |
 | `servicePillars` | 3    | 3           |
 
-### 2.1 Media must be primed FIRST
+### 2.1 Media
 
-**Order is not optional.** The drafts reference media 61 times by `$ref`
-(resolve an existing media doc by filename) and only 10 times by `$file`
-(upload-or-reuse). Seed content into an empty media collection and those 61
-references resolve to nothing — you get the whole site with almost no images.
-Prime media, then seed content.
+Media ships in the content repo and loads by `$file` with the content (§2.2). There
+is nothing to prime.
 
-Media is also the one thing genuinely **not** reproducible from scripts. Of the
-65 originals, 27 are curated outputs (`homepage-hero.webp`, `culture-1.webp`,
-`team-lake-annual-meeting.webp`, the headshots) whose source-photo choice was a
-human decision, and `tools/ingest-photos` keys its manifest by sha256 — so
-_which_ of the ~900 photos in `../photos` became `homepage-hero.webp` is
-recorded nowhere re-runnable. Re-running the ingest will not reproduce them.
+### 2.2 Rebuild the content
 
-So carry the originals across from the environment being replaced. They are
-served publicly, and Payload regenerates every size variant on upload — which is
-why only the 65 originals matter, not the ~473 S3 objects.
-
-```sh
-SRC=https://seqtek-preview.com
-DIR=/tmp/media-originals && mkdir -p "$DIR"
-
-# Fetch every original, and build the manifest push-to-payload expects,
-# carrying the ORIGINAL alt text across (alt is required on upload).
-curl -s "$SRC/api/media?limit=300&depth=0" > "$DIR/media.json"
-python3 - "$DIR" "$SRC" <<'PY'
-import json, os, sys, urllib.request
-d, src = sys.argv[1], sys.argv[2]
-docs = json.load(open(os.path.join(d, "media.json")))["docs"]
-man = []
-for m in docs:
-    fn = m.get("filename")
-    if not fn:
-        continue
-    urllib.request.urlretrieve(f"{src}/media/{fn}", os.path.join(d, fn))
-    # push-to-payload reads `curated` (the filename in --dir) and `alt`.
-    man.append({"curated": fn, "source": fn, "kind": "photo", "slot": "",
-                "people": [], "alt": m.get("alt") or fn})
-json.dump(man, open(os.path.join(d, "manifest.json"), "w"), indent=2)
-print(f"{len(man)} originals + manifest.json")
-PY
-
-# Push them into the NEW environment (idempotent — skips filenames already there)
-IMPORT_BASE_URL=https://<new-env> IMPORT_TOKEN=<token> \
-  npx tsx tools/ingest-photos/push-to-payload.ts --dir "$DIR" --dry-run
-```
-
-**If the target is gated** (`cognitoAuthEnabled: true`, per §1.3a — the prod
-configuration), the ALB 302s every path including `/api/*`, so `IMPORT_TOKEN`
-alone never reaches Payload. Export the proxy's session cookie as well, or the
-push fails with `likely behind an auth proxy`:
-
-```sh
-export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
-```
-
-`tools/payload-seed/README.md` §"Getting `IMPORT_COOKIE`" has the DevTools
-steps. Every REST tool here reads it: `push-to-payload`, `rekey-staging`,
-`push-staging` and `payload:seed`.
-
-Drop `--dry-run` to write. Keep filenames byte-identical — `$ref` and `$file`
-both key on filename, so a rename silently orphans every reference to it.
-
-### 2.2 Then rebuild the content
-
-```sh
-export IMPORT_BASE_URL=https://<new-environment-url>
-export IMPORT_TOKEN=<payload-token cookie from /admin on the NEW env>
-# Gated target (cognitoAuthEnabled, §1.3a)? Also export the proxy cookie —
-# see §2.1. Without it the globals at the end of this list are the ones most
-# likely to report success while writing nothing.
-export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
-
-# Order matters — later specs resolve $ref against what earlier ones created.
-# `global-site-settings` and `global-navigation` are deliberately absent: both
-# globals were withdrawn in spec 011 (site chrome is code-owned, ADR 0010), and
-# payload-seed accepts any string as a global slug, so listing them here would
-# PATCH a route that no longer exists and report success.
-for f in categories industries testimonials team service-pillars services \
-         case-studies posts workshops pages partners global-homepage; do
-  npm run payload:seed -- docs/content-drafts/$f.json
-done
-```
-
-> **Reconciled 2026-08-11.** This list previously named `content-batch.json`,
-> `about.json`, and `homepage.json`. Those predate the spec-010 block migration —
-> they carry the legacy discrete body fields but **no `layout` array**, so seeding
-> them into a fresh environment loads content that renders as an **empty body**,
-> and reports success while doing it. They now live in
-> `docs/content-drafts/_archive/`. The files above are a verified-portable mirror
-> of staging (58 docs, 84 `$ref`s, 0 unresolved) carrying both the legacy fields
-> and the real `layout`. See `docs/content-drafts/README.md`.
->
-> Load `industries.json` before `case-studies.json`: the five industry records are
-> missing on staging today, which is why every case study there has a dangling
-> `industry` reference. Seeding in this order repairs it.
-
-Run each with `--dry-run` first. Seeding is idempotent by the identity field, so
-a re-run repairs rather than duplicates. A `$ref` that cannot resolve is
-reported — if you see those, media priming (§2.1) did not complete.
+Once per lane, as in §2.9 steps 6–7: the website owner signs in to the lane's
+`/admin` first, then loads the content JSON in the content repo's `LOAD-ORDER.md`
+order.
 
 ### 2.3 Verify against the old environment
 
@@ -485,7 +402,9 @@ aws route53domains update-domain-nameservers --domain-name seqtek-preview.com \
 4. Transfer the domain and repoint nameservers (§2.6)
 5. Watch both accounts for 24 h
 6. Only then decommission the source: **take a final RDS snapshot and keep it**,
-   then delete stacks, empty buckets, remove zones
+   then delete stacks, empty buckets, remove zones. **Not in the account that runs
+   the lanes today:** it also holds the live seqtek.com zone, a shared VPC and
+   unrelated infrastructure.
 
 Rollback before step 4 is free — the old environment is still serving. After it,
 revert the nameservers; DNS TTL is the exposure window. Delete nothing in the
@@ -512,26 +431,118 @@ own it.
 
 ## 2.9 Before a destructive migration: snapshot first
 
-Some migrations drop columns and tables — spec 011's expand/contract close is the
-first, shipped as `20260824_201317_spec011_drop_inert_fields` plus
-`20260824_214311_spec011_drop_stats_bar_source`. Those are not recoverable by
-re-running anything.
+### Rebuilding a lane's database for the 2026-09-24 baseline
 
-**Merging IS deploying, and deploying IS migrating.** A push to `main` promotes
-the ww3 lane (`deploy.yml`, `IS_RELEASE`), the container's `CMD` is
-`npx payload migrate && node server.js` (`Dockerfile:134`), and the `preview`
-GitHub Environment has no approval rule. There is no manual step between the
-merge button and the migration, and there is no separate staging lane to
-rehearse in — that account was retired 2026-08-14.
+The migration history was squashed into one baseline (`src/migrations/*_baseline.ts`)
+that creates every type and table, so it cannot run against a lane's existing
+database. Deployed to a lane that has not been rebuilt (preview at merge, ww3 at
+release publish), `payload migrate` fails and ECS rolls back to the previous image,
+which keeps serving. The rebuild works before that deploy or after it has failed.
+Do each lane just before its own deploy: the lane serves nothing in between.
 
-So the one safety step happens **before you press merge**:
+Both lanes run in the `SeqtekPreview*` stacks in `us-east-1` and share one RDS
+instance; preview's database is `seqtek_preview` and ww3's is `seqtek_prod`. The
+account also runs unrelated infrastructure, another RDS instance included, so
+every command below resolves its target from the stack outputs.
+
+The work splits the way §5 does: the AWS steps need the account admin, the rest
+needs the website owner. The lane stays at zero tasks from the drop until the new
+image deploys, because an old-image task started in between would migrate the old
+schema into the empty database.
+
+**Account admin** (AWS CLI in the account; AWS CloudShell in `us-east-1` works).
+
+1. Pick the lane and snapshot the RDS instance. The snapshot holds both lanes'
+   databases.
+
+```sh
+export AWS_REGION=us-east-1
+LANE=ServiceName   # preview. For ww3: LANE=SecondaryLaneServiceName
+out() { aws cloudformation describe-stacks --stack-name "$1" \
+  --query "Stacks[0].Outputs[?OutputKey=='$2'].OutputValue | [0]" --output text; }
+CLUSTER=$(out SeqtekPreviewCompute ClusterName)
+SERVICE=$(out SeqtekPreviewCompute "$LANE")
+DBHOST=$(out SeqtekPreviewData DbEndpointHostname)
+INSTANCE=$(aws rds describe-db-instances --output text \
+  --query "DBInstances[?Endpoint.Address=='$DBHOST'].DBInstanceIdentifier | [0]")
+SNAP=pre-baseline-$(date +%Y%m%d%H%M)
+aws rds create-db-snapshot --db-instance-identifier "$INSTANCE" \
+  --db-snapshot-identifier "$SNAP" >/dev/null
+aws rds wait db-snapshot-completed --db-snapshot-identifier "$SNAP"
+```
+
+2. Note the lane's task count (1 today), then scale it to zero.
+
+```sh
+aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+  --query 'services[0].desiredCount'
+aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+  --desired-count 0 >/dev/null
+aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
+```
+
+3. Drop and recreate the lane's database with a one-off task from the lane's own
+   task definition, which carries the credentials. Its `DB_NAME` is that lane's
+   database, so the other lane's is untouched.
+
+```sh
+TASKDEF=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+  --query 'services[0].taskDefinition' --output text)
+aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+  --query 'services[0].networkConfiguration' --output json > net.json
+cat > recreate-db.json <<'EOF'
+{"containerOverrides": [{"name": "AppContainer", "command": ["node", "-e",
+  "const { Client } = require('pg'); const e = process.env; const c = new Client({ connectionString: `postgresql://${e.DB_USER}:${e.DB_PASS}@${e.DB_HOST}:${e.DB_PORT}/postgres?sslmode=require` }); (async () => { await c.connect(); await c.query(`DROP DATABASE IF EXISTS ${e.DB_NAME} WITH (FORCE)`); await c.query(`CREATE DATABASE ${e.DB_NAME}`); await c.end(); })().catch((err) => { console.error(err); process.exit(1); });"]}]}
+EOF
+TASK=$(aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE \
+  --task-definition "$TASKDEF" --network-configuration file://net.json \
+  --overrides file://recreate-db.json --query 'tasks[0].taskArn' --output text)
+aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK"
+aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" \
+  --query 'tasks[0].[containers[0].exitCode, stoppedReason]'   # exit code must be 0
+```
+
+Then report the snapshot name and the task count from step 2, and stop. **Do not
+sign in to `/admin`**: on an empty database the first account to sign in becomes
+the admin (`src/lib/auth/apply-bootstrap-role.ts`).
+
+**Website owner.**
+
+4. Deploy: merge to `main` (preview) or publish the release (ww3), or re-run the
+   failed Deploy run if one already tried. The new image's `payload migrate`
+   applies the baseline to the empty database.
+5. If the deploy's smoke job fails because the lane has no running task, ask the
+   account admin to restore the step 2 count with
+   `aws ecs update-service --desired-count`, then re-run the smoke job.
+6. Sign in to the lane's `/admin` with Google, first. Its `payload-token` cookie is
+   `IMPORT_TOKEN`. The ALB gate's session cookies are `IMPORT_COOKIE`
+   (`tools/payload-seed/README.md`, "Getting `IMPORT_COOKIE`").
+7. Load the content JSON with `npm run payload:seed` in the empty-database order in
+   the content repo's `LOAD-ORDER.md`. Every file must end `errors=0`.
+
+### Snapshotting before a destructive migration
+
+A migration that drops columns or tables is not recoverable by re-running
+anything.
+
+**Merging IS deploying, and deploying IS migrating.** A push to `main` deploys the
+preview lane and publishing a release deploys ww3 (`deploy.yml`, `IS_RELEASE`).
+Each lane's container command runs `npx payload migrate` before `node server.js`
+(`infra/lib/compute-stack.ts`), and the `preview` GitHub Environment has no
+approval rule. There is no manual step between the merge button and the
+migration, and there is no separate staging lane to rehearse in — that account
+was retired 2026-08-14.
+
+So the one safety step happens **before the merge**, and the account admin takes
+it, since the website owner has no AWS access (§5). Resolve `$INSTANCE` as in step 1
+of the rebuild above:
 
 ```sh
 aws rds create-db-snapshot \
-  --db-instance-identifier <instance> \
-  --db-snapshot-identifier pre-spec011-drop-inert-fields
+  --db-instance-identifier "$INSTANCE" \
+  --db-snapshot-identifier pre-<migration-name>
 aws rds wait db-snapshot-completed \
-  --db-snapshot-identifier pre-spec011-drop-inert-fields
+  --db-snapshot-identifier pre-<migration-name>
 ```
 
 That is the whole procedure. Two things make it sufficient rather than thin:
@@ -617,14 +628,17 @@ HubSpot build args survived).
 
 ## 5. Hand-off when you don't own the target account
 
-The common case here: the AWS account belongs to someone else (SEQTEK's infra
-admin is **domanick@seqtechllc.com**), and the person who knows the website has
-no credentials in it.
+The AWS account belongs to SEQTEK's account admin, and the website owner has no
+credentials in it.
+
+**The current hand-off is §2.9**, rebuilding a lane's database: account admin
+steps 1–3, website owner steps 4–7. The rest of this section is a fresh-account
+standup in the retired layout; see the status note at the top.
 
 That splits cleanly, because **the entire content half needs no AWS access at
 all.** The seeders write over the REST API with an `/admin` session JWT — which
-is exactly why they were built that way (staging and prod have no direct DB or
-S3 access). So the account admin never has to learn this codebase, and the
+is exactly why they were built that way (nothing outside AWS reaches the lanes'
+database or bucket). So the account admin never has to learn this codebase, and the
 website owner never needs an IAM user.
 
 This repo is public: send the account admin a link to this file rather than a
@@ -652,10 +666,9 @@ Then report back three things and **stop**:
 - confirmation that **nobody has signed in to `/admin` yet**
 
 > **Do not sign in to `/admin`.** The first person to sign in becomes the sole
-> admin; everyone after is provisioned as `editor`. `Categories` is admin-only
-> for create/update and the content load writes 3 categories, so an editor
-> cannot finish it. Leave the first sign-in to whoever runs Lane B, or expect to
-> promote them afterwards.
+> admin; everyone after is provisioned as `editor`, and an editor cannot delete
+> records or manage accounts. Leave the first sign-in to whoever runs Lane B, or
+> expect to promote them afterwards.
 
 ### If the account admin also has GitHub access
 

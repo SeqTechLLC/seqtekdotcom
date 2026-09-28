@@ -82,7 +82,7 @@ describe('payload-types generated shape (SC-008, FR-038)', () => {
   describe('Block-level required fields', () => {
     it('HeroBlock.variant is a non-nullable union literal', () => {
       expectTypeOf<HeroBlock['variant']>().toEqualTypeOf<
-        'text-only' | 'with-image' | 'with-video' | 'split'
+        'text-only' | 'split' | 'cover' | 'with-video'
       >()
     })
 

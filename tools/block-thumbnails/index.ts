@@ -42,10 +42,9 @@ const BUDGET_BYTES = 400 * 1024
  * Override for a block whose first showcase variant is not the one an editor
  * should be shown: block slug → variant index.
  *
- * Deliberately empty. Every variant is captured, and all 45 blocks were looked
- * at variant-by-variant when this shipped; variant 0 read best in every case.
- * The hook stays because re-pointing a preview should not need a re-capture —
- * add an entry and re-run.
+ * Deliberately empty: variant 0 reads best for every block. The hook stays
+ * because re-pointing a preview should not need a re-capture — add an entry
+ * and re-run.
  */
 const PREVIEW_VARIANT: Record<string, number> = {}
 
@@ -53,17 +52,9 @@ const PREVIEW_VARIANT: Record<string, number> = {}
  * A block's preview format is declared in exactly one place: the block's own
  * `admin.images.thumbnail` URL, via `blockAdmin()`. An `.svg` there means the
  * preview is hand-authored and this tool must leave it alone; `.webp` means it
- * is derived from a capture.
- *
- * This used to be a second list here, which is the same duplication US2
- * removed for category assignment — a tool-side set and a config-side argument
- * that a test could only catch after they disagreed. Reading the config is
- * what makes disagreement impossible.
- *
- * `video-embed` is the one hand-authored preview today: it renders a facade
- * around a REMOTE YouTube poster frame, so the capture is non-deterministic
- * (it failed outright on one run) and would commit a third party's video still
- * into a public repository.
+ * is derived from a capture. Reading the config, rather than keeping a second
+ * list here, is what makes the two impossible to disagree. No block uses a
+ * hand-authored preview today.
  */
 function declaredPreview(block: (typeof layoutBlocks)[number]): {
   filename: string

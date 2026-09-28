@@ -24,7 +24,7 @@ import { getBlockFixtures } from '../../../src/payload/seed/showcase/fixtures'
 const OUT_DIR = path.resolve(import.meta.dirname, 'screenshots/block-previews')
 
 // Desktop only. The picker is an admin-desktop surface, and a mobile capture
-// of a two-column block would misrepresent what the editor is choosing.
+// of a side-by-side block would misrepresent what the editor is choosing.
 const VIEWPORT = { width: 1440, height: 900 }
 
 // Capturing every variant of every block costs a screenshot each; three is
@@ -44,6 +44,7 @@ const STUB_SUPPORTING = {
   serviceGroupIds: [0, 0, 0],
   categoryIds: [0, 0, 0],
   teamMemberIds: [0],
+  partnerIds: [0, 0, 0],
 }
 
 const fixtures = getBlockFixtures(STUB_MEDIA, STUB_SUPPORTING)
@@ -75,7 +76,12 @@ for (const fixture of fixtures) {
     // reach anyway. Hiding the light-DOM host takes its shadow content with
     // it, and matching by tag name also catches a portal injected after this
     // style tag.
-    await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' })
+    // The site header is sticky, so a block taller than the viewport (a video
+    // embed) had the header painted across the top of its preview too.
+    await page.addStyleTag({
+      content:
+        'nextjs-portal { display: none !important; } [data-testid="site-header"] { visibility: hidden !important; }',
+    })
 
     const article = page.getByTestId('page')
     await expect(article).toBeVisible()

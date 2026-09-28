@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import { CAROUSEL_SIZES, GRID_SIZES } from '@/components/sections/Gallery'
 import { SIZES as IMAGE_SIZES } from '@/components/sections/Image'
-import { CARD_SIZES } from '@/components/sections/TeamGrid'
+import { CARD_SIZES as TEAM_CARD_SIZES } from '@/components/cards/TeamCards'
 
 import {
   boxAt,
@@ -329,7 +329,7 @@ describe('the mirrored constants match their sources', () => {
  *     `--max-warnings`).
  *
  * Both injections the reviewer used now fail: swapping `sizes={SPLIT_MEDIA_SIZES}`
- * in `Hero.tsx`, and changing `TwoColumn`'s `lg:grid-cols-2` to `md:grid-cols-2`.
+ * in `Hero.tsx`, and changing `MediaText`'s `lg:grid-cols-2` to `md:grid-cols-2`.
  */
 describe('call-site geometry — bound to the components, not re-typed', () => {
   const source = (p: string) => readFileSync(path.resolve(p), 'utf8')
@@ -348,15 +348,11 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     cell: (viewport: number) => number
   }> = [
     {
-      name: 'split media column (Hero, CaseStudyHero, TwoColumn, ServicePillarHero)',
+      name: 'split media column (Hero, MediaText, FeaturedCard)',
       file: 'src/components/sections/Hero.tsx',
       classes: 'grid gap-10 lg:grid-cols-2 lg:items-center',
       expression: 'sizes={SPLIT_MEDIA_SIZES}',
-      alsoIn: [
-        'src/components/sections/CaseStudyHero.tsx',
-        'src/components/sections/TwoColumn.tsx',
-        'src/components/sections/ServicePillarHero.tsx',
-      ],
+      alsoIn: ['src/components/sections/MediaText.tsx', 'src/components/cards/FeaturedCard.tsx'],
       sizes: SPLIT_MEDIA_SIZES,
       cell: (vw) => (vw >= 1024 ? cellWidth(boxAt(vw), 2, GAP[10]) : boxAt(vw)),
     },
@@ -369,8 +365,16 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
       cell: (vw) => boxAt(vw) * (vw >= 1024 ? 0.32 : vw >= 640 ? 0.48 : 0.8),
     },
     {
+      name: 'gallery grid, 1 column (a lone picture at the Image block standard measure)',
+      expression: 'sizes={GRID_SIZES[columns]}',
+      file: 'src/components/sections/Gallery.tsx',
+      classes: "'1': 'mx-auto max-w-3xl'",
+      sizes: GRID_SIZES['1'],
+      cell: (vw) => Math.min(768, boxAt(vw)),
+    },
+    {
       name: 'gallery grid, 2 columns',
-      expression: "sizes={GRID_SIZES[columns ?? '3']}",
+      expression: 'sizes={GRID_SIZES[columns]}',
       file: 'src/components/sections/Gallery.tsx',
       classes: "'2': 'sm:grid-cols-2'",
       sizes: GRID_SIZES['2'],
@@ -378,7 +382,7 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     },
     {
       name: 'gallery grid, 3 columns',
-      expression: "sizes={GRID_SIZES[columns ?? '3']}",
+      expression: 'sizes={GRID_SIZES[columns]}',
       file: 'src/components/sections/Gallery.tsx',
       classes: "'3': 'sm:grid-cols-2 lg:grid-cols-3'",
       sizes: GRID_SIZES['3'],
@@ -386,18 +390,18 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     },
     {
       name: 'gallery grid, 4 columns',
-      expression: "sizes={GRID_SIZES[columns ?? '3']}",
+      expression: 'sizes={GRID_SIZES[columns]}',
       file: 'src/components/sections/Gallery.tsx',
       classes: "'4': 'sm:grid-cols-2 lg:grid-cols-4'",
       sizes: GRID_SIZES['4'],
       cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 4 : vw >= 640 ? 2 : 1, GAP[6]),
     },
     {
-      name: 'team grid cards',
+      name: 'cards block, team member cards',
       expression: 'sizes={CARD_SIZES}',
-      file: 'src/components/sections/TeamGrid.tsx',
+      file: 'src/components/cards/TeamCards.tsx',
       classes: 'sm:grid-cols-2 lg:grid-cols-3',
-      sizes: CARD_SIZES,
+      sizes: TEAM_CARD_SIZES,
       cell: (vw) => cellWidth(boxAt(vw), vw >= 1024 ? 3 : vw >= 640 ? 2 : 1, GAP[6]),
     },
     {
@@ -466,11 +470,11 @@ describe('call-site geometry — bound to the components, not re-typed', () => {
     })
   }
 
-  it('the four split-media blocks all use the one shared constant', () => {
+  it('the split-media blocks all use the one shared constant', () => {
     // They re-typed the same geometry four times before, which is how one wrong
     // fraction landed in all four at once.
-    for (const f of ['Hero', 'CaseStudyHero', 'TwoColumn', 'ServicePillarHero']) {
-      expect(source(`src/components/sections/${f}.tsx`), f).toContain('SPLIT_MEDIA_SIZES')
+    for (const f of ['sections/Hero', 'sections/MediaText', 'cards/FeaturedCard']) {
+      expect(source(`src/components/${f}.tsx`), f).toContain('SPLIT_MEDIA_SIZES')
     }
   })
 

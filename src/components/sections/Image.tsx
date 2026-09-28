@@ -1,5 +1,5 @@
 import { ResponsiveImage } from '../ui/ResponsiveImage'
-import { RAIL_CLASS, Section } from '../ui/Section'
+import { RAIL_CLASS, Section, type SectionBackground } from '../ui/Section'
 import { boxSizes, SHELL_RAIL } from '@/lib/layoutGeometry'
 
 interface MediaLike {
@@ -15,6 +15,7 @@ interface ImageProps {
   caption?: string | null
   width?: 'narrow' | 'standard' | 'wide' | 'full' | null
   alignment?: 'center' | 'left' | 'right' | null
+  background?: SectionBackground | null
 }
 
 // Width variants mirror the Content block's reading-column measures so a
@@ -51,13 +52,19 @@ const ALIGN_CLASSES: Record<NonNullable<ImageProps['alignment']>, string> = {
 const isFullMedia = (value: unknown): value is MediaLike =>
   typeof value === 'object' && value !== null && 'url' in (value as object)
 
-export function Image({ image, caption, width = 'standard', alignment = 'center' }: ImageProps) {
+export function Image({
+  image,
+  caption,
+  width = 'standard',
+  alignment = 'center',
+  background = 'none',
+}: ImageProps) {
   if (!isFullMedia(image) || !image.url) return null
   const widthCls = WIDTH_CLASSES[width ?? 'standard']
   const alignCls = ALIGN_CLASSES[alignment ?? 'center']
 
   return (
-    <Section padding="default">
+    <Section padding="default" background={background ?? 'none'}>
       <figure className={`${widthCls} ${alignCls}`}>
         <ResponsiveImage
           media={image}
@@ -65,7 +72,11 @@ export function Image({ image, caption, width = 'standard', alignment = 'center'
           className="w-full rounded-lg border border-border-subtle shadow-sm"
         />
         {caption ? (
-          <figcaption className="mt-3 text-small text-text-secondary">{caption}</figcaption>
+          <figcaption
+            className={`mt-3 text-small ${background === 'inverse' ? 'text-neutral-200' : 'text-text-secondary'}`}
+          >
+            {caption}
+          </figcaption>
         ) : null}
       </figure>
     </Section>

@@ -1,7 +1,8 @@
 /**
  * Showcase supporting docs — minimal seeded records in collections that
  * showcase blocks reference (testimonials, caseStudies, services, posts,
- * industries, locations, workshops, service groups, categories, teamMembers).
+ * industries, locations, workshops, service groups, categories, teamMembers,
+ * partners).
  *
  * Records are tagged with a `[Showcase]` prefix on their useAsTitle field so
  * they can be cleared idempotently. The prefix lives in the title/name so
@@ -24,6 +25,7 @@ export interface SupportingIds {
   workshopIds: Array<string | number>
   categoryIds: Array<string | number>
   teamMemberIds: Array<string | number>
+  partnerIds: Array<string | number>
 }
 
 type CollectionWithStringTitleField =
@@ -36,6 +38,7 @@ type CollectionWithStringTitleField =
   | 'workshops'
   | 'categories'
   | 'teamMembers'
+  | 'partners'
 
 async function clearTagged(
   payload: Payload,
@@ -56,6 +59,7 @@ async function clearTagged(
  * (author=teamMembers, industry=industries), so order from leaf to root.
  */
 export async function clearSupportingDocs(payload: Payload): Promise<void> {
+  await clearTagged(payload, 'partners', 'name')
   await clearTagged(payload, 'posts', 'title')
   await clearTagged(payload, 'caseStudies', 'title')
   await clearTagged(payload, 'services', 'title')
@@ -134,11 +138,8 @@ async function seedIndustries(payload: Payload) {
 
 async function seedLocations(payload: Payload) {
   await clearTagged(payload, 'locations', 'city')
-  // ROADMAP INERT-2: `locations-list` renders a second line from the state,
-  // which lives at `address.state` — the renderer used to read a top-level
-  // `state` the collection does not have. These fixtures carried no address at
-  // all, so the showcase looked identical either way and the dead branch had
-  // nowhere to show up.
+  // Location cards render a second line from `address.state`, so each fixture
+  // carries one.
   return createBatch(payload, 'locations', [
     { city: `${SHOWCASE_TAG}Tulsa`, address: { state: 'OK' }, _status: 'published' },
     { city: `${SHOWCASE_TAG}Oklahoma City`, address: { state: 'OK' }, _status: 'published' },
@@ -150,12 +151,11 @@ async function seedLocations(payload: Payload) {
 async function seedTeamMembers(payload: Payload, photoId: string | number) {
   await clearTagged(payload, 'teamMembers', 'name')
   // ROADMAP UI-1: `title` is the job title the cards render; `role` is the
-  // one-sentence description the /team/[slug] header renders under it. These
-  // fixtures used to put the job title in `role`, which is the same confusion
-  // that had the grid rendering the wrong field. One member carries both so the
-  // showcase exercises each, one carries the title alone.
+  // one-sentence description the /team/[slug] header renders under it. One
+  // member carries both so the showcase exercises each, one carries the title
+  // alone.
   return createBatch(payload, 'teamMembers', [
-    // `_status: 'published'` matters: the `team-grid` manual variant points at
+    // `_status: 'published'` matters: the hand-picked team `cards` fixture points at
     // these two, and an anon read drops unpublished relations — so without it
     // the showcase's manual card grid captured as an empty section.
     {
@@ -255,6 +255,32 @@ async function seedWorkshops(payload: Payload) {
   ])
 }
 
+// The `cards` block lists partners, and nothing else in the showcase seeds
+// one. `logo` is required, so they carry the placeholder mark.
+async function seedPartners(payload: Payload, logoId: string | number) {
+  await clearTagged(payload, 'partners', 'name')
+  return createBatch(payload, 'partners', [
+    {
+      name: `${SHOWCASE_TAG}Northwind Cloud`,
+      summary: 'Cloud platform partner for the migrations we run end to end.',
+      logo: logoId,
+      _status: 'published',
+    },
+    {
+      name: `${SHOWCASE_TAG}Contoso Data`,
+      summary: 'Analytics tooling we recommend when a client outgrows spreadsheets.',
+      logo: logoId,
+      _status: 'published',
+    },
+    {
+      name: `${SHOWCASE_TAG}Fabrikam Security`,
+      summary: 'Identity and access partner for regulated environments.',
+      logo: logoId,
+      _status: 'published',
+    },
+  ])
+}
+
 async function createBatch(
   payload: Payload,
   collection: CollectionWithStringTitleField,
@@ -275,6 +301,7 @@ async function createBatch(
 export async function seedSupportingDocs(
   payload: Payload,
   photoId: string | number,
+  logoId: string | number = photoId,
 ): Promise<SupportingIds> {
   const testimonialIds = await seedTestimonials(payload, photoId)
   const categoryIds = await seedCategories(payload)
@@ -285,8 +312,8 @@ export async function seedSupportingDocs(
   const locationIds = await seedLocations(payload)
   const teamMemberIds = await seedTeamMembers(payload, photoId)
   const serviceIds = await seedServices(payload)
-  // The relation lives on the GROUP. Give each group one leaf so the
-  // `service-cards` `by-pillar` source has something to resolve.
+  // The relation lives on the GROUP. Give each group one leaf so a services
+  // `cards` block filtered by group has something to resolve.
   await Promise.all(
     serviceGroupIds.map((id, i) =>
       serviceIds[i] === undefined
@@ -302,6 +329,7 @@ export async function seedSupportingDocs(
   const caseStudyIds = await seedCaseStudies(payload, industryIds, photoId)
   const postIds = await seedPosts(payload, teamMemberIds[0]!, photoId)
   const workshopIds = await seedWorkshops(payload)
+  const partnerIds = await seedPartners(payload, logoId)
 
   return {
     testimonialIds,
@@ -314,5 +342,6 @@ export async function seedSupportingDocs(
     serviceGroupIds,
     categoryIds,
     teamMemberIds,
+    partnerIds,
   }
 }

@@ -89,12 +89,10 @@ const SERVICE_GROUP_SLUG = 'delivery-and-change'
 
 /**
  * An axis — the third and last tier, and the one NAV-1 made load-bearing: two
- * of the six top-level nav items point at an axis page. It was the only tier
- * with no fixture. The route is tier-agnostic (it stamps `data-tier` and hands
- * the layout to RenderBlocks), so what went uncovered is not a branch but the
- * SHAPE an axis carries: `service-pillar-cards`, the block whose whole purpose
- * is an axis page, and which no other fixture renders (a group's own page uses
- * `service-cards` instead).
+ * of the six top-level nav items point at an axis page. The route is
+ * tier-agnostic (it stamps `data-tier` and hands the layout to RenderBlocks),
+ * so what this covers is the shape an axis carries: `cards` hand-picking its
+ * groups.
  */
 const SERVICE_AXIS_SLUG = 'what-we-do-e2e'
 
@@ -247,8 +245,15 @@ export async function seedInScopeRoutes(
           blockType: 'content',
           body: lexical('Deploys went from quarterly to daily.'),
         },
-        { blockType: 'metric-display', number: '50%', label: 'Faster deploys' },
-        { blockType: 'metric-display', number: '3x', label: 'Release frequency' },
+        {
+          blockType: 'items',
+          layout: 'grid',
+          markers: 'custom',
+          items: [
+            { marker: '50%', title: 'Faster deploys' },
+            { marker: '3x', title: 'Release frequency' },
+          ],
+        },
       ],
       testimonial: testimonial.id,
       _status: 'published',
@@ -275,7 +280,7 @@ export async function seedInScopeRoutes(
   // the real services content lives in the gitignored docs/content-drafts JSON
   // loaded by tools/payload-seed. The block TYPES get full a11y coverage from
   // the showcase seeder; here we only need each route to 200 and pass the
-  // sweep. digital-transformation keeps a featured-case-study block pointing at
+  // sweep. digital-transformation keeps a featured `cards` block pointing at
   // the case study seeded just above, so it resolves a real study and never
   // read-timeouts on an unseeded id.
 
@@ -307,7 +312,7 @@ export async function seedInScopeRoutes(
       body: lexical('A senior US engineering team that plugs into your roadmap.'),
     },
     {
-      blockType: 'comparison-table',
+      blockType: 'table',
       heading: 'Localshoring vs the alternatives',
       columns: [{ label: 'Localshoring' }, { label: 'Offshore' }],
       rows: [{ dimension: 'Time zone', cells: [{ value: 'Same' }, { value: 'Opposite' }] }],
@@ -318,9 +323,12 @@ export async function seedInScopeRoutes(
   const aiIntegration = await serviceDoc('AI Integration', 'ai-integration', [
     { blockType: 'content', body: lexical('Where AI fits your business, and where it does not.') },
     {
-      blockType: 'process-steps',
+      blockType: 'items',
       heading: 'How an engagement runs',
-      steps: [
+      layout: 'grid',
+      style: 'card',
+      markers: 'numbers',
+      items: [
         { title: 'Map the workflow', body: 'We learn how the work happens today.' },
         { title: 'Prove it small', body: 'A narrow, measurable pilot.' },
       ],
@@ -332,7 +340,14 @@ export async function seedInScopeRoutes(
       blockType: 'content',
       body: lexical('Custom software plus the change management to make it stick.'),
     },
-    { blockType: 'featured-case-study', heading: 'Featured work', caseStudy: caseStudy.id },
+    {
+      blockType: 'cards',
+      heading: 'Featured work',
+      collection: 'caseStudies',
+      source: 'manual',
+      display: 'featured',
+      manualItems: [{ relationTo: 'caseStudies', value: caseStudy.id }],
+    },
   ])
 
   // The group holds an ordered list of its services (SVC-2) — the relation lives
@@ -353,9 +368,13 @@ export async function seedInScopeRoutes(
           subheadline: 'How an engagement actually runs.',
         },
         {
-          blockType: 'service-cards',
+          blockType: 'cards',
+          collection: 'services',
           source: 'manual',
-          manualItems: [(localshoring as { id: number }).id, (aiIntegration as { id: number }).id],
+          manualItems: [
+            { relationTo: 'services', value: (localshoring as { id: number }).id },
+            { relationTo: 'services', value: (aiIntegration as { id: number }).id },
+          ],
         },
       ] as never,
       _status: 'published',
@@ -363,8 +382,7 @@ export async function seedInScopeRoutes(
     overrideAccess: true,
   })
 
-  // The axis tier. `service-pillar-cards` requires at least one group, so this
-  // has to be created after the group above.
+  // The axis tier. Its cards list the group above, so it is created after it.
   await payload.create({
     collection: 'services',
     data: {
@@ -380,9 +398,11 @@ export async function seedInScopeRoutes(
           subheadline: 'The areas we work in.',
         },
         {
-          blockType: 'service-pillar-cards',
+          blockType: 'cards',
           heading: 'Our groups',
-          pillars: [(group as { id: number }).id],
+          collection: 'services',
+          source: 'manual',
+          manualItems: [{ relationTo: 'services', value: (group as { id: number }).id }],
         },
       ] as never,
       _status: 'published',
@@ -439,8 +459,8 @@ export async function seedInScopeRoutes(
     overrideAccess: true,
   })
 
-  // /our-story — accent-bearing blocks on a real in-scope route: metric-display
-  // (text-accent-strong number on green-50) + process-steps (step numbers).
+  // /our-story — accent-bearing blocks on a real in-scope route: a single stat
+  // (text-accent-strong figure on green-50) + numbered steps.
   await payload.create({
     collection: 'pages',
     data: {
@@ -448,15 +468,19 @@ export async function seedInScopeRoutes(
       slug: seed.storySlug,
       layout: [
         {
-          blockType: 'metric-display',
-          number: '25+',
-          label: 'Years in business',
+          blockType: 'items',
+          layout: 'grid',
+          markers: 'custom',
           background: 'accent',
+          items: [{ marker: '25+', title: 'Years in business' }],
         },
         {
-          blockType: 'process-steps',
+          blockType: 'items',
           heading: 'How we work',
-          steps: [
+          layout: 'grid',
+          style: 'card',
+          markers: 'numbers',
+          items: [
             { title: 'Discover', body: 'We learn the business and its constraints.' },
             { title: 'Deliver', body: 'We ship in small, verifiable increments.' },
           ],
@@ -467,7 +491,7 @@ export async function seedInScopeRoutes(
     overrideAccess: true,
   })
 
-  // /localshoring — comparison-table (the proven marquee shape).
+  // /localshoring — a comparison table (the proven marquee shape).
   await payload.create({
     collection: 'pages',
     data: {
@@ -475,7 +499,7 @@ export async function seedInScopeRoutes(
       slug: seed.localshoringSlug,
       layout: [
         {
-          blockType: 'comparison-table',
+          blockType: 'table',
           heading: 'Localshoring vs the alternatives',
           columns: [{ label: 'Localshoring' }, { label: 'Offshore' }],
           rows: [{ dimension: 'Time zone', cells: [{ value: 'Same' }, { value: 'Opposite' }] }],

@@ -16,18 +16,45 @@ const BRAND_MARKER = 'HP-E2E-brand-teaser-marker'
 
 const testLayout = [
   {
-    blockType: 'homepage-hero',
+    blockType: 'hero',
+    variant: 'text-only',
     headline: HERO_MARKER,
     subheadline: 'Composed through RenderBlocks, not a bespoke template.',
     primaryCta: { label: 'Explore our services', url: '/services/what-we-do' },
     secondaryCta: { label: 'Book a call', url: '/contact' },
   },
   {
-    blockType: 'brand-teaser',
-    headline: BRAND_MARKER,
-    body: 'A composed brand teaser block.',
-    linkLabel: 'Read the story',
-    linkUrl: '/our-story',
+    blockType: 'content',
+    body: {
+      root: {
+        type: 'root',
+        version: 1,
+        format: '',
+        indent: 0,
+        direction: 'ltr',
+        children: [
+          {
+            type: 'heading',
+            tag: 'h2',
+            version: 1,
+            format: '',
+            indent: 0,
+            direction: 'ltr',
+            children: [
+              {
+                type: 'text',
+                text: BRAND_MARKER,
+                version: 1,
+                format: 0,
+                detail: 0,
+                mode: 'normal',
+                style: '',
+              },
+            ],
+          },
+        ],
+      },
+    },
   },
 ]
 

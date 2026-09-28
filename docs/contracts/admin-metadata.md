@@ -75,12 +75,10 @@ rather than prose-quality:
 Both pickers are checked independently: the layout drawer is populated from
 `layoutBlocks`, the Lexical menu from `richTextBlocks ∪ richTextInlineBlocks`.
 
-The substring clause is what carries the original intent. It is what forces bare `Hero`
-to become `Hero (standard page)` when `Case study hero`, `Homepage hero` and
-`Service pillar hero` are on the same screen, `Embed` to become `Embed (iframe)` beside
-`Video embed`, and `Testimonial` to become `Testimonial (single)` beside
-`Featured testimonials`. Those three were the entire real-world ambiguity in the
-45-block set.
+The substring clause is what carries the original intent. In the 45-block set it forced
+bare `Hero` to become `Hero (standard page)` beside `Case study hero`, `Homepage hero`
+and `Service pillar hero`, and made the same call for `Embed` and `Testimonial`. The
+thirteen-block set has no such pair; the rule still runs on every label.
 
 **FR-011 is therefore NOT MET as written** and is amended in `spec.md` rather than
 declared satisfied. The long-form "what it produces and when to choose it" prose stays
@@ -265,8 +263,8 @@ image beside the name, so the row answers "which image is this?" too.
 not only the ones with no text field. The 20px thumbnail comes from the same
 document and answers "which image is this?" on a captioned row as much as on a
 bare one, so a caption does not save the request. What the text fields decide is
-the _name_; `logo-bar.logos` and `industries.clientLogos` are the two arrays
-with no other source for it.
+the _name_; `industries.clientLogos` is the one array with no other source
+for it.
 
 **Enforced by**: `tests/int/adminMetadata.int.spec.ts` walks every collection,
 global and block and fails any array with an `upload` child and no `RowLabel`.

@@ -97,8 +97,7 @@ export const navLinkField = ({
     //
     // The extra `admin` props go in `requiredWhen`'s SECOND ARGUMENT, never as
     // a sibling `admin:` key — a spread followed by `admin: {...}` replaces the
-    // `condition` the helper returns, which is how `logo-bar.logos` once shipped
-    // validated-but-always-visible.
+    // `condition` the helper returns, leaving the field always visible.
     {
       name: 'doc',
       type: 'relationship',

@@ -4,7 +4,7 @@
   "collection": "pages",
   "missingBlock": {
     "name": "savings-calculator",
-    "reason": "The brief's centerpiece is a stateful, client-side interactive widget (inputs + slider that recompute a result on change). No existing block renders editable inputs or live client-side computation. `stats-bar` and `metric-display` present fixed, authored numbers; `embed` could host a third-party calculator but the brief asks for a first-party, branded, on-page experience. This is a genuine capability gap, so it routes to the block-curation loop (FR-011) for a new `savings-calculator` block rather than hand-coding a one-off page.",
-    "nearestExisting": "metric-display"
+    "reason": "The brief's centerpiece is a stateful, client-side widget: inputs and a slider that recompute a result as the visitor types. No block renders editable inputs or live computation. `items` shows fixed, authored figures, and `embed` could host a third-party calculator, but the brief asks for a first-party one. This goes to Kenn as a gap; it is not built without his sign-off (ADR 0013).",
+    "nearestExisting": "items"
   }
 }

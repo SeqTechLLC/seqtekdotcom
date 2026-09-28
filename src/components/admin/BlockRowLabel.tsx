@@ -32,8 +32,8 @@ export interface BlockRowLabelProps {
 /**
  * Field names to try, in order, for the line an editor would recognise. The
  * order is "what a person would call this block", not the field order: a
- * `case-study-hero` has both `headline` and `eyebrow`, and the headline is
- * the one that names it.
+ * `hero` has both `headline` and `eyebrow`, and the headline is the one that
+ * names it.
  */
 const TITLE_FIELDS = [
   'headline',

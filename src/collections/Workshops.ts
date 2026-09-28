@@ -80,7 +80,7 @@ export const Workshops: CollectionConfig = {
       },
     },
     orderField({
-      what: 'the /workshops page (a workshop-list block keeps the order you pick there)',
+      what: 'the /workshops page and any Collection cards block listing workshops',
     }),
     seoField({ noun: 'workshop' }),
     publishedAtField(),

@@ -18,6 +18,7 @@ import type {
   TeamMember,
   Partner,
   Industry,
+  Location,
 } from '@/payload-types'
 
 // spec 004 Phase 2 (Foundational). The ISR correctness of every public route
@@ -284,23 +285,18 @@ export const getHomepage = withReadTimeout(
         // The exposure is EVERY block, not a subset: `Homepage` declares
         // `blocks: [...layoutBlocks]`, so editors recompose the page without
         // a deploy and this guard has to hold for whatever they pick. The
-        // names below are worked examples of that reach, not a registry to
-        // keep current — it is more than the obvious ones:
-        // `featured-case-study`, `industry-grid`, `related-posts`,
-        // `workshop-list`, `service-pillar-cards`, and the four
-        // source-driven grids whenever an author sets them to manual, since
-        // `resolveLayout` short-circuits and leaves the depth-2 population
-        // in place. (`logo-bar` and `testimonial-block` cannot leak either
-        // way: `media` reads `() => true` and `testimonials` has no drafts.)
+        // main reach is a `cards` block set to "Pick them by hand":
+        // `resolveLayout` keeps its picks, so the depth-2 population is what
+        // renders. (`gallery` and `quote` cannot leak either way: `media`
+        // reads `() => true` and `testimonials` has no drafts.)
         //
         // COST, recorded because the obvious remedy is a trap. At depth 2 an
-        // `industry-grid` relation now carries each industry's full block
-        // `layout` (IND-1), not the small taxonomy row it used to. Amortized
-        // by the hourly `unstable_cache` above, so not a correctness problem.
-        // But `defaultPopulate` on `Industries` — the natural fix — would
-        // strip `layout`, and `IndustryGrid.isLinkable` reads it to decide
-        // whether a card may link. Trimming here silently unlinks every card;
-        // `industryGridLinking.int.spec.tsx` is what catches that.
+        // industry relation carries the industry's full block `layout`
+        // (IND-1). Amortized by the hourly `unstable_cache` above, so not a
+        // correctness problem. But `defaultPopulate` on `Industries` — the
+        // natural fix — would strip `layout`, and `IndustryCards.isLinkable`
+        // reads it to decide whether a card may link. Trimming here silently
+        // unlinks every card, and no test reads what this reader returns.
         return (await payload.findGlobal({
           slug: 'homepage',
           depth: 2,
@@ -429,7 +425,9 @@ export const getIndustryBySlug = withReadTimeout(
 // ---------------------------------------------------------------------------
 
 export const findPublishedList = async (
-  collection: SluggedCollection | 'teamMembers',
+  // `locations` is listed but not slugged-and-routed: a `cards` block lists
+  // markets, and no `/locations/[slug]` route exists to read one by slug.
+  collection: SluggedCollection | 'locations',
   // Payload's `Sort` is `string | string[]`; the array form is how a listing
   // gets a deterministic tiebreaker on a nullable primary sort key.
   opts: { sort?: string | string[]; depth?: number } = {},
@@ -440,7 +438,6 @@ export const findPublishedList = async (
     draft: false,
     overrideAccess: false,
     depth: opts.depth ?? 1,
-    limit: 200,
     pagination: false,
     ...(opts.sort ? { sort: opts.sort } : {}),
   })
@@ -491,6 +488,27 @@ export const listTeamMembers = withReadTimeout('listTeamMembers', (): Promise<Te
     async () => (await findPublishedList('teamMembers', { sort: 'order' })) as TeamMember[],
     ['teamMembers', 'list'],
     { tags: listCacheTags('teamMembers'), revalidate: ONE_HOUR },
+  )(),
+)
+
+// The next two feed a `cards` block set to list every industry or market.
+// Neither collection has an `order` field, so they sort by the name an editor
+// sees. Depth 0: an industry card reads `layout` only to decide whether it may
+// link, and blocks come back inline at any depth; nothing on a market card is
+// a relation.
+export const listIndustries = withReadTimeout('listIndustries', (): Promise<Industry[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('industries', { sort: 'title', depth: 0 })) as Industry[],
+    ['industries', 'list'],
+    { tags: listCacheTags('industries'), revalidate: ONE_HOUR },
+  )(),
+)
+
+export const listLocations = withReadTimeout('listLocations', (): Promise<Location[]> =>
+  unstable_cache(
+    async () => (await findPublishedList('locations', { sort: 'city', depth: 0 })) as Location[],
+    ['locations', 'list'],
+    { tags: listCacheTags('locations'), revalidate: ONE_HOUR },
   )(),
 )
 

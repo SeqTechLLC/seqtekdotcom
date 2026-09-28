@@ -33,7 +33,7 @@ All events are pushed via a single SSR-safe emitter `pushDataLayer()` in `src/li
 { event: 'booking_complete', meetingUrl: string }
 ```
 
-- Source: HubSpot Meetings `onMeetingBookSucceeded` cross-window `message`. The listener seam is defined in `HubspotMeetings.tsx`, but the component is a placeholder that does not yet load the real embed — so this **cannot fire until the Meetings embed is implemented** (out of scope here; documented dependency, mirrors the Meta deferral).
+- Source: HubSpot Meetings `onMeetingBookSucceeded` cross-window `message`. The listener seam (`BookingCompleteSeam`) is mounted by the `cta` block's meeting panel (`Cta.tsx`), which opens the scheduler in a new tab rather than loading the real embed — so this **cannot fire until the Meetings embed is implemented** (out of scope here; documented dependency, mirrors the Meta deferral).
 - **Test**: deferred with emission. The contract and listener shape are reviewable now.
 
 ## Invariants

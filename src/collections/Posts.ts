@@ -97,7 +97,7 @@ export const Posts: CollectionConfig = {
       hasMany: true,
       admin: {
         description:
-          'What this post is about. Topics are how a "Posts by category" block finds it.',
+          'What this post is about. A Collection cards block listing insights can filter on topic.',
       },
     },
     {

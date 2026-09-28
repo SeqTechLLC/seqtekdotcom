@@ -52,9 +52,8 @@ export default async function WorkshopPage({ params }: Props) {
 
   const facilitator = isRelObject(workshop.facilitator) ? workshop.facilitator : null
   // payload-types Workshop['layout'] is the RenderBlocks-compatible shape.
-  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
-  // case-study-grid, service-cards) get their items filled in here, before
-  // the layout reaches the synchronous RenderBlocks dispatcher.
+  // ROADMAP UI-2: `cards` blocks get their items filled in here, before the
+  // layout reaches the synchronous RenderBlocks dispatcher.
   const layout = (await resolveLayout(workshop.layout as never)) as never
 
   return (
