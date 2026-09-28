@@ -223,9 +223,8 @@ function Grid({ items, props }: { items: Spoken[]; props: QuoteProps }) {
 }
 
 /**
- * Replaces `testimonial-block` (one quote, large) and `featured-testimonials`
- * (several, as a grid). The count decides which: one quote is drawn large in
- * the chosen `layout`, two or more always sit in a grid.
+ * The count decides the shape: one quote is drawn large in the chosen
+ * `layout`, two or more always sit in a grid.
  */
 export function Quote(props: QuoteProps) {
   const items = spokenFrom(props)

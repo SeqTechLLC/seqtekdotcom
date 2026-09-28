@@ -24,8 +24,7 @@ interface TabSetProps {
  * One panel at a time, following the ARIA tabs pattern: left/right move
  * between tabs and wrap at the ends, home/end jump to them, and only the
  * selected tab is in the tab order, so a keyboard user tabs past the strip
- * into the panel rather than through every label. Ported from the retired
- * `tabs` block (ROADMAP INERT-2).
+ * into the panel rather than through every label.
  */
 export function TabSet({ items, labelledBy, inverse = false, className }: TabSetProps) {
   const [active, setActive] = useState(0)

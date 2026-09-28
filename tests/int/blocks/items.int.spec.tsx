@@ -9,11 +9,8 @@ import {
 } from '../../../src/components/sections/Items'
 
 /**
- * `items` replaces nine blocks (process steps, timeline, nav cards,
- * deliverables, key takeaways, tech stack, stats bar, metric display, mission
- * vision values). The output-contract gate proves every control moves the
- * HTML; this pins WHAT each layout draws, so the look those nine blocks had
- * survives the move.
+ * The output-contract gate proves every control moves the HTML; this pins
+ * WHAT each `items` layout draws.
  */
 
 const media = (n: number) => ({

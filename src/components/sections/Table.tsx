@@ -41,7 +41,7 @@ const padding = (have: number, want: number): number[] =>
   Array.from({ length: Math.max(0, want - have) }, (_, i) => have + i)
 
 /**
- * Replaces `comparison-table`. Any number of columns: the frame around the
+ * Any number of columns: the frame around the
  * table scrolls on its own axis, so however wide the table grows the page
  * itself never scrolls sideways. The frame is focusable so a keyboard user can
  * scroll it too.

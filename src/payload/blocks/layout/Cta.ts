@@ -82,10 +82,7 @@ const secondaryCta: GroupField = {
   admin: { ...secondary.admin, condition: (_data, siblingData) => hasButtons(siblingData) },
 }
 
-/**
- * Replaces `cta-section`, `contact-cta`, `newsletter-cta`, `download-card`
- * and `hubspot-meetings`: one ask, and `action` says what answering it means.
- */
+/** One ask; `action` says what answering it means. */
 export const Cta: Block = {
   slug: 'cta',
   interfaceName: 'CtaBlock',

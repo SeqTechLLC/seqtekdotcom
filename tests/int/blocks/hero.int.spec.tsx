@@ -6,8 +6,7 @@ import { Hero as HeroBlock } from '../../../src/payload/blocks/layout/Hero'
 import { selectOptions } from '../helpers/synthesizeBlock'
 
 /**
- * The one page opener (docs/planning/block-consolidation.md). `cover` is the
- * old homepage hero; `with-image` folded into `split`.
+ * The one page opener; `variant` picks its shape.
  */
 
 const photo = { url: '/media/photo.jpg', alt: 'A team at a whiteboard' }

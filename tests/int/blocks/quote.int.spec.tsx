@@ -4,8 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { Quote } from '../../../src/components/sections/Quote'
 
 /**
- * The `quote` block replaces testimonial-block and featured-testimonials. One
- * quote draws large in the chosen layout; two or more draw as a grid.
+ * One quote draws large in the chosen layout; two or more draw as a grid.
  */
 
 const doc = (id: number, fields: Record<string, unknown> = {}) => ({

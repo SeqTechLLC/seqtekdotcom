@@ -39,7 +39,7 @@ const PUBLIC_PATH_BUILDERS: Record<PreviewCollection, (doc: DocLike) => string |
   partners: (doc) => (doc.slug ? `/partners/${doc.slug}` : null),
   // ROADMAP IND-1, and the same trap `services` fell into above: the route
   // implements the full draft path (`getDraftBySlug`, PreviewBanner, and
-  // IndustryGrid's preview-only link guard), and `src/lib/preview.ts` has its
+  // IndustryCards' preview-only link guard), and `src/lib/preview.ts` has its
   // own `PreviewCollection` union that already lists `industries` — but THIS
   // union is what `/preview/[collection]/[slug]` gates on, so without the entry
   // that whole branch is unreachable dead code and an editor gets

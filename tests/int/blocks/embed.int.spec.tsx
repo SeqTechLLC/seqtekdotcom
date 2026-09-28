@@ -6,9 +6,7 @@ import { Embed as EmbedBlock } from '../../../src/payload/blocks/layout/Embed'
 import { selectOptions } from '../helpers/synthesizeBlock'
 
 /**
- * `embed` — a video, a map or another web page, framed on the page. It merges
- * `video-embed`, `map` and the old iframe-only `embed`
- * (docs/planning/block-consolidation.md).
+ * `embed` — a video, a map or another web page, framed on the page.
  */
 
 const OSM =

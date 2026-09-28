@@ -4,14 +4,8 @@ import { cn } from '@/lib/cn'
 import { SHELL_RAIL, type RailSize } from '@/lib/layoutGeometry'
 
 /**
- * The block shell, owned in one place.
- *
- * Every block used to restate this recipe itself — 46 of 46 hand-wrote
- * `px-4 md:px-6 lg:px-8`, 44 hand-wrote `mx-auto max-w-container-*`, and none
- * used the `Container` primitive that already described the same model. So the
- * rail width was a fact stated 46 times, and moving it was a 44-file change
- * that silently invalidated every geometry derived from it (DESIGN_SYSTEM
- * §11.4, ADR 0012).
+ * The block shell, owned in one place so the rail width is stated once
+ * (DESIGN_SYSTEM §11.4, ADR 0012).
  *
  * A block says what it IS — padding rhythm, background, rail — and this owns
  * how that becomes CSS. `src/lib/layoutGeometry.ts` holds the numbers so

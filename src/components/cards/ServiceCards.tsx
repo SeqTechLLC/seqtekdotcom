@@ -29,8 +29,7 @@ export function ServiceCards({ docs, headingLevel }: GridProps<ServiceCard>) {
       className={`mt-8 grid gap-6 ${allGroups ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-3'}`}
     >
       {docs.map((s) => {
-        // ROADMAP INERT-2: a group's card used to read a `tagline` no group
-        // has ever carried, so it has always been title-only.
+        // A group carries no tagline, so its card is title-only.
         const card = isGroup(s) ? (
           <CardHeading className="text-h3 font-semibold">{s.title}</CardHeading>
         ) : (

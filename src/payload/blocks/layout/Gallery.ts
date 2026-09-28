@@ -5,10 +5,9 @@ import { blockAdmin } from '../blockAdmin'
 import { backgroundField, headingField, introField } from '../../fields/blockCopy'
 import { mediaRowLabel } from '../../fields/mediaRowLabel'
 
-// A set of pictures, or a strip of logos (WordPress "Gallery"). Replaces
-// `logo-bar` and `client-logo-grid` as the `logos` layout. There is no column
-// control: the renderer picks the column count from how many items there are
-// (docs/planning/block-consolidation.md). One-off figures use `image`.
+// A set of pictures, or a strip of logos (WordPress "Gallery"). There is no
+// column control: the renderer picks the column count from how many items
+// there are. One-off figures use `image`.
 export const Gallery: Block = {
   slug: 'gallery',
   interfaceName: 'GalleryBlock',

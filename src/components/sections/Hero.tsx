@@ -43,11 +43,7 @@ const ALLOWED_VIDEO_HOSTS = [
   'fast.wistia.net',
 ]
 
-/**
- * ROADMAP INERT-2 — `primaryCta.variant` was declared on the `Cta` type and
- * never destructured; the button was hardcoded `bg-accent-strong text-white`,
- * so all three options in the picker drew the same thing.
- */
+/** One look per `primaryCta.variant`, so each option in the picker differs. */
 const CTA_VARIANT_CLASS: Record<string, string> = {
   primary: 'rounded-md bg-accent-strong px-5 py-3 font-medium text-white',
   secondary:
@@ -95,9 +91,7 @@ export function Hero({
 }: HeroProps) {
   const alignmentCls = alignment === 'center' ? 'text-center mx-auto' : 'text-left'
   const image = isFullMedia(media) && media.url ? media : null
-  // ROADMAP INERT-2 — `split` used to share one branch with `with-image`, so
-  // it drew the identical stacked hero and the picker offered the same layout
-  // twice under two names. It now does what it says: copy beside the image.
+  // Without an image, `split` falls back to the plain stacked layout.
   const isSplit = variant === 'split' && image !== null
   const isCover = variant === 'cover'
   const isCentered = alignment === 'center'
@@ -156,7 +150,7 @@ export function Hero({
 
   if (isCover) {
     return (
-      // Ported from the retired homepage hero. The scrim is navy-900 at 80%:
+      // The scrim is navy-900 at 80%:
       // white over it stays above 8:1 even where the photo underneath is pure
       // white, which keeps the headline and subheadline at AAA whatever image
       // an editor picks (DESIGN_SYSTEM §12.1). The inverse surface under the
@@ -188,8 +182,8 @@ export function Hero({
   }
 
   return (
-    // The hero shares the page grid edge with every section below it (two-column,
-    // video bands), so it takes the shell rail like everything else. Headline at
+    // The hero shares the page grid edge with every section below it, so it
+    // takes the shell rail like everything else. Headline at
     // display scale keeps its own measure cap so it wraps editorially rather than
     // spanning the rail; subheadline likewise.
     <Section

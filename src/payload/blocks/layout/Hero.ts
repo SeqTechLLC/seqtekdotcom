@@ -9,8 +9,7 @@ import { requiredWhen } from '../conditional'
 
 type HeroSibling = { variant?: string }
 
-// The one page opener (docs/planning/block-consolidation.md). `cover` is the
-// old homepage hero; `split` absorbed the old `with-image`.
+// The one page opener; `variant` picks its shape.
 export const Hero: Block = {
   slug: 'hero',
   interfaceName: 'HeroBlock',

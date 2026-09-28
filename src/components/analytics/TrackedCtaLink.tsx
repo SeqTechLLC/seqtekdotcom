@@ -7,8 +7,8 @@ import { pushDataLayer, type AnalyticsEvent } from '@/lib/analytics/dataLayer'
 
 /**
  * spec 008 US3 (T017) — the single client surface that emits `cta_click`
- * (contract D1, FR-008). Every primary-CTA surface (Button-as-CTA, CtaSection,
- * ContactCta, InlineCta) renders through this so there is ONE push path
+ * (contract D1, FR-008). Every primary-CTA surface (Button-as-CTA, the `cta`
+ * block, InlineCta) renders through this so there is ONE push path
  * (INV-1). Mirrors Button's internal-vs-external link logic so it is a drop-in.
  *
  * Non-blocking: the push runs on click but never prevents/awaits navigation,
@@ -32,7 +32,7 @@ interface TrackedCtaLinkProps extends Omit<
   href: string
   /** Stable identifier (not the editable label) — GTM trigger key. */
   ctaId: string
-  /** Coarse placement, e.g. `header`, `cta-section`, `contact-cta`. */
+  /** Coarse placement, e.g. `header`, `cta-buttons`, `cta-meeting`. */
   location: string
   /** Human text for GTM Preview readability; falls back to string children. */
   label?: string

@@ -12,20 +12,15 @@ import { buildLexical } from '../showcase/lexical'
 //
 // ROADMAP IND-1's bar for an industry page is the same one a group page has to
 // clear: a page that only asserts "we work in X" is worse than no page. The
-// proof section is a `case-study-grid` set to `by-industry`, which fills itself
-// from whatever is tagged to that industry. It renders NOTHING when there is
-// nothing tagged — a bare "Selected work" heading over empty space was itself a
-// claim with nothing behind it, so the grid now bows out entirely
-// (`gridEmptyState.int.spec.tsx`). The bar above is therefore met by ADDING
-// proof, never by the section appearing.
+// proof section is a `cards` block of case studies filtered to the industry,
+// which fills itself from whatever is tagged to it and renders NOTHING when
+// nothing is tagged. The bar above is therefore met by ADDING proof, never by
+// the section appearing.
 //
-// It is NOT in this skeleton, and cannot be: the block's `industry` field is
-// `requiredWhen(source === 'by-industry')` (see `requiredWhen` on the block's `industry` field in `CaseStudyGrid.ts`), and a
-// `defaultValue` has no document id to point at — a self-referential grid would
-// save as a required-and-empty relation. So the seeded industries carry the
-// grid (see the content repo's `industries.json`) and an admin-created one
-// needs it added by hand after create. Clearing the bar above is a step the
-// editor still has to take.
+// It is NOT in this skeleton, and cannot be: a `defaultValue` has no document
+// id to point at, and a blank `industry` filter lists every case study. So the
+// seeded industries carry the block (see the content repo's `industries.json`)
+// and an admin-created one needs it added by hand after create.
 export const industrySkeleton = (): Array<Record<string, unknown>> => [
   {
     blockType: 'hero',

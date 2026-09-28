@@ -14,10 +14,7 @@ interface HubspotLeadFormProps {
   successHeading?: string
   successBody?: string
   /**
-   * Revealed only once the submit succeeds. This is how a gated asset is
-   * actually gated: `download-card` used to print `Asset: <fileUrl>` beside a
-   * disabled form, so the file was neither gated nor downloadable
-   * (ROADMAP INERT-2).
+   * Revealed only once the submit succeeds; this is what gates a gated asset.
    */
   successCta?: { href: string; label: string } | null
 }

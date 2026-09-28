@@ -27,7 +27,7 @@ const eyebrow = eyebrowField({
 })
 
 // Something from another site, framed on the page (WordPress "Embed" and
-// "Video"). Replaces `video-embed`, `map` and the old iframe-only `embed`.
+// "Video"): a video, a map or a page.
 export const Embed: Block = {
   slug: 'embed',
   interfaceName: 'EmbedBlock',

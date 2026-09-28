@@ -60,9 +60,8 @@ export default async function CaseStudyPage({ params }: Props) {
   const related = (caseStudy.relatedCaseStudies ?? []).filter(isRelObject).slice(0, 3)
   const industry = isRelObject(caseStudy.industry) ? caseStudy.industry : null
   // payload-types CaseStudy['layout'] is the RenderBlocks-compatible shape.
-  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
-  // case-study-grid, service-cards) get their items filled in here, before
-  // the layout reaches the synchronous RenderBlocks dispatcher.
+  // ROADMAP UI-2: `cards` blocks get their items filled in here, before the
+  // layout reaches the synchronous RenderBlocks dispatcher.
   const layout = (await resolveLayout(caseStudy.layout as never)) as never
 
   // Reading column for the route-owned header + related footer (DESIGN_SYSTEM

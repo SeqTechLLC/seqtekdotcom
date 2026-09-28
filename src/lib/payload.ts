@@ -285,23 +285,18 @@ export const getHomepage = withReadTimeout(
         // The exposure is EVERY block, not a subset: `Homepage` declares
         // `blocks: [...layoutBlocks]`, so editors recompose the page without
         // a deploy and this guard has to hold for whatever they pick. The
-        // names below are worked examples of that reach, not a registry to
-        // keep current — it is more than the obvious ones:
-        // `featured-case-study`, `industry-grid`, `related-posts`,
-        // `workshop-list`, `service-pillar-cards`, and the four
-        // source-driven grids whenever an author sets them to manual, since
-        // `resolveLayout` short-circuits and leaves the depth-2 population
-        // in place. (`logo-bar` and `testimonial-block` cannot leak either
-        // way: `media` reads `() => true` and `testimonials` has no drafts.)
+        // main reach is a `cards` block set to "Pick them by hand":
+        // `resolveLayout` keeps its picks, so the depth-2 population is what
+        // renders. (`gallery` and `quote` cannot leak either way: `media`
+        // reads `() => true` and `testimonials` has no drafts.)
         //
         // COST, recorded because the obvious remedy is a trap. At depth 2 an
-        // `industry-grid` relation now carries each industry's full block
-        // `layout` (IND-1), not the small taxonomy row it used to. Amortized
-        // by the hourly `unstable_cache` above, so not a correctness problem.
-        // But `defaultPopulate` on `Industries` — the natural fix — would
-        // strip `layout`, and `IndustryGrid.isLinkable` reads it to decide
-        // whether a card may link. Trimming here silently unlinks every card;
-        // `industryGridLinking.int.spec.tsx` is what catches that.
+        // industry relation carries the industry's full block `layout`
+        // (IND-1). Amortized by the hourly `unstable_cache` above, so not a
+        // correctness problem. But `defaultPopulate` on `Industries` — the
+        // natural fix — would strip `layout`, and `IndustryCards.isLinkable`
+        // reads it to decide whether a card may link. Trimming here silently
+        // unlinks every card, and no test reads what this reader returns.
         return (await payload.findGlobal({
           slug: 'homepage',
           depth: 2,

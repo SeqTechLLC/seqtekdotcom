@@ -4,21 +4,15 @@ import { describe, expect, it } from 'vitest'
 import { Cards } from '../../../src/components/sections/Cards'
 
 /**
- * ROADMAP IND-1. Industry cards (the `cards` block, collection `industries`) link to `/industries/<slug>` — that is the
- * behaviour this block exists to deliver, and until this spec it was rendered by
- * nothing in CI: `blockOutputContract` synthesizes industries with no `layout`
- * (`blocks` is absent from `SYNTHESIZABLE_TYPES`), `seedIndustries` seeds four
- * without a body, and no e2e page carries the block. Every existing fixture
- * therefore exercised the UNLINKED branch only, so a regression to "no card
- * ever links" would have been green everywhere.
+ * ROADMAP IND-1. Industry cards (the `cards` block, collection `industries`)
+ * link to `/industries/<slug>` only when the industry has a body. The other
+ * fixtures synthesize industries with no `layout`, so this spec is what
+ * exercises the linked branch.
  *
- * The invariant is load-bearing and easy to break from a distance. `isLinkable`
- * reads `layout`, which arrives only because both production readers populate
- * at `depth: 2` with no `select` and no `defaultPopulate`. Adding
- * `defaultPopulate` to `Industries` — the natural fix for the homepage pulling
- * every industry's full page body — would set `layout` to undefined and
- * silently restore the #126 defect this block was re-linked to fix. That is
- * what these assertions are here to catch.
+ * `isLinkable` reads `layout`, which arrives only because the production
+ * readers populate at `depth: 2` with no `select` and no `defaultPopulate`.
+ * These cases pin the rule on hand-built docs; they would not catch a
+ * `defaultPopulate` added to `Industries`.
  */
 describe('industry cards — a card links only where the route resolves', () => {
   const industry = (over: Record<string, unknown> = {}) => ({

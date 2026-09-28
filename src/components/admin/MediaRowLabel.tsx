@@ -7,8 +7,8 @@ import React from 'react'
 /**
  * Spec 011 US3 / T043 / FR-017 — a collapsed row of media identifies itself.
  *
- * Payload labels array rows by position: eight logos in a `client-logo-grid`
- * collapse to `Logo 01` … `Logo 08`, which answers nothing and forces an
+ * Payload labels array rows by position: eight logos in a `gallery`
+ * collapse to `Image 01` … `Image 08`, which answers nothing and forces an
  * expand-and-collapse per row to find the one you want.
  *
  * This resolves the row's own name in three steps, cheapest first:
@@ -21,9 +21,9 @@ import React from 'react'
  * row, not only the ones step 1 cannot name. The 20px thumbnail comes from the
  * same document, and it is what answers "which image is this?" on a captioned
  * row as much as on a bare one, so the request is not avoidable by finding a
- * caption. What the text fields buy is the *name*: `logo-bar.logos` and
- * `industries.clientLogos`, the two arrays that are nothing but an upload,
- * have no other source for it. The image is `adminThumbnail`'s output (T041),
+ * caption. What the text fields buy is the *name*: `industries.clientLogos`,
+ * an array that is nothing but an upload, has no other source for it. The
+ * image is `adminThumbnail`'s output (T041),
  * not the full-size original.
  */
 

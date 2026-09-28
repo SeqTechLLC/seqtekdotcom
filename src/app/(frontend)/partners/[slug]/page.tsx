@@ -49,9 +49,8 @@ export default async function PartnerPage({ params }: Props) {
   if (!partner) notFound()
 
   // payload-types Partner['layout'] is the RenderBlocks-compatible shape.
-  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
-  // case-study-grid, service-cards) get their items filled in here, before
-  // the layout reaches the synchronous RenderBlocks dispatcher.
+  // ROADMAP UI-2: `cards` blocks get their items filled in here, before the
+  // layout reaches the synchronous RenderBlocks dispatcher.
   const layout = (await resolveLayout(partner.layout as never)) as never
   // `logo` + `url` are the typed metadata the index card uses; this is where
   // they earn their keep on the detail page (Button renders external hrefs as

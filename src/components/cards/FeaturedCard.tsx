@@ -13,9 +13,9 @@ interface FeaturedCardProps {
 
 /**
  * The first item of a `cards` block drawn large: picture on one side, title,
- * one line and a button on the other. The old featured-case-study look, made
- * collection-agnostic. An item with no picture keeps the same weight on a
- * panel of its own rather than leaving half the row empty.
+ * one line and a button on the other, for any collection. An item with no
+ * picture keeps the same weight on a panel of its own rather than leaving half
+ * the row empty.
  */
 export function FeaturedCard({ item, headingLevel, inverse = false }: FeaturedCardProps) {
   const Title = headingLevel

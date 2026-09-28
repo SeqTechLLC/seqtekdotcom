@@ -5,10 +5,8 @@ import { AccordionBlock } from '../../../src/components/sections/AccordionBlock'
 import { buildLexical } from '../../../src/payload/seed/showcase/lexical'
 
 /**
- * The `accordion` block replaces faq, accordion and tabs. The tabs describe is
- * `interactionBlocks.int.spec.tsx`'s `<Tabs />` suite carried over onto
- * `display: tabs`; the output-contract gate can see that a control moves the
- * HTML, only this can see that the interaction itself works.
+ * The output-contract gate can see that a control moves the HTML; only this
+ * can see that the tabs interaction itself works.
  */
 
 const item = (id: string, title: string, text: string) => ({

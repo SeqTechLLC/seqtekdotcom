@@ -23,11 +23,8 @@ const buildSrc = (provider: VideoProvider, id: string, autoplay: boolean) => {
  * A 16:9 player that, given a poster, shows the still and a Play button and
  * loads the third-party frame only when a reader asks for it — so YouTube or
  * Vimeo never see a visitor who does not watch. Without a poster it embeds the
- * player directly.
- *
- * ROADMAP INERT-2 — a poster once REPLACED the <iframe> with a still and a
- * non-interactive "▶ Play" span, so filling the field in made the video
- * unplayable. The still is a real button here for that reason.
+ * player directly. The still is a real button, so a poster never leaves the
+ * video unplayable.
  */
 export function VideoFacade({ provider, videoId, title, poster }: VideoFacadeProps) {
   const [playing, setPlaying] = useState(false)

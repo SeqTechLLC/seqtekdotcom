@@ -54,9 +54,8 @@ export default async function HomePage() {
   const homepage = isDraft ? await readDraftHomepage() : publishedHomepage
 
   // payload-types Homepage['layout'] is the RenderBlocks-compatible shape.
-  // ROADMAP UI-2: collection-backed blocks (team-grid, post-list,
-  // case-study-grid, service-cards) get their items filled in here, before
-  // the layout reaches the synchronous RenderBlocks dispatcher.
+  // ROADMAP UI-2: `cards` blocks get their items filled in here, before the
+  // layout reaches the synchronous RenderBlocks dispatcher.
   const layout = (await resolveLayout(homepage?.layout as never)) as never
 
   return (

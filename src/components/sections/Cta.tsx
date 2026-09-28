@@ -79,7 +79,7 @@ const BUTTON_CLASS: Record<'light' | 'dark' | 'brand', Record<ButtonStyle, strin
     secondary: 'rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10',
     ghost: 'rounded-md px-5 py-3 font-medium text-white underline hover:no-underline',
   },
-  // The solid green band: the old CTA's white button with green text.
+  // The solid green band: a white button with green text.
   brand: {
     primary: 'rounded-md bg-white px-5 py-3 font-medium text-accent-strong',
     secondary: 'rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10',
@@ -161,15 +161,12 @@ function MeetingPanel({
 }
 
 /**
- * Replaces `cta-section`, `contact-cta`, `newsletter-cta`, `download-card` and
- * `hubspot-meetings`.
+ * One ask; `action` says what answering it means.
  *
  * - **Meeting.** The scheduling panel is optional in the render even though
  *   the schema requires the link: a whitespace-only value passes
  *   `httpsUrlValidate` as empty, and a bare truthiness check would put the
- *   framed panel over a blank address. Trimmed, it collapses instead, so the
- *   "Configure a HubSpot meetings URL" placeholder the old `contact-cta`
- *   published cannot come back through a side door (ROADMAP INERT-2).
+ *   framed panel over a blank address. Trimmed, it collapses instead.
  * - **Newsletter.** Without a form GUID there is no way to subscribe, so the
  *   section renders nothing rather than a heading over a form that cannot work.
  * - **Download.** A COURTESY GATE, not a real one. This is a server component

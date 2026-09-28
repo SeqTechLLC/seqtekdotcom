@@ -6,9 +6,7 @@ import { registry } from '../../../src/components/sections/registry'
 import { buildLexical } from '../../../src/payload/seed/showcase/lexical'
 
 /**
- * `media-text` — a picture beside a column of prose. It replaces `two-column`,
- * and `brand-teaser`'s headline, paragraph and link are its rich text and
- * button (docs/planning/block-consolidation.md).
+ * `media-text` — a picture beside a column of prose.
  */
 
 const photo = { url: '/media/photo.jpg', alt: 'A workshop in progress' }

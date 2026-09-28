@@ -6,9 +6,7 @@ import { editorConfig } from '../../editor/editorConfig'
 import { backgroundField } from '../../fields/blockCopy'
 import { ctaField } from '../../fields/cta'
 
-// A picture beside a column of prose (WordPress "Media & Text"). Replaces
-// `two-column` and `brand-teaser`: the teaser's headline and paragraph are
-// just the rich text, and its link is the button.
+// A picture beside a column of prose (WordPress "Media & Text").
 export const MediaText: Block = {
   slug: 'media-text',
   interfaceName: 'MediaTextBlock',

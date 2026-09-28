@@ -9,8 +9,8 @@ import { pushDataLayer, type AnalyticsEvent } from '@/lib/analytics/dataLayer'
  *
  * HubSpot Meetings reports a successful booking via a cross-window
  * `postMessage` (the `onMeetingBookSucceeded` meetings event). This island
- * defines the listener + the push shape, but `HubspotMeetings.tsx` is still a
- * PLACEHOLDER that does not load the real embed — so no window posts that
+ * defines the listener + the push shape, but the `cta` block's meeting panel
+ * does not load the real embed — so no window posts that
  * message today and emission stays gated on the embed landing (mirrors the
  * Meta-pixel deferral). The contract and listener shape are reviewable now.
  *

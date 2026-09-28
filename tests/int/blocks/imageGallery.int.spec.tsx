@@ -9,9 +9,9 @@ import { RenderBlocks } from '../../../src/components/sections/RenderBlocks'
 import { registry } from '../../../src/components/sections/registry'
 
 // spec 010 / FR-005 — the two gap-fill blocks. Pins render coverage for
-// `image` + `gallery` through the shared RenderBlocks dispatcher and the
-// null/empty resilience the retired workshop template had (depth-0 / missing
-// upload rows are dropped, never thrown).
+// `image` + `gallery` through the shared RenderBlocks dispatcher, and their
+// null/empty resilience (depth-0 / missing upload rows are dropped, never
+// thrown).
 
 const media = (url: string, alt = 'A photo') => ({ url, alt })
 

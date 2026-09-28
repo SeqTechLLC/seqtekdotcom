@@ -26,8 +26,7 @@ const filtersFor =
     d?.collection === collection && d?.source === 'filtered'
 
 /**
- * WordPress's Query Loop: one block for every list of documents, replacing
- * the ten per-collection grids (docs/planning/block-consolidation.md).
+ * WordPress's Query Loop: one block for every list of documents.
  *
  * `src/lib/resolveLayout.ts` reads `collection`, `source`, the filters and
  * `limit`, and hands the component the finished list in `manualItems`. The

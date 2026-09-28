@@ -5,8 +5,8 @@ import { editorConfig } from '../../editor/editorConfig'
 import { backgroundField, headingField, introField } from '../../fields/blockCopy'
 
 /**
- * Replaces `faq`, `accordion` and `tabs`: titled panels of rich text, either
- * opened in place or switched between as tabs. Emits no FAQPage JSON-LD.
+ * Titled panels of rich text, either opened in place or switched between as
+ * tabs. Emits no FAQPage JSON-LD.
  */
 export const Accordion: Block = {
   slug: 'accordion',

@@ -23,8 +23,8 @@ interface AccordionProps {
 }
 
 /**
- * Replaces `faq`, `accordion` and `tabs`. Heading, intro and panels share one
- * centred reading column (DESIGN_SYSTEM §11.4), whichever way the panels open.
+ * Heading, intro and panels share one centred reading column
+ * (DESIGN_SYSTEM §11.4), whichever way the panels open.
  *
  * `accordion` is native `<details>`: no script, and find-in-page opens a
  * closed panel. `tabs` hands the server-rendered panels to `TabSet`, which

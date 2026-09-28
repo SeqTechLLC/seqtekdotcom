@@ -15,18 +15,9 @@ import type { ResolvedBlockType } from './resolvedBlockTypes'
 /**
  * ROADMAP UI-2 — resolve collection-backed blocks at template time.
  *
- * Four blocks let an author pick a `source`/`filter` (latest posts, case
- * studies by industry, services by pillar, leadership-only team members)
- * instead of hand-picking rows. Nothing ever consumed those selects: the
- * render components only knew how to draw `manualItems`, so a block set to any
- * non-manual source drew the literal string "Source: latest (resolves at
- * template time)" as public body copy. `team-grid` was the worst of them,
- * because `filter` is its one REQUIRED field while `manualItems` is described
- * as an optional override — the natural authoring path produced the broken
- * page.
- *
- * This module is the "template time" those placeholders were deferring to. The
- * routes await it before handing the layout to `RenderBlocks`, so:
+ * A `cards` block set to "All of them" or "Filtered" names what it lists, not
+ * the items; this module turns that choice into items. The routes await it
+ * before handing the layout to `RenderBlocks`, so:
  *
  *   - blocks stay pure, synchronous, presentational components (they render
  *     whatever `manualItems` they are handed and nothing else), which keeps
@@ -35,7 +26,7 @@ import type { ResolvedBlockType } from './resolvedBlockTypes'
  *   - the collection reads go through the existing cached readers in
  *     `lib/payload.ts`, so they inherit the cache tags, the hourly
  *     revalidation and the `withReadTimeout` guard (ADR 0007) for free;
- *   - `source`/`filter` become authoring-time inputs consumed HERE, and are
+ *   - `source` and the filters are authoring-time inputs consumed HERE, and are
  *     not read by any component.
  *
  * A read that times out throws rather than degrading to an empty section: a
@@ -84,7 +75,7 @@ interface TeamOrdering {
 
 /**
  * Leadership first, then by `order` (unset last). Shared with `/team` so the
- * listing page and a `team-grid` block set to "All" agree on sequence. Typed
+ * listing page and a `cards` block of team members agree on sequence. Typed
  * structurally rather than as `TeamMember` so it stays callable on any shape
  * carrying the two fields it reads.
  */

@@ -66,8 +66,7 @@ const GRID_COLUMN_CLASSES: Record<GridColumns, string> = {
 
 // The column steps ABOVE, as numbers, so `sizes` is derived from the same
 // geometry the grid classes describe instead of being hand-computed against
-// it. Two across has no `lg:` override, so it stays two-up at every width —
-// the case a single shared string used to get wrong by a whole rung.
+// it. Two across has no `lg:` override, so it stays two-up at every width.
 const GRID_COLUMN_STEPS: Record<Exclude<GridColumns, '1'>, ColumnStep[]> = {
   '2': [
     [640, 2],
@@ -154,8 +153,7 @@ export function Gallery({
   layout = 'grid',
   background = 'none',
 }: GalleryProps) {
-  // Keep only rows whose upload relation is populated (depth > 0), mirroring
-  // the workshop proof-gallery resilience the retired template had.
+  // Keep only rows whose upload relation is populated (depth > 0).
   const figures = (items ?? [])
     .map((it) =>
       isFullMedia(it.image) && it.image.url
@@ -216,11 +214,9 @@ function PhotoGrid({ figures, captionCls }: { figures: FigureItem[]; captionCls:
   )
 }
 
-// Ported from the retired logo bar (gray until pointed at, so a wall of
-// mismatched brand colours stays calm) and client logo grid (the cards, and a
-// small caption under the logo). Each card is a light surface whatever the
-// band, so a logo drawn for a white page and its caption stay legible on the
-// dark one.
+// Logos stay gray until pointed at, so a wall of mismatched brand colours
+// stays calm. Each card is a light surface whatever the band, so a logo drawn
+// for a white page and its caption stay legible on the dark one.
 function LogoGrid({ figures }: { figures: FigureItem[] }) {
   const columns = logoColumnsFor(figures.length)
   return (

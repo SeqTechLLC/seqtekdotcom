@@ -45,8 +45,7 @@ export interface ItemsProps {
  * Colour roles, by whether the band behind the block is light or dark. On the
  * light bands meaning-bearing green is `accent-strong` (DESIGN_SYSTEM §2.4, the
  * `text-accent` trap). The dark band is the one place green-500 is the right
- * choice: it clears AA there, where green-700 does not, which is why StatsBar
- * and MetricDisplay used it on the same band.
+ * choice: it clears AA there, where green-700 does not.
  */
 interface Tone {
   marker: string
@@ -307,8 +306,7 @@ function Grid({
   const statLike = markers === 'custom' && !list.some((item) => asMedia(item.image))
   const Tag = markers === 'numbers' ? 'ol' : 'ul'
 
-  // One figure on its own is a headline number: centred, display size, the
-  // way MetricDisplay drew it.
+  // One figure on its own is a headline number: centred, display size.
   if (list.length === 1 && statLike) {
     const [item] = list
     return (

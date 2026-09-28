@@ -7,18 +7,9 @@ import { Cards } from '../../../src/components/sections/Cards'
 /**
  * A collection-backed grid with nothing to show renders NOTHING — not a heading.
  *
- * Found by looking at `/industries/oil-and-gas` on the lane: `CaseStudyGrid`
- * rendered "Selected work" with an empty space beneath it, because the case
- * studies were still tagged to industries the IND-1 seed had just retired.
- * `IndustryGrid` already returned null in that situation; `CaseStudyGrid` did
- * not.
- *
- * The data was repairable, but the shape is not a one-off. These grids resolve
- * their items at RENDER (`source: by-industry`, `latest`, `by-service`), so an
- * author never sees the empty state while editing — and per CONTENT_NEEDS §11,
- * five of the seven industries have no case study to point at, so five pages
- * would have shipped a heading promising proof that does not exist. That
- * document's own rule is that a claim we cannot point at loses at our size.
+ * Its items resolve at RENDER, so an author never sees the empty state while
+ * editing, and an industry page whose filter matches no case study would
+ * otherwise ship a heading promising proof that does not exist.
  */
 describe('a grid with no items renders nothing at all', () => {
   const cases = [

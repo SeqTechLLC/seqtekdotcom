@@ -4,8 +4,8 @@ import { blockAdmin } from '../blockAdmin'
 import { backgroundField, headingField, introField } from '../../fields/blockCopy'
 
 /**
- * Replaces `comparison-table`. Same data shape, no column cap: past the width
- * of the screen the table scrolls sideways inside its own frame, never the page.
+ * Any number of columns: past the width of the screen the table scrolls
+ * sideways inside its own frame, never the page.
  */
 export const Table: Block = {
   slug: 'table',

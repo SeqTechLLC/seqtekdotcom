@@ -1,6 +1,6 @@
 /**
  * Shared URL validators for text fields. The renderers also apply protocol
- * and host checks defense-in-depth (see Hero.tsx, Map.tsx, Embed.tsx), but
+ * and host checks defense-in-depth (see Hero.tsx, Embed.tsx), but
  * validating at the schema gives editors immediate save-time feedback and
  * prevents a `javascript:` URI from ever landing in the DB.
  */

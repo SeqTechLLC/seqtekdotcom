@@ -12,10 +12,9 @@ import { useAdminSession, type AdminSession } from '../helpers/adminSession'
  * "Much of the perceived emptiness is fields belonging to variants the editor
  * didn't choose, shown unconditionally" (spec.md US4).
  * `adminMetadata.int.spec.ts` can prove a field DECLARES `admin.condition`;
- * only the browser proves Payload acts on it, which is the half that actually
- * failed: `logo-bar.logos` carried a conditional validator whose `admin` was
- * overwritten by a sibling key, so it validated conditionally and displayed
- * unconditionally for two specs.
+ * only the browser proves Payload acts on it. That is the half that can fail:
+ * a conditional validator whose `admin` is overwritten by a sibling key
+ * validates conditionally and displays unconditionally.
  *
  * **The expectations are computed from the config, not typed out.** Each
  * block's own `condition` predicate is evaluated here, in this process, against

@@ -119,9 +119,8 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
 
     /**
      * A control is often only drawn under one setting of a sibling select: a
-     * hero's image needs `variant: with-image`, a CTA section's background
-     * image needs `background: image`. Comparing under the baseline alone
-     * would call both of those inert, so each perturbation is retried under
+     * hero's image needs `variant: split`. Comparing under the baseline alone
+     * would call that inert, so each perturbation is retried under
      * every single-select variation of the block. One state where the control
      * moves the output is enough — the question is whether the control is
      * wired at all, not whether it is wired in every combination.
@@ -132,7 +131,7 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
         for (const option of selectOptions(field).slice(1)) states.push({ [path]: option })
         continue
       }
-      // An optional image can also switch a branch off: `video-embed`'s poster
+      // An optional image can also switch a branch off: an `embed`'s thumbnail
       // stands in front of the player until it is clicked, so with one set the
       // provider and video id do not reach the first paint at all. Leaving it
       // out is a state an author reaches, so the gate has to look there too.
@@ -155,12 +154,9 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
     // ---- 1. No placeholder text reaches a reader. No exceptions. ------------
 
     /**
-     * Checked in every state an author can reach, not only the default one.
-     * The dead options this gate was written for — `logo-bar.source:
-     * from-homepage` and `mission-vision-values.layout: tabs`, both since
-     * withdrawn from the schema — were exactly the shape a baseline-only check
-     * cannot see: a branch behind a non-default select. `hero.variant` and
-     * `cta-section.background` are live examples of the same shape.
+     * Checked in every state an author can reach, not only the default one: a
+     * dead branch behind a non-default select (`hero.variant`, say) is exactly
+     * the shape a baseline-only check cannot see.
      * `requiredOnly` is the other end: what an author gets by saving the moment
      * Payload lets them, which is where the placeholder branches this gate was
      * written for actually lived.
@@ -259,8 +255,8 @@ describe.each(layoutBlocks.map((b) => [b.slug, b] as const))(
           const live = options.filter((o) => !declaredInert.has(o))
 
           // Same reasoning as the perturbation check: an option can only tell
-          // itself apart under the right sibling settings. `video-embed`'s
-          // provider is invisible while a poster stands in front of the
+          // itself apart under the right sibling settings. An `embed`'s
+          // provider is invisible while a thumbnail stands in front of the
           // player, so the options are judged in whichever state separates
           // them, not only in the baseline.
           const perState = states.map((overrides) => {

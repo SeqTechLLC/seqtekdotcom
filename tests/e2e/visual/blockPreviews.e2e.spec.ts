@@ -24,7 +24,7 @@ import { getBlockFixtures } from '../../../src/payload/seed/showcase/fixtures'
 const OUT_DIR = path.resolve(import.meta.dirname, 'screenshots/block-previews')
 
 // Desktop only. The picker is an admin-desktop surface, and a mobile capture
-// of a two-column block would misrepresent what the editor is choosing.
+// of a side-by-side block would misrepresent what the editor is choosing.
 const VIEWPORT = { width: 1440, height: 900 }
 
 // Capturing every variant of every block costs a screenshot each; three is

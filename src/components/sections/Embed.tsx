@@ -23,8 +23,7 @@ interface EmbedProps {
   background?: SectionBackground | null
 }
 
-// A named step rather than a pixel count, so there is no number to cap. The
-// old map and embed blocks defaulted to 400px and 600px.
+// A named step rather than a pixel count, so there is no number to cap.
 const HEIGHT_CLASSES: Record<Height, string> = {
   short: 'h-80',
   medium: 'h-[30rem]',

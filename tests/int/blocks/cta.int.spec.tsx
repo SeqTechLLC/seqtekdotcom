@@ -6,9 +6,7 @@ import { Cta } from '../../../src/components/sections/Cta'
 import { Cta as CtaBlock } from '../../../src/payload/blocks/layout/Cta'
 
 /**
- * The `cta` block replaces cta-section, contact-cta, newsletter-cta,
- * download-card and hubspot-meetings. The first describe is
- * `contactCta.int.spec.tsx` carried over onto the `meeting` action.
+ * The `cta` block: one ask, in the shape its `action` names.
  */
 
 const base = {

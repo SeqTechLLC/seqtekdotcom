@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest'
 import { Table } from '../../../src/components/sections/Table'
 
 /**
- * The `table` block replaces comparison-table, without its two-to-four column
- * cap: the frame around the table scrolls, never the page.
+ * The `table` block takes any number of columns: the frame around the table
+ * scrolls, never the page.
  */
 
 const columns = (n: number) => Array.from({ length: n }, (_, i) => ({ label: `Col ${i}` }))

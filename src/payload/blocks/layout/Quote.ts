@@ -10,8 +10,7 @@ const fromPanel = (d?: QuoteSibling) => (d?.source ?? 'testimonials') === 'testi
 const typedHere = (d?: QuoteSibling) => d?.source === 'custom'
 
 /**
- * Replaces `testimonial-block` and `featured-testimonials`. One quote draws
- * large, several draw as a grid.
+ * One quote draws large, several draw as a grid.
  *
  * `source` decides between a testimonial record and a quote typed into the
  * block. Only the side it names is published; the other side's fields are
