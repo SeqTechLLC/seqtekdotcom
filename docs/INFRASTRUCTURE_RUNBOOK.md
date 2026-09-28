@@ -461,14 +461,21 @@ own it.
 
 The migration history was squashed into one baseline (`src/migrations/*_baseline.ts`)
 that creates every type and table, so it cannot run against a lane's existing
-database. The first deploy of it to a lane (preview at merge, ww3 at release
-publish) fails `payload migrate` and ECS rolls back to the previous image, which
-keeps serving. To bring the lane forward, snapshot it (below) if it holds `/admin`
-edits that are not in the content JSON, then:
+database. Deployed to a lane that has not been rebuilt (preview at merge, ww3 at
+release publish), `payload migrate` fails and ECS rolls back to the previous image,
+which keeps serving. The rebuild works before that deploy or after it has failed.
 
-1. Drop and recreate the lane's database with a one-off task from the lane's own
-   task definition, which already carries the credentials (the lanes have no
-   direct database access):
+It splits the way §5 does: the AWS steps need the account admin, the rest needs the
+website owner. The lane stays at zero tasks from the drop until the new image
+deploys, because an old-image task started in between would migrate the old schema
+into the empty database.
+
+**Account admin:**
+
+1. Snapshot the database (below) if the lane holds `/admin` edits that are not in
+   the content JSON.
+2. Scale the lane to zero, then drop and recreate its database with a one-off task
+   from the lane's own task definition, which carries the credentials:
 
    ```sh
    STACK=SeqtekPreviewCompute
@@ -476,6 +483,10 @@ edits that are not in the content JSON, then:
    out() { aws cloudformation describe-stacks --stack-name "$STACK" \
      --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue | [0]" --output text; }
    CLUSTER=$(out ClusterName); SERVICE=$(out "$LANE")
+   aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+     --query 'services[0].desiredCount'   # note it for step 4
+   aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" --desired-count 0 >/dev/null
+   aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
    TASKDEF=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
      --query 'services[0].taskDefinition' --output text)
    aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
@@ -492,16 +503,23 @@ edits that are not in the content JSON, then:
      --query 'tasks[0].containers[0].exitCode'   # must be 0
    ```
 
-   `DB_NAME` is each lane's own database, so the same override serves both.
+   `DB_NAME` is each lane's own database, so the same override serves both. Then
+   report the task count and stop. **Do not sign in to `/admin`**: on an empty
+   database the first account to sign in becomes the admin
+   (`src/lib/auth/apply-bootstrap-role.ts`).
 
-2. Re-run the failed Deploy run (`gh run rerun <id>`). The container's
-   `payload migrate` applies the baseline to the empty database.
-3. Sign in to the lane's `/admin` with Google. On an empty database the first
-   account becomes admin (`src/lib/auth/apply-bootstrap-role.ts`), so do this
-   before anyone else does. Its `payload-token` cookie is `IMPORT_TOKEN`; the gate
-   cookie is `IMPORT_COOKIE` (§2.1).
-4. Load the content JSON with `npm run payload:seed` in the empty-database order
-   in the content repo's `LOAD-ORDER.md`. Every file must end `errors=0`.
+**Website owner:**
+
+3. Deploy: merge to `main` (preview) or publish the release (ww3), or re-run the
+   failed Deploy run if one already tried. The new image's `payload migrate`
+   applies the baseline to the empty database.
+4. If the deploy's smoke job fails because the lane has no running task, the
+   account admin restores the step 2 count with
+   `aws ecs update-service --desired-count`; then re-run the smoke job.
+5. Sign in to the lane's `/admin` with Google, first. Its `payload-token` cookie is
+   `IMPORT_TOKEN`; the gate cookie is `IMPORT_COOKIE` (§2.1).
+6. Load the content JSON with `npm run payload:seed` in the empty-database order in
+   the content repo's `LOAD-ORDER.md`. Every file must end `errors=0`.
 
 ### Snapshotting before a destructive migration
 
