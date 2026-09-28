@@ -11,12 +11,12 @@
 | 4   | [Post-change verification](#4-post-change-verification)                                     | After any of the above                |
 | 5   | [Hand-off when you don't own the account](#5-hand-off-when-you-dont-own-the-target-account) | Someone else holds AWS admin          |
 
-> **Status, 2026-09-28.** Only §2.9 has been checked against what is deployed: the one
-> `preview` env (`SeqtekPreview*` stacks serving preview.seqtek.com and ww3.seqtek.com), in
-> an AWS account shared with unrelated infrastructure. §1–§3 and §5 still describe the
-> retired `staging`/`prod` layout and the destroyed seqtek-preview.com, and running them
-> against this account would collide with or delete live resources. Do not use them until
-> they are rewritten (`ROADMAP.md` P3, Infrastructure).
+> **Status, 2026-09-28.** Only §1.3b and §2.9 match what is deployed: the one `preview`
+> env (`SeqtekPreview*` stacks serving preview.seqtek.com and ww3.seqtek.com), in an AWS
+> account shared with unrelated infrastructure. The rest of §1–§3 and §5 still describe
+> the retired `staging`/`prod` layout and the destroyed seqtek-preview.com, and running
+> them against this account would collide with or delete live resources. Do not use them
+> until they are rewritten (`ROADMAP.md` P3, Infrastructure).
 
 Design rationale lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) (§ Promotion model,
 § Environments & isolation). [`INFRASTRUCTURE_QUICKSTART.md`](./INFRASTRUCTURE_QUICKSTART.md) was
