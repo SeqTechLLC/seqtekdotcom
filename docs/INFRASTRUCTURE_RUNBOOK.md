@@ -1,21 +1,29 @@
 # Infrastructure Runbook
 
-**Living operational doc.** Five procedures:
+**Living operational doc.**
 
 | §   | Procedure                                                                                   | When                                  |
 | --- | ------------------------------------------------------------------------------------------- | ------------------------------------- |
 | 1   | [Stand up a fresh AWS account](#1-stand-up-a-fresh-aws-account)                             | New account, nothing exists yet       |
 | 2   | [Migrate an environment to another account](#2-migrate-an-environment-to-another-account)   | Moving a running env to a new account |
+| 2.9 | [Rebuild a lane's database](#rebuilding-a-lanes-database-for-the-2026-09-24-baseline)       | A lane's first deploy of the baseline |
 | 3   | [Cut `seqtek.com` over to prod](#3-cut-seqtekcom-over-to-prod)                              | Launch                                |
 | 4   | [Post-change verification](#4-post-change-verification)                                     | After any of the above                |
 | 5   | [Hand-off when you don't own the account](#5-hand-off-when-you-dont-own-the-target-account) | Someone else holds AWS admin          |
+
+> **Status, 2026-09-28.** Only §2.9 has been checked against what is deployed: the one
+> `preview` env (`SeqtekPreview*` stacks serving preview.seqtek.com and ww3.seqtek.com), in
+> an AWS account shared with unrelated infrastructure. §1–§3 and §5 still describe the
+> retired `staging`/`prod` layout and the destroyed seqtek-preview.com, and running them
+> against this account would collide with or delete live resources. Do not use them until
+> they are rewritten (`ROADMAP.md` P3, Infrastructure).
 
 Design rationale lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) (§ Promotion model,
 § Environments & isolation). [`INFRASTRUCTURE_QUICKSTART.md`](./INFRASTRUCTURE_QUICKSTART.md) was
 the original first-deploy walkthrough; it is **superseded by this file for the
 first deploy** (it predates the promotion model and describes merges to `main`
 deploying prod), but remains the reference for secret rotation, tear-down, alarm
-verification and troubleshooting.
+verification and troubleshooting, though it still describes the retired EC2 stack.
 
 ---
 
@@ -249,107 +257,16 @@ Verified 2026-08-10: the drafts reproduce the live site's content **exactly** �
 | `services`       | 9    | 9           |
 | `servicePillars` | 3    | 3           |
 
-### 2.1 Media must be primed FIRST
+### 2.1 Media
 
-**Order is not optional.** The drafts reference media 61 times by `$ref`
-(resolve an existing media doc by filename) and only 10 times by `$file`
-(upload-or-reuse). Seed content into an empty media collection and those 61
-references resolve to nothing — you get the whole site with almost no images.
-Prime media, then seed content.
+Media ships in the content repo and loads by `$file` with the content (§2.2). There
+is nothing to prime.
 
-Media is also the one thing genuinely **not** reproducible from scripts. Of the
-65 originals, 27 are curated outputs (`homepage-hero.webp`, `culture-1.webp`,
-`team-lake-annual-meeting.webp`, the headshots) whose source-photo choice was a
-human decision, and `tools/ingest-photos` keys its manifest by sha256 — so
-_which_ of the ~900 photos in `../photos` became `homepage-hero.webp` is
-recorded nowhere re-runnable. Re-running the ingest will not reproduce them.
+### 2.2 Rebuild the content
 
-So carry the originals across from the environment being replaced. They are
-served publicly, and Payload regenerates every size variant on upload — which is
-why only the 65 originals matter, not the ~473 S3 objects.
-
-```sh
-SRC=https://seqtek-preview.com
-DIR=/tmp/media-originals && mkdir -p "$DIR"
-
-# Fetch every original, and build the manifest push-to-payload expects,
-# carrying the ORIGINAL alt text across (alt is required on upload).
-curl -s "$SRC/api/media?limit=300&depth=0" > "$DIR/media.json"
-python3 - "$DIR" "$SRC" <<'PY'
-import json, os, sys, urllib.request
-d, src = sys.argv[1], sys.argv[2]
-docs = json.load(open(os.path.join(d, "media.json")))["docs"]
-man = []
-for m in docs:
-    fn = m.get("filename")
-    if not fn:
-        continue
-    urllib.request.urlretrieve(f"{src}/media/{fn}", os.path.join(d, fn))
-    # push-to-payload reads `curated` (the filename in --dir) and `alt`.
-    man.append({"curated": fn, "source": fn, "kind": "photo", "slot": "",
-                "people": [], "alt": m.get("alt") or fn})
-json.dump(man, open(os.path.join(d, "manifest.json"), "w"), indent=2)
-print(f"{len(man)} originals + manifest.json")
-PY
-
-# Push them into the NEW environment (idempotent — skips filenames already there)
-IMPORT_BASE_URL=https://<new-env> IMPORT_TOKEN=<token> \
-  npx tsx tools/ingest-photos/push-to-payload.ts --dir "$DIR" --dry-run
-```
-
-**If the target is gated** (`cognitoAuthEnabled: true`, per §1.3a — the prod
-configuration), the ALB 302s every path including `/api/*`, so `IMPORT_TOKEN`
-alone never reaches Payload. Export the proxy's session cookie as well, or the
-push fails with `likely behind an auth proxy`:
-
-```sh
-export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
-```
-
-`tools/payload-seed/README.md` §"Getting `IMPORT_COOKIE`" has the DevTools
-steps. Every REST tool here reads it: `push-to-payload`, `rekey-staging`,
-`push-staging` and `payload:seed`.
-
-Drop `--dry-run` to write. Keep filenames byte-identical — `$ref` and `$file`
-both key on filename, so a rename silently orphans every reference to it.
-
-### 2.2 Then rebuild the content
-
-```sh
-export IMPORT_BASE_URL=https://<new-environment-url>
-export IMPORT_TOKEN=<payload-token cookie from /admin on the NEW env>
-# Gated target (cognitoAuthEnabled, §1.3a)? Also export the proxy cookie —
-# see §2.1. Without it the globals at the end of this list are the ones most
-# likely to report success while writing nothing.
-export IMPORT_COOKIE='AWSELBAuthSessionCookie-0=<value>; AWSELBAuthSessionCookie-1=<value>'
-
-# Order matters — later specs resolve $ref against what earlier ones created.
-# `global-site-settings` and `global-navigation` are deliberately absent: both
-# globals were withdrawn in spec 011 (site chrome is code-owned, ADR 0010), and
-# payload-seed accepts any string as a global slug, so listing them here would
-# PATCH a route that no longer exists and report success.
-for f in categories industries testimonials team service-pillars services \
-         case-studies posts workshops pages partners global-homepage; do
-  npm run payload:seed -- docs/content-drafts/$f.json
-done
-```
-
-> **Reconciled 2026-08-11.** This list previously named `content-batch.json`,
-> `about.json`, and `homepage.json`. Those predate the spec-010 block migration —
-> they carry the legacy discrete body fields but **no `layout` array**, so seeding
-> them into a fresh environment loads content that renders as an **empty body**,
-> and reports success while doing it. They now live in
-> `docs/content-drafts/_archive/`. The files above are a verified-portable mirror
-> of staging (58 docs, 84 `$ref`s, 0 unresolved) carrying both the legacy fields
-> and the real `layout`. See `docs/content-drafts/README.md`.
->
-> Load `industries.json` before `case-studies.json`: the five industry records are
-> missing on staging today, which is why every case study there has a dangling
-> `industry` reference. Seeding in this order repairs it.
-
-Run each with `--dry-run` first. Seeding is idempotent by the identity field, so
-a re-run repairs rather than duplicates. A `$ref` that cannot resolve is
-reported — if you see those, media priming (§2.1) did not complete.
+Once per lane, as in §2.9 steps 6–7: the website owner signs in to the lane's
+`/admin` first, then loads the content JSON in the content repo's `LOAD-ORDER.md`
+order.
 
 ### 2.3 Verify against the old environment
 
@@ -430,7 +347,9 @@ aws route53domains update-domain-nameservers --domain-name seqtek-preview.com \
 4. Transfer the domain and repoint nameservers (§2.6)
 5. Watch both accounts for 24 h
 6. Only then decommission the source: **take a final RDS snapshot and keep it**,
-   then delete stacks, empty buckets, remove zones
+   then delete stacks, empty buckets, remove zones. **Not in the account that runs
+   the lanes today:** it also holds the live seqtek.com zone, a shared VPC and
+   unrelated infrastructure.
 
 Rollback before step 4 is free — the old environment is still serving. After it,
 revert the nameservers; DNS TTL is the exposure window. Delete nothing in the
@@ -541,7 +460,8 @@ the admin (`src/lib/auth/apply-bootstrap-role.ts`).
    account admin to restore the step 2 count with
    `aws ecs update-service --desired-count`, then re-run the smoke job.
 6. Sign in to the lane's `/admin` with Google, first. Its `payload-token` cookie is
-   `IMPORT_TOKEN`; the gate cookie is `IMPORT_COOKIE` (§2.1).
+   `IMPORT_TOKEN`. The ALB gate's session cookies are `IMPORT_COOKIE`
+   (`tools/payload-seed/README.md`, "Getting `IMPORT_COOKIE`").
 7. Load the content JSON with `npm run payload:seed` in the empty-database order in
    the content repo's `LOAD-ORDER.md`. Every file must end `errors=0`.
 
@@ -653,14 +573,17 @@ HubSpot build args survived).
 
 ## 5. Hand-off when you don't own the target account
 
-The common case here: the AWS account belongs to someone else (SEQTEK's infra
-admin is **domanick@seqtechllc.com**), and the person who knows the website has
-no credentials in it.
+The AWS account belongs to SEQTEK's account admin, and the website owner has no
+credentials in it.
+
+**The current hand-off is §2.9**, rebuilding a lane's database: account admin
+steps 1–3, website owner steps 4–7. The rest of this section is a fresh-account
+standup in the retired layout; see the status note at the top.
 
 That splits cleanly, because **the entire content half needs no AWS access at
 all.** The seeders write over the REST API with an `/admin` session JWT — which
-is exactly why they were built that way (staging and prod have no direct DB or
-S3 access). So the account admin never has to learn this codebase, and the
+is exactly why they were built that way (nothing outside AWS reaches the lanes'
+database or bucket). So the account admin never has to learn this codebase, and the
 website owner never needs an IAM user.
 
 This repo is public: send the account admin a link to this file rather than a
@@ -688,10 +611,9 @@ Then report back three things and **stop**:
 - confirmation that **nobody has signed in to `/admin` yet**
 
 > **Do not sign in to `/admin`.** The first person to sign in becomes the sole
-> admin; everyone after is provisioned as `editor`. `Categories` is admin-only
-> for create/update and the content load writes 3 categories, so an editor
-> cannot finish it. Leave the first sign-in to whoever runs Lane B, or expect to
-> promote them afterwards.
+> admin; everyone after is provisioned as `editor`, and an editor cannot delete
+> records or manage accounts. Leave the first sign-in to whoever runs Lane B, or
+> expect to promote them afterwards.
 
 ### If the account admin also has GitHub access
 
