@@ -75,12 +75,10 @@ rather than prose-quality:
 Both pickers are checked independently: the layout drawer is populated from
 `layoutBlocks`, the Lexical menu from `richTextBlocks ∪ richTextInlineBlocks`.
 
-The substring clause is what carries the original intent. It is what forces bare `Hero`
-to become `Hero (standard page)` when `Case study hero`, `Homepage hero` and
-`Service pillar hero` are on the same screen, `Embed` to become `Embed (iframe)` beside
-`Video embed`, and `Testimonial` to become `Testimonial (single)` beside
-`Featured testimonials`. Those three were the entire real-world ambiguity in the
-45-block set.
+The substring clause is what carries the original intent. In the 45-block set it forced
+bare `Hero` to become `Hero (standard page)` beside `Case study hero`, `Homepage hero`
+and `Service pillar hero`, and made the same call for `Embed` and `Testimonial`. The
+thirteen-block set has no such pair; the rule still runs on every label.
 
 **FR-011 is therefore NOT MET as written** and is amended in `spec.md` rather than
 declared satisfied. The long-form "what it produces and when to choose it" prose stays

@@ -489,7 +489,7 @@ export interface ItemsBlock {
      */
     title: string;
     /**
-     * Optional. One to three sentences under the title. Tags do not show it.
+     * Optional. One to three sentences under the title.
      */
     body?: string | null;
     /**
@@ -501,7 +501,7 @@ export interface ItemsBlock {
      */
     image?: (number | null) | Media;
     /**
-     * Optional. With an address, the title (or the tag) becomes a link. Add link text to also show a "link text →" line under the item; tags do not show it.
+     * Optional. With an address, the title (or the tag) becomes a link. Add link text to also show a "link text →" line under the item.
      */
     link?: {
       /**
@@ -820,11 +820,11 @@ export interface CaseStudy {
    */
   subtitle?: string | null;
   /**
-   * What sector the client is in. A "Case studies by industry" block filters on this.
+   * What sector the client is in. A Collection cards block listing case studies can filter on this.
    */
   industry: number | Industry;
   /**
-   * Which services this engagement used. A "Case studies by service" block filters on this.
+   * Which services this engagement used. A Collection cards block listing case studies can filter on this.
    */
   services?: (number | Service)[] | null;
   /**
@@ -910,7 +910,7 @@ export interface CaseStudy {
 export interface Industry {
   id: number;
   /**
-   * What this sector is called on case studies and in an industry grid.
+   * What this sector is called on case studies and on industry cards.
    */
   title: string;
   /**
@@ -1087,7 +1087,7 @@ export interface CtaBlock {
    */
   action: 'buttons' | 'meeting' | 'newsletter' | 'download';
   /**
-   * Centered stacks everything down the middle. Split puts the heading on the left and the buttons, scheduler, form or download beside it; on a phone the two stack.
+   * Centered stacks everything down the middle. Split sets two columns side by side: the copy beside the buttons, scheduler or form, or a download's cover beside its form. On a phone they stack.
    */
   variant: 'centered' | 'split';
   /**
@@ -1250,7 +1250,7 @@ export interface CardsBlock {
 export interface Category {
   id: number;
   /**
-   * What this topic is called on a post and in a "Posts by category" block.
+   * What this topic is called on a post and in the topic filter of a Collection cards block.
    */
   title: string;
   /**
@@ -1315,7 +1315,7 @@ export interface Post {
    */
   author: number | TeamMember;
   /**
-   * What this post is about. Topics are how a "Posts by category" block finds it.
+   * What this post is about. A Collection cards block listing insights can filter on topic.
    */
   categories?: (number | Category)[] | null;
   /**
@@ -1572,7 +1572,7 @@ export interface Workshop {
    */
   testimonial?: (number | null) | Testimonial;
   /**
-   * Lowest number first in the /workshops page (a workshop-list block keeps the order you pick there). Records left without a number come after the numbered ones, newest first.
+   * Lowest number first in the /workshops page and any Collection cards block listing workshops. Records left without a number come after the numbered ones, newest first.
    */
   order?: number | null;
   /**
@@ -1609,7 +1609,7 @@ export interface Workshop {
 export interface Location {
   id: number;
   /**
-   * The market name, as it appears on a "Where we work" block.
+   * The market name, as it appears on a Collection cards block listing markets.
    */
   city: string;
   /**

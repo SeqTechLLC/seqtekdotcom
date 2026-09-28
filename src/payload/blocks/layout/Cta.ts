@@ -140,7 +140,7 @@ export const Cta: Block = {
       ],
       admin: {
         description:
-          'Centered stacks everything down the middle. Split puts the heading on the left and the buttons, scheduler, form or download beside it; on a phone the two stack.',
+          "Centered stacks everything down the middle. Split sets two columns side by side: the copy beside the buttons, scheduler or form, or a download's cover beside its form. On a phone they stack.",
       },
     },
     primaryCta,

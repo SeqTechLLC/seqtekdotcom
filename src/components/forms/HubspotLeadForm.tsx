@@ -14,7 +14,8 @@ interface HubspotLeadFormProps {
   successHeading?: string
   successBody?: string
   /**
-   * Revealed only once the submit succeeds; this is what gates a gated asset.
+   * Shown once the submit succeeds. A courtesy, not access control: the link is
+   * already in the page before submit (see `Cta.tsx`).
    */
   successCta?: { href: string; label: string } | null
 }

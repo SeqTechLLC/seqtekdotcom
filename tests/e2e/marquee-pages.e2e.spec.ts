@@ -145,7 +145,10 @@ test.describe('US3 — team page renders members with photos', () => {
     })
   })
 
-  test('GET /team → 200, TeamGrid renders the member, axe-clean', async ({ page, request }) => {
+  test('GET /team → 200, the team cards render the member, axe-clean', async ({
+    page,
+    request,
+  }) => {
     const media = await payload.create({
       collection: 'media',
       data: { alt: 'US3 marquee headshot' },

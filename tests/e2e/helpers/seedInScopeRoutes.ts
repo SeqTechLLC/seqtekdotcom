@@ -280,7 +280,7 @@ export async function seedInScopeRoutes(
   // the real services content lives in the gitignored docs/content-drafts JSON
   // loaded by tools/payload-seed. The block TYPES get full a11y coverage from
   // the showcase seeder; here we only need each route to 200 and pass the
-  // sweep. digital-transformation keeps a featured-case-study block pointing at
+  // sweep. digital-transformation keeps a featured `cards` block pointing at
   // the case study seeded just above, so it resolves a real study and never
   // read-timeouts on an unseeded id.
 

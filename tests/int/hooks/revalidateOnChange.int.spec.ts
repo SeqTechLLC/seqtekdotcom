@@ -112,7 +112,7 @@ describe('buildRevalidatePlan — per-collection routing', () => {
   // stale for `revalidate: 3600` and CloudFront is never invalidated for the
   // index path. `/industries` is the subtle one: it is a `pages` doc on the
   // `/[slug]` catch-all rather than a route file, so it does not look like an
-  // index — but it carries an `industry-grid`.
+  // index — but it lists industries as `cards`.
   it.each([
     { collection: 'partners' as const, slug: 'p-1', index: '/partners' },
     { collection: 'industries' as const, slug: 'energy', index: '/industries' },

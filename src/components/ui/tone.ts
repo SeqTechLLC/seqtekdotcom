@@ -1,14 +1,12 @@
 import type { SectionBackground } from './Section'
 
 /**
- * Text, rule and highlight colours that stay legible on each `Section`
- * background.
+ * Text, rule and highlight colours for each `Section` background.
  *
- * The semantic tokens (`text-text-secondary`, `text-text-muted`,
- * `border-border-subtle`) are tuned for the light surfaces. On the `inverse`
- * band they disappear (neutral-700 on neutral-900), so a block that offers
- * every background reads its secondary colours from here instead of writing
- * them inline.
+ * `.band-dark` and `.band-brand` re-point the semantic text and border tokens, so
+ * those already read on every band. This adds the accent (`accent-strong` is not
+ * re-pointed, since it is also the button fill), a highlight panel, and the
+ * `inverse`/`brand` flags a block branches on.
  */
 export interface Tone {
   /** True on the dark and brand bands, where body text is already white. */

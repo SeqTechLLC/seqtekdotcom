@@ -1,4 +1,4 @@
-import type { CaseStudy, Post, Service } from '../payload-types'
+import type { CaseStudy, Service } from '../payload-types'
 import { type CardCollection, isCardCollection, unwrapPicks } from './cardCollections'
 import {
   listCaseStudies,
@@ -58,14 +58,6 @@ const sameRelation = (a: unknown, b: unknown): boolean => {
 
 const relationListHas = (values: unknown, target: unknown): boolean =>
   Array.isArray(values) && values.some((value) => sameRelation(value, target))
-
-const hasManualItems = (block: LayoutBlock): boolean =>
-  Array.isArray(block.manualItems) && block.manualItems.length > 0
-
-const limitOf = (block: LayoutBlock, fallback: number): number => {
-  const raw = block.limit
-  return typeof raw === 'number' && raw > 0 ? raw : fallback
-}
 
 /** The two fields the team ordering actually reads. */
 interface TeamOrdering {

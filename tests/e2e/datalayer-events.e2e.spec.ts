@@ -163,7 +163,7 @@ test.describe('US3 — dataLayer conversion signals', () => {
     expect(view.slug).toBe(CASE_SLUG)
   })
 
-  // booking_complete (D3) is a seam only — emission is gated on the real
-  // HubSpot Meetings embed (HubspotMeetings.tsx is a placeholder). No live
-  // assertion here; the listener shape is reviewable in BookingCompleteSeam.tsx.
+  // booking_complete (D3) is a seam only: it fires from the real HubSpot
+  // Meetings embed, which no test loads. The listener is in
+  // BookingCompleteSeam.tsx.
 })

@@ -43,9 +43,8 @@ const ROUTES: { slug: string; path: string }[] = [
   // both land with the content seed; the harness skips a route that is not
   // there yet rather than failing.
   //
-  // `/industries` matters more than it looks: it is the ONLY document carrying
-  // an `industry-grid`, so the visible change IND-1 makes to that block —
-  // unlinked <div> to <Link> — renders on this one page and nowhere else.
+  // `/industries` lists industries as cards, so it is where an industry card's
+  // link (or its absence) shows.
   { slug: 'industries', path: '/industries' },
   { slug: 'industry', path: '/industries/oil-and-gas' },
   { slug: 'service-axis-how', path: '/services/how-we-work' },

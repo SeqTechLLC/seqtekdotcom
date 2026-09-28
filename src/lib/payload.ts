@@ -438,7 +438,6 @@ export const findPublishedList = async (
     draft: false,
     overrideAccess: false,
     depth: opts.depth ?? 1,
-    limit: 200,
     pagination: false,
     ...(opts.sort ? { sort: opts.sort } : {}),
   })

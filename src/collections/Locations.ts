@@ -35,7 +35,9 @@ export const Locations: CollectionConfig = {
       type: 'text',
       label: 'City',
       required: true,
-      admin: { description: 'The market name, as it appears on a "Where we work" block.' },
+      admin: {
+        description: 'The market name, as it appears on a Collection cards block listing markets.',
+      },
     },
     urlPathField({
       useAsSlug: 'city',

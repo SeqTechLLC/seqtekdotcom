@@ -9,10 +9,9 @@ import { Cards } from '../../../src/components/sections/Cards'
  * fixtures synthesize industries with no `layout`, so this spec is what
  * exercises the linked branch.
  *
- * `isLinkable` reads `layout`, which arrives only because the production
- * readers populate at `depth: 2` with no `select` and no `defaultPopulate`.
- * These cases pin the rule on hand-built docs; they would not catch a
- * `defaultPopulate` added to `Industries`.
+ * `isLinkable` reads `layout`, which the reader returns because it passes no
+ * `select` and `Industries` has no `defaultPopulate`. These cases pin the rule
+ * on hand-built docs; they would not catch either being added.
  */
 describe('industry cards — a card links only where the route resolves', () => {
   const industry = (over: Record<string, unknown> = {}) => ({
