@@ -451,14 +451,15 @@ held at zero tasks from the drop until the new image deploys, and nothing else
 deploys in between. Once a lane is rebuilt there is no going back to the old
 image; a problem is fixed forward and the lane reloaded from the content JSON.
 
-**Website owner, first.** Confirm no Deploy run is in progress or queued, then hold
-merges to `main` (preview) or the release (ww3) until step 5. For ww3, merge
-nothing under `infra/` between step 4 and publishing.
+**Website owner, first.** Confirm no Deploy run is in progress or queued. Then,
+until step 5: for preview, merge nothing to `main`; for ww3, hold the release and
+merge nothing under `infra/`.
 
 **Account admin.** Run the blocks in bash with AWS CLI v2; AWS CloudShell in
 `us-east-1` qualifies. If a command errors or prints something other than the
 value noted beside it, stop and report it. If a `wait` prints "Max attempts
-exceeded", re-run just that `wait`. Nothing changes until step 3.
+exceeded", re-run that `wait` once; if it times out again, report it. Nothing
+changes until step 3.
 
 1. Choose the lane, resolve its resources, and check the stack is idle.
 
@@ -512,13 +513,16 @@ aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
 4. Drop and recreate the lane's database with a one-off task from the lane's own
    task definition, which carries the credentials. Its `DB_NAME` is that lane's
    database, so the other lane's is untouched, and the script refuses any other
-   name. First re-check the two preconditions:
+   name. First re-check the preconditions. `SNAP` is the step 2 snapshot name; in a
+   new shell, set it to the reported name.
 
 ```sh
-aws rds describe-db-snapshots --db-snapshot-identifier "$SNAP" \
+aws rds describe-db-snapshots --db-snapshot-identifier "${SNAP:?set SNAP to the step 2 snapshot name}" \
   --query 'DBSnapshots[0].Status' --output text   # available
 aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" --output text \
-  --query 'services[0].[runningCount, length(deployments)]'   # 0 1
+  --query 'services[0].[desiredCount, runningCount, pendingCount, length(deployments)]'   # 0 0 0 1
+aws cloudformation describe-stacks --stack-name SeqtekPreviewCompute \
+  --query 'Stacks[0].StackStatus' --output text   # UPDATE_COMPLETE or UPDATE_ROLLBACK_COMPLETE
 ```
 
 ```sh
@@ -543,7 +547,7 @@ nothing has changed: the failure says why; re-run step 4 once it is resolved.
 ```sh
 aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK"
 aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" --output text \
-  --query 'tasks[0].[containers[0].exitCode, stoppedReason]'   # 0
+  --query 'tasks[0].[containers[0].exitCode, stoppedReason]'   # 0  Essential container in task exited
 ```
 
 - Exit code `0`: done. The task's log line reads `recreated seqtek_preview` (or
@@ -589,7 +593,10 @@ aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
 
 **If a deploy fails after the rebuild,** ECS rolled the lane back to the old image
 at one task. The account admin re-runs step 1's blocks and checks the stack
-status. If it is `UPDATE_ROLLBACK_FAILED`, run step 3, then:
+status. If no snapshot was taken yet, run step 2; otherwise set `SNAP` to the
+reported name. If the status is `UPDATE_ROLLBACK_FAILED`, the old image cannot boot
+on the baseline-migrated database, so run steps 3 and 4 first (step 4's stack check
+reads `UPDATE_ROLLBACK_FAILED` here; that is expected), then:
 
 ```sh
 aws cloudformation continue-update-rollback --stack-name SeqtekPreviewCompute
