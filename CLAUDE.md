@@ -16,7 +16,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 Defer to these docs before re-deriving anything. Update them when decisions change.
 
 - `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com builds once; publishing the GitHub Release promotes that same image → ww3.seqtek.com, no rebuild)
-- `docs/INFRASTRUCTURE_RUNBOOK.md` — step-by-step: fresh AWS account standup, migrating an environment (with data) to another account, `seqtek.com` cutover
+- `docs/INFRASTRUCTURE_RUNBOOK.md` — rebuilding a lane's database, snapshotting before a destructive migration, the GitHub environments and parameters CDK does not create, external reviewers
 - `docs/ROADMAP.md` — what is still open, in priority order. Open items only; nothing that has shipped
 - `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
 - `docs/LOCAL_DEVELOPMENT.md` — running locally

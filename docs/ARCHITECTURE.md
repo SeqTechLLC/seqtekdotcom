@@ -866,7 +866,7 @@ paths) so a running instance traces back to a CHANGELOG entry.
 **Prerequisites.** Production deploys fail closed unless the `production` GitHub
 Environment exists with `AWS_ACCOUNT_ID`, deployment branch/tag policies, and
 `PROD_ENVIRONMENT_CONFIGURED=true` — see
-[`INFRASTRUCTURE_RUNBOOK.md`](./INFRASTRUCTURE_RUNBOOK.md) §1.2.
+[`INFRASTRUCTURE_RUNBOOK.md`](./INFRASTRUCTURE_RUNBOOK.md) §3.
 
 `workflow_dispatch` covers what the triggers can't: the first deploy into a
 fresh account (no release to replay), a stack-scoped redeploy, or re-running a
