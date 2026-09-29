@@ -10,9 +10,8 @@ const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  // spec 004 T039 — 301 map from old Wix URLs (INTEGRATIONS.md §9, via
-  // src/lib/redirects.ts). Read at server start, so restart `next start` after
-  // editing the map.
+  // 301 map from old Wix URLs (src/lib/redirects.ts). Read at server start, so
+  // restart `next start` after editing the map.
   async redirects() {
     return redirectMap
   },

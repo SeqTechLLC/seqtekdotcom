@@ -10,7 +10,7 @@ import { TestimonialEmbed } from './TestimonialEmbed'
 
 // blockType (kebab-case slug from src/payload/blocks/inline/*.ts) → React component.
 // Every entry MUST appear in src/payload/blocks/inline/index.ts and vice versa
-// (enforced by tests/int/render/inlineRegistryCoverage.test.ts).
+// (enforced by tests/int/render/inlineRegistryCoverage.int.spec.ts).
 // Types intentionally use `any` per contract inline-block-converter.md.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const defaultInlineRegistry: Record<string, ComponentType<any>> = {

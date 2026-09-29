@@ -65,7 +65,7 @@
         "ownsAccountEcrRepository": true
       },
       "preview": {
-        "_comment_domain": "This account is NOT a fresh/dedicated account (corrected 2026-08-10 after initial deploy attempt hit the account's 5-VPC-per-region limit): it already runs other real infrastructure (an 'intranet-sequred' ECS/FusionAuth/wiki stack, an RDS 'warehouse' database, and WordPress/SEO-hosting security groups under the Seqtek name in the SeqtekDeploy VPC). Cert covers seqtek.com + *.seqtek.com (reusable for any future subdomain with zero re-validation), but dnsRecordNames creates ONLY preview.seqtek.com — the zone's existing seqtek.com (A -> 89.106.200.1) and www.seqtek.com (CNAME -> client.gushwork.net) records are untouched. Hosted zone ZDNRI358EUS3R confirmed to already live in this same account.",
+        "_comment_domain": "This account also runs infrastructure unrelated to this codebase. The cert covers seqtek.com + *.seqtek.com (reusable for any future subdomain with no re-validation), but dnsRecordNames creates ONLY preview.seqtek.com; the zone's existing seqtek.com and www.seqtek.com records are untouched. Hosted zone ZDNRI358EUS3R is in this same account.",
         "_comment_sizing": "Mirrors staging's validation-period free-tier-eligible sizing — this is a testing environment, not launch-readiness scale.",
         "region": "us-east-1",
         "domainName": "seqtek.com",
@@ -73,7 +73,7 @@
         "certificateArn": null,
         "certificateSans": ["*.seqtek.com"],
         "dnsRecordNames": ["preview.seqtek.com"],
-        "_comment_existingVpc": "Account was already at its 5-VPC/5-IGW-per-region limit, and this VPC (SeqtekDeploy, pre-existing, unrelated to this codebase) is reused rather than requesting a quota increase. Its 3 existing subnets are all in us-east-1f only; ALB and RDS both independently require 2 AZs, so a new public+isolated subnet pair is added in us-east-1a (CIDRs 10.0.2.0/24, 10.0.40.0/26 — verified free against the VPC's existing 10.0.0.0/24, 10.0.1.0/24, 10.0.32.0/26 on 2026-08-10). The existing IGW is reused for the new public subnet's route; nothing existing in this VPC (its other subnets, route tables, default security group, or the WordPress/SEO/NFS security groups already there) is modified.",
+        "_comment_existingVpc": "Account was already at its 5-VPC/5-IGW-per-region limit, and this VPC (SeqtekDeploy, pre-existing, unrelated to this codebase) is reused rather than requesting a quota increase. Its 3 existing subnets are all in us-east-1f only; ALB and RDS both independently require 2 AZs, so a new public+isolated subnet pair is added in us-east-1a (CIDRs 10.0.2.0/24, 10.0.40.0/26 — verified free against the VPC's existing 10.0.0.0/24, 10.0.1.0/24, 10.0.32.0/26 on 2026-08-10). The existing IGW is reused for the new public subnet's route; nothing existing in this VPC (its other subnets, route tables, default security group, or the other security groups already there) is modified.",
         "existingVpc": {
           "vpcId": "vpc-00cacecfd614514d0",
           "igwId": "igw-0207829ee7d2725e8",

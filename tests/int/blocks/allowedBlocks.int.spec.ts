@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { layoutBlocks } from '../../../src/payload/blocks/layout'
 
 /**
- * The block list is pinned (docs/planning/block-consolidation.md). Every page,
+ * The block list is pinned (ADR 0013). Every page,
  * current or new, composes from these. A new look is an option on one of them.
  *
  * Changing this list needs Kenn's sign-off: it is the one place a new block

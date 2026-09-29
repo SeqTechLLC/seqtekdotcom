@@ -92,7 +92,7 @@ const BY_COLLECTION: Record<CardCollection, (props: BodyProps) => ReactNode> = {
 
 /**
  * The `cards` block: any list of documents, drawn as that collection's card
- * (docs/planning/block-consolidation.md). Also what the listing routes render,
+ * (docs/BLOCK_LIBRARY.md §5.5). Also what the listing routes render,
  * so `/team` and a team block on a page cannot drift apart.
  */
 export function Cards({ collection, ...props }: CardsProps) {

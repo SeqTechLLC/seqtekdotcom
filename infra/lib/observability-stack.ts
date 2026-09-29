@@ -27,21 +27,19 @@ export interface ObservabilityStackProps extends StackProps {
 }
 
 /**
- * Observability plane per spec 002 / US3 / T042.
+ * Observability plane.
  *
  * - SNS topic with at-rest encryption (aws-managed key)
  * - Slack notifier Lambda (NodejsFunction, esbuild-bundled)
- * - 9 CloudWatch alarms per ARCHITECTURE.md §8 / data-model § 1
+ * - 9 CloudWatch alarms per ARCHITECTURE.md §8
  * - EventBridge heartbeat rule firing every 6h
  *
- * **Network placement deviation from data-model § 1 (validation-period)**:
- * the Lambda runs without VPC config because the validation-period
- * network topology has no NAT gateway (Clarifications Session 2026-05-26)
- * and a VPC-bound Lambda without NAT cannot reach hooks.slack.com. IAM
- * scoping on the SSM webhook parameter is the actual security boundary;
- * the Lambda only has GetParameter on one path and outbound HTTPS via
- * AWS Lambda's runtime networking. Phase 5.5 launch-readiness review
- * adds NAT and flips this to PRIVATE_WITH_EGRESS placement.
+ * **Network placement:** the Lambda runs without VPC config because the
+ * network has no NAT gateway, and a VPC-bound Lambda without NAT cannot reach
+ * hooks.slack.com. IAM scoping on the SSM webhook parameter is the security
+ * boundary: the Lambda only has GetParameter on one path, plus outbound HTTPS
+ * through Lambda's runtime networking. Moving it into the VPC waits on the
+ * production network posture (ROADMAP P3).
  */
 export class ObservabilityStack extends Stack {
   public readonly alarmTopic: sns.Topic

@@ -2,9 +2,9 @@
  * CSP violation report sink. Accepts both legacy `application/csp-report`
  * payloads and the modern Reporting API (`application/reports+json`) shape.
  *
- * Logs a single JSON line per accepted report to stdout so the awslogs Docker
- * log driver ships them to CloudWatch Logs (INTEGRATIONS.md §8 Rollout
- * mechanism). Metric filter + alarm live in the CDK stack.
+ * Logs a single JSON line per accepted report to stdout so the awslogs log
+ * driver ships them to CloudWatch Logs (INTEGRATIONS.md §8 Rollout mechanism).
+ * No metric filter or alarm watches them yet.
  */
 
 import { NextResponse } from 'next/server'

@@ -14,13 +14,9 @@ export interface ManifestEntry {
   mediaId?: string | number
   /**
    * True when this doc was uploaded with a generated placeholder `alt` that
-   * still needs an editor (C-7). This used to be stamped into `media.caption`
-   * as `REVIEW_MARKER`, but ROADMAP INERT-2 dropped that column — it rendered
-   * nowhere, so the admin offered editors a caption field that reached no
-   * page. The flag lives here instead, beside the `mediaId` it describes, so
-   * the alt-text pass can select exactly the auto-ingested rows. Note that
-   * pass does not exist yet — nothing in the tree reads this field except the
-   * test that pins it — so this is where C-7 should look, not a live contract.
+   * still needs an editor. It sits beside the `mediaId` it describes, so an
+   * alt-text pass can select exactly the auto-ingested rows. No such pass
+   * exists yet; only the test that pins it reads this field.
    */
   altPending?: boolean
   /** Set by a `--out` disk run (path of the written file, relative to outDir). */

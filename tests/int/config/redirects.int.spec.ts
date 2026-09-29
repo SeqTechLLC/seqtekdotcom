@@ -4,21 +4,20 @@ import { describe, expect, it } from 'vitest'
 import { redirectMap } from '../../../src/lib/redirects'
 
 /**
- * spec 004 T040 (redirect-map.md). The 301 map from old Wix URLs, at the HTTP
- * path level. Since spec 011 this is the only slug-rewrite record in code.
+ * The 301 map from old Wix URLs, at the HTTP path level. It is the only
+ * slug-rewrite record in code.
  */
 
-// The non-identity sources from INTEGRATIONS.md §9 (the two identity rows
-// /contact → /contact and /privacy-policy → /privacy-policy are intentionally
-// excluded — a self-redirect is a loop, not a redirect).
+// Every source the map must carry. /contact and /privacy-policy are excluded:
+// a self-redirect is a loop, not a redirect.
 const EXPECTED_SOURCES = [
   '/about-us-1',
   // Internal route→route 301 from the About → Our Story rename.
   '/about',
   '/our-services',
   // The four-offering overview, collapsed onto the What We Do axis once the
-  // two-axis nav stopped linking it (NAV-1). Not an INTEGRATIONS §9 Wix source
-  // — an internal route→route 301, same class as /about above.
+  // two-axis nav stopped linking it (NAV-1). Not a Wix source — an internal
+  // route→route 301, same class as /about above.
   '/services',
   '/touchstone-workshops',
   '/touchstone-workshops/:slug*',

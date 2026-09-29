@@ -1,22 +1,15 @@
 import typography from '@tailwindcss/typography'
 
 /**
- * Design tokens translated from docs/DESIGN_SYSTEM.md §14.
- * Doc wins on values; this file is the published Tailwind API.
+ * The published Tailwind API for the design tokens. This file and
+ * src/app/(frontend)/styles.css own the values; docs/DESIGN_SYSTEM.md holds the
+ * usage rules.
  *
- * Ramps and state colors are hex-baked because they don't theme-swap.
- * Semantic tokens (text-*, surface-*, border-*, accent-*) read from
- * CSS custom properties defined in src/app/(frontend)/styles.css so
- * dark mode / high-contrast mode can swap them later (D-1 §1.5).
+ * Ramps and state colors are hex-baked. Semantic tokens (text-*, surface-*,
+ * border-*, accent-*) read the custom properties in styles.css, which the bands
+ * re-point.
  */
-const fontStack = [
-  'Nunito Sans',
-  'ui-sans-serif',
-  'system-ui',
-  '-apple-system',
-  'Segoe UI',
-  'sans-serif',
-]
+const fontStack = ['ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif']
 
 /** @type {import('tailwindcss').Config} */
 const config = {

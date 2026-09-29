@@ -12,7 +12,7 @@ import { selectOptions } from '../helpers/synthesizeBlock'
 
 /**
  * `gallery` — pictures, or a strip of logos. Columns follow the item count and
- * there is no column control (docs/planning/block-consolidation.md).
+ * there is no column control (docs/BLOCK_LIBRARY.md §5.2).
  */
 
 const pic = (n: number, caption?: string) => ({

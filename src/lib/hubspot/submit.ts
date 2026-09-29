@@ -1,18 +1,17 @@
 /**
- * HubSpot Forms API submission engine (spec 005, INTEGRATIONS.md §1.2).
+ * HubSpot Forms API submission engine (INTEGRATIONS.md §1.2).
  *
  * Shared by every custom form on the site. Runs the documented submission
  * state machine, classifies failures, and pushes GTM dataLayer events.
  *
- * HALF-WIRED (v1): the live POST to api.hsforms.com only fires when BOTH the
- * portal ID and a real form GUID are configured. Until the HubSpot admin
- * returns the GUIDs (INTEGRATIONS.md §1.2 provisioning checklist), submit
- * short-circuits to a stub success so the full client-side lifecycle —
+ * The live POST to api.hsforms.com only fires when BOTH the portal ID and a
+ * real form GUID are configured. Without them (local dev, CI) submit
+ * short-circuits to a stub success, so the full client-side lifecycle —
  * validation, submitting state, success view, dataLayer events — is exercisable
- * end-to-end without hitting HubSpot. Drop a GUID into the env var to go live.
+ * end-to-end without hitting HubSpot.
  *
- * NOTE (go-live): `api.hsforms.com` is already allowed in CSP `connect-src`
- * (src/lib/csp.ts — `*.hsforms.com`, spec 005), so going live needs no CSP change.
+ * `api.hsforms.com` is allowed in CSP `connect-src` (`*.hsforms.com`,
+ * src/lib/csp.ts).
  */
 
 import { pushDataLayer } from '@/lib/analytics/dataLayer'

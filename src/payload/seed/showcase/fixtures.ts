@@ -1312,7 +1312,7 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
         },
       ],
     },
-    // ---- Deferred catalog blocks (BLOCK_LIBRARY.md §5.7) ----
+    // ---- Specialty blocks (BLOCK_LIBRARY.md §5.6) ----
     {
       blockType: 'hubspot-form',
       variants: [

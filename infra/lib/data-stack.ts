@@ -18,13 +18,12 @@ export interface DataStackProps extends StackProps {
 
 /**
  * Data plane — RDS Postgres in isolated subnets, S3 media bucket, and
- * the Parameter Store namespace (per contracts/parameter-store.md).
+ * the Parameter Store namespace (INFRASTRUCTURE_RUNBOOK.md §4).
  *
  * Sensitive values (DB master credentials, Payload secret, revalidation
  * secret) live in **Secrets Manager** — CDK-native, no template
- * leakage, supports auto-rotation. The EC2 user-data script in
- * compute-stack fetches them at boot via the AWS SDK and assembles the
- * env vars the app reads.
+ * leakage, supports auto-rotation. The ECS task definitions in
+ * compute-stack inject them as container secrets at task start.
  *
  * Why not mirror to SSM SecureString: AwsCustomResource serializes the
  * `parameters` block as a JSON string, and CFN doesn't resolve
@@ -174,7 +173,7 @@ export class DataStack extends Stack {
 
     // ----- Parameter Store: non-sensitive config only -----
     // Sensitive values (db creds, payload secret, revalidation secret)
-    // live in Secrets Manager above. User-data fetches both at boot.
+    // live in Secrets Manager above.
     new ssm.StringParameter(this, 'S3BucketParam', {
       parameterName: `${this.parameterPathPrefix}/s3_bucket`,
       stringValue: this.mediaBucket.bucketName,

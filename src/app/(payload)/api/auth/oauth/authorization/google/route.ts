@@ -18,19 +18,19 @@ const HOSTED_DOMAIN_HINT = '*'
 const MAX_AGE_SECONDS = 600 // 10 minutes — long enough to complete consent
 
 function callbackUri(req: NextRequest): string {
-  // Behind CloudFront -> ALB -> EC2 -> Docker -> Next.js, `req.url` shows
+  // Behind CloudFront -> ALB -> Fargate task -> Next.js, `req.url` shows
   // the container's internal bind address (http://0.0.0.0:3000/...).
   // Reconstruct the viewer-facing URL from forwarded headers.
   //
-  // Protocol: prefer CloudFront's own `cloudfront-forwarded-proto` header
-  // which always reflects the actual VIEWER protocol. Our CloudFront
-  // distribution uses HTTP_ONLY to the ALB origin (validation-period
-  // topology), so `x-forwarded-proto` arrives at Next.js as 'http' —
-  // wrong for OAuth redirect_uri which must match the registered
-  // viewer-facing HTTPS URL. Fall back to x-forwarded-proto for non-CF
-  // proxy setups, then req.url's protocol for local dev.
+  // Protocol: prefer CloudFront's own `cloudfront-forwarded-proto` header,
+  // which always reflects the VIEWER protocol. An env without the gate uses
+  // HTTP_ONLY to the ALB origin (edge-stack.ts), so `x-forwarded-proto` can
+  // arrive as 'http' — wrong for an OAuth redirect_uri, which must match the
+  // registered HTTPS URL. Fall back to x-forwarded-proto for non-CF proxy
+  // setups, then req.url's protocol for local dev.
   //
-  // Host: prefer x-forwarded-host (set by ALB), then standard Host header.
+  // Host: prefer x-forwarded-host (the viewer's Host, copied by the CloudFront
+  // Function in edge-stack.ts), then the standard Host header.
   const proto =
     req.headers.get('cloudfront-forwarded-proto') ??
     req.headers.get('x-forwarded-proto') ??

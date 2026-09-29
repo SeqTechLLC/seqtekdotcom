@@ -17,7 +17,7 @@ import type { EnvName } from './construct-utils'
 const LOGO_PATH = join(__dirname, '..', '..', 'public', 'brand', 'demo-environment.png')
 const LOGO_BASE64 = readFileSync(LOGO_PATH).toString('base64')
 
-// docs/DESIGN_SYSTEM.md §14 / tailwind.config.mjs — brand-navy-800 and
+// docs/DESIGN_SYSTEM.md §2.1 / tailwind.config.mjs — brand-navy-800 and
 // brand-green-500/600, hex-baked the same way tailwind.config.mjs bakes
 // them (the branding document is flat JSON with no access to CSS custom
 // properties or theme tokens).

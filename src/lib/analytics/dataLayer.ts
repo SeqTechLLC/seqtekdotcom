@@ -1,16 +1,16 @@
 /**
- * Shared GTM dataLayer emitter (spec 008 US3, INTEGRATIONS.md §2.4).
+ * Shared GTM dataLayer emitter (INTEGRATIONS.md §2.4,
+ * contracts/datalayer-events.md).
  *
- * Generalizes the proven `src/lib/hubspot/submit.ts` push pattern so every
- * conversion signal flows through ONE SSR-safe emitter with ONE
- * `Window.dataLayer` global declaration (data-model §A, INV-1). Pushes are a
- * no-op under SSR (no `window`) and harmless when `NEXT_PUBLIC_GTM_ID` is unset
- * — GTM simply isn't there to consume them (INV-4). No call site should touch
+ * Every conversion signal flows through ONE SSR-safe emitter with ONE
+ * `Window.dataLayer` global declaration (INV-1). Pushes are a no-op under SSR
+ * (no `window`) and harmless when `NEXT_PUBLIC_GTM_ID` is unset — GTM simply
+ * isn't there to consume them (INV-4). No call site should touch
  * `window.dataLayer` directly.
  *
- * The events are interaction signals only — no PII (INV-2, INTEGRATIONS.md
- * §1.2). The existing `form_submission_*` events (spec 005) are pushed through
- * this same emitter from `submit.ts`; their shapes are unchanged (INV-3).
+ * The events are interaction signals only — no PII (INV-2). The
+ * `form_submission_*` events are pushed through this same emitter from
+ * `submit.ts`; event shapes change only additively (INV-3).
  */
 
 declare global {

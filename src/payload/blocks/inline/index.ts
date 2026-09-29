@@ -1,5 +1,5 @@
-// If you add a block here, run `npm run generate:importmap` before
-// next dev-start (project_payload_importmap_gotcha).
+// If you add a block here, run `npm run generate:importmap` before the next
+// dev start (LOCAL_DEVELOPMENT.md, "Regenerating the Payload importMap").
 import { Callout } from './Callout'
 import { Disclosure } from './Disclosure'
 import { Figure } from './Figure'

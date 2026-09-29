@@ -287,8 +287,8 @@ export const navigation: Navigation = {
   ctaButton: { label: 'Book a Call', url: '/contact' },
 }
 
-// BR-7 resolved 2026-08-17: the canonical office is the Gradient space on
-// Cheyenne, not Sapulpa. Street/city/zip are formatted exactly as the old Wix
+// The canonical office is the Gradient space on Cheyenne. Street/city/zip are
+// formatted exactly as the old Wix
 // footer published them — local search treats name, address and phone as one
 // identity, so reformatting a live NAP costs more than it gains.
 export const siteSettings: SiteSettings = {

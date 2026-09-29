@@ -1,15 +1,11 @@
 import type { Redirect } from 'next/dist/lib/load-custom-routes'
 
-// spec 004 T039 (redirect-map.md). 301 map from old Wix URLs → canonical
-// routes. Source of truth: INTEGRATIONS.md §9 — reconciled in the same PR.
-// Extracted to a module so next.config.ts and the RM test (T040) share one
-// definition. This is the HTTP path-level contract, with route prefixes. The
-// seed-side bare-slug map it used to pair with (`seed/slugRewrites.ts`) went
-// with the audit seeder in spec 011; every mapping it held is represented here.
+// 301 map from old Wix URLs → canonical routes. This module is the source of
+// truth: next.config.ts reads it and tests/int/config/redirects.int.spec.ts pins
+// it. It is the HTTP path-level contract, with route prefixes.
 //
-// The two INTEGRATIONS §9 identity rows (`/contact` → `/contact`,
-// `/privacy-policy` → `/privacy-policy`) are intentionally OMITTED: a redirect
-// to itself is a loop, not a redirect — those URLs simply don't change.
+// `/contact` and `/privacy-policy` are intentionally OMITTED: a redirect to
+// itself is a loop, not a redirect — those URLs simply don't change.
 
 export const redirectMap: Redirect[] = [
   { source: '/about-us-1', destination: '/our-story', permanent: true },
@@ -47,10 +43,8 @@ export const redirectMap: Redirect[] = [
     destination: '/workshops',
     permanent: true,
   },
-  // The old Wix case studies. The new set is a different, NAMED set of clients
-  // (Endurance Lift, Hogan, NovaMud, WellChecked, Taurex ×4), so the old
-  // anonymous industry studies have no one-to-one successor and land on the
-  // listing. Do NOT re-point these at a per-slug study unless that slug actually
+  // The old Wix case studies. The new case studies are a different set, so the
+  // old industry studies have no one-to-one successor and land on the listing. Do NOT re-point these at a per-slug study unless that slug actually
   // exists — RM3 enforces that via KNOWN_DETAIL_DESTINATIONS.
   { source: '/organizational-strategy-1-1-1-3', destination: '/case-studies', permanent: true },
   { source: '/organizational-strategy-1-1-1-3-1', destination: '/case-studies', permanent: true },
@@ -199,8 +193,8 @@ export const redirectMap: Redirect[] = [
   // slugs were read live from the DB before finalizing. Workshops is the primary
   // funnel, so the organizational-strategy pillar + its workshop/strategy leaves
   // land on /workshops; everything else lands on the What We Do axis for the
-  // reason given above. These are internal route→route 301s (INTEGRATIONS §9),
-  // and they stay ONE hop: `/services/ai-automation` points straight at
+  // reason given above. These are internal route→route 301s, and they stay ONE
+  // hop: `/services/ai-automation` points straight at
   // `/services/what-we-do` rather than at `/services`, which is itself a 301.
   { source: '/services/ai-automation', destination: '/services/what-we-do', permanent: true },
   {

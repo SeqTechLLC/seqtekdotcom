@@ -4,7 +4,7 @@ import { layoutBlocks } from '../../../src/payload/blocks/layout'
 import { flattenBlock } from '../helpers/flattenFields'
 
 /**
- * No block may cap its content (docs/planning/block-consolidation.md). A cap
+ * No block may cap its content (ADR 0013). A cap
  * turns a content change into a code change: seven CADENCE principles against
  * a six-step maximum is the case that set the rule. A layout that degrades
  * past N items handles N instead.
