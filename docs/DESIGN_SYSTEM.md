@@ -1,20 +1,18 @@
 # SEQTEK Website — Design System
 
-**Date:** 2026-05-14 (updated 2026-05-20: BR-2 resolved — Nunito Sans selected; D-1 tokens translated to Tailwind v3 config)
-**Status:** Reference — applied
-**Depends on:** SEQTEK brand kit (private — kept outside this repo, see CLAUDE.md for local convention), `BRAND_STRATEGY_RESEARCH.md`, ADR `docs/decisions/0001-tailwind-v3.md`
-
-The foundation tokens for the SEQTEK website. The token reference in §14 is written in Tailwind v4 `@theme` syntax for clarity — the actual implementation uses Tailwind v3 per ADR 0001. Ramps and state colors are baked as hex into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.spacing`, `.borderRadius`, etc.); the semantic-token swap layer lives as `:root` CSS custom properties in `src/app/(frontend)/styles.css` and is referenced from the Tailwind config via `var(--color-…)`. This doc remains the source of truth for token _values_ — when this doc and the Tailwind config disagree, this doc wins. **One deliberate exception:** the surface/border palette (plus `--color-text-muted`) was re-pitched to **warm paper** in PRs #55/#66; there the implementation in `styles.css` is authoritative, and this doc has been updated to match it rather than the reverse. See §2.4.
+Usage rules for the brand tokens. The values live in `tailwind.config.mjs` (ramps, type scale, radius, shadow,
+motion, z-index, container widths) and in `src/app/(frontend)/styles.css` (the semantic `--color-*` variables).
+When this doc and those files disagree, the files are right and this doc gets fixed. Tailwind v3 (ADR 0001).
 
 ---
 
 ## 1. Principles
 
-1. **Brand depth, not brand decoration.** The brand kit gives us four colors, a logo, and a wordmark. The design system multiplies that into a working palette without inventing visual identity that isn't ours.
-2. **Content is the conversion asset.** Case studies, service pages, and blog posts are content-dense. The type scale, line height, and spacing rhythms favor scanability over hero drama. (See `BRAND_STRATEGY_RESEARCH.md` §2 — Hinge findings on content as the top growth lever.)
-3. **Trust by detail.** Per WCAG 2.2 AA minimum, with AAA contrast on hero copy where the first impression is set. Real photography over stock. Full-attribution components over anonymous ones. Type metrics tuned for actual reading.
-4. **One source of truth.** This doc defines token values; `tailwind.config.mjs` (v3) is the published API. Component code reads tokens via utility classes (`text-text-primary`, `bg-accent`); component code does not hardcode hex values, sizes, or durations.
-5. **Light mode is v1 scope.** Dark mode and high-contrast mode are deferred per ROADMAP.md (D-1 decision). When added later, semantic tokens are the swap point — primitives don't change.
+1. **Brand depth, not decoration.** Four brand seeds become a working palette; no invented identity.
+2. **Semantic tokens only.** Components use `text-text-primary`, `bg-surface` and the like, never raw hex, sizes
+   or durations.
+3. **WCAG 2.2 AA everywhere**, AAA contrast on the surfaces in §12.1.
+4. **Light mode only.**
 
 ---
 
@@ -22,120 +20,52 @@ The foundation tokens for the SEQTEK website. The token reference in §14 is wri
 
 ### 2.1 Brand seeds
 
-From the official SEQTEK brand kit (kept privately outside this repo), four immutable values:
+From the brand kit (kept outside this repo). These four values are fixed.
 
-| Name          | Hex       | Role                                                                                                        |
-| ------------- | --------- | ----------------------------------------------------------------------------------------------------------- |
-| Brand Green   | `#72B94D` | Accent, calls-to-action, illustration highlights, the quill in the Q                                        |
-| Brand Navy    | `#1F3265` | Foundational structural color — headings, primary text, dark surfaces                                       |
-| Brand "Black" | `#1C1C31` | Near-black with slight navy cast. Used as the deepest neutral.                                              |
-| Brand White   | `#FFFFFF` | Elevated/card surface (`--color-surface-elevated`). The default _page_ surface is now warm paper — see §2.4 |
+| Name          | Hex       | Role                                                                      |
+| ------------- | --------- | ------------------------------------------------------------------------- |
+| Brand Green   | `#72B94D` | Accent, illustration, the quill in the Q                                  |
+| Brand Navy    | `#1F3265` | Structure: headings, dark surfaces                                        |
+| Brand "Black" | `#1C1C31` | The deepest neutral, with a navy cast                                     |
+| Brand White   | `#FFFFFF` | Card surface (`--color-surface-elevated`); the page itself is warm (§2.4) |
 
-These four values may not be edited. The ramps in §2.2 are extrapolated _around_ them so the brand seeds keep their named positions inside the system.
+### 2.2 Ramps
 
-### 2.2 Color ramps
-
-Algorithmic 50–950 ramps generated from the brand seeds. Where the brand seed naturally falls (by luminance) is where it sits in the ramp — we don't force every brand color to "500."
-
-#### Brand Green (`brand-green-*`)
-
-Seed at `500`. Mid-saturation, mid-luminance — natural fit.
-
-| Step  | Hex       | Use                                                                                                      |
-| ----- | --------- | -------------------------------------------------------------------------------------------------------- |
-| `50`  | `#F3F9EC` | Subtle accent backgrounds (success-ish surface, callouts)                                                |
-| `100` | `#E3F1D4` | Hover backgrounds for green-tinted controls                                                              |
-| `200` | `#C8E3AB` | Light dividers, illustration fills                                                                       |
-| `300` | `#A4D27A` | Light accent backgrounds (sparing)                                                                       |
-| `400` | `#88C45F` | Lighter accent for hover states above 500                                                                |
-| `500` | `#72B94D` | **Brand seed.** Primary accent color, link rest, the quill highlight.                                    |
-| `600` | `#5A9C3B` | Primary button background paired with white text (AA large, see §2.5). Focus rings on light backgrounds. |
-| `700` | `#46792F` | Primary button background paired with white text (passes AA for body). Pressed/active state.             |
-| `800` | `#355B24` | Dark accent for inverse surfaces                                                                         |
-| `900` | `#243F19` | Reserved for compositing                                                                                 |
-| `950` | `#142410` | Reserved                                                                                                 |
-
-#### Brand Navy (`brand-navy-*`)
-
-Seed at `800`. The brand navy is dark — anchoring it at 800 leaves room for lighter navy steps that the design will actually use (mute headings, dark UI chrome).
-
-| Step  | Hex       | Use                                                                         |
-| ----- | --------- | --------------------------------------------------------------------------- |
-| `50`  | `#F0F3FA` | Cool surface tint                                                           |
-| `100` | `#DDE4F1` | Subtle dividers, badge backgrounds                                          |
-| `200` | `#BCCAE0` | Disabled control surfaces                                                   |
-| `300` | `#94A8CC` | Light navy text on light surfaces (decorative only, fails body contrast)    |
-| `400` | `#6C83B3` | Decorative accents                                                          |
-| `500` | `#4A648F` | Secondary structural color (e.g., section dividers on dark backgrounds)     |
-| `600` | `#3A527A` | Body text on light surfaces (passes AA body)                                |
-| `700` | `#2C3F60` | Headings (passes AAA body — see §2.5)                                       |
-| `800` | `#1F3265` | **Brand seed.** Deep navy — display copy, dark sections, footer background. |
-| `900` | `#131E3D` | Inverse surface background (alternative to neutral-900)                     |
-| `950` | `#0A1224` | Reserved                                                                    |
-
-#### Neutrals (`neutral-*`)
-
-Seeded from the brand "Black" `#1C1C31` so the neutral ramp carries the same faint navy cast as the brand foundation. The site reads cohesive even where no brand color is visible.
-
-| Step  | Hex       | Use                                                    |
-| ----- | --------- | ------------------------------------------------------ |
-| `0`   | `#FFFFFF` | Canonical surface                                      |
-| `50`  | `#F7F7F8` | Subtle surface (alternating sections, code blocks)     |
-| `100` | `#EDEDF0` | Dividers, input borders rest                           |
-| `200` | `#D9D9DF` | Strong dividers, disabled outlines                     |
-| `300` | `#BABABF` | Placeholder text (large only — fails body)             |
-| `400` | `#93939C` | Disabled text                                          |
-| `500` | `#6E6E7A` | Muted text (timestamps, metadata) — passes AA body     |
-| `600` | `#54545D` | Secondary body text — passes AA body                   |
-| `700` | `#3E3E47` | Body text alternate (when navy-700 is too cool)        |
-| `800` | `#2A2A32` | Strong text                                            |
-| `900` | `#1C1C31` | **Brand seed.** Primary text, headings, dark surfaces. |
-| `950` | `#0E0E1A` | Reserved compositing                                   |
+`brand-green-*`, `brand-navy-*` and `neutral-*` run 50–950 in `tailwind.config.mjs`. Each seed sits where its
+luminance falls: green at `500`, navy at `800`, and the brand black at `neutral-900`, so the neutrals carry the same
+navy cast. For foreground green and solid green fills use `700`; `500` is decorative (§2.5).
 
 ### 2.3 State colors
 
-Semantic state colors are intentionally _not_ brand-green, so a success message never gets confused with a primary CTA.
-
-| State     | 100 (surface) | 500 (foreground) | 700 (strong) |
-| --------- | ------------- | ---------------- | ------------ |
-| `success` | `#D1FAE5`     | `#10B981`        | `#047857`    |
-| `warning` | `#FEF3C7`     | `#F59E0B`        | `#B45309`    |
-| `error`   | `#FEE2E2`     | `#EF4444`        | `#B91C1C`    |
-| `info`    | `#DBEAFE`     | `#3B82F6`        | `#1D4ED8`    |
-
-These are de-saturated enough to coexist with brand colors without competing for attention. `info-500` is cooler than brand navy by design — they should never share a viewport without semantic distinction.
+`success`, `warning`, `error` and `info` at `100` / `500` / `700`. None is brand green, so a success message never
+reads as a call to action.
 
 ### 2.4 Semantic tokens
 
-The site is built against semantic tokens, not raw ramps. A component reads `text-text-primary`; never `text-neutral-900`. This is the swap layer.
+Components read these, never a ramp step. Values are in `styles.css`.
 
-The surface and border tokens (plus `--color-text-muted`) were re-pitched to a **warm-paper** palette in PRs #55/#66 — the values below are what ships in `styles.css` and deliberately diverge from the cool neutral ramp in §2.2. Where a token still tracks its ramp position, the ramp name is shown; the warm-paper overrides show their literal hex.
+| Token                                            | Purpose                                                |
+| ------------------------------------------------ | ------------------------------------------------------ |
+| `--color-text-primary` / `-secondary` / `-muted` | Body and headings / captions / timestamps, helper text |
+| `--color-text-inverse`                           | Text on dark surfaces                                  |
+| `--color-text-accent`, `--color-link` (`-hover`) | Meaning-bearing green text, links                      |
+| `--color-surface`                                | The page: warm paper `#faf8f4`                         |
+| `--color-surface-subtle`                         | Alternating band: `#f6f3ec`                            |
+| `--color-surface-elevated`                       | Cards: white, lifting off the warm page                |
+| `--color-surface-inverse` / `-accent`            | Dark sections and footer / green-50 callouts           |
+| `--color-border-subtle` / `-strong` / `-focus`   | Dividers / card outlines / the focus ring (green-600)  |
+| `--color-accent`                                 | Green-500, decorative only                             |
+| `--color-accent-strong` / `-hover` / `-pressed`  | Solid CTA fills (green-700/800/900)                    |
 
-| Token                      | Default value     | Purpose                                                                                               |
-| -------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
-| `--color-text-primary`     | `neutral-900`     | Primary text — body, headings                                                                         |
-| `--color-text-secondary`   | `neutral-700`     | Secondary text — captions, metadata-with-weight                                                       |
-| `--color-text-muted`       | `#65656f`         | De-emphasized text — timestamps, helper text (neutral-500 nudged darker to clear AA on the warm band) |
-| `--color-text-inverse`     | `neutral-0`       | Text on dark backgrounds                                                                              |
-| `--color-text-accent`      | `brand-green-700` | Inline accent text                                                                                    |
-| `--color-link`             | `brand-green-700` | Default link color (passes AA body on white)                                                          |
-| `--color-link-hover`       | `brand-green-800` | Link hover                                                                                            |
-| `--color-surface`          | `#faf8f4`         | Default page surface — **warm paper** (PR #55/#66), not neutral-0                                     |
-| `--color-surface-subtle`   | `#f6f3ec`         | Alternating section background — **warm band**                                                        |
-| `--color-surface-elevated` | `#ffffff`         | Card surface (paired with shadow) — true white, lifts off the warm page                               |
-| `--color-surface-inverse`  | `neutral-900`     | Dark sections, footer                                                                                 |
-| `--color-surface-accent`   | `brand-green-50`  | Highlight callouts                                                                                    |
-| `--color-border-subtle`    | `#e7e3da`         | Dividers, default input borders — **warm border**                                                     |
-| `--color-border-strong`    | `#d6d0c2`         | Pronounced dividers, card outlines — **warm border strong**                                           |
-| `--color-border-focus`     | `brand-green-600` | Focus indicator ring                                                                                  |
-| `--color-accent`           | `brand-green-500` | Brand accent (the quill green)                                                                        |
-| `--color-accent-strong`    | `brand-green-700` | Solid CTA backgrounds, badges                                                                         |
-| `--color-accent-hover`     | `brand-green-800` | Hover for solid accent backgrounds                                                                    |
-| `--color-accent-pressed`   | `brand-green-900` | Pressed state for solid accent backgrounds                                                            |
+**The `text-accent` trap.** Tailwind flattens the theme, so `text-accent` is `--color-accent`, green-500, which fails
+AA on every light surface. Meaning-bearing green text uses `text-accent-strong` (or `text-text-accent` /
+`text-link`); the same goes for `border-accent` and `bg-accent`. axe `color-contrast` on the in-scope routes is the
+guard.
 
-> **The `text-accent` naming trap (spec 007).** Tailwind flattens the color theme, so the utility **`text-accent`** resolves to `accent.DEFAULT` → `--color-accent` → **brand-green-500 (`#72b94d`, 2.4:1 on white — fails AA even for large text)**. It does **not** resolve to the green-700 `--color-text-accent` token (that one is reached via **`text-text-accent`**). The green-500 seed is a legitimate _decorative/illustration_ color only. For any **meaning-bearing accent text** (eyebrows, stat figures, step numbers, inline links, toggle glyphs) use **`text-accent-strong`** (preferred, matches the `bg-accent-strong` CTA fills) — or `text-text-accent` / `text-link`. The same applies to meaning-bearing borders/dividers (`border-accent` → `border-accent-strong`) and solid fills (`bg-accent` → `bg-accent-strong`). Decorative-only accents (e.g. the `bg-accent/5` wash) stay green-500 and are hidden from assistive tech where they'd otherwise be announced. axe `color-contrast` across the seeded in-scope routes is the regression guard.
-
-**Bands.** A block's `background` picks its surface through `ui/Section`: `subtle` → `surface-subtle`, `accent` → `surface-accent`, `inverse` → `surface-inverse`, and `brand` → `accent-strong`. `brand` is the solid green close and only the `cta` block offers it: white on green-700 is AA, green text on it is not. The `inverse` and `brand` bands add a class (`styles.css`) that re-points the text, link and border tokens, so a block's ordinary classes stay legible on them:
+**Bands.** A block's `background` picks its surface through `ui/Section`: `subtle` → `surface-subtle`, `accent` →
+`surface-accent`, `inverse` → `surface-inverse`, `brand` → `accent-strong`. Only `cta` offers `brand`: white on
+green-700 is AA, green text on it is not. The `inverse` and `brand` bands re-point the text, link and border tokens
+(`styles.css`), so a block's ordinary classes stay legible:
 
 | Token                                             | `inverse` (`.band-dark`)  | `brand` (`.band-brand`) |
 | ------------------------------------------------- | ------------------------- | ----------------------- |
@@ -144,297 +74,95 @@ The surface and border tokens (plus `--color-text-muted`) were re-pitched to a *
 | `--color-text-accent`, `--color-link`             | green-300                 | white                   |
 | `--color-border-subtle` / `--color-border-strong` | neutral-700 / neutral-600 | white at 30% / 50%      |
 
-`accent-strong` is not re-pointed: it is also the button fill, which works on both. A light panel inside a band (`bg-surface`, `bg-surface-elevated`, `bg-surface-subtle` or `bg-white`: a form card, a quote card) gets the page tokens back, so its text is dark again. Classes that are not tokens come from `toneFor(background)` (`src/components/ui/tone.ts`).
+`accent-strong` is not re-pointed, because it is also the button fill. A light panel inside a band (`bg-surface`,
+`bg-surface-elevated`, `bg-surface-subtle`, `bg-white`) gets the page tokens back. Classes that are not tokens come
+from `toneFor(background)` in `src/components/ui/tone.ts`.
 
-### 2.5 Contrast pairs reference
+### 2.5 Contrast
 
-WCAG 2.2 floor compliance (AA: 4.5:1 body, 3:1 large/UI) for general site content. AAA (7:1 body, 4.5:1 large) for hero copy specifically — see §12 for the page-by-page list.
+Floors: AA is 4.5:1 for body and 3:1 for large text and UI; AAA is 7:1 and 4.5:1. Measured with the WCAG formula:
 
-Verified pairings on white (`#FFFFFF`) background:
+| Text                             | White card | Page `#faf8f4` | Band `#f6f3ec` | Use                        |
+| -------------------------------- | ---------- | -------------- | -------------- | -------------------------- |
+| `neutral-900`                    | 16.67      | 15.71          | 15.04          | AAA: body, hero copy       |
+| `navy-800`                       | 12.34      | 11.63          | 11.13          | AAA: display headings      |
+| `neutral-700` / `navy-700`       | 10.58      | 9.97           | 9.55           | AAA: secondary text        |
+| `navy-600`                       | 7.87       | 7.42           | 7.10           | AAA                        |
+| `--color-text-muted` (`#65656f`) | 5.76       | 5.43           | 5.20           | AA body                    |
+| `brand-green-700`                | 5.20       | 4.90           | 4.69           | AA body: links, green text |
+| `brand-green-600`                | 3.36       | 3.17           | 3.03           | Large text and UI only     |
+| `brand-green-500`                | 2.40       | 2.26           | 2.16           | Fails: decorative only     |
 
-| Text color                    | Contrast vs white | Use for                                       |
-| ----------------------------- | ----------------- | --------------------------------------------- |
-| `neutral-900` (`#1C1C31`)     | 16.4:1            | AAA — hero copy, primary body                 |
-| `neutral-700` (`#3E3E47`)     | 10.0:1            | AAA — secondary text                          |
-| `navy-800` (`#1F3265`)        | 11.6:1            | AAA — display headings                        |
-| `navy-700` (`#2C3F60`)        | 8.8:1             | AAA — H1/H2                                   |
-| `navy-600` (`#3A527A`)        | 5.7:1             | AA body — alternative body color              |
-| `neutral-500` (`#6E6E7A`)     | 4.8:1             | AA body — muted text minimum                  |
-| `brand-green-700` (`#46792F`) | 5.6:1             | AA body — inline links                        |
-| `brand-green-600` (`#5A9C3B`) | 3.9:1             | AA large only — large accent text, never body |
-
-Verified pairings for white text on a colored background (for buttons, badges, dark sections):
-
-| Background                    | Contrast vs white | Use                                                                                                                    |
-| ----------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `neutral-900` (`#1C1C31`)     | 16.4:1            | AAA — inverse hero                                                                                                     |
-| `navy-800` (`#1F3265`)        | 11.6:1            | AAA — primary dark button (recommended for primary CTAs)                                                               |
-| `navy-700` (`#2C3F60`)        | 8.8:1             | AAA — alternate dark button                                                                                            |
-| `brand-green-700` (`#46792F`) | 5.6:1             | AA body — green CTA background ("Take the Assessment" etc.)                                                            |
-| `brand-green-600` (`#5A9C3B`) | 3.9:1             | AA large only — large CTA buttons (≥18pt or 14pt bold)                                                                 |
-| `brand-green-500` (`#72B94D`) | 2.5:1             | **Fails AA.** Never use as button background with white text — pair with navy text instead, or use 600/700 with white. |
-
-**Important pattern:** the brand green at `500` is too light for white text **and for foreground text/borders on light surfaces**. Solid green CTAs use `brand-green-700` for body sizes, `brand-green-600` for large sizes. Alternatively, the brand-green-500 background with navy text (`navy-800`) yields ~4.4:1 — passes AA large only. The same floor applies beyond buttons: **green-500 foreground text/icons** (eyebrows, stat figures, inline links) and **green-500 borders/dividers** (blockquote rules, metric rules, hover outlines) on white/light backgrounds fail their floor — use the `*-accent-strong` (green-700) family. Green-500 on **navy** already passes (~6.95:1) and is left as-is. Document this everywhere a green accent appears, not just "green buttons" (see the §2.4 `text-accent` trap note).
+White text on fills: `neutral-900` 16.67, `navy-800` 12.34, `brand-green-700` 5.20 (the CTA fill), `brand-green-600`
+3.36 (large only), `brand-green-500` 2.40 (never). Green-500 with `navy-800` text is 5.15. On the dark band,
+`neutral-200` is 11.86 and `green-300` 9.59 against `neutral-900`.
 
 ---
 
 ## 3. Typography
 
-### 3.1 Families
+### 3.1 Family
 
-| Role         | Family                                              | Notes                                                                                                                                                                                                                                                                                        |
-| ------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Display + UI | `Nunito Sans`                                       | Selected 2026-05-20 (BR-2) as the open-source Avenir analogue: humanist geometric sans with similar terminal shapes, proportions, and warmth; SIL OFL licensed, self-hostable. Self-hosted in `/public/fonts/` per ARCHITECTURE.md §1; print materials retain Avenir Book per the brand kit. |
-| Body         | `Nunito Sans`                                       | Same family used throughout for cohesion.                                                                                                                                                                                                                                                    |
-| Monospace    | `ui-monospace, 'SF Mono', 'Roboto Mono', monospace` | System stack — no custom mono font loaded. Used in code blocks only.                                                                                                                                                                                                                         |
+**Nunito Sans** for display and body: the open-source (SIL OFL) analogue of the brand kit's Avenir, which stays the
+print face. Monospace is the system stack. **It is not loaded yet.** `styles.css` names it in `--font-display` and
+`--font-body`, but nothing loads the font (no `@font-face`, no `next/font`), so the site renders in the system
+fallback.
 
-**Print vs. web split:** Avenir Book remains the brand font in print materials (per the brand kit). It is a paid foundry font and cannot ship in a public repo, so the web face is Nunito Sans — the closest open-source analogue. Component code is family-agnostic via `--font-display` and `--font-body`; only the CSS variables in §14 change if the web face is ever revisited.
+### 3.2 Scale
 
-### 3.2 Type scale — major-third (1.25×)
+Major third (1.25×) on a 16px base. Each size token in `tailwind.config.mjs` carries its own line height, and the
+large ones their tracking: `caption`, `eyebrow`, `small`, `body`, `body-lg`, `h4`, `h3`, `h2`, `h1`, `display`,
+`display-xl`.
 
-Base body size is `1rem` = `16px`. Each step multiplies by 1.25.
+### 3.3 Usage
 
-| Token             | Size        | Pixels | Use                               |
-| ----------------- | ----------- | ------ | --------------------------------- |
-| `text-caption`    | `0.75rem`   | 12     | Caption, timestamps, footnotes    |
-| `text-small`      | `0.8125rem` | 13     | Helper text, dense metadata       |
-| `text-body`       | `1rem`      | 16     | Body copy, default UI text        |
-| `text-body-lg`    | `1.125rem`  | 18     | Lead paragraphs, intro copy       |
-| `text-h4`         | `1.25rem`   | 20     | Card titles, small section labels |
-| `text-h3`         | `1.5625rem` | 25     | Subsection headings               |
-| `text-h2`         | `1.953rem`  | 31     | Section headings                  |
-| `text-h1`         | `2.441rem`  | 39     | Page titles                       |
-| `text-display`    | `3.052rem`  | 49     | Hero headlines on most pages      |
-| `text-display-xl` | `3.815rem`  | 61     | Homepage / About hero only        |
-
-Rounded to 3 decimal places where the math doesn't land cleanly; rendered pixels rounded by the browser.
-
-### 3.3 Line heights
-
-Line heights tighten as type size grows — display copy at 1.6 line-height looks limp; body at 1.15 is unreadable.
-
-| Token             | Value  | Pair with                         |
-| ----------------- | ------ | --------------------------------- |
-| `leading-display` | `1.1`  | `text-display`, `text-display-xl` |
-| `leading-h1`      | `1.15` | `text-h1`                         |
-| `leading-h2`      | `1.2`  | `text-h2`                         |
-| `leading-h3`      | `1.25` | `text-h3`                         |
-| `leading-h4`      | `1.3`  | `text-h4`                         |
-| `leading-body`    | `1.6`  | `text-body`, `text-body-lg`       |
-| `leading-small`   | `1.5`  | `text-small`, `text-caption`      |
-
-### 3.4 Weights
-
-Nunito Sans is loaded in four weights to keep the network payload small:
-
-| Token           | Weight | Use                                       |
-| --------------- | ------ | ----------------------------------------- |
-| `font-regular`  | 400    | Body copy default                         |
-| `font-medium`   | 500    | Lead paragraphs, button labels            |
-| `font-semibold` | 600    | H4, H3, H2                                |
-| `font-bold`     | 700    | H1, display, emphatic inline (`<strong>`) |
-
-`font-display` style attribute is `swap` (per ARCHITECTURE.md §7) — fallback system font renders immediately while Nunito Sans loads.
-
-### 3.5 Letter spacing
-
-| Token             | Value     | Use                                                              |
-| ----------------- | --------- | ---------------------------------------------------------------- |
-| `tracking-tight`  | `-0.02em` | Display + h1 (large type benefits from slight negative tracking) |
-| `tracking-normal` | `0`       | Body, h2–h4                                                      |
-| `tracking-wide`   | `0.025em` | All-caps eyebrows, labels                                        |
-
-### 3.6 Usage matrix
-
-| Style                      | Family  | Size              | Weight | Line height       | Tracking                    |
-| -------------------------- | ------- | ----------------- | ------ | ----------------- | --------------------------- |
-| Display XL (homepage hero) | display | `text-display-xl` | 700    | `leading-display` | `tracking-tight`            |
-| Display (page heroes)      | display | `text-display`    | 700    | `leading-display` | `tracking-tight`            |
-| H1                         | display | `text-h1`         | 700    | `leading-h1`      | `tracking-tight`            |
-| H2                         | display | `text-h2`         | 600    | `leading-h2`      | normal                      |
-| H3                         | display | `text-h3`         | 600    | `leading-h3`      | normal                      |
-| H4                         | display | `text-h4`         | 600    | `leading-h4`      | normal                      |
-| Lead                       | body    | `text-body-lg`    | 500    | `leading-body`    | normal                      |
-| Body                       | body    | `text-body`       | 400    | `leading-body`    | normal                      |
-| Small                      | body    | `text-small`      | 400    | `leading-small`   | normal                      |
-| Caption                    | body    | `text-caption`    | 400    | `leading-small`   | normal                      |
-| Eyebrow                    | body    | `text-caption`    | 600    | `leading-small`   | `tracking-wide` (uppercase) |
-| Button label               | body    | `text-body`       | 500    | `1`               | normal                      |
-| Code                       | mono    | `text-small`      | 400    | `leading-small`   | normal                      |
+| Style   | Size                              | Weight | Notes                               |
+| ------- | --------------------------------- | ------ | ----------------------------------- |
+| Hero    | `text-display md:text-display-xl` | 700    | Every hero (`Hero.tsx`)             |
+| H1      | `text-h1`                         | 700    |                                     |
+| H2–H4   | `text-h2` / `text-h3` / `text-h4` | 600    |                                     |
+| Lead    | `text-body-lg`                    | 500    |                                     |
+| Body    | `text-body`                       | 400    |                                     |
+| Small   | `text-small` / `text-caption`     | 400    | Helper text, metadata               |
+| Eyebrow | `text-eyebrow`                    | —      | Uppercase; 0.75rem, 0.08em tracking |
+| Code    | `font-mono text-small`            | 400    |                                     |
 
 ---
 
 ## 4. Spacing
 
-Tailwind's default 4px base. We don't override the scale — fighting Tailwind's spacing primitive creates friction with every component, plugin, and third-party block library. Standard tokens (`space-0`, `space-1`, …, `space-96`) are used directly.
-
-Section rhythm convention (vertical padding on `<Section>`):
-
-| Token              | Mobile (top + bottom) | Desktop (top + bottom) | Use                                    |
-| ------------------ | --------------------- | ---------------------- | -------------------------------------- |
-| `section-tight`    | `space-12` (48px)     | `space-16` (64px)      | Compact sections in dense pages        |
-| `section-default`  | `space-16` (64px)     | `space-24` (96px)      | Default content rhythm                 |
-| `section-spacious` | `space-20` (80px)     | `space-32` (128px)     | Hero sections, major breathing moments |
-
-These are component-level conventions, not Tailwind custom values.
+Tailwind's default 4px scale, not overridden. Section padding is `ui/Section`'s `padding`, the same at every
+breakpoint: `tight` `py-10`, `default` `py-12`, `spacious` `py-16` (the default). Horizontal padding comes from the
+shell: `px-4`, `md:px-6`, `lg:px-8`.
 
 ---
 
 ## 5. Radius
 
-| Token         | Value            | Use                                  |
-| ------------- | ---------------- | ------------------------------------ |
-| `radius-sm`   | `0.25rem` (4px)  | Tags, badges, inline pills           |
-| `radius-md`   | `0.5rem` (8px)   | Buttons, inputs, small cards         |
-| `radius-lg`   | `0.75rem` (12px) | Cards, image containers              |
-| `radius-xl`   | `1rem` (16px)    | Hero card frames, prominent surfaces |
-| `radius-2xl`  | `1.5rem` (24px)  | Large feature panels                 |
-| `radius-full` | `9999px`         | Avatars, circular icon buttons       |
+`rounded-sm` (4px) tags, `rounded-md` (8px) buttons and inputs, `rounded-lg` (12px) cards, `rounded-full` avatars.
 
----
+## 6. Shadow
 
-## 6. Shadow / elevation
-
-Shadows use the brand `neutral-900` tint (rather than pure black) so elevation feels cohesive with the cool-cast neutral palette. Calibrated for a content site — sparing use, no SaaS-app deep shadows.
-
-| Token       | Value                                                                         | Use                                  |
-| ----------- | ----------------------------------------------------------------------------- | ------------------------------------ |
-| `shadow-xs` | `0 1px 2px 0 rgb(28 28 49 / 0.04)`                                            | Subtle separation (input rest state) |
-| `shadow-sm` | `0 1px 3px 0 rgb(28 28 49 / 0.06), 0 1px 2px -1px rgb(28 28 49 / 0.05)`       | Default card lift                    |
-| `shadow-md` | `0 4px 6px -1px rgb(28 28 49 / 0.08), 0 2px 4px -2px rgb(28 28 49 / 0.06)`    | Hover state for interactive cards    |
-| `shadow-lg` | `0 10px 15px -3px rgb(28 28 49 / 0.10), 0 4px 6px -4px rgb(28 28 49 / 0.08)`  | Dropdowns, popovers                  |
-| `shadow-xl` | `0 20px 25px -5px rgb(28 28 49 / 0.12), 0 8px 10px -6px rgb(28 28 49 / 0.10)` | Modal dialogs, max elevation         |
-
----
+Shadows are tinted with `neutral-900`, not black. Cards rest at `shadow-xs`; linked cards lift to `shadow-sm` on
+hover.
 
 ## 7. Motion
 
-Calibrated to feel responsive but not theatrical. Respects `prefers-reduced-motion: reduce` everywhere — when set, durations collapse to `1ms` and easing becomes `linear` (effectively disabling animation).
-
-### 7.1 Durations
-
-| Token           | Value   | Use                                                  |
-| --------------- | ------- | ---------------------------------------------------- |
-| `duration-fast` | `150ms` | Hover state changes, focus rings, micro-interactions |
-| `duration-base` | `250ms` | Default transitions — most state changes             |
-| `duration-slow` | `400ms` | Modal/drawer enter, large layout shifts              |
-
-### 7.2 Easings
-
-| Token             | Value                                      | Use                                             |
-| ----------------- | ------------------------------------------ | ----------------------------------------------- |
-| `ease-entrance`   | `cubic-bezier(0.16, 1, 0.3, 1)` (out-expo) | Elements entering the viewport, modal slide-ins |
-| `ease-transition` | `cubic-bezier(0.4, 0, 0.2, 1)` (in-out)    | State changes, hover, color/opacity transitions |
-| `ease-exit`       | `cubic-bezier(0.4, 0, 1, 1)` (in-quad)     | Elements leaving (faster snap-out feel)         |
-
-### 7.3 Reduced motion
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-```
-
-Applied in `globals.css`. Component code does not need to check the media query — the global override handles it.
-
----
+Durations `fast` (150ms) and `base` (250ms) with the `transition` easing. `prefers-reduced-motion` is handled
+globally in `styles.css`; components do not check it.
 
 ## 8. Breakpoints
 
-Tailwind defaults. No customization. Matching the framework reduces friction with every third-party block library.
-
-| Token     | Min-width | Notional device             |
-| --------- | --------- | --------------------------- |
-| (default) | 0         | Mobile                      |
-| `sm`      | 640px     | Large mobile / small tablet |
-| `md`      | 768px     | Tablet                      |
-| `lg`      | 1024px    | Laptop                      |
-| `xl`      | 1280px    | Desktop                     |
-| `2xl`     | 1536px    | Wide desktop                |
-
-Mobile-first by default. Components style for mobile, then layer larger breakpoints.
-
----
+Tailwind defaults, mobile first.
 
 ## 9. Z-index
 
-A short, deliberate scale. Components should never use raw numbers — only these named tokens.
+Use the named tokens in `tailwind.config.mjs`, never a raw number.
 
-| Token        | Value  | Use                                 |
-| ------------ | ------ | ----------------------------------- |
-| `z-base`     | `0`    | Default                             |
-| `z-elevated` | `10`   | Hovered cards, raised content       |
-| `z-dropdown` | `100`  | Select dropdowns, popovers          |
-| `z-sticky`   | `200`  | Sticky header, scroll-to-top button |
-| `z-overlay`  | `1000` | Page overlay/scrim                  |
-| `z-modal`    | `1100` | Modal dialogs                       |
-| `z-toast`    | `1200` | Toast notifications                 |
-| `z-tooltip`  | `1300` | Tooltips (highest — always on top)  |
+## 10. Component states
 
----
-
-## 10. Component state tokens
-
-Patterns every interactive component implements. Documented here so primitives don't reinvent the wheel.
-
-### 10.1 Button states
-
-| State              | Background                   | Text           | Border                                | Shadow      |
-| ------------------ | ---------------------------- | -------------- | ------------------------------------- | ----------- |
-| Rest (primary)     | `accent-strong` (green-700)  | `text-inverse` | none                                  | `shadow-xs` |
-| Hover (primary)    | `accent-hover` (green-800)   | `text-inverse` | none                                  | `shadow-sm` |
-| Pressed (primary)  | `accent-pressed` (green-900) | `text-inverse` | none                                  | none        |
-| Focus (primary)    | `accent-strong`              | `text-inverse` | `2px solid border-focus` (offset 2px) | `shadow-xs` |
-| Disabled (primary) | `neutral-200`                | `text-muted`   | none                                  | none        |
-
-Secondary buttons invert: navy-700 background, white text, with a hover shift to navy-800. Ghost buttons use transparent background with `border-strong` outline and `text-primary` text.
-
-### 10.2 Input states
-
-| State    | Background   | Border                                   | Text                                                |
-| -------- | ------------ | ---------------------------------------- | --------------------------------------------------- |
-| Rest     | `surface`    | `border-subtle`                          | `text-primary`                                      |
-| Hover    | `surface`    | `border-strong`                          | `text-primary`                                      |
-| Focus    | `surface`    | `2px solid border-focus` (replacing 1px) | `text-primary`                                      |
-| Error    | `surface`    | `2px solid error-500`                    | `text-primary` (with `error-700` helper text below) |
-| Disabled | `neutral-50` | `border-subtle`                          | `text-muted`                                        |
-
-### 10.3 Card states
-
-| State                    | Background         | Border          | Shadow      |
-| ------------------------ | ------------------ | --------------- | ----------- |
-| Rest                     | `surface-elevated` | `border-subtle` | `shadow-sm` |
-| Hover (interactive only) | `surface-elevated` | `border-strong` | `shadow-md` |
-
-Non-interactive cards do not change on hover.
-
-### 10.4 Focus indicator (universal)
-
-Per WCAG 2.2 §2.4.11 (focus appearance):
-
-- Minimum 2px solid outline
-- Minimum 3:1 contrast with adjacent colors
-- 2px offset from the focused element
-- Visible on all interactive elements via `:focus-visible`
-- Color: `border-focus` (brand-green-600) on light surfaces; `brand-green-400` on dark surfaces (verified contrast against `surface-inverse`)
-
-Applied globally:
-
-```css
-:focus-visible {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
-}
-```
-
-Component code does not re-implement focus styling unless overriding for a specific contrast reason (and that override must also meet the 3:1 minimum).
+Button variants and their hover, active and disabled states are in `src/components/ui/Button.tsx`. Focus is the
+global ring (§12.3). Form errors in `HubspotLeadForm` use Tailwind's `red-*` utilities, not the `error` state tokens.
 
 ---
 
@@ -442,425 +170,141 @@ Component code does not re-implement focus styling unless overriding for a speci
 
 ### 11.1 Containers
 
-| Token            | Max-width | Use                                            |
-| ---------------- | --------- | ---------------------------------------------- |
-| `container-sm`   | `640px`   | Long-form reading (blog posts)                 |
-| `container-md`   | `768px`   | Standard content (about, services)             |
-| `container-lg`   | `1024px`  | Legacy. The shell moved to `xl` (ADR 0012)     |
-| `container-xl`   | `1280px`  | Default site container — most pages            |
-| `container-full` | `100%`    | Full-bleed sections (hero backgrounds, footer) |
+`ui/Container` sizes: `sm` 640px, `md` 768px (the long-form article measure), `lg` 1024px, `xl` 1280px (the shell
+rail, `SHELL_RAIL`), and `full`.
 
-Horizontal padding: `space-4` (16px) at mobile, `space-6` (24px) at `md`, `space-8` (32px) at `lg+`. Applied in the `<Container>` primitive (BLOCK_LIBRARY.md §3).
+### 11.2 Shell ownership
 
-### 11.2 Grid
+`ui/Section` owns a block's rail and padding, and `ui/Container` the page chrome's (ADR 0012).
+`tests/int/layout/shellOwnership.int.spec.ts` fails a block that restates either, and a route file that names a
+`container-*` token.
 
-12-column responsive grid available via Tailwind utilities (`grid-cols-12`). Most marketing layouts will use Flexbox or simpler grids (`grid-cols-3`, `grid-cols-4`) — the 12-col is there when complex column spans are needed (case study sidebar layouts).
+### 11.3 Verifying layout
 
-### 11.3 Section rhythm
-
-Per §4, three section padding tokens (`section-tight`, `section-default`, `section-spacious`). `ui/Section` accepts a `padding` prop naming these (ADR 0012). Note the divergence: Section maps them to the flat `py-10 / py-12 / py-16` the code actually uses, not the responsive scale §4 describes — which the code has never used. Reconciling that is a deliberate visual change, and it is now a one-file change rather than a 46-file one.
+Measure element boxes (`getBoundingClientRect`) at 1440 and 390 through the visual harness. Don't reason from
+classes.
 
 ### 11.4 Reading column (body-copy alignment)
 
-**Body copy is a left-justified block, capped at the `prose` measure (`max-w-prose`, 65ch), and CENTERED as a block within its container.** This is a hard rule.
+**Body copy is left-justified text in a block capped at the `prose` measure (65ch) and centred in its container.**
+This is a hard rule.
 
-- **The rule lives in the block components, not in templates (FR-009, ADR 0009).** After spec 010 every non-blog page renders its body through `RenderBlocks`, so the reading-column wrapper is owned by the block render components (`src/components/sections/Content.tsx`, `Image.tsx`, `Gallery.tsx`, `Items.tsx`, …): each takes its shell from `ui/Section` and its measure from `ui/ReadingColumn` (ADR 0012). Blocks no longer write either by hand: `tests/int/layout/shellOwnership.int.spec.ts` fails any block that restates the rail or the section padding. Fix the wrapper in one block and that layout is fixed everywhere it renders — the "four-templates-one-bug" problem ADR 0009 cites. The only sanctioned exception is the bespoke Posts (insights) article template. Verify by **measuring element boxes** at desktop+mobile via the visual harness, not by reasoning from classes (memory: "measure, don't reason").
-- **Why 65ch:** the `@tailwindcss/typography` `prose` class caps line length at 65ch — the readable measure (~50–75 chars/line). Keep it. Do **not** widen body copy past it.
-- **Center the block, not the text.** Use `mx-auto` (auto side margins) so the column sits on the page's centre axis. Never use `text-center` on body copy or headings — centered _text_ (ragged both edges) looks broken; we want left-justified text in a centred block.
-- **Different widths are fine if everything is centred.** A full-width hero, a wide metrics grid, and a 65ch body column can coexist — as long as they all share one vertical centre axis (concentric). What looks broken is **left-justifying** mismatched widths (wide title, narrower hero, narrower body all hugging the left edge with ragged right edges).
-- **A section's heading travels with its body.** Put the heading inside the same centred reading column as its paragraphs — in a block, inside the same `<ReadingColumn>` — so the heading and body share a left edge. Don't leave a full-width heading above a centred body.
+- **Blocks own it.** Each block takes its measure from `ui/ReadingColumn`, which centres by default. Fix the wrapper
+  in one block and it is fixed everywhere that block renders.
+- **Keep 65ch.** Don't widen body copy past it.
+- **Centre the block, not the text.** `mx-auto`, never `text-center` on body copy or headings.
+- **Different widths are fine if they share one centre axis.** Mismatched widths hugging the left edge look broken.
+- **A section's heading travels with its body**: inside the same `ReadingColumn`, sharing its left edge.
 
-**Banned:** `max-w-none` on a `prose`/`Prose` block to "fill the column," and any "left-aligned to the shared edge" wrapper. Both are what `ui/ReadingColumn` exists to make unwritable: it centres by default, and `flush` / `flushFrom` are the only sanctioned exceptions (a column a grid has already positioned). Both are workarounds for a missing `mx-auto` and were the root of repeated alignment churn. In a block, do not hand-write the measure at all — wrap the content in `<ReadingColumn>`, which centres by default. For rich text, pass `className="mx-auto"` to `<RichText>` (forwarded to `<Prose>`). Four page templates still write it directly and are outside `ReadingColumn`'s reach for now — `case-studies/[slug]`, `workshops/[slug]`, `team/[slug]` and `partners/[slug]` — as do `error.tsx` and `not-found.tsx`. (The bespoke Posts template is NOT among them: it uses `mx-auto max-w-container-md` with `<RichText className="mx-auto">`.)
+**Banned:** `max-w-none` on `prose` to "fill the column", and any left-aligned-to-the-shared-edge wrapper.
+`ReadingColumn`'s `flush` / `flushFrom` are the only exceptions, for a column a grid has already positioned. For rich
+text, pass `className="mx-auto"` to `<RichText>`. The `case-studies`, `workshops`, `team` and `partners` detail
+routes, `error.tsx` and `not-found.tsx` write the measure directly.
 
 ### 11.5 Listing pages: never double-container a block
 
-Every listing renders through the `cards` block (`src/components/sections/Cards.tsx`, drawing each
-collection's card from `src/components/cards/*`), which is **self-containering**: since ADR 0012 that means
-it renders through `ui/Section`, which owns the padding and the rail. That is the block contract — a block
-renders correctly at full page width and needs no help from its caller.
-
-So a listing page must **not** wrap the grid in a second padded container. Doing so nests two padded
-containers and insets the grid from the page's own `h1` — measured at **32px on desktop, 16px on mobile**,
-on all five listing routes at once (ROADMAP UI-1 follow-up, `PROJECT_HISTORY` P5-29). Note the two recipes
-do not commute: padding + max-width on the **same** element lands at a different x than padding on an outer
-element with the max-width inside it.
-
-**Do not hand-write the recipe for the header either.** These five headers restated it as
-`mx-auto max-w-container-lg`, with a comment explaining that they matched the block deliberately — and
-when ADR 0012 moved the rail the blocks followed and the headers did not, putting every `h1` **128px right
-of its own grid**. Use `ui/Container`, which reads the same `SHELL_RAIL` the blocks do.
-`tests/int/layout/shellOwnership.int.spec.ts` now fails any route file that names a `container-*` token.
-
-**The shape:**
+Every listing renders the `cards` block, which contains itself through `ui/Section`. A listing page must not wrap it
+in a second padded container: that insets the grid from the page's own `h1`. The header uses `ui/Container`, which
+reads the same `SHELL_RAIL`, never a hand-written `mx-auto max-w-container-*`.
 
 ```tsx
-<div data-testid="…">                     {/* no container, no padding */}
-  <header className="pt-16">              {/* vertical rhythm only … */}
-    <Container>                           {/* … the shell comes from the owner */}
-      <h1 …/>
+<div data-testid="…">
+  <header className="pt-16">
+    <Container>
+      <h1 … />
     </Container>
   </header>
-  <Cards collection="teamMembers" … />    {/* full width; contains itself */}
+  <Cards collection="teamMembers" … />
 </div>
 ```
 
-A narrower column is the same owner with a size: `<Container size="md">` for the long-form article
-measure (`insights/[slug]`), never a hand-written `mx-auto max-w-container-md`.
-
-This is §11.4's "a section's heading travels with its body" applied at page level: the page header and the
-grid resolve to the same x and the same column width. Verify by measuring `getBoundingClientRect().x` on
-the `h1` and the grid `ul` at 1440 and 390 — they must be equal.
+A narrower column is the same owner with a size: `<Container size="md">` for `insights/[slug]`. Check it by
+measuring `getBoundingClientRect().x` on the `h1` and the grid at 1440 and 390; they must match.
 
 ---
 
-## 12. Accessibility specs
+## 12. Accessibility
 
-WCAG 2.2 AA minimum across the site, with AAA contrast on specific high-impact surfaces.
+### 12.1 AAA targets (7:1 body, 4.5:1 large)
 
-### 12.1 AAA targets (must hit 7:1 body / 4.5:1 large)
+Hero headlines and subheadlines. On the `cover` hero, a navy-900 scrim at 80% keeps white text above 8:1 over any
+photo. Use `neutral-900` for body and `navy-800` for display here; no mid-tone greys.
 
-- Homepage hero headline + subhead
-- Our Story hero (`/our-story` is a flat block Page — renamed from `/about`, which 301s to it)
-- Offering page hero headlines (four offering pages)
-- Case study hero metric callouts
+### 12.2 AA targets
 
-For these, body uses `neutral-900` (16.4:1 on white), display uses `navy-800` (11.6:1 on white). No design freedom to use mid-tone grays in these zones.
-
-### 12.2 AA targets (must hit 4.5:1 body / 3:1 large + UI)
-
-Everywhere else. All body copy, all UI components, all interactive states. The §2.5 contrast pair list is the operational reference.
+Everything else: all body copy, UI components and interactive states. §2.5 is the reference.
 
 ### 12.3 Focus indicators
 
-- Visible on every interactive element via `:focus-visible` (so keyboard users see focus; mouse users don't get the ring polluting hover state)
-- 2px outline minimum
-- 3:1 contrast against adjacent colors
-- 2px offset
+A global `:focus-visible` outline: 2px, offset 2px, `--color-border-focus` (green-600), at least 3:1 against what it
+sits on. It is 4.96:1 on the dark band. The `cover` hero switches to green-400. The `brand` band does not re-point
+the ring, and green-600 on green-700 is 1.55:1.
 
 ### 12.4 Touch targets
 
-- Minimum 44×44 CSS pixels for any interactive element on mobile (per WCAG 2.2 §2.5.8 / Apple HIG / Material Design)
-- Applies to buttons, links, form inputs, checkboxes, radio buttons, navigation items
-- Visual element can be smaller as long as the hit area (padding) brings it to 44×44
+WCAG 2.2 AA (2.5.8) requires 24×24 CSS px; aim for 44×44 on mobile. The header CTA is a `sm` button, 36px tall.
 
-### 12.5 Motion and animation
+### 12.5 Motion
 
-- All animation respects `prefers-reduced-motion: reduce` (see §7.3)
-- No autoplay video with audio
-- No parallax effects (per Nielsen Norman Group accessibility guidance; also a performance liability)
-- Carousels (testimonial carousel) require manual advancement OR pause-on-focus + pause-on-reduced-motion
+Reduced motion is honoured globally (§7). No autoplaying audio and no parallax. The gallery `carousel` is a
+scroll-snap row the reader moves; it never autoplays.
 
 ### 12.6 Color independence
 
-No information conveyed by color alone. Error states pair color with an icon and text label. Status pills use both color and a leading dot/icon.
+Never convey information by colour alone; pair it with text or an icon.
 
 ### 12.7 Skip link
 
-`<SkipToContent>` is the first focusable element in `<body>`. Per BLOCK_LIBRARY.md §4 — visually hidden until focused, jumps to `#main`.
+`SkipToContent` is the first focusable element and jumps to `#main` (BLOCK_LIBRARY §4).
 
 ---
 
 ## 13. Logo and brand mark
 
-Logo files live in the SEQTEK brand kit (kept privately outside this repo) and are the only source for the wordmark — no recreations, no traces. Rules marked **(brand kit)** are quoted from the brand kit PDF; rules marked **(design system)** are conventions added here and should be confirmed with marketing if challenged.
+Logo files come from the brand kit, the only source for the wordmark: no recreations, no traces. Rules marked
+**(brand kit)** are quoted from it; the rest are this site's conventions.
 
 ### 13.1 Spelling — non-negotiable
 
-**(brand kit)** SEQTEK is **always all caps**. Never spell it `SeqTek`, `Seqtek`, or `Seqtech`. This applies to:
-
-- Visible body copy and headings
-- HTML `<title>`, meta tags, OG tags
-- Image `alt` text on logo files
-- ARIA labels and accessible names
-- Schema.org structured data (`Organization.name`)
-- Any user-facing string in the codebase
-
-Recommended Phase 1 task: add a CI text check that fails on regex `\b[Ss]eq([Tt]ek|tech)\b` outside the canonical "SEQTEK" spelling.
+**(brand kit)** SEQTEK is **always all caps**, never `SeqTek`, `Seqtek` or `Seqtech`. That covers visible copy,
+`<title>` and meta tags, alt text, ARIA labels, structured data (`Organization.name`) and every user-facing string. No
+automated check enforces it.
 
 ### 13.2 Variants
 
-The supplied zip contains three logo variants. The **Q-only** mark referenced by the brand kit is not in the zip — request from marketing before using as a favicon or social avatar; do **not** crop the wordmark to fake one.
+`public/brand/` holds four PNGs; filenames match the brand kit.
 
-| Variant                     | Asset (transparent BG)                                       | Use when                                                       |
-| --------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------- |
-| Black wordmark with tagline | `Black Logo-Transparent.png` / `Black SEQTEK Logo BG.ai`     | Light surfaces (background luminance ≥ 0.70)                   |
-| Black wordmark, no tagline  | `Black-logo-w-o-tagline-transparent-background.png`          | Wordmark renders below ~120px wide; tagline becomes illegible  |
-| White wordmark with tagline | `White SEQTEK Logo-Transparent.png` / `White SEQTEK Logo.ai` | Dark surfaces (`brand-navy-700`+, `brand-black`, dark imagery) |
-| White wordmark, no tagline  | `White-logo-w-o-tagline-transparent-background.png`          | Same as above, sub-120px renders                               |
-| Q-only mark                 | _Not supplied — request from marketing_                      | Favicons, social avatars, sub-96px contexts                    |
+| Variant                     | Asset                                               | Use                          |
+| --------------------------- | --------------------------------------------------- | ---------------------------- |
+| Black wordmark with tagline | `Black Logo-Transparent.png`                        | Light surfaces               |
+| Black wordmark, no tagline  | `Black-logo-w-o-tagline-transparent-background.png` | Light surfaces, below ~120px |
+| White wordmark with tagline | `White SEQTEK Logo-Transparent.png`                 | Dark surfaces and imagery    |
+| White wordmark, no tagline  | `White-logo-w-o-tagline-transparent-background.png` | Dark surfaces, below ~120px  |
 
-Native master files (`.ai`) are for print and ad units; the web app uses the PNGs (and inline SVG once converted from `.ai`).
+The brand kit's Q-only mark is not among the supplied files. The site's favicon (`src/app/favicon.ico`,
+`src/app/icon.png`) is the Q mark extracted from the wordmark (PR #48).
 
 ### 13.3 Tagline
 
-**(brand kit)** Official tagline: **"Delivering Transformative Technologies Since 1999"**.
-
-Tagline appears in:
-
-- Footer (paired with the wordmark, set in `--font-display`, color `--color-text-muted` on light or `--color-text-inverted` on navy)
-- Email signatures (per brand kit)
-
-Tagline does **not** appear in:
-
-- Header / nav (logo only — header is dense already)
-- Favicons or social avatars
-- Any context where the wordmark renders below ~120px wide
-- Marketing campaigns that need a different sub-headline (the tagline is the brand line, not an ad-of-the-day slot)
-
-Tagline must always carry the **"Since 1999"** clause — never trim to "Delivering Transformative Technologies".
+**(brand kit)** "Delivering Transformative Technologies Since 1999", always with "Since 1999". The footer sets it
+under the wordmark; it stays out of the header and anywhere the wordmark renders below ~120px.
 
 ### 13.4 Clearspace and minimum size
 
-**(design system — brand kit does not specify; confirm with marketing if challenged)**
+Clearspace equals the cap height of the "S" on every side. Minimum width is 96px for the wordmark and 200px with
+the tagline.
 
-- **Clearspace:** equal to the cap height of the "S" in the wordmark, on all four sides. No other content (text, image edges, UI controls) may enter that zone.
-- **Minimum width — full wordmark:** 96px on screen. Below 96px, drop the tagline; below the tagline-drop point, switch to the Q-only mark.
-- **Minimum width — wordmark with tagline:** 200px on screen. Tagline tracking and weight assume this floor.
-- **Minimum width — Q-only mark:** 24px (favicon size).
+### 13.5 Backgrounds
 
-### 13.5 Background and color use
+Black wordmark on light surfaces; white on `surface-inverse`, navy and dark imagery. On a photograph, put a navy
+scrim under the white wordmark. Keep the logo off green.
 
-The wordmark only ships in two colors — black and white. Pair to background contrast, not to brand-color whim.
+### 13.6 Don't
 
-| Background                              | Required logo                 | Notes                                                                                                                                                                              |
-| --------------------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| White / `--color-bg`                    | Black wordmark                | Default site case                                                                                                                                                                  |
-| `--color-brand-navy-700` through `-900` | White wordmark                | Footer, dark hero variants                                                                                                                                                         |
-| `--color-brand-black`                   | White wordmark                | High-contrast surfaces                                                                                                                                                             |
-| Photographic / textured                 | White wordmark **with scrim** | Apply 40% navy overlay (`rgb(31 50 101 / 0.4)`) before placing logo. Never place the wordmark directly on busy imagery.                                                            |
-| `--color-brand-green-*`                 | Avoid                         | Green is the accent color, not a logo background — competes with the quill highlight inside the Q. If unavoidable, use the white wordmark on `green-700` or darker (passes 4.5:1). |
+Recolour, filter, distort, rebuild or trace the wordmark; place it where it falls under 3:1; crop the Q out of it
+for a standalone icon; or alter the tagline.
 
-### 13.6 Improper uses — do not
+### 13.7 Implementation
 
-- Recolor the wordmark in any way (only the supplied black and white assets are sanctioned)
-- Apply outline, emboss, drop-shadow, glow, gradient, or any filter
-- Stretch, skew, rotate, or otherwise distort the wordmark
-- Place the wordmark on a background that fails 3:1 contrast against the wordmark fill (use the alternate variant instead)
-- Crop the "Q" out of the wordmark to use as a standalone icon — request the proper Q-only mark
-- Rebuild or trace the wordmark in code, fonts, or vector tools — only the supplied assets are canonical
-- Spell SEQTEK in anything other than all-caps anywhere in the product (see §13.1)
-- Replace the tagline, paraphrase it, or trim "Since 1999"
-
-### 13.7 Implementation notes
-
-- Logo assets live under `public/brand/` so they're served by Next.js without going through the bundler. Filenames preserve the brand-kit names (do not rename — keeps provenance traceable to the zip).
-- Use `<Image>` for raster variants; convert `.ai` files to optimized SVG once and inline the Q-only mark for crisp rendering at all sizes.
-- Wordmark `alt` text: `"SEQTEK"` (the canonical spelling — not `"SEQTEK logo"`, which creates redundant screen-reader output when paired with surrounding brand context).
-- Footer wordmark + tagline lockup is a primitive — see BLOCK_LIBRARY.md (`<BrandLockup variant="footer" />`); add as primitive if not yet listed.
-- Favicon set must be generated from the Q-only mark once supplied; until then, defer favicon work and ship a placeholder `favicon.ico` pulled from the wordmark "Q" letterform (replace before launch).
-
----
-
-## 14. Tailwind theme tokens (reference)
-
-The token reference. Per ADR 0001 the implementation uses Tailwind v3 — these `@theme` declarations are translated into `tailwind.config.mjs` (`theme.extend.colors`, `.fontSize`, `.borderRadius`, `.boxShadow`, `.transitionDuration`, `.transitionTimingFunction`, `.zIndex`, `.maxWidth`, etc.) and `:root` CSS custom properties in `src/app/(frontend)/styles.css`. The v4 `@theme` syntax is preserved here because it documents intent compactly. When values diverge, this doc wins for _values_ and the config file wins for _naming/utility shape_.
-
-```css
-@import 'tailwindcss';
-@plugin "@tailwindcss/typography";
-
-@theme {
-  /* ─────────────────────────────────────────────────────
-   * BRAND GREEN — accent palette
-   * ───────────────────────────────────────────────────── */
-  --color-brand-green-50: #f3f9ec;
-  --color-brand-green-100: #e3f1d4;
-  --color-brand-green-200: #c8e3ab;
-  --color-brand-green-300: #a4d27a;
-  --color-brand-green-400: #88c45f;
-  --color-brand-green-500: #72b94d; /* brand seed */
-  --color-brand-green-600: #5a9c3b;
-  --color-brand-green-700: #46792f;
-  --color-brand-green-800: #355b24;
-  --color-brand-green-900: #243f19;
-  --color-brand-green-950: #142410;
-
-  /* ─────────────────────────────────────────────────────
-   * BRAND NAVY — structural palette (seed at 800)
-   * ───────────────────────────────────────────────────── */
-  --color-brand-navy-50: #f0f3fa;
-  --color-brand-navy-100: #dde4f1;
-  --color-brand-navy-200: #bccae0;
-  --color-brand-navy-300: #94a8cc;
-  --color-brand-navy-400: #6c83b3;
-  --color-brand-navy-500: #4a648f;
-  --color-brand-navy-600: #3a527a;
-  --color-brand-navy-700: #2c3f60;
-  --color-brand-navy-800: #1f3265; /* brand seed */
-  --color-brand-navy-900: #131e3d;
-  --color-brand-navy-950: #0a1224;
-
-  /* ─────────────────────────────────────────────────────
-   * NEUTRALS — navy-tinted cool cast (seed at 900)
-   * ───────────────────────────────────────────────────── */
-  --color-neutral-0: #ffffff;
-  --color-neutral-50: #f7f7f8;
-  --color-neutral-100: #ededf0;
-  --color-neutral-200: #d9d9df;
-  --color-neutral-300: #bababf;
-  --color-neutral-400: #93939c;
-  --color-neutral-500: #6e6e7a;
-  --color-neutral-600: #54545d;
-  --color-neutral-700: #3e3e47;
-  --color-neutral-800: #2a2a32;
-  --color-neutral-900: #1c1c31; /* brand seed ("Black") */
-  --color-neutral-950: #0e0e1a;
-
-  /* ─────────────────────────────────────────────────────
-   * STATE COLORS
-   * ───────────────────────────────────────────────────── */
-  --color-success-100: #d1fae5;
-  --color-success-500: #10b981;
-  --color-success-700: #047857;
-  --color-warning-100: #fef3c7;
-  --color-warning-500: #f59e0b;
-  --color-warning-700: #b45309;
-  --color-error-100: #fee2e2;
-  --color-error-500: #ef4444;
-  --color-error-700: #b91c1c;
-  --color-info-100: #dbeafe;
-  --color-info-500: #3b82f6;
-  --color-info-700: #1d4ed8;
-
-  /* ─────────────────────────────────────────────────────
-   * SEMANTIC TOKENS — what component code actually reads
-   * ───────────────────────────────────────────────────── */
-  --color-text-primary: var(--color-neutral-900);
-  --color-text-secondary: var(--color-neutral-700);
-  --color-text-muted: #65656f; /* neutral-500, nudged darker — clears AA on the warm band */
-  --color-text-inverse: var(--color-neutral-0);
-  --color-text-accent: var(--color-brand-green-700);
-  --color-link: var(--color-brand-green-700);
-  --color-link-hover: var(--color-brand-green-800);
-
-  --color-surface: #faf8f4; /* warm paper (PR #55/#66) — not neutral-0 */
-  --color-surface-subtle: #f6f3ec; /* warm band */
-  --color-surface-elevated: #ffffff; /* true white card surface */
-  --color-surface-inverse: var(--color-neutral-900);
-  --color-surface-accent: var(--color-brand-green-50);
-
-  --color-border-subtle: #e7e3da; /* warm border */
-  --color-border-strong: #d6d0c2; /* warm border strong */
-  --color-border-focus: var(--color-brand-green-600);
-
-  --color-accent: var(--color-brand-green-500);
-  --color-accent-strong: var(--color-brand-green-700);
-  --color-accent-hover: var(--color-brand-green-800);
-  --color-accent-pressed: var(--color-brand-green-900);
-
-  /* ─────────────────────────────────────────────────────
-   * TYPOGRAPHY
-   * ───────────────────────────────────────────────────── */
-  --font-display: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-body: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', monospace;
-
-  /* Type scale — major-third (1.25×) from 16px base */
-  --text-caption: 0.75rem;
-  --text-small: 0.8125rem;
-  --text-body: 1rem;
-  --text-body-lg: 1.125rem;
-  --text-h4: 1.25rem;
-  --text-h3: 1.5625rem;
-  --text-h2: 1.953rem;
-  --text-h1: 2.441rem;
-  --text-display: 3.052rem;
-  --text-display-xl: 3.815rem;
-
-  /* Line heights */
-  --leading-display: 1.1;
-  --leading-h1: 1.15;
-  --leading-h2: 1.2;
-  --leading-h3: 1.25;
-  --leading-h4: 1.3;
-  --leading-body: 1.6;
-  --leading-small: 1.5;
-
-  /* Letter spacing */
-  --tracking-tight: -0.02em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.025em;
-
-  /* Weights — Nunito Sans only loads these four to keep payload tight */
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-
-  /* ─────────────────────────────────────────────────────
-   * RADIUS
-   * ───────────────────────────────────────────────────── */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-full: 9999px;
-
-  /* ─────────────────────────────────────────────────────
-   * SHADOWS — neutral-900 tinted
-   * ───────────────────────────────────────────────────── */
-  --shadow-xs: 0 1px 2px 0 rgb(28 28 49 / 0.04);
-  --shadow-sm: 0 1px 3px 0 rgb(28 28 49 / 0.06), 0 1px 2px -1px rgb(28 28 49 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(28 28 49 / 0.08), 0 2px 4px -2px rgb(28 28 49 / 0.06);
-  --shadow-lg: 0 10px 15px -3px rgb(28 28 49 / 0.1), 0 4px 6px -4px rgb(28 28 49 / 0.08);
-  --shadow-xl: 0 20px 25px -5px rgb(28 28 49 / 0.12), 0 8px 10px -6px rgb(28 28 49 / 0.1);
-
-  /* ─────────────────────────────────────────────────────
-   * MOTION
-   * ───────────────────────────────────────────────────── */
-  --duration-fast: 150ms;
-  --duration-base: 250ms;
-  --duration-slow: 400ms;
-  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-transition: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
-
-  /* ─────────────────────────────────────────────────────
-   * Z-INDEX
-   * ───────────────────────────────────────────────────── */
-  --z-base: 0;
-  --z-elevated: 10;
-  --z-dropdown: 100;
-  --z-sticky: 200;
-  --z-overlay: 1000;
-  --z-modal: 1100;
-  --z-toast: 1200;
-  --z-tooltip: 1300;
-
-  /* ─────────────────────────────────────────────────────
-   * BREAKPOINTS — Tailwind defaults (here for reference)
-   * sm: 640px  md: 768px  lg: 1024px  xl: 1280px  2xl: 1536px
-   * ───────────────────────────────────────────────────── */
-}
-
-/* Global focus indicator — WCAG 2.2 §2.4.11 */
-:focus-visible {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
-}
-
-/* Reduced-motion override (see §7.3) */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-```
-
----
-
-## 15. Open questions and dependencies
-
-| ID   | Question                                                                                                                                                                 | Where blocked                                          |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
-| DS-1 | Should `<TestimonialCarousel>` autoplay by default, or only manual advancement? Accessibility implications.                                                              | Confirm during D-3 wireframe pass                      |
-| DS-2 | Does the homepage hero use `text-display-xl` (61px) or scale back to `text-display` (49px) on smaller hero copy? Decide after first hero copy draft lands.               | Content (CONTENT-REQUIREMENTS §4 — homepage hero copy) |
-| DS-3 | Lexical rich-text styling — confirm `@tailwindcss/typography` `prose` defaults match this design system's body/heading scales. May need a `prose-seqtek` override class. | Validate during Phase 1 stack spike (D-13)             |
-
-These do not block applying the rest of the design system. They block specific pieces.
+The header uses the black wordmark without tagline, and the footer the white wordmark with it; both `alt` texts are
+the company name, SEQTEK.

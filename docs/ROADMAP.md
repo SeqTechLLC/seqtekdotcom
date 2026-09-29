@@ -1,396 +1,110 @@
 # SEQTEK Website — Roadmap
 
-**Owner:** Kenn Williamson
+What is still open, in priority order. When an item ships it moves to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md)
+with a `P{N}-*` entry in the same commit. What we need from people, and content status, is tracked in the private
+content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
-What is still open, in priority order. Nothing else.
+## P0 — Launch scope
 
-**Rules for this file.** When something ships it leaves — move it to [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md)
-with a `P{N}-*` row in the same commit. Don't check items off in place, don't keep the reasoning for a decision
-that's already made, don't restate what shipped, don't catalogue content. If it isn't listed here, it's done or
-it isn't happening.
+- **NAV-1 / SVC-2 residual.** The menu, the services collection and the service copy have shipped (P5-31, P5-37,
+  P5-46, P5-52).
+  - Retarget `/technology-and-data` (`src/lib/redirects.ts`) at the data service page rather than the axis.
+  - Decide whether the leaf namespace stays named `/services/`. Every leaf shares one flat namespace whichever axis
+    it hangs off; only the name is open.
+- **IND-1 residual — industry copy and proof.** `industries.json` still carries placeholder bodies. Healthcare,
+  Manufacturing, Aerospace and Retail have no case study, so their `cards` block renders nothing; each either gets a
+  study (PROOF-1) or stays a draft.
+- **BOOK-1 — book a call.** Booking is the `cta` block's `meeting` action with a `meetingUrl` (`Cta.ts`). It needs a
+  real HubSpot meetings URL (portal config). Then repoint the header CTA and footer "Book a Call", which go to
+  `/contact` (`site-content.ts`), and fold the live `booking_complete` event into the P3 GTM matrix. The inline
+  calendar embed needs HubSpot's `MeetingsEmbedCode.js` and a CSP change (`INTEGRATIONS.md` §8); a button meets the
+  ask.
+- **PROOF-1 — case studies and attributable quotes.** Every capability claim links to proof, and there are fewer
+  proofs than menu items. Status is in the private `WAITING_ON_PEOPLE.md`.
+- **AB-1 — an alternative "what we do" page.** A page that explains everything we do quickly without the full list,
+  A/B tested against the menu once there is traffic. Settle how "understood quickly" is measured before building it.
+- **LM-1 — what "soft launch" means.** Either ungate `ww3.seqtek.com` for a named audience, or cut DNS early and
+  treat the hard launch as a content refresh (which pulls most of P3 forward).
 
-**Companion docs.** `CONTENT_NEEDS.md` (private content repo) is what we need _from people_; this file tracks the
-_work_. [`PROJECT_HISTORY.md`](./PROJECT_HISTORY.md) is the audit trail. [`decisions/`](./decisions/) holds the
-ADRs. Meeting notes live in [`meetings/`](./meetings/).
+## P1 — Content throughput
 
----
-
-## Priority at a glance
-
-| #      | Item                                                           | Owner                  |
-| ------ | -------------------------------------------------------------- | ---------------------- |
-| **P0** | NAV-1 Dropdown panels + the pages under them                   | Kenn, blocked on Brent |
-|        | SVC-2 Seed the services copy to the lanes                      | Kenn                   |
-|        | IND-1 Eight industry pages                                     | Kenn + Brent           |
-|        | BOOK-1 Book-a-call widget routing to Daniel                    | Kenn, blocked on Megan |
-|        | PROOF-1 Case studies + quotes, on hard dates                   | Megan, Brent escalates |
-|        | AB-1 The alternative "what we do" page, A/B against the menu   | Kenn                   |
-|        | LM-1 Decide what "soft launch" means                           | Kenn                   |
-| **P1** | Block-preview regeneration is undocumented                     | Kenn                   |
-|        | A-1 Megan signs in + editor training                           | Kenn                   |
-|        | HYG-1 Content data hygiene                                     | Kenn                   |
-|        | UI-3 Default skeletons are publishable placeholder copy        | Kenn                   |
-|        | INERT-2 residual — service icon, collection-field sweep        | Kenn                   |
-| **P2** | K8 Sweep — tool shipped; links/images clean, copy is not       | Kenn                   |
-|        | CL-1 Load the drafted content                                  | Kenn                   |
-|        | C-7 Taurex sign-off                                            | Kenn + Megan           |
-|        | BR-5 Stats bar                                                 | Leadership             |
-|        | COPY-1 Tagline ↔ hero reconciliation                           | Kenn + Megan           |
-|        | HS-1 HubSpot cookie policy for this site's hostnames           | Megan                  |
-|        | VID-1 `/our-story` video embeds render as black boxes          | Kenn                   |
-| **P3** | Cutover checklist — CSP, QA, a11y sign-off, infra posture, DNS | Kenn + infra           |
-| **P4** | SEC-1 / F-6 / regional pages and the campaign content          | Kenn + Megan           |
-
----
-
-## P0 — Committed at the 2026-08-31 sales alignment
-
-Go/no-go **2026-09-14**. Context and quotes: `docs/meetings/2026-08-31-hank-sales-website-alignment.md`.
-
-- **NAV-1 — the menu is built and wired.** The panel shipped (#129) and
-  `site-content.ts` now carries both axes, all three groups and all nine leaves, every one resolving against a
-  published `services` row. The mechanism is done. **The copy is written; seeding it is SVC-2 below.**
-  - **Shipped 2026-09-16 — see `docs/planning/header-nav-collection.md`** and the amendment to ADR 0010: the
-    header nav is a validated `navigation` collection; footer and legal navs stay code-owned. The mechanism is
-    done — collection, polymorphic targets with derived URLs, whole-site revalidation, migration. **Open: the
-    menu is not seeded.** `getNavigation` falls back to the code-owned tree in `site-content.ts` while the
-    collection is empty, so every lane still serves today's menu until a `navigation.json` lands in the content
-    repo. The bullet below is the superseded framing, kept for its cost analysis.
-  - **Open decision: should the axis panels derive from the `services` collection?** Today a new service is a
-    content edit plus a code change to `site-content.ts`, which is the friction ADR 0010 accepted when the nav
-    was six decade-scale items. It is 13 entries now. The hierarchy already exists as typed relations
-    (`tier`, and `items` constrained to `tier: 'leaf'`), so a derived panel builds URLs from `slug` and has no
-    free-text URL field to get wrong — which is the specific risk ADR 0010 rejected. Scope it to the two axis
-    panels; top-level items, footer, legal nav and the JSON-LD values stay code-owned. Costs: `SiteHeader`
-    becomes async (`listServices()` and its `services_list` tag already exist), and it renders on every page,
-    so the revalidation gap below becomes load-bearing rather than cosmetic. Wants an ADR revising 0010.
-  - `tests/e2e/layout.e2e.spec.ts` (~:28-38) asserts all seven top-level items are visible **links**. If an axis
-    item becomes a button that opens a panel, that assertion changes shape.
-  - **A group's URL is optional, and that is what de-risks the second panel.** A group with no URL renders as
-    a heading and nothing more, so "how we work" can ship with headless groups and earn pages later. Brent
-    asked for all three "what we do" groups to be clickable, so on that panel every group takes a URL. The
-    panel already renders a group either way (#129) — what changes is how much copy has to exist first.
-  - **Decide whether the leaf namespace stays named `/services/`.** It was worth asking once the axis labels
-    settled, and they have. All leaves share ONE flat namespace whichever axis they hang off — that is not
-    optional, because a leaf reachable from both panels must resolve to one URL. Only the name is open.
-  - The a11y gate is the cost, not the CSS: click/tap to open (hover-only fails WCAG 2.2 §1.4.13), no focus
-    trap. `tests/e2e/a11y.e2e.spec.ts` sweeps at zero axe violations.
-
-- **SVC-2 residual — seed the copy.** The code shipped (P5-31 / #131, P5-41 / #136) and the copy is written
-  (P5-46): all 16 `services` docs, Cadence included, carry real copy in the content repo's `services.json`,
-  and the eight case studies are tagged with the services they prove. A deploy never runs the seeder, so:
-  - **Preview:** seed `services.json`, `case-studies.json`, `services.json` again (the content repo's
-    `LOAD-ORDER.md` has why) and `navigation.json` **before** P5-46's code change deploys, or its links land on
-    placeholder copy. `pages.json` unpublishes five Pages (`localshoring`, `service-localshoring`,
-    `service-ai-integration`, `service-digital-transformation`, `service-overview`), so it runs **after** the
-    deploy. `ww3` follows the next release in the same order.
-  - **Refine the 21 Wix service 301s.** They all land on the axis today, which is the honest interim target.
-    `/technology-and-data` should reach the data page rather than the axis. Cheaper before the DNS cutover:
-    nothing is live, so these are retargeted at source rather than layered.
-  - **No publish gate reads seeded copy.** `tests/int/render/noPlaceholderCopy.int.spec.ts` guards skeleton
-    source only; a check on rendered output is K8's job.
-  - The axis and group pages link their children with hand-typed `items` links, so renaming a service slug
-    means editing those links too.
-
-  **Carry forward:** absorbing tiers into one collection means every relationship pointing at that collection
-  has to constrain to a tier, or the pickers offer nonsense. Six fields pointed at `services`; without
-  `filterOptions` each would have offered an axis as a taggable service. Any future collection merge inherits
-  this.
-
-- **IND-1 — industry pages. Wiring done; the copy is not.** Eight industries: Oil and Gas, Energy,
-  Manufacturing, Healthcare, FinTech, Aerospace, Retail (added by Brent 2026-09-10), and Leadership and
-  Training. Non-profit is explicitly out.
-  - **The mechanism shipped.** `industries` carries a `layout` blocks field, `/industries/[slug]` renders it
-    through `RenderBlocks` off the collection, industry cards link to it, and the sitemap derives
-    the URLs. Publishing a new industry needs no deploy. Of the four INERT-1 groups only `seo` is un-hidden —
-    the route renders `layout` blocks and nothing else, so `description`, `relevantServices` and
-    `clientLogos` still have no reader. Un-hide each one in the change that ships its consumer.
-  - **One taxonomy, settled.** The five previous slugs were invented one per engagement, not marketing
-    industries. All seven case studies were re-tagged onto the canonical set and the old five unpublished —
-    `unpublished` keeps the row as a working tag while its URL 404s. **Hogan resolved to Leadership and
-    Training** rather than being forced into one of Brent's six.
-  - **Nav placement was a measurement, and the header changed to fit it.** Industries is a **seventh
-    top-level item** with `/industries` (a `pages` doc on the `/[slug]` catch-all) as its destination.
-    Making it fit took two changes, both measured on the rendered header: the row container went `lg` →
-    **`xl`** (1024 → 1280px), because it caps the row regardless of window width and every multi-word label
-    wrapped at 1440 without it; and the desktop nav moved to the **`xl` breakpoint**, because at a 1024px
-    viewport the container is viewport-bound (1024 − 64px padding = 960px) and no max-width helps — so
-    1024–1279 renders the drawer. **Re-measure before adding anything else to the header**, against the
-    1280px cap, not the old 1024.
-  - **What is left is the copy.** All eight bodies are placeholders and say so on the page.
-  - **Six of the eight have no proof** — Healthcare, FinTech, Manufacturing, Aerospace, Leadership and
-    Training, and Retail carry no case study. Their `cards` block (case studies filtered by industry) renders **nothing at all** — heading included — rather than an empty
-    section: a bare "Selected work" over empty space was itself a claim with nothing behind it. So the gap is
-    no longer self-advertising on the page, which makes the publish decision a human one: either PROOF-1 lands
-    a study each, or those five stay drafts until it does. `CONTENT_NEEDS.md` §11.
-
-- **BOOK-1 — book-a-call widget, routing to Daniel.** The blocks shipped (#124). What is missing:
-  - **Daniel's real HubSpot meetings URL** (Megan, portal config). The only URL in the repo is a fixture. The
-    button cannot go live without it.
-  - The footer's "Book a Call" still points at `/contact` (`site-content.ts`). Repoint it, and place the block
-    where a visitor actually lands.
-  - `booking_complete` starts emitting for real once a live URL is in place — fold it into the P3 GTM matrix.
-  - The inline calendar embed stays unshipped: it needs HubSpot's `MeetingsEmbedCode.js` and a CSP widening
-    (`INTEGRATIONS.md` §8). A button satisfies the ask.
-
-- **PROOF-1 — case studies and attributable quotes, on hard dates.** Every capability claim links to proof, and
-  there are fewer proofs than the menu will have items.
-  **Protocol, targets and current state:** private content repo, `WAITING_ON_PEOPLE.md`.
-  **Decide at the go/no-go:** whether a named, signed case study gates the cutover.
-
-- **AB-1 — the alternative "what we do" page.** Build a page that meets Brent's goal — a visitor understands
-  everything we do very quickly — without the full list, and A/B it against the menu. Not launch-gating; do it
-  after the menu ships and there is traffic. Settle how "understood quickly" gets measured before building it.
-
-- **LM-1 — decide what "soft launch" means.** Answer at the 2026-09-14 go/no-go. Either (a) ungate
-  `ww3.seqtek.com` for a named audience, or (b) cut DNS early and treat the hard launch as a content refresh.
-  (b) pulls most of P3 forward, and is what the meeting described in everything but name. Kenn decides.
-
----
-
-## P1 — Unblock content throughput
-
-Every content change is still a developer task. This tier fixes that before we load more content by hand.
-
-- **Block-preview regeneration is undocumented.** `npm run block:thumbnails` rebuilds the committed admin
-  block-picker previews (ADR 0011) from a `visual:capture` run, and `docs/LOCAL_DEVELOPMENT.md` never mentions it.
-  The last open item from spec 011; its task list was retired with the spec directories, and a default page
-  skeleton on `Pages.layout` was deliberately not taken because it is the defect UI-3 exists to remove.
-- **A-1 residual — Megan signs in, then editor training.** The auth code shipped (#77). What is left is a
-  deploy, her first sign-in (auto-provisions an `editor`), and a short CMS quickstart. Train **after** 011
-  lands so she learns the fixed panel.
-- **HYG-1 — content data hygiene.** No human input needed; see `CONTENT_NEEDS.md` §10. Check a live lane, then:
-  seed `industries` or drop the relationship (published case studies reference industry IDs, and a `cards`
-  block filtered by industry returns zero rows against an empty collection); seed `locations` if
-  the regional pages get built; delete the `ztest-delete-me` category; give case studies an `ogImage`.
-- **UI-3 — a skeleton `defaultValue` is publishable placeholder copy, on READ as well as create.**
-  `TeamMembers.layout` defaults to `teamMemberSkeleton`, whose body reads as finished prose — seven members
-  were published without overwriting it. The same pattern exists for `caseStudy`, `workshop`, `partner` and
-  now `industries` — five collections, pinned by `skeletonDefaultValue.int.spec.ts`.
-  **Scope corrected:** this is not only about NEW records. Payload applies a `defaultValue` when a field reads
-  back `undefined`, and the Drizzle adapter leaves a blocks field unassigned when the row has no block rows —
-  so adding `layout` to a collection that ALREADY has published rows gives every one of them a skeleton body
-  on the next read. That is what put five `<h1>Industry name</h1>` pages on the preview lane after IND-1
-  deployed; they were retired by unpublishing. The copy half is done; the code half is not, because the flaw
-  is the skeleton design. **The third option shipped** — `tools/link-sweep` greps rendered HTML for
-  `SKELETON_PLACEHOLDER_COPY`, which moved to `src/payload/seed/skeletons/placeholderCopy.ts` so the source
-  guard and the sweep could share one list. That closes the detection half: a skeleton published unedited is
-  now visible on the next sweep instead of only when someone reads the page. **Still to decide, and it is the
-  design half:** ship skeletons as empty blocks, or mark skeleton text so a publish check can refuse it at
-  the source. Detection after the fact is a weaker guarantee than a `defaultValue` that cannot be published
-  as-is.
-- **INERT-2 residual — controls whose renderer does nothing with them.** The gate
-  (`tests/int/blocks/blockOutputContract.int.spec.tsx`) holds every block in `layoutBlocks` to three promises:
-  no developer phrase reaches body text, every control changes the output, every select option draws something
-  different. Exceptions are declared on the block via `custom: outputContract({...})`. Still open:
-  - `services.icon` is read, but there is no icon set behind it — `src/components/cards/ServiceCards.tsx:38`
-    prints the raw string. Not gate-visible: it does reach the output, just as a string.
-  - **The gate covers block controls, not collection fields.** Nothing has audited the collections' own fields
-    the same way. Sequencing: `docs/planning/block-output-contract.md`.
-- **Three top-level nav destinations are not editable without a deploy — deliberately parked 2026-09-04.**
-  `/case-studies`, `/insights` and `/contact` are bespoke route files: their `<h1>`, intro copy and SEO strings
-  are literals. The other four nav destinations (`/our-story`, and both `/services` axes) are documents.
-  ADR 0009 says there should be no bespoke page templates, so these are the remaining exceptions.
-
-  **Converting them is not the small job it looks like.** Each blocks on something real:
-  - `cards` has no cap (ADR 0013), so a block-composed listing shows every document. The blocker is
-    **pagination** — page state in a URL the block does not own. That is a feature, not a schema tweak.
-  - `/contact` is worse: `ContactForm` is a curated six-field schema with HubSpot internal names verified by a
-    live test submit (2026-06-22), including the `inquiry_type` select that routes the lead. The
-    `hubspot-form` block renders generic `DEFAULT_FIELDS` with a hardcoded special case for the Workshop GUID
-    and nothing for contact, and `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID` is unset. Converting would swap the
-    real form for the generic one.
-
-  **Cost of leaving it:** one deploy to reword about six lines of copy, rarely. Revisit when pagination is
-  wanted for its own sake, or when the contact form's field set is being reworked anyway (which would also
-  remove the Workshop hardcode in `HubspotForm.tsx`).
-
-- **Link the location cards** (`src/components/cards/LocationCards.tsx`) when the locations route ships; they
-  are not links today. `revalidateOnChange` builds `/consulting/<slug>`. Settle the URL before the route is
-  built.
-
----
+- **A-1 residual — editor onboarding.** The marketing editor's first sign-in (it provisions an `editor`) and a short
+  CMS quickstart.
+- **HYG-1 — data hygiene.** Case studies have no `ogImage`; seed `locations` if the regional pages are built.
+- **UI-3 — a skeleton `defaultValue` is publishable placeholder copy.** Payload applies a `defaultValue` on read as
+  well as on create, and five collections default `layout` to a skeleton (`skeletonDefaultValue.int.spec.ts`). The
+  K8 sweep detects a skeleton published unedited. Still to decide: ship skeletons as empty blocks, or mark skeleton
+  text so a publish check refuses it.
+- **INERT-2 residual.** `services.icon` is printed as a raw string (`ServiceCards.tsx:37`); there is no icon set
+  behind it. The output-contract gate covers block controls only; collection fields have not been audited the same
+  way.
+- **Location cards** (`LocationCards.tsx`) are not links. `revalidateOnChange` builds `/consulting/<slug>`; settle
+  the URL before the route is built.
 
 ## P2 — Soft launch
 
-- **K8 — broken-link + broken-image sweep. The tool shipped; run it after every content load.**
-  `npm run sweep` (`tools/link-sweep`) crawls every internal link from `/`, seeded additionally from the
-  sitemap so orphans are reached, at desktop and mobile. Reports dead routes with the pages linking them,
-  images that never paint, placeholder or repo-internal copy in rendered text, missing `alt`, and links that
-  land somewhere else. `--fail-on` turns any category into a CI gate; the default run is a report.
-
-  **First full run — preview lane, 2026-09-09, 60 routes:**
-
-  | Check                       | Result                                             |
-  | --------------------------- | -------------------------------------------------- |
-  | Routes returning 200        | **60 / 60**                                        |
-  | Dead or unreachable         | **none**                                           |
-  | Images that do not paint    | **none**                                           |
-  | Images with no `alt`        | **none**                                           |
-  | Links landing elsewhere     | **none**                                           |
-  | Broken external links       | **none of 4 checked** (1 more unverifiable, below) |
-  | Placeholder / internal copy | **77 findings across 23 routes**                   |
-
-  So the mechanical half of the soft-launch bar is **met** — everything goes somewhere, and every image
-  paints. The only sweep failures are copy, and they are wholly the two known content items: all **15**
-  `/services/*` routes (SVC-2) and all **8** `/industries*` routes, index included (IND-1). Thirteen of the
-  service routes additionally print `CONTENT_NEEDS.md`, a section sign and a roadmap id to the visitor.
-
-  **One outbound link cannot be verified by a robot and never will be.** `facebook.com/seqtek/` answers 400
-  to one user-agent and 200 to another; `linkedin.com/company/seqtek` answers 999 to a bare client and 200 to
-  a browser. Both profiles are live — checked by hand 2026-09-09. The sweep sends a browser user-agent and
-  files "the server refused this client" statuses under their own heading, outside the failable count.
-  Neither is a defect to fix.
-
-  **Do not gate on `placeholders` until that copy is written** — it would be red on purpose every run, and a
-  gate nobody can make green gets ignored. `--fail-on=links,images,alt,redirects` is green today and worth
-  wiring now.
-
-  Recurring class to watch: Leonardo mid-post figures live only in the DB, so any post re-seed strips them
-  (`tools/leonardo-images`). The sweep catches that on the next run rather than at review time.
-
-- **CL-1 — load the drafted content.** A seeder run, not authoring: the values block onto `/our-story`, the
-  testimonial re-seed, the curated photo picks (C-8, `tools/ingest-photos`), the six blog bodies, and the
-  three staged Taurex studies. The `teamMembers` slice is done on preview and **not yet on production** — the seeder
-  runs against `ww3` separately. Run against a gated lane with `IMPORT_TOKEN` + `IMPORT_COOKIE` (#102).
-- **C-7 — Taurex sign-off.** The highest-leverage content conversation: four written studies
-  become publishable, all three outstanding `pendingQuote` slots are Taurex people, and it clears the
-  soft-launch "one named, signed case study" gate in one call. NovaMud stays the editorial flagship (the only
-  study with metrics) but needs its own write-up and naming permission.
-- **BR-5 — stats bar.** 25+ years (founded 1999) is the only sourced number. **The projects count is
-  unsourceable — do not publish it**; the old Wix site ran two contradictory sets at once. "Lives touched"
-  stays dropped. The current bar states the founding year twice — replace the third slot or drop to two.
-  Reinstate a projects figure only if the PSA/invoicing history can produce one from a system of record.
-- **COPY-1 — reconcile the tagline and the homepage hero.** They currently make different claims, and neither
-  is what leadership wants carried. Write against Hank's definition instead: boutique scale as the advantage,
-  Localshoring as the name for it, trust → speed → bottom line, since 1999. Settles the open hero-size
-  question (DS-2) at the same time.
-- **HS-1 — publish a HubSpot cookie policy for this site's hostnames** _(launch blocker, portal config only)_.
-  Portal `8504846`'s three banners are attached to other hostnames and none define cookie categories, so the
-  banner never renders and the footer's "Cookie preferences" / "Withdraw consent" controls are silent no-ops.
-  The code side is complete (ADR 0006). Steps: `INTEGRATIONS.md` §4.1.
-- **VID-1 — `/our-story` video embeds render as black boxes.** Verify they show a poster frame before anyone
-  reviews the page.
-- **Soft-launch sign-off.** Kenn's work-first pass → Megan's polish pass → Megan + Hank + Brent. Minimum: real
-  faces and at least one named, signed case study (anonymous studies are dropped, not softened). No
-  `[PLACEHOLDER]`, no lorem.
-
----
+- **K8 — gate CI on the sweep.** Wire `npm run sweep -- --fail-on=links,images,alt,redirects` into CI. Don't gate
+  on `placeholders` until the copy is written.
+- **HS-1 — a HubSpot cookie policy for this site's hostnames** _(launch blocker, portal config only)_. Portal
+  `8504846`'s banners are attached to other hostnames and define no cookie categories, so the banner never renders
+  and the footer's consent controls do nothing. The code side is complete (ADR 0006); steps are in `INTEGRATIONS.md`
+  §4.1.
+- **VID-1 — `/our-story` video embeds render as black boxes.** Verify a poster frame shows.
 
 ## P3 — Hard launch and cutover
 
-Gated on the September All Hands shoot plus the P2 content. Leadership engages here, not during dev.
-
-**Content and copy gate**
-
-- Mission, vision and hero copy read in context across the homepage, `/our-story`, service and case-study heroes.
-- Sequoyah acknowledgement (BR-1) — leadership reads the rendered pages, then signs off or iterates (ADR 0003).
-- Faith framing — leadership decides whether and how the brand-kit faith elements surface on `/our-story`.
-- Testimonial attribution (C-1) — every quoted testimonial confirmed with a named attribution.
-- Leadership bios and headshots (C-3, BR-7) — each person approves their own copy and photo.
-- Case-study copy (C-7) — each study has a hero image, a named testimonial and a metrics array. **Only 2 of 7
-  carry a quantified outcome**; a hard number in every study was the highest-impact fix in the teardown.
-- Cookie banner reviewed.
-- **Sign-off captured in writing** so decisions don't get re-litigated post-launch.
-
 **Quality gates**
 
-- **CSP promoted from report-only to enforcing** (`src/lib/csp.ts` still defaults to `report-only`). Calendar a
-  hard date — the easiest thing here to forget.
-- Cross-browser / device QA — Chrome, Safari, Firefox; iOS, Android.
-- **Blocking screen-reader sign-off** across the AT/browser matrix. Spec 007 shipped the automated sweep and a
-  best-effort SR pass; the formal blocking pass is the residual.
-- Re-take Lighthouse against CloudFront with the consent-gated third parties live, then flip the performance /
-  LCP / TBT / CLS budgets from `warn` → `error`. **These numbers are sales-facing** — SEO 100 against Wix's 85,
-  and mobile load 1s against 10s, were quoted to leadership, so they have to stay true through cutover. Best
-  Practices is held down by the HubSpot and LinkedIn integrations: fix it here or stop quoting it.
-- Live returning-visitor consent fire-matrix on the real GTM container, cross-browser.
-- **Schema-drift CI guard** — fail CI if `payload migrate:create --dry-run` would produce a diff against what is
-  on disk. No CI gate runs migrations at all today (P5-30). Add the "schema change → `migrate:create` before
-  merge" note to `PAYLOAD_DEVELOPMENT.md`.
-- **CI e2e stability** — the Playwright job races the dev-server schema push (`relation … does not exist` →
-  cascade). Push once before the webServer and test process, or have the test process reuse the schema.
-- **Spec 003 US7** — verify `enforceDraftWhenScheduled` is wired on every draftable collection with
-  `publishedAt` and ship the integration test. The cron trigger stays deliberately deferred.
+- **CSP enforcing.** `src/lib/csp.ts` defaults to report-only and no lane sets `CSP_MODE`. Set a date.
+- Cross-browser and device QA: Chrome, Safari, Firefox; iOS, Android.
+- A blocking screen-reader sign-off across the AT and browser matrix. The automated axe sweep exists.
+- Re-take Lighthouse against CloudFront with the consent-gated third parties live, then flip the performance, LCP,
+  TBT and CLS budgets in `.lighthouserc.cjs` from `warn` to `error`.
+- A live returning-visitor consent fire-matrix on the real GTM container, cross-browser.
+- **Schema-drift CI guard.** No CI job runs migrations. Fail CI when `payload migrate:create` would produce a diff
+  against what is on disk, and note "schema change → `migrate:create` before merge" in `PAYLOAD_DEVELOPMENT.md`.
 
-**GTM external config** (GTM-UI work, not code)
+**GTM (container config, not code)**
 
-- **US1/US2 tail** — build the LinkedIn Insight Tag + Google Ads conversion tag in container `GTM-54KBJ2Z3`
-  (require `ad_storage`, fire on Page View + `hubspotConsentUpdate`), deploy, run the Accept/Deny/Customize
-  fire-matrix, then export → commit `infra/gtm/container.json` and confirm zero drift.
-- **Deferred until their content ships** — the 8 Meta browser pixels are staged without triggers; bind each to
-  its per-market path trigger when those routes exist (INTEGRATIONS §2.3).
-- **Deferred** — CAPI consent enforcement at source, and `booking_complete` live emission (BOOK-1).
+- Build the LinkedIn Insight Tag and Google Ads conversion tag in `GTM-54KBJ2Z3` (require `ad_storage`; fire on page
+  view and `hubspotConsentUpdate`), run the accept/deny/customize matrix, then export and commit
+  `infra/gtm/container.json`.
+- Deferred until their content ships: the eight Meta pixels, staged without triggers (`INTEGRATIONS.md` §2.3).
+- Deferred: CAPI consent enforcement at the source.
 
-**Infrastructure** _(the Fargate migration is owned by the infra engineer — reconcile docs after, don't port)_
+**Infrastructure**
 
-- **RDS multi-AZ flip** before public launch. Small CDK change, required for the 99.9% SLA to be achievable
-  (AWS SLAs single-AZ RDS at 99.5%).
-- **Production network posture** — tasks on private subnets with NAT or VPC endpoints, and production-shape
-  sizing. Bundle with the multi-AZ flip into one change window. Re-derive against the current stack.
-- **Force a new service deployment AFTER the Edge stack deploys.** On a fresh environment Compute comes up
-  before Edge, so first-boot tasks never see the Edge-owned `cloudfront_distribution_id` SSM param and every
-  invalidation silently skips. Verify after: a media delete produces an entry in
-  `aws cloudfront list-invalidations`.
-- **Snapshot the lane before merging** — merging is what deploys, and the container's `CMD` runs
-  `payload migrate` on start. `INFRASTRUCTURE_RUNBOOK.md` §2.
-- **Cutover to seqtek.com (Dom), in a low-traffic window.** What it has to cover:
-  - Ungating ww3 without ungating preview.seqtek.com: `cognitoAuthEnabled` is env-wide today.
-  - `seqtek.com` as the first entry of `secondaryLane.dnsRecordNames`, which drives the CloudFront aliases,
-    the Route 53 records, the ALB host rule, the Cognito callbacks and the lane's `NEXT_PUBLIC_SITE_URL`.
-  - The zone's existing `seqtek.com`/`www` records, and the older distribution holding those aliases
-    (`edge-stack.ts` comment), come off in the change window.
-  - The shared distribution disables CloudFront caching while the env has a gate, because its cache key has
-    no host (`edge-stack.ts`). Public seqtek.com needs a host-aware cache policy or its own distribution.
-- **Production's database has no deletion guard.** `seqtek_prod` lives on the `preview` env's RDS instance,
-  which has no deletion protection and `RemovalPolicy.DESTROY` (`data-stack.ts:111-114`): deleting
-  `SeqtekPreviewData` drops it with no final snapshot.
-- Post-cutover: submit the sitemap to Search Console and verify redirects, validate CloudFront cache behavior,
-  test-restore an RDS snapshot, run a full redirect crawl, watch CloudWatch and Search Console for regressions.
-
----
+- **RDS multi-AZ** before public launch. AWS's SLA for single-AZ RDS is 99.5%.
+- **Production network posture:** tasks on private subnets with NAT or VPC endpoints, production sizing. One change
+  window with multi-AZ.
+- **Force a new service deployment after the Edge stack deploys** on a fresh env, or tasks never read the
+  Edge-owned `cloudfront_distribution_id` and every invalidation skips.
+- **Snapshot before merging a destructive migration** (`INFRASTRUCTURE_RUNBOOK.md` §2).
+- **Cutover to seqtek.com** (infra engineer, low-traffic window). It has to cover:
+  - ungating ww3 without ungating preview.seqtek.com, since `cognitoAuthEnabled` is env-wide;
+  - `seqtek.com` as the first entry of `secondaryLane.dnsRecordNames`, which drives the CloudFront aliases, the
+    Route 53 records, the ALB host rule, the Cognito callbacks and the lane's `NEXT_PUBLIC_SITE_URL`;
+  - removing the zone's existing `seqtek.com`/`www` records and the older distribution's aliases in the window;
+  - caching: the shared distribution disables CloudFront caching while the env has a gate, because its cache key
+    has no host (`edge-stack.ts`). Public seqtek.com needs a host-aware cache policy or its own distribution.
+- **Production's database has no deletion guard.** `seqtek_prod` is on the `preview` env's RDS instance, which has
+  no deletion protection and `RemovalPolicy.DESTROY` (`data-stack.ts`).
+- After cutover: submit the sitemap to Search Console, crawl the redirects, check CloudFront cache behavior,
+  test-restore an RDS snapshot, watch CloudWatch and Search Console.
 
 ## P4 — After the cutover
 
-Real work, none of it blocking a launch. Ordered by expected return.
-
-- **SEC-1 — security / compliance page.** The one addition with a measured commercial gate behind it. G2
-  (n=1,002): 83% of companies require a security or privacy assessment to purchase (88% enterprise), and 39%
-  overall / 50% of enterprise name IT security review as their biggest source of evaluation delay. We have no
-  such page.
-- **INERT-1 residual — un-hide the rest of the `industries` and `locations` metadata.** `industries.seo` was
-  un-hidden by IND-1, which shipped the route that reads it. Still hidden and still without a consumer:
-  `industries.description`, `relevantServices` and `clientLogos` (the route renders `layout` blocks only), and
-  every `locations` group. Un-hide each in the change that ships its consumer. `admin.hidden` does not touch
-  REST, so the seeder still writes them.
-- **Regional landing pages (4) + a careers stub.** `/tulsa-consulting`, `/okc-consulting`,
-  `/northwest-arkansas-consulting`, `/kansas-city-consulting` are parked on `/localshoring`. Each wants
-  market-specific copy, proof and contact (`CONTENT_NEEDS.md` §9). Careers: one "if you want to join us" page
-  at most — the old Wix job listings are not coming across.
-- **F-6 — AICO baseline.** `llms.txt` + `llms-full.txt` routes, `.md` alternatives for content pages,
-  differentiated `robots.txt` per AI crawler, CloudFront cache rules for crawler traffic, byline and
-  last-updated metadata. Spec: `ARCHITECTURE.md` §14 + `CONTENT-REQUIREMENTS.md` §8. Partly content-gated.
-- **Campaign content expansion.** 3–5 supporting blog posts for the AI workshop push; a lead magnet; 4–6 more
-  case studies in batches, each with real outcomes and a testimonial. The workshop and case-study pages should
-  also read as self-contained campaign landing pages — a cold visitor from an ad needs full context and a clear
-  CTA without the rest of the site. New posts get solicited from technical staff and written by the people who
-  did the work, not generated.
-- **Deeper SEO** — per-page OG images and structured data beyond the spec-004 baseline (`BreadcrumbList`
-  JSON-LD; a `primaryGroup` on services if a breadcrumb ever needs one parent).
-- **Portfolio-readiness polish.** A live link + screenshots in `README.md`; a note framing the engineering depth
-  as deliberate; replace the `(record.layout ?? []) as never` casts in the block-rendered detail routes with a
-  typed `BlockLike[]` adapter.
-- **CI Actions cost.** The remaining per-run cost is the ~11-minute Playwright + axe + Lighthouse job — gate it
-  behind ready-for-review PRs so draft pushes skip it. (The org Actions spending limit was hit 2026-06-16; taking the repo public resolved it, since Actions are free there.)
-- **Small stuff.** Correct the `_overridesNotes` entries that have drifted from the overrides they describe —
-  `undici` says `^7.28.0` where the override is `^7.29.0`, and the `ws` note still says it is "pending" on a
-  PR that has landed (issue #75). The keep-or-remove question that issue also raised **is answered**: all
-  five report `STALE`, but removing them takes the production tree from 1 moderate to 6, so they stay — see
-  `tools/check-stale-overrides/README.md`. Also decide autoplay vs manual-only if a testimonial carousel is
-  ever built.
-
----
-
-## Waiting on people
-
-Tracked in the private content repo: `CONTENT_NEEDS.md` and `WAITING_ON_PEOPLE.md`.
+- **SEC-1 — a security and compliance page.** In G2's survey (n=1,002), 83% of companies require a security or
+  privacy assessment to purchase. We have no such page.
+- **INERT-1 residual.** `industries.description`, `relevantServices` and `clientLogos`, and every `locations` group,
+  are hidden with no reader. Un-hide each in the change that ships its consumer.
+- **Regional landing pages and a careers page.** The footer's four city links point at `/services/localshoring`.
+- **F-6 — AICO baseline.** Spec: [`planning/aico.md`](./planning/aico.md) and `CONTENT-REQUIREMENTS.md` §8.
+- **Deeper SEO:** per-page OG images; a `primaryGroup` on services if a breadcrumb ever needs one parent.
+- **Portfolio polish:** a live link and screenshots in `README.md`; replace the
+  `resolveLayout(x.layout as never)) as never` casts in the eight block-rendered routes with a typed adapter.
+- **Vertical rhythm.** `Section` maps `tight`, `default` and `spacious` to flat padding. Making it responsive is a
+  deliberate visual change (ADR 0012).
+- **CI cost:** gate the Playwright, axe and Lighthouse job behind ready-for-review PRs.
+- **Override notes:** `package.json` `_overridesNotes` has drifted from the overrides it describes. All five
+  overrides stay (`tools/check-stale-overrides/README.md`).

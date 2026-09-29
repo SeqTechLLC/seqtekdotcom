@@ -1,89 +1,56 @@
 # Error Pages & Failure States
 
-**Date:** 2026-05-14
-**Status:** Reference — as built (spec 004 + spec 007)
+## 1. Principle
 
----
-
-## 1. Overview
-
-Four failure states need explicit design: a missing page (404), a server-side exception (500), a planned maintenance window, and a hung or slow request. Each must stay on-brand, keep the user moving forward, and feed enough telemetry to CloudWatch that we can debug after the fact. The governing principle: **no dead ends.** Even the maintenance page provides at least one outbound path back to the marketing site once traffic resumes.
-
----
+No dead ends. Every failure state stays on-brand, gives at least one onward path, and logs enough to debug.
+Copy follows the voice rules in CONTENT-REQUIREMENTS §5A: consultative, never jokey, never blaming the
+visitor.
 
 ## 2. 404 — Page Not Found
 
-- **File:** `app/not-found.tsx`
-- **Triggered when:** Next.js can't match the requested path, OR a server component explicitly calls `notFound()` (e.g., a case study slug doesn't resolve in Payload).
-- **Layout:** Full site header and footer present. No breadcrumbs — there is no location to anchor them to.
-- **Content blocks:** Clear heading, brief one-sentence explanation, three destination cards (Home, What We Do, Case Studies), and a "Book a Strategy Call" CTA as the secondary path per the CTA hierarchy in CONTENT-REQUIREMENTS §9.
-- **Copy guidance:** Not jokey. SEQTEK's voice is consultative — "We couldn't find that page." beats "Oops!" every time. All brand voice rules from CONTENT-REQUIREMENTS §5A apply: no "leverage," no "synergies," buyer-centric language only.
-- **Tracking:** `dataLayer.push({ event: 'page_not_found', path: <requested> })` so marketing can see which 404s actually take traffic. High-traffic 404s usually signal a missing redirect from the old Wix URL set.
+- **File:** `src/app/(frontend)/not-found.tsx`, rendered inside the site layout, so header and footer are
+  present. Triggered by an unmatched path or a server component calling `notFound()`.
+- **Content:** "We could not find that page", three destination cards (Home, What We Do, Case studies) and
+  a "Book a strategy call" link to `/contact`, per the CTA hierarchy in CONTENT-REQUIREMENTS §9.
+- **Tracking:** `NotFoundTracker` pushes `{ event: 'page_not_found', path }` to the dataLayer. Frequent
+  404s usually mean a missing redirect in `src/lib/redirects.ts`.
 
----
+A path under `/feeds/*` (the retired resource hub) returns **410 Gone** from `src/proxy.ts` instead
+(`src/lib/gone.ts`).
 
 ## 3. 500 — Server Error
 
-- **Files:** `app/error.tsx` (route segment boundary) and `app/global-error.tsx` (root layout failure — replaces the entire HTML document).
-- **Triggered when:** An uncaught exception in a server component, layout, or route handler.
-- **Layout:** Minimal. Logo at top, no global nav — the nav may itself be the thing that broke. Don't risk a cascading render error inside the error page.
-- **Content:** Short apology, "Try again" button that calls `reset()`, email fallback `support@seqtek.com`, and a visible request ID for support correlation.
-- **Request ID:** Generated in `src/proxy.ts` (Next 16 rename of `middleware.ts`) as a UUID v4, attached to every request via the `x-request-id` response header for logs, and also written as a JS-readable `x-request-id` cookie (`httpOnly: false`, `sameSite: lax`) — **except on Server Action requests** (`next-action` header). Next treats a proxy-set cookie on an action as a cookie mutation and refreshes the route, which re-initialised the Payload admin's form after every edit and discarded what was typed; the boundaries read the cookie set by the page load, so actions do not need one. Both client error boundaries — `error.tsx` and `global-error.tsx` — surface it the same way: `readRequestId()` in `src/components/error/requestId.ts` parses that cookie and falls back to the Next error `digest` when the cookie is unavailable (e.g. a `global-error.tsx` render before the proxy ran). No context provider is involved. Logged in CloudWatch Logs alongside the stack trace.
-- **Tracking:** Error and full stack written to stdout — the CloudWatch Logs agent picks them up. A Sentry integration is deferred per ARCHITECTURE.md §8 Future Consideration; do not add a third-party error aggregator at launch.
-
----
+- **Files:** `src/app/(frontend)/error.tsx` (segment boundary, rendered inside the site layout) and
+  `global-error.tsx` (root failure; replaces the whole document, so no nav).
+- **Content:** a short apology, a "Try again" button calling `reset()`, `support@seqtek.com`, and a
+  visible request ID.
+- **Request ID:** `src/proxy.ts` generates a UUID per request and sets it as the `x-request-id` response
+  header and a JS-readable cookie. It sets no cookie on Server Action requests (`next-action`), because
+  Next refreshes the route on a cookie mutation and that reset the Payload admin's form. `readRequestId()`
+  (`src/components/error/requestId.ts`) reads the cookie and falls back to the error `digest`.
+- **Logging:** the error and stack go to stdout, and from there to CloudWatch Logs.
 
 ## 4. Maintenance Mode
 
-- **Trigger:** `MAINTENANCE_MODE=true` env var, sourced from AWS Parameter Store at instance boot.
-- **Mechanism:** `src/proxy.ts` short-circuits all incoming requests with a static maintenance HTML response — EXCEPT `/api/health`, which must still return 200. If the health endpoint flips, the ALB will mark instances unhealthy and start a replacement loop, which is exactly the wrong behavior during a planned outage.
-- **Page content:** Brand-consistent layout (logo, neutral background), brief message, expected return time if known. Status page link is a future option if SEQTEK adopts one — not at launch.
-- **Use case:** Emergency Postgres migration that can't be done blue-green. Should be rare; default off.
-
----
+- **Trigger:** `MAINTENANCE_MODE=true`. No lane sets it; turning it on is a task-definition change and a
+  deploy.
+- **Mechanism:** `src/proxy.ts` answers every request with a static 503 page, **except** `/api/health`,
+  which must keep returning 200 or the ALB would start replacing tasks during a planned outage.
 
 ## 5. Slow Page & Hung Request Detection
 
-- **Server side (as built — spec 007, ADR 0007):** Next.js has no built-in request-level timeout. Rather than wrapping each call site, the budget lives **once** as the **outermost layer of the cached readers** in `src/lib/payload.ts`: `withReadTimeout(label, React.cache(unstable_cache(rawRead)))`. It races the reader against a 5-second hard timer with **`Promise.race`** — not `AbortController`, because Payload's Local API takes no `AbortSignal`, so the losing query is orphaned (runs to completion in the pool) while the response thread is freed immediately. On timeout it throws a typed `PayloadReadTimeoutError`, which falls through to the branded `error.tsx` (no new error UI), and emits a warn-level structured log `{type:'payload_read_timeout', ts, requestId, reader, args}`. The `x-request-id` is read via `headers()` **in the wrapper's `catch`** — this must stay **outside** `unstable_cache` (where `headers()` throws); that constraint is exactly why the wrapper is outermost. Readers reached from ISR scope (`sitemap.ts`, `revalidate = 3600`) guard the `headers()` read and fall back to `requestId: 'unknown'`. The happy path is a no-op beyond one `setTimeout`/`clearTimeout` (no measurable latency, no behavior change). All 18 cached public readers are wrapped (spec 010 added the team and workshop readers; ADR 0010's amendment added the nav read, wrapped as `readNavigation` — the exported `getNavigation` wraps **that** in a `try/catch` and falls back to the code-owned menu, because it is the one reader awaited from the root layout, where a throw bypasses `error.tsx` for `global-error.tsx`. The catch sits **outside** the timeout wrapper so it covers the 5s budget as well as an inner rejection, and the `payload_read_timeout` log still fires first — see the 2026-09-16 amendment in `contracts/read-timeout-telemetry.md`); the three raw `findPublished*` helpers run _inside_ `unstable_cache` and are deliberately **not** wrapped.
-- **Client side:** Forms already enforce a 15-second submission timeout (see INTEGRATIONS.md §1.2). Images use `next/image` with native lazy loading and graceful failure — no additional handling needed.
-- **ALB layer:** Target group health check hits `/api/health` every 30s, threshold 3 — the instance is replaced after three consecutive failures. Already documented in ARCHITECTURE.md §9; cross-reference there rather than duplicating.
+- **Server:** each cached public reader in `src/lib/payload.ts` is wrapped, outermost, in
+  `withReadTimeout`, which races it against a 5-second timer with `Promise.race` (Payload's Local API
+  takes no `AbortSignal`, so the losing query runs on in the pool). On timeout it throws
+  `PayloadReadTimeoutError`, which renders `error.tsx`, and logs `payload_read_timeout` with the request
+  ID. The request ID is read through `headers()` in the wrapper's `catch`, outside `unstable_cache`, where
+  `headers()` would throw. `getNavigation`, awaited from the root layout, also catches the error and falls
+  back to the code-owned menu, because a throw there would skip `error.tsx`. Details:
+  [ADR 0007](decisions/0007-read-timeout.md) and
+  [`contracts/read-timeout-telemetry.md`](contracts/read-timeout-telemetry.md).
+- **Client:** HubSpot form submits time out at 15 seconds (INTEGRATIONS §1.2).
+- **ALB:** the target group checks `/api/health` every 30 s and marks a task unhealthy after 2 failures
+  (ARCHITECTURE §8).
 
----
-
-## 6. Brand Voice in Error Pages
-
-The same rules apply as the rest of the site (CONTENT-REQUIREMENTS §5A). Three non-negotiables:
-
-- **Never blame the user.** They didn't break anything.
-- **Never be jokey for the sake of clever.** "We couldn't find that page" is right. "Whoops, looks like our digital gophers ate this one!" is wrong.
-- **Always provide at least one onward path.** No dead ends.
-
----
-
-## 7. Tracking & Recovery
-
-Client-side events fired into the GTM dataLayer:
-
-| Event                   | Where fired                    | What it captures       |
-| ----------------------- | ------------------------------ | ---------------------- |
-| `page_not_found`        | 404 page client component      | Requested path         |
-| `error_boundary_caught` | 500 page client component      | Request ID, error name |
-| `maintenance_view`      | Maintenance page client script | Timestamp              |
-
-Server-side logging and user surfacing:
-
-| Error class          | Logged in                                  | Surfaced to user                   |
-| -------------------- | ------------------------------------------ | ---------------------------------- |
-| 404                  | CloudWatch Logs (request log)              | Yes — 404 page                     |
-| 500                  | CloudWatch Logs (stack trace + request ID) | Yes — 500 page with request ID     |
-| Slow request timeout | CloudWatch Logs (warn level)               | Yes — 500 page after timeout fires |
-| Maintenance          | n/a                                        | Yes — maintenance page             |
-
----
-
-## 8. Acceptance Criteria
-
-- **Manual QA:** Trigger each error class — broken slug for 404, a force-throw in a server component for 500, env var flip for maintenance, `await new Promise(r => setTimeout(r, 6000))` inside a Payload call for slow-request. Verify layout, copy, CTAs, and tracking events for each.
-- **Lighthouse:** Error pages still score Performance > 95. They're lighter than regular pages and should comfortably exceed the threshold.
-- **Axe:** WCAG 2.2 AA passes on every error page.
-- **Visual regression:** Playwright snapshots of each error state at 375 / 768 / 1440 viewport widths.
+Coverage: `tests/e2e/slow-request.e2e.spec.ts`, `tests/int/config/error-maintenance.int.spec.ts`,
+`tests/int/lib/readerFallback.int.spec.ts`.

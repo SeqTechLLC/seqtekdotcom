@@ -1,430 +1,180 @@
 # Local Development Guide
 
-How to get the SEQTEK website running on your machine.
-
----
+How to run the SEQTEK website on your machine. No AWS credentials are needed.
 
 ## Prerequisites
 
-| Tool               | Version                                                     | Check                    |
-| ------------------ | ----------------------------------------------------------- | ------------------------ |
-| **Node.js**        | `>=22` (`package.json` engines floor; 24.x LTS recommended) | `node --version`         |
-| **npm**            | Bundled with Node                                           | `npm --version`          |
-| **Docker**         | Any recent version                                          | `docker --version`       |
-| **Docker Compose** | V2 (included with Docker Desktop)                           | `docker compose version` |
-| **Git**            | Any recent version                                          | `git --version`          |
+Node.js `>=22` (24.x LTS recommended), npm, Docker with Compose V2, Git.
 
-No AWS credentials, VPN access, or cloud accounts are needed for local development.
-
----
-
-## Quick Start
+## Quick start
 
 ```bash
-# 1. Clone and install
-git clone <repo-url>
-cd company-website
 npm install
-
-# 2. Set up environment
-cp .env.example .env.local
-
-# 3. Start Postgres
-docker compose up -d
-
-# 4. Start the dev server
-npm run dev
+cp .env.example .env.local          # then fill in the required values below
+docker compose up -d                # Postgres on localhost:5433
+PAYLOAD_DISABLE_PUSH=true npm run payload migrate
+PAYLOAD_DISABLE_PUSH=true npm run dev
 ```
 
-The site is at `http://localhost:3100`. The Payload admin panel is at `http://localhost:3100/admin`.
+The site is at `http://localhost:3100` and the admin at `http://localhost:3100/admin`. The database starts empty;
+[Build the local database](#build-the-local-database) loads the content.
 
-`/admin` is gated by Google Workspace SSO (both `@seqtechllc.com` and `@seqtek.com` accounts are admitted — see PR #77). Before the first sign-in works locally you need a Google OAuth client — see [Google OAuth Client (D-14)](#google-oauth-client-d-14) below. On a fresh database the first signer is bootstrapped to the Admin role; later signers default to Editor.
+Always run with `PAYLOAD_DISABLE_PUSH=true`. The schema comes from the migrations (one baseline since 2026-09-24),
+not from Drizzle's dev push, which also leaves the dev server hanging at boot.
 
----
+## Environment variables
 
-## Environment Variables
+**Required**
 
-Copy `.env.example` to `.env.local` and fill in the values below. Only two are required for a working local environment:
+| Variable               | Local value                                            |
+| ---------------------- | ------------------------------------------------------ |
+| `DATABASE_URL`         | `postgresql://seqtek:seqtek@localhost:5433/seqtek_dev` |
+| `PAYLOAD_SECRET`       | Any 32+ char string (`openssl rand -hex 32`)           |
+| `GOOGLE_CLIENT_ID`     | See [Google OAuth client](#google-oauth-client-d-14)   |
+| `GOOGLE_CLIENT_SECRET` | Same                                                   |
 
-### Required
+**Optional** (leave blank locally)
 
-| Variable               | Local Value                                            | Notes                                                                     |
-| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `DATABASE_URL`         | `postgresql://seqtek:seqtek@localhost:5433/seqtek_dev` | Matches the Docker Compose Postgres config                                |
-| `PAYLOAD_SECRET`       | Any random string (32+ chars)                          | Used for JWT signing. Generate with `openssl rand -hex 32`                |
-| `GOOGLE_CLIENT_ID`     | From Google Cloud Console                              | OAuth 2.0 client ID. See [Google OAuth Client](#google-oauth-client-d-14) |
-| `GOOGLE_CLIENT_SECRET` | From Google Cloud Console                              | OAuth 2.0 client secret. Same source as above                             |
+| Variable                                                                                                       | Notes                                                                            |
+| -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                                                                                         | Payload's `serverURL`; defaults to `http://localhost:3100`                       |
+| `REVALIDATION_SECRET`                                                                                          | Bearer secret for `POST /api/revalidate`                                         |
+| `CSP_MODE`                                                                                                     | `enforce`, `report-only` (default) or `off`                                      |
+| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`, `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`, `NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID` | Blank leaves the forms half-wired: they run their full lifecycle without posting |
+| `NEXT_PUBLIC_GTM_ID`                                                                                           | GTM loads only when set                                                          |
+| `S3_BUCKET`, `S3_REGION`, `S3_BUCKET_HOSTNAME`                                                                 | Unset means local filesystem media                                               |
+| `CLOUDFRONT_DISTRIBUTION_ID`                                                                                   | Unset locally; invalidations are skipped                                         |
 
-### Optional (leave blank for local dev)
+## Postgres
 
-| Variable                        | Local Value             | Notes                                                                                                                                        |
-| ------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PREVIEW_SECRET`                | Any 32+ char string     | Phase 2 (spec 003) — required to mint preview cookies for `pages`/`posts`/`caseStudies`/`services`/`workshops`/`teamMembers` drafts (FR-019) |
-| `REVALIDATION_SECRET`           | Any 32+ char string     | Phase 2 — Bearer secret for `POST /api/revalidate` (FR-026)                                                                                  |
-| `CLOUDFRONT_DISTRIBUTION_ID`    | _(empty)_               | Phase 2 — unset locally by design (R-03); set per-environment in staging/prod via Parameter Store (FR-027)                                   |
-| `S3_BUCKET`                     | _(empty)_               | Not needed. See [Media Storage](#media-storage-no-s3-needed) below                                                                           |
-| `S3_REGION`                     | _(empty)_               | Required when `S3_BUCKET` is set                                                                                                             |
-| `S3_BUCKET_HOSTNAME`            | _(empty)_               |                                                                                                                                              |
-| `AUDIT_DIR`                     | _(empty)_               | Phase 2 — path to the private Wix audit (defaults to `~/projects/seqtek-internal/audit/`). Read by the seed script                           |
-| `NEXT_PUBLIC_SITE_URL`          | `http://localhost:3100` | Used for canonical URLs and OG meta tags                                                                                                     |
-| `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` | _(empty)_               | HubSpot forms won't render without this, which is fine for dev                                                                               |
-| `NEXT_PUBLIC_GTM_ID`            | _(empty)_               | GTM won't load without this, which is fine for dev                                                                                           |
+Docker Compose runs Postgres only (`postgres:18`, matching RDS). The app runs through `next dev`. The container
+listens on `localhost:5433`, with database `seqtek_dev` and user and password `seqtek`. Data persists in a Docker
+volume; `docker compose down -v` destroys it.
 
-### What's NOT in .env.local
+## Build the local database
 
-There are no `AWS_ACCESS_KEY_ID` or `AWS_SECRET_ACCESS_KEY` variables anywhere. Production and staging use IAM instance profiles on EC2 — the AWS SDK discovers credentials automatically from the instance metadata service. Locally, AWS credentials are not needed because S3 is not used (see below).
+All site content, media included, lives in the content JSON (`docs/content-drafts/`, a symlink to the private
+content repo). A local database is built the same way as a lane's:
 
----
+1. Move `media/` aside if it holds earlier uploads, or re-uploaded files get renamed.
+2. Recreate the database and apply the migrations:
 
-## Docker Compose (Postgres Only)
+   ```bash
+   docker compose exec postgres psql -U seqtek -d postgres \
+     -c "DROP DATABASE IF EXISTS seqtek_dev WITH (FORCE)" -c "CREATE DATABASE seqtek_dev OWNER seqtek"
+   PAYLOAD_DISABLE_PUSH=true npm run payload migrate
+   ```
 
-Docker Compose runs a single service: Postgres. The application itself runs directly via `next dev` for fast HMR — you are not running the app in Docker locally.
+3. Start the dev server, sign in to `/admin` with Google (on an empty database the first account becomes the
+   admin), and copy the `payload-token` cookie.
+4. Load the files in the order in the content repo's `LOAD-ORDER.md`. Every file must end `errors=0`.
 
-```bash
-# Start Postgres in the background
-docker compose up -d
+   ```bash
+   IMPORT_TOKEN=<payload-token> npm run payload:seed -- docs/content-drafts/<file>.json
+   ```
 
-# Check it's running
-docker compose ps
+`--dry-run` previews a file. `--base-url` or `IMPORT_BASE_URL` points the same command at a lane; a gated lane also
+needs `IMPORT_COOKIE` (`tools/payload-seed/README.md`). Test fixtures are separate: `npm run seed:showcase` seeds
+one page per block for the visual capture.
 
-# View Postgres logs
-docker compose logs postgres
+## Google OAuth client (D-14)
 
-# Stop (preserves data)
-docker compose stop
+`/admin` signs in through Google Workspace; `@seqtechllc.com` and `@seqtek.com` accounts are admitted (ADR 0002). To
+sign in locally, create a client in Google Cloud Console → APIs & Services → Credentials, in the `seqtek-website`
+project:
 
-# Stop and destroy data volume (full reset)
-docker compose down -v
-```
+- type **Web application**;
+- JavaScript origin `http://localhost:3100`;
+- redirect URI `http://localhost:3100/api/auth/oauth/callback/google`.
 
-The Postgres container:
+Put the ID and secret in `.env.local`, and never commit that file. Other domains are rejected at the callback
+without creating a user. Later accounts are provisioned as editors; promote them in `/admin/collections/users`.
 
-- Runs on `localhost:5433` (host port; container is `5432` internally — see `docker-compose.yml`)
-- Creates a database `seqtek_dev` with user `seqtek` / password `seqtek`
-- Data persists in a Docker volume between restarts
-- Matches the same Postgres major version as production RDS
-
-Locally the Postgres adapter runs in **dev push** mode (`push: true` when `NODE_ENV !== 'production'` **and** `PAYLOAD_DISABLE_PUSH !== 'true'` — the E2E suite sets `PAYLOAD_DISABLE_PUSH=true` to turn push off): on `npm run dev` Payload connects to Postgres and syncs the schema straight from the collection configs — no migration files, no manual step. Do **not** run `payload migrate` against a database that dev push has already modified.
-
-**Rebuilding the local database from the content.** All site content, media included, lives in the content JSON, so a clean database is: drop and recreate `seqtek_dev`, run `PAYLOAD_DISABLE_PUSH=true npx payload migrate` (the single baseline migration), mint an admin session, and load the files in the order in the content repo's `LOAD-ORDER.md`. Run the dev server with `PAYLOAD_DISABLE_PUSH=true` against a database built this way. Versioned migrations are authored with `npm run payload migrate:create` and exist for staging/prod only; see [PAYLOAD_DEVELOPMENT.md](PAYLOAD_DEVELOPMENT.md) for that workflow.
-
----
-
-## Google OAuth Client (D-14)
-
-`/admin` uses Google Workspace SSO restricted to `@seqtechllc.com` **and** `@seqtek.com` accounts (ROADMAP D-14, ADR 0002, spec 001; second domain added in PR #77). You need an OAuth client to sign in locally.
-
-### One-time setup
-
-1. Open [Google Cloud Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
-2. Confirm you're in the **seqtek-website** project.
-3. **Create Credentials → OAuth client ID** → application type **Web application**.
-4. Name: `seqtek-website-local-dev`.
-5. Authorized JavaScript origins: `http://localhost:3100`.
-6. Authorized redirect URIs: `http://localhost:3100/api/auth/oauth/callback/google`.
-7. **Create** — copy the Client ID and Client Secret.
-
-### Put the values in `.env.local`
-
-```bash
-GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxx
-```
-
-Never commit `.env.local`. `.env.example` lists the names with empty values.
-
-### First sign-in
-
-Drop the Postgres volume if you want a clean cutover (`docker compose down -v`), restart, then visit `/admin` and click **Sign in with Google**. The first signer from either admitted domain becomes Admin; subsequent signers default to Editor. Promote them in `/admin/collections/users/<id>`.
-
-Accounts outside `@seqtechllc.com` and `@seqtek.com` are rejected at the OAuth callback — no row is created.
-
-### Tests (no real Google needed)
-
-Vitest integration tests cover the Users `beforeChange` hook directly (`payload.create({ collection: 'users', ... })`) — same code path the plugin's OAuth callback invokes, no Google round-trip. Playwright E2E tests for the post-auth experience mint a session cookie via `payload.login()` and navigate `/admin` with that cookie set — no OAuth round-trip either. See spec 001 `tasks.md` for the FR-012 note on why we test the integration surface only.
+Tests need no Google: integration tests call the Users hooks directly, and E2E tests mint a session cookie with
+`payload.login()`.
 
 ### Running a second dev server on another port
 
-Two Claude sessions (or a test run beside your own `npm run dev`) need two
-servers, and the second one must not use `:3100`. When you start it, set
-`NEXT_PUBLIC_SITE_URL` to match:
+`next dev` refuses a second instance from the same directory, so a second server runs from another checkout, and
+it must set `NEXT_PUBLIC_SITE_URL` to its own origin:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3111 npx next dev --port 3111
 ```
 
-Without it the admin **looks** signed in and silently does nothing: Payload
-pushes `config.serverURL` (which defaults to `http://localhost:3100`) onto
-`config.csrf`, and `extractJWT` drops the session cookie whenever the request's
-`Origin` is not on that list. Page navigations send no `Origin` and still
-authenticate; every server action — `form-state`, which is what adds a block
-row, populates an upload preview, and re-evaluates a conditional field — comes
-back `UnauthorizedError` and the UI just fails to update. Diagnosed 2026-08-27
-while verifying spec 011 US4.
+Without it, the admin looks signed in but every server action fails. Payload adds `serverURL` to `config.csrf`, and
+`extractJWT` drops the session cookie when the request's `Origin` is not on that list.
 
-### Staging and prod
+## Media
 
-Production and staging read `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from AWS Parameter Store at `/seqtek/website/{env}/google_client_{id,secret}` via the EC2 instance profile. See [`contracts/env-vars.md`](./contracts/env-vars.md) for the exact path map.
+With no `S3_BUCKET`, Payload stores uploads in `media/` (gitignored), and the admin, rendering and image
+optimisation behave the same as with S3.
 
----
+## Git hooks
 
-## Media Storage (No S3 Needed)
+`npm install` installs Husky; the pre-commit hook runs `gitleaks` on staged changes and lint-staged. Install
+gitleaks (`brew install gitleaks`, or a release from GitHub). The repo is public: never bypass the hook with
+`--no-verify`. For a false positive, add a `[gitleaks:allow]` comment or an allowlist rule in `.gitleaks.toml`.
 
-Production and staging store media uploads in S3 (authenticated via IAM role on EC2). Locally, none of this applies.
+## Common tasks
 
-When the S3 environment variables are absent, Payload falls back to local filesystem storage. Uploaded images, documents, and other media are written to disk inside the project directory. This is gitignored and works transparently — the admin panel upload UI, image rendering, and `next/image` optimization all function identically.
+### Change a collection or block
 
-You do not need to:
-
-- Create an S3 bucket
-- Configure AWS credentials
-- Set up a mock S3 service (like MinIO or LocalStack)
-
-If you need to test S3 uploads specifically (e.g., working on the storage adapter config), you can set the S3 env vars in `.env.local` and provide credentials via `~/.aws/credentials` or environment variables. This is an edge case — most development does not require it.
-
----
-
-## Seeding Content
-
-### Starting Empty
-
-The default setup starts with an empty database. Payload creates the schema on first startup. Visit `/admin` to create your admin user and start adding content manually. This is the simplest path for working on UI components or layout changes.
-
-### ~~Seeding from Audit Data~~ — removed (spec 011)
-
-The `migrateFromAudit.ts` script and its parsers were deleted. It was a one-shot
-Wix migration that had already run, and `docs/content-drafts/*.json` superseded it
-as the content source (see below, and `CLAUDE.md` § Content loading & deploys).
-
-By spec 011 it had also gone quietly inert: its case-study and homepage steps
-wrote fields the schema no longer has, so Payload dropped every key and both
-steps reported success while writing nothing.
-
-The 301 redirect map it once sourced is committed code and unaffected —
-`src/lib/redirects.ts`, which now carries the slug rewrites too (the seed-side
-`slugRewrites.ts` went with the seeder; every mapping it held is in the 301 map
-and INTEGRATIONS.md §9). The dated Wix crawl remains outside the repo at
-`~/projects/seqtek-internal/audit/` as the historical record.
-
-To populate a local database, use the seeder below.
-
-If you don't have the audit directory, you can still develop against the full site — you'll just need to create sample content manually in the admin panel.
-
-### Loading content drafts (`tools/payload-seed`)
-
-For real, hand-authored content — the path used to populate staging and local mirrors — the committed generic seeder is `tools/payload-seed` (PR #82), driven by `npm run payload:seed`. It upserts any collection document or global from a JSON request file over the REST API, resolving relations (`$ref`), images (`$file`), and rich text (`$lexical`) at write time. Upserts are idempotent (keyed on `slug` by default), so re-running a file is safe.
-
-The seeder is the committed _engine_; the content data itself is **not** committed — it lives gitignored under `docs/content-drafts/*.json` (with `*.mts` driver scripts alongside). Auth is your own `/admin` Google-SSO session: sign in on the target environment, copy the `payload-token` cookie, and export it as `IMPORT_TOKEN` (it expires with the session — grab a fresh one per run).
+Edit the config, then:
 
 ```bash
-# Dry-run against local dev (no token, no writes):
-tsx tools/payload-seed/index.ts ./docs/content-drafts/<file>.json --dry-run
-
-# Seed local dev (server on :3100); publishes by default:
-IMPORT_TOKEN=<session-jwt> npm run payload:seed ./docs/content-drafts/<file>.json
-
-# Seed staging, forcing everything to draft:
-IMPORT_TOKEN=<session-jwt> npm run payload:seed ./docs/content-drafts/<file>.json \
-  --base-url=https://seqtek-preview.com --draft
+npm run payload migrate:create <name>   # audit the generated SQL
+PAYLOAD_DISABLE_PUSH=true npm run payload migrate
+npm run generate:types                  # commit src/payload-types.ts with the change
 ```
 
-The target origin comes from `--base-url` (default `http://localhost:3100`) or the `IMPORT_BASE_URL` env var, so the same seed file drives both local and staging. See `tools/payload-seed/README.md` for the full spec/directive reference.
-
----
-
-## Git Hooks (gitleaks)
-
-Husky installs automatically during `npm install` (via the `prepare` script). A pre-commit hook runs `gitleaks` to scan staged changes for secrets before every commit.
-
-If gitleaks is not installed on your system, the hook will warn you. Install it:
-
-```bash
-# macOS
-brew install gitleaks
-
-# Linux (from GitHub releases)
-# See https://github.com/gitleaks/gitleaks#installing
-
-# Verify
-gitleaks version
-```
-
-The hook is non-negotiable for this repo — it's public, and a leaked credential is permanently in the git history. If the hook blocks your commit, it found something that looks like a secret. Check the output, fix the issue, and re-commit. Do not bypass it with `--no-verify`.
-
----
-
-## Common Tasks
-
-### Reset the Database
-
-```bash
-# Drop and recreate (dev push rebuilds the schema on next startup)
-docker compose down -v
-docker compose up -d
-npm run dev
-```
-
-### Change a Payload Collection
-
-Edit the collection config in `src/collections/`. Locally there are no migration files to generate — dev push syncs the schema directly: on the next `npm run dev` the database schema updates and the admin panel and API reflect the changes immediately. (Versioned migrations for staging/prod are authored separately with `npm run payload migrate:create` — see [PAYLOAD_DEVELOPMENT.md](PAYLOAD_DEVELOPMENT.md).)
-
-Two artefacts do **not** regenerate on their own — both need a manual step after any schema change. See the next two subsections.
-
-### Regenerating Payload types
-
-`src/payload-types.ts` is the generated TypeScript surface that every render path consumes. Phase 3 page templates import `Page['layout']`, `CaseStudy`, etc. from this file and pass the result straight to `<RenderBlocks>` with no `as any` casts (FR-038, spec 003 US3).
-
-Regenerate after any field/collection/global add, rename, or required-flag flip:
-
-```bash
-npm run generate:types
-```
-
-Commit the regenerated `src/payload-types.ts` in the same PR as the schema change. CI typechecks against it.
+A block change touches every collection that uses `layout`. `migrate:create` can stop at drizzle-kit's "created or
+renamed?" prompt; answer it deliberately. See `PAYLOAD_DEVELOPMENT.md` for the migration rules.
 
 ### Regenerating the Payload importMap
 
-`src/app/(payload)/admin/importMap.js` is the static manifest Payload uses to resolve client-side components (richText editors, custom fields, inline blocks). When you add a `richText` field or any client-component-bearing field, the admin panel will fail to load that field's editor until you regenerate the map (FR-039, ADR `project_payload_importmap_gotcha`).
+`src/app/(payload)/admin/importMap.js` tells the admin how to load client components. After adding a `richText`
+field, a custom field component or an inline block, run `npm run generate:importmap` and commit the result. A stale
+map shows as a blank editor or a `Cannot find module` error in the admin.
 
-```bash
-npm run generate:importmap
-```
-
-The symptom of a stale importMap is an editor that mounts blank or a `Cannot find module` console error in the admin. If you add an inline block to `src/payload/blocks/inline/`, also run this — the inline-blocks set widens the Lexical config and the admin reloads it from the map.
-
-Commit the regenerated `importMap.js` in the same PR as the schema change.
-
-### Test the Health Endpoint
+### Health and revalidation
 
 ```bash
 curl http://localhost:3100/api/health
-```
-
-Returns JSON with status, uptime, and database connectivity. Same endpoint the ALB uses in production.
-
-### Test On-Demand Revalidation
-
-```bash
 curl -X POST http://localhost:3100/api/revalidate \
-  -H "Content-Type: application/json" \
-  -d '{"secret": "<your REVALIDATION_SECRET>", "paths": ["/case-studies"]}'
+  -H "Authorization: Bearer $REVALIDATION_SECRET" -H "Content-Type: application/json" \
+  -d '{"paths": ["/case-studies"]}'
 ```
 
-### Sweep for broken links, broken images and placeholder copy
-
-ROADMAP K8. Crawls every internal link from `/`, seeded additionally from the
-site's own `/sitemap.xml` so orphaned documents are reached, at desktop and
-mobile:
+### Sweep for broken links, images and placeholder copy
 
 ```bash
-npm run sweep                                          # localhost:3100
-npm run sweep -- --base-url=https://preview.seqtek.com # a lane
-npm run sweep -- --json=/tmp/sweep.json --external      # full report + outbound links
+npm run sweep -- --exclude=showcase-                     # localhost:3100, skipping the test fixtures
+npm run sweep -- --base-url=https://preview.seqtek.com   # a lane
 ```
 
-A Cognito-gated lane needs the ALB session from your own browser (DevTools →
-Application → Cookies). **Both halves** — with only cookie 0 the ALB 302s to the
-IdP, and every route then "returns 200" as a Google sign-in page:
+A gated lane needs both halves of the ALB session cookie from your browser, or every route "returns 200" as the
+sign-in page:
+`SWEEP_COOKIE='AWSELBAuthSessionCookie-0=…; AWSELBAuthSessionCookie-1=…'`. Run it after every content load.
+`--fail-on` turns a category into a failure; the reference is `tools/link-sweep/README.md`.
 
-```bash
-SWEEP_COOKIE='AWSELBAuthSessionCookie-0=…; AWSELBAuthSessionCookie-1=…' \
-  npm run sweep -- --base-url=https://preview.seqtek.com
-```
+## Local versus the lanes
 
-Reports dead routes (naming what links to them), images that never paint,
-placeholder or repo-internal copy in rendered text, em dashes in rendered copy,
-routes whose rendered text is thinner than `--thin-threshold`, missing `alt`,
-and links that land somewhere else. Exits 0 unless `--fail-on` names a category
-(`all` leaves out `thin`, which is a measurement rather than a defect). Full
-detail in `tools/link-sweep/README.md`.
-
-Run it after every content load — that is when links and images break. Locally,
-add `--exclude=showcase-`: `npm run seed:showcase` seeds a page per block plus a
-skeleton fixture in every collection, and they otherwise dominate both the
-placeholder and thin lists.
-
-```bash
-npm run sweep -- --exclude=showcase-
-```
-
----
-
-## How Local Dev Differs from Production
-
-| Aspect               | Local                                    | Production                                    |
-| -------------------- | ---------------------------------------- | --------------------------------------------- |
-| **App server**       | `next dev` (HMR, no optimization)        | `node server.js` (standalone build in Docker) |
-| **Database**         | Docker Compose Postgres on localhost     | RDS PostgreSQL (private subnet)               |
-| **Media storage**    | Local filesystem (gitignored)            | S3 bucket via IAM role                        |
-| **AWS credentials**  | None needed                              | IAM instance profile via IMDS                 |
-| **CDN**              | None                                     | CloudFront                                    |
-| **SSL**              | None (HTTP on port 3100)                 | ACM cert on CloudFront                        |
-| **ISR**              | Dev mode — pages render on every request | Static generation + on-demand revalidation    |
-| **CSP**              | Enforced (same proxy)                    | Enforced (same proxy)                         |
-| **Secret detection** | Pre-commit hook (gitleaks)               | Pre-commit hook + CI check                    |
-
-The CSP proxy (Next 16's rename of middleware) runs in both environments, so you'll catch CSP violations during development. If a third-party script or resource is blocked in dev, it will also be blocked in production.
-
----
+|             | Local                              | Lanes (preview, ww3)                        |
+| ----------- | ---------------------------------- | ------------------------------------------- |
+| App server  | `next dev`                         | `node server.js` in a Fargate task          |
+| Database    | Docker Postgres on `:5433`         | RDS PostgreSQL, one instance for both lanes |
+| Media       | `media/` on disk                   | S3, served by CloudFront at `/media/*`      |
+| Credentials | None                               | The ECS task role                           |
+| Rendering   | Dynamic, reads cached per request  | The same, plus on-demand revalidation       |
+| CSP         | `CSP_MODE` (default `report-only`) | The same default                            |
 
 ## Troubleshooting
 
-### "Connection refused" on startup
-
-Postgres isn't running. Start it:
-
-```bash
-docker compose up -d
-```
-
-Then check with `docker compose ps` — the postgres service should show `running`.
-
-### "relation does not exist" errors
-
-Payload migrations haven't run. This usually means the dev server was started before Postgres was ready. Restart the dev server:
-
-```bash
-# Ctrl+C to stop, then:
-npm run dev
-```
-
-On `npm run dev`, dev push syncs the local schema straight from the collection configs. If the database existed but the schema is stale, restarting reconciles it — no migration files are involved locally.
-
-### Port 3100 already in use
-
-Another process is using the port. Find and kill it:
-
-```bash
-lsof -ti:3100 | xargs kill
-```
-
-Or start on a different port:
-
-```bash
-PORT=3001 npm run dev
-```
-
-### gitleaks blocks my commit
-
-The pre-commit hook found something that looks like a secret in your staged changes. Read the output — it tells you which file and line triggered the match. Common false positives:
-
-- Test fixtures with high-entropy strings — add a `[gitleaks:allow]` inline comment
-- Example URLs with tokens — use obviously fake values (`sk_test_FAKE_KEY_HERE`)
-
-Do not bypass with `--no-verify`. If you believe it's a false positive, update `.gitleaks.toml` with an allowlist rule and commit that config change first.
-
-### HubSpot forms don't render
-
-Expected. HubSpot forms require `NEXT_PUBLIC_HUBSPOT_PORTAL_ID` to be set. For most local development this isn't needed. If you're working on the form integration, use the real portal ID from the team.
-
-### Images look broken after switching branches
-
-The local media directory may have files from a different branch's seed data. Reset:
-
-```bash
-# Clear local uploads (gitignored, safe to delete)
-rm -rf media/
-npm run dev
-```
-
-Then re-seed or re-upload as needed.
+- **Connection refused:** Postgres isn't running. `docker compose up -d`.
+- **"relation does not exist":** the database has no schema. Run `PAYLOAD_DISABLE_PUSH=true npm run payload migrate`.
+- **The dev server hangs at boot:** start it with `PAYLOAD_DISABLE_PUSH=true`.
+- **Port 3100 in use:** an earlier dev server is still running; `lsof -ti:3100 | xargs kill`. The dev script always
+  uses 3100.
+- **HubSpot forms don't post:** expected without the portal ID and form GUIDs.
+- **Images broken after switching branches:** clear `media/` and reload the content.

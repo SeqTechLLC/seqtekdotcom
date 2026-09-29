@@ -1,95 +1,60 @@
-# Contract: Live preview URLs + draft-mode entry route
+# Contract: live preview URLs and the draft-mode entry route
 
-> Promoted from `specs/003-phase-2-content-models/contracts/` when the spec directories were retired. Code and
-> tests cite this file as the authority, so it is maintained. `FR-*`, `US*` and `T0*` identifiers
-> below refer to that spec; what shipped is recorded in `docs/PROJECT_HISTORY.md`.
-
-**Files**:
-
-- `src/payload/livePreview/url.ts` — URL builder consumed by `admin.livePreview.url` on each of the four preview collections.
-- `src/app/(frontend)/preview/[collection]/[slug]/route.ts` — Next.js route handler that sets `draftMode` cookie and redirects to the public route.
-
-**Cited from**: `docs/ARCHITECTURE.md` §6 + spec FR-019, FR-020, FR-021.
+- `src/payload/livePreview/url.ts` builds the URL. Each preview collection wires it with
+  `admin.livePreview: livePreviewFor('<collection>')`.
+- `src/app/(frontend)/preview/[collection]/[slug]/route.ts` turns on draft mode and redirects to
+  the public page.
 
 ## URL pattern
 
 ```text
-${process.env.NEXT_PUBLIC_SITE_URL}/preview/{collection}/{slug}
+${NEXT_PUBLIC_SITE_URL}/preview/{collection}/{slug}
 ```
 
-Where `{collection}` is one of: `pages`, `posts`, `caseStudies`, `services`.
+`{collection}` is one of `PREVIEW_COLLECTIONS`: `pages`, `posts`, `caseStudies`, `services`,
+`workshops`, `teamMembers`, `partners`, `industries`. `buildPreviewUrl(collection, doc)` returns
+`null` for an unknown collection or a document with no slug, and `livePreviewFor` turns that into
+`''`, which hides Payload's Preview button.
 
-> **Design note (2026-05-30):** the URL deliberately does NOT carry a
-> `PREVIEW_SECRET` query parameter. The earlier sketch in this contract did,
-> but embedding a long-lived env secret in the iframe `src` leaks it into
-> (a) the admin DOM (any admin/editor can inspect), (b) Referer headers on
-> any outbound clicks made from inside the preview frame, and (c)
-> CloudFront / ALB access logs. The route handler is same-origin with the
-> admin, so the `payload-token` session cookie ships automatically — that
-> cookie is the real auth boundary. See the rationale block in
-> `src/payload/livePreview/url.ts`.
+The URL carries no secret. The route is same-origin with the admin, so the `payload-token` session
+cookie comes with the request and is the auth boundary. A secret in the iframe `src` would leak into
+the admin DOM, Referer headers and access logs.
 
-## `admin.livePreview` wiring
+Breakpoints: mobile 375×667, tablet 768×1024, desktop 1280×800.
 
-Each of the four collections includes:
-
-```typescript
-admin: {
-  livePreview: {
-    url: buildPreviewUrl,
-    breakpoints: [
-      { name: 'mobile', width: 375, height: 667 },
-      { name: 'tablet', width: 768, height: 1024 },
-      { name: 'desktop', width: 1280, height: 800 },
-    ],
-  },
-}
-```
-
-Where `buildPreviewUrl({ data, collectionConfig })` returns the preview URL string (or `null` when the document has no slug yet — Payload hides the Preview button).
-
-## Route handler behaviour
+## Route behaviour
 
 `GET /preview/{collection}/{slug}`:
 
-1. **Collection check**: ensure `{collection}` is one of the four supported. Otherwise → 404 JSON.
-2. **Slug present**: empty slug → 400 JSON.
-3. **Auth check**: resolve the request via `payload.auth({ headers })`; require the user to carry an `admin` or `editor` role. No editorial session → 302 to `/admin/login?redirect=<original-path>`.
-4. **Document existence**: `payload.find({ collection, where: { slug: { equals: slug } }, draft: true, limit: 1, depth: collection === 'services' ? 1 : 0 })`. Not found → 404 JSON.
-5. **Public path resolution**: compute the public path via `publicPathFor(collection, doc)`. Returns `null` when the doc has no slug or (for `services`) no resolvable pillar slug → 404 JSON.
-6. **Enable draft mode**: `(await draftMode()).enable()` (Next.js 16+: `draftMode()` returns a Promise; sets a signed cookie).
-7. **Redirect**: 302 to the resolved public path. Mapping (mirrors `PUBLIC_PATH_BUILDERS` in `src/payload/livePreview/url.ts`):
-   - `pages` → `/${slug}`.
-   - `posts` → `/insights/${slug}`.
-   - `caseStudies` → `/case-studies/${slug}`.
-   - `services` → `/services/${pillar.slug}/${slug}` (falls back to `/services/${slug}` if no pillar — useful for partially-drafted services).
+1. An unsupported collection returns 404 JSON.
+2. An empty slug returns 400 JSON.
+3. A user without the `admin` or `editor` role is redirected (302) to
+   `/admin/login?redirect=<original path>`.
+4. The route loads the draft by slug at `depth: 0`. No document returns 404 JSON.
+5. The public path comes from `publicPathFor` (`PUBLIC_PATH_BUILDERS`). No path returns 404 JSON.
+6. It turns on draft mode (`(await draftMode()).enable()`) and redirects (302) to the public path.
 
-> **Phase 3 dependency:** the public routes referenced above are filled in by
-> spec 004 (Phase 3 page templates). Until those land, the redirect
-> mechanically points at routes that may 404; this is intentional and
-> documented — US2 in spec 003 owns the redirect contract, not the
-> downstream render. The dev-only `/showcase/[slug]` route covers visual
-> verification in the meantime.
+| Collection    | Public path            |
+| ------------- | ---------------------- |
+| `pages`       | `/{slug}`              |
+| `posts`       | `/insights/{slug}`     |
+| `caseStudies` | `/case-studies/{slug}` |
+| `services`    | `/services/{slug}`     |
+| `workshops`   | `/workshops/{slug}`    |
+| `teamMembers` | `/team/{slug}`         |
+| `partners`    | `/partners/{slug}`     |
+| `industries`  | `/industries/{slug}`   |
 
-## Preview banner
+In draft mode each public route renders `<PreviewBanner />`
+(`src/components/layout/PreviewBanner.tsx`).
 
-Public page components are responsible for rendering a "PREVIEW MODE" banner when `draftMode().isEnabled === true` (FR-020). Phase 3 page templates include the banner; Phase 2 provides a `<PreviewBanner />` component in `src/components/layout/PreviewBanner.tsx` that pages can drop in.
+## Tests
 
-## Test contract
+- `tests/int/preview/livePreviewUrl.int.spec.ts` covers the builder, `publicPathFor` and
+  `isPreviewCollection`.
+- `tests/e2e/preview/{pages,posts,caseStudies}Preview.e2e.spec.ts` cover the route: the editor
+  redirect with the draft-mode cookie, the unauthenticated login redirect, a missing document, and
+  an unsupported collection.
 
-- `tests/e2e/preview/{collection}Preview.e2e.spec.ts` (one per collection):
-  - Authenticated editor: `GET /preview/{collection}/{slug}` → 302 with `Location` set to the resolved public path and the draft-mode cookie set on the response. (FR-019, SC-003)
-  - Unauthenticated: same URL → 302 to `/admin/login?redirect=...`. (FR-021)
-  - Missing document: 404 JSON.
-  - Unsupported collection: 404 JSON.
-  - Visual confirmation (banner + draft content) is verified by spec 004's page-template tests; this contract owns the redirect step only.
-- `tests/int/preview/livePreviewUrl.int.spec.ts`:
-  - `buildPreviewUrl` returns expected string for each collection.
-  - Returns `null` when slug is missing or collection is unknown.
-  - `publicPathFor` returns the expected public path per collection (including the pillar fallback for `services`).
-  - `isPreviewCollection` narrows the four supported collections and rejects others.
-
-## Stability
-
-- The route gates on the admin session cookie (`payload-token`), which is set per-environment by the same SSO flow. No additional per-environment secret is required.
-- The shared route handler means adding a fifth preview-supported collection in a future spec is one entry change (`PREVIEW_COLLECTIONS` + `PUBLIC_PATH_BUILDERS` in `livePreview/url.ts`), not a new route file.
+Adding a preview collection means adding one entry each to `PREVIEW_COLLECTIONS` and
+`PUBLIC_PATH_BUILDERS`.

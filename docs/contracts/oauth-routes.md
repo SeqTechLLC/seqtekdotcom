@@ -1,68 +1,70 @@
-# Contract — OAuth routes & redirects
+# Contract: OAuth routes and redirects
 
-> Promoted from `specs/001-google-oauth-sso/contracts/` when the spec directories were retired. Code and
-> tests cite this file as the authority, so it is maintained. `FR-*`, `US*` and `T0*` identifiers
-> below refer to that spec; what shipped is recorded in `docs/PROJECT_HISTORY.md`.
+`/admin` sign-in is a custom Google OAuth integration. ADR 0002 records why it is not a plugin.
+Payload's own JWT cookie strategy validates the resulting session on every admin request; the
+local password strategy is off.
 
-**Feature**: 001-google-oauth-sso · **Date**: 2026-05-24 (rewritten during /speckit-implement)
+## 1. Routes
 
-This spec ships a **custom OAuth integration**, not the `payload-auth-plugin` dependency originally planned. Decision recorded in ADR 0002 (post-implementation note) and in `tasks.md` "FR-012 note" block at the top of the file. Trust-surface reasoning: small ecosystem (305-star plugin, one maintainer, exact-pinned vulnerable deps); ADR 0002's listed fallback was a custom `auth.strategies`-style implementation.
+**`GET /api/auth/oauth/authorization/google`** (`src/app/(payload)/api/auth/oauth/authorization/google/route.ts`)
 
-## 1. Routes we register
+1. Generates a PKCE pair and a CSRF state, and stores both in HttpOnly cookies.
+2. Redirects (302) to Google with `scope=openid email profile`, `code_challenge_method=S256`,
+   `prompt=select_account` and `hd=*`. `hd=*` limits the account picker to Workspace accounts. We
+   run two Workspace domains, and `hd` takes only one.
+3. Builds the `redirect_uri` per request from `cloudfront-forwarded-proto` or `x-forwarded-proto`
+   and from `x-forwarded-host`, so each lane uses its own host.
 
-| #   | Method | Path                                   | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Status codes |
-| --- | ------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| 1   | GET    | `/api/auth/oauth/authorization/google` | Browser entry. Generates a PKCE pair + CSRF state, stores both in HttpOnly cookies, 302s to `https://accounts.google.com/o/oauth2/v2/auth?...` with `client_id`, `redirect_uri`, `scope=openid email profile`, `state`, `code_challenge`, `code_challenge_method=S256`, `hd=seqtechllc.com`, `prompt=select_account`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | 302          |
-| 2   | GET    | `/api/auth/oauth/callback/google`      | Google → us with `?code&state` (or `?error`). Validates state cookie matches the returned state, exchanges the code for tokens at Google's token endpoint, verifies the ID token's signature against `https://www.googleapis.com/oauth2/v3/certs` and validates `iss`, `aud`, `exp`. Enforces the `hd` claim server-side (defence-in-depth on top of the `hd=` URL hint). Looks up the user by `googleSub`; if absent, calls `payload.create({ collection: 'users', data, req: { user: null } })` which runs the Users `beforeChange` hook chain (domain allowlist, bootstrap-admin role assignment, audit log). Mints a Payload-compatible session cookie via Payload's own `getFieldsToSign` + `jwtSign` + `generatePayloadCookie` and 302s to `/admin`. On any failure (state mismatch, network, provider error, domain reject) redirects to `/admin/login?error=<code>` and clears the OAuth cookies. | 302          |
+**`GET /api/auth/oauth/callback/google`** (`…/callback/google/route.ts`)
 
-Files:
+1. Checks that the state cookie matches the returned `state`.
+2. Exchanges the code for tokens, then verifies the ID token against Google's JWKS, checking
+   `iss`, `aud` and `exp` (`src/lib/auth/google-oauth.ts`, via `jose`).
+3. Rejects an `hd` claim outside `ALLOWED_WORKSPACE_DOMAINS` (`seqtechllc.com`, `seqtek.com`, in
+   `src/lib/auth/allowed-domains.ts`).
+4. Finds the user by `googleSub`, or creates one through the Users `beforeChange` hooks: the domain
+   allowlist, the first-admin role, and the audit log.
+5. Mints Payload's session cookie with Payload's own helpers (`src/lib/auth/session-cookie.ts`) and
+   redirects (302) to `/admin`.
+6. On any failure it clears the OAuth cookies and redirects to `/admin/login?error=<code>`.
 
-- `src/app/(payload)/api/auth/oauth/authorization/google/route.ts`
-- `src/app/(payload)/api/auth/oauth/callback/google/route.ts`
-- `src/lib/auth/google-oauth.ts` — PKCE/state generation, authorization-URL builder, token exchange, ID-token verification via `jose`'s `createRemoteJWKSet` + `jwtVerify`
-- `src/lib/auth/session-cookie.ts` — Payload session-cookie issuance via Payload's own helpers
-
-There are no `/session/*`, `/auth/signin`, or `/passkey/*` routes here — the plugin's full surface is intentionally not reproduced. Payload's default JWT cookie strategy continues to validate the session cookie on every subsequent admin request; we just bypass the local password strategy by minting the cookie ourselves.
+**Logout.** `POST /api/auth/logout` revokes the Payload session.
+`GET /api/auth/gate-logout` clears the ALB Cognito gate's cookies and bounces through Cognito's
+`/logout`.
 
 ## 2. Cookies
 
-| Name                                          | When set               | TTL                 | Flags                                                                       | Purpose                                                                               |
-| --------------------------------------------- | ---------------------- | ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `__seqtek_oauth_state`                        | On entry route         | 10 min              | `HttpOnly; SameSite=Lax; Path=/; Secure` (when HTTPS)                       | CSRF state to compare against the `state` Google returns.                             |
-| `__seqtek_oauth_verifier`                     | On entry route         | 10 min              | same as above                                                               | PKCE code verifier paired with the code challenge sent to Google.                     |
-| `payload-token` (default Payload cookie name) | On successful callback | Payload default 2 h | `HttpOnly; SameSite=Lax; Path=/` (Secure flag follows `serverURL` protocol) | The session JWT Payload's admin reads on every request. Signed with `PAYLOAD_SECRET`. |
+| Name                      | Set                 | TTL                   | Flags                                               |
+| ------------------------- | ------------------- | --------------------- | --------------------------------------------------- |
+| `__seqtek_oauth_state`    | entry route         | 10 min                | `HttpOnly; SameSite=Lax; Path=/`, `Secure` on HTTPS |
+| `__seqtek_oauth_verifier` | entry route         | 10 min                | same                                                |
+| `payload-token`           | successful callback | 2 h (Payload default) | `HttpOnly; SameSite=Lax; Path=/`                    |
 
-OAuth-flow cookies are deleted on every callback (success or error). The session cookie expires per Payload's `tokenExpiration` (left at the 7200 s default, per Clarifications 2026-05-21 Q1).
+Every callback deletes the two OAuth cookies, whether it succeeds or fails.
 
-## 3. Error codes emitted on `errorRedirectPath`
+## 3. Error codes
 
-| `?error=`         | Trigger                                                                                                                            | User-facing message                                |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `state_mismatch`  | CSRF state cookie missing or doesn't match the `state` Google returned                                                             | "Sign-in expired. Please try again."               |
-| `domain_rejected` | ID token's `hd` claim isn't `seqtechllc.com`, **or** the Users beforeChange hook rejected on email-domain check                    | "Only SEQTEK Workspace accounts can sign in here." |
-| `provider_error`  | Google returned non-2xx from token endpoint, OR `?error=...` in the callback URL, OR ID token signature/claims failed verification | "Google couldn't sign you in. Please try again."   |
-| `network`         | `fetch` to Google's token endpoint threw (connectivity, timeout)                                                                   | "We couldn't reach Google. Please try again."      |
-| `internal`        | Anything else: missing env vars, session cookie minting failure, unexpected exception                                              | "Something went wrong. Please try again."          |
+| `?error=`         | Trigger                                                                                | Message                                            |
+| ----------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `state_mismatch`  | state cookie missing or different                                                      | "Sign-in expired. Please try again."               |
+| `domain_rejected` | `hd` claim or email domain outside the allowlist                                       | "Only SEQTEK Workspace accounts can sign in here." |
+| `provider_error`  | Google returned an error, a non-2xx token response, or a token that fails verification | "Google couldn't sign you in. Please try again."   |
+| `network`         | the token request threw                                                                | "We couldn't reach Google. Please try again."      |
+| `internal`        | anything else, including a missing `GOOGLE_CLIENT_ID`                                  | "Something went wrong. Please try again."          |
 
-Messages are intentionally non-disclosive (FR-010). Diagnostics go to CloudWatch via the audit log; only the user-friendly string lands on the page.
+The messages come from `src/components/admin/LoginError.tsx` and disclose nothing; the details go to
+the audit log. `tests/e2e/auth-login-errors.e2e.spec.ts` covers each code.
 
-## 4. Redirect-URI registration (per environment)
+## 4. Redirect URIs
 
-Registered in the SEQTEK Google Cloud project's OAuth 2.0 Client ("Web application" type) under "Authorized redirect URIs":
-
-| Env        | Redirect URI                                                |
-| ---------- | ----------------------------------------------------------- |
-| Local dev  | `http://localhost:3100/api/auth/oauth/callback/google`      |
-| Staging    | `https://staging.seqtek.com/api/auth/oauth/callback/google` |
-| Prod       | `https://seqtek.com/api/auth/oauth/callback/google`         |
-| Prod (www) | `https://www.seqtek.com/api/auth/oauth/callback/google`     |
-
-Paths are unchanged from the plugin era — the implementation swap was transparent to Google Console.
+The Google OAuth client needs `<scheme>://<host>/api/auth/oauth/callback/google` registered for every
+host that serves `/admin`: `http://localhost:3100`, `https://preview.seqtek.com` and
+`https://ww3.seqtek.com`.
 
 ## 5. Tests
 
-Per the FR-012 note in `tasks.md`, the OAuth round-trip itself is third-party I/O (Google's authorize/token endpoints, JWKS) and is not stubbed. Instead:
-
-- **Vitest int** drives the application-side logic by calling `payload.create({ collection: 'users', ..., req: { user: null } })` and `payload.update(...)` — the same code paths the callback route invokes after Google's response. Covers domain allowlist, bootstrap-admin, role-update guard, `googleSub` uniqueness, audit-log emission.
-- **Playwright** drives `/admin/login?error=<code>` for each error string in the LoginError contract, plus an unauthenticated `/admin` → `/admin/login` redirect.
-- **Live OAuth** is exercised manually with a real `@seqtechllc.com` account during T020 (the only task that genuinely needs a browser + Google client). A breakage in Google's response shape would surface in this manual flow first, and in CloudWatch from the audit-log lines second.
+- **Vitest** runs the application side through `payload.create` and `payload.update` with
+  `req.user = null`, the same paths the callback uses. It covers the domain allowlist, the first
+  admin, the role-update guard, `googleSub` uniqueness and the audit log.
+- **Playwright** covers the error page and the unauthenticated `/admin` → `/admin/login` redirect.
+- **The Google round trip is not stubbed**; it is exercised by a real sign-in.

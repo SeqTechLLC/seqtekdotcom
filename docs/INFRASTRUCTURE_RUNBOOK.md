@@ -96,6 +96,14 @@ because GitHub auto-creates a missing environment with no protection rules.
 | SSM `String`       | `/seqtek/website/preview/cognito_google_client_id`    |
 | Secrets Manager    | `seqtek-website/preview/cognito-google-client-secret` |
 
+CDK writes the rest under `/seqtek/website/preview/`:
+
+- **`cloudfront_distribution_id`.** The Data stack creates it as `unset`, and the Edge stack
+  overwrites it with the real ID. Tasks read it at start, so after Edge's first deploy they need a
+  new deployment to pick it up.
+- **`s3_bucket`, `s3_bucket_hostname`, `s3_region` and `next_public_site_url`.** CDK writes these
+  but nothing reads them. The task definitions set those values as plain environment variables.
+
 There are two Google OAuth clients, both in the Workspace project with the
 "Internal" (`@seqtechllc.com`-only) consent screen:
 
