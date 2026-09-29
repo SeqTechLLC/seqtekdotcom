@@ -1,4 +1,5 @@
 import React from 'react'
+import { Nunito_Sans } from 'next/font/google'
 import { SkipToContent } from '@/components/layout/SkipToContent'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
@@ -15,7 +16,17 @@ export const metadata = {
   description: 'Delivering Transformative Technologies Since 1999',
 }
 
-// T135 / spec 003 Polish. Preconnect hints shave a round-trip off the first
+// The brand face. next/font downloads it at build time and serves it from this
+// origin, so no request reaches Google and `font-src 'self'` still holds. It
+// sets `--font-nunito-sans` on <html>, which styles.css builds the families on.
+const nunitoSans = Nunito_Sans({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-nunito-sans',
+})
+
+// Preconnect hints shave a round-trip off the first
 // request to each third-party origin. Env-gated on the same vars as the
 // loader scripts so unset dev/CI environments don't preconnect to nothing.
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID
@@ -23,7 +34,7 @@ const HUBSPOT_ID = process.env.NEXT_PUBLIC_HUBSPOT_PORTAL_ID
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={nunitoSans.variable}>
       <head>
         {GTM_ID ? (
           <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="" />

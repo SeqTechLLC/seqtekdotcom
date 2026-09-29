@@ -17,7 +17,7 @@ open work lives in [`ROADMAP.md`](./ROADMAP.md).
 | Styling   | Tailwind CSS v3                                                  | Tokens in `tailwind.config.mjs` ([ADR 0001](decisions/0001-tailwind-v3.md))                                                                |
 | Rich text | Lexical (`@payloadcms/richtext-lexical`)                         | Payload's editor; inline blocks render through a registry                                                                                  |
 | Media     | S3 via `@payloadcms/storage-s3`, served by CloudFront `/media/*` | Payload generates size derivatives; `ResponsiveImage` renders them as `<picture>` ([ADR 0008](decisions/0008-media-cloudfront-serving.md)) |
-| Fonts     | None loaded yet                                                  | `styles.css` names Nunito Sans, but no font is loaded, so pages render in the system fallback                                              |
+| Fonts     | Nunito Sans via `next/font/google`                               | Self-hosted at build time from this origin, so `font-src 'self'` holds; `styles.css` builds the families on `--font-nunito-sans`           |
 | IaC       | AWS CDK (TypeScript), `infra/`                                   | §13                                                                                                                                        |
 
 Payload and Next are coupled: `@payloadcms/next` declares the Next range it supports, so upgrade them

@@ -104,9 +104,9 @@ White text on fills: `neutral-900` 16.67, `navy-800` 12.34, `brand-green-700` 5.
 ### 3.1 Family
 
 **Nunito Sans** for display and body: the open-source (SIL OFL) analogue of the brand kit's Avenir, which stays the
-print face. Monospace is the system stack. **It is not loaded yet.** `styles.css` names it in `--font-display` and
-`--font-body`, but nothing loads the font (no `@font-face`, no `next/font`), so the site renders in the system
-fallback.
+print face. Monospace is the system stack. The frontend layout loads it through `next/font/google` (the variable
+font, normal and italic), which sets `--font-nunito-sans` on `<html>`; `--font-display` and `--font-body` build on
+it. Semibold (600) is a true weight in Nunito and reads lighter than a system bold.
 
 ### 3.2 Scale
 
@@ -237,8 +237,8 @@ Everything else: all body copy, UI components and interactive states. §2.5 is t
 ### 12.3 Focus indicators
 
 A global `:focus-visible` outline: 2px, offset 2px, `--color-border-focus` (green-600), at least 3:1 against what it
-sits on. It is 4.96:1 on the dark band. The `cover` hero switches to green-400. The `brand` band does not re-point
-the ring, and green-600 on green-700 is 1.55:1.
+sits on. It is 4.96:1 on the dark band. The `cover` hero switches to green-400, and the `brand` band re-points the
+ring to white (5.2:1 on green-700).
 
 ### 12.4 Touch targets
 

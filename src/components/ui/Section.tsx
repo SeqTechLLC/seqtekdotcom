@@ -31,8 +31,8 @@ const PADDING: Record<SectionPadding, string> = {
 const BACKGROUND: Record<SectionBackground, string> = {
   none: '',
   subtle: 'bg-surface-subtle',
-  // accent-strong, not `bg-accent`: brand-green-500 fails WCAG AA against
-  // white text at 2.39:1. DESIGN_SYSTEM.md §14.
+  // The pale green surface, read with the page's dark text. The solid green is
+  // `brand`.
   accent: 'bg-surface-accent',
   // `band-dark` / `band-brand` (styles.css) re-point the text, link and border
   // tokens, so every block's ordinary classes stay legible on the band.

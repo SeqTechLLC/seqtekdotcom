@@ -3,13 +3,10 @@
 @tailwind utilities;
 
 /*
- * Semantic design tokens — the swap layer (D-1 §1.5).
- * Component code reads these via Tailwind utilities (text-text-primary, bg-surface,
- * border-border-focus). Dark mode and high-contrast mode will reassign these vars;
- * primitive ramps stay fixed.
- *
- * Values resolved from docs/DESIGN_SYSTEM.md §2.4. When this file and the doc
- * disagree, the doc wins.
+ * Semantic design tokens. Components read them through Tailwind utilities
+ * (text-text-primary, bg-surface, border-border-focus), and the bands below
+ * re-point them. This file owns the values; docs/DESIGN_SYSTEM.md §2.4 holds the
+ * usage rules.
  */
 @layer base {
   /* A light panel inside a dark or brand band (a form card, a quote card) gets the
@@ -46,10 +43,12 @@
     --color-accent-hover: #355b24; /* brand-green-800 */
     --color-accent-pressed: #243f19; /* brand-green-900 */
 
-    /* Type families. Nunito Sans @font-face is loaded by a later Phase 1 task;
-     * fallback stack covers the gap until the woff2 lands in /public/fonts/. */
-    --font-display: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --font-body: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    /* Type families. The frontend layout loads Nunito Sans through next/font,
+     * which sets --font-nunito-sans on <html>. */
+    --font-display:
+      var(--font-nunito-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-body:
+      var(--font-nunito-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', monospace;
   }
 
@@ -75,6 +74,8 @@
     --color-link-hover: #f3f9ec;
     --color-border-subtle: rgb(255 255 255 / 0.3);
     --color-border-strong: rgb(255 255 255 / 0.5);
+    /* green-600 on this green is 1.55:1; white clears the 3:1 a focus ring needs. */
+    --color-border-focus: #ffffff;
   }
 
   body {
