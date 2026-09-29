@@ -1,69 +1,34 @@
-# Contract: Lexical → JSX converter (with inline blocks)
+# Contract: Lexical → JSX converter with inline blocks
 
-> Promoted from `specs/003-phase-2-content-models/contracts/` when the spec directories were retired. Code and
-> tests cite this file as the authority, so it is maintained. `FR-*`, `US*` and `T0*` identifiers
-> below refer to that spec; what shipped is recorded in `docs/PROJECT_HISTORY.md`.
+`src/components/richText/RichText.tsx` is the rich-text analogue of `RenderBlocks`
+(`BLOCK_LIBRARY.md` §8).
 
-**File**: `src/components/richText/RichText.tsx` (+ `src/components/richText/inline/<Name>.tsx`)
-
-**Cited from**: `docs/BLOCK_LIBRARY.md` §5.2 + §8 (the inline-block analogue of `RenderBlocks`).
-
-## Signature
-
-```typescript
-import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
-
-export interface RichTextProps {
+```ts
+interface RichTextProps {
   data: SerializedEditorState | null | undefined
-  /**
-   * Optional override registry — defaults to the full inline-block set
-   * registered in src/payload/editor/editorConfig.ts.
-   */
-  inlineRegistry?: Record<string, React.ComponentType<any>>
-  /** Wrap in `<Prose>`. Default: true. */
-  withProse?: boolean
+  inlineRegistry?: Record<string, ComponentType<any>> // default: defaultInlineRegistry
+  withProse?: boolean // default: true
+  className?: string // classes for the <Prose> wrapper
 }
-
-export function RichText(props: RichTextProps): React.ReactElement
+function RichText(props: RichTextProps): ReactElement | null
 ```
 
 ## Behaviour
 
-1. `data` null/undefined/empty → returns `null` (no DOM).
-2. Walks the Lexical AST and emits semantic JSX (`<p>`, `<h2>`, `<ul>`, `<a>`, etc.).
-3. On a `block` node (block-level inline block, e.g., `callout`, `image-with-caption`): look up `inlineRegistry[node.fields.blockType]`. Same not-found behaviour as `RenderBlocks`: dev warning, prod silent, skip the node.
-4. On an `inlineBlock` node (truly in-flow, e.g., `inline-cta`): same registry lookup; render inline (e.g., wrapped in a `<span>` if the component is text-level).
-5. When `withProse` is true (default): wrap result in `<Prose>` (the `@tailwindcss/typography`-based primitive per BLOCK_LIBRARY.md §3). When false: caller owns wrapping.
+1. Null, undefined or empty `data` returns `null`.
+2. Payload's Lexical JSX converter emits semantic markup.
+3. `block` nodes (paragraph-level) and `inlineBlock` nodes (mid-paragraph) are both looked up by
+   `blockType` in the registry, and each renders its component with the node's fields passed
+   through unchanged.
+4. An unregistered `blockType` falls through to Payload's fallback, and the rest of the document
+   still renders.
+5. Internal links resolve to public URLs through `publicPathFor`; an unresolvable one gets
+   `href="#"`.
+6. With `withProse` true, the output is wrapped in `<Prose>` (`BLOCK_LIBRARY.md` §3).
 
-## Inline registry (default)
+## Invariant
 
-```typescript
-import type { ComponentType } from 'react'
-
-export const defaultInlineRegistry: Record<string, ComponentType<any>> = {
-  'inline-cta': InlineCta,
-  'testimonial-embed': TestimonialEmbed,
-  callout: Callout,
-  'image-with-caption': ImageWithCaption,
-  figure: Figure,
-  'quote-pullquote': QuotePullquote,
-  disclosure: Disclosure,
-}
-```
-
-**Invariant**: every inline block registered in `src/payload/blocks/inline/index.ts` MUST appear in `defaultInlineRegistry`. Enforced by the same kind of coverage test as `RenderBlocks`.
-
-## Test contract
-
-- `tests/int/render/richTextInline.test.ts`:
-  - Empty input → null.
-  - Plain text node → `<p>` inside `<Prose>`.
-  - `inline-cta` node → registered component renders with the field values.
-  - Unknown block type → dev warning, no DOM for that node.
-- `tests/int/render/inlineRegistryCoverage.test.ts`:
-  - Iterates inline-block exports and asserts each has a default-registry entry.
-
-## Stability
-
-- `SerializedEditorState` ships from `@payloadcms/richtext-lexical/lexical` — pinned to Payload's minor.
-- The converter does **not** do data shaping — inline-block field values are passed straight through to the registered component. This matches FR-008's "inserts a working node" expectation.
+Every inline block in `src/payload/blocks/inline/index.ts` has an entry in `defaultInlineRegistry`
+(`src/components/richText/inline/registry.ts`), and every registry entry has a block. Enforced by
+`tests/int/render/inlineRegistryCoverage.int.spec.ts`. The rendering behaviour is covered by
+`tests/int/render/richTextInline.int.spec.tsx`.

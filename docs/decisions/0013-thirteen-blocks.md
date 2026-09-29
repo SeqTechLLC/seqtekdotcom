@@ -1,4 +1,4 @@
-# ADR 0013 — Thirteen blocks, modelled on WordPress core
+# 0013. Thirteen blocks, modelled on WordPress core
 
 **Status:** Accepted
 **Date:** 2026-09-24
@@ -35,8 +35,8 @@ LLM-assisted composition to come, so every content-driven code change breaks tha
 
 Thirteen section-level blocks (`hero`, `content`, `media-text`, `items`, `cards`, `image`, `gallery`, `quote`, `cta`,
 `table`, `accordion`, `embed`, `hubspot-form`), each with options where the old library had separate blocks. No numeric
-caps. The list is pinned by a test, and adding to it needs the site owner's sign-off. Spec and mapping:
-`docs/planning/block-consolidation.md`.
+caps. The list is pinned by a test, and adding to it needs the site owner's sign-off. The blocks and their options:
+`BLOCK_LIBRARY.md` §5.
 
 ## Consequences
 

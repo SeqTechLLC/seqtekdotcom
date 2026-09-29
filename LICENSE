@@ -37,7 +37,6 @@ The following files contain SEQTEK's strategic, marketing, and brand content
 ("Proprietary Content"). The MIT License above does NOT apply to these files.
 
   - docs/CONTENT-REQUIREMENTS.md
-  - docs/BRAND_STRATEGY_RESEARCH.md
   - any future content under src/content/, src/copy/, or content/
   - the committed SEQTEK brand marks used to render the site chrome:
     public/brand/* and the app icons src/app/favicon.ico and src/app/icon.png

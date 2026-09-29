@@ -1,27 +1,23 @@
-# Contract: `compose-page` authoring skill (FR-010, US3)
+# Contract: `compose-page` authoring skill
 
-> Promoted from `specs/010-block-page-composition/contracts/` when the spec directories were retired. Code and
-> tests cite this file as the authority, so it is maintained. `FR-*`, `US*` and `T0*` identifiers
-> below refer to that spec; what shipped is recorded in `docs/PROJECT_HISTORY.md`.
+`.claude/skills/compose-page/SKILL.md` composes a page from the existing blocks.
 
-Net-new page authoring from the existing block library. A project-committed skill at `.claude/skills/compose-page/SKILL.md` (frontmatter: `name`, `description`, `argument-hint`, `user-invocable: true`, matching the existing speckit skill format).
+**Input.** A page brief (purpose, sections, audience), optionally with a target collection:
+pages, services, industries, caseStudies, workshops, teamMembers or the homepage.
 
-## Input
+**Output, exactly one of:**
 
-A page brief in natural language (purpose, sections, audience), optionally a target collection (page / workshop / case study / service / team / homepage).
+1. **A `layout`.** An ordered blocks array using only registered blocks (`BLOCK_LIBRARY.md` §5),
+   with each block's fields filled in. It follows the reading-column rule (`DESIGN_SYSTEM.md`
+   §11.4), is shaped as content JSON for `tools/payload-seed`, and contains no page code.
+2. **One named block gap.** When no block can do what the brief needs, the output names the missing
+   capability and why. Usually the fix is an option on an existing block; a new block needs the
+   owner's sign-off (ADR 0013).
 
-## Output (exactly one of)
+**Guarantees.**
 
-1. **A valid `layout`**: an ordered blocks array using **only** existing registered blocks (BLOCK_LIBRARY §5), each block's fields populated, honoring the reading-column rule (DESIGN_SYSTEM §11.4) and the per-type default skeleton (R4) where applicable. Emitted as JSON ready to paste/seed via the Local API upsert pattern — **no bespoke page code**.
-2. **A single named block gap**: when the brief needs a capability no block provides, the specific missing block (name + why) — routed to Kenn, not hand-coded. The fix is usually an option on an existing block; a new block needs his sign-off (ADR 0013).
+- It never emits React or template code for a page.
+- It only uses block slugs present in `registry.ts`.
+- It covers AICO metadata needs (`CONTENT-REQUIREMENTS.md` §8).
 
-## Guarantees
-
-- Never emits React/template code for a page (SC-006: the only code path is a new/fixed block).
-- Only references slugs present in `registry.ts`; an unknown need is reported as a gap, never invented.
-- Consumes the current BLOCK_LIBRARY catalog (§5/§6) and AICO metadata needs (CONTENT-REQUIREMENTS §8) for content-collection/SEO blocks.
-
-## Acceptance (spec US3)
-
-- Brief expressible with existing blocks → valid layout, no code changes.
-- Brief needing a missing capability → flags the specific missing block.
+`tests/int/skills/composePage.int.spec.ts` checks the output shape.

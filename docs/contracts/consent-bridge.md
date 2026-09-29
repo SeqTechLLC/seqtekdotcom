@@ -1,86 +1,45 @@
-# Contract: HubSpot → GTM consent bridge + footer control
+# Contract: HubSpot → GTM consent bridge and footer control
 
-> Promoted from `specs/006-consent-privacy-compliance/contracts/` when the spec directories were retired. Code and
-> tests cite this file as the authority, so it is maintained. `FR-*`, `US*` and `T0*` identifiers
-> below refer to that spec; what shipped is recorded in `docs/PROJECT_HISTORY.md`.
+Implemented in `src/components/integrations/ConsentDefault.tsx` (an inline `<head>` script) and
+`src/components/layout/ConsentPreferences.tsx` (the footer control). ADR 0006 records why.
 
-Client-side surface in `ConsentDefault.tsx` (inline `<head>`) and `ConsentPreferences.tsx` (footer). Sources: research.md R1/R2/R4.
+## C1 — Consent default
 
-## C1 — Consent default (stamped before any third-party evaluates)
+The script carries the request nonce and runs in `<head>` before GTM and HubSpot load; both load
+`afterInteractive` in no fixed order. It initialises `window.dataLayer` and a `gtag` shim, then sets
+the Consent Mode default:
 
-```js
-window.dataLayer = window.dataLayer || []
-function gtag() {
-  dataLayer.push(arguments)
-}
-gtag('consent', 'default', {
-  analytics_storage: 'denied',
-  ad_storage: 'denied',
-  ad_user_data: 'denied',
-  ad_personalization: 'denied',
-  functionality_storage: 'granted',
-  wait_for_update: 500,
-})
-```
+- `analytics_storage`, `ad_storage`, `ad_user_data` and `ad_personalization`: `denied`;
+- `functionality_storage`: `granted`;
+- `wait_for_update: 500`.
 
-- MUST execute in `<head>` carrying the request nonce, before GTM/HubSpot load (both `afterInteractive`, non-deterministic order). Already the case.
-- (Regime/geo) — an optional `region: [EU…]` scoping on the default is a portal/legal decision (R5), out of code scope here.
+## C2 — The bridge
 
-## C2 — The bridge (REPLACES the `__hs_opt_in_consent` listener)
+In the same script, `_hsp.push(['addPrivacyConsentListener', cb])` registers HubSpot's documented
+consent listener.
 
-```js
-var _hsp = (window._hsp = window._hsp || [])
-_hsp.push([
-  'addPrivacyConsentListener',
-  function (consent) {
-    var analytics = !!(
-      consent &&
-      (consent.allowed || (consent.categories && consent.categories.analytics))
-    )
-    var ads = !!(
-      consent &&
-      (consent.allowed || (consent.categories && consent.categories.advertisement))
-    )
-    gtag('consent', 'update', {
-      analytics_storage: analytics ? 'granted' : 'denied',
-      ad_storage: ads ? 'granted' : 'denied',
-      ad_user_data: ads ? 'granted' : 'denied',
-      ad_personalization: ads ? 'granted' : 'denied',
-      functionality_storage: 'granted',
-    })
-    gtag('event', 'hubspotConsentUpdate') // GTM Custom Event trigger of this exact name
-  },
-])
-```
+- **When it runs.** HubSpot calls it when the banner reports a choice, and also on init for a
+  returning visitor. So pushing it before the tracking code loads still delivers consent.
+- **What it grants.** A category is granted when `consent.allowed` or `consent.categories.<cat>` is
+  set, which covers both notice-only and per-category policies. `analytics` grants
+  `analytics_storage`. `advertisement` (HubSpot's spelling) grants `ad_storage`, `ad_user_data` and
+  `ad_personalization`. `functionality_storage` stays granted.
+- **What it fires.** After each `gtag('consent', 'update', …)`, it fires the event
+  `hubspotConsentUpdate`. GTM's Custom Event trigger must use that exact name.
+- **Which queue.** `_hsp` is HubSpot's privacy queue, distinct from the `_hsq` analytics queue.
 
-**Contract guarantees**
+## C3 — Footer consent-preferences control
 
-- Pushing the listener before the tracking code loads MUST still deliver consent (HubSpot invokes the callback on init) → covers returning-visitor rehydration (US3).
-- Category read order: `consent.allowed` OR `consent.categories.<cat>` (handle notify-only + per-category policies).
-- Mapping is fixed: `analytics→analytics_storage`; `advertisement→ad_storage+ad_user_data+ad_personalization`; functionality stays granted.
-- Event name `hubspotConsentUpdate` MUST match the GTM trigger (gtm-consent-governance.md).
+| Action              | Call                                        | Result                                                       |
+| ------------------- | ------------------------------------------- | ------------------------------------------------------------ |
+| Re-open preferences | `window._hsp.push(['showBanner'])`          | the banner reopens with the visitor's current choices        |
+| Withdraw            | `window._hsp.push(['revokeCookieConsent'])` | HubSpot's consent cookies clear; the next load is all-denied |
 
-## C3 — Footer consent-preferences control (`ConsentPreferences.tsx`, `'use client'`)
+It is a no-op, never a throw, when HubSpot is not loaded. It sits in the footer's legal links, so
+it is on every page, keyboard-operable and axe-clean.
 
-| Action              | Call                                        | Result                                                      |
-| ------------------- | ------------------------------------------- | ----------------------------------------------------------- |
-| Re-open preferences | `window._hsp.push(['showBanner'])`          | banner resurfaces with current choices (US4)                |
-| Withdraw / clear    | `window._hsp.push(['revokeCookieConsent'])` | HubSpot consent cookies cleared; next load = default-denied |
+## Verification
 
-- MUST be inert (render a static element or no-op) when `window._hsp` is absent (env-unset local/CI) — never throw.
-- MUST be reachable from every page (mounted in `SiteFooter` `legalNav`), keyboard-operable, and axe-clean (Principle II).
-
-## C4 — `dataLayer` events (consumed by GTM)
-
-| Event                  | When                      | Note                                                             |
-| ---------------------- | ------------------------- | ---------------------------------------------------------------- |
-| `consent` `default`    | head, pre-load            | all denied except functionality                                  |
-| `consent` `update`     | on each listener callback | mapped per C2                                                    |
-| `hubspotConsentUpdate` | after each update         | custom-event trigger hook for tags without native consent checks |
-
-(Form `dataLayer` events `form_submission_*` are owned by spec 005, unchanged.)
-
-## C5 — Verification hooks (for E2E)
-
-- A returning visitor is simulated by pre-seeding `__hs_opt_out` + `__hs_cookie_cat_pref`; assert the banner is not shown and the `update` reflects the seeded choice before any pixel host appears in network.
-- Deny path: assert **zero** requests to Meta/LinkedIn/Google-Ads/HubSpot-analytics hosts (SC-001).
+- `tests/e2e/consent-flows.e2e.spec.ts` covers the default, the bridge mapping, and a deny path that
+  sends zero requests to Meta, LinkedIn, Google Ads or HubSpot analytics.
+- `tests/e2e/privacy-consent-ui.e2e.spec.ts` covers C3.

@@ -1,22 +1,20 @@
-# Contract: GTM container consent governance (external config, version-controlled)
+# Contract: GTM container consent governance
 
-> Promoted from `specs/006-consent-privacy-compliance/contracts/` when the spec directories were retired. Code and
-> tests cite this file as the authority, so it is maintained. `FR-*`, `US*` and `T0*` identifiers
-> below refer to that spec; what shipped is recorded in `docs/PROJECT_HISTORY.md`.
+What container `GTM-54KBJ2Z3` must encode. It is configured in the GTM web UI. GTM does not load on
+the deployed lanes yet (INTEGRATIONS §2.1).
 
-Configured in the GTM web UI, exported to `infra/gtm/container.json` (FR-008). Sources: INTEGRATIONS.md §2.2/§2.3, research.md R4.
+## G1 — Container-side consent defaults
 
-## G1 — Consent defaults (container-side, belt-and-suspenders to the inline default)
-
-All non-essential storage `denied` by default: `analytics_storage`, `ad_storage`, `ad_user_data`, `ad_personalization` = denied; `functionality_storage` = granted; "Wait for update" enabled (honors `wait_for_update: 500`). The inline `gtag('consent','default')` (consent-bridge.md C1) is authoritative for first paint; the container default is the fallback if the inline script is ever bypassed.
+The container repeats the default: `analytics_storage`, `ad_storage`, `ad_user_data` and
+`ad_personalization` denied, `functionality_storage` granted, with "Wait for update" enabled. The
+inline default (consent-bridge C1) governs first paint; this is the fallback.
 
 ## G2 — HubSpot consent trigger
 
-A **Custom Event** trigger firing on event name `hubspotConsentUpdate` (exact match to the `gtag('event', …)` in consent-bridge.md C2). Tags that lack built-in Consent Mode checks attach to this trigger so they only fire post-consent.
+A Custom Event trigger on `hubspotConsentUpdate`, the exact name consent-bridge C2 fires. Tags
+without built-in Consent Mode checks attach to it.
 
-## G3 — Per-tag consent requirements (FR-007)
-
-Every paid tag declares "Require additional consent for tag to fire" = `ad_storage` (advertising) or is gated by `analytics_storage` (analytics):
+## G3 — Per-tag consent requirements
 
 | Tag                                      | Required consent    |
 | ---------------------------------------- | ------------------- |
@@ -25,20 +23,15 @@ Every paid tag declares "Require additional consent for tag to fire" = `ad_stora
 | Google Ads `AW-810041431`                | `ad_storage`        |
 | HubSpot analytics                        | `analytics_storage` |
 
-**Invariant**: 100% of marketing/analytics tags carry a consent requirement (SC-006). A tag with no requirement is a defect — caught by the Deny-all network no-leak check (SC-001) and a config review of the exported container diff.
+A tag with no consent requirement is a defect.
 
-## G4 — Expected fire matrix (the staging acceptance test — INTEGRATIONS.md §2.2)
+## G4 — Fire matrix
 
-| Flow                              | Analytics tags      | Advertising tags (Meta/LinkedIn/GoogleAds)  |
-| --------------------------------- | ------------------- | ------------------------------------------- |
-| Accept all                        | fire after `update` | fire after `update`                         |
-| Deny all                          | do not fire         | do not fire — **no ad host in network**     |
-| Customize (analytics on, ads off) | fire                | held — no ad-storage beacon leaves the page |
+| Flow                              | Analytics tags      | Advertising tags                           |
+| --------------------------------- | ------------------- | ------------------------------------------ |
+| Accept all                        | fire after `update` | fire after `update`                        |
+| Deny all                          | do not fire         | do not fire; no ad host in network         |
+| Customize (analytics on, ads off) | fire                | held; no ad-storage beacon leaves the page |
 
-Verified in GTM Preview/Debug (tag fire status) AND corroborated in the browser Network tab (no pixel host on Deny).
-
-## G5 — Container provenance
-
-- Pixel IDs migrated from the current Wix site (INTEGRATIONS.md §2.3 "Action required") before tags are built.
-- `infra/gtm/container.json` committed on every meaningful change for a reviewable diff + rollback target.
-- **Soft block**: GTM Container ID is `TBD`; live G4 verification is gated on the container existing + the HubSpot portal banner being configured.
+Check it in GTM Preview and in the browser Network tab. The container export belongs in
+`infra/gtm/container.json`, which is not committed yet.

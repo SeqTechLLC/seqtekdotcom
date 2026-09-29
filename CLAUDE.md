@@ -9,7 +9,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 - PostgreSQL (RDS in prod, Docker Compose locally)
 - Tailwind v3 (config-based; v3 chosen over v4 — see `docs/decisions/0001-tailwind-v3.md`)
 - AWS: Fargate + ALB + CloudFront, Docker via ECR
-- Identity: Google Workspace (`@seqtechllc.com`) via OAuth plugin (ROADMAP D-14, Phase 1 — see `docs/decisions/0002-auth-strategy.md`)
+- Identity: Google Workspace (`@seqtechllc.com`, `@seqtek.com`) through custom OAuth handlers (`docs/decisions/0002-auth-strategy.md`)
 
 ## Source of truth
 
@@ -23,10 +23,8 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 - `docs/PAYLOAD_DEVELOPMENT.md` — Payload patterns
 - `docs/BLOCK_LIBRARY.md` — block/component inventory
 - `docs/DESIGN_SYSTEM.md` — color, type, spacing, motion tokens; logo usage rules
-- `docs/BRAND_STRATEGY_RESEARCH.md` — voice, positioning, narrative direction
 - `docs/CONTENT-REQUIREMENTS.md` — content needs (incl. SEO/AICO under §8)
-- `docs/CONTENT_MIGRATION.md` — historical: how the Wix audit was mapped into Payload. The script it specified was deleted in spec 011; kept as provenance for the 301 map and slug rewrites
-- `docs/INTEGRATIONS.md` — HubSpot, GTM, ScoreApp, CSP, SES
+- `docs/INTEGRATIONS.md` — HubSpot forms, GTM and consent, CSP
 - `docs/ERROR_PAGES.md` — 404, 500, maintenance, slow-request handling
 - `docs/contracts/` — the contracts code and tests cite as the authority (admin metadata, live-preview URLs, render-blocks, consent bridge, media URLs, dataLayer events). Change one only with the code that implements it
 - `docs/decisions/` — Architecture Decision Records (ADRs): non-obvious technical choices, options considered, trade-offs accepted, when to revisit. Read `docs/decisions/README.md` first.
@@ -35,7 +33,7 @@ Defer to these docs before re-deriving anything. Update them when decisions chan
 
 **What the site is.** Two content primitives — a block-composed `Page` and a rich-text `Post` — plus typed
 metadata collections that carry a block-composed body (`caseStudies`, `workshops`, `teamMembers`, `partners`,
-`posts`). There are **no bespoke per-type page templates**; everything renders through the shared
+`services`, `industries`). There are **no bespoke per-type page templates**; everything renders through the shared
 `RenderBlocks` dispatcher (ADR 0009). `partners` is the reference implementation of the metadata-collection
 pattern. Media is served from CloudFront `/media/*` (ADR 0008). `services` is one collection carrying a `tier`
 of `leaf | group | axis`, all rendering through `/services/[slug]`.
@@ -54,6 +52,15 @@ publish (ADR 0010). The **header** nav moved to a `navigation` collection and pu
 are read on the render path and pinned by tests, so edit the values freely but expect a shape change to fail
 `organizationLd.int.spec.ts` / `metadataOutput.int.spec.ts`.
 
+**Thirteen blocks, no caps.** The layout library is 13 blocks (ADR 0013), pinned by
+`tests/int/blocks/allowedBlocks.int.spec.ts`; adding one needs Kenn's sign-off. `noCaps.int.spec.ts` bans numeric caps
+(`maxRows`, `maxLength`, `max`). A new look is an option on an existing block, not a new block.
+
+**One baseline migration.** The migration history is one baseline (`src/migrations/*_baseline.ts`). Every database,
+local or a lane, is created empty, migrated, then loaded from the content JSON in `LOAD-ORDER.md` order, with
+`PAYLOAD_DISABLE_PUSH=true`; nothing relies on Drizzle's dev push. A schema change is
+`npm run payload migrate:create` plus an audit of the generated SQL.
+
 **The bottleneck is content throughput, not features.** `docs/ROADMAP.md` is everything open;
 `docs/PROJECT_HISTORY.md` is the archive. Don't re-derive status from git history — read those two.
 
@@ -68,10 +75,10 @@ harder constraint of the two, so if a minor bump breaks the combo, try downgradi
   change goes in the **same PR** as that code, as its own commit. Standalone docs-only PRs are for docs with no
   related code in flight — a meeting note, a decision that arrived from a person, an ADR ahead of
   implementation. (Docs-only merges deploy nothing: `deploy.yml` sets `paths-ignore: docs/**`.)
-- **Public repo** — no secrets committed. `.env.local` only. Pre-commit gitleaks (per Phase 1 plan).
+- **Public repo** — no secrets committed. `.env.local` only. Pre-commit gitleaks.
 - **TypeScript strict mode**, no `any`. ESLint + Prettier enforced in CI.
 - **Tooling and scripts** live in subdirectories, not the repo root.
-- **Private SEQTEK assets** (brand kit PDF, trademarked logos, Wix content audit) are kept outside this repo. By convention they live at `~/projects/seqtek-internal/brandkit/` and `~/projects/seqtek-internal/audit/` (sibling directories). The seed script reads `AUDIT_DIR` env var; design-system docs reference brand assets by name without committing them.
+- **Private SEQTEK assets** (the brand kit PDF, the Wix content audit) stay outside this repo, in the sibling directories `~/projects/seqtek-internal/brandkit/` and `~/projects/seqtek-internal/audit/`. The logos in `public/brand/` are committed.
 
 ## Visual verification (required for UI changes)
 
@@ -113,8 +120,7 @@ code, never copy or media. **Tool is committed; data is gitignored.**
 - **The data** — `docs/content-drafts/` is a symlink to the private sibling repo `website-content`
   (`~/projects/seqtek-internal/website-content`), gitignored here because this repo is public. One JSON file per
   collection or global. Its README covers load order, known defects and how to recreate the symlink. The tool
-  stays here because it is coupled to `src/` (`resolve.ts` imports `textToLexical`; `payload-rest/client.ts`
-  mirrors `src/collections/Media.ts`) and its tests live in this repo's Vitest suite.
+  stays in this repo, next to the `src/` code it imports.
 
 **Content state and lane state are not documented here.** No test pins either and neither lives in this repo,
 so check the file through the symlink, or check the lane.

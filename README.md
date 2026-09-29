@@ -1,59 +1,62 @@
 # SEQTEK Website
 
-Open-source rebuild of [seqtek.com](https://www.seqtek.com) — moving from Wix to a self-hosted Next.js + Payload CMS stack on AWS. Public as a portfolio piece showing the stack choices, architectural reasoning, and process behind a real production marketing site rebuild.
+Open-source rebuild of [seqtek.com](https://www.seqtek.com), moving from Wix to a self-hosted Next.js + Payload CMS
+stack on AWS. Public as a portfolio piece showing the stack choices, architectural reasoning and process behind a real
+marketing site rebuild.
 
-**Status:** Active development; nothing publicly launched. UAT at `preview.seqtek.com`, production at `ww3.seqtek.com`, both behind an ALB + Cognito gate. Shipped across 115 merged PRs: the Payload content models, the public render foundation + all marquee page templates, a block-composed content model (two primitives, no bespoke per-type templates — [ADR 0009](docs/decisions/0009-block-first-composition.md)), media via CloudFront, the analytics/conversion surface, and launch-hardening (WCAG 2.2 a11y, Lighthouse perf, cookie consent). Production cutover to `seqtek.com` is gated on final content + a launch-readiness review — not engineering. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for what's open and [`docs/PROJECT_HISTORY.md`](docs/PROJECT_HISTORY.md) for what's shipped.
+**Status:** active development; nothing is publicly launched. UAT runs at `preview.seqtek.com` and production at
+`ww3.seqtek.com`, both behind an ALB + Cognito gate. The cutover to `seqtek.com` is gated on content, not
+engineering. [`docs/ROADMAP.md`](docs/ROADMAP.md) is what's open; [`docs/PROJECT_HISTORY.md`](docs/PROJECT_HISTORY.md)
+is what shipped.
 
 ## Stack
 
 - **Next.js 16** (App Router, RSC) + **React 19** + **TypeScript** (strict)
-- **Payload CMS v3.84+** embedded in the Next app, **Postgres** backed
+- **Payload CMS v3** embedded in the Next app, backed by **Postgres**
 - **Tailwind v3** ([why not v4](docs/decisions/0001-tailwind-v3.md))
-- **Lexical** rich-text editor (Payload v3 default)
-- **AWS** for everything: Fargate + ALB + CloudFront, Docker via ECR, RDS for Postgres, S3 for media (with Origin Access Control)
-- Auth via **Google Workspace OAuth** restricted to SEQTEK's Google Workspace domains (`@seqtechllc.com` and `@seqtek.com`) ([why](docs/decisions/0002-auth-strategy.md))
+- **AWS**: ECS Fargate behind an ALB and CloudFront, images in ECR, RDS Postgres, S3 media with Origin Access Control
+- `/admin` sign-in through **Google Workspace**, restricted to SEQTEK's two domains ([why](docs/decisions/0002-auth-strategy.md))
 
 ## Where to look
 
-If you're reading this as a reference rather than running it:
-
-- [`CLAUDE.md`](CLAUDE.md) — the one-page TL;DR for someone (or something) joining the project
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — what's still open
+- [`CLAUDE.md`](CLAUDE.md) — the one-page brief for someone (or something) joining the project
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system design, deployment, security model
-- [`docs/PAYLOAD_DEVELOPMENT.md`](docs/PAYLOAD_DEVELOPMENT.md) — Payload v3 patterns, hooks, access control, live preview
-- [`docs/decisions/`](docs/decisions/) — Architecture Decision Records (the _why_ behind non-obvious choices)
-- [`docs/BLOCK_LIBRARY.md`](docs/BLOCK_LIBRARY.md) — content block inventory and composition rules
-- [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — color, typography, spacing, motion, and logo usage tokens
+- [`docs/decisions/`](docs/decisions/) — Architecture Decision Records: the _why_ behind non-obvious choices
+- [`docs/BLOCK_LIBRARY.md`](docs/BLOCK_LIBRARY.md) — the thirteen layout blocks
+- [`docs/PAYLOAD_DEVELOPMENT.md`](docs/PAYLOAD_DEVELOPMENT.md) — project rules for Payload collections and blocks
+- [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — colour, type, spacing, motion and logo usage
 
 ## Running locally
 
 ```bash
-git clone git@github.com:SeqTechLLC/seqtekdotcom.git
-cd seqtekdotcom
+git clone git@github.com:SeqTechLLC/seqtekdotcom.git && cd seqtekdotcom
 npm install
-cp .env.example .env.local      # set PAYLOAD_SECRET (openssl rand -hex 32)
-docker compose up -d            # Postgres on :5433
-npm run dev                     # site on :3100, admin at :3100/admin
+cp .env.example .env.local    # PAYLOAD_SECRET, plus GOOGLE_CLIENT_ID/SECRET for /admin
+docker compose up -d          # Postgres on :5433
+PAYLOAD_DISABLE_PUSH=true npm run payload migrate
+PAYLOAD_DISABLE_PUSH=true npm run dev   # site on :3100, admin at :3100/admin
 ```
 
-Full setup, env vars, and troubleshooting in [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
+Setup, content loading and troubleshooting: [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
 
 ## Quality gates
 
-| Gate                 | Where                                                                  | Runs                                  |
-| -------------------- | ---------------------------------------------------------------------- | ------------------------------------- |
-| Secret scan          | Pre-commit (gitleaks) + CI                                             | Every commit; gates merge             |
-| Lint + format        | Pre-commit (lint-staged) + CI (`npm run lint`, `npm run format:check`) | Staged files locally; full repo in CI |
-| Typecheck            | CI (`npm run typecheck`)                                               | Every push                            |
-| Conventional Commits | Commit message convention                                              | Enforced by review                    |
+A pre-commit hook (`.husky/pre-commit`) runs gitleaks and lint-staged. CI (`.github/workflows/ci.yml`) runs on pull
+requests to `main`; a job whose paths did not change is skipped, and the rest must pass to merge:
 
-The pre-commit hook lives in `.husky/pre-commit` and runs gitleaks → lint-staged. CI runs in `.github/workflows/ci.yml` on push to any branch and PR to `main`.
+- typecheck, lint, format, an importMap check, and a differential audit of production dependencies;
+- Vitest integration tests against a real Postgres;
+- Playwright end-to-end tests with axe accessibility checks and Lighthouse budgets;
+- a gitleaks scan of the full history;
+- CDK synth with assertion tests, and actionlint.
 
-## License & content notes
+## License and content notes
 
-This repo contains two categories of material, licensed differently — see [`LICENSE`](LICENSE):
+This repo holds two kinds of material, licensed differently (see [`LICENSE`](LICENSE)):
 
-- **Code** (everything except the proprietary paths called out below) — **MIT**. Fork, learn, adapt.
-- **Strategic content** — `docs/CONTENT-REQUIREMENTS.md`, `docs/BRAND_STRATEGY_RESEARCH.md`, future `src/content/` — **All Rights Reserved**. Read for reference; don't reuse the substance in your own work.
-- **Brand assets** (logos, brand-standards PDF, content audit) are intentionally **not committed** to this repo. They live in a private sibling directory; see [`CLAUDE.md`](CLAUDE.md).
-- **SEQTEK** and the SEQTEK marks are trademarks of SeqTech, LLC. If you fork to deploy a running copy, replace the branding.
+- **Code** (everything except the paths below) is **MIT**. Fork, learn, adapt.
+- **Strategic content** (`docs/CONTENT-REQUIREMENTS.md`) is **All Rights Reserved**. Read it for reference; don't reuse
+  the substance.
+- The brand-standards PDF and the content audit are not committed. The logos in `public/brand/` are.
+- **SEQTEK** and the SEQTEK marks are trademarks of SeqTech, LLC. If you fork to deploy a running copy, replace the
+  branding.
