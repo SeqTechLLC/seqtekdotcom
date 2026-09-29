@@ -93,8 +93,8 @@ export const articleLd = (post: Post): JsonLdObject => {
 }
 
 /**
- * Person schema for `/team/[slug]` (spec 010 US2 / CONTENT-REQUIREMENTS §8.7 —
- * AICO/E-E-A-T: job title, expertise keywords, a `sameAs` link, canonical URL).
+ * Person schema for `/team/[slug]` (CONTENT-REQUIREMENTS §8, AI crawler
+ * readiness: job title, expertise keywords, a `sameAs` link, canonical URL).
  */
 export const personLd = (member: TeamMember): JsonLdObject => {
   const image =

@@ -43,8 +43,8 @@ export default buildConfig({
     },
   },
   collections,
-  // spec 011 T016 (FR-003/FR-005): `siteSettings` and `navigation` were
-  // withdrawn. Site chrome is code-owned (ADR 0010) — see src/lib/site-content.ts.
+  // The one global. Site chrome is code-owned (ADR 0010, src/lib/site-content.ts);
+  // the header menu is the `navigation` collection.
   globals: [Homepage],
   editor: editorConfig,
   secret: process.env.PAYLOAD_SECRET || '',

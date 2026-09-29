@@ -13,8 +13,8 @@ import { selectOptions } from '../helpers/synthesizeBlock'
 
 /**
  * Every block but `hero` takes the shared `background` (none, subtle, accent,
- * inverse), mapped to `Section` (docs/planning/block-consolidation.md). These
- * are the blocks that gained or changed it in the media lane.
+ * inverse), mapped to `Section` (docs/BLOCK_LIBRARY.md §3). These cases cover
+ * the blocks listed below.
  */
 
 const LANE_BLOCKS = ['content', 'media-text', 'image', 'gallery', 'embed', 'hubspot-form']

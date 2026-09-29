@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
 import { attachEditorSessionToContext, cleanupEditorSession } from '../sessions/editorSession'
 
 /**
- * T126 / Constitution II / ARCHITECTURE.md §7 / spec 003 Polish.
+ * ARCHITECTURE.md §7.
  *
  * Axe coverage on the admin authoring surface (Pages composer + richText
  * inline-block insertion). Payload's admin chrome is third-party and not

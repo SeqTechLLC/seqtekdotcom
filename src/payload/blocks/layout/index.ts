@@ -1,4 +1,4 @@
-// The thirteen layout blocks (ADR 0013, docs/planning/block-consolidation.md).
+// The thirteen layout blocks (ADR 0013, docs/BLOCK_LIBRARY.md §5).
 // The list is pinned by tests/int/blocks/allowedBlocks.int.spec.ts: a new look
 // is an option on one of these, not a new block. Run `npm run generate:types`
 // and `npm run generate:importmap` after any change (FR-038, FR-039).

@@ -5,19 +5,16 @@ import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'paylo
 import { invalidateCloudFrontPaths } from '../../lib/cloudfront/invalidate'
 
 /**
- * CDN invalidation for media files (spec 009 FR-011).
+ * CDN invalidation for media files.
  *
- * With the stable `media/<filename>` key shape (ADR 0008), a same-filename
- * replacement keeps the same S3 key — the "every change mints a new key"
- * cache-busting that ARCHITECTURE §6 relied on under id-prefixed keys is
- * gone. The long-TTL `/media/*` CloudFront behavior would serve the old
- * bytes for up to a year. These hooks close that gap: invalidate the
- * affected paths on file replace and on delete.
+ * With the stable `media/<filename>` key shape (ADR 0008, ARCHITECTURE §5), a
+ * same-filename replacement keeps the same S3 key, so the long-TTL `/media/*`
+ * CloudFront behavior would serve the old bytes for up to a year. These hooks
+ * invalidate the affected paths on file replace and on delete.
  *
  * Deliberate no-ops:
  *   - create: fresh key, nothing cached yet.
- *   - metadata-only update (no incoming file): nothing on S3 changed. The
- *     staging re-key script's `PATCH {prefix}` depends on this no-op.
+ *   - metadata-only update (no incoming file): nothing on S3 changed.
  *   - no `CLOUDFRONT_DISTRIBUTION_ID`: `invalidateCloudFrontPaths` itself
  *     skips (local dev / CI), same as the page-revalidation hooks.
  *

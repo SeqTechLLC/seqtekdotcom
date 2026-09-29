@@ -4,7 +4,7 @@
  * Verifies the Postgres connection by issuing a cheap `count` against the
  * users collection through Payload's existing connection pool — no extra
  * pg client, no transitive-dep imports. Returns 200 when the round-trip
- * succeeds; 503 when it fails so the ALB can stop routing to the instance.
+ * succeeds; 503 when it fails so the ALB can stop routing to the task.
  *
  * Also reports what is running, by all three of its names. They describe ONE
  * artifact — the same ECR digest carries every one of them as a tag:
@@ -24,9 +24,9 @@
  * This endpoint is exempt from the Cognito gate, so treat all three as public.
  *
  * Per ERROR_PAGES.md §4 this endpoint must keep returning 200 in
- * maintenance mode so the ALB doesn't start replacing instances during a
- * planned outage. The maintenance-mode short-circuit therefore lives in
- * `src/proxy.ts` (future task) and must allow `/api/health` through.
+ * maintenance mode so ECS doesn't start replacing tasks during a planned
+ * outage. The maintenance-mode short-circuit in `src/proxy.ts` lets
+ * `/api/health` through.
  */
 
 import { getPayload } from 'payload'

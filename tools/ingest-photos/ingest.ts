@@ -189,9 +189,8 @@ export async function runIngest(
     try {
       const { id } = await uploader.create({
         collection: 'media',
-        // `caption: REVIEW_MARKER` used to ride along here. `media.caption`
-        // was dropped (ROADMAP INERT-2); the review flag is recorded on the
-        // manifest entry below instead, which is the record C-7 should read.
+        // The review flag for the alt-text pass is recorded on the manifest
+        // entry below (`altPending`); `media.caption` no longer exists.
         data: { alt: generateAlt(file.relPath) },
         file: {
           data: converted.buffer,

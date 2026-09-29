@@ -24,10 +24,9 @@ const MAINTENANCE_HTML = `<!doctype html>
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Maintenance short-circuit (ERROR_PAGES §4 / invariant E4). Every path
-  // returns a static 503 EXCEPT /api/health, which MUST stay 200 — otherwise
-  // the ALB marks instances unhealthy and the ASG starts replacing them mid
-  // maintenance. Runs before CSP so a broken app can't keep the page from
+  // Maintenance short-circuit (ERROR_PAGES §4). Every path returns a static
+  // 503 EXCEPT /api/health, which MUST stay 200 — otherwise the ALB marks the
+  // task unhealthy and ECS starts replacing it mid maintenance. Runs before CSP so a broken app can't keep the page from
   // serving.
   if (process.env.MAINTENANCE_MODE === 'true' && pathname !== HEALTH_PATH) {
     return new NextResponse(MAINTENANCE_HTML, {
@@ -129,8 +128,8 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Next 16 `proxy` always runs on the Node.js runtime, so `process.env`
-  // (MAINTENANCE_MODE, CSP_MODE) is read at RUNTIME — the Parameter-Store-at-boot
-  // maintenance toggle (ERROR_PAGES §4) works without a rebuild. (A `runtime`
+  // (MAINTENANCE_MODE, CSP_MODE) is read at RUNTIME: setting either in the task
+  // definition takes effect without a rebuild (ERROR_PAGES §4). (A `runtime`
   // segment config is disallowed in a proxy file.)
   // Skip Next internals, the report endpoint (avoids self-loops if it ever 4xx-s), and static files.
   matcher: [

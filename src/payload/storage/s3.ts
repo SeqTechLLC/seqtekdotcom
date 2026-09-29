@@ -5,10 +5,10 @@ import { s3Storage } from '@payloadcms/storage-s3'
 
 /**
  * The S3 storage plugin is ALWAYS registered; only its runtime behavior is
- * toggled by environment. With `S3_BUCKET` + `S3_REGION` set (staging/prod) the
+ * toggled by environment. With `S3_BUCKET` + `S3_REGION` set (the deployed lanes) the
  * S3 adapter is active and local-filesystem storage is disabled; without them
  * (local dev, CI) the plugin is `enabled: false`, so uploads fall back to the
- * local filesystem (FR-022) and no S3 access is needed.
+ * local filesystem and no S3 access is needed.
  *
  * Why always-register instead of returning `null` when S3 is absent: Payload's
  * cloud-storage plugin unconditionally adds its admin client component
@@ -27,16 +27,15 @@ import { s3Storage } from '@payloadcms/storage-s3'
  * is enabled, so `media` carries the column in every environment instead of
  * only where S3 is active. This is the Payload v4 default and keeps the
  * generated `payload-types.ts` and the database schema env-independent (the
- * prod column is provisioned by the companion migration in #39; dev/CI get it
- * via drizzle push).
+ * column is in the baseline migration).
  *
- * AWS credentials come from the default credential chain (EC2 instance profile
- * in prod, optional `~/.aws/credentials` locally).
+ * AWS credentials come from the default credential chain (the ECS task role on
+ * the lanes, optional `~/.aws/credentials` locally).
  */
 
 /**
  * Object-key prefix for the media collection. Keys are `media/<filename>`
- * (spec 009 / ADR 0008, clarified 2026-06-09): the CloudFront `/media/*`
+ * (ADR 0008): the CloudFront `/media/*`
  * behavior (infra/lib/edge-stack.ts) has no originPath, so the public URL
  * path is forwarded VERBATIM as the S3 object key — the static `media`
  * prefix makes path == key with zero edge configuration. Size variants are
@@ -58,9 +57,9 @@ const MEDIA_PREFIX = 'media'
  *   URL and key cannot drift per-document.
  * - Encoding mirrors the adapter's own `generateURL.js`: encode the filename
  *   segment, never the `/` joiner.
- * - Host fallback matches `payload.config.ts` serverURL. In deployed envs
- *   `NEXT_PUBLIC_SITE_URL` comes from the `next_public_site_url` SSM param at
- *   RUNTIME (server-side reads only) — `NEXT_PUBLIC_*` build-time inlining
+ * - Host fallback matches `payload.config.ts` serverURL. On the lanes
+ *   `NEXT_PUBLIC_SITE_URL` is set in the task definition and read at RUNTIME
+ *   (server-side reads only) — `NEXT_PUBLIC_*` build-time inlining
  *   applies to client bundles, so client components must NOT rely on this
  *   value (the CI build has it unset).
  *

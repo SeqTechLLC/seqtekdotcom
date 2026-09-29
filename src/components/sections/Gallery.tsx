@@ -25,7 +25,7 @@ interface GalleryProps {
 }
 
 /**
- * Columns follow the count (docs/planning/block-consolidation.md): up to `fit`
+ * Columns follow the count (docs/BLOCK_LIBRARY.md §5.2): up to `fit`
  * items share one row; past that, whichever of `choices` leaves the last row
  * fullest, the wider on a tie. There is deliberately no editor control and no
  * ceiling — a cap on how many fit is how content changes became code changes.

@@ -6,10 +6,10 @@ import type { AnchorHTMLAttributes, MouseEvent, ReactNode } from 'react'
 import { pushDataLayer, type AnalyticsEvent } from '@/lib/analytics/dataLayer'
 
 /**
- * spec 008 US3 (T017) — the single client surface that emits `cta_click`
- * (contract D1, FR-008). Every primary-CTA surface (Button-as-CTA, the `cta`
- * block, InlineCta) renders through this so there is ONE push path
- * (INV-1). Mirrors Button's internal-vs-external link logic so it is a drop-in.
+ * The single client surface that emits `cta_click` (contracts/datalayer-events.md
+ * D1). Every primary-CTA surface (Button-as-CTA, the `cta` block, InlineCta)
+ * renders through this so there is ONE push path (INV-1). Mirrors Button's
+ * internal-vs-external link logic so it is a drop-in.
  *
  * Non-blocking: the push runs on click but never prevents/awaits navigation,
  * and a thrown push can never swallow the click (try/catch). A forwarded

@@ -23,19 +23,17 @@ import { NONCE_HEADER } from '@/lib/csp'
  *
  * The listener is HubSpot's documented consent-change mechanism
  * (developers.hubspot.com/docs/api-reference/cookie-banner/cookie-banner-api).
- * It supersedes the unofficial `__hs_opt_in_consent` DOM event the scaffold
- * used — that event name appears nowhere in HubSpot's docs and most likely
- * never fired, silently pinning consent at the all-denied default. See
- * research.md R1 + ADR 0006. The `_hsp` *privacy* queue is distinct from the
- * `_hsq` analytics queue — do not cross them (research R2).
+ * Not the `__hs_opt_in_consent` DOM event, which appears nowhere in HubSpot's
+ * docs (ADR 0006). The `_hsp` *privacy* queue is distinct from the `_hsq`
+ * analytics queue — do not cross them.
  *
- * Consent payload (research R1): treat a category as granted when
+ * Consent payload: treat a category as granted when
  * `consent.allowed` (banner-off / notify-only / accepted) OR the per-category
  * flag is set. HubSpot's category keys are exactly `analytics`,
  * `advertisement` (full word — spelling is load-bearing), `functionality`.
  * After mapping to Google Consent Mode v2 signals, fire a
  * `hubspotConsentUpdate` Custom Event so GTM tags without built-in consent
- * checks can trigger off it (contracts/gtm-consent-governance.md G2).
+ * checks can trigger off it (infra/gtm/README.md, G2).
  */
 const SNIPPET = `
 window.dataLayer = window.dataLayer || [];

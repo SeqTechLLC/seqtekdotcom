@@ -1,17 +1,19 @@
 import type { SerializedEditorState, SerializedLexicalNode } from 'lexical'
 
 /**
- * Plain-text → Lexical AST transformer for the Wix audit seed pipeline.
+ * Plain text → Lexical AST, for the content seeder's `$lexical` directive
+ * (`tools/payload-seed/resolve.ts`). The input carries no markup, so nodes are
+ * emitted directly rather than parsed from HTML. The output is the same
+ * `SerializedEditorState` the admin saves.
  *
- * The audit JSON is text-only (no HTML markup) per `docs/CONTENT_MIGRATION.md`
- * §4 — so we bypass HTML parsing and emit Lexical nodes directly. The output
- * shape is the same `SerializedEditorState` admin saves so seed and admin
- * stay structurally identical (R-15).
- *
- * The file keeps the canonical name `htmlToLexical` (per tasks.md T100) even
- * though the runtime path is text-only — when a fuller HTML re-crawl arrives
- * later, the `htmlToLexical` wrapper below routes to
- * `@payloadcms/richtext-lexical/convertHTMLToLexical`.
+ * Detection rules. Blocks are separated by blank lines:
+ * - A block of two or more lines that all start with a bullet (`•`, `–`, `—`,
+ *   `-`, `*`) becomes one unordered list.
+ * - A single line `1. Text` becomes a heading (`sectionTag`, default `h3`)
+ *   with the number stripped.
+ * - A single line wrapped in quotes (curly or straight) becomes a quote.
+ * - Anything else becomes one paragraph, trimmed, with internal whitespace
+ *   collapsed.
  */
 
 interface LexicalNode {
@@ -176,7 +178,7 @@ function stripNumberPrefix(line: string): string {
 /**
  * Convert a single section's text into Lexical nodes. Blocks are separated
  * by blank lines; within each block we emit a paragraph, bulleted list,
- * heading, or quote per the §4 detection rules.
+ * heading, or quote per the detection rules above.
  */
 export function textToLexicalNodes(
   source: string,
@@ -222,8 +224,7 @@ export function textToLexicalNodes(
       continue
     }
 
-    // Multi-line block: join lines into one paragraph, collapsing whitespace
-    // — matches the §4 "trim, collapse internal whitespace" rule for prose.
+    // Multi-line block: join lines into one paragraph, collapsing whitespace.
     nodes.push(paragraph(collapseWhitespace(lines.join(' '))))
   }
   return nodes

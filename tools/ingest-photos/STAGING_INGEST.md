@@ -89,8 +89,7 @@ tunnel drops mid-way.
 
 - DB writes go through the SSM tunnel; S3 PUTs go straight from your machine to
   `seqtek-media-staging`.
-- These media IDs are independent of production. At launch, content moves
-  staging → prod via a DB dump/restore + `aws s3 sync` (see `ARCHITECTURE.md` §5).
+- These media IDs are independent of production.
 - A tarball of the bundle (`photo-catalog/curated.tar.gz`) exists if you'd rather
   copy it onto an in-VPC host and run there instead of port-forwarding.
 - **One-shot migration (run once, after the spec 009 deploy):** objects

@@ -1,13 +1,13 @@
 'use client'
 
 /**
- * Footer consent-preferences control (spec 006 US4 / contracts/consent-bridge.md C3).
+ * Footer consent-preferences control (contracts/consent-bridge.md C3).
  *
  * Re-opens HubSpot's own banner and offers a withdraw affordance via HubSpot's
  * official privacy command queue (`_hsp`) — no custom consent UI is built, so
  * there is a single source of truth for consent (HubSpot's banner):
  *   - "Cookie preferences" → `_hsp.push(['showBanner'])` resurfaces the banner
- *     with the visitor's current choices (research R2).
+ *     with the visitor's current choices.
  *   - "Withdraw consent"   → `_hsp.push(['revokeCookieConsent'])` clears the
  *     HubSpot consent cookies; the next load returns to the all-denied default.
  *

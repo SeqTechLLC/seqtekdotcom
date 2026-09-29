@@ -146,12 +146,11 @@ describe('runIngest dedup + idempotency', () => {
     expect(first.skippedExisting).toBe(1)
     expect(new Manifest(manifestPath).size).toBe(2)
 
-    // ROADMAP INERT-2 — the review flag for the alt-text pass (C-7) used to be
-    // `caption: REVIEW_MARKER` on the created doc, until `media.caption` was
-    // dropped. It now rides on the manifest entry. Both halves are pinned here
-    // because neither `tsc` nor this stub could see the old write: `data` is
-    // passed as a variable, so excess-property checking never fired, and the
-    // stub swallowed whatever it was given.
+    // The review flag for the alt-text pass rides on the manifest entry, not on
+    // the created doc (`media.caption` no longer exists). Both halves are pinned
+    // here because neither `tsc` nor this stub would catch a stray `caption`:
+    // `data` is passed as a variable, so excess-property checking never fires,
+    // and the stub swallows whatever it is given.
     expect(uploadedData.every((d) => !('caption' in d))).toBe(true)
     const entries = Object.values(
       JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, { altPending?: boolean }>,

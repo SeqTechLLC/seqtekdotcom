@@ -24,8 +24,7 @@ import type { Industry } from '@/payload-types'
 // Publish state is the lever for an industry that exists only to TAG case
 // studies and should not have a page of its own: the read below is
 // published-only, so a draft industry keeps working as a taxonomy target while
-// its URL 404s. That is the answer IND-1 needed for Hogan's vertical before it
-// was settled as Leadership and Training.
+// its URL 404s.
 //
 // The `<h1>` comes from the layout's hero block, not from a route-owned header
 // (the `/partners/[slug]` shape) — so `industrySkeleton` leads with a hero.

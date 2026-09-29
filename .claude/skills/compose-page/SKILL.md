@@ -28,7 +28,7 @@ not built without his sign-off, and the fix is almost always an option on an exi
 
 ## The blocks
 
-Exact fields: `src/payload/blocks/layout/<Block>.ts`. Spec: `docs/planning/block-consolidation.md`.
+Exact fields: `src/payload/blocks/layout/<Block>.ts`. Catalog: `docs/BLOCK_LIBRARY.md` §5.
 
 | Block | Use it for |
 | --- | --- |

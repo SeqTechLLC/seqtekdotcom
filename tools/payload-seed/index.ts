@@ -4,7 +4,7 @@
  * importers — see README.md for the spec format and the three directives.
  *
  *   IMPORT_TOKEN=<session-jwt> tsx tools/payload-seed/index.ts ./seed.json \
- *     [--base-url=https://seqtek-preview.com] [--draft] [--dry-run] [--allow-missing-refs] [--json] [--check-orphans]
+ *     [--base-url=https://preview.seqtek.com] [--draft] [--dry-run] [--allow-missing-refs] [--json] [--check-orphans]
  *
  * Auth is the caller's own /admin session JWT (Authorization: JWT <token>),
  * read by Payload's built-in JWT strategy — no API key, no schema change.

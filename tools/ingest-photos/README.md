@@ -19,10 +19,8 @@ Bulk-loads the SEQTEK photo archive into the Payload **Media** collection
   (the idempotency the case-study importer lacks — ROADMAP **T-1**).
 - Sets a required placeholder `alt` from the folder name and flags every
   uploaded doc with `altPending: true` on its manifest entry, so the editorial
-  alt-text pass (**C-7**) can find them. That flag used to be a review marker
-  stamped into `media.caption`; ROADMAP INERT-2 dropped that column, and the
-  manifest — already the per-upload record, keyed by sha256 alongside the
-  `mediaId` — is where the flag lives now.
+  alt-text pass can find them. The manifest is the per-upload record, keyed by
+  sha256 alongside the `mediaId`.
 
 The `../photos` archive is never modified — the tool only produces in-memory
 buffers for upload.
@@ -42,10 +40,6 @@ S3; otherwise it falls back to local filesystem under `media/`.
 
 ## Environments
 
-Buckets are **per-environment** (`seqtek-media-staging` / `seqtek-media-prod`),
-so the dedup manifest is env-scoped via `--env-label` (`.manifest.<label>.json`,
-gitignored). Staging RDS lives in private subnets and the staging bucket is
-written by the EC2 instance profile, so a staging ingest runs **on a staging
-instance (via SSM)** — where it has DB reachability and instance-profile S3
-credentials — not from a laptop. At launch, content moves staging → prod via a
-DB dump/restore + `aws s3 sync` (see `docs/ARCHITECTURE.md` §5).
+The dedup manifest is env-scoped via `--env-label` (`.manifest.<label>.json`,
+gitignored). The lanes load their media from the content JSON through
+`tools/payload-seed` (`$file`), not through this tool.
