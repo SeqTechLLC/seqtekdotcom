@@ -282,7 +282,8 @@ automated check enforces it.
 | White wordmark, no tagline  | `White-logo-w-o-tagline-transparent-background.png` | Dark surfaces, below ~120px  |
 
 The brand kit's Q-only mark is not among the supplied files. The site's favicon (`src/app/favicon.ico`,
-`src/app/icon.png`) is the Q mark extracted from the wordmark (PR #48).
+`src/app/icon.png`) is the Q mark extracted from the wordmark (PR #48), approved by Kenn on 2026-09-30 as the one
+exception to §13.6.
 
 ### 13.3 Tagline
 
@@ -302,7 +303,7 @@ scrim under the white wordmark. Keep the logo off green.
 ### 13.6 Don't
 
 Recolour, filter, distort, rebuild or trace the wordmark; place it where it falls under 3:1; crop the Q out of it
-for a standalone icon; or alter the tagline.
+for a standalone icon (the favicon is the approved exception, §13.2); or alter the tagline.
 
 ### 13.7 Implementation
 

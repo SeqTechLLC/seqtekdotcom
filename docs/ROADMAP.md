@@ -47,8 +47,8 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
   on `placeholders` until the copy is written.
 - **HS-1 — a HubSpot cookie policy for this site's hostnames** _(launch blocker, portal config only)_. Portal
   `8504846`'s banners are attached to other hostnames and define no cookie categories, so the banner never renders
-  and the footer's consent controls do nothing. The code side is complete (ADR 0006); steps are in `INTEGRATIONS.md`
-  §4.1.
+  and the footer's consent controls do nothing. The policy is opt-in (Kenn, 2026-09-30, from Megan). The code side
+  is complete (ADR 0006); steps are in `INTEGRATIONS.md` §4.1.
 - **VID-1 — `/our-story` video embeds render as black boxes.** Verify a poster frame shows.
 
 ## P3 — Hard launch and cutover

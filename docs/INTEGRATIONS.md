@@ -136,12 +136,15 @@ policies are listed by hostname in `https://js.hs-banner.com/v2/8504846/banner.j
 It had none for `preview.seqtek.com` or `ww3.seqtek.com`. So on the lanes the banner never
 shows, and the footer control does nothing.
 
+The policy is opt-in: no analytics or advertising cookies until the visitor accepts (Kenn,
+2026-09-30, from Megan). The code already defaults every non-essential signal to denied (§2.2).
+
 To integrate a lane (in the HubSpot portal, no code change):
 
 1. Go to Settings → Privacy & Consent → Cookies → Add policy, and add one for the hostname
    (`preview.seqtek.com`, `ww3.seqtek.com`, and later `seqtek.com`). If the domain field only
    offers connected domains, add the host under Settings → Website → Domains & URLs first.
-2. Enable "Display cookies by category", so the policy reports the `analytics`,
+2. Make the policy opt-in, and enable "Display cookies by category", so it reports the `analytics`,
    `advertisement` and `functionality` categories the bridge reads.
 3. Publish.
 4. On the lane, check four things:
