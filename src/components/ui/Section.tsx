@@ -87,6 +87,10 @@ export function Section({
 }: SectionProps) {
   return (
     <section
+      // styles.css reads this: a section on the same band as the one before it
+      // drops its top padding, so the two share one gap (DESIGN_SYSTEM §4). A
+      // bleed image is not a flat band, so it never shares a gap.
+      data-band={bleed ? undefined : background}
       className={cn(
         'px-4 md:px-6 lg:px-8',
         PADDING[padding],

@@ -605,11 +605,13 @@ function BulletList({ header, list, markers, tone, Title }: Shared) {
 
 // ---- tags ------------------------------------------------------------------
 
+// Chips are short, so they wrap inside the reading column with their heading
+// rather than spreading across the rail under prose that is centred.
 function Tags({ header, list, tone }: Shared) {
   const chip = 'inline-block rounded-full border px-4 py-1.5 text-small font-medium'
   return (
-    <>
-      {header ? <ReadingColumn flush>{header}</ReadingColumn> : null}
+    <ReadingColumn>
+      {header}
       <ul className={cn('flex flex-wrap gap-2', header && 'mt-6')}>
         {list.map((item, i) => {
           const href = trimmed(item.link?.url)
@@ -626,7 +628,7 @@ function Tags({ header, list, tone }: Shared) {
           )
         })}
       </ul>
-    </>
+    </ReadingColumn>
   )
 }
 

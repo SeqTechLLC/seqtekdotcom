@@ -79,8 +79,12 @@ export function RichText({
     inlineRegistry as Record<string, ComponentType<Record<string, unknown>>>,
   )
 
+  // Inside `<Prose>`, Payload's own wrapper div would become the prose's only
+  // child, so typography's `> :first-child` / `> :last-child` margin resets
+  // would land on the div instead of the first heading and the last paragraph.
   const body = (
     <PayloadRichText
+      disableContainer={withProse}
       data={data}
       converters={({ defaultConverters }) => ({
         ...defaultConverters,

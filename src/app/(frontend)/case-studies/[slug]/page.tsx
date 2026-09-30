@@ -85,10 +85,11 @@ export default async function CaseStudyPage({ params }: Props) {
           NOT wrap them in a second padded container — that inset every block on
           this route and, since ADR 0012, had them deriving `sizes` from the
           1280px rail while rendering into 912px. The prose that is NOT a block
-          gets its own `Container`; `RenderBlocks` sits outside it. */}
+          gets its own `Container`; `RenderBlocks` sits outside it. The first
+          block brings its own top padding, so nothing here ends in a margin. */}
       <article data-testid="case-study" className="py-16">
         <Container>
-          <header className={`${readingCol} mb-12`}>
+          <header className={readingCol}>
             {industry?.title ? (
               <p className="text-small font-semibold uppercase tracking-wide text-text-muted">
                 {industry.title}
@@ -106,7 +107,7 @@ export default async function CaseStudyPage({ params }: Props) {
             <ResponsiveImage
               media={caseStudy.heroImage}
               sizes={boxSizes()}
-              className="mb-12 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
+              className="mt-12 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
               loading="eager"
               fetchPriority="high"
             />

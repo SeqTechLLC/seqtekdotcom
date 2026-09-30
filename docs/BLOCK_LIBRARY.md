@@ -128,7 +128,7 @@ the layout adjusts to it.
 | `grid` | Columns follow the count. One item takes the reading column; one item with a custom marker is a display-size headline figure.                               |
 | `line` | Items down a vertical rule. Short markers (a number, a letter) hang in a gutter, so a lettered set spells its word; longer ones (a date) run as a timeline. |
 | `list` | Compact bullets, two columns on a wide screen; with `numbers`, one numbered column.                                                                         |
-| `tags` | Chips. A link makes the chip a link; `body` is not shown.                                                                                                   |
+| `tags` | Chips, wrapped in the reading column with their heading. A link makes the chip a link; `body` is not shown.                                                 |
 
 `markers` (not for `tags`): `none`, `numbers`, or `custom` (typed on each item: "25+", a letter, a year). `style`
 (grid only): `plain` (a heavy rule over each item) or `card`.
