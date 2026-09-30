@@ -5,14 +5,14 @@ import {
   columnsFor,
   Gallery,
   gridColumnsFor,
-  logoColumnsFor,
+  logoScale,
 } from '../../../src/components/sections/Gallery'
 import { Gallery as GalleryBlock } from '../../../src/payload/blocks/layout/Gallery'
 import { selectOptions } from '../helpers/synthesizeBlock'
 
 /**
- * `gallery` — pictures, or a strip of logos. Columns follow the item count and
- * there is no column control (docs/BLOCK_LIBRARY.md §5.2).
+ * `gallery` — pictures, or a strip of logos. Photo columns follow the item
+ * count, logos wrap, and there is no column control (docs/BLOCK_LIBRARY.md).
  */
 
 const pic = (n: number, caption?: string) => ({
@@ -41,11 +41,6 @@ describe('columns follow the count', () => {
     expect([1, 2, 3].map((n) => gridColumnsFor(n))).toEqual(['1', '2', '3'])
     // 4 fills a row of four; 5 and 6 fill rows of three; 7 and 8 rows of four.
     expect([4, 5, 6, 7, 8, 9].map((n) => gridColumnsFor(n))).toEqual(['4', '3', '3', '4', '4', '3'])
-  })
-
-  it('lets logos run up to six across', () => {
-    expect([1, 4, 6].map((n) => logoColumnsFor(n))).toEqual(['1', '4', '6'])
-    expect([7, 8, 9, 10, 12].map((n) => logoColumnsFor(n))).toEqual(['4', '4', '5', '5', '6'])
   })
 
   it('has no ceiling: any count gets an answer from the choices', () => {
@@ -84,18 +79,48 @@ describe('<Gallery /> layouts', () => {
     expect(row.querySelectorAll('figure')).toHaveLength(3)
   })
 
-  it('logos: a list of logo cards, gray until pointed at, caption small underneath', () => {
+  it('logos: a wrapping list of bare logos in colour, caption small underneath', () => {
     const { container, getByRole, getByText } = render(
       <Gallery layout="logos" heading="Clients" items={[pic(1, 'Example Co.'), pic(2)]} />,
     )
     const list = getByRole('list')
+    expect(list.className).toContain('flex-wrap')
     expect(list.querySelectorAll('li')).toHaveLength(2)
     const img = container.querySelector('img')
-    expect(img?.className).toContain('grayscale')
-    expect(img?.className).toContain('hover:grayscale-0')
+    expect(img?.className).not.toContain('grayscale')
+    expect(img?.className).toContain('hover:scale-110')
+    expect(img?.className).not.toContain('bg-surface')
     expect(img?.getAttribute('alt')).toBe('Picture 1')
     expect(getByText('Example Co.').className).toContain('text-caption')
+    expect(getByRole('heading', { level: 2 }).parentElement?.className).toContain('text-center')
     expect(container.querySelector('figure')).toBeNull()
+  })
+
+  it('logos: sized by area from the media dimensions, a fixed height without them', () => {
+    expect(logoScale({ width: 400, height: 100 })).toBe(2)
+    expect(logoScale({ width: 100, height: 100 })).toBe(1)
+    expect(logoScale({ width: 2000, height: 100 })).toBe(2.5)
+    expect(logoScale({ width: 100, height: 400 })).toBe(0.75)
+    expect(logoScale({ url: '/l.svg' })).toBeNull()
+
+    const { container } = render(
+      <Gallery
+        layout="logos"
+        items={[
+          { image: { url: '/wide.png', alt: 'Wide', width: 400, height: 100 }, caption: null },
+          { image: { url: '/l.svg', alt: 'No size' }, caption: null },
+        ]}
+      />,
+    )
+    const [wide, unsized] = Array.from(container.querySelectorAll('img'))
+    expect(wide.style.getPropertyValue('--logo')).toBe('2')
+    expect(wide.className).toContain('w-[calc(var(--logo)*3.5rem)]')
+    expect(unsized.className).toContain('h-14')
+  })
+
+  it('logos: each sits on a light plate on the dark band', () => {
+    const { container } = render(<Gallery layout="logos" background="inverse" items={pics(2)} />)
+    expect(container.querySelector('img')?.className).toContain('bg-surface')
   })
 
   it('falls back to the caption for a logo with no alt text', () => {

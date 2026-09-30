@@ -1,5 +1,8 @@
+import type { CSSProperties } from 'react'
+
 import { ResponsiveImage } from '../ui/ResponsiveImage'
 import { Section, type SectionBackground } from '../ui/Section'
+import { cn } from '@/lib/cn'
 import { boxSizes, gridSizes, type ColumnStep } from '@/lib/layoutGeometry'
 
 interface MediaLike {
@@ -39,15 +42,10 @@ export function columnsFor(count: number, fit: number, choices: readonly number[
 }
 
 type GridColumns = '1' | '2' | '3' | '4'
-type LogoColumns = '1' | '2' | '3' | '4' | '5' | '6'
 
 /** Photos: up to three in a row, then three or four across. */
 export const gridColumnsFor = (count: number): GridColumns =>
   String(columnsFor(count, 3, [3, 4])) as GridColumns
-
-/** Logos are small, so up to six share a row, then four, five or six across. */
-export const logoColumnsFor = (count: number): LogoColumns =>
-  String(columnsFor(count, 6, [4, 5, 6])) as LogoColumns
 
 // Tailwind must see whole class names, so these stay literal while `sizes` is
 // derived from the steps below — the same fact in two forms. Nothing in the
@@ -103,16 +101,12 @@ export const CAROUSEL_SIZES = boxSizes({
   ],
 })
 
-// Logos render as plain <img> at a fixed height, so no `sizes` is involved.
-// Short sets are held narrower than the rail so a pair of logos does not sit in
-// two cards the width of half the page.
-const LOGO_COLUMN_CLASSES: Record<LogoColumns, string> = {
-  '1': 'grid-cols-1 max-w-xs',
-  '2': 'grid-cols-2 max-w-2xl',
-  '3': 'grid-cols-2 sm:grid-cols-3 max-w-4xl',
-  '4': 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
-  '5': 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
-  '6': 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6',
+// Logos are sized by area, not height, so a wide wordmark and a square badge
+// carry the same weight: width scales with the square root of the aspect
+// ratio. The clamp keeps a very tall or very long mark from running away.
+export function logoScale(media: MediaLike): number | null {
+  if (!media.width || !media.height) return null
+  return Math.min(2.5, Math.max(0.75, Math.sqrt(media.width / media.height)))
 }
 
 const isFullMedia = (value: unknown): value is MediaLike =>
@@ -169,17 +163,25 @@ export function Gallery({
   return (
     <Section padding="default" background={background ?? 'none'}>
       {heading || intro ? (
-        <div className="mb-6">
+        // A logo strip is centred, so its heading is too.
+        <div className={cn('mb-6', layout === 'logos' && 'text-center')}>
           {heading ? <h2 className="text-h3 font-semibold">{heading}</h2> : null}
           {intro ? (
-            <p className={`${heading ? 'mt-3' : ''} max-w-2xl text-body-lg ${secondaryCls}`}>
+            <p
+              className={cn(
+                heading && 'mt-3',
+                'max-w-2xl text-body-lg',
+                layout === 'logos' && 'mx-auto',
+                secondaryCls,
+              )}
+            >
               {intro}
             </p>
           ) : null}
         </div>
       ) : null}
       {layout === 'logos' ? (
-        <LogoGrid figures={figures} />
+        <LogoStrip figures={figures} inverse={background === 'inverse'} captionCls={secondaryCls} />
       ) : layout === 'carousel' ? (
         // A scrolling row with nothing focusable inside it cannot be scrolled
         // from the keyboard, so the row itself takes focus (axe
@@ -214,29 +216,44 @@ function PhotoGrid({ figures, captionCls }: { figures: FigureItem[]; captionCls:
   )
 }
 
-// Logos stay gray until pointed at, so a wall of mismatched brand colours
-// stays calm. Each card is a light surface whatever the band, so a logo drawn
-// for a white page and its caption stay legible on the dark one.
-function LogoGrid({ figures }: { figures: FigureItem[] }) {
-  const columns = logoColumnsFor(figures.length)
+// Logos sit bare in a centred, wrapping row, so the count lays itself out: a
+// short set stays on one line and a long one wraps with its last row centred.
+// On the dark band each sits on a light plate, so a logo drawn for a white
+// page stays legible.
+function LogoStrip({
+  figures,
+  inverse,
+  captionCls,
+}: {
+  figures: FigureItem[]
+  inverse: boolean
+  captionCls: string
+}) {
   return (
-    <ul className={`grid gap-4 sm:gap-5 ${LOGO_COLUMN_CLASSES[columns]}`}>
-      {figures.map((f, i) => (
-        <li
-          key={i}
-          className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border-subtle bg-surface px-6 py-10"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={f.image.url ?? ''}
-            alt={f.image.alt ?? f.caption ?? ''}
-            className="h-16 w-auto max-w-full object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0 md:h-20"
-          />
-          {f.caption ? (
-            <span className="text-center text-caption text-text-muted">{f.caption}</span>
-          ) : null}
-        </li>
-      ))}
+    <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-14">
+      {figures.map((f, i) => {
+        const scale = logoScale(f.image)
+        return (
+          <li key={i} className="flex flex-col items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={f.image.url ?? ''}
+              alt={f.image.alt ?? f.caption ?? ''}
+              style={scale ? ({ '--logo': scale } as CSSProperties) : undefined}
+              className={cn(
+                'max-w-full object-contain transition-transform duration-base ease-transition hover:scale-110',
+                scale
+                  ? 'h-auto w-[calc(var(--logo)*3.5rem)] sm:w-[calc(var(--logo)*4.5rem)]'
+                  : 'h-14 w-auto sm:h-[4.5rem]',
+                inverse && 'box-content rounded-md bg-surface p-3',
+              )}
+            />
+            {f.caption ? (
+              <span className={`text-center text-caption ${captionCls}`}>{f.caption}</span>
+            ) : null}
+          </li>
+        )
+      })}
     </ul>
   )
 }
