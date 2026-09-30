@@ -87,6 +87,9 @@ export function Section({
 }: SectionProps) {
   return (
     <section
+      // styles.css reads this: a section on the same band as the one before it
+      // drops its top padding, so the two share one gap (DESIGN_SYSTEM §4).
+      data-band={background}
       className={cn(
         'px-4 md:px-6 lg:px-8',
         PADDING[padding],

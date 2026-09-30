@@ -86,6 +86,17 @@
   }
 }
 
+/* Two sections on the same band read as one surface, so they share one gap: the
+ * second drops its top padding (DESIGN_SYSTEM §4, `data-band` from Section.tsx).
+ * Two attribute selectors outrank the `py-*` utility, wherever it is emitted. */
+[data-band='none'] + [data-band='none'],
+[data-band='subtle'] + [data-band='subtle'],
+[data-band='accent'] + [data-band='accent'],
+[data-band='inverse'] + [data-band='inverse'],
+[data-band='brand'] + [data-band='brand'] {
+  padding-top: 0;
+}
+
 /* WCAG 2.2 §2.4.11 — universal focus indicator */
 :focus-visible {
   outline: 2px solid var(--color-border-focus);

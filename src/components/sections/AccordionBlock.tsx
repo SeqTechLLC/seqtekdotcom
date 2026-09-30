@@ -88,7 +88,7 @@ export function AccordionBlock({
                       ▾
                     </span>
                   </summary>
-                  <div className="pb-4">
+                  <div className="pb-6 pt-2">
                     <RichText data={item.body} withProse className={prose} />
                   </div>
                 </details>
