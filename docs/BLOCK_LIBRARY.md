@@ -140,9 +140,10 @@ axis. Alt text lives on the media record.
 
 #### `gallery`
 
-A set of pictures (`grid`, or `carousel`: one swipeable row) or a strip of `logos` (grey until pointed at, each on a
-light card so any band works). Columns follow the count, and a single picture is held to `image`'s standard
-measure. Rows whose upload did not populate are dropped.
+A set of pictures (`grid`, or `carousel`: one swipeable row) or a strip of `logos`: bare, in colour, in a centred
+row that wraps, each sized by area so a wordmark and a badge weigh the same (on the dark band, each sits on a light
+plate). Photo columns follow the count, and a single picture is held to `image`'s standard measure. Rows whose upload
+did not populate are dropped.
 
 #### `table`
 
