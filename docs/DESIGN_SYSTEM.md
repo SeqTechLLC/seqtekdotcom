@@ -135,6 +135,10 @@ Tailwind's default 4px scale, not overridden. Section padding is `ui/Section`'s 
 breakpoint: `tight` `py-10`, `default` `py-12`, `spacious` `py-16` (the default). Horizontal padding comes from the
 shell: `px-4`, `md:px-6`, `lg:px-8`.
 
+Two sections on the same background share one gap: the second drops its top padding (`data-band`, `styles.css`), so
+back-to-back `content` blocks space like headings within one body. A change of background keeps both paddings.
+Rich text starts and ends flush: the first child's top margin and the last child's bottom margin are zero.
+
 ---
 
 ## 5. Radius
