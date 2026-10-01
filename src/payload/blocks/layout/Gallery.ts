@@ -64,7 +64,7 @@ export const Gallery: Block = {
       defaultValue: 'grid',
       admin: {
         description:
-          'A grid shows every picture at once and picks its columns from how many there are. A carousel puts them in one swipeable row, roughly one picture wide on a phone and three on a desktop, which suits a long set. Logos draws client or partner logos in gray, turning to full color when a visitor points at one.',
+          'A grid shows every picture at once and picks its columns from how many there are. A carousel puts them in one swipeable row, roughly one picture wide on a phone and three on a desktop, which suits a long set. Logos lays client or partner logos out in a centred row that wraps to fit how many there are.',
       },
       options: [
         { label: 'Grid', value: 'grid' },
