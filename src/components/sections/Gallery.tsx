@@ -216,8 +216,9 @@ function PhotoGrid({ figures, captionCls }: { figures: FigureItem[]; captionCls:
   )
 }
 
-// Logos sit bare in a centred, wrapping row, so the count lays itself out: a
-// short set stays on one line and a long one wraps with its last row centred.
+// Logos sit bare in a centred row that wraps, so the count lays itself out. They
+// flow as inline boxes so `text-balance` evens the rows instead of leaving one
+// logo alone on the last.
 // On the dark band each sits on a light plate, so a logo drawn for a white
 // page stays legible.
 function LogoStrip({
@@ -230,11 +231,14 @@ function LogoStrip({
   captionCls: string
 }) {
   return (
-    <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-14">
+    <ul className="-my-4 text-balance text-center leading-none">
       {figures.map((f, i) => {
         const scale = logoScale(f.image)
         return (
-          <li key={i} className="flex flex-col items-center gap-2">
+          <li
+            key={i}
+            className="mx-5 my-4 inline-flex flex-col items-center gap-2 align-middle sm:mx-7"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={f.image.url ?? ''}

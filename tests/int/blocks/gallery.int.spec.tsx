@@ -84,7 +84,7 @@ describe('<Gallery /> layouts', () => {
       <Gallery layout="logos" heading="Clients" items={[pic(1, 'Example Co.'), pic(2)]} />,
     )
     const list = getByRole('list')
-    expect(list.className).toContain('flex-wrap')
+    expect(list.className).toContain('text-balance')
     expect(list.querySelectorAll('li')).toHaveLength(2)
     const img = container.querySelector('img')
     expect(img?.className).not.toContain('grayscale')
