@@ -40,9 +40,8 @@ The `<TrackView/>` island fires it once when a case-study page mounts, and not a
 ```
 
 It is triggered by HubSpot Meetings' `onMeetingBookSucceeded` message. The listener
-(`BookingCompleteSeam`) is mounted in the `cta` block's meeting panel, but the panel opens the
-scheduler in a new tab rather than embedding it, so the event cannot fire until an embed exists
-(`ROADMAP.md` BOOK-1).
+(`BookingCompleteSeam`) is mounted in the `cta` block's meeting panel. Booking is a Google Calendar
+page, which never sends that message, so the event does not fire (`ROADMAP.md` BOOK-1).
 
 ## Invariants
 

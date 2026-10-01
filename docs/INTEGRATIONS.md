@@ -62,8 +62,9 @@ The tracking script loads HubSpot chat. It is configured in the portal.
 
 ### 1.4 Meetings
 
-The `cta` block's `meeting` action takes a HubSpot Meetings URL and opens it in a new tab. No
-scheduler is embedded, so `booking_complete` (§2.4) cannot fire yet.
+Booking is a Google Calendar appointment page (`bookACall`, `site-content.ts`; ROADMAP BOOK-1), opened in a new
+tab. `booking_complete` (§2.4) listens for HubSpot Meetings' message, which a Google booking never sends, so it does
+not fire.
 
 ### 1.5 Cookie banner
 
