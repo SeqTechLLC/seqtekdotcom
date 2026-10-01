@@ -80,8 +80,8 @@ export type SiteSettings = {
   footerText: string
 }
 
-// Booking is a Google Calendar appointment page (ROADMAP BOOK-1). The header,
-// footer, 404 and /team all link to it under this one label.
+// Booking is a Google Calendar appointment page (ROADMAP BOOK-1). One label and
+// URL for every booking link in code.
 export const bookACall = {
   label: 'Book a Call',
   url: 'https://calendar.app.google/TWZWK4RF3NPmEFdW6',

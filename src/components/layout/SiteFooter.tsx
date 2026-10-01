@@ -50,8 +50,8 @@ export function SiteFooter() {
               <Image
                 src="/brand/White-logo-w-o-tagline-transparent-background.png"
                 alt={companyName}
-                width={2560}
-                height={521}
+                width={580}
+                height={118}
                 className="h-10 w-auto"
               />
             </Link>
@@ -126,9 +126,8 @@ export function SiteFooter() {
                 {column.label}
               </h2>
               <ul className="mt-4 space-y-2">
-                {/* Keyed by label+url: several columns legitimately repeat a
-                    URL — the four market links all park on the same interim
-                    page — so `url` alone is not unique and React warns. */}
+                {/* Keyed by label+url: a column can repeat a URL, so `url`
+                    alone is not unique and React warns. */}
                 {column.children?.map((item) => (
                   <li key={`${item.label}-${item.url}`}>
                     <SmartLink

@@ -47,7 +47,6 @@ export default async function TeamPage() {
         </Container>
       </header>
       <Cards collection="teamMembers" manualItems={ordered} headingLevel="h2" />
-      {/* The green close Our Story and the service pages end on. */}
       <Cta
         heading="Put this team on your problem"
         body="Tell us what is in your way. The people on this page are the ones who do the work."

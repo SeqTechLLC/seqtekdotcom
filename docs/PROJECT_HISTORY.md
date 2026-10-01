@@ -170,3 +170,5 @@ them still resolve. Detail lives in the PRs.
 - **P5-52** (#167, 2026-09-16) — The header menu is a validated `navigation` collection read by an async
   `SiteHeader` through `getNavigation`, falling back to the `site-content.ts` tree while empty. Footer and legal
   navs stay code-owned (ADR 0010, amendment 2026-09-16).
+- **P5-53** (#189, 2026-10-01) — Booking is a Google Calendar appointment page, chosen over HubSpot Meetings on
+  2026-08-31. The header, footer, 404 and `/team` link to it as "Book a Call" (`bookACall`, `site-content.ts`).

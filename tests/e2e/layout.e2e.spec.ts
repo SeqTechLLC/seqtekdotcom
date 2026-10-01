@@ -41,8 +41,7 @@ test.describe('Site chrome — desktop viewport', () => {
       await expect(primaryNav.getByRole('link', { name: label })).toBeVisible()
     }
 
-    // Desktop primary CTA links to the contact form (the dedicated booking
-    // route is not built yet; see CONTENT_NEEDS §4).
+    // Desktop primary CTA opens the booking page.
     const ctaButton = header.getByRole('link', { name: /book a call/i })
     await expect(ctaButton).toBeVisible()
     await expect(ctaButton).toHaveAttribute('href', bookACall.url)
