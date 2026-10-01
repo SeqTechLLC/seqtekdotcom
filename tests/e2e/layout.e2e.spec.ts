@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test'
 import { mkdir } from 'fs/promises'
 import path from 'path'
 
+import { bookACall } from '../../src/lib/site-content'
+
 const SCREENSHOTS_DIR = path.resolve('tests/e2e/screenshots')
 
 test.beforeAll(async () => {
@@ -43,7 +45,7 @@ test.describe('Site chrome — desktop viewport', () => {
     // route is not built yet; see CONTENT_NEEDS §4).
     const ctaButton = header.getByRole('link', { name: /book a call/i })
     await expect(ctaButton).toBeVisible()
-    await expect(ctaButton).toHaveAttribute('href', '/contact')
+    await expect(ctaButton).toHaveAttribute('href', bookACall.url)
 
     // Footer is rendered with all THREE navigation columns + legal links. The
     // services column is gone on purpose: the services menu lives in the

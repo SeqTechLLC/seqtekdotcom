@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import { listTeamMembers } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { Cards } from '@/components/sections/Cards'
+import { Cta } from '@/components/sections/Cta'
+import { bookACall } from '@/lib/site-content'
 import { byLeadershipThenOrder } from '@/lib/resolveLayout'
 import { Container } from '@/components/ui/Container'
 
@@ -45,6 +47,14 @@ export default async function TeamPage() {
         </Container>
       </header>
       <Cards collection="teamMembers" manualItems={ordered} headingLevel="h2" />
+      {/* The green close Our Story and the service pages end on. */}
+      <Cta
+        heading="Put this team on your problem"
+        body="Tell us what is in your way. The people on this page are the ones who do the work."
+        primaryCta={bookACall}
+        secondaryCta={{ label: 'See our work', url: '/case-studies' }}
+        background="brand"
+      />
     </div>
   )
 }

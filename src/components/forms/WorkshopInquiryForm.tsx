@@ -33,9 +33,9 @@ const WORKSHOP_FIELDS: FormFieldConfig[] = [
     // as optional (INTEGRATIONS.md §1.2). Don't relax this to match HubSpot.
     required: true,
     options: [
-      { label: 'AI Strategy', value: 'AI Strategy' },
-      { label: 'Five Dysfunctions of a Team', value: 'Five Dysfunctions of a Team' },
-      { label: 'Leadership & Culture', value: 'Leadership & Culture' },
+      { label: 'The Touchstone Workshop', value: 'The Touchstone Workshop' },
+      { label: 'Five Dysfunctions Workshop', value: 'Five Dysfunctions Workshop' },
+      { label: 'Re-Alignment Workshop', value: 'Re-Alignment Workshop' },
       { label: 'Not sure yet', value: 'Not sure yet' },
     ],
   },

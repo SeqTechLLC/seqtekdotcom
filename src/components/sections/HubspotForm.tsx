@@ -42,8 +42,16 @@ export function HubspotForm({
   background = 'none',
 }: HubspotFormProps) {
   const inverse = background === 'inverse'
+  const workshop = formId === WORKSHOP_FORM_ID
   return (
-    <Section padding="spacious" background={background ?? 'none'}>
+    // The workshop form is a link target (`#request`); the scroll margin clears
+    // the sticky header.
+    <Section
+      padding="spacious"
+      background={background ?? 'none'}
+      id={workshop ? 'request' : undefined}
+      className={workshop ? 'scroll-mt-24' : undefined}
+    >
       {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
       {description ? (
         <p
@@ -59,7 +67,7 @@ export function HubspotForm({
           inverse ? 'mt-8 rounded-lg bg-surface-elevated p-6 text-text-primary md:p-8' : 'mt-8'
         }
       >
-        {formId === WORKSHOP_FORM_ID ? (
+        {workshop ? (
           <WorkshopInquiryForm />
         ) : (
           <HubspotLeadForm formId={formId} fields={DEFAULT_FIELDS} />

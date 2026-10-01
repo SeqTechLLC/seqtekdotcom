@@ -80,6 +80,13 @@ export type SiteSettings = {
   footerText: string
 }
 
+// Booking is a Google Calendar appointment page (ROADMAP BOOK-1). The header,
+// footer, 404 and /team all link to it under this one label.
+export const bookACall = {
+  label: 'Book a Call',
+  url: 'https://calendar.app.google/TWZWK4RF3NPmEFdW6',
+}
+
 export const navigation: Navigation = {
   mainNav: [
     {
@@ -263,9 +270,7 @@ export const navigation: Navigation = {
       url: '/contact',
       children: [
         { label: 'Contact', url: '/contact' },
-        // Book-a-call repoints to the contact form until a HubSpot Meetings
-        // route ships (CONTENT_NEEDS §4; matches the not-found.tsx CTA).
-        { label: 'Book a Call', url: '/contact' },
+        bookACall,
         // Interim: the four market landing pages aren't built yet, so the city
         // links point at localshoring (our local-delivery model) rather than
         // 404ing.
@@ -282,9 +287,7 @@ export const navigation: Navigation = {
     { label: 'Privacy Policy', url: '/privacy-policy' },
     { label: 'Terms of Service', url: '/terms-of-service' },
   ],
-  // Repoints to the contact form until a HubSpot Meetings route ships
-  // (CONTENT_NEEDS §4; matches the not-found.tsx "Book a strategy call" CTA).
-  ctaButton: { label: 'Book a Call', url: '/contact' },
+  ctaButton: bookACall,
 }
 
 // The canonical office is the Gradient space on Cheyenne. Street/city/zip are
