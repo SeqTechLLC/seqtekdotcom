@@ -252,3 +252,29 @@ describe('cta block validation', () => {
     expect(formId('', { siblingData: { action: 'buttons' } })).toBe(true)
   })
 })
+
+describe('<Cta /> buttons', () => {
+  it('open an off-site link in a new tab and keep an internal or mailto: link in place', () => {
+    const { getByRole } = render(
+      <Cta
+        heading="Talk to us"
+        primaryCta={{ label: 'Book a Call', url: 'https://calendar.example.com/book' }}
+        secondaryCta={{ label: 'See our work', url: '/case-studies' }}
+      />,
+    )
+    const book = getByRole('link', { name: 'Book a Call' })
+    expect(book.getAttribute('target')).toBe('_blank')
+    expect(book.getAttribute('rel')).toBe('noopener noreferrer')
+    expect(getByRole('link', { name: 'See our work' }).getAttribute('target')).toBeNull()
+
+    const mail = render(
+      <Cta
+        heading="Write to us"
+        primaryCta={{ label: 'Email us', url: 'mailto:contact@example.com' }}
+        secondaryCta={{ label: 'Their site', url: 'https://example.com' }}
+      />,
+    )
+    expect(mail.getByRole('link', { name: 'Email us' }).getAttribute('target')).toBeNull()
+    expect(mail.getByRole('link', { name: 'Their site' }).getAttribute('target')).toBe('_blank')
+  })
+})

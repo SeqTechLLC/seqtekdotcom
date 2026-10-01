@@ -1,8 +1,7 @@
-import Link from 'next/link'
-
 import { ResponsiveImage } from '../ui/ResponsiveImage'
 import { Section } from '../ui/Section'
 import { SPLIT_MEDIA_SIZES } from '@/lib/layoutGeometry'
+import { SmartLink } from '../ui/SmartLink'
 
 // The cover photo runs edge to edge behind the whole band, outside the rail,
 // so its rendered width is the viewport's. There is no shell geometry to
@@ -129,12 +128,12 @@ export function Hero({
   const ctas = (
     <div className={`mt-8 flex flex-wrap items-center gap-4 ${isCentered ? 'justify-center' : ''}`}>
       {primaryCta?.label && primaryCta?.url ? (
-        <Link href={primaryCta.url} className={ctaClass(primaryCta.variant, isCover)}>
+        <SmartLink href={primaryCta.url} className={ctaClass(primaryCta.variant, isCover)}>
           {primaryCta.label}
-        </Link>
+        </SmartLink>
       ) : null}
       {secondaryCta?.label && secondaryCta?.url ? (
-        <Link
+        <SmartLink
           href={secondaryCta.url}
           className={
             isCover
@@ -143,7 +142,7 @@ export function Hero({
           }
         >
           {secondaryCta.label}
-        </Link>
+        </SmartLink>
       ) : null}
     </div>
   )

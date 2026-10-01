@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 
 import { RichText } from '../richText/RichText'
@@ -6,6 +5,7 @@ import { ReadingColumn } from '../ui/ReadingColumn'
 import { ResponsiveImage } from '../ui/ResponsiveImage'
 import { Section, type SectionBackground } from '../ui/Section'
 import { SPLIT_MEDIA_SIZES } from '@/lib/layoutGeometry'
+import { SmartLink } from '../ui/SmartLink'
 
 interface MediaLike {
   url?: string | null
@@ -43,12 +43,12 @@ export function MediaText({
           needs its inverted set. */}
       <RichText data={body} className={background === 'inverse' ? 'prose-invert' : undefined} />
       {cta?.label && cta?.url ? (
-        <Link
+        <SmartLink
           href={cta.url}
           className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
         >
           {cta.label}
-        </Link>
+        </SmartLink>
       ) : null}
     </div>
   )

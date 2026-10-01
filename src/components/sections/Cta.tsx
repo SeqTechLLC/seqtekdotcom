@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import type { ReactNode } from 'react'
 
 import { BookingCompleteSeam } from '@/components/analytics/BookingCompleteSeam'
@@ -9,6 +8,7 @@ import { type FormFieldConfig } from '@/lib/hubspot/fields'
 import { ReadingColumn } from '../ui/ReadingColumn'
 import { Section, type SectionBackground } from '../ui/Section'
 import { toneFor, type Tone } from '../ui/tone'
+import { SmartLink } from '../ui/SmartLink'
 
 type ButtonStyle = 'primary' | 'secondary' | 'ghost'
 type CtaAction = 'buttons' | 'meeting' | 'newsletter' | 'download'
@@ -118,9 +118,9 @@ function Buttons({
         </TrackedCtaLink>
       ) : null}
       {secondary ? (
-        <Link href={secondary.url} className="font-medium underline">
+        <SmartLink href={secondary.url} className="font-medium underline">
           {secondary.label}
-        </Link>
+        </SmartLink>
       ) : null}
     </div>
   )

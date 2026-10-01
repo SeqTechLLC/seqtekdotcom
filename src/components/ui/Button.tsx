@@ -82,7 +82,6 @@ export function Button({
           label={cta.label ?? (typeof children === 'string' ? children : undefined)}
           className={classes}
           prefetch={false}
-          newTab
           {...anchorProps}
         >
           {children}
