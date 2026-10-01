@@ -218,7 +218,8 @@ function PhotoGrid({ figures, captionCls }: { figures: FigureItem[]; captionCls:
 
 // Logos sit bare in a centred row that wraps, so the count lays itself out. They
 // flow as inline boxes so `text-balance` evens the rows instead of leaving one
-// logo alone on the last.
+// logo alone on the last (Chromium balances up to six rows; past that it wraps
+// normally).
 // On the dark band each sits on a light plate, so a logo drawn for a white
 // page stays legible.
 function LogoStrip({
@@ -243,6 +244,8 @@ function LogoStrip({
             <img
               src={f.image.url ?? ''}
               alt={f.image.alt ?? f.caption ?? ''}
+              width={f.image.width ?? undefined}
+              height={f.image.height ?? undefined}
               style={scale ? ({ '--logo': scale } as CSSProperties) : undefined}
               className={cn(
                 'max-w-full object-contain transition-transform duration-base ease-transition hover:scale-110',
