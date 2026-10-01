@@ -2,6 +2,8 @@ import Link from 'next/link'
 
 import { NotFoundTracker } from '@/components/error/NotFoundTracker'
 import { Container } from '@/components/ui/Container'
+import { SmartLink } from '@/components/ui/SmartLink'
+import { bookACall } from '@/lib/site-content'
 
 // spec 004 T035 (ERROR_PAGES §2). Renders within the (frontend) layout, so the
 // site header + footer are already present. Consultative voice, not jokey.
@@ -40,14 +42,12 @@ export default function NotFound() {
         </ul>
 
         <div className="mt-12">
-          {/* `/contact` now exists (spec 005). Repoint to `/contact/book-a-call`
-            once the Meetings route ships. */}
-          <Link
-            href="/contact"
+          <SmartLink
+            href={bookACall.url}
             className="inline-block rounded-md bg-accent-strong px-6 py-3 font-semibold text-white transition hover:opacity-90"
           >
-            Book a strategy call
-          </Link>
+            {bookACall.label}
+          </SmartLink>
         </div>
       </div>
     </Container>

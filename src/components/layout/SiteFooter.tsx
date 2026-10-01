@@ -45,12 +45,14 @@ export function SiteFooter() {
         <div className="grid gap-10 py-12 md:grid-cols-2 md:py-16 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Link href="/" aria-label={companyName} className="inline-block">
+              {/* The no-tagline wordmark: the tagline is set as text below,
+                  where it stays legible (DESIGN_SYSTEM §13.3). */}
               <Image
-                src="/brand/White SEQTEK Logo-Transparent.png"
+                src="/brand/White-logo-w-o-tagline-transparent-background.png"
                 alt={companyName}
                 width={580}
-                height={160}
-                className="h-14 w-auto"
+                height={118}
+                className="h-10 w-auto"
               />
             </Link>
             <p className="mt-4 max-w-xs text-small text-text-inverse opacity-80">{tagline}</p>
@@ -124,10 +126,8 @@ export function SiteFooter() {
                 {column.label}
               </h2>
               <ul className="mt-4 space-y-2">
-                {/* Keyed by label+url: several columns legitimately repeat a
-                    URL — Connect has /contact twice (Contact, Book a Call) and
-                    the four market links all park on the same interim page —
-                    so `url` alone is not unique and React warns. */}
+                {/* Keyed by label+url: a column can repeat a URL, so `url`
+                    alone is not unique and React warns. */}
                 {column.children?.map((item) => (
                   <li key={`${item.label}-${item.url}`}>
                     <SmartLink

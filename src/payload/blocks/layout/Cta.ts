@@ -125,7 +125,7 @@ export const Cta: Block = {
       ],
       admin: {
         description:
-          'Buttons link anywhere. A meeting adds a panel that opens a HubSpot scheduler. Newsletter and download put a HubSpot form in the section; a download hands over the file once the form is sent.',
+          'Buttons link anywhere. A meeting adds a panel that opens a booking page. Newsletter and download put a HubSpot form in the section; a download hands over the file once the form is sent.',
       },
     },
     {
@@ -148,10 +148,10 @@ export const Cta: Block = {
     {
       name: 'meetingUrl',
       type: 'text',
-      label: 'HubSpot scheduling link',
+      label: 'Scheduling link',
       ...requiredWhenAnd(
         (d) => actionOf(d) === 'meeting',
-        'A HubSpot meetings address, e.g. https://meetings.hubspot.com/name. The panel\'s "See available times" button opens it in a new tab.',
+        'A booking page address, e.g. a Google Calendar appointment page. The panel\'s "See available times" button opens it in a new tab.',
         httpsUrlValidate,
       ),
     },

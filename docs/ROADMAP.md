@@ -14,11 +14,9 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 - **IND-1 residual — industry copy and proof.** `industries.json` still carries placeholder bodies. Healthcare,
   Manufacturing, Aerospace and Retail have no case study, so their `cards` block renders nothing; each either gets a
   study (PROOF-1) or stays a draft.
-- **BOOK-1 — book a call.** Booking is the `cta` block's `meeting` action with a `meetingUrl` (`Cta.ts`). It needs a
-  real HubSpot meetings URL (portal config). Then repoint the header CTA and footer "Book a Call", which go to
-  `/contact` (`site-content.ts`), and fold the live `booking_complete` event into the P3 GTM matrix. The inline
-  calendar embed needs HubSpot's `MeetingsEmbedCode.js` and a CSP change (`INTEGRATIONS.md` §8); a button meets the
-  ask.
+- **BOOK-1 residual — `booking_complete` does not fire.** Booking is a Google Calendar appointment page (P5-53).
+  `BookingCompleteSeam` listens for HubSpot's `onMeetingBookSucceeded`, which a Google booking never sends, so
+  bookings are not measured on the site.
 - **PROOF-1 — case studies and attributable quotes.** Every capability claim links to proof, and there are fewer
   proofs than menu items. Status is in the private `WAITING_ON_PEOPLE.md`.
 - **AB-1 — an alternative "what we do" page.** A page that explains everything we do quickly without the full list,

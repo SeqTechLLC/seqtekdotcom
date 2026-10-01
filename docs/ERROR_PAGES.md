@@ -11,7 +11,8 @@ visitor.
 - **File:** `src/app/(frontend)/not-found.tsx`, rendered inside the site layout, so header and footer are
   present. Triggered by an unmatched path or a server component calling `notFound()`.
 - **Content:** "We could not find that page", three destination cards (Home, What We Do, Case studies) and
-  a "Book a strategy call" link to `/contact`, per the CTA hierarchy in CONTENT-REQUIREMENTS §9.
+  a "Book a Call" link to the booking page (`bookACall`, `site-content.ts`), per the CTA hierarchy in
+  CONTENT-REQUIREMENTS §9.
 - **Tracking:** `NotFoundTracker` pushes `{ event: 'page_not_found', path }` to the dataLayer. Frequent
   404s usually mean a missing redirect in `src/lib/redirects.ts`.
 

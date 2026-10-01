@@ -39,8 +39,6 @@ interface TrackedCtaLinkProps extends Omit<
   className?: string
   /** Forwarded to next/link; omit to keep the default prefetch behavior. */
   prefetch?: boolean
-  /** Match Button's external behavior (open in a new tab) when external. */
-  newTab?: boolean
   onClick?: (e: MouseEvent<HTMLAnchorElement>) => void
   children: ReactNode
 }
@@ -52,7 +50,6 @@ export function TrackedCtaLink({
   label,
   className,
   prefetch,
-  newTab,
   onClick,
   children,
   ...rest
@@ -87,13 +84,16 @@ export function TrackedCtaLink({
     )
   }
 
+  // An off-site link opens in a new tab, as SmartLink's does; mailto: and tel:
+  // hand off to an app and stay put.
+  const offSite = !href.startsWith('mailto:') && !href.startsWith('tel:')
   return (
     <a
       href={href}
       className={className}
       data-cta-id={ctaId}
       onClick={handleClick}
-      {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      {...(offSite ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
       {...rest}
     >
       {children}

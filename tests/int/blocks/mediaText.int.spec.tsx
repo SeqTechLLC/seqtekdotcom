@@ -48,6 +48,19 @@ describe('<MediaText />', () => {
     expect(container.querySelector('img')?.getAttribute('alt')).toBe(photo.alt)
   })
 
+  it('opens an off-site button in a new tab', () => {
+    const { getByRole } = render(
+      <MediaText
+        media={photo}
+        body={body}
+        cta={{ label: 'Book a Call', url: 'https://calendar.example.com/book' }}
+      />,
+    )
+    const book = getByRole('link', { name: 'Book a Call' })
+    expect(book.getAttribute('target')).toBe('_blank')
+    expect(book.getAttribute('rel')).toBe('noopener noreferrer')
+  })
+
   it('draws no button when the button is half filled in', () => {
     const { queryByRole } = render(
       <MediaText media={photo} body={body} cta={{ label: 'Orphan', url: null }} />,

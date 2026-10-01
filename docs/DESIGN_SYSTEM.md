@@ -283,7 +283,7 @@ automated check enforces it.
 | Black wordmark with tagline | `Black Logo-Transparent.png`                        | Light surfaces               |
 | Black wordmark, no tagline  | `Black-logo-w-o-tagline-transparent-background.png` | Light surfaces, below ~120px |
 | White wordmark with tagline | `White SEQTEK Logo-Transparent.png`                 | Dark surfaces and imagery    |
-| White wordmark, no tagline  | `White-logo-w-o-tagline-transparent-background.png` | Dark surfaces, below ~120px  |
+| White wordmark, no tagline  | `White-logo-w-o-tagline-transparent-background.png` | Dark surfaces; the footer    |
 
 The brand kit's Q-only mark is not among the supplied files. The site's favicon (`src/app/favicon.ico`,
 `src/app/icon.png`) is the Q mark extracted from the wordmark (PR #48).
@@ -291,7 +291,7 @@ The brand kit's Q-only mark is not among the supplied files. The site's favicon 
 ### 13.3 Tagline
 
 **(brand kit)** "Delivering Transformative Technologies Since 1999", always with "Since 1999". The footer sets it
-under the wordmark; it stays out of the header and anywhere the wordmark renders below ~120px.
+as text under the no-tagline wordmark; it stays out of the header and anywhere the wordmark renders below ~120px.
 
 ### 13.4 Clearspace and minimum size
 

@@ -82,7 +82,6 @@ export function Button({
           label={cta.label ?? (typeof children === 'string' ? children : undefined)}
           className={classes}
           prefetch={false}
-          newTab
           {...anchorProps}
         >
           {children}
@@ -92,9 +91,8 @@ export function Button({
 
     if (isInternalHref(href)) {
       // prefetch={false}: chrome/content links default to no-prefetch during the
-      // incomplete-route phase (see SmartLink for the rationale). The CTA now
-      // points at the live /contact, so the original 404-on-prefetch concern is
-      // resolved; left disabled for consistency — opt back in per-link if wanted.
+      // incomplete-route phase (see SmartLink for the rationale). Opt back in
+      // per-link if wanted.
       return (
         <Link href={href} prefetch={false} className={classes} {...anchorProps}>
           {children}

@@ -63,6 +63,23 @@ describe('hero variants', () => {
   })
 })
 
+describe('hero buttons', () => {
+  it('open an off-site link in a new tab and keep an internal one in place', () => {
+    const { getByRole } = render(
+      <Hero
+        variant="text-only"
+        headline="Plain words"
+        primaryCta={{ label: 'See our work', url: '/case-studies' }}
+        secondaryCta={{ label: 'Book a Call', url: 'https://calendar.example.com/book' }}
+      />,
+    )
+    const book = getByRole('link', { name: 'Book a Call' })
+    expect(book.getAttribute('target')).toBe('_blank')
+    expect(book.getAttribute('rel')).toBe('noopener noreferrer')
+    expect(getByRole('link', { name: 'See our work' }).getAttribute('target')).toBeNull()
+  })
+})
+
 describe('hero cover', () => {
   const cover = (props: Partial<Parameters<typeof Hero>[0]> = {}) =>
     render(

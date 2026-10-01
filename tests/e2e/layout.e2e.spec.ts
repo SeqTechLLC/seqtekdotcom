@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test'
 import { mkdir } from 'fs/promises'
 import path from 'path'
 
+import { bookACall } from '../../src/lib/site-content'
+
 const SCREENSHOTS_DIR = path.resolve('tests/e2e/screenshots')
 
 test.beforeAll(async () => {
@@ -39,11 +41,10 @@ test.describe('Site chrome — desktop viewport', () => {
       await expect(primaryNav.getByRole('link', { name: label })).toBeVisible()
     }
 
-    // Desktop primary CTA links to the contact form (the dedicated booking
-    // route is not built yet; see CONTENT_NEEDS §4).
+    // Desktop primary CTA opens the booking page.
     const ctaButton = header.getByRole('link', { name: /book a call/i })
     await expect(ctaButton).toBeVisible()
-    await expect(ctaButton).toHaveAttribute('href', '/contact')
+    await expect(ctaButton).toHaveAttribute('href', bookACall.url)
 
     // Footer is rendered with all THREE navigation columns + legal links. The
     // services column is gone on purpose: the services menu lives in the
