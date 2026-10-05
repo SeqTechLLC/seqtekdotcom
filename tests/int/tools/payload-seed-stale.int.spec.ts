@@ -125,6 +125,16 @@ describe('stale-file check', () => {
     expect(fresh.reads[0]).toContain('/api/globals/homepage?depth=0&draft=true')
   })
 
+  it('writes a global that has never been saved, as on an empty database', async () => {
+    const raw = { global: 'homepage', basedOn: EXPORTED, data: {} }
+    const empty = server(null)
+    const result = await upsertSpec(client(empty.fetchFn), spec(raw), raw.data, {
+      status: 'published',
+      dryRun: false,
+    })
+    expect(result).toMatchObject({ operation: 'global', updatedAt: WRITTEN })
+  })
+
   it('rejects a basedOn that is not a timestamp', () => {
     const v = validateSpecs({ ...PAGE, basedOn: 'yesterday' })
     expect(v.ok).toBe(false)

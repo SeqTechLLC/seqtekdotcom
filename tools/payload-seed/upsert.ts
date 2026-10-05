@@ -95,12 +95,10 @@ export async function upsertSpec(
     const target = `global:${spec.global}`
     if (spec.basedOn !== undefined && !opts.force && client.hasToken) {
       const live = await client.getGlobal(spec.global, { draft: true })
-      assertNotStale(
-        target,
-        spec.basedOn,
-        typeof live.updatedAt === 'string' ? live.updatedAt : null,
-        opts.force,
-      )
+      // A global never saved has no `updatedAt`: like a missing document, nothing to overwrite.
+      if (typeof live.updatedAt === 'string') {
+        assertNotStale(target, spec.basedOn, live.updatedAt, opts.force)
+      }
     }
     if (opts.dryRun) return { target, operation: 'dry-run' }
     const { updatedAt } = await client.updateGlobal(spec.global, writeData, { draft: asDraft })
