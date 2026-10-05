@@ -7,13 +7,16 @@
  * HubSpot reports advertising consent, through a second
  * `addPrivacyConsentListener` alongside the consent bridge's (HubSpot supports
  * several). The mapping is the bridge's: `consent.allowed` (notice-only) or the
- * `advertisement` category. `window.lintrk` exists only after that, so
- * `LinkedInPageViews` is a no-op until consent.
+ * `advertisement` category. Every call records the decision in
+ * `window.__linkedInAdsConsent`, and `LinkedInPageViews` sends page views only
+ * while it is true, so a later deny stops them. A loaded script can't be
+ * unloaded.
  */
 
 declare global {
   interface Window {
     lintrk?: ((action: string, data?: Record<string, unknown>) => void) & { q?: unknown[] }
+    __linkedInAdsConsent?: boolean
   }
 }
 
@@ -27,6 +30,7 @@ window._linkedin_data_partner_ids.push(window._linkedin_partner_id);
 var _hsp = (window._hsp = window._hsp || []);
 _hsp.push(['addPrivacyConsentListener', function(consent){
   var ads = !!(consent && (consent.allowed || (consent.categories && consent.categories.advertisement)));
+  window.__linkedInAdsConsent = ads;
   if (!ads || window.lintrk) return;
   window.lintrk = function(a, b){ window.lintrk.q.push([a, b]); };
   window.lintrk.q = [];
