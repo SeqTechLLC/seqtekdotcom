@@ -1,6 +1,6 @@
 /**
  * Thin, generic Payload REST client shared by the repo's content tools
- * (case-study importer, photo ingest, Leonardo image push, generic seeder).
+ * (photo ingest, Leonardo image push, the seeder and the exporter).
  *
  * Authenticates with `Authorization: JWT <token>` — the token is the caller's
  * own `payload-token` session JWT from a logged-in /admin session. Payload's
@@ -354,6 +354,60 @@ export class PayloadRestClient {
       page += 1
     }
     return out
+  }
+
+  /**
+   * Every document in a collection at `depth=0`, oldest first. With a token
+   * this includes drafts: an admin session bypasses `publishedOrAuthed`, and
+   * `draft=false` reads the main table, so a published document comes back as
+   * published even when a newer draft is pending.
+   */
+  async listDocs(collection: string): Promise<Array<Record<string, unknown>>> {
+    const out: Array<Record<string, unknown>> = []
+    for (let page = 1; ; page += 1) {
+      const params = new URLSearchParams({
+        limit: '100',
+        page: String(page),
+        depth: '0',
+        draft: 'false',
+        sort: 'createdAt',
+      })
+      const res = await this.fetchFn(`${this.baseUrl}/api/${collection}?${params.toString()}`, {
+        headers: this.authHeaders(),
+      })
+      if (!res.ok) throw await this.toError(res, `list ${collection}`)
+      const json = await this.parseJson<{
+        docs?: Array<Record<string, unknown>>
+        hasNextPage?: boolean
+      }>(res, `list ${collection}`)
+      out.push(...(json.docs ?? []))
+      if (!json.hasNextPage) return out
+    }
+  }
+
+  /** A global at `depth=0`, as published. */
+  async getGlobal(slug: string): Promise<Record<string, unknown>> {
+    const params = new URLSearchParams({ depth: '0', draft: 'false' })
+    const res = await this.fetchFn(`${this.baseUrl}/api/globals/${slug}?${params.toString()}`, {
+      headers: this.authHeaders(),
+    })
+    if (!res.ok) throw await this.toError(res, `read global ${slug}`)
+    return this.parseJson<Record<string, unknown>>(res, `read global ${slug}`)
+  }
+
+  /**
+   * A media file's bytes. Media reads are public, so no JWT is sent; the gate
+   * cookie is, but only to the target's own origin.
+   */
+  async downloadFile(url: string): Promise<Uint8Array> {
+    const target = new URL(url, this.baseUrl)
+    const headers: Record<string, string> = {}
+    if (this.cookie && target.origin === new URL(this.baseUrl).origin) {
+      headers.Cookie = this.cookie
+    }
+    const res = await this.fetchFn(target.toString(), { headers })
+    if (!res.ok) throw await this.toError(res, `download ${target.pathname}`)
+    return new Uint8Array(await res.arrayBuffer())
   }
 
   /** Read an image from disk or URL into bytes, validating type + size. */
