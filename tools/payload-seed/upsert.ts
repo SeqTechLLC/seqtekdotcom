@@ -17,6 +17,8 @@ export interface UpsertOptions {
   status: SeedStatus
   /** Report intended op without any write. */
   dryRun: boolean
+  /** Write even when the document changed after the spec's `basedOn`. */
+  force?: boolean
 }
 
 export interface UpsertResult {
@@ -25,6 +27,35 @@ export interface UpsertResult {
   id?: DocId
   /** Dry-run only: what the real run would do. `unknown` without a token. */
   wouldBe?: 'create' | 'update' | 'unknown'
+  /** The written document's new `updatedAt`, the next `basedOn`. */
+  updatedAt?: string | null
+}
+
+/** The document changed after the spec was exported (ADR 0014). */
+export class StaleSpecError extends Error {
+  constructor(target: string, basedOn: string, current: string | null) {
+    super(
+      `${target} changed after this file was exported (based on ${basedOn}, now ${current ?? 'unknown'}; ` +
+        `a pending draft counts). Export it again, or pass --force to overwrite.`,
+    )
+    this.name = 'StaleSpecError'
+  }
+}
+
+/**
+ * Throws when the live document moved on from `basedOn`. The read uses
+ * `draft: true`, whose `updatedAt` is the latest version's, so an unpublished
+ * draft saved since the export is caught too.
+ */
+function assertNotStale(
+  target: string,
+  basedOn: string | undefined,
+  current: string | null,
+  force: boolean | undefined,
+): void {
+  if (basedOn === undefined || force) return
+  if (current !== null && Date.parse(current) === Date.parse(basedOn)) return
+  throw new StaleSpecError(target, basedOn, current)
 }
 
 export async function upsertSpec(
@@ -62,9 +93,18 @@ export async function upsertSpec(
 
   if (isGlobalSpec(spec)) {
     const target = `global:${spec.global}`
+    if (spec.basedOn !== undefined && !opts.force && client.hasToken) {
+      const live = await client.getGlobal(spec.global, { draft: true })
+      assertNotStale(
+        target,
+        spec.basedOn,
+        typeof live.updatedAt === 'string' ? live.updatedAt : null,
+        opts.force,
+      )
+    }
     if (opts.dryRun) return { target, operation: 'dry-run' }
-    await client.updateGlobal(spec.global, writeData, { draft: asDraft })
-    return { target, operation: 'global' }
+    const { updatedAt } = await client.updateGlobal(spec.global, writeData, { draft: asDraft })
+    return { target, operation: 'global', updatedAt }
   }
 
   const identityValue = String(data[spec.identity])
@@ -73,27 +113,31 @@ export async function upsertSpec(
   // The find runs in dry-run too, when there is a token to run it with. It is
   // a read, it changes nothing, and without it a dry-run could not say whether
   // a spec would CREATE or UPDATE — which is most of what a rehearsal is for.
-  const existingId =
+  const existing =
     opts.dryRun && !client.hasToken
       ? null
-      : await client.findIdByField(spec.collection, spec.identity, identityValue, { draft: true })
+      : await client.findDocByField(spec.collection, spec.identity, identityValue, { draft: true })
+  // A document that does not exist yet is a create, whatever the file was based on.
+  if (existing !== null) assertNotStale(target, spec.basedOn, existing.updatedAt, opts.force)
 
   if (opts.dryRun) {
     return {
       target,
       operation: 'dry-run',
-      wouldBe: client.hasToken ? (existingId !== null ? 'update' : 'create') : 'unknown',
+      wouldBe: client.hasToken ? (existing !== null ? 'update' : 'create') : 'unknown',
     }
   }
-  if (existingId !== null) {
-    const id = await client.updateDoc(spec.collection, existingId, writeData, { draft: asDraft })
-    return { target, operation: 'update', id }
+  if (existing !== null) {
+    const { id, updatedAt } = await client.updateDoc(spec.collection, existing.id, writeData, {
+      draft: asDraft,
+    })
+    return { target, operation: 'update', id, updatedAt }
   }
   // A new document that is not going live is created as a draft, so it skips
   // the validation a publish runs. That lets a restore's first pass create every
   // document while the references a later pass fills in are still missing.
-  const id = await client.createDoc(spec.collection, writeData, {
+  const { id, updatedAt } = await client.createDoc(spec.collection, writeData, {
     draft: asDraft || opts.status === 'unpublished',
   })
-  return { target, operation: 'create', id }
+  return { target, operation: 'create', id, updatedAt }
 }

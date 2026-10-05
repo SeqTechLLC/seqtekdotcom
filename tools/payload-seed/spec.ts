@@ -20,6 +20,12 @@
  */
 export type SeedStatus = 'published' | 'draft' | 'unpublished'
 
+/**
+ * `basedOn` is the document's `updatedAt` when `tools/payload-export` read it.
+ * The seeder refuses to overwrite a document that has changed since (ADR 0014),
+ * and writes the new `updatedAt` back after loading. Hand-written specs omit it.
+ */
+
 /** Upsert one collection document, idempotent by `data[identity]`. */
 export interface CollectionSpec {
   collection: string
@@ -27,6 +33,7 @@ export interface CollectionSpec {
   identity: string
   data: Record<string, unknown>
   status: SeedStatus
+  basedOn?: string
 }
 
 /** Update one global. */
@@ -34,6 +41,7 @@ export interface GlobalSpec {
   global: string
   data: Record<string, unknown>
   status: SeedStatus
+  basedOn?: string
 }
 
 export type SeedSpec = CollectionSpec | GlobalSpec
@@ -51,6 +59,13 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+function parseBasedOn(value: unknown, path: string, errors: string[]): string | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value === 'string' && !Number.isNaN(Date.parse(value))) return value
+  errors.push(`${path}.basedOn must be an ISO timestamp`)
+  return undefined
 }
 
 function parseStatus(value: unknown, path: string, errors: string[]): SeedStatus {
@@ -82,7 +97,7 @@ function editDistance(a: string, b: string): number {
   return d[a.length][b.length]
 }
 
-const KNOWN_KEYS = ['collection', 'global', 'identity', 'data', 'status'] as const
+const KNOWN_KEYS = ['collection', 'global', 'identity', 'data', 'status', 'basedOn'] as const
 
 /**
  * Only `status` and `identity` are checked, and only at distance 1.
@@ -144,8 +159,9 @@ function validateOne(raw: unknown, path: string, errors: string[]): SeedSpec | n
       errors.push(`${path} has both "global" and "collection" — use exactly one`)
     }
     const status = parseStatus(raw.status, path, errors)
+    const basedOn = parseBasedOn(raw.basedOn, path, errors)
     if (!isNonEmptyString(raw.global) || !isObject(raw.data)) return null
-    return { global: raw.global, data: raw.data, status }
+    return { global: raw.global, data: raw.data, status, ...(basedOn ? { basedOn } : {}) }
   }
 
   if (!isNonEmptyString(raw.collection)) {
@@ -169,8 +185,15 @@ function validateOne(raw: unknown, path: string, errors: string[]): SeedSpec | n
     }
   }
   const status = parseStatus(raw.status, path, errors)
+  const basedOn = parseBasedOn(raw.basedOn, path, errors)
   if (!isNonEmptyString(raw.collection) || !isObject(raw.data)) return null
-  return { collection: raw.collection, identity, data: raw.data, status }
+  return {
+    collection: raw.collection,
+    identity,
+    data: raw.data,
+    status,
+    ...(basedOn ? { basedOn } : {}),
+  }
 }
 
 /**

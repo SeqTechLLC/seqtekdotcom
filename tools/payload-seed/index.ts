@@ -11,7 +11,7 @@
  */
 
 import { config as loadEnv } from 'dotenv'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -44,6 +44,7 @@ interface CliArgs {
   allowMissingRefs: boolean
   json: boolean
   checkOrphans: boolean
+  force: boolean
   help: boolean
   unknown: string[]
 }
@@ -57,6 +58,7 @@ function parseArgs(argv: readonly string[], env: NodeJS.ProcessEnv): CliArgs {
     allowMissingRefs: false,
     json: false,
     checkOrphans: false,
+    force: false,
     help: false,
     unknown: [],
   }
@@ -66,6 +68,7 @@ function parseArgs(argv: readonly string[], env: NodeJS.ProcessEnv): CliArgs {
     else if (arg === '--allow-missing-refs') out.allowMissingRefs = true
     else if (arg === '--json') out.json = true
     else if (arg === '--check-orphans') out.checkOrphans = true
+    else if (arg === '--force') out.force = true
     else if (arg === '--help' || arg === '-h') out.help = true
     else if (arg.startsWith('--base-url=')) out.baseUrl = arg.slice('--base-url='.length)
     else if (arg.startsWith('--')) out.unknown.push(arg)
@@ -99,6 +102,9 @@ Flags:
                        collections that this file does not mention. The seeder
                        only ever writes what it is given, so a doc removed from
                        a file stays live — this makes that visible.
+  --force              Overwrite a document that changed after the file's
+                       "basedOn" (an exported file records it; see
+                       tools/payload-export). Without it such a spec errors.
   --help, -h           Show this help and exit 0.
 
 Environment:
@@ -267,6 +273,9 @@ async function main(): Promise<number> {
   // problem; a run of timeouts is the same thing wearing a different error.
   let consecutiveTimeouts = 0
   const TIMEOUT_ABORT_THRESHOLD = 3
+  // Spec index → the `updatedAt` its write produced, written back as `basedOn`
+  // so the same file can be edited and loaded again.
+  const rebased = new Map<number, string>()
 
   // Sequential: an earlier spec's created doc must be findable by a later $ref.
   for (let i = 0; i < validated.value.length; i++) {
@@ -287,7 +296,14 @@ async function main(): Promise<number> {
         log,
         warn,
       })
-      const result = await upsertSpec(client, spec, data, { status, dryRun: args.dryRun })
+      const result = await upsertSpec(client, spec, data, {
+        status,
+        dryRun: args.dryRun,
+        force: args.force,
+      })
+      if (spec.basedOn !== undefined && typeof result.updatedAt === 'string') {
+        rebased.set(i, result.updatedAt)
+      }
 
       switch (result.operation) {
         case 'create':
@@ -352,6 +368,13 @@ async function main(): Promise<number> {
         break
       }
     }
+  }
+
+  if (rebased.size > 0) {
+    const items = (Array.isArray(raw) ? raw : [raw]) as Array<Record<string, unknown>>
+    for (const [i, updatedAt] of rebased) items[i].basedOn = updatedAt
+    await writeFile(args.file, `${JSON.stringify(raw, null, 2)}\n`)
+    log(`basedOn updated for ${rebased.size} spec(s) in ${args.file}`)
   }
 
   // Orphans: published documents this file does NOT mention. The seeder cannot

@@ -104,12 +104,22 @@ export class PayloadRestError extends Error {
 type DocId = string | number
 
 interface FindResponse {
-  docs?: Array<{ id: DocId }>
+  docs?: Array<{ id: DocId; updatedAt?: unknown }>
 }
 
 interface WriteResponse {
-  doc?: { id: DocId }
+  doc?: { id: DocId; updatedAt?: unknown }
+  /** A global's write answers with `result` rather than `doc`. */
+  result?: { updatedAt?: unknown }
 }
+
+/** A document's id and the `updatedAt` the read or write reported. */
+export interface DocVersion {
+  id: DocId
+  updatedAt: string | null
+}
+
+const updatedAtOf = (value: unknown): string | null => (typeof value === 'string' ? value : null)
 
 /**
  * Wrap a fetch so every request carries a deadline, and an expired one reports
@@ -279,6 +289,19 @@ export class PayloadRestClient {
     value: string,
     opts: FindOptions,
   ): Promise<DocId | null> {
+    return (await this.findDocByField(collection, field, value, opts))?.id ?? null
+  }
+
+  /**
+   * Like `findIdByField`, with the document's `updatedAt`. With `draft: true`
+   * that is the latest version's, so a pending draft shows as a change.
+   */
+  async findDocByField(
+    collection: string,
+    field: string,
+    value: string,
+    opts: FindOptions,
+  ): Promise<DocVersion | null> {
     const params = new URLSearchParams({
       [`where[${field}][equals]`]: value,
       limit: '1',
@@ -290,7 +313,8 @@ export class PayloadRestClient {
     })
     if (!res.ok) throw await this.toError(res, `find ${collection} by ${field}`)
     const json = await this.parseJson<FindResponse>(res, `find ${collection} by ${field}`)
-    return json.docs && json.docs.length > 0 ? json.docs[0].id : null
+    const doc = json.docs?.[0]
+    return doc ? { id: doc.id, updatedAt: updatedAtOf(doc.updatedAt) } : null
   }
 
   /**
@@ -385,9 +409,12 @@ export class PayloadRestClient {
     }
   }
 
-  /** A global at `depth=0`, as published. */
-  async getGlobal(slug: string): Promise<Record<string, unknown>> {
-    const params = new URLSearchParams({ depth: '0', draft: 'false' })
+  /** A global at `depth=0`: as published, or its latest version with `draft: true`. */
+  async getGlobal(
+    slug: string,
+    opts: FindOptions = { draft: false },
+  ): Promise<Record<string, unknown>> {
+    const params = new URLSearchParams({ depth: '0', draft: opts.draft ? 'true' : 'false' })
     const res = await this.fetchFn(`${this.baseUrl}/api/globals/${slug}?${params.toString()}`, {
       headers: this.authHeaders(),
     })
@@ -466,7 +493,7 @@ export class PayloadRestClient {
     collection: string,
     data: Record<string, unknown>,
     opts: WriteOptions,
-  ): Promise<DocId> {
+  ): Promise<DocVersion> {
     const url = `${this.baseUrl}/api/${collection}${opts.draft ? '?draft=true' : ''}`
     const res = await this.fetchFn(url, {
       method: 'POST',
@@ -477,7 +504,7 @@ export class PayloadRestClient {
     const json = await this.parseJson<WriteResponse>(res, `create ${collection}`)
     if (json.doc?.id === undefined)
       throw new PayloadRestError(`create ${collection} returned no document id`)
-    return json.doc.id
+    return { id: json.doc.id, updatedAt: updatedAtOf(json.doc.updatedAt) }
   }
 
   async updateDoc(
@@ -485,7 +512,7 @@ export class PayloadRestClient {
     id: DocId,
     data: Record<string, unknown>,
     opts: WriteOptions,
-  ): Promise<DocId> {
+  ): Promise<DocVersion> {
     const url = `${this.baseUrl}/api/${collection}/${id}${opts.draft ? '?draft=true' : ''}`
     const res = await this.fetchFn(url, {
       method: 'PATCH',
@@ -494,7 +521,7 @@ export class PayloadRestClient {
     })
     if (!res.ok) throw await this.toError(res, `update ${collection}`)
     const json = await this.parseJson<WriteResponse>(res, `update ${collection}`)
-    return json.doc?.id ?? id
+    return { id: json.doc?.id ?? id, updatedAt: updatedAtOf(json.doc?.updatedAt) }
   }
 
   /** Update a Payload global by slug (POST /api/globals/:slug). */
@@ -502,7 +529,7 @@ export class PayloadRestClient {
     slug: string,
     data: Record<string, unknown>,
     opts: WriteOptions,
-  ): Promise<void> {
+  ): Promise<{ updatedAt: string | null }> {
     const url = `${this.baseUrl}/api/globals/${slug}${opts.draft ? '?draft=true' : ''}`
     const res = await this.fetchFn(url, {
       method: 'POST',
@@ -510,11 +537,11 @@ export class PayloadRestClient {
       body: JSON.stringify(data),
     })
     if (!res.ok) throw await this.toError(res, `update global ${slug}`)
-    // Globals are the one write whose caller needs no id back, so nothing else
-    // would ever touch the body — parse it anyway. A gated environment answers
-    // the unauthenticated POST with a 302 that `fetch` follows to a 200 HTML
-    // sign-in page, which passes `res.ok` and would otherwise report a silent
-    // success for a write that never happened.
-    await this.parseJson<WriteResponse>(res, `update global ${slug}`)
+    // Parsed even when the caller ignores the result. A gated environment
+    // answers the unauthenticated POST with a 302 that `fetch` follows to a 200
+    // HTML sign-in page, which passes `res.ok` and would otherwise report a
+    // silent success for a write that never happened.
+    const json = await this.parseJson<WriteResponse>(res, `update global ${slug}`)
+    return { updatedAt: updatedAtOf(json.result?.updatedAt ?? json.doc?.updatedAt) }
   }
 }

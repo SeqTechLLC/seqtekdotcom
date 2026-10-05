@@ -156,7 +156,7 @@ async function resolveRef(
     // `_status` goes FIRST so an author who sets it deliberately in
     // `createIfMissing` still wins. Spreading it last silently overrode an
     // explicit value, which is the behaviour this whole change is against.
-    const id = await client.createDoc(
+    const { id } = await client.createDoc(
       collection,
       { _status: 'published', ...raw.createIfMissing },
       { draft: false },

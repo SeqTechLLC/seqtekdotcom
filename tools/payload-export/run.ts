@@ -75,6 +75,10 @@ export function loadOrder(collections: readonly CollectionConfig[]): CollectionC
 const statusOf = (doc: Record<string, unknown>): 'published' | 'unpublished' =>
   doc._status === 'draft' ? 'unpublished' : 'published'
 
+/** The seeder refuses to overwrite a document that changed after this (ADR 0014). */
+const basedOnOf = (doc: Record<string, unknown>): { basedOn?: string } =>
+  typeof doc.updatedAt === 'string' ? { basedOn: doc.updatedAt } : {}
+
 async function sizeOnDisk(file: string): Promise<number | null> {
   try {
     return (await stat(file)).size
@@ -172,6 +176,7 @@ export async function exportContent(opts: ExportOptions): Promise<ExportSummary>
           collection: entity.slug,
           ...(identity === 'slug' ? {} : { identity }),
           status: statusOf(doc),
+          ...basedOnOf(doc),
           data: exportFields(entity.collection.fields, doc, ctx, `${entity.slug}:${key}`),
         })
       }
@@ -184,6 +189,7 @@ export async function exportContent(opts: ExportOptions): Promise<ExportSummary>
           {
             global: entity.slug,
             status: statusOf(doc),
+            ...basedOnOf(doc),
             data: exportFields(entity.global.fields, doc, ctx, `global:${entity.slug}`),
           },
         ],

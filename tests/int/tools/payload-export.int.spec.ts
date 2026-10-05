@@ -321,7 +321,14 @@ describe('exportContent', () => {
     testimonials: [],
     posts: [
       { id: 9, slug: 'zeta', title: 'Z', hero: 1, _status: 'draft' },
-      { id: 8, slug: 'alpha', title: 'A', tags: [5], _status: 'published' },
+      {
+        id: 8,
+        slug: 'alpha',
+        title: 'A',
+        tags: [5],
+        _status: 'published',
+        updatedAt: '2026-10-05T15:00:00.000Z',
+      },
     ],
     media: [
       {
@@ -386,6 +393,7 @@ describe('exportContent', () => {
       {
         collection: 'posts',
         status: 'published',
+        basedOn: '2026-10-05T15:00:00.000Z',
         data: {
           title: 'A',
           slug: 'alpha',
