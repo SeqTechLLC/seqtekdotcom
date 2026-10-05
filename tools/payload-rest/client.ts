@@ -1,6 +1,6 @@
 /**
  * Thin, generic Payload REST client shared by the repo's content tools
- * (case-study importer, photo ingest, Leonardo image push, generic seeder).
+ * (photo ingest, Leonardo image push, the seeder and the exporter).
  *
  * Authenticates with `Authorization: JWT <token>` — the token is the caller's
  * own `payload-token` session JWT from a logged-in /admin session. Payload's
@@ -104,12 +104,22 @@ export class PayloadRestError extends Error {
 type DocId = string | number
 
 interface FindResponse {
-  docs?: Array<{ id: DocId }>
+  docs?: Array<{ id: DocId; updatedAt?: unknown }>
 }
 
 interface WriteResponse {
-  doc?: { id: DocId }
+  doc?: { id: DocId; updatedAt?: unknown }
+  /** A global's write answers with `result` rather than `doc`. */
+  result?: { updatedAt?: unknown }
 }
+
+/** A document's id and the `updatedAt` the read or write reported. */
+export interface DocVersion {
+  id: DocId
+  updatedAt: string | null
+}
+
+const updatedAtOf = (value: unknown): string | null => (typeof value === 'string' ? value : null)
 
 /**
  * Wrap a fetch so every request carries a deadline, and an expired one reports
@@ -279,6 +289,19 @@ export class PayloadRestClient {
     value: string,
     opts: FindOptions,
   ): Promise<DocId | null> {
+    return (await this.findDocByField(collection, field, value, opts))?.id ?? null
+  }
+
+  /**
+   * Like `findIdByField`, with the document's `updatedAt`. With `draft: true`
+   * that is the latest version's, so a pending draft shows as a change.
+   */
+  async findDocByField(
+    collection: string,
+    field: string,
+    value: string,
+    opts: FindOptions,
+  ): Promise<DocVersion | null> {
     const params = new URLSearchParams({
       [`where[${field}][equals]`]: value,
       limit: '1',
@@ -290,7 +313,8 @@ export class PayloadRestClient {
     })
     if (!res.ok) throw await this.toError(res, `find ${collection} by ${field}`)
     const json = await this.parseJson<FindResponse>(res, `find ${collection} by ${field}`)
-    return json.docs && json.docs.length > 0 ? json.docs[0].id : null
+    const doc = json.docs?.[0]
+    return doc ? { id: doc.id, updatedAt: updatedAtOf(doc.updatedAt) } : null
   }
 
   /**
@@ -356,6 +380,68 @@ export class PayloadRestClient {
     return out
   }
 
+  /**
+   * Every document in a collection at `depth=0`, oldest first. With a token
+   * this includes never-published documents, since an admin session bypasses
+   * `publishedOrAuthed`. `draft: false` reads the main table: a published
+   * document as published, but a never-published one as its FIRST save, because
+   * a draft save writes only the versions table. `draft: true` reads each
+   * document's latest version.
+   */
+  async listDocs(
+    collection: string,
+    opts: FindOptions = { draft: false },
+  ): Promise<Array<Record<string, unknown>>> {
+    const out: Array<Record<string, unknown>> = []
+    for (let page = 1; ; page += 1) {
+      const params = new URLSearchParams({
+        limit: '100',
+        page: String(page),
+        depth: '0',
+        draft: opts.draft ? 'true' : 'false',
+        sort: 'createdAt',
+      })
+      const res = await this.fetchFn(`${this.baseUrl}/api/${collection}?${params.toString()}`, {
+        headers: this.authHeaders(),
+      })
+      if (!res.ok) throw await this.toError(res, `list ${collection}`)
+      const json = await this.parseJson<{
+        docs?: Array<Record<string, unknown>>
+        hasNextPage?: boolean
+      }>(res, `list ${collection}`)
+      out.push(...(json.docs ?? []))
+      if (!json.hasNextPage) return out
+    }
+  }
+
+  /** A global at `depth=0`: as published, or its latest version with `draft: true`. */
+  async getGlobal(
+    slug: string,
+    opts: FindOptions = { draft: false },
+  ): Promise<Record<string, unknown>> {
+    const params = new URLSearchParams({ depth: '0', draft: opts.draft ? 'true' : 'false' })
+    const res = await this.fetchFn(`${this.baseUrl}/api/globals/${slug}?${params.toString()}`, {
+      headers: this.authHeaders(),
+    })
+    if (!res.ok) throw await this.toError(res, `read global ${slug}`)
+    return this.parseJson<Record<string, unknown>>(res, `read global ${slug}`)
+  }
+
+  /**
+   * A media file's bytes. Media reads are public, so no JWT is sent; the gate
+   * cookie is, but only to the target's own origin.
+   */
+  async downloadFile(url: string): Promise<Uint8Array> {
+    const target = new URL(url, this.baseUrl)
+    const headers: Record<string, string> = {}
+    if (this.cookie && target.origin === new URL(this.baseUrl).origin) {
+      headers.Cookie = this.cookie
+    }
+    const res = await this.fetchFn(target.toString(), { headers })
+    if (!res.ok) throw await this.toError(res, `download ${target.pathname}`)
+    return new Uint8Array(await res.arrayBuffer())
+  }
+
   /** Read an image from disk or URL into bytes, validating type + size. */
   async resolveImage(ref: ImageRef): Promise<ResolvedImage> {
     let data: Uint8Array
@@ -412,7 +498,7 @@ export class PayloadRestClient {
     collection: string,
     data: Record<string, unknown>,
     opts: WriteOptions,
-  ): Promise<DocId> {
+  ): Promise<DocVersion> {
     const url = `${this.baseUrl}/api/${collection}${opts.draft ? '?draft=true' : ''}`
     const res = await this.fetchFn(url, {
       method: 'POST',
@@ -423,7 +509,7 @@ export class PayloadRestClient {
     const json = await this.parseJson<WriteResponse>(res, `create ${collection}`)
     if (json.doc?.id === undefined)
       throw new PayloadRestError(`create ${collection} returned no document id`)
-    return json.doc.id
+    return { id: json.doc.id, updatedAt: updatedAtOf(json.doc.updatedAt) }
   }
 
   async updateDoc(
@@ -431,7 +517,7 @@ export class PayloadRestClient {
     id: DocId,
     data: Record<string, unknown>,
     opts: WriteOptions,
-  ): Promise<DocId> {
+  ): Promise<DocVersion> {
     const url = `${this.baseUrl}/api/${collection}/${id}${opts.draft ? '?draft=true' : ''}`
     const res = await this.fetchFn(url, {
       method: 'PATCH',
@@ -440,7 +526,7 @@ export class PayloadRestClient {
     })
     if (!res.ok) throw await this.toError(res, `update ${collection}`)
     const json = await this.parseJson<WriteResponse>(res, `update ${collection}`)
-    return json.doc?.id ?? id
+    return { id: json.doc?.id ?? id, updatedAt: updatedAtOf(json.doc?.updatedAt) }
   }
 
   /** Update a Payload global by slug (POST /api/globals/:slug). */
@@ -448,7 +534,7 @@ export class PayloadRestClient {
     slug: string,
     data: Record<string, unknown>,
     opts: WriteOptions,
-  ): Promise<void> {
+  ): Promise<{ updatedAt: string | null }> {
     const url = `${this.baseUrl}/api/globals/${slug}${opts.draft ? '?draft=true' : ''}`
     const res = await this.fetchFn(url, {
       method: 'POST',
@@ -456,11 +542,11 @@ export class PayloadRestClient {
       body: JSON.stringify(data),
     })
     if (!res.ok) throw await this.toError(res, `update global ${slug}`)
-    // Globals are the one write whose caller needs no id back, so nothing else
-    // would ever touch the body — parse it anyway. A gated environment answers
-    // the unauthenticated POST with a 302 that `fetch` follows to a 200 HTML
-    // sign-in page, which passes `res.ok` and would otherwise report a silent
-    // success for a write that never happened.
-    await this.parseJson<WriteResponse>(res, `update global ${slug}`)
+    // Parsed even when the caller ignores the result. A gated environment
+    // answers the unauthenticated POST with a 302 that `fetch` follows to a 200
+    // HTML sign-in page, which passes `res.ok` and would otherwise report a
+    // silent success for a write that never happened.
+    const json = await this.parseJson<WriteResponse>(res, `update global ${slug}`)
+    return { updatedAt: updatedAtOf(json.result?.updatedAt ?? json.doc?.updatedAt) }
   }
 }

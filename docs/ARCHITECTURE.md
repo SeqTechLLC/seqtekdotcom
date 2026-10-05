@@ -113,7 +113,7 @@ src/
   proxy.ts            CSP nonce, maintenance mode, 410 for retired feeds
   payload.config.ts
 infra/                AWS CDK (§13)
-tools/                payload-seed, payload-rest, ingest-photos, link-sweep, and other subdir tooling
+tools/                payload-seed, payload-export, payload-rest, ingest-photos, link-sweep, and other tooling
 tests/                Vitest (int) and Playwright (e2e, a11y, visual)
 docs/                 this doc, ROADMAP, contracts/, decisions/
 ```

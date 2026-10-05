@@ -172,3 +172,7 @@ them still resolve. Detail lives in the PRs.
   navs stay code-owned (ADR 0010, amendment 2026-09-16).
 - **P5-53** (#189, 2026-10-01) — Booking is a Google Calendar appointment page, chosen over HubSpot Meetings on
   2026-08-31. The header, footer, 404 and `/team` link to it as "Book a Call" (`bookACall`, `site-content.ts`).
+- **P5-54** (#191, 2026-10-05) — `tools/payload-export` writes a database back out as seeder files and media (ADR 0014).
+  A local export, restored into an empty database and exported again, came back identical.
+- **P5-55** — CM-2 (#191, 2026-10-05) — The seeder refuses to overwrite a document that changed after the export its file
+  came from (`basedOn`), unless `--force` (ADR 0014).

@@ -65,3 +65,4 @@ holds; the history is in git and `PROJECT_HISTORY.md`.
 | [0011](0011-block-previews-committed-rasters.md) | Block picker previews are committed, derived rasters            | Accepted | 2026-08-26 |
 | [0012](0012-one-shell-geometry.md)               | One source of truth for shell geometry                          | Accepted | 2026-09-05 |
 | [0013](0013-thirteen-blocks.md)                  | Thirteen blocks, modelled on WordPress core                     | Accepted | 2026-09-24 |
+| [0014](0014-tooling-works-from-live-database.md) | After launch, content tooling works from the live database      | Accepted | 2026-10-05 |

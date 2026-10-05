@@ -28,6 +28,9 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 - **A-1 residual — editor onboarding.** The marketing editor's first sign-in (it provisions an `editor`) and a short
   CMS quickstart.
+- **IMG-1 — WebP masters.** Payload re-encodes an uploaded WebP at quality 80, so a WebP master loses quality on
+  every upload and every restore. `ingest-photos` now writes JPEG or PNG; the WebP media already loaded (most
+  headshots, heroes and panels) need their originals uploaded in their place, where the originals exist.
 - **HYG-1 — data hygiene.** Case studies have no `ogImage`; seed `locations` if the regional pages are built.
 - **UI-3 — a skeleton `defaultValue` is publishable placeholder copy.** Payload applies a `defaultValue` on read as
   well as on create, and five collections default `layout` to a skeleton (`skeletonDefaultValue.int.spec.ts`). The
@@ -62,6 +65,12 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 - **Schema-drift CI guard.** No CI job runs migrations. Fail CI when `payload migrate:create` would produce a diff
   against what is on disk, and note "schema change → `migrate:create` before merge" in `PAYLOAD_DEVELOPMENT.md`.
 
+**Content**
+
+- **CM-1 — the database becomes the content master (ADR 0014).** At cutover: the final load from the content JSON,
+  then `tools/payload-export` against production, that export loaded twice into an empty local database, and
+  `visual:capture` compared with the lane. From then on, tooling starts from an export.
+
 **GTM (container config, not code)**
 
 - Build the LinkedIn Insight Tag and Google Ads conversion tag in `GTM-54KBJ2Z3` (require `ad_storage`; fire on page
@@ -92,6 +101,13 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 ## P4 — After the cutover
 
+- **AI-1 — AI-assisted small edits in `/admin` through `@payloadcms/plugin-mcp`** (ADR 0014). Find, create and
+  update on the content collections, no delete; a hook forces every MCP write to a draft; the `compose-page` rules
+  ship as an MCP prompt.
+  The plugin adds an API-key collection, so it needs a migration, and Payload v4 changes its config and auth. It is
+  unreachable while the lane is gated.
+- **CM-3 — scheduled export.** Run `tools/payload-export` against production on a schedule and commit the result to
+  the content repo. Decide where it runs.
 - **SEC-1 — a security and compliance page.** In G2's survey (n=1,002), 83% of companies require a security or
   privacy assessment to purchase. We have no such page.
 - **INERT-1 residual.** `industries.description`, `relevantServices` and `clientLogos`, and every `locations` group,

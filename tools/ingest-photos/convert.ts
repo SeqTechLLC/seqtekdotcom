@@ -17,7 +17,11 @@ export const MAX_BYTES = 25 * 1024 * 1024
 /** Longest edge the site ever serves (the `wide` breakpoint in Media.ts). */
 export const MAX_EDGE = 2400
 const WEBP_QUALITY = 82
-const JPEG_QUALITY = 82
+/**
+ * High, because this is the master: Payload makes the WebP and JPEG sizes the
+ * site serves from it, and stores a JPEG or PNG master untouched.
+ */
+const JPEG_QUALITY = 90
 
 /** Not in the collection's allowed MIME list — must be re-encoded. */
 const CONVERT_EXT = new Set(['heic', 'heif', 'jfif'])
@@ -51,17 +55,21 @@ export interface ConvertOptions {
 }
 
 /**
- * Default (`keep`): PNGs stay lossless PNG (screenshots/graphics), everything
- * else → WebP. An explicit `jpeg`/`webp` forces that format for every file.
+ * Default (`keep`): PNGs and anything with transparency become lossless PNG
+ * (screenshots, graphics, logos); everything else becomes JPEG. Never WebP: Payload
+ * re-encodes an uploaded WebP at quality 80 (`generateFileData`, which treats it as
+ * possibly animated), so a WebP master loses quality on every upload. An explicit
+ * `jpeg`/`webp` forces that format for every file.
  */
 function targetFormat(
   ext: string,
+  hasAlpha: boolean,
   override: OutputFormat = 'keep',
 ): { format: OutFormat; outExt: string } {
   if (override === 'jpeg') return { format: 'jpeg', outExt: 'jpg' }
   if (override === 'webp') return { format: 'webp', outExt: 'webp' }
-  if (ext === 'png') return { format: 'png', outExt: 'png' }
-  return { format: 'webp', outExt: 'webp' }
+  if (ext === 'png' || hasAlpha) return { format: 'png', outExt: 'png' }
+  return { format: 'jpeg', outExt: 'jpg' }
 }
 
 function mimeForExt(ext: string): string {
@@ -135,7 +143,9 @@ export async function convertFile(
   const overCap = file.sizeBytes > MAX_BYTES
   const maxEdge = opts.maxEdge ?? MAX_EDGE
   const forced = opts.outFormat && opts.outFormat !== 'keep'
-  const { format, outExt } = targetFormat(file.ext, opts.outFormat)
+  // Only a WebP source can carry transparency into a non-PNG target.
+  const hasAlpha = file.ext === 'webp' && (await sharp(input).metadata()).hasAlpha === true
+  const { format, outExt } = targetFormat(file.ext, hasAlpha, opts.outFormat)
 
   let buffer: Buffer
   let disposition: Disposition
@@ -155,7 +165,7 @@ export async function convertFile(
     const startEdge = mode === 'all' || overCap || forced ? maxEdge : null
     const source = HEIC_EXT.has(file.ext) ? await decodeHeic(input) : input
     buffer = await encodeUnderCap(source, format, startEdge)
-    disposition = mustConvert ? 'convert-webp' : overCap ? 'downscale' : 'normalize'
+    disposition = mustConvert ? 'convert' : overCap ? 'downscale' : 'normalize'
     finalExt = outExt
     mimeType = format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp'
   }
