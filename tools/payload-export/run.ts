@@ -197,16 +197,21 @@ export async function exportContent(opts: ExportOptions): Promise<ExportSummary>
         published._status === 'draft'
           ? await client.getGlobal(entity.slug, { draft: true })
           : published
+      // A global never saved reads as its field defaults, `_status: 'draft'` included;
+      // loaded elsewhere, that would take a live global down.
+      const saved = typeof doc.updatedAt === 'string'
       outputs.push({
         file,
-        specs: [
-          {
-            global: entity.slug,
-            status: statusOf(doc),
-            ...basedOnOf(doc),
-            data: exportFields(entity.global.fields, doc, ctx, `global:${entity.slug}`),
-          },
-        ],
+        specs: saved
+          ? [
+              {
+                global: entity.slug,
+                status: statusOf(doc),
+                ...basedOnOf(doc),
+                data: exportFields(entity.global.fields, doc, ctx, `global:${entity.slug}`),
+              },
+            ]
+          : [],
       })
     }
   }

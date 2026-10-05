@@ -367,7 +367,8 @@ describe('exportContent', () => {
       if (u.pathname.startsWith('/api/media/file/')) return new Response(new Uint8Array([1, 2, 3]))
       const json = (body: unknown): Response =>
         new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
-      if (u.pathname === '/api/globals/home') return json({ id: 1, hero: 1, _status: 'published' })
+      if (u.pathname === '/api/globals/home')
+        return json({ id: 1, hero: 1, _status: 'published', updatedAt: '2026-10-05T15:00:00.000Z' })
       const key = u.pathname.replace('/api/', '')
       const docs = u.searchParams.get('draft') === 'true' ? LATEST[key] : DOCS[key]
       return json({ docs: docs ?? [], hasNextPage: false })
@@ -446,6 +447,18 @@ describe('exportContent', () => {
     await writeFile(path.join(out, '02-testimonials.json'), '[]')
     await run(server().fetchFn, ['posts', 'testimonials'])
     expect((await readdir(out)).filter((f) => f.endsWith('.json'))).toEqual(['03-posts.json'])
+  })
+
+  it('writes no file for a global that has never been saved', async () => {
+    const { fetchFn } = server()
+    const unsaved: FetchFn = async (input, init) =>
+      String(input).includes('/api/globals/home')
+        ? new Response(JSON.stringify({ _status: 'draft' }), {
+            headers: { 'content-type': 'application/json' },
+          })
+        : fetchFn(input, init)
+    await run(unsaved)
+    expect((await readdir(out)).filter((f) => f.endsWith('.json'))).not.toContain('04-home.json')
   })
 
   it('refuses an unknown name', async () => {

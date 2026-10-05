@@ -14,7 +14,8 @@ Bulk-loads the SEQTEK photo archive into the Payload **Media** collection
   - **`--mode=minimal`**: roadmap-literal — convert HEIC/jfif to JPEG, downscale
     only the files over the 25 MB cap, pass everything else through full-res
     with original EXIF.
-- Never writes WebP unless forced. The output is the master: Payload makes the
+- `--mode=all` never writes WebP unless forced; `--mode=minimal` passes an
+  under-cap WebP through as WebP. The output is the master: Payload makes the
   WebP and JPEG sizes the site serves from it, and re-encodes an uploaded WebP,
   so a WebP master would lose quality on every upload.
 - Dedups by **sha256 of the converted bytes**: identical photos in multiple
