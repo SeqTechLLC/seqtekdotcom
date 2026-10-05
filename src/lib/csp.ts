@@ -49,6 +49,10 @@ const HUBSPOT_FRAME = [
 
 const HUBSPOT_IMG = ['*.hubspot.com', '*.hsforms.net'] as const
 
+// insight.min.js itself loads under 'strict-dynamic'; its beacons go to
+// px/px4/dc.ads.linkedin.com.
+const LINKEDIN_BEACON = ['*.ads.linkedin.com'] as const
+
 // Privacy-respecting video embeds (workshop proof sections, the `embed`
 // block). youtube-nocookie defers cookies until playback; Vimeo's player
 // host is its only embed origin. Iframes only — no script/img surface.
@@ -76,7 +80,7 @@ export function buildCspPolicy({
   const isAdmin = pathname.startsWith('/admin')
   const isEnforced = mode === 'enforce'
 
-  const imgSrc = ["'self'", 'data:', ...HUBSPOT_IMG]
+  const imgSrc = ["'self'", 'data:', ...HUBSPOT_IMG, ...LINKEDIN_BEACON]
   if (mediaHost) imgSrc.push(mediaHost)
 
   const directives: Record<string, string[]> = {
@@ -90,6 +94,7 @@ export function buildCspPolicy({
       ...HUBSPOT_CONNECT,
       '*.googletagmanager.com',
       '*.google-analytics.com',
+      ...LINKEDIN_BEACON,
     ],
     'frame-src': ["'self'", ...HUBSPOT_FRAME, ...VIDEO_FRAME],
     'frame-ancestors': ["'none'"],
