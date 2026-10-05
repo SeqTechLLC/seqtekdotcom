@@ -28,7 +28,7 @@ database holds the content and the JSON is a working copy of it:
 - Most changes are made by tooling. `tools/payload-export` pulls the current content as seeder files, AI-assisted
   tooling generates or edits them, and `tools/payload-seed` loads them back.
 - The marketing editor makes small changes in `/admin`. Tooling starts from a fresh export, so it does not overwrite
-  them, and the seeder refuses a file older than the document it would overwrite (ROADMAP CM-2).
+  them, and the seeder refuses a file older than the document it would overwrite.
 - Loading with `--draft` stages a change for review in `/admin` instead of publishing it.
 - Exports are committed to the content repo.
 

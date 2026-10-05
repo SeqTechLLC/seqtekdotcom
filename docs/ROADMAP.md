@@ -67,9 +67,6 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 - **CM-1 — the database becomes the content master (ADR 0014).** At cutover: the final load from the content JSON,
   then `tools/payload-export` against production, that export loaded twice into an empty local database, and
   `visual:capture` compared with the lane. From then on, tooling starts from an export.
-- **CM-2 — the seeder refuses a stale file** (ADR 0014). The export records each document's `updatedAt`; the seeder
-  refuses to overwrite a document changed since, unless forced. This is what lets tooling publish directly without
-  overwriting an `/admin` edit. Needed before CM-1.
 
 **GTM (container config, not code)**
 

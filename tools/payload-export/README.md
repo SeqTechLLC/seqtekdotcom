@@ -29,6 +29,8 @@ Getting the token and cookie is the same as for the seeder.
   `<out-dir>/media/`; a file already there at the same size is not fetched again.
 - `$file` paths are relative to the directory the export ran from. Seed from the same directory.
 - A published document exports as `published`; one that is not live exports as `unpublished`.
+- Each spec carries `basedOn`, the document's `updatedAt`. The seeder refuses to overwrite a document that has
+  changed since, so an `/admin` edit made after the export is not lost.
 - Left out: ids, timestamps, array and block row ids, users, and media nothing references. `$file` carries alt text
   only, so a media focal point resets to the centre.
 
@@ -52,6 +54,6 @@ for f in out/*.json; do npm run payload:seed -- "$f" --draft --allow-missing-ref
 for f in out/*.json; do npm run payload:seed -- "$f"; done
 ```
 
-Locally, start from an empty `media/`: Payload renames an upload whose filename is already on disk, and the second
+Loading rewrites `basedOn` in the files. Locally, start from an empty `media/`: Payload renames an upload whose filename is already on disk, and the second
 pass then uploads everything again. Payload re-encodes an uploaded WebP, so a restored WebP is not byte-identical to
 the export; PNG and JPEG are.

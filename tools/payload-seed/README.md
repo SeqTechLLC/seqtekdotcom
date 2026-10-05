@@ -37,6 +37,7 @@ IMPORT_TOKEN=<session-jwt> npm run payload:seed ./seed.json \
 | `--allow-missing-refs` | Downgrade an unresolved non-omittable `$ref` from error to warn+drop. |
 | `--json`               | One JSON result object on stdout; human log moves to stderr.          |
 | `--check-orphans`      | After writing, warn about published docs this file does not mention.  |
+| `--force`              | Overwrite a document that changed after the spec's `basedOn`.         |
 | `IMPORT_TOKEN`         | Your `/admin` session JWT. Required unless `--dry-run`. Never logged. |
 | `IMPORT_BASE_URL`      | Alternative to `--base-url`.                                          |
 | `IMPORT_COOKIE`        | Raw `Cookie` header for a target behind an auth proxy. Unset locally. |
@@ -282,6 +283,14 @@ clear message. Prefix a key with `_` to mark it deliberate.
 The net is deliberately narrow — one edit (counting a transposition as one, so
 `stauts` is caught), against two targets. `date`, `meta`, `state`, `entity`,
 `notes`, `title` and `tags` all pass.
+
+## Stale files: `basedOn`
+
+A spec written by [`payload-export`](../payload-export/README.md) carries `basedOn`, the document's `updatedAt`
+when it was exported. Before writing, the seeder reads the document's latest version and refuses the spec if it
+has changed since, which includes an unpublished draft saved in `/admin` (ADR 0014). `--force` overwrites anyway.
+A document that does not exist is created. After a write the seeder puts the new `updatedAt` back into the file,
+so the same file can be edited and loaded again. A spec without `basedOn` is not checked.
 
 ## What it will not do: retire
 
