@@ -118,7 +118,7 @@ code, never copy or media. **Tool is committed; data is gitignored.**
   `IMPORT_COOKIE`). `--dry-run` previews. Keep the token out of the repo. The shared REST client is
   `tools/payload-rest/client.ts`. **Don't commit remote-push scripts** — the runner is generic; the data is not.
 - **The export** — `tools/payload-export` (`npm run payload:export -- <dir>`) writes a database back out as
-  seeder files plus their media. After cutover the database is the content master (ADR 0014).
+  seeder files plus their media. After cutover, tooling exports before it loads (ADR 0014).
 - **The data** — `docs/content-drafts/` is a symlink to the private sibling repo `website-content`
   (`~/projects/seqtek-internal/website-content`), gitignored here because this repo is public. One JSON file per
   collection or global. Its README covers load order, known defects and how to recreate the symlink. The tool

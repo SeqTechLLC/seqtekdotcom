@@ -66,7 +66,10 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 - **CM-1 — the database becomes the content master (ADR 0014).** At cutover: the final load from the content JSON,
   then `tools/payload-export` against production, that export loaded twice into an empty local database, and
-  `visual:capture` compared with the lane. From then on, reload an existing document only with `--draft`.
+  `visual:capture` compared with the lane. From then on, tooling starts from an export.
+- **CM-2 — the seeder refuses a stale file** (ADR 0014). The export records each document's `updatedAt`; the seeder
+  refuses to overwrite a document changed since, unless forced. This is what lets tooling publish directly without
+  overwriting an `/admin` edit. Needed before CM-1.
 
 **GTM (container config, not code)**
 
@@ -98,12 +101,11 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 ## P4 — After the cutover
 
-- **AI-1 — AI-assisted editing through `@payloadcms/plugin-mcp`** (ADR 0014). Find, create and update on the content
-  collections, no delete; a hook forces every MCP write to a draft; the `compose-page` rules ship as an MCP prompt.
+- **AI-1 — AI-assisted small edits in `/admin` through `@payloadcms/plugin-mcp`** (ADR 0014). Find, create and
+  update on the content collections, no delete; a hook forces every MCP write to a draft; the `compose-page` rules
+  ship as an MCP prompt.
   The plugin adds an API-key collection, so it needs a migration, and Payload v4 changes its config and auth. It is
   unreachable while the lane is gated.
-- **CM-2 — the seeder refuses to publish over an existing document** without an explicit flag, so a stale file
-  cannot overwrite an `/admin` edit (ADR 0014).
 - **CM-3 — scheduled export.** Run `tools/payload-export` against production on a schedule and commit the result to
   the content repo. Decide where it runs.
 - **SEC-1 — a security and compliance page.** In G2's survey (n=1,002), 83% of companies require a security or

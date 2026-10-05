@@ -2,7 +2,7 @@
 
 Reads a Payload database over REST and writes it back out as request files for
 [`payload-seed`](../payload-seed/README.md), with the media they reference. After cutover the database is the
-content master and this is how its content comes back out as JSON (ADR 0014).
+content master, and tooling starts from an export of it (ADR 0014).
 
 ## Usage
 
@@ -32,13 +32,14 @@ Getting the token and cookie is the same as for the seeder.
 - Left out: ids, timestamps, array and block row ids, users, and media nothing references. `$file` carries alt text
   only, so a media focal point resets to the centre.
 
-## Editing through JSON
+## Changing content with tooling
 
-Export the collection, edit it, load it as a draft, and publish from `/admin` after checking the version diff:
+Export what you are changing, generate or edit it, and load it back. Add `--draft` to review the change in `/admin`
+before it goes live.
 
 ```bash
 npm run payload:export -- out --only=services
-npm run payload:seed -- out/07-services.json --draft
+npm run payload:seed -- out/07-services.json
 ```
 
 ## Restoring an empty database
