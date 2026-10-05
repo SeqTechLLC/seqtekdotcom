@@ -50,18 +50,19 @@ holds; the history is in git and `PROJECT_HISTORY.md`.
 
 ## Index
 
-| #                                                | Title                                                           | Status   | Date       |
-| ------------------------------------------------ | --------------------------------------------------------------- | -------- | ---------- |
-| [0001](0001-tailwind-v3.md)                      | Use Tailwind CSS v3, not v4 or plain CSS                        | Accepted | 2026-05-14 |
-| [0002](0002-auth-strategy.md)                    | Google Workspace SSO for `/admin` through custom OAuth handlers | Accepted | 2026-05-14 |
-| [0003](0003-sequoyah-brand-narrative.md)         | Carry the Sequoyah heritage as brand depth                      | Accepted | 2026-05-20 |
-| [0004](0004-postgres-18.md)                      | PostgreSQL 18                                                   | Accepted | 2026-05-29 |
-| [0005](0005-isr-unstable-cache-tag-parity.md)    | ISR data caching via `unstable_cache` with tag parity           | Accepted | 2026-06-01 |
-| [0006](0006-hubspot-consent-bridge.md)           | HubSpot consent bridge on `addPrivacyConsentListener`           | Accepted | 2026-06-03 |
-| [0007](0007-read-timeout.md)                     | Server-read timeout: `Promise.race` as the outermost layer      | Accepted | 2026-06-05 |
-| [0008](0008-media-cloudfront-serving.md)         | Serve Payload media from CloudFront `/media/*`                  | Accepted | 2026-06-09 |
-| [0009](0009-block-first-composition.md)          | Two content primitives: block-composed Pages and Posts          | Accepted | 2026-06-14 |
-| [0010](0010-site-chrome-code-owned.md)           | Site chrome is code-owned; the header menu is a collection      | Accepted | 2026-08-21 |
-| [0011](0011-block-previews-committed-rasters.md) | Block picker previews are committed, derived rasters            | Accepted | 2026-08-26 |
-| [0012](0012-one-shell-geometry.md)               | One source of truth for shell geometry                          | Accepted | 2026-09-05 |
-| [0013](0013-thirteen-blocks.md)                  | Thirteen blocks, modelled on WordPress core                     | Accepted | 2026-09-24 |
+| #                                                       | Title                                                           | Status   | Date       |
+| ------------------------------------------------------- | --------------------------------------------------------------- | -------- | ---------- |
+| [0001](0001-tailwind-v3.md)                             | Use Tailwind CSS v3, not v4 or plain CSS                        | Accepted | 2026-05-14 |
+| [0002](0002-auth-strategy.md)                           | Google Workspace SSO for `/admin` through custom OAuth handlers | Accepted | 2026-05-14 |
+| [0003](0003-sequoyah-brand-narrative.md)                | Carry the Sequoyah heritage as brand depth                      | Accepted | 2026-05-20 |
+| [0004](0004-postgres-18.md)                             | PostgreSQL 18                                                   | Accepted | 2026-05-29 |
+| [0005](0005-isr-unstable-cache-tag-parity.md)           | ISR data caching via `unstable_cache` with tag parity           | Accepted | 2026-06-01 |
+| [0006](0006-hubspot-consent-bridge.md)                  | HubSpot consent bridge on `addPrivacyConsentListener`           | Accepted | 2026-06-03 |
+| [0007](0007-read-timeout.md)                            | Server-read timeout: `Promise.race` as the outermost layer      | Accepted | 2026-06-05 |
+| [0008](0008-media-cloudfront-serving.md)                | Serve Payload media from CloudFront `/media/*`                  | Accepted | 2026-06-09 |
+| [0009](0009-block-first-composition.md)                 | Two content primitives: block-composed Pages and Posts          | Accepted | 2026-06-14 |
+| [0010](0010-site-chrome-code-owned.md)                  | Site chrome is code-owned; the header menu is a collection      | Accepted | 2026-08-21 |
+| [0011](0011-block-previews-committed-rasters.md)        | Block picker previews are committed, derived rasters            | Accepted | 2026-08-26 |
+| [0012](0012-one-shell-geometry.md)                      | One source of truth for shell geometry                          | Accepted | 2026-09-05 |
+| [0013](0013-thirteen-blocks.md)                         | Thirteen blocks, modelled on WordPress core                     | Accepted | 2026-09-24 |
+| [0014](0014-database-is-content-master-after-launch.md) | After launch the database is the content master                 | Accepted | 2026-10-05 |
