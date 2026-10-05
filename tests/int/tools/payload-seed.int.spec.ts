@@ -278,7 +278,7 @@ describe('upsertSpec — collection', () => {
     expect(patch?.url).not.toContain('draft=true')
   })
 
-  it('creates an unpublished document when none exists', async () => {
+  it('creates an unpublished document as a draft when none exists', async () => {
     const { fetchFn, calls } = createFakeFetch()
     const client = makeClient(fetchFn)
     const spec = validateSpecs({
@@ -295,7 +295,7 @@ describe('upsertSpec — collection', () => {
     )
     const post = calls.find((c) => c.method === 'POST' && c.url.includes('/api/teamMembers'))
     expect((JSON.parse(post?.body as string) as Record<string, unknown>)._status).toBe('draft')
-    expect(post?.url).not.toContain('draft=true')
+    expect(post?.url).toContain('draft=true')
   })
 
   it('dry-run performs no writes', async () => {

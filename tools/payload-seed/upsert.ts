@@ -89,6 +89,11 @@ export async function upsertSpec(
     const id = await client.updateDoc(spec.collection, existingId, writeData, { draft: asDraft })
     return { target, operation: 'update', id }
   }
-  const id = await client.createDoc(spec.collection, writeData, { draft: asDraft })
+  // A new document that is not going live is created as a draft, so it skips
+  // the validation a publish runs. That lets a restore's first pass create every
+  // document while the references a later pass fills in are still missing.
+  const id = await client.createDoc(spec.collection, writeData, {
+    draft: asDraft || opts.status === 'unpublished',
+  })
   return { target, operation: 'create', id }
 }

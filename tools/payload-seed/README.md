@@ -302,7 +302,8 @@ To take a document down, say so:
 ```
 
 `unpublished` writes `_status: 'draft'` — the document and its version history
-survive, so it can be re-published. Pass **`--check-orphans`** to have the run
+survive, so it can be re-published. A document that does not exist yet is created
+as a draft, which skips the validation a publish runs. Pass **`--check-orphans`** to have the run
 warn about published documents in the touched collections that the file does not
 mention. It is opt-in because seeding one document on purpose would otherwise
 report every other document as an orphan. Documents already retired
