@@ -36,7 +36,8 @@ export class StaleSpecError extends Error {
   constructor(target: string, basedOn: string, current: string | null) {
     super(
       `${target} changed after this file was exported (based on ${basedOn}, now ${current ?? 'unknown'}; ` +
-        `a pending draft counts). Export it again, or pass --force to overwrite.`,
+        `a pending draft counts). Export it again. If that is refused too, a draft is waiting in ` +
+        `/admin: publish or discard it first. --force overwrites the document, draft included.`,
     )
     this.name = 'StaleSpecError'
   }

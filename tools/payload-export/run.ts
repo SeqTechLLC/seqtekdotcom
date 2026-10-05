@@ -106,7 +106,17 @@ export async function exportContent(opts: ExportOptions): Promise<ExportSummary>
   const docs = new Map<string, Array<Record<string, unknown>>>()
   const identities = new Map<string, Map<string, string>>()
   for (const c of collections) {
-    const list = await client.listDocs(c.slug)
+    let list = await client.listDocs(c.slug)
+    // A document that is not live is exported as its latest version: its main
+    // row holds only its first save. A live one is exported as published.
+    if (list.some((doc) => doc._status === 'draft')) {
+      const latest = new Map(
+        (await client.listDocs(c.slug, { draft: true })).map((d) => [String(d.id), d]),
+      )
+      list = list.map((doc) =>
+        doc._status === 'draft' ? (latest.get(String(doc.id)) ?? doc) : doc,
+      )
+    }
     docs.set(c.slug, list)
     const field = identityOf(c.slug)
     const ids = new Map<string, string>()
@@ -182,7 +192,11 @@ export async function exportContent(opts: ExportOptions): Promise<ExportSummary>
       }
       outputs.push({ file, specs })
     } else if (entity.global) {
-      const doc = await client.getGlobal(entity.slug)
+      const published = await client.getGlobal(entity.slug)
+      const doc =
+        published._status === 'draft'
+          ? await client.getGlobal(entity.slug, { draft: true })
+          : published
       outputs.push({
         file,
         specs: [

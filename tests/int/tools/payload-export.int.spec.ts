@@ -341,6 +341,21 @@ describe('exportContent', () => {
     ],
   }
 
+  // A draft save writes only the versions table, so the never-published `zeta`
+  // has moved on from its main row; `draft=true` reads that latest version.
+  const LATEST: Record<string, Array<Record<string, unknown>>> = {
+    posts: [
+      {
+        id: 9,
+        slug: 'zeta',
+        title: 'Z, second draft',
+        hero: 1,
+        _status: 'draft',
+        updatedAt: '2026-10-05T16:00:00.000Z',
+      },
+    ],
+  }
+
   function server(): {
     fetchFn: FetchFn
     requests: Array<{ url: string; headers: Record<string, string> }>
@@ -353,7 +368,9 @@ describe('exportContent', () => {
       const json = (body: unknown): Response =>
         new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
       if (u.pathname === '/api/globals/home') return json({ id: 1, hero: 1, _status: 'published' })
-      return json({ docs: DOCS[u.pathname.replace('/api/', '')] ?? [], hasNextPage: false })
+      const key = u.pathname.replace('/api/', '')
+      const docs = u.searchParams.get('draft') === 'true' ? LATEST[key] : DOCS[key]
+      return json({ docs: docs ?? [], hasNextPage: false })
     }
     return { fetchFn, requests }
   }
@@ -403,7 +420,12 @@ describe('exportContent', () => {
       {
         collection: 'posts',
         status: 'unpublished',
-        data: { title: 'Z', slug: 'zeta', hero: { $file: { path: 'media/a.webp', alt: 'A' } } },
+        basedOn: '2026-10-05T16:00:00.000Z',
+        data: {
+          title: 'Z, second draft',
+          slug: 'zeta',
+          hero: { $file: { path: 'media/a.webp', alt: 'A' } },
+        },
       },
     ])
     expect(await readFile(path.join(out, 'media/a.webp'))).toEqual(Buffer.from([1, 2, 3]))

@@ -20,12 +20,6 @@
  */
 export type SeedStatus = 'published' | 'draft' | 'unpublished'
 
-/**
- * `basedOn` is the document's `updatedAt` when `tools/payload-export` read it.
- * The seeder refuses to overwrite a document that has changed since (ADR 0014),
- * and writes the new `updatedAt` back after loading. Hand-written specs omit it.
- */
-
 /** Upsert one collection document, idempotent by `data[identity]`. */
 export interface CollectionSpec {
   collection: string
@@ -33,6 +27,11 @@ export interface CollectionSpec {
   identity: string
   data: Record<string, unknown>
   status: SeedStatus
+  /**
+   * The document's `updatedAt` when `tools/payload-export` read it. The seeder
+   * refuses to overwrite a document that has changed since (ADR 0014), and
+   * writes the new `updatedAt` back after loading. Hand-written specs omit it.
+   */
   basedOn?: string
 }
 
@@ -41,6 +40,7 @@ export interface GlobalSpec {
   global: string
   data: Record<string, unknown>
   status: SeedStatus
+  /** As on `CollectionSpec`. */
   basedOn?: string
 }
 

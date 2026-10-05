@@ -382,18 +382,23 @@ export class PayloadRestClient {
 
   /**
    * Every document in a collection at `depth=0`, oldest first. With a token
-   * this includes drafts: an admin session bypasses `publishedOrAuthed`, and
-   * `draft=false` reads the main table, so a published document comes back as
-   * published even when a newer draft is pending.
+   * this includes never-published documents, since an admin session bypasses
+   * `publishedOrAuthed`. `draft: false` reads the main table: a published
+   * document as published, but a never-published one as its FIRST save, because
+   * a draft save writes only the versions table. `draft: true` reads each
+   * document's latest version.
    */
-  async listDocs(collection: string): Promise<Array<Record<string, unknown>>> {
+  async listDocs(
+    collection: string,
+    opts: FindOptions = { draft: false },
+  ): Promise<Array<Record<string, unknown>>> {
     const out: Array<Record<string, unknown>> = []
     for (let page = 1; ; page += 1) {
       const params = new URLSearchParams({
         limit: '100',
         page: String(page),
         depth: '0',
-        draft: 'false',
+        draft: opts.draft ? 'true' : 'false',
         sort: 'createdAt',
       })
       const res = await this.fetchFn(`${this.baseUrl}/api/${collection}?${params.toString()}`, {
