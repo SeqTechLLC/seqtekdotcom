@@ -5,14 +5,14 @@
 
 /**
  * `all` (default): normalize every image — auto-orient, cap the long edge at
- * 2400px, strip EXIF/GPS, HEIC/jfif → WebP, PNG stays PNG. `minimal`: only the
- * roadmap-literal scope — convert HEIC/jfif → WebP, downscale just the files
+ * 2400px, strip EXIF/GPS, photos → JPEG, PNG stays PNG. `minimal`: only the
+ * roadmap-literal scope — convert HEIC/jfif → JPEG, downscale just the files
  * over the 25 MB cap, pass everything else through full-res with EXIF intact.
  */
 export type NormalizeMode = 'all' | 'minimal'
 
 /** What `convert` did to a source file — for the run summary. */
-export type Disposition = 'passthrough' | 'convert-webp' | 'downscale' | 'normalize'
+export type Disposition = 'passthrough' | 'convert' | 'downscale' | 'normalize'
 
 /** A discovered source image, relative to the ingest root. */
 export interface SourceFile {

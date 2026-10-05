@@ -9,11 +9,14 @@ Bulk-loads the SEQTEK photo archive into the Payload **Media** collection
 - Normalizes each image with the `sharp` already bundled with Payload (compiled
   with libheif — reads HEIC natively, **no system install needed**):
   - **`--mode=all`** (default): auto-orient, cap the long edge at 2400px (the
-    largest size the site serves), strip EXIF/GPS, HEIC/jfif → WebP, PNG stays
-    lossless PNG. Shrinks the footprint from ~7.4 GB to well under 1 GB.
-  - **`--mode=minimal`**: roadmap-literal — convert HEIC/jfif → WebP, downscale
+    largest size the site serves), strip EXIF/GPS. Photos become JPEG at quality
+    90; PNGs, and WebPs with transparency, become lossless PNG.
+  - **`--mode=minimal`**: roadmap-literal — convert HEIC/jfif to JPEG, downscale
     only the files over the 25 MB cap, pass everything else through full-res
     with original EXIF.
+- Never writes WebP unless forced. The output is the master: Payload makes the
+  WebP and JPEG sizes the site serves from it, and re-encodes an uploaded WebP,
+  so a WebP master would lose quality on every upload.
 - Dedups by **sha256 of the converted bytes**: identical photos in multiple
   folders collapse to one Media row, and re-runs skip already-uploaded content
   (the idempotency the case-study importer lacks — ROADMAP **T-1**).

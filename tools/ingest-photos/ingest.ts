@@ -46,7 +46,7 @@ export interface IngestOptions {
 /**
  * On-disk output path that mirrors the source structure: keeps folder names
  * verbatim (spaces and all, for easy browsing), slugifies only the basename,
- * and swaps the extension (`2022/IMG_2901.jpg` → `2022/img-2901.webp`).
+ * and swaps the extension (`2022/IMG_2901.HEIC` → `2022/img-2901.jpg`).
  */
 export function diskOutPath(relPath: string, outExt: string): string {
   const dir = dirname(relPath)

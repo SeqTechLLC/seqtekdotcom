@@ -88,11 +88,30 @@ describe('convertFile', () => {
     expect(meta.exif).toBeUndefined()
   })
 
-  it('all mode: JPEG is re-encoded to WebP', async () => {
+  it('all mode: a photo becomes a JPEG master, never WebP', async () => {
     const file = await writeFixture('General/photo.jpg', await solidJpeg())
     const out = await convertFile(file, 'all')
-    expect(out.mimeType).toBe('image/webp')
-    expect((await sharp(out.buffer).metadata()).format).toBe('webp')
+    expect(out.mimeType).toBe('image/jpeg')
+    expect(out.filename).toBe('general-photo.jpg')
+    expect((await sharp(out.buffer).metadata()).format).toBe('jpeg')
+  })
+
+  it('all mode: an opaque WebP becomes JPEG, a transparent one PNG', async () => {
+    const opaque = await sharp({
+      create: { width: 32, height: 32, channels: 3, background: { r: 1, g: 2, b: 3 } },
+    })
+      .webp()
+      .toBuffer()
+    const clear = await sharp({
+      create: { width: 32, height: 32, channels: 4, background: { r: 1, g: 2, b: 3, alpha: 0.5 } },
+    })
+      .webp()
+      .toBuffer()
+    const a = await convertFile(await writeFixture('General/opaque.webp', opaque), 'all')
+    const b = await convertFile(await writeFixture('General/logo.webp', clear), 'all')
+    expect(a.mimeType).toBe('image/jpeg')
+    expect(b.mimeType).toBe('image/png')
+    expect((await sharp(b.buffer).metadata()).hasAlpha).toBe(true)
   })
 
   it('minimal mode: an allowed under-cap file passes through untouched', async () => {
@@ -103,11 +122,11 @@ describe('convertFile', () => {
     expect(out.buffer.equals(png)).toBe(true)
   })
 
-  it('minimal mode: a .jfif is converted to WebP', async () => {
+  it('minimal mode: a .jfif is converted to JPEG', async () => {
     const file = await writeFixture('General/legacy.jfif', await solidJpeg())
     const out = await convertFile(file, 'minimal')
-    expect(out.disposition).toBe('convert-webp')
-    expect(out.mimeType).toBe('image/webp')
+    expect(out.disposition).toBe('convert')
+    expect(out.mimeType).toBe('image/jpeg')
   })
 })
 
@@ -187,8 +206,8 @@ describe('runIngest dedup + idempotency', () => {
 
     expect(summary.uploaded).toBe(2)
     expect(summary.errors).toHaveLength(0)
-    // Folder structure preserved; JPEG → WebP, PNG stays PNG.
-    expect(existsSync(path.join(outDir, '2022', 'img-2901.webp'))).toBe(true)
+    // Folder structure preserved; JPEG stays JPEG, PNG stays PNG.
+    expect(existsSync(path.join(outDir, '2022', 'img-2901.jpg'))).toBe(true)
     expect(existsSync(path.join(outDir, 'Headshots', 'jane.png'))).toBe(true)
 
     await rm(dir, { recursive: true, force: true })

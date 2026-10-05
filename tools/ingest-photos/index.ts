@@ -74,7 +74,7 @@ const USAGE = `Usage: npx tsx tools/ingest-photos/index.ts [flags]
 
 Flags:
   --dry-run            Classify + convert in memory, print the plan, write nothing.
-  --mode=all|minimal   all (default): cap 2400px, strip EXIF, HEIC/jfif→WebP, PNG stays PNG.
+  --mode=all|minimal   all (default): cap 2400px, strip EXIF, photos→JPEG q90, PNG stays PNG.
                        minimal: convert HEIC/jfif, downscale only >25MB, pass the rest through.
   --limit=N            Process only the first N files (sampling / local validation).
   --source=PATH        Photo archive root (default: ../photos).
