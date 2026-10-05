@@ -10,10 +10,12 @@ leave it unset, so GTM loads nowhere today.
 
 ## Tag scope
 
-- **Site-wide (to build):** the LinkedIn Insight Tag (partner `3952964`) and the
-  Google Ads conversion tag (`AW-810041431`). Both require `ad_storage` (G3) and fire
-  on Page View paired with the `hubspotConsentUpdate` Custom Event (G2), so they
-  re-evaluate the moment consent changes.
+- **Site-wide (to build):** the Google Ads conversion tag (`AW-810041431`). It
+  requires `ad_storage` (G3) and fires on Page View paired with the
+  `hubspotConsentUpdate` Custom Event (G2), so it re-evaluates the moment consent
+  changes.
+- **Not in the container:** the LinkedIn Insight Tag loads from the code
+  (`docs/INTEGRATIONS.md` §3). Don't add it here too, or every page view counts twice.
 - **Deferred:** the 8 per-market Meta browser pixels. Their old Case Study Workshop
   landing paths now 301 to `/workshops/touchstone` (`src/lib/redirects.ts`), so a path
   trigger on them can never fire. Stage them with no bound trigger until per-market
@@ -38,7 +40,6 @@ What the container must encode. The inline default in `ConsentDefault.tsx`
   | Tag                                      | Required consent    |
   | ---------------------------------------- | ------------------- |
   | Meta Pixel ×8 (Tulsa/OKC/NW-Ark/KC, A+B) | `ad_storage`        |
-  | LinkedIn Insight Tag                     | `ad_storage`        |
   | Google Ads `AW-810041431`                | `ad_storage`        |
   | HubSpot analytics                        | `analytics_storage` |
 

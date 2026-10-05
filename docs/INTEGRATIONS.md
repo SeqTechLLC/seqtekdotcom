@@ -1,8 +1,9 @@
 # Integrations
 
-HubSpot (portal `8504846`) runs tracking, forms, chat and the cookie banner, and Google Tag
-Manager holds the ad pixels. Environment variables are listed in `ARCHITECTURE.md` §6. The
-portal, form, container and pixel IDs below are public: they ship in the browser bundle.
+HubSpot (portal `8504846`) runs tracking, forms, chat and the cookie banner. The LinkedIn
+Insight Tag loads from the code (§3), and Google Tag Manager holds the other ad pixels.
+Environment variables are listed in `ARCHITECTURE.md` §6. The portal, form, container and pixel
+IDs below are public: they ship in the browser bundle.
 
 ## 1. HubSpot
 
@@ -100,9 +101,8 @@ accept/deny/customize check are in `infra/gtm/README.md`.
 
 ### 2.3 Pixels
 
-Pixels live in GTM, not in the code, and each requires `ad_storage`. When GTM is enabled, only
-the LinkedIn Insight Tag (partner `3952964`) and the Google Ads conversion tag (`AW-810041431`)
-fire site-wide.
+Pixels other than LinkedIn's (§3) live in GTM, not in the code, and each requires `ad_storage`.
+When GTM is enabled, only the Google Ads conversion tag (`AW-810041431`) fires site-wide.
 
 The eight Meta browser pixels are staged with no trigger:
 
@@ -120,6 +120,22 @@ so a path trigger on them could never fire. The site sends no server-side Conver
 
 Every push goes through `pushDataLayer()` in `src/lib/analytics/dataLayer.ts`. The event
 catalogue is `docs/contracts/datalayer-events.md`. Payloads carry no personal data.
+
+## 3. LinkedIn Insight Tag
+
+`LinkedInInsightTag.tsx` renders the tag on every page when `NEXT_PUBLIC_LINKEDIN_PARTNER_ID` is
+set; both lanes build with partner `3952964`. It loads from the code because the GTM container
+stays off the lanes until it is rebuilt (§2.1).
+
+- **Consent.** The snippet registers its own `addPrivacyConsentListener` and loads
+  `insight.min.js` only when HubSpot reports `consent.allowed` or the `advertisement` category,
+  the same mapping as the bridge (§2.2). On a hostname with no banner policy (§4.1), HubSpot
+  reports consent immediately and the tag loads with the page.
+- **Page views.** The tag counts one page view when it loads. `LinkedInPageViews.tsx` calls
+  `lintrk('track')` on each client-side navigation after that, so URL-based conversions see every
+  page.
+- **One tag, many sites.** The partner ID is per ad account, not per domain, so the same tag can
+  run on the Wix site and this one at once.
 
 ## 4. Cookie consent
 

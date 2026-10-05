@@ -73,7 +73,7 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 **GTM (container config, not code)**
 
-- Build the LinkedIn Insight Tag and Google Ads conversion tag in `GTM-54KBJ2Z3` (require `ad_storage`; fire on page
+- Build the Google Ads conversion tag in `GTM-54KBJ2Z3` (require `ad_storage`; fire on page
   view and `hubspotConsentUpdate`), run the accept/deny/customize matrix, then export and commit
   `infra/gtm/container.json`.
 - Deferred until their content ships: the eight Meta pixels, staged without triggers (`INTEGRATIONS.md` §2.3).
