@@ -28,6 +28,9 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 - **A-1 residual — editor onboarding.** The marketing editor's first sign-in (it provisions an `editor`) and a short
   CMS quickstart.
+- **IMG-1 — WebP masters.** Payload re-encodes an uploaded WebP at quality 80, so a WebP master loses quality on
+  every upload and every restore. `ingest-photos` now writes JPEG or PNG; the WebP media already loaded (most
+  headshots, heroes and panels) need their originals uploaded in their place, where the originals exist.
 - **HYG-1 — data hygiene.** Case studies have no `ogImage`; seed `locations` if the regional pages are built.
 - **UI-3 — a skeleton `defaultValue` is publishable placeholder copy.** Payload applies a `defaultValue` on read as
   well as on create, and five collections default `layout` to a skeleton (`skeletonDefaultValue.int.spec.ts`). The
