@@ -2,7 +2,6 @@ import Script from 'next/script'
 import { headers } from 'next/headers'
 import { NONCE_HEADER } from '@/lib/csp'
 import { linkedInInsightSnippet } from '@/lib/analytics/linkedInInsight'
-import { LinkedInPageViews } from './LinkedInPageViews'
 
 /**
  * LinkedIn Insight Tag loader — env-gated on NEXT_PUBLIC_LINKEDIN_PARTNER_ID,
@@ -15,14 +14,11 @@ export async function LinkedInInsightTag() {
   const nonce = (await headers()).get(NONCE_HEADER) ?? undefined
 
   return (
-    <>
-      <Script
-        id="linkedin-insight"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: linkedInInsightSnippet(partnerId) }}
-      />
-      <LinkedInPageViews />
-    </>
+    <Script
+      id="linkedin-insight"
+      strategy="afterInteractive"
+      nonce={nonce}
+      dangerouslySetInnerHTML={{ __html: linkedInInsightSnippet(partnerId) }}
+    />
   )
 }
