@@ -145,20 +145,22 @@ stays off the lanes until it is rebuilt (§2.1).
 
 The HubSpot banner appears only on a hostname that has a published policy in the portal. The
 policies are listed by hostname in `https://js.hs-banner.com/v2/8504846/banner.js`. On
-2026-09-29 it held policies for:
+2026-10-06 it held:
 
-- `blog.seqtek.com`
-- `info.seqtek.com`
-- `www.seqtek.com`
-- the retired `seqtek-preview.com`
+- the retired `seqtek-preview.com`: cookies by category, all visitors. This is the policy the
+  new hostnames need;
+- `blog.seqtek.com` and `info.seqtek.com`: notify only, US visitors;
+- `www.seqtek.com`: cookies without banner, `/mainsite` only, US visitors.
 
-It had none for `preview.seqtek.com` or `ww3.seqtek.com`. So on the lanes the banner never
-shows: "Cookie preferences" does nothing, and "Withdraw consent" only reloads the page (§3).
+It had none for `preview.seqtek.com`, `ww3.seqtek.com` or `seqtek.com`. With no matching policy,
+or a cookies-without-banner one, HubSpot shows no banner and reports consent as granted, so every
+tag loads without asking. On the lanes "Cookie preferences" does nothing, and "Withdraw consent"
+only reloads the page (§3).
 
 To integrate a lane (in the HubSpot portal, no code change):
 
 1. Go to Settings → Privacy & Consent → Cookies → Add policy, and add one for the hostname
-   (`preview.seqtek.com`, `ww3.seqtek.com`, and later `seqtek.com`). If the domain field only
+   (`preview.seqtek.com`, `ww3.seqtek.com`, and at cutover `seqtek.com` and `www.seqtek.com`). If the domain field only
    offers connected domains, add the host under Settings → Website → Domains & URLs first.
 2. Enable "Display cookies by category", so the policy reports the `analytics`,
    `advertisement` and `functionality` categories the bridge reads.
