@@ -79,6 +79,11 @@ describe('buildCspPolicy — directive parity with ARCHITECTURE.md §6', () => {
     }
   })
 
+  it('allowlists the LinkedIn Insight Tag beacon host on connect-src and img-src', () => {
+    expect(policy).toMatch(/connect-src [^;]*\*\.ads\.linkedin\.com/)
+    expect(policy).toMatch(/img-src [^;]*\*\.ads\.linkedin\.com/)
+  })
+
   it('allowlists the HubSpot frame + img hosts', () => {
     expect(policy).toContain(`frame-src 'self' *.hubspot.com *.hsforms.net meetings.hubspot.com`)
     expect(policy).toMatch(/img-src 'self' data: \*\.hubspot\.com \*\.hsforms\.net/)

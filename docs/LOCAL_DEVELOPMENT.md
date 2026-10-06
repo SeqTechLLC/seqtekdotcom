@@ -42,6 +42,7 @@ not from Drizzle's dev push, which also leaves the dev server hanging at boot.
 | `CSP_MODE`                                                                                                     | `enforce`, `report-only` (default) or `off`                                      |
 | `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`, `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`, `NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID` | Blank leaves the forms half-wired: they run their full lifecycle without posting |
 | `NEXT_PUBLIC_GTM_ID`                                                                                           | GTM loads only when set                                                          |
+| `NEXT_PUBLIC_LINKEDIN_PARTNER_ID`                                                                              | The LinkedIn Insight Tag loads only when set                                     |
 | `S3_BUCKET`, `S3_REGION`, `S3_BUCKET_HOSTNAME`                                                                 | Unset means local filesystem media                                               |
 | `CLOUDFRONT_DISTRIBUTION_ID`                                                                                   | Unset locally; invalidations are skipped                                         |
 

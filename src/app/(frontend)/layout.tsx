@@ -6,6 +6,7 @@ import { SiteFooter } from '@/components/layout/SiteFooter'
 import { ConsentDefault } from '@/components/integrations/ConsentDefault'
 import { GtmScript } from '@/components/integrations/GtmScript'
 import { HubSpotTracking } from '@/components/integrations/HubSpotTracking'
+import { LinkedInInsightTag } from '@/components/integrations/LinkedInInsightTag'
 import './styles.css'
 
 export const metadata = {
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteFooter />
         <GtmScript />
         <HubSpotTracking />
+        <LinkedInInsightTag />
       </body>
     </html>
   )

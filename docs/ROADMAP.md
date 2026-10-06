@@ -73,7 +73,7 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 **GTM (container config, not code)**
 
-- Build the LinkedIn Insight Tag and Google Ads conversion tag in `GTM-54KBJ2Z3` (require `ad_storage`; fire on page
+- Build the Google Ads conversion tag in `GTM-54KBJ2Z3` (require `ad_storage`; fire on page
   view and `hubspotConsentUpdate`), run the accept/deny/customize matrix, then export and commit
   `infra/gtm/container.json`.
 - Deferred until their content ships: the eight Meta pixels, staged without triggers (`INTEGRATIONS.md` §2.3).
@@ -92,6 +92,9 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
   - `seqtek.com` as the first entry of `secondaryLane.dnsRecordNames`, which drives the CloudFront aliases, the
     Route 53 records, the ALB host rule, the Cognito callbacks and the lane's `NEXT_PUBLIC_SITE_URL`;
   - removing the zone's existing `seqtek.com`/`www` records and the older distribution's aliases in the window;
+  - a by-category HubSpot cookie policy for `seqtek.com` and `www.seqtek.com` (`INTEGRATIONS.md` §4.1), replacing
+    www's cookies-without-banner one. Without it HubSpot grants consent to every visitor and the ad tags load
+    without asking;
   - caching: the shared distribution disables CloudFront caching while the env has a gate, because its cache key
     has no host (`edge-stack.ts`). Public seqtek.com needs a host-aware cache policy or its own distribution.
 - **Production's database has no deletion guard.** `seqtek_prod` is on the `preview` env's RDS instance, which has

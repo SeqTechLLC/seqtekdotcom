@@ -1,8 +1,9 @@
 # Integrations
 
-HubSpot (portal `8504846`) runs tracking, forms, chat and the cookie banner, and Google Tag
-Manager holds the ad pixels. Environment variables are listed in `ARCHITECTURE.md` §6. The
-portal, form, container and pixel IDs below are public: they ship in the browser bundle.
+HubSpot (portal `8504846`) runs tracking, forms, chat and the cookie banner. The LinkedIn
+Insight Tag loads from the code (§3), and Google Tag Manager holds the other ad pixels.
+Environment variables are listed in `ARCHITECTURE.md` §6. The portal, form, container and pixel
+IDs below are public: they ship in the browser bundle.
 
 ## 1. HubSpot
 
@@ -100,9 +101,8 @@ accept/deny/customize check are in `infra/gtm/README.md`.
 
 ### 2.3 Pixels
 
-Pixels live in GTM, not in the code, and each requires `ad_storage`. When GTM is enabled, only
-the LinkedIn Insight Tag (partner `3952964`) and the Google Ads conversion tag (`AW-810041431`)
-fire site-wide.
+Pixels other than LinkedIn's (§3) live in GTM, not in the code, and each requires `ad_storage`.
+When GTM is enabled, only the Google Ads conversion tag (`AW-810041431`) fires site-wide.
 
 The eight Meta browser pixels are staged with no trigger:
 
@@ -121,26 +121,46 @@ so a path trigger on them could never fire. The site sends no server-side Conver
 Every push goes through `pushDataLayer()` in `src/lib/analytics/dataLayer.ts`. The event
 catalogue is `docs/contracts/datalayer-events.md`. Payloads carry no personal data.
 
+## 3. LinkedIn Insight Tag
+
+`LinkedInInsightTag.tsx` renders the tag on every page when `NEXT_PUBLIC_LINKEDIN_PARTNER_ID` is
+set; both lanes build with partner `3952964`. It loads from the code because the GTM container
+stays off the lanes until it is rebuilt (§2.1).
+
+- **Consent.** The snippet registers its own `addPrivacyConsentListener` and loads
+  `insight.min.js` only when HubSpot reports `consent.allowed` or the `advertisement` category,
+  the same mapping as the bridge (§2.2). On a hostname with no banner policy (§4.1), HubSpot
+  reports consent immediately and the tag loads with the page.
+- **Deny after load.** A deny or withdrawal after the tag has loaded clears its `li_adsId` and
+  reloads the page, because the loaded script can't be unloaded. Under a policy that stores the
+  visitor's choice, the reloaded page never loads it. With no policy, or one without a banner,
+  HubSpot reports consent again and the tag comes back.
+- **Page views.** The tag reports client-side navigations itself; the site calls none of its API.
+- **One tag, many sites.** The partner ID is per ad account, not per domain, so the same tag can
+  run on the Wix site and this one at once.
+
 ## 4. Cookie consent
 
 ### 4.1 Portal-side state
 
 The HubSpot banner appears only on a hostname that has a published policy in the portal. The
 policies are listed by hostname in `https://js.hs-banner.com/v2/8504846/banner.js`. On
-2026-09-29 it held policies for:
+2026-10-06 it held:
 
-- `blog.seqtek.com`
-- `info.seqtek.com`
-- `www.seqtek.com`
-- the retired `seqtek-preview.com`
+- the retired `seqtek-preview.com`: cookies by category, all visitors. This is the policy the
+  new hostnames need;
+- `blog.seqtek.com` and `info.seqtek.com`: notify only, US visitors;
+- `www.seqtek.com`: cookies without banner, `/mainsite` only, US visitors.
 
-It had none for `preview.seqtek.com` or `ww3.seqtek.com`. So on the lanes the banner never
-shows, and the footer control does nothing.
+It had none for `preview.seqtek.com`, `ww3.seqtek.com` or `seqtek.com`. With no matching policy,
+or a cookies-without-banner one, HubSpot shows no banner and reports consent as granted, so every
+tag loads without asking. On the lanes "Cookie preferences" does nothing, and "Withdraw consent"
+only reloads the page (§3).
 
 To integrate a lane (in the HubSpot portal, no code change):
 
 1. Go to Settings → Privacy & Consent → Cookies → Add policy, and add one for the hostname
-   (`preview.seqtek.com`, `ww3.seqtek.com`, and later `seqtek.com`). If the domain field only
+   (`preview.seqtek.com`, `ww3.seqtek.com`, and at cutover `seqtek.com` and `www.seqtek.com`). If the domain field only
    offers connected domains, add the host under Settings → Website → Domains & URLs first.
 2. Enable "Display cookies by category", so the policy reports the `analytics`,
    `advertisement` and `functionality` categories the bridge reads.

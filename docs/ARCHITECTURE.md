@@ -288,6 +288,7 @@ The one list. `.env.example` carries local defaults.
 | `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`                                               | Client | Public     | Build arg                                  | HubSpot tracking and Forms API                       |
 | `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`, `NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID` | Client | Public     | Build arg                                  | HubSpot form GUIDs                                   |
 | `NEXT_PUBLIC_GTM_ID`                                                          | Client | Public     | Build arg, empty in both lanes             | GTM loads only when set                              |
+| `NEXT_PUBLIC_LINKEDIN_PARTNER_ID`                                             | Client | Public     | Build arg, `3952964` in both lanes         | LinkedIn Insight Tag loads only when set             |
 | `BUILD_COMMIT`, `BUILD_VERSION`                                               | Server | Public     | Build arg                                  | `commit` and `version` in `/api/health`              |
 
 `.env*.local` is gitignored; `.env.example` has no secrets.
@@ -346,21 +347,21 @@ built.
 policy that `buildCspPolicy` (`src/lib/csp.ts`) builds. The layout applies the nonce to first-party
 scripts, the GTM loader and HubSpot tracking; `'strict-dynamic'` trusts what they load.
 
-| Directive                   | Sources                                                                                                                                                               |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `default-src`               | `'self'`                                                                                                                                                              |
-| `script-src`                | `'nonce-{random}'` `'strict-dynamic'` `'self'`                                                                                                                        |
-| `style-src`                 | `'self'`; `'self' 'unsafe-inline'` on `/admin/*` (the Lexical editor)                                                                                                 |
-| `img-src`                   | `'self'` `data:` `*.hubspot.com` `*.hsforms.net` and the media host                                                                                                   |
-| `font-src`                  | `'self'`                                                                                                                                                              |
-| `connect-src`               | `'self'` `*.hubspot.com` `*.hs-analytics.net` `*.hsforms.net` `*.hsforms.com` `*.hs-banner.com` `*.usemessages.com` `*.googletagmanager.com` `*.google-analytics.com` |
-| `frame-src`                 | `'self'` `*.hubspot.com` `*.hsforms.net` `meetings.hubspot.com` `*.hubspotusercontent.com` `www.youtube-nocookie.com` `player.vimeo.com`                              |
-| `frame-ancestors`           | `'none'`                                                                                                                                                              |
-| `base-uri`                  | `'self'`                                                                                                                                                              |
-| `form-action`               | `'self'` `*.hsforms.net`                                                                                                                                              |
-| `object-src`                | `'none'`                                                                                                                                                              |
-| `upgrade-insecure-requests` | Only in `enforce` mode                                                                                                                                                |
-| reporting                   | `report-uri /api/csp-report` and `report-to csp-endpoint`                                                                                                             |
+| Directive                   | Sources                                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `default-src`               | `'self'`                                                                                                                                                                                   |
+| `script-src`                | `'nonce-{random}'` `'strict-dynamic'` `'self'`                                                                                                                                             |
+| `style-src`                 | `'self'`; `'self' 'unsafe-inline'` on `/admin/*` (the Lexical editor)                                                                                                                      |
+| `img-src`                   | `'self'` `data:` `*.hubspot.com` `*.hsforms.net` `*.ads.linkedin.com` and the media host                                                                                                   |
+| `font-src`                  | `'self'`                                                                                                                                                                                   |
+| `connect-src`               | `'self'` `*.hubspot.com` `*.hs-analytics.net` `*.hsforms.net` `*.hsforms.com` `*.hs-banner.com` `*.usemessages.com` `*.googletagmanager.com` `*.google-analytics.com` `*.ads.linkedin.com` |
+| `frame-src`                 | `'self'` `*.hubspot.com` `*.hsforms.net` `meetings.hubspot.com` `*.hubspotusercontent.com` `www.youtube-nocookie.com` `player.vimeo.com`                                                   |
+| `frame-ancestors`           | `'none'`                                                                                                                                                                                   |
+| `base-uri`                  | `'self'`                                                                                                                                                                                   |
+| `form-action`               | `'self'` `*.hsforms.net`                                                                                                                                                                   |
+| `object-src`                | `'none'`                                                                                                                                                                                   |
+| `upgrade-insecure-requests` | Only in `enforce` mode                                                                                                                                                                     |
+| reporting                   | `report-uri /api/csp-report` and `report-to csp-endpoint`                                                                                                                                  |
 
 `CSP_MODE` sets the mode, and the code default is `report-only`. Neither lane sets it, so both run
 report-only. Moving to `enforce` is an environment change; the criteria are in
