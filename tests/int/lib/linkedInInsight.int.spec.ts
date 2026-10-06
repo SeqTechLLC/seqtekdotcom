@@ -73,11 +73,15 @@ describe('linkedInInsightSnippet', () => {
     expect(insightScripts()).toHaveLength(1)
   })
 
-  it('reloads the page on a deny after the tag has loaded', () => {
+  it('clears li_adsId and reloads the page on a deny after the tag has loaded', () => {
     const listener = runSnippet()
     listener({ allowed: true })
+    localStorage.setItem('li_adsId', 'abc')
+    document.cookie = 'li_adsId=abc; path=/'
     expect(reload).not.toHaveBeenCalled()
     listener({ allowed: false, categories: { advertisement: false } })
+    expect(localStorage.getItem('li_adsId')).toBeNull()
+    expect(document.cookie).not.toContain('li_adsId')
     expect(reload).toHaveBeenCalledTimes(1)
   })
 })

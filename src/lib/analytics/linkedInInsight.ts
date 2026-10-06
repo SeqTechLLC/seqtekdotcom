@@ -9,10 +9,13 @@
  * several). The mapping is the bridge's: `consent.allowed` (notice-only) or the
  * `advertisement` category.
  *
- * A deny after the tag has loaded reloads the page. The loaded script can't be
- * unloaded and reports client-side navigations on its own, so a reload is the
- * only way to stop it; the reloaded page never loads it. A deny on a page where
- * it never loaded does nothing, so a returning visitor's deny can't loop.
+ * A deny after the tag has loaded clears its `li_adsId` (localStorage and a
+ * host-only cookie) and reloads the page. The loaded script can't be unloaded
+ * and reports client-side navigations on its own, so a reload is the only way
+ * to stop it. Under a policy that stores the visitor's choice, the reloaded
+ * page never loads it; with no policy, or one without a banner, HubSpot reports
+ * consent again and it comes back. A deny on a page where it never loaded does
+ * nothing, so a returning visitor's deny can't loop.
  */
 
 export const INSIGHT_SCRIPT_SRC = 'https://snap.licdn.com/li.lms-analytics/insight.min.js'
@@ -26,7 +29,11 @@ var _hsp = (window._hsp = window._hsp || []);
 _hsp.push(['addPrivacyConsentListener', function(consent){
   var ads = !!(consent && (consent.allowed || (consent.categories && consent.categories.advertisement)));
   if (!ads) {
-    if (window.lintrk) location.reload();
+    if (window.lintrk) {
+      try { localStorage.removeItem('li_adsId'); } catch (e) {}
+      document.cookie = 'li_adsId=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+      location.reload();
+    }
     return;
   }
   if (window.lintrk) return;

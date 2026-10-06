@@ -131,8 +131,10 @@ stays off the lanes until it is rebuilt (§2.1).
   `insight.min.js` only when HubSpot reports `consent.allowed` or the `advertisement` category,
   the same mapping as the bridge (§2.2). On a hostname with no banner policy (§4.1), HubSpot
   reports consent immediately and the tag loads with the page.
-- **Deny after load.** A deny or withdrawal after the tag has loaded reloads the page. The loaded
-  script can't be unloaded, and the reloaded page never loads it.
+- **Deny after load.** A deny or withdrawal after the tag has loaded clears its `li_adsId` and
+  reloads the page, because the loaded script can't be unloaded. Under a policy that stores the
+  visitor's choice, the reloaded page never loads it. With no policy, or one without a banner,
+  HubSpot reports consent again and the tag comes back.
 - **Page views.** The tag reports client-side navigations itself; the site calls none of its API.
 - **One tag, many sites.** The partner ID is per ad account, not per domain, so the same tag can
   run on the Wix site and this one at once.
@@ -151,7 +153,7 @@ policies are listed by hostname in `https://js.hs-banner.com/v2/8504846/banner.j
 - the retired `seqtek-preview.com`
 
 It had none for `preview.seqtek.com` or `ww3.seqtek.com`. So on the lanes the banner never
-shows, and the footer control does nothing.
+shows: "Cookie preferences" does nothing, and "Withdraw consent" only reloads the page (§3).
 
 To integrate a lane (in the HubSpot portal, no code change):
 
