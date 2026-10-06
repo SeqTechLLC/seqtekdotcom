@@ -50,7 +50,8 @@ const HUBSPOT_FRAME = [
 const HUBSPOT_IMG = ['*.hubspot.com', '*.hsforms.net'] as const
 
 // insight.min.js itself loads under 'strict-dynamic'; its beacons go to
-// px/px4/dc.ads.linkedin.com.
+// px.ads.linkedin.com. The wildcard also covers px4 and dc, which LinkedIn's
+// troubleshooting page lists as tag hosts.
 const LINKEDIN_BEACON = ['*.ads.linkedin.com'] as const
 
 // Privacy-respecting video embeds (workshop proof sections, the `embed`
