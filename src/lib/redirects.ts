@@ -83,14 +83,13 @@ export const redirectMap: Redirect[] = [
   { source: '/nwarkbcasestudyworkshop', destination: '/workshops/touchstone', permanent: true },
 
   // ---- Careers -------------------------------------------------------------
-  // There is no Careers page on the new site (CONTENT_NEEDS §9), so the Wix
-  // careers page and its role descriptions point at the contact form: the ask is
-  // the same either way, start a conversation. Revisit if a Careers page ships.
+  // The Wix careers landing (/careers-1) goes to the new /careers page. Its role
+  // descriptions have no successor, so they point at the contact form: the ask is
+  // the same either way, start a conversation.
   //
   // "goverment" and "machione" reproduce the Wix misspellings verbatim. The typo
   // is what is indexed; a corrected slug would match nothing.
-  { source: '/careers-1', destination: '/contact', permanent: true },
-  { source: '/careers', destination: '/contact', permanent: true },
+  { source: '/careers-1', destination: '/careers', permanent: true },
   { source: '/business-analyst', destination: '/contact', permanent: true },
   { source: '/database-developer', destination: '/contact', permanent: true },
   { source: '/front-end-developer', destination: '/contact', permanent: true },
