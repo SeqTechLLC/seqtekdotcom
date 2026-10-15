@@ -14,27 +14,16 @@ module.exports = {
   ci: {
     collect: {
       url: [
-        // spec 004 T044 — the marquee + in-scope LISTING surfaces. The public
-        // assertMatrix gate (a11y / best-practices / SEO ≥ 0.95) applies to
-        // all of these; Performance budgets stay `warn` until Phase 5.
-        //
         // CI runs LHCI against a freshly-migrated, EMPTY DB (the build must not
         // depend on DB content), so only routes that 200 without seeded content
-        // are listed: the homepage + the collection listings (which render an
-        // empty grid) + the admin login. CONTENT-dependent `pages` routes
-        // (/our-story, /localshoring, /services + the offering pages) and per-slug
-        // detail URLs 404 here — they get LHCI coverage in a SEEDED environment
-        // (staging), tracked below, not silently dropped.
+        // are listed: the homepage and the admin login. The listing and legal
+        // pages (/team, /case-studies, /insights, /workshops, /privacy-policy,
+        // /terms-of-service) are `pages` docs now and 404 here, like every other
+        // CONTENT-dependent route. They get LHCI coverage in a SEEDED
+        // environment, not silently dropped. The public assertMatrix gate
+        // (a11y / best-practices / SEO >= 0.95) applies to what is listed;
+        // Performance budgets stay `warn`.
         'http://localhost:3200/',
-        'http://localhost:3200/team',
-        'http://localhost:3200/case-studies',
-        'http://localhost:3200/insights',
-        'http://localhost:3200/touchstone-workshops',
-        // spec 006 T031 — static legal route (200s against the empty CI DB);
-        // carries the same public a11y/best-practices/SEO >= 0.95 gate, and
-        // covers the footer consent-preferences control (present on every page).
-        'http://localhost:3200/privacy-policy',
-        'http://localhost:3200/terms-of-service',
         'http://localhost:3200/admin/login',
         // Seeded-env-only (404 against the empty CI DB): /our-story, /localshoring,
         // /services + /services/<offering> (feat/services-restructure made these
