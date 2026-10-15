@@ -38,6 +38,10 @@ metadata collections that carry a block-composed body (`caseStudies`, `workshops
 pattern. Media is served from CloudFront `/media/*` (ADR 0008). `services` is one collection carrying a `tier`
 of `leaf | group | axis`, all rendering through `/services/[slug]`.
 
+**Page copy is never route code.** Every heading, paragraph, button and band on a page is a block in its `layout`.
+A section the library cannot draw gets a block option, not JSX in a route. Only site chrome (below) is code-owned. `/contact` is the one route still
+written in code (ROADMAP CONTACT-1); `noBespokeBodyTemplates.int.spec.ts` accounts for every route file.
+
 **Environments.** Nothing is publicly launched. A merge to `main` builds the image and deploys
 `preview.seqtek.com` (UAT, primary Fargate lane); **publishing** the GitHub Release that Release-Please prepares
 promotes **that same already-built image** to `ww3.seqtek.com` (production, secondary lane, same stack and

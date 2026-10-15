@@ -26,6 +26,10 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 ## P1 — Content throughput
 
+- **CONTACT-1 — `/contact` is the one route with its own copy.** The heading, intro and `ContactForm` fields live in
+  `contact/page.tsx`, and the form ID comes from `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`. Make it a `pages` doc: a text-only
+  hero plus a `hubspot-form` block that draws the contact fields for the contact form's GUID, as it does for the
+  workshop form. Then drop it from `CODE_OWNED_ROUTES` in `noBespokeBodyTemplates.int.spec.ts`.
 - **A-1 residual — editor onboarding.** The marketing editor's first sign-in (it provisions an `editor`) and a short
   CMS quickstart.
 - **IMG-1 — WebP masters.** Payload re-encodes an uploaded WebP at quality 80, so a WebP master loses quality on
