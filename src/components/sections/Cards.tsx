@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 
+import { TrackedCtaLink } from '@/components/analytics/TrackedCtaLink'
 import { caseStudyKind } from '../cards/CaseStudyCards'
 import { FeaturedCard } from '../cards/FeaturedCard'
 import { industryKind } from '../cards/IndustryCards'
@@ -11,15 +12,18 @@ import { teamMemberKind } from '../cards/TeamCards'
 import type { CardHeadingLevel, CardKind } from '../cards/types'
 import { workshopKind } from '../cards/WorkshopCards'
 import { Section, type SectionBackground } from '../ui/Section'
+import { TabSet } from '../ui/TabSet'
 import { type CardCollection, isCardCollection, unwrapPicks } from '@/lib/cardCollections'
 
 export interface CardsProps {
   heading?: string | null
   intro?: string | null
+  /** A button beside the heading, e.g. "Explore all case studies". Needs both words and a link. */
+  cta?: { label?: string | null; url?: string | null } | null
   background?: SectionBackground | null
   /** Chooses the card. Also read upstream, to choose the query. */
   collection?: CardCollection | null
-  display?: 'grid' | 'featured' | null
+  display?: 'grid' | 'featured' | 'tabs' | null
   /**
    * The finished list: `resolveLayout` fills it whichever way the block chose
    * its items (ROADMAP UI-2), so this component draws exactly what it is
@@ -37,12 +41,15 @@ function CardsSection<T>({
   kind,
   heading,
   intro,
+  cta,
   background,
   collection,
   display,
   manualItems,
   headingLevel,
 }: BodyProps & { kind: CardKind<T> }) {
+  // Names the tablist, so a screen reader hears the heading once, not twice.
+  const headingId = useId()
   const docs = unwrapPicks(manualItems, collection).filter(kind.isDoc)
 
   // No items, no section, heading included. A list that fills itself at render
@@ -55,10 +62,34 @@ function CardsSection<T>({
   const inverse = background === 'inverse'
   const { Grid } = kind
   const [first, ...rest] = docs
+  const button = cta?.label?.trim() && cta.url?.trim() ? { label: cta.label, url: cta.url } : null
 
   return (
     <Section padding="spacious" background={background ?? 'none'}>
-      {heading ? <h2 className="text-h2 font-bold">{heading}</h2> : null}
+      {heading || button ? (
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {heading ? (
+            <h2 id={headingId} className="text-h2 font-bold">
+              {heading}
+            </h2>
+          ) : null}
+          {button ? (
+            <TrackedCtaLink
+              href={button.url}
+              ctaId="cards-heading"
+              location="cards"
+              label={button.label}
+              className={`${heading ? '' : 'ml-auto '}rounded-md border px-5 py-3 font-medium ${
+                inverse
+                  ? 'border-white text-white hover:bg-white/10'
+                  : 'border-accent-strong text-accent-strong hover:bg-surface-accent'
+              }`}
+            >
+              {button.label}
+            </TrackedCtaLink>
+          ) : null}
+        </div>
+      ) : null}
       {intro ? (
         <p
           className={`mt-4 max-w-prose text-body-lg ${inverse ? 'text-text-inverse/80' : 'text-text-secondary'}`}
@@ -66,7 +97,21 @@ function CardsSection<T>({
           {intro}
         </p>
       ) : null}
-      {display === 'featured' ? (
+      {display === 'tabs' ? (
+        <TabSet
+          className="mt-8"
+          labelledBy={heading ? headingId : undefined}
+          inverse={inverse}
+          items={docs.map((doc, i) => {
+            const item = kind.featured(doc)
+            return {
+              key: i,
+              label: kind.tabLabel?.(doc) || item.title,
+              panel: <FeaturedCard item={item} headingLevel={level} inverse={inverse} flush />,
+            }
+          })}
+        />
+      ) : display === 'featured' ? (
         <>
           <FeaturedCard item={kind.featured(first)} headingLevel={level} inverse={inverse} />
           {rest.length > 0 ? <Grid docs={rest} headingLevel={level} offset={1} /> : null}

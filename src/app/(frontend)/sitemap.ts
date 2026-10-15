@@ -17,8 +17,8 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://seqtek-preview.co
 const url = (path: string): string => `${SITE_URL}${path}`
 
 // feat/services-restructure (ADR 0009). The three peer-offering routes
-// (/services/[offering]). Workshops is NOT here — it has its own /workshops
-// route (already a STATIC_PATH). The offering content lives in `service-*`
+// (/services/[offering]). Workshops is NOT here — `/workshops` is its own `pages`
+// doc, listed by the flat-page loop. The offering content lives in `service-*`
 // Pages whose canonical URL is /services/<offering>, NOT the flat /service-*
 // slug — so those page slugs are excluded from the flat-page loop below.
 // ROADMAP SVC-2: both hardcoded lists are gone. Services and their groups are
@@ -45,17 +45,9 @@ const SERVICE_PAGE_SLUGS_NOT_IN_SITEMAP = new Set([
   'service-digital-transformation',
 ])
 
-const STATIC_PATHS = [
-  '/',
-  '/case-studies',
-  '/insights',
-  '/workshops',
-  '/team',
-  // NOTE: `/partners` is deliberately NOT static — it is added below only when
-  // the collection has published docs (see the partner loop).
-  '/privacy-policy', // spec 006 US5 (T025): static legal route
-  '/terms-of-service', // static legal route (same shape as /privacy-policy)
-]
+// The listing and legal pages (/team, /case-studies, /privacy-policy ...) are `pages`
+// docs now, so the flat-page loop below lists them once they are published.
+const STATIC_PATHS = ['/']
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const paths = new Set<string>(STATIC_PATHS)
@@ -112,15 +104,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // they serve placeholder copy, which is what the IND-1 lane deploy showed.
     for (const slug of industrySlugs) paths.add(`/industries/${slug}`)
     // ADR 0009 metadata collection — no exclusion set needed here (unlike the
-    // `service-*` Pages): a partner's canonical URL IS `/partners/<slug>`.
-    // The index is listed only once it has cards. Code ships ahead of content
-    // (a deploy never seeds), so between merge and the first `partners.json`
-    // load `/partners` is a heading over an empty grid — not a URL to hand a
-    // crawler. The `${collection}_list` tag busts this the moment one publishes.
-    if (partnerSlugs.length > 0) {
-      paths.add('/partners')
-      for (const slug of partnerSlugs) paths.add(`/partners/${slug}`)
-    }
+    // `service-*` Pages): a partner's canonical URL IS `/partners/<slug>`. The
+    // `/partners` index is a `pages` doc, listed by the flat-page loop above.
+    for (const slug of partnerSlugs) paths.add(`/partners/${slug}`)
   } catch (err) {
     console.warn('[sitemap] published-slug read failed; emitting static paths only:', err)
   }

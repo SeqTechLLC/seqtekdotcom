@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 
-import { getHomepage, getPayloadInstance, listPosts } from '@/lib/payload'
+import { getHomepage, getPayloadInstance } from '@/lib/payload'
 import { buildMetadata } from '@/lib/metadata'
 import { siteSettings } from '@/lib/site-content'
 import { organizationLd } from '@/lib/structured-data'
@@ -9,16 +9,14 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import { RenderBlocks } from '@/components/sections/RenderBlocks'
 import { resolveLayout } from '@/lib/resolveLayout'
-import { Cards } from '@/components/sections/Cards'
-import { Cta } from '@/components/sections/Cta'
 import type { Homepage } from '@/payload-types'
 
 // spec 010 US5 (Phase F) — `/` is driven by the `homepage` GLOBAL's `layout`
-// blocks rendered through RenderBlocks (ADR 0009): editors reorder/edit the
-// homepage sections with no deploy. The Organization JSON-LD and the
-// conversion-signal surface are unchanged (data-model.md "Keep"). The Touchstone
-// CTA + latest-insights stay template-level: latest-insights resolves posts at
-// render time (a static block cannot), so it is not a stored homepage field.
+// blocks rendered through RenderBlocks (ADR 0009): editors reorder/edit every
+// section of the homepage with no deploy. Nothing on the page is template
+// code: the Touchstone band is a `cta` block and latest insights is a `cards`
+// block over `posts`, which `resolveLayout` fills at render. The Organization
+// JSON-LD and the conversion-signal surface are unchanged (data-model.md "Keep").
 
 export const revalidate = 3600
 
@@ -47,9 +45,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  // Cached published reads FIRST, then the dynamic draft check — keeps the
-  // unstable_cache reads out of a dynamic scope (DYNAMIC_SERVER_USAGE guard).
-  const [publishedHomepage, latestPosts] = await Promise.all([getHomepage(), listPosts()])
+  // Cached published read FIRST, then the dynamic draft check — keeps the
+  // unstable_cache read out of a dynamic scope (DYNAMIC_SERVER_USAGE guard).
+  const publishedHomepage = await getHomepage()
   const { isEnabled: isDraft } = await draftMode()
   const homepage = isDraft ? await readDraftHomepage() : publishedHomepage
 
@@ -65,26 +63,6 @@ export default async function HomePage() {
 
       <div data-testid="homepage" data-homepage="true">
         <RenderBlocks blocks={layout} />
-
-        <section data-testid="workshop-cta">
-          <Cta
-            variant="split"
-            background="subtle"
-            heading="The Touchstone Workshop"
-            body="A working session that turns AI ambition into an architecture, named epics, and a build sequence."
-            primaryCta={{ label: 'Explore the workshop', url: '/workshops/touchstone' }}
-          />
-        </section>
-
-        {latestPosts.length ? (
-          <section data-testid="latest-insights">
-            <Cards
-              collection="posts"
-              heading="Latest insights"
-              manualItems={latestPosts.slice(0, 3)}
-            />
-          </section>
-        ) : null}
       </div>
     </>
   )

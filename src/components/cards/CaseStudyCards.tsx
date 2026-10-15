@@ -8,6 +8,7 @@ export interface CaseStudyCard {
   slug?: string | null
   subtitle?: string | null
   heroImage?: MediaLike | string | number | null
+  industry?: { title?: string | null } | string | number | null
 }
 
 export const isCaseStudyDoc = hasKey<CaseStudyCard>('title')
@@ -65,4 +66,6 @@ export const caseStudyKind: CardKind<CaseStudyCard> = {
     ctaLabel: 'Read the case study',
     image: isMedia(d.heroImage) ? d.heroImage : null,
   }),
+  // A study's tab is its sector, so a row of studies reads as a row of industries.
+  tabLabel: (d) => (typeof d.industry === 'object' && d.industry ? d.industry.title : null),
 }

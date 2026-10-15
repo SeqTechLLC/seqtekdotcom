@@ -2,13 +2,27 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 import { hspCalls, installConsentHarness } from './helpers/consent'
+import {
+  cleanupListingPages,
+  getPayloadClient,
+  seedListingPages,
+} from './helpers/seedInScopeRoutes'
 
 /**
  * spec 006 US4 (T020) + US5 (T023). The footer consent control + the
- * /privacy-policy route. The T002 harness stubs `_hsp` so we can assert the
+ * /privacy-policy page (a `pages` doc; its prose is content, so these tests
+ * check the page frame and the code-owned footer, not the legal wording). The T002 harness stubs `_hsp` so we can assert the
  * official commands the control pushes (contracts/consent-bridge.md C3) even
  * with HubSpot env-unset in CI.
  */
+
+test.beforeAll(async () => {
+  await seedListingPages(await getPayloadClient())
+})
+
+test.afterAll(async () => {
+  await cleanupListingPages(await getPayloadClient())
+})
 
 const hasCommand = (calls: unknown[][], command: string): boolean =>
   calls.some((c) => Array.isArray(c) && c[0] === command)
@@ -68,30 +82,15 @@ test.describe('US4 — footer consent-preferences control', () => {
 })
 
 test.describe('US5 — privacy policy page', () => {
-  test('renders the data / cookie / third-party disclosures', async ({ page }) => {
+  test('renders as a page with its own heading', async ({ page }) => {
     await page.goto('/privacy-policy')
-    await expect(page.getByTestId('privacy-policy')).toBeVisible()
+    await expect(page.locator('[data-page-slug="privacy-policy"]')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Privacy Policy', level: 1 })).toBeVisible()
-
-    const body = page.getByTestId('privacy-policy')
-    await expect(body).toContainText('Information we collect')
-    await expect(body).toContainText('Cookies and similar technologies')
-    await expect(body).toContainText('Analytics')
-    await expect(body).toContainText('Advertising')
-    // The four third parties (data-model §7).
-    for (const party of ['HubSpot', 'Google', 'Meta', 'LinkedIn']) {
-      await expect(body).toContainText(party)
-    }
   })
 
-  test('points to the footer consent control for changing/withdrawing consent', async ({
-    page,
-  }) => {
+  test('carries the footer consent control for changing/withdrawing consent', async ({ page }) => {
     await installConsentHarness(page)
     await page.goto('/privacy-policy')
-    // The page prose references the control...
-    await expect(page.getByTestId('privacy-policy')).toContainText('Cookie preferences')
-    // ...and the control itself is present on this page (footer, every page).
     await expect(page.getByTestId('consent-preferences')).toBeVisible()
   })
 

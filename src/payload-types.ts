@@ -1158,6 +1158,19 @@ export interface CardsBlock {
    */
   intro?: string | null;
   /**
+   * Optional. A button on the heading line, e.g. "Explore all case studies". It needs both its text and its link.
+   */
+  cta?: {
+    /**
+     * The words on the button. Two to four words reads best, e.g. "Book a call".
+     */
+    label?: string | null;
+    /**
+     * Where the button goes. A path on this site starts with a slash ("/contact"); an outside link needs the full https:// address.
+     */
+    url?: string | null;
+  };
+  /**
    * The kind of thing this section lists. Each draws as its own card: a case study with its photo, a person with their headshot, a market by name. If nothing matches, the whole section is left off the page, heading included.
    */
   collection:
@@ -1230,9 +1243,9 @@ export interface CardsBlock {
    */
   limit?: number | null;
   /**
-   * "Grid" draws every item as an equal card. "First one featured" draws the first item large, beside its picture, with the rest as a grid underneath.
+   * "Grid" draws every item as an equal card. "First one featured" draws the first item large, beside its picture, with the rest as a grid underneath. "Tabs" shows one item at a time, large, behind a row of tabs; a case study's tab is named for its industry, anything else for its title.
    */
-  display: 'grid' | 'featured';
+  display: 'grid' | 'featured' | 'tabs';
   /**
    * The colour band behind this section. Alternate it with the sections around it.
    */
@@ -2345,6 +2358,12 @@ export interface CtaBlockSelect<T extends boolean = true> {
 export interface CardsBlockSelect<T extends boolean = true> {
   heading?: T;
   intro?: T;
+  cta?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
   collection?: T;
   source?: T;
   industry?: T;

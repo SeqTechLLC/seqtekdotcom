@@ -3,6 +3,7 @@ import { valueIsValueWithRelation } from 'payload/shared'
 
 import { CARD_COLLECTIONS, type CardCollection } from '../../../lib/cardCollections'
 import { backgroundField, headingField, introField } from '../../fields/blockCopy'
+import { ctaField } from '../../fields/cta'
 import { blockAdmin } from '../blockAdmin'
 import { requiredWhen } from '../conditional'
 import { outputContract } from '../outputContract'
@@ -59,6 +60,12 @@ export const Cards: Block = {
   fields: [
     headingField(),
     introField(),
+    ctaField({
+      name: 'cta',
+      label: 'Button beside the heading',
+      description:
+        'Optional. A button on the heading line, e.g. "Explore all case studies". It needs both its text and its link.',
+    }),
     {
       name: 'collection',
       type: 'select',
@@ -188,10 +195,11 @@ export const Cards: Block = {
       options: [
         { label: 'Grid', value: 'grid' },
         { label: 'First one featured', value: 'featured' },
+        { label: 'Tabs, one item each', value: 'tabs' },
       ],
       admin: {
         description:
-          '"Grid" draws every item as an equal card. "First one featured" draws the first item large, beside its picture, with the rest as a grid underneath.',
+          '"Grid" draws every item as an equal card. "First one featured" draws the first item large, beside its picture, with the rest as a grid underneath. "Tabs" shows one item at a time, large, behind a row of tabs; a case study\'s tab is named for its industry, anything else for its title.',
       },
     },
     backgroundField(),
