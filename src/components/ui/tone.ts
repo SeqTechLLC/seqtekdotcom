@@ -5,13 +5,12 @@ import type { SectionBackground } from './Section'
  *
  * `.band-dark` and `.band-brand` re-point the semantic text and border tokens, so
  * those already read on every band. This adds the accent (`accent-strong` is not
- * re-pointed, since it is also the button fill), a highlight panel, and the
- * `inverse`/`brand` flags a block branches on.
+ * re-pointed), a highlight panel, and the `inverse`/`brand` flags a block branches on.
  */
 export interface Tone {
-  /** True on the dark and brand bands, where body text is already white. */
+  /** True on the dark and brand bands, where a form needs a light panel of its own. */
   inverse: boolean
-  /** True on the solid brand-green band, where the primary button turns white. */
+  /** True on the solid brand-green band, which reads brand-black text and a black primary button. */
   brand: boolean
   secondary: string
   muted: string
@@ -47,12 +46,12 @@ const DARK: Tone = {
 const BRAND: Tone = {
   inverse: true,
   brand: true,
-  secondary: 'text-brand-green-50',
-  muted: 'text-brand-green-100',
-  accent: 'text-white',
-  rule: 'border-white/30',
-  ruleStrong: 'border-white/50',
-  highlight: 'bg-accent-hover',
+  secondary: 'text-neutral-800',
+  muted: 'text-neutral-800',
+  accent: 'text-neutral-900',
+  rule: 'border-neutral-900/30',
+  ruleStrong: 'border-neutral-900/50',
+  highlight: 'bg-accent-fill-hover',
 }
 
 export const toneFor = (background: SectionBackground | null | undefined): Tone => {

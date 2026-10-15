@@ -43,6 +43,13 @@
     --color-accent-hover: #355b24; /* brand-green-800 */
     --color-accent-pressed: #243f19; /* brand-green-900 */
 
+    /* Solid fills (buttons, the brand band): the bright brand green with brand-black
+     * text, 6.96:1. White on it is 2.4:1, so a fill never carries white text. */
+    --color-accent-fill: #72b94d; /* brand-green-500 */
+    --color-accent-fill-hover: #88c45f; /* brand-green-400, 8.02:1 with the text */
+    --color-accent-fill-pressed: #5a9c3b; /* brand-green-600, 4.96:1 with the text */
+    --color-on-accent-fill: #1c1c31; /* neutral-900, the brand black */
+
     /* Type families. The frontend layout loads Nunito Sans through next/font,
      * which sets --font-nunito-sans on <html>. */
     --font-display:
@@ -54,7 +61,7 @@
 
   /* Dark and brand bands re-point the text, link and border tokens, so a block's
    * ordinary classes stay legible on them (Section.tsx). `accent-strong` is not
-   * re-pointed: it is also the button fill, which already works on both. */
+   * re-pointed: it is green text and rules, which the dark band reads as it is. */
   .band-dark {
     --color-text-primary: #ffffff;
     --color-text-secondary: #d9d9df; /* neutral-200 */
@@ -65,17 +72,18 @@
     --color-border-subtle: #3e3e47; /* neutral-700 */
     --color-border-strong: #54545d; /* neutral-600 */
   }
+  /* The bright green band reads brand-black text: 6.96:1, 5.94:1 for the lighter greys. */
   .band-brand {
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #f3f9ec; /* brand-green-50 */
-    --color-text-muted: #e3f1d4; /* brand-green-100 */
-    --color-text-accent: #ffffff;
-    --color-link: #ffffff;
-    --color-link-hover: #f3f9ec;
-    --color-border-subtle: rgb(255 255 255 / 0.3);
-    --color-border-strong: rgb(255 255 255 / 0.5);
-    /* green-600 on this green is 1.55:1; white clears the 3:1 a focus ring needs. */
-    --color-border-focus: #ffffff;
+    --color-text-primary: #1c1c31; /* neutral-900 */
+    --color-text-secondary: #2a2a32; /* neutral-800 */
+    --color-text-muted: #2a2a32;
+    --color-text-accent: #1c1c31;
+    --color-link: #1c1c31;
+    --color-link-hover: #0e0e1a; /* neutral-950 */
+    --color-border-subtle: rgb(28 28 49 / 0.3);
+    --color-border-strong: rgb(28 28 49 / 0.5);
+    /* green-600 on this green is 1.55:1; the brand black clears the 3:1 a focus ring needs. */
+    --color-border-focus: #1c1c31;
   }
 
   body {

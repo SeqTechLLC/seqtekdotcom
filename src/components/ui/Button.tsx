@@ -11,7 +11,7 @@ const base =
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    'bg-accent-strong text-text-inverse shadow-xs hover:bg-accent-hover active:bg-accent-pressed disabled:bg-neutral-200 disabled:text-text-muted disabled:shadow-none',
+    'bg-accent-fill text-on-fill shadow-xs hover:bg-accent-fill-hover active:bg-accent-fill-pressed disabled:bg-neutral-200 disabled:text-text-muted disabled:shadow-none',
   secondary:
     'bg-brand-navy-700 text-text-inverse shadow-xs hover:bg-brand-navy-800 active:bg-brand-navy-900',
   ghost: 'border border-border-strong bg-transparent text-text-primary hover:bg-surface-subtle',

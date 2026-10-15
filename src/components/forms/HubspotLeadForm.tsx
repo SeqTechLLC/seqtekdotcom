@@ -102,7 +102,7 @@ export function HubspotLeadForm({
             href={successCta.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+            className="mt-6 inline-block rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill"
           >
             {successCta.label}
           </a>
@@ -223,7 +223,7 @@ export function HubspotLeadForm({
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-md bg-accent-strong px-5 py-3 font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill disabled:opacity-60"
       >
         {submitting ? 'Sending…' : submitLabel}
       </button>

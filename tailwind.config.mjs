@@ -89,7 +89,11 @@ const config = {
           strong: 'var(--color-accent-strong)',
           hover: 'var(--color-accent-hover)',
           pressed: 'var(--color-accent-pressed)',
+          fill: 'var(--color-accent-fill)',
+          'fill-hover': 'var(--color-accent-fill-hover)',
+          'fill-pressed': 'var(--color-accent-fill-pressed)',
         },
+        'on-fill': 'var(--color-on-accent-fill)',
       },
       fontFamily: {
         display: ['var(--font-display)', ...fontStack],

@@ -45,7 +45,7 @@ export function MediaText({
       {cta?.label && cta?.url ? (
         <SmartLink
           href={cta.url}
-          className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+          className="mt-6 inline-block rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill"
         >
           {cta.label}
         </SmartLink>

@@ -40,7 +40,7 @@ export default function Error({
           <button
             type="button"
             onClick={reset}
-            className="rounded-md bg-accent-strong px-6 py-3 font-semibold text-white transition hover:opacity-90"
+            className="rounded-md bg-accent-fill px-6 py-3 font-semibold text-on-fill transition hover:opacity-90"
           >
             Try again
           </button>
