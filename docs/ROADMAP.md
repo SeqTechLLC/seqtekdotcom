@@ -70,6 +70,9 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 - **CM-1 — the database becomes the content master (ADR 0014).** At cutover: the final load from the content JSON,
   then `tools/payload-export` against production, that export loaded twice into an empty local database, and
   `visual:capture` compared with the lane. From then on, tooling starts from an export.
+- **Publish the Careers page before cutover.** It is seeded as a draft, so `/careers` 404s and `/careers-1` redirects
+  into it. Open: how to apply, whether roles are open, the benefits list. Then publish it, add Careers to the Our Story
+  group in the `navigation` collection (keep the fallback in `src/lib/site-content.ts` in sync) and to `footerNav`.
 
 **GTM (container config, not code)**
 
@@ -115,7 +118,7 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
   privacy assessment to purchase. We have no such page.
 - **INERT-1 residual.** `industries.description`, `relevantServices` and `clientLogos`, and every `locations` group,
   are hidden with no reader. Un-hide each in the change that ships its consumer.
-- **Regional landing pages and a careers page.** The footer's four city links point at `/services/localshoring`.
+- **Regional landing pages.** The footer's four city links point at `/services/localshoring`.
 - **F-6 — AICO baseline.** Spec: [`planning/aico.md`](./planning/aico.md) and `CONTENT-REQUIREMENTS.md` §8.
 - **Deeper SEO:** per-page OG images; a `primaryGroup` on services if a breadcrumb ever needs one parent.
 - **Portfolio polish:** a live link and screenshots in `README.md`; replace the

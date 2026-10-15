@@ -54,7 +54,6 @@ const EXPECTED_SOURCES = [
   // Careers + the Wix role pages. "goverment" and "machione" carry the original
   // Wix typos on purpose — that is what is indexed.
   '/careers-1',
-  '/careers',
   '/business-analyst',
   '/database-developer',
   '/front-end-developer',
