@@ -89,7 +89,7 @@ export const backgroundField = (
     { label: 'Subtle tint', value: 'subtle' },
     { label: 'Brand accent', value: 'accent' },
     { label: 'Dark', value: 'inverse' },
-    // Only blocks built for white-on-green offer the solid band (Section.tsx).
+    // Only blocks built for brand-black-on-green offer the solid band (Section.tsx).
     ...(brand ? [{ label: 'Solid brand green', value: 'brand' }] : []),
   ],
   admin: {
