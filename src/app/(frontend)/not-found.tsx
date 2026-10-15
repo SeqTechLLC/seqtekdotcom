@@ -44,7 +44,7 @@ export default function NotFound() {
         <div className="mt-12">
           <SmartLink
             href={bookACall.url}
-            className="inline-block rounded-md bg-accent-strong px-6 py-3 font-semibold text-white transition hover:opacity-90"
+            className="inline-block rounded-md bg-accent-fill px-6 py-3 font-semibold text-on-fill transition hover:opacity-90"
           >
             {bookACall.label}
           </SmartLink>

@@ -184,16 +184,18 @@ Treat it as public.
 
 #### `cards`
 
-Any list of documents, drawn as that collection's card (`src/components/cards/*`). The listing routes
-(`/case-studies`, `/insights`, `/team`, `/workshops`, `/partners`) and the homepage's latest insights render the same
-component.
+Any list of documents, drawn as that collection's card (`src/components/cards/*`). The listing pages
+(`/case-studies`, `/insights`, `/team`, `/workshops`, `/partners`, each a `pages` doc) and the homepage's latest
+insights render the same block.
 
 - `source`: `all`, `filtered` or `manual`. Filters: `industry` and `service` for case studies (set both and a study
   must match both), `category` for posts, `leadershipOnly` for team members, `serviceGroup` for services (in the
   group's order). Other collections have no filter, so `filtered` lists all of them.
 - `manual` picks come from `collection` only, in pick order; a services pick may be a service or a group. Each pick
   must be `{ relationTo, value }`.
-- `display`: `grid` or `featured` (the first item large, beside its picture).
+- `display`: `grid`, `featured` (the first item large, beside its picture) or `tabs` (one item at a time, large, behind
+  a row of tabs; a case study's tab is its industry, anything else's is its title).
+- `cta`: an optional button on the heading line, e.g. "Explore all case studies". It needs both text and link.
 
 **Resolved before render.** Every route awaits `resolveLayout(doc.layout)` (`src/lib/resolveLayout.ts`), which fills
 `manualItems` whichever way the block chose: `all` and `filtered` read the cached listing readers in
@@ -226,8 +228,8 @@ type, not a render template. A new case study, workshop, industry, team member o
 skeleton (`src/payload/seed/skeletons/*.ts`, the `layout` `defaultValue`), which an editor builds out to this.
 
 **Routes that own their header.** Case study, workshop and team member routes render the `h1` themselves, so their
-layouts open without a `hero`. The homepage route appends a `cta` (the Touchstone workshop) and a latest-insights
-`cards` after the layout, so the homepage layout does not end with its own `cta`.
+layouts open without a `hero`. The homepage route renders nothing but its `layout`: the Touchstone band is a `cta`,
+latest insights is a `cards` over `posts`, and the closing band is a `cta`, all blocks in the homepage global.
 
 | Page type                                      | Block order                                                                                                                                                                                                 |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -239,14 +241,15 @@ layouts open without a `hero`. The homepage route appends a `cta` (the Touchston
 | Market (`pages`, e.g. `okc-consulting`)        | `hero` → `content` (local context) → `items` (grid, subtle) → `media-text` → `quote` → `cards` (caseStudies) → `cta`                                                                                        |
 | Our Story (`pages`)                            | `hero` → `media-text` → `embed` (video, subtle) → `media-text` (other side) → `items` (grid: values) → `cards` (teamMembers) → `cta`                                                                        |
 | Industries index (`pages`, `industries`)       | `hero` (text-only) → `cards` (industries) → `cta`                                                                                                                                                           |
+| Listing (`pages`, e.g. `team`)                 | `hero` (text-only) → `cards` (`source: all` over one collection) → `cta` (team only)                                                                                                                        |
+| Legal (`pages`, e.g. `privacy-policy`)         | `hero` (text-only, centered; the headline and "Last updated") → `content` (the prose)                                                                                                                       |
 | Case study (`caseStudies`; route owns header)  | `content` (the challenge) → `media-text` (the approach) → `items` (grid, custom markers, accent: results) → `content` (the outcome) → `quote` → `items` (tags: technologies) → `cta`                        |
 | Workshop (`workshops`; route owns header)      | `content` (what it is) → `items` (list: what you leave with) → `gallery` (photos) → `embed` (recap video) → `quote` → `hubspot-form` (the inquiry form is the close)                                        |
 | Team member (`teamMembers`; route owns header) | `content` (bio) → `items` (list: expertise, certifications) → `content` → `cta`                                                                                                                             |
 | Partner (`partners`)                           | `hero` → `content` (who they are) → `items` (grid, card: what we do together) → `items` (tags: products) → `cta`                                                                                            |
 
-**Not block-composed.** Blog posts are rich text with inline blocks. `/case-studies`, `/insights`, `/team`,
-`/workshops` and `/partners` are route files that render a `Container` header over `cards` (DESIGN_SYSTEM §11.5).
-`/contact` is a route file with the curated `ContactForm`.
+**Not block-composed.** Blog posts are rich text with inline blocks. `/contact` is a route file with the curated
+`ContactForm`.
 
 ---
 

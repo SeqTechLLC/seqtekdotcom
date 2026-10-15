@@ -9,6 +9,8 @@ interface FeaturedCardProps {
   headingLevel: CardHeadingLevel
   /** The section sits on the dark band, so text drawn straight on it inverts. */
   inverse?: boolean
+  /** Drop the top margin when something else (a tab panel) already spaces it. */
+  flush?: boolean
 }
 
 /**
@@ -17,9 +19,15 @@ interface FeaturedCardProps {
  * picture keeps the same weight on a panel of its own rather than leaving half
  * the row empty.
  */
-export function FeaturedCard({ item, headingLevel, inverse = false }: FeaturedCardProps) {
+export function FeaturedCard({
+  item,
+  headingLevel,
+  inverse = false,
+  flush = false,
+}: FeaturedCardProps) {
   const Title = headingLevel
   const onPanel = !item.image
+  const top = flush ? '' : 'mt-8 '
   const muted = inverse && !onPanel ? 'text-text-inverse/80' : 'text-text-secondary'
 
   const copy = (
@@ -29,7 +37,7 @@ export function FeaturedCard({ item, headingLevel, inverse = false }: FeaturedCa
       {item.href ? (
         <Link
           href={item.href}
-          className="mt-6 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+          className="mt-6 inline-block rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill"
         >
           {item.ctaLabel ?? 'Read more'}
         </Link>
@@ -39,14 +47,16 @@ export function FeaturedCard({ item, headingLevel, inverse = false }: FeaturedCa
 
   if (!item.image) {
     return (
-      <div className="mt-8 rounded-lg border border-border-subtle bg-surface-elevated p-8 text-text-primary shadow-sm md:p-10">
+      <div
+        className={`${top}rounded-lg border border-border-subtle bg-surface-elevated p-8 text-text-primary shadow-sm md:p-10`}
+      >
         {copy}
       </div>
     )
   }
 
   return (
-    <div className="mt-8 grid gap-10 lg:grid-cols-2 lg:items-center">
+    <div className={`${top}grid gap-10 lg:grid-cols-2 lg:items-center`}>
       {item.imageIsLogo ? (
         <div className="flex items-center justify-center rounded-md border border-border-subtle bg-surface px-6 py-16">
           {/* eslint-disable-next-line @next/next/no-img-element */}

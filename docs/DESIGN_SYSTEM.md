@@ -33,7 +33,8 @@ From the brand kit (kept outside this repo). These four values are fixed.
 
 `brand-green-*`, `brand-navy-*` and `neutral-*` run 50–950 in `tailwind.config.mjs`. Each seed sits where its
 luminance falls: green at `500`, navy at `800`, and the brand black at `neutral-900`, so the neutrals carry the same
-navy cast. For foreground green and solid green fills use `700`; `500` is decorative (§2.5).
+navy cast. Foreground green (text, links, rules) uses `700`. A solid green fill is `500` with brand-black text; white on
+it fails (§2.5).
 
 ### 2.3 State colors
 
@@ -44,18 +45,20 @@ reads as a call to action.
 
 Components read these, never a ramp step. Values are in `styles.css`.
 
-| Token                                            | Purpose                                                |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| `--color-text-primary` / `-secondary` / `-muted` | Body and headings / captions / timestamps, helper text |
-| `--color-text-inverse`                           | Text on dark surfaces                                  |
-| `--color-text-accent`, `--color-link` (`-hover`) | Meaning-bearing green text, links                      |
-| `--color-surface`                                | The page: warm paper `#faf8f4`                         |
-| `--color-surface-subtle`                         | Alternating band: `#f6f3ec`                            |
-| `--color-surface-elevated`                       | Cards: white, lifting off the warm page                |
-| `--color-surface-inverse` / `-accent`            | Dark sections and footer / green-50 callouts           |
-| `--color-border-subtle` / `-strong` / `-focus`   | Dividers / card outlines / the focus ring (green-600)  |
-| `--color-accent`                                 | Green-500, decorative only                             |
-| `--color-accent-strong` / `-hover` / `-pressed`  | Solid CTA fills (green-700/800/900)                    |
+| Token                                            | Purpose                                                  |
+| ------------------------------------------------ | -------------------------------------------------------- |
+| `--color-text-primary` / `-secondary` / `-muted` | Body and headings / captions / timestamps, helper text   |
+| `--color-text-inverse`                           | Text on dark surfaces                                    |
+| `--color-text-accent`, `--color-link` (`-hover`) | Meaning-bearing green text, links                        |
+| `--color-surface`                                | The page: warm paper `#faf8f4`                           |
+| `--color-surface-subtle`                         | Alternating band: `#f6f3ec`                              |
+| `--color-surface-elevated`                       | Cards: white, lifting off the warm page                  |
+| `--color-surface-inverse` / `-accent`            | Dark sections and footer / green-50 callouts             |
+| `--color-border-subtle` / `-strong` / `-focus`   | Dividers / card outlines / the focus ring (green-600)    |
+| `--color-accent`                                 | Green-500, decorative only                               |
+| `--color-accent-strong` / `-hover` / `-pressed`  | Green text, rules and outlines (green-700/800/900)       |
+| `--color-accent-fill` / `-hover` / `-pressed`    | Solid fills: buttons, the brand band (green-500/400/600) |
+| `--color-on-accent-fill`                         | Text on a fill: brand black (neutral-900), 6.96:1        |
 
 **The `text-accent` trap.** Tailwind flattens the theme, so `text-accent` is `--color-accent`, green-500, which fails
 AA on every light surface. Meaning-bearing green text uses `text-accent-strong` (or `text-text-accent` /
@@ -63,18 +66,18 @@ AA on every light surface. Meaning-bearing green text uses `text-accent-strong` 
 guard.
 
 **Bands.** A block's `background` picks its surface through `ui/Section`: `subtle` → `surface-subtle`, `accent` →
-`surface-accent`, `inverse` → `surface-inverse`, `brand` → `accent-strong`. Only `cta` offers `brand`: white on
-green-700 is AA, green text on it is not. The `inverse` and `brand` bands re-point the text, link and border tokens
+`surface-accent`, `inverse` → `surface-inverse`, `brand` → `accent-fill`. Only `cta` offers `brand`: brand-black text on
+the bright green is AA, white and green text on it are not. The `inverse` and `brand` bands re-point the text, link and border tokens
 (`styles.css`), so a block's ordinary classes stay legible:
 
-| Token                                             | `inverse` (`.band-dark`)  | `brand` (`.band-brand`) |
-| ------------------------------------------------- | ------------------------- | ----------------------- |
-| `--color-text-primary`                            | white                     | white                   |
-| `--color-text-secondary` / `--color-text-muted`   | neutral-200 / neutral-300 | green-50 / green-100    |
-| `--color-text-accent`, `--color-link`             | green-300                 | white                   |
-| `--color-border-subtle` / `--color-border-strong` | neutral-700 / neutral-600 | white at 30% / 50%      |
+| Token                                             | `inverse` (`.band-dark`)  | `brand` (`.band-brand`)  |
+| ------------------------------------------------- | ------------------------- | ------------------------ |
+| `--color-text-primary`                            | white                     | neutral-900              |
+| `--color-text-secondary` / `--color-text-muted`   | neutral-200 / neutral-300 | neutral-800              |
+| `--color-text-accent`, `--color-link`             | green-300                 | neutral-900              |
+| `--color-border-subtle` / `--color-border-strong` | neutral-700 / neutral-600 | neutral-900 at 30% / 50% |
 
-`accent-strong` is not re-pointed, because it is also the button fill. A light panel inside a band (`bg-surface`,
+`accent-strong` is not re-pointed. A light panel inside a band (`bg-surface`,
 `bg-surface-elevated`, `bg-surface-subtle`, `bg-white`) gets the page tokens back. Classes that are not tokens come
 from `toneFor(background)` in `src/components/ui/tone.ts`.
 
@@ -93,8 +96,10 @@ Floors: AA is 4.5:1 for body and 3:1 for large text and UI; AAA is 7:1 and 4.5:1
 | `brand-green-600`                | 3.36       | 3.17           | 3.03           | Large text and UI only     |
 | `brand-green-500`                | 2.40       | 2.26           | 2.16           | Fails: decorative only     |
 
-White text on fills: `neutral-900` 16.67, `navy-800` 12.34, `brand-green-700` 5.20 (the CTA fill), `brand-green-600`
-3.36 (large only), `brand-green-500` 2.40 (never). Green-500 with `navy-800` text is 5.15. On the dark band,
+White text on fills: `neutral-900` 16.67, `navy-800` 12.34, `brand-green-700` 5.20, `brand-green-600` 3.36 (large
+only), `brand-green-500` 2.40 (never). Text on the green-500 fill: `neutral-900` 6.96 (the button and band text),
+`neutral-800` 5.94, `navy-800` 5.15, white 2.40. The fill hovers to green-400 (8.02 with `neutral-900`) and presses to
+green-600 (4.96). `accentFillText.int.spec.ts` fails a `bg-accent-fill` line that also sets white text. On the dark band,
 `neutral-200` is 11.86 and `green-300` 9.59 against `neutral-900`.
 
 ---
@@ -205,22 +210,12 @@ This is a hard rule.
 text, pass `className="mx-auto"` to `<RichText>`. The `case-studies`, `workshops`, `team` and `partners` detail
 routes, `error.tsx` and `not-found.tsx` write the measure directly.
 
-### 11.5 Listing pages: never double-container a block
+### 11.5 Listing pages: a text-only hero over `cards`
 
-Every listing renders the `cards` block, which contains itself through `ui/Section`. A listing page must not wrap it
-in a second padded container: that insets the grid from the page's own `h1`. The header uses `ui/Container`, which
-reads the same `SHELL_RAIL`, never a hand-written `mx-auto max-w-container-*`.
-
-```tsx
-<div data-testid="…">
-  <header className="pt-16">
-    <Container>
-      <h1 … />
-    </Container>
-  </header>
-  <Cards collection="teamMembers" … />
-</div>
-```
+Every listing (`/team`, `/case-studies`, `/insights`, `/workshops`, `/partners`) is a `pages` doc: a text-only `hero`
+for the `h1` and intro, then a `cards` block over the collection. Both own their shell through `ui/Section` and
+`ui/Container`, which read the same `SHELL_RAIL`, so a listing needs no wrapper. Never add one: a second padded
+container insets the grid from the `h1`.
 
 A narrower column is the same owner with a size: `<Container size="md">` for `insights/[slug]`. Check it by
 measuring `getBoundingClientRect().x` on the `h1` and the grid at 1440 and 390; they must match.
@@ -242,7 +237,7 @@ Everything else: all body copy, UI components and interactive states. §2.5 is t
 
 A global `:focus-visible` outline: 2px, offset 2px, `--color-border-focus` (green-600), at least 3:1 against what it
 sits on. It is 4.96:1 on the dark band. The `cover` hero switches to green-400, and the `brand` band re-points the
-ring to white (5.2:1 on green-700).
+ring to the brand black (6.96:1 on green-500).
 
 ### 12.4 Touch targets
 

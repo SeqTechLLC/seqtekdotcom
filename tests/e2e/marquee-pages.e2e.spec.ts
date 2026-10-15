@@ -5,6 +5,7 @@ import { getPayload, type Payload } from 'payload'
 import config from '../../src/payload.config'
 import { attachEditorSessionToContext, cleanupEditorSession } from '../sessions/editorSession'
 import { revalidateDevCache } from './helpers/revalidateDevCache'
+import { cleanupListingPages, seedListingPages } from './helpers/seedInScopeRoutes'
 import { warmRoute } from './helpers/warmRoute'
 import type { Post } from '../../src/payload-types'
 
@@ -133,6 +134,7 @@ const TEAM_NAME = 'US3 Marquee Member'
 
 test.describe('US3 — team page renders members with photos', () => {
   test.afterAll(async () => {
+    await cleanupListingPages(payload)
     await payload.delete({
       collection: 'teamMembers',
       where: { slug: { equals: TEAM_SLUG } },
@@ -180,18 +182,20 @@ test.describe('US3 — team page renders members with photos', () => {
     // afterChange `revalidateTag` never reaches the dev server — and a sibling
     // suite (a11y) may have already warmed `teamMembers_list`. Bust it in-process
     // so the render reflects the just-created member regardless of suite order.
-    await revalidateDevCache(request, ['teamMembers_list'])
+    await seedListingPages(payload)
+    await revalidateDevCache(request, ['teamMembers_list', 'pages_team'])
 
     await warmRoute(request, '/team', TEAM_NAME)
     const res = await page.goto('/team')
     expect(res?.status()).toBe(200)
-    await expect(page.getByTestId('team')).toBeVisible()
+    const teamPage = page.locator('[data-page-slug="team"]')
+    await expect(teamPage).toBeVisible()
     await expect(page.getByText(TEAM_NAME)).toBeVisible()
     // ROADMAP UI-1: the card subtitle is the job title (`title`), never the
     // descriptive `role`. The fixture above sets both so this can tell them
     // apart.
     await expect(page.getByText('Principal Consultant')).toBeVisible()
-    await expect(page.getByTestId('team').getByText('Engineering', { exact: true })).toHaveCount(0)
+    await expect(teamPage.getByText('Engineering', { exact: true })).toHaveCount(0)
 
     const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
     expect(

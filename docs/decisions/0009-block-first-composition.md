@@ -25,8 +25,7 @@ rich-text long-form type. Every specialised type is a collection of typed metada
 over a block-composed body, with no bespoke template; `partners` is the reference implementation (P5-22). The only
 change that needs code and a deploy is creating or fixing a block. Consistency comes from seeded skeletons, not code.
 
-`/case-studies`, `/insights` and `/contact` remain route files: converting them needs pagination in a block-composed
-listing, and would replace the curated contact form.
+`/contact` remains a route file: converting it would replace the curated contact form.
 
 ## Consequences
 

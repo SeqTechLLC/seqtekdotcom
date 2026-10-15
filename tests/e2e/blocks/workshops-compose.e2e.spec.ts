@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { Payload } from 'payload'
 
-import { getPayloadClient, lexical } from '../helpers/seedInScopeRoutes'
+import {
+  cleanupListingPages,
+  getPayloadClient,
+  lexical,
+  seedListingPages,
+} from '../helpers/seedInScopeRoutes'
 import { revalidateDevCache } from '../helpers/revalidateDevCache'
 import { warmRoute } from '../helpers/warmRoute'
 
@@ -28,6 +33,8 @@ const layoutBravoFirst = [
 
 test.beforeAll(async () => {
   payload = await getPayloadClient()
+  // `/workshops` is a `pages` doc, so the listing assertion needs one.
+  await seedListingPages(payload)
   await payload.delete({
     collection: 'workshops',
     where: { slug: { equals: SLUG } },
@@ -47,6 +54,7 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
+  await cleanupListingPages(payload)
   await payload.delete({
     collection: 'workshops',
     where: { slug: { equals: SLUG } },

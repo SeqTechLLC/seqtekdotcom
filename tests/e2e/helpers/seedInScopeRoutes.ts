@@ -97,8 +97,9 @@ const SERVICE_GROUP_SLUG = 'delivery-and-change'
 const SERVICE_AXIS_SLUG = 'what-we-do-e2e'
 
 /**
- * The full in-scope route inventory (contracts C-1). Listing routes render even
- * empty; detail/generic routes need the seeded content above. `/admin` keeps
+ * The full in-scope route inventory (contracts C-1). Listing and legal routes are
+ * `pages` docs, so they need seeding too (`seedListingPages`); detail/generic
+ * routes need the seeded content above. `/admin` keeps
  * its separate critical/serious-only spec and is intentionally excluded.
  */
 export function inScopeRoutes(
@@ -154,12 +155,79 @@ const del = async (
     overrideAccess: true,
   })
 
+const LISTING_PAGES = [
+  { slug: 'team', title: 'Our team', collection: 'teamMembers' },
+  { slug: 'case-studies', title: 'Case studies', collection: 'caseStudies' },
+  { slug: 'insights', title: 'Insights', collection: 'posts' },
+  { slug: 'workshops', title: 'Workshops', collection: 'workshops' },
+  { slug: 'partners', title: 'Partners', collection: 'partners' },
+] as const
+
+const LEGAL_PAGES = [
+  { slug: 'privacy-policy', title: 'Privacy Policy' },
+  { slug: 'terms-of-service', title: 'Terms of Service' },
+] as const
+
+const hero = (headline: string, subheadline: string) => ({
+  blockType: 'hero',
+  variant: 'text-only',
+  alignment: 'left',
+  headline,
+  subheadline,
+})
+
+/**
+ * The listing and legal routes are `pages` docs on `/[slug]` (there is no route
+ * file), so a spec that visits `/team` or `/privacy-policy` needs the doc first.
+ * Same shape as the real ones: a hero, then a `cards` block over the collection
+ * (or the prose). Idempotent: deletes by slug before it creates.
+ */
+export async function seedListingPages(payload: Payload): Promise<void> {
+  await cleanupListingPages(payload)
+  for (const { slug, title, collection } of LISTING_PAGES) {
+    await payload.create({
+      collection: 'pages',
+      data: {
+        title,
+        slug,
+        layout: [
+          hero(title, `All ${title.toLowerCase()}.`),
+          { blockType: 'cards', collection, source: 'all' },
+        ],
+        _status: 'published',
+      } as never,
+      overrideAccess: true,
+    })
+  }
+  for (const { slug, title } of LEGAL_PAGES) {
+    await payload.create({
+      collection: 'pages',
+      data: {
+        title,
+        slug,
+        layout: [
+          hero(title, 'Last updated: test fixture'),
+          { blockType: 'content', width: 'standard', body: lexical('Fixture legal copy.') },
+        ],
+        _status: 'published',
+      } as never,
+      overrideAccess: true,
+    })
+  }
+}
+
+export async function cleanupListingPages(payload: Payload): Promise<void> {
+  for (const { slug } of [...LISTING_PAGES, ...LEGAL_PAGES])
+    await del(payload, 'pages', 'slug', slug)
+}
+
 /** Idempotently seed every doc the in-scope detail/generic routes render. */
 export async function seedInScopeRoutes(
   payload: Payload,
   seed: InScopeSeed = IN_SCOPE_SEED,
 ): Promise<void> {
   await cleanupInScopeRoutes(payload, seed)
+  await seedListingPages(payload)
 
   const media = await payload.create({
     collection: 'media',
@@ -524,6 +592,7 @@ export async function cleanupInScopeRoutes(
   await del(payload, 'partners', 'slug', seed.partnerSlug)
   await del(payload, 'pages', 'slug', seed.storySlug)
   await del(payload, 'pages', 'slug', seed.localshoringSlug)
+  await cleanupListingPages(payload)
   // SVC-2: the leaves and the group are collection docs, not Pages.
   await del(payload, 'services', 'slug', SERVICE_AXIS_SLUG)
   await del(payload, 'services', 'slug', SERVICE_GROUP_SLUG)

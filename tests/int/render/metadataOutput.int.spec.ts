@@ -103,20 +103,13 @@ describe('buildMetadata call sites are enumerated', () => {
   const EXPECTED_CALL_SITES = [
     '[slug]/page.tsx',
     'case-studies/[slug]/page.tsx',
-    'case-studies/page.tsx',
     'industries/[slug]/page.tsx',
     'insights/[slug]/page.tsx',
-    'insights/page.tsx',
     'page.tsx',
     'partners/[slug]/page.tsx',
-    'partners/page.tsx',
-    'privacy-policy/page.tsx',
     'services/[slug]/page.tsx',
     'team/[slug]/page.tsx',
-    'team/page.tsx',
-    'terms-of-service/page.tsx',
     'workshops/[slug]/page.tsx',
-    'workshops/page.tsx',
   ]
 
   // Any file Next can emit metadata from, not just `page.tsx` — a

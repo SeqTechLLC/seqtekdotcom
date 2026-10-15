@@ -68,22 +68,23 @@ const GATE_FIELDS: FormFieldConfig[] = [
 /** `ctaField`'s three button styles, as `Hero` draws them, plus a dark-band set. */
 const BUTTON_CLASS: Record<'light' | 'dark' | 'brand', Record<ButtonStyle, string>> = {
   light: {
-    primary: 'rounded-md bg-accent-strong px-5 py-3 font-medium text-white',
+    primary: 'rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill',
     secondary:
       'rounded-md border border-accent-strong px-5 py-3 font-medium text-accent-strong hover:bg-surface-accent',
     ghost: 'rounded-md px-5 py-3 font-medium text-accent-strong underline hover:no-underline',
   },
   // Green-700 text on neutral-900 fails AA, so the lighter styles go white.
   dark: {
-    primary: 'rounded-md bg-accent-strong px-5 py-3 font-medium text-white',
+    primary: 'rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill',
     secondary: 'rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10',
     ghost: 'rounded-md px-5 py-3 font-medium text-white underline hover:no-underline',
   },
-  // The solid green band: a white button with green text.
+  // The solid green band: a brand-black button with white text.
   brand: {
-    primary: 'rounded-md bg-white px-5 py-3 font-medium text-accent-strong',
-    secondary: 'rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10',
-    ghost: 'rounded-md px-5 py-3 font-medium text-white underline hover:no-underline',
+    primary: 'rounded-md bg-neutral-900 px-5 py-3 font-medium text-white hover:bg-neutral-800',
+    secondary:
+      'rounded-md border border-neutral-900 px-5 py-3 font-medium text-neutral-900 hover:bg-neutral-900/10',
+    ghost: 'rounded-md px-5 py-3 font-medium text-neutral-900 underline hover:no-underline',
   },
 }
 
@@ -152,7 +153,7 @@ function MeetingPanel({
         label="See available times"
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-4 inline-block rounded-md bg-accent-strong px-5 py-3 font-medium text-white"
+        className="mt-4 inline-block rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill"
       >
         See available times
       </TrackedCtaLink>

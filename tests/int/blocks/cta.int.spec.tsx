@@ -118,7 +118,9 @@ describe('<Cta action="buttons" />', () => {
       )
         .getByRole('link', { name: variant })
         .getAttribute('class')
-    expect(style('primary')).toMatch(/bg-accent-strong/)
+    const primary = style('primary')
+    expect(primary).toMatch(/bg-accent-fill/)
+    expect(primary).toMatch(/text-on-fill/)
     expect(style('secondary')).toMatch(/border-accent-strong/)
     expect(style('ghost')).toMatch(/underline/)
   })
@@ -137,10 +139,13 @@ describe('<Cta action="buttons" />', () => {
     expect(cls).not.toMatch(/text-accent-strong/)
   })
 
-  it('sits on the solid brand band unless told otherwise, with a white main button', () => {
+  it('sits on the solid brand band unless told otherwise, with a brand-black main button', () => {
     const { container, getAllByRole } = render(<Cta {...base} />)
-    expect(container.querySelector('section')?.className).toMatch(/bg-accent-strong/)
-    expect(getAllByRole('link')[0].getAttribute('class')).toMatch(/bg-white/)
+    expect(container.querySelector('section')?.className).toMatch(/bg-accent-fill/)
+    expect(container.querySelector('section')?.className).toMatch(/text-on-fill/)
+    const main = getAllByRole('link')[0].getAttribute('class')
+    expect(main).toMatch(/bg-neutral-900/)
+    expect(main).toMatch(/text-white/)
   })
 })
 

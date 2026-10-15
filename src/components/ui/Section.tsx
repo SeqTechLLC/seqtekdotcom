@@ -37,9 +37,9 @@ const BACKGROUND: Record<SectionBackground, string> = {
   // `band-dark` / `band-brand` (styles.css) re-point the text, link and border
   // tokens, so every block's ordinary classes stay legible on the band.
   inverse: 'band-dark bg-surface-inverse text-text-inverse',
-  // The solid green close. Only `cta` offers it: white on green-700 is AA, and
-  // green text on it is not, so blocks that colour text green stay off it.
-  brand: 'band-brand bg-accent-strong text-white',
+  // The solid green close, read in brand black (6.96:1). Only `cta` offers it:
+  // green text on it fails, so blocks that colour text green stay off it.
+  brand: 'band-brand bg-accent-fill text-on-fill',
 }
 
 const BORDER: Record<SectionBorder, string> = {

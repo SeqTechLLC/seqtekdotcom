@@ -1,7 +1,13 @@
 import { expect, test } from '@playwright/test'
 import type { Payload } from 'payload'
 
-import { getPayloadClient, lexical, PNG_1x1 } from '../helpers/seedInScopeRoutes'
+import {
+  cleanupListingPages,
+  getPayloadClient,
+  lexical,
+  PNG_1x1,
+  seedListingPages,
+} from '../helpers/seedInScopeRoutes'
 import { revalidateDevCache } from '../helpers/revalidateDevCache'
 import { warmRoute } from '../helpers/warmRoute'
 
@@ -19,6 +25,8 @@ let industryId: string | number
 
 test.beforeAll(async () => {
   payload = await getPayloadClient()
+  // `/case-studies` is a `pages` doc, so the listing assertion needs one.
+  await seedListingPages(payload)
   await payload.delete({
     collection: 'caseStudies',
     where: { slug: { equals: SLUG } },
@@ -59,6 +67,7 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
+  await cleanupListingPages(payload)
   await payload.delete({
     collection: 'caseStudies',
     where: { slug: { equals: SLUG } },

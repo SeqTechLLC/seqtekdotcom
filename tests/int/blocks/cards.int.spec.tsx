@@ -173,6 +173,70 @@ describe('cards — featured display', () => {
   })
 })
 
+describe('cards — tabs display', () => {
+  const studies = [
+    {
+      id: 1,
+      title: 'Well site',
+      slug: 'well-site',
+      subtitle: 'Modernizing the well site',
+      heroImage: photo,
+      industry: { title: 'Oil and Gas' },
+    },
+    { id: 2, title: 'Flight ops', slug: 'flight-ops', industry: { title: 'Aerospace' } },
+    { id: 3, title: 'No sector', slug: 'no-sector', industry: 7 },
+  ]
+  const tabs = (extra: Partial<CardsProps> = {}) =>
+    draw({ collection: 'caseStudies', display: 'tabs', manualItems: studies, ...extra })
+
+  it('draws one tab per item, named for the case study industry, else its title', () => {
+    const labels = [...tabs().querySelectorAll('[role="tab"]')].map((t) => t.textContent)
+    expect(labels).toEqual(['Oil and Gas', 'Aerospace', 'No sector'])
+  })
+
+  it('shows the first item large with its button, and hides the rest', () => {
+    const el = tabs()
+    const panels = [...el.querySelectorAll('[role="tabpanel"]')] as HTMLElement[]
+    expect(panels).toHaveLength(3)
+    expect(panels[0].hidden).toBe(false)
+    expect(panels[1].hidden).toBe(true)
+    expect(panels[0].querySelector('a[href="/case-studies/well-site"]')?.textContent).toBe(
+      'Read the case study',
+    )
+    expect(panels[0].textContent).toContain('Modernizing the well site')
+    expect(el.querySelector('ul')).toBeNull()
+  })
+
+  it('names the tablist with the section heading and puts panel titles at h3 under it', () => {
+    const el = tabs({ heading: 'Real results' })
+    const heading = el.querySelector('h2')
+    expect(el.querySelector('[role="tablist"]')?.getAttribute('aria-labelledby')).toBe(heading?.id)
+    expect(el.querySelector('[role="tabpanel"] h3')?.textContent).toBe('Well site')
+  })
+})
+
+describe('cards — button beside the heading', () => {
+  const studies = [{ id: 1, title: 'One', slug: 'one' }]
+  const link = (cta: CardsProps['cta']) =>
+    draw({ collection: 'caseStudies', heading: 'Work', cta, manualItems: studies }).querySelector(
+      'a[href="/case-studies"]',
+    )
+
+  it('draws the button on the heading line', () => {
+    const button = link({ label: 'Explore all case studies', url: '/case-studies' })
+    expect(button?.textContent).toBe('Explore all case studies')
+    expect(button?.parentElement?.querySelector('h2')?.textContent).toBe('Work')
+  })
+
+  it.each([
+    ['no words', { label: '', url: '/case-studies' }],
+    ['no link', { label: 'Explore', url: '' }],
+    ['neither', null],
+  ])('is not drawn with %s', (_label, cta) => {
+    expect(link(cta)).toBeNull()
+  })
+})
+
 // ROADMAP UI-1 — cards show `title` (the job title), never `role` (a sentence).
 describe('cards — team members', () => {
   const dana = {

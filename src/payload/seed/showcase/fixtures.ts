@@ -1161,6 +1161,18 @@ function getAuthoredFixtures(media: MediaIdMap, supporting: SupportingIds): Auth
             display: 'featured',
           },
         },
+        {
+          name: 'case-studies-tabs',
+          data: {
+            blockType: 'cards',
+            heading: 'Real results across the industries we serve',
+            cta: { label: 'Explore all case studies', url: '/case-studies' },
+            collection: 'caseStudies',
+            source: 'manual',
+            manualItems: picks('caseStudies', supporting.caseStudyIds),
+            display: 'tabs',
+          },
+        },
       ],
     },
     {

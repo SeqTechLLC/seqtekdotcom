@@ -44,7 +44,7 @@ const ALLOWED_VIDEO_HOSTS = [
 
 /** One look per `primaryCta.variant`, so each option in the picker differs. */
 const CTA_VARIANT_CLASS: Record<string, string> = {
-  primary: 'rounded-md bg-accent-strong px-5 py-3 font-medium text-white',
+  primary: 'rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill',
   secondary:
     'rounded-md border border-accent-strong px-5 py-3 font-medium text-accent-strong hover:bg-surface-accent',
   ghost: 'rounded-md px-5 py-3 font-medium text-accent-strong underline hover:no-underline',
@@ -56,7 +56,7 @@ const CTA_VARIANT_CLASS: Record<string, string> = {
 // over a pale patch of photo (DESIGN_SYSTEM §12.3).
 const COVER_FOCUS = 'focus-visible:outline-brand-green-400'
 const COVER_CTA_VARIANT_CLASS: Record<string, string> = {
-  primary: `rounded-md bg-accent-strong px-5 py-3 font-medium text-white ${COVER_FOCUS}`,
+  primary: `rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill ${COVER_FOCUS}`,
   secondary: `rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10 ${COVER_FOCUS}`,
   ghost: `rounded-md px-5 py-3 font-medium text-white underline hover:no-underline ${COVER_FOCUS}`,
 }

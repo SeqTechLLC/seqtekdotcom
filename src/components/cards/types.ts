@@ -43,6 +43,8 @@ export interface CardKind<T> {
   isDoc: (value: unknown) => value is T
   Grid: ComponentType<GridProps<T>>
   featured: (doc: T) => FeaturedItem
+  /** What the `tabs` display names a document's tab; falls back to its title. */
+  tabLabel?: (doc: T) => string | null | undefined
 }
 
 export const isMedia = (v: unknown): v is MediaLike & { url: string } =>
