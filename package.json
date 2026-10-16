@@ -29,6 +29,7 @@
     "test": "npm run test:int && npm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" PAYLOAD_DISABLE_PUSH=true playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "lhci:seed": "cross-env NODE_OPTIONS=--no-deprecation PAYLOAD_DISABLE_PUSH=true tsx tools/e2e/seed-lighthouse.ts",
     "test:lhci": "lhci autorun --config=.lighthouserc.cjs",
     "typecheck": "tsc --noEmit",
     "visual:capture": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.visual.config.ts"

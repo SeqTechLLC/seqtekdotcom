@@ -326,6 +326,9 @@ jobs:
           CHROME_PATH=$(node -e "console.log(require('playwright').chromium.executablePath())")
           echo "path=${CHROME_PATH}" >> "$GITHUB_OUTPUT"
 
+      - name: Seed the pages Lighthouse visits
+        run: npm run lhci:seed
+
       - name: Lighthouse CI (a11y/best-practices/SEO gate; perf as warnings)
         env:
           CHROME_PATH: ${{ steps.chrome.outputs.path }}

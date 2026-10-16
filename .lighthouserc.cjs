@@ -15,15 +15,19 @@ module.exports = {
     collect: {
       url: [
         // CI runs LHCI against a freshly-migrated, EMPTY DB (the build must not
-        // depend on DB content), so only routes that 200 without seeded content
-        // are listed: the homepage and the admin login. The listing and legal
-        // pages (/team, /case-studies, /insights, /workshops, /privacy-policy,
-        // /terms-of-service) are `pages` docs now and 404 here, like every other
-        // CONTENT-dependent route. They get LHCI coverage in a SEEDED
-        // environment, not silently dropped. The public assertMatrix gate
-        // (a11y / best-practices / SEO >= 0.95) applies to what is listed;
-        // Performance budgets stay `warn`.
+        // depend on DB content). `npm run lhci:seed` adds the listing and legal
+        // `pages` docs first, so those routes 200 here; the listings render no
+        // cards. The public assertMatrix gate (a11y / best-practices / SEO >=
+        // 0.95) applies to all of these; Performance budgets stay `warn`.
         'http://localhost:3200/',
+        'http://localhost:3200/team',
+        'http://localhost:3200/case-studies',
+        'http://localhost:3200/insights',
+        'http://localhost:3200/workshops',
+        // Legal pages: they carry the footer consent-preferences control
+        // (present on every page) under the same gate.
+        'http://localhost:3200/privacy-policy',
+        'http://localhost:3200/terms-of-service',
         'http://localhost:3200/admin/login',
         // Seeded-env-only (404 against the empty CI DB): /our-story, /localshoring,
         // /services + /services/<offering> (feat/services-restructure made these
