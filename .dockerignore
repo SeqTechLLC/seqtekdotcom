@@ -30,6 +30,8 @@ coverage
 
 # Tests — never run inside the production image
 tests
+# CI/test scripts that import from tests/ — `next build` type-checks every .ts file
+tools/e2e
 test-results
 playwright-report
 playwright/.cache
