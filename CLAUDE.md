@@ -15,7 +15,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 
 Defer to these docs before re-deriving anything. Update them when decisions change.
 
-- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com builds once; publishing the GitHub Release promotes that same image → www.seqtek.com, no rebuild)
+- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com builds once; running Deploy with `env: prod` and the Release-Please version promotes that same image → www.seqtek.com, no rebuild)
 - `docs/INFRASTRUCTURE_RUNBOOK.md` — rebuilding a lane's database, snapshotting before a destructive migration, the GitHub environments and parameters CDK does not create, external reviewers
 - `docs/ROADMAP.md` — what is still open, in priority order. Open items only; nothing that has shipped
 - `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
@@ -43,12 +43,13 @@ A section the library cannot draw gets a block option, not JSX in a route. Only 
 written in code (ROADMAP CONTACT-1); `noBespokeBodyTemplates.int.spec.ts` accounts for every route file.
 
 **Environments.** A merge to `main` builds the image and deploys
-`preview.seqtek.com` (UAT, primary Fargate lane); **publishing** the GitHub Release that Release-Please prepares
-promotes **that same already-built image** to `www.seqtek.com` (production, secondary lane, same stack and
-account) without rebuilding. Merging the release PR itself deploys nothing. `main` is the only deployment
-branch. `preview.seqtek.com` sits behind an ALB + Cognito gate — index control, not access control: it keeps
-search engines out. The production lane is served publicly (`gated: false` in `infra/cdk.json`). The apex
-`seqtek.com` 301s to www at the DNS provider.
+`preview.seqtek.com` (UAT, primary Fargate lane). Merging the release PR that Release-Please prepares builds the
+release commit the same way, tagged with the release version. Running the Deploy workflow with `env: prod` and
+`target: vX.Y.Z` then promotes **that same already-built image** to `www.seqtek.com` (production, secondary
+lane, same stack and account) without rebuilding. `main` is the only deployment branch. `preview.seqtek.com`
+sits behind an ALB + Cognito gate — index control, not access control: it keeps search engines out. The
+production lane is served publicly (`gated: false` in `infra/cdk.json`). The apex `seqtek.com` 301s to www at
+the DNS provider.
 
 **Site chrome is code-owned, except the header menu.** Company name, tagline, phone, email, postal address,
 social links, the footer nav and the legal nav live in `src/lib/site-content.ts` and change by deploy, not by

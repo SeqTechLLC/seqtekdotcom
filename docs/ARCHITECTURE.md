@@ -125,7 +125,7 @@ docs/                 this doc, ROADMAP, contracts/, decisions/
 ```
 GitHub (public repo)
   merge to main ──► build image, push to ECR ──► cdk deploy SeqtekPreviewCompute
-  publish release ─► resolve an existing image ─► cdk deploy (production lane only moves)
+  promote a version ─► resolve an existing image ─► cdk deploy (production lane only moves)
 
 CloudFront (ACM cert for seqtek.com + *.seqtek.com; aliases preview. and www.)
   │   CloudFront Function: Host ─► x-forwarded-host
@@ -185,16 +185,17 @@ Current versions never expire. Incomplete multipart uploads abort after 7 days.
 
 ### Promotion model — what deploys where
 
-| Trigger                                | Deploys to                  | Lane      | Builds? |
-| -------------------------------------- | --------------------------- | --------- | ------- |
-| Push to `main`                         | preview.seqtek.com (UAT)    | primary   | yes     |
-| Merge the Release-Please PR            | nothing                     | —         | no      |
-| Publish a GitHub Release               | www.seqtek.com (production) | secondary | no      |
-| Deploy workflow, `env: prod`, `target` | www.seqtek.com              | secondary | no      |
-| Deploy workflow, `env: preview`        | preview.seqtek.com          | primary   | yes     |
+| Trigger                                | Deploys to                             | Lane      | Builds? |
+| -------------------------------------- | -------------------------------------- | --------- | ------- |
+| Push to `main`                         | preview.seqtek.com (UAT)               | primary   | yes     |
+| Merge the Release-Please PR            | preview.seqtek.com (release candidate) | primary   | yes     |
+| Publish a GitHub Release               | www.seqtek.com (production)            | secondary | no      |
+| Deploy workflow, `env: prod`, `target` | www.seqtek.com                         | secondary | no      |
+| Deploy workflow, `env: preview`        | preview.seqtek.com                     | primary   | yes     |
 
-**One build, promoted unchanged.** A `main` build tags its image with the commit SHA and a build version
-(`MAJOR.MINOR` from the last release tag, `PATCH` = that patch plus commits since). Promotion points the
+**One build, promoted unchanged.** A `main` build tags its image with the commit SHA and a build version:
+`X.Y.Z-N` for N commits after the last release tag, or plain `X.Y.Z` for Release-Please's release commit
+(read from `package.json`, since the tag does not exist yet when that build starts). Promotion points the
 production task definition at an image that already exists. Nothing is rebuilt, because a rebuild would ship
 bits nobody tested.
 
@@ -208,9 +209,9 @@ is not moving is pinned to the image tag and `RELEASE_VERSION` it is running, re
 service. `compute-stack.ts` has no fallback for `secondaryImageTag`: a deploy that cannot say what
 production runs fails the synth.
 
-A release created by the default `GITHUB_TOKEN` raises no workflow run, so a release has to be published
-by a person to promote. Merging the release PR only changes the version and CHANGELOG, and `deploy.yml`
-skips that commit by its message.
+Release-Please publishes its release with the default `GITHUB_TOKEN`, which raises no workflow run, so a
+person promotes it: run Deploy with `env: prod` and `target: vX.Y.Z`. Merging the release PR builds the
+release commit onto preview as `X.Y.Z`, so that is the image the dispatch finds.
 
 `/api/health` reports what a lane runs: `version` and `commit` are baked into the image, and `release` is
 set at promotion and is `null` on a lane that was never released.
@@ -517,7 +518,7 @@ fallback, because every deploy states what production runs.
 | ------------------------------- | -------------------------------------------------------------- |
 | PR touching `infra/`            | `cdk synth` for `staging` and `prod`, plus the assertion tests |
 | Push to `main`                  | `cdk deploy SeqtekPreview*Compute`                             |
-| Publish a release               | `cdk deploy SeqtekPreview*Compute`, production lane moves      |
+| Promote a version               | `cdk deploy SeqtekPreview*Compute`, production lane moves      |
 | Deploy workflow, `stack-filter` | Any `SeqtekPreview*` stack, e.g. `*Edge` or `*`                |
 
 The assertion tests cover the security groups, bucket settings, the OAC origin, IAM scoping, the
