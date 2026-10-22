@@ -80,7 +80,13 @@ export class ComputeStack extends Stack {
     // COGNITO_CLIENT_ID, below) and the target-group/listener-action
     // wiring further down all need the SAME User Pool/Client/Domain when
     // gating is on.
-    const gatedHostnames = [...cfg.dnsRecordNames, ...(cfg.secondaryLane?.dnsRecordNames ?? [])]
+    // The secondary lane is gated unless it opts out (`gated: false`), so the
+    // gate can stay on preview while production is served publicly.
+    const secondaryLaneGated = cfg.secondaryLane?.gated ?? true
+    const gatedHostnames = [
+      ...cfg.dnsRecordNames,
+      ...(secondaryLaneGated ? (cfg.secondaryLane?.dnsRecordNames ?? []) : []),
+    ]
     const cognitoGate = cfg.cognitoAuthEnabled
       ? new CognitoAuthGate(this, 'AuthGate', {
           envName,
@@ -565,8 +571,9 @@ export class ComputeStack extends Stack {
           // substituting a build-time number.
           RELEASE_VERSION: releaseVersion ?? '',
           // Same reasoning as the primary lane's container — see its
-          // COGNITO_LOGOUT_URL comment above.
-          ...(cognitoGate
+          // COGNITO_LOGOUT_URL comment above. An ungated lane has no gate
+          // session to end, so it gets neither value.
+          ...(cognitoGate && secondaryLaneGated
             ? {
                 COGNITO_LOGOUT_URL: `${cognitoGate.userPoolDomain.baseUrl()}/logout`,
                 COGNITO_CLIENT_ID: cognitoGate.userPoolClient.userPoolClientId,
@@ -660,7 +667,7 @@ export class ComputeStack extends Stack {
         },
       })
 
-      if (cognitoGate) {
+      if (cognitoGate && secondaryLaneGated) {
         // Same reasoning as PrimaryHealthCheckBypass above — this lane's
         // OWN /api/health, /_next/image, AND /api/media/file/* must stay
         // reachable unauthenticated (deliberately NOT /api/revalidate —
@@ -687,9 +694,10 @@ export class ComputeStack extends Stack {
       this.httpListener.addAction('SecondaryLaneRule', {
         priority: 10,
         conditions: [elbv2.ListenerCondition.httpHeader('x-forwarded-host', lane.dnsRecordNames)],
-        action: cognitoGate
-          ? cognitoGate.authenticateAndForward(elbv2.ListenerAction.forward([laneTargetGroup]))
-          : elbv2.ListenerAction.forward([laneTargetGroup]),
+        action:
+          cognitoGate && secondaryLaneGated
+            ? cognitoGate.authenticateAndForward(elbv2.ListenerAction.forward([laneTargetGroup]))
+            : elbv2.ListenerAction.forward([laneTargetGroup]),
       })
 
       // Exported so a deploy can read back the tag this lane is CURRENTLY

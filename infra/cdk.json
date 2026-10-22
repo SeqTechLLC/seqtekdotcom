@@ -84,13 +84,14 @@
           "secondaryPublicCidr": "10.0.2.0/24",
           "secondaryIsolatedCidr": "10.0.40.0/26"
         },
-        "_comment_secondaryLane": "TEMPORARY PROD-preview lane (added 2026-08-11, remove once seqtek.com cutover is ready): shares this env's cluster/ALB/RDS instance rather than standing up a whole separate env. Reachable at ww3.seqtek.com only — covered by the *.seqtek.com cert SAN above, zero new cert validation needed. New database 'seqtek_prod' on the SAME RDS instance, created by the lane's own container startup command, not a new rds.DatabaseInstance. seqtek.com and www.seqtek.com are NOT touched by this.",
+        "_comment_secondaryLane": "PRODUCTION lane: shares this env's cluster/ALB/RDS instance rather than standing up a whole separate env. Served at www.seqtek.com, covered by the *.seqtek.com cert SAN above. Database 'seqtek_prod' on the SAME RDS instance, created by the lane's own container startup command, not a new rds.DatabaseInstance. gated:false serves it publicly while preview.seqtek.com stays behind the Cognito gate. The apex seqtek.com is NOT touched here: it 301s to www at the DNS provider.",
         "secondaryLane": {
           "name": "prod",
           "databaseName": "seqtek_prod",
-          "dnsRecordNames": ["ww3.seqtek.com"]
+          "dnsRecordNames": ["www.seqtek.com"],
+          "gated": false
         },
-        "_comment_cognitoAuthEnabled": "Gates BOTH preview.seqtek.com and ww3.seqtek.com behind Google Workspace SSO via Cognito (2026-08-12). seqtek.com/www.seqtek.com currently point elsewhere entirely (different distribution) and are untouched by this — cutover onto this same ALB (as another rule, alongside ww3) is a planned FUTURE step, not done here. Google OAuth client + cognito_google_client_id/secret SSM params seeded 2026-08-12.",
+        "_comment_cognitoAuthEnabled": "Gates preview.seqtek.com behind Google Workspace SSO via Cognito (2026-08-12), and the secondaryLane too unless it sets gated:false (www.seqtek.com does). Google OAuth client + cognito_google_client_id/secret SSM params seeded 2026-08-12.",
         "cognitoAuthEnabled": true,
         "instanceClass": "t3",
         "instanceSize": "micro",

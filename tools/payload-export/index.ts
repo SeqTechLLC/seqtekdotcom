@@ -3,7 +3,7 @@
  * `tools/payload-seed` loads back. See README.md.
  *
  *   IMPORT_TOKEN=<session-jwt> tsx tools/payload-export/index.ts <out-dir> \
- *     [--base-url=https://ww3.seqtek.com] [--only=services,homepage]
+ *     [--base-url=https://www.seqtek.com] [--only=services,homepage]
  */
 
 import { config as loadEnv } from 'dotenv'

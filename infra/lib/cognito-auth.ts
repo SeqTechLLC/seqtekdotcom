@@ -34,7 +34,7 @@ export interface CognitoAuthGateProps {
   envName: EnvName
   /**
    * Every hostname the ALB will present a login-gated action for — e.g.
-   * `['preview.seqtek.com', 'ww3.seqtek.com']`. Cognito's App Client
+   * `['preview.seqtek.com', 'www.seqtek.com']`. Cognito's App Client
    * needs a callback/logout URL PER hostname (ALB's authenticate-cognito
    * action redirects to a fixed `/oauth2/idpresponse` path on whichever
    * host the request arrived on).

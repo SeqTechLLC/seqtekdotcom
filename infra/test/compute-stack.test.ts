@@ -2,7 +2,7 @@ import { App } from 'aws-cdk-lib'
 import { Match, Template } from 'aws-cdk-lib/assertions'
 import { describe, expect, it } from 'vitest'
 import { ComputeStack } from '../lib/compute-stack'
-import type { EnvConfig } from '../lib/construct-utils'
+import { validateEnvConfig, type EnvConfig } from '../lib/construct-utils'
 import { DataStack } from '../lib/data-stack'
 import { NetworkStack } from '../lib/network-stack'
 
@@ -662,6 +662,98 @@ describe('ComputeStack', () => {
       )
       withoutGate.resourceCountIs('AWS::Cognito::UserPool', 0)
       withoutGate.resourceCountIs('AWS::ElasticLoadBalancingV2::ListenerRule', 1) // just SecondaryLaneRule
+    })
+  })
+
+  describe('with a secondaryLane that opts out of the gate (gated: false)', () => {
+    // Production is served publicly at www while preview stays gated, in the
+    // same env: `cognitoAuthEnabled` stays true and only the lane opts out.
+    const cfg: EnvConfig = {
+      ...stagingCfg,
+      domainName: 'seqtek-preview.com',
+      hostedZoneId: 'Z0000000000000000000A',
+      certificateSans: ['*.seqtek-preview.com'],
+      dnsRecordNames: ['preview.seqtek-preview.com'],
+      secondaryLane: {
+        name: 'prod',
+        databaseName: 'seqtek_prod',
+        dnsRecordNames: ['www.seqtek-preview.com'],
+        gated: false,
+      },
+      cognitoAuthEnabled: true,
+    }
+    const t = synthCompute('staging', cfg, undefined, 'latest-staging')
+
+    it('still gates the primary lane with authenticate-oidc', () => {
+      t.resourceCountIs('AWS::Cognito::UserPool', 1)
+      t.hasResourceProperties('AWS::ElasticLoadBalancingV2::Listener', {
+        DefaultActions: Match.arrayWith([Match.objectLike({ Type: 'authenticate-oidc' })]),
+      })
+    })
+
+    it('forwards the secondaryLane rule with no authenticate-oidc', () => {
+      const rules = t.findResources('AWS::ElasticLoadBalancingV2::ListenerRule')
+      const lane = Object.values(rules).find(
+        (r) => (r.Properties as { Priority: number }).Priority === 10,
+      )
+      expect(lane, 'expected the priority-10 secondary lane rule').toBeDefined()
+      const actions = (lane!.Properties as { Actions: Array<{ Type: string }> }).Actions
+      expect(actions.map((a) => a.Type)).toEqual(['forward'])
+    })
+
+    it('drops the secondary lane health bypass, which only exists to punch through the gate', () => {
+      const priorities = Object.values(t.findResources('AWS::ElasticLoadBalancingV2::ListenerRule'))
+        .map((r) => (r.Properties as { Priority: number }).Priority)
+        .sort((a, b) => a - b)
+      expect(priorities).toEqual([6, 10])
+    })
+
+    it('registers a Cognito callback and logout URL for the primary hostname only', () => {
+      t.hasResourceProperties('AWS::Cognito::UserPoolClient', {
+        CallbackURLs: ['https://preview.seqtek-preview.com/oauth2/idpresponse'],
+        LogoutURLs: ['https://preview.seqtek-preview.com/'],
+      })
+    })
+
+    it('passes the gate-logout variables to the primary lane only', () => {
+      const taskDefs = Object.values(t.findResources('AWS::ECS::TaskDefinition'))
+      const withGateVars = taskDefs.filter((td) =>
+        (
+          (
+            td.Properties as {
+              ContainerDefinitions: Array<{ Environment?: Array<{ Name: string }> }>
+            }
+          ).ContainerDefinitions[0]?.Environment ?? []
+        ).some((e) => e.Name === 'COGNITO_CLIENT_ID'),
+      )
+      expect(withGateVars).toHaveLength(1)
+    })
+
+    it('serves the lane at the new hostname', () => {
+      const taskDefs = Object.values(t.findResources('AWS::ECS::TaskDefinition'))
+      const urls = taskDefs
+        .flatMap(
+          (td) =>
+            (
+              td.Properties as {
+                ContainerDefinitions: Array<{
+                  Environment?: Array<{ Name: string; Value?: string }>
+                }>
+              }
+            ).ContainerDefinitions[0]?.Environment ?? [],
+        )
+        .filter((e) => e.Name === 'NEXT_PUBLIC_SITE_URL')
+        .map((e) => e.Value)
+      expect(urls).toContain('https://www.seqtek-preview.com')
+    })
+
+    it('rejects a non-boolean gated value at config validation time', () => {
+      expect(() =>
+        validateEnvConfig('preview', {
+          ...cfg,
+          secondaryLane: { ...cfg.secondaryLane!, gated: 'no' as unknown as boolean },
+        }),
+      ).toThrow(/secondaryLane\.gated must be a boolean/)
     })
   })
 

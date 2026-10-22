@@ -161,7 +161,7 @@ sign-in page:
 
 ## Local versus the lanes
 
-|             | Local                              | Lanes (preview, ww3)                        |
+|             | Local                              | Lanes (preview, www)                        |
 | ----------- | ---------------------------------- | ------------------------------------------- |
 | App server  | `next dev`                         | `node server.js` in a Fargate task          |
 | Database    | Docker Postgres on `:5433`         | RDS PostgreSQL, one instance for both lanes |

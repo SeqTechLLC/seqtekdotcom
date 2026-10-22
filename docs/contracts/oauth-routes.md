@@ -59,7 +59,7 @@ the audit log. `tests/e2e/auth-login-errors.e2e.spec.ts` covers each code.
 
 The Google OAuth client needs `<scheme>://<host>/api/auth/oauth/callback/google` registered for every
 host that serves `/admin`: `http://localhost:3100`, `https://preview.seqtek.com` and
-`https://ww3.seqtek.com`.
+`https://www.seqtek.com`.
 
 ## 5. Tests
 
