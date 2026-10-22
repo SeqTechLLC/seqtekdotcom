@@ -667,12 +667,18 @@ export class ComputeStack extends Stack {
         },
       })
 
-      if (cognitoGate && secondaryLaneGated) {
+      if (cognitoGate) {
         // Same reasoning as PrimaryHealthCheckBypass above — this lane's
         // OWN /api/health, /_next/image, AND /api/media/file/* must stay
         // reachable unauthenticated (deliberately NOT /api/revalidate —
         // see that rule's comment). Evaluated before the full rule below
         // (priority 10) since ALB rules are checked in priority order.
+        //
+        // Needed even when this lane is NOT gated (`gated: false`): the
+        // primary bypass (priority 6) matches those paths on ANY host, so
+        // without this host-scoped rule ahead of it, the lane's health
+        // check and media files would be answered by the primary lane's app
+        // and database. Found on www.seqtek.com at cutover.
         this.httpListener.addAction('SecondaryLaneHealthCheckBypass', {
           priority: 5,
           conditions: [
