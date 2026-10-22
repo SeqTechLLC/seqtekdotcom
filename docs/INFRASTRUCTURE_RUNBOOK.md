@@ -1,7 +1,7 @@
 # Infrastructure Runbook
 
 Procedures for the one deployed env, `preview`: the `SeqtekPreview*` stacks in
-`us-east-1`. They serve preview.seqtek.com (UAT) and ww3.seqtek.com (production)
+`us-east-1`. They serve preview.seqtek.com (UAT) and www.seqtek.com (production)
 from one RDS instance, with the databases `seqtek_preview` and `seqtek_prod`. AWS
 steps belong to SEQTEK's account admin. Merges, Deploy runs, releases and `/admin`
 belong to the website owner. This repo is public, so send the admin a link, not a
@@ -26,7 +26,7 @@ and the redeploy fails again.
    out() { aws cloudformation describe-stacks --stack-name SeqtekPreviewCompute \
      --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text; }
    CLUSTER=$(out ClusterName)
-   SERVICE=$(out ServiceName)   # ww3: $(out SecondaryLaneServiceName)
+   SERVICE=$(out ServiceName)   # production (www): $(out SecondaryLaneServiceName)
    aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" --desired-count 0
    ```
 
@@ -49,19 +49,19 @@ aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE --task-definition "$
 
 **Website owner.**
 
-3. Redeploy: re-run the failed Deploy run (preview) or publish the release (ww3).
+3. Redeploy: re-run the failed Deploy run (preview) or publish the release (production).
    The deploy brings the service back up on the new image.
 4. Sign in to the lane's `/admin` first: on an empty database the first account to
    sign in becomes the only admin. Then load the content JSON with
    `npm run payload:seed` in the order in the content repo's `LOAD-ORDER.md`.
 
 If the redeploy fails, repeat 1–2 and redeploy. Merge nothing to `main` while
-preview is being rebuilt, since a merge redeploys it. Do ww3 right before
+preview is being rebuilt, since a merge redeploys it. Do production right before
 publishing the release that carries the baseline (#174 or later).
 
 ## 2. Snapshot before a destructive migration
 
-A merge to `main` deploys preview, publishing a release deploys ww3, and each
+A merge to `main` deploys preview, publishing a release deploys production, and each
 container runs `payload migrate` on start. So a migration that drops columns or
 tables applies with no manual step. Before merging one, and again before publishing
 its release, the account admin snapshots the RDS instance:

@@ -4,7 +4,7 @@ name: Deploy
 #
 #   merge to `main`            →  preview.seqtek.com  (UAT, primary lane.
 #                                                       BUILDS the image.)
-#   publish a GitHub Release   →  ww3.seqtek.com      (PROD, secondary lane.
+#   publish a GitHub Release   →  www.seqtek.com      (PROD, secondary lane.
 #                                                       Promotes an existing
 #                                                       image. NO build.)
 #
@@ -59,10 +59,10 @@ name: Deploy
 #
 # Neither path deploys the never-provisioned `envName: prod` CDK env (decided
 # 2026-08-12: no AWS account, no infra, and the account is at its 5-VPC limit).
-# ww3 is a second ECS task/service/target-group inside the SAME
+# The production lane is a second ECS task/service/target-group inside the SAME
 # `SeqtekPreviewCompute` stack — see compute-stack.ts `secondaryLane`.
 #
-# ww3.seqtek.com is production: the finished site behind a DNS record, so going
+# www.seqtek.com is production: the finished site behind a DNS record, so going
 # live is a Route53 change rather than a deploy. Both lanes are Cognito-gated
 # until then, and that gate is index control — it keeps search engines out.
 #
@@ -199,7 +199,7 @@ jobs:
     # Two GitHub Environments, ONE CDK/AWS target (the preview account —
     # staging's separate account is retired, nothing deploys there anymore).
     # `production` is still the human-facing gate for whatever promotes the
-    # secondary (ww3) lane — a `main` push now included, alongside the
+    # secondary (production) lane — a `main` push now included, alongside the
     # existing release/`env=prod` dispatch paths — via required reviewers /
     # deployment branch policy on that Environment. `preview` gates the
     # ordinary Preview-branch push, which only ever touches the primary lane.
@@ -218,7 +218,7 @@ jobs:
     env:
       # IS_RELEASE distinguishes "merge to `main` — only the PRIMARY
       # (preview.seqtek.com) lane moves" from "release or manual prod
-      # promotion — only the SECONDARY (ww3.seqtek.com) lane moves". Both
+      # promotion — only the SECONDARY (www.seqtek.com) lane moves". Both
       # deploy the SAME `env=preview` CDK stacks in the SAME account; they
       # differ in image-tag wiring below and in which GitHub Environment
       # gates them above.
@@ -416,7 +416,7 @@ jobs:
         run: npm --prefix infra ci
 
       # RELEASE PATH ONLY. A release must not drift the PRIMARY lane's task
-      # definition just because it ran — it promotes ONLY the secondary (ww3)
+      # definition just because it ran — it promotes ONLY the secondary (production)
       # lane. Re-synthing `SeqtekPreviewCompute` touches BOTH lanes' task
       # definitions, so the primary lane's `-c imageTag` has to be pinned to
       # whatever it is ALREADY running (read straight from the live ECS
@@ -729,11 +729,11 @@ jobs:
             exit 1
           fi
           if [ "${IS_RELEASE}" = "true" ]; then
-            echo "Release: promoting prod (ww3) lane to ${SECONDARY_IMAGE_TAG}"
+            echo "Release: promoting prod (www) lane to ${SECONDARY_IMAGE_TAG}"
             echo "         holding preview lane at ${IMAGE_TAG}"
           else
             echo "Main push: moving preview lane to ${IMAGE_TAG}"
-            echo "           holding prod (ww3) lane at ${SECONDARY_IMAGE_TAG}"
+            echo "           holding prod (www) lane at ${SECONDARY_IMAGE_TAG}"
           fi
           npm --prefix infra run cdk -- deploy -c env="$ENV_NAME" -c imageTag="$IMAGE_TAG" \
             -c "secondaryImageTag=$SECONDARY_IMAGE_TAG" \
@@ -760,7 +760,7 @@ jobs:
         id: site
         # A release only ever changed the secondary lane, so it reports (and
         # the smoke job below tests) SecondaryLaneSiteUrl — e.g.
-        # https://ww3.seqtek.com/ — not the primary SiteUrl, which a release
+        # https://www.seqtek.com/ — not the primary SiteUrl, which a release
         # never touches.
         env:
           OUTPUT_KEY: ${{ env.IS_RELEASE == 'true' && 'SecondaryLaneSiteUrl' || 'SiteUrl' }}

@@ -15,7 +15,7 @@ Rebuild of seqtek.com from Wix → self-hosted Next.js + Payload CMS. Open-sourc
 
 Defer to these docs before re-deriving anything. Update them when decisions change.
 
-- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com builds once; publishing the GitHub Release promotes that same image → ww3.seqtek.com, no rebuild)
+- `docs/ARCHITECTURE.md` — system design, stack rationale, deployment, promotion model (`main` → preview.seqtek.com builds once; publishing the GitHub Release promotes that same image → www.seqtek.com, no rebuild)
 - `docs/INFRASTRUCTURE_RUNBOOK.md` — rebuilding a lane's database, snapshotting before a destructive migration, the GitHub environments and parameters CDK does not create, external reviewers
 - `docs/ROADMAP.md` — what is still open, in priority order. Open items only; nothing that has shipped
 - `docs/PROJECT_HISTORY.md` — archive of completed roadmap items (IDs preserved for traceability)
@@ -42,12 +42,13 @@ of `leaf | group | axis`, all rendering through `/services/[slug]`.
 A section the library cannot draw gets a block option, not JSX in a route. Only site chrome (below) is code-owned. `/contact` is the one route still
 written in code (ROADMAP CONTACT-1); `noBespokeBodyTemplates.int.spec.ts` accounts for every route file.
 
-**Environments.** Nothing is publicly launched. A merge to `main` builds the image and deploys
+**Environments.** A merge to `main` builds the image and deploys
 `preview.seqtek.com` (UAT, primary Fargate lane); **publishing** the GitHub Release that Release-Please prepares
-promotes **that same already-built image** to `ww3.seqtek.com` (production, secondary lane, same stack and
+promotes **that same already-built image** to `www.seqtek.com` (production, secondary lane, same stack and
 account) without rebuilding. Merging the release PR itself deploys nothing. `main` is the only deployment
-branch. Both lanes sit behind an ALB + Cognito gate — index control, not access control: it is what keeps
-search engines out until cutover. `seqtek.com` still serves the old Wix site.
+branch. `preview.seqtek.com` sits behind an ALB + Cognito gate — index control, not access control: it keeps
+search engines out. The production lane is served publicly (`gated: false` in `infra/cdk.json`). The apex
+`seqtek.com` 301s to www at the DNS provider.
 
 **Site chrome is code-owned, except the header menu.** Company name, tagline, phone, email, postal address,
 social links, the footer nav and the legal nav live in `src/lib/site-content.ts` and change by deploy, not by
@@ -117,7 +118,7 @@ code, never copy or media. **Tool is committed; data is gitignored.**
   write time: `$ref` (relation by slug/field → id), `$file` (media upload-or-reuse by filename → id),
   `$lexical` (prose → editorState). An array of specs runs in order, so earlier docs resolve as later refs.
   `IMPORT_BASE_URL` (default `http://localhost:3100`; the lanes are `https://preview.seqtek.com` /
-  `https://ww3.seqtek.com`) + `IMPORT_TOKEN` (an `/admin` `payload-token` JWT the site owner mints — the lanes
+  `https://www.seqtek.com`) + `IMPORT_TOKEN` (an `/admin` `payload-token` JWT the site owner mints — the lanes
   have no direct DB access, so REST-with-a-token is the only path; a Cognito-gated lane also needs
   `IMPORT_COOKIE`). `--dry-run` previews. Keep the token out of the repo. The shared REST client is
   `tools/payload-rest/client.ts`. **Don't commit remote-push scripts** — the runner is generic; the data is not.

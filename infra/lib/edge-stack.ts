@@ -105,7 +105,7 @@ export class EdgeStack extends Stack {
     // behavior — not overridable via origin request policy, and `Host`
     // can't be added to one for a custom origin). With one distribution
     // and one ALB shared by two lanes, compute-stack's host-based ALB rule
-    // would otherwise never see `preview.seqtek.com` or `ww3.seqtek.com` —
+    // would otherwise never see `preview.seqtek.com` or `www.seqtek.com` —
     // only the ALB's own DNS name, on every request. This CloudFront
     // Function (viewer-request stage, runs before origin selection) copies
     // the viewer's real Host into a new `x-forwarded-host` header, which

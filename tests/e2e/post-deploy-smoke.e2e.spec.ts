@@ -13,7 +13,7 @@
  *
  * The `/` and `/admin` checks below tolerate TWO valid outcomes rather
  * than asserting exactly one: this same suite runs against both a
- * cognitoAuthEnabled lane (preview.seqtek.com / ww3.seqtek.com, added
+ * cognitoAuthEnabled lane (preview.seqtek.com / www.seqtek.com, added
  * 2026-08-12 — see infra/lib/cognito-auth.ts) and an ungated one
  * (seqtek-preview.com). On a gated lane, anonymous access correctly
  * redirects to the Cognito Hosted UI instead of 200ing — that's the

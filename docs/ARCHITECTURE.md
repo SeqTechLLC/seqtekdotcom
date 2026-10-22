@@ -125,14 +125,14 @@ docs/                 this doc, ROADMAP, contracts/, decisions/
 ```
 GitHub (public repo)
   merge to main ──► build image, push to ECR ──► cdk deploy SeqtekPreviewCompute
-  publish release ─► resolve an existing image ─► cdk deploy (ww3 lane only moves)
+  publish release ─► resolve an existing image ─► cdk deploy (production lane only moves)
 
-CloudFront (ACM cert for seqtek.com + *.seqtek.com; aliases preview. and ww3.)
+CloudFront (ACM cert for seqtek.com + *.seqtek.com; aliases preview. and www.)
   │   CloudFront Function: Host ─► x-forwarded-host
   ├─► S3 media bucket (/media/*, Origin Access Control)
   └─► ALB (HTTPS 443, Cognito gate on each gated lane)
         ├─ default action ────────────► preview lane: Fargate service, database seqtek_preview
-        └─ x-forwarded-host = ww3... ─► ww3 lane:     Fargate service, database seqtek_prod
+        └─ x-forwarded-host = www... ─► production lane:     Fargate service, database seqtek_prod
                                               │
                                               ▼
                               RDS PostgreSQL (one instance, isolated subnets)
@@ -140,7 +140,7 @@ CloudFront (ACM cert for seqtek.com + *.seqtek.com; aliases preview. and ww3.)
 
 Both lanes live in the `SeqtekPreview*` stacks in one AWS account. Each lane is an ECS task definition,
 service and target group. Tasks run in public subnets with public IPs (the VPC has no NAT) and accept
-port 3000 from the ALB only. The container runs `payload migrate` and then `node server.js`; the ww3
+port 3000 from the ALB only. The container runs `payload migrate` and then `node server.js`; the production
 lane's command first creates `seqtek_prod` if it is missing. Services use a rolling deployment with the
 ECS circuit breaker (`rollback: true`): a task that fails the ALB health check rolls the service back to
 its previous task definition.
@@ -176,7 +176,7 @@ Current versions never expire. Incomplete multipart uploads abort after 7 days.
 `deploy.yml`, on a push to `main` (docs-only changes are skipped):
 
 1. Build the image and push it to ECR, tagged with the commit SHA and the build version.
-2. `cdk deploy SeqtekPreview*Compute` with `-c imageTag=<sha>`, holding the ww3 lane at the tag it is
+2. `cdk deploy SeqtekPreview*Compute` with `-c imageTag=<sha>`, holding the production lane at the tag it is
    running.
 3. Run the post-deploy smoke (`tests/e2e/post-deploy-smoke.e2e.spec.ts`) against the lane.
 4. Post the outcome to Slack through `slack-notify.yml`.
@@ -189,13 +189,13 @@ Current versions never expire. Incomplete multipart uploads abort after 7 days.
 | -------------------------------------- | --------------------------- | --------- | ------- |
 | Push to `main`                         | preview.seqtek.com (UAT)    | primary   | yes     |
 | Merge the Release-Please PR            | nothing                     | —         | no      |
-| Publish a GitHub Release               | ww3.seqtek.com (production) | secondary | no      |
-| Deploy workflow, `env: prod`, `target` | ww3.seqtek.com              | secondary | no      |
+| Publish a GitHub Release               | www.seqtek.com (production) | secondary | no      |
+| Deploy workflow, `env: prod`, `target` | www.seqtek.com              | secondary | no      |
 | Deploy workflow, `env: preview`        | preview.seqtek.com          | primary   | yes     |
 
 **One build, promoted unchanged.** A `main` build tags its image with the commit SHA and a build version
 (`MAJOR.MINOR` from the last release tag, `PATCH` = that patch plus commits since). Promotion points the
-ww3 task definition at an image that already exists. Nothing is rebuilt, because a rebuild would ship
+production task definition at an image that already exists. Nothing is rebuilt, because a rebuild would ship
 bits nobody tested.
 
 **Resolution.** A release tag `vX.Y.Z` resolves to the image tagged `X.Y.Z` and deploys it by its commit
@@ -221,7 +221,7 @@ policies and `PROD_ENVIRONMENT_CONFIGURED=true` ([`INFRASTRUCTURE_RUNBOOK.md`](.
 
 ### Environments & isolation
 
-`infra/cdk.json` defines three CDK envs; only `preview` is deployed. Its `secondaryLane` is the ww3
+`infra/cdk.json` defines three CDK envs; only `preview` is deployed. Its `secondaryLane` is the
 production lane, so production and UAT share one VPC, ALB, RDS instance, media bucket, ECR repository,
 secrets and SSM tree, and are isolated by database, task definition, target group and host rule.
 Deleting `SeqtekPreviewData` would delete production's database with it: the instance has no deletion
@@ -246,7 +246,7 @@ the stack knows are set directly in the task environment. `NEXT_PUBLIC_*` values
 
 CloudFront terminates TLS with an ACM certificate for `seqtek.com` and `*.seqtek.com`, validated in the
 `seqtek.com` hosted zone. CDK creates Route 53 alias records only for the names in `dnsRecordNames`
-(`preview.seqtek.com`, and `ww3.seqtek.com` for the secondary lane). The ALB listens on 443 from the
+(`preview.seqtek.com`, and `www.seqtek.com` for the secondary lane). The ALB listens on 443 from the
 CloudFront prefix list only. There is no www-to-apex redirect.
 
 ### Network
@@ -279,7 +279,7 @@ The one list. `.env.example` carries local defaults.
 | `S3_BUCKET`, `S3_BUCKET_HOSTNAME`, `S3_REGION`                                | Server | Config     | Task environment                           | Media storage; the hostname also feeds CSP `img-src` |
 | `CLOUDFRONT_DISTRIBUTION_ID`                                                  | Server | Config     | SSM (written by the Edge stack)            | Targeted invalidations                               |
 | `COGNITO_LOGOUT_URL`, `COGNITO_CLIENT_ID`                                     | Server | Config     | Task environment, gated lanes only         | `/api/auth/gate-logout`                              |
-| `RELEASE_VERSION`                                                             | Server | Config     | Task environment, ww3 lane                 | `release` in `/api/health`                           |
+| `RELEASE_VERSION`                                                             | Server | Config     | Task environment, production lane          | `release` in `/api/health`                           |
 | `CSP_MODE`                                                                    | Server | Config     | Unset (defaults to `report-only`)          | `enforce` \| `report-only` \| `off`                  |
 | `MAINTENANCE_MODE`                                                            | Server | Config     | Unset                                      | `true` serves the maintenance page (ERROR_PAGES §4)  |
 | `PAYLOAD_DISABLE_PUSH`                                                        | Server | Config     | Local and CI only                          | Turns off Drizzle push outside production            |
@@ -425,7 +425,7 @@ every 6 hours so a silent channel means a broken path:
 | `RdsConnectionsHigh`     | Connections > 60 for 3 min                            |
 | `CloudFrontErrorRate`    | 5xx rate > 1% in 5 min                                |
 
-The ECS alarms watch the primary (preview) service; the ww3 lane has no service-level alarm. Containers
+The ECS alarms watch the primary (preview) service; the production lane has no service-level alarm. Containers
 log to CloudWatch Logs through the `awslogs` driver (`/seqtek/website/preview/app` and
 `/seqtek/website/preview/prod/app`, 14-day retention).
 
@@ -517,7 +517,7 @@ fallback, because every deploy states what production runs.
 | ------------------------------- | -------------------------------------------------------------- |
 | PR touching `infra/`            | `cdk synth` for `staging` and `prod`, plus the assertion tests |
 | Push to `main`                  | `cdk deploy SeqtekPreview*Compute`                             |
-| Publish a release               | `cdk deploy SeqtekPreview*Compute`, ww3 lane moves             |
+| Publish a release               | `cdk deploy SeqtekPreview*Compute`, production lane moves      |
 | Deploy workflow, `stack-filter` | Any `SeqtekPreview*` stack, e.g. `*Edge` or `*`                |
 
 The assertion tests cover the security groups, bucket settings, the OAC origin, IAM scoping, the

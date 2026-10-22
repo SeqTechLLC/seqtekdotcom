@@ -4,9 +4,8 @@ Open-source rebuild of [seqtek.com](https://www.seqtek.com), moving from Wix to 
 stack on AWS. Public as a portfolio piece showing the stack choices, architectural reasoning and process behind a real
 marketing site rebuild.
 
-**Status:** active development; nothing is publicly launched. UAT runs at `preview.seqtek.com` and production at
-`ww3.seqtek.com`, both behind an ALB + Cognito gate. The cutover to `seqtek.com` is gated on content, not
-engineering. [`docs/ROADMAP.md`](docs/ROADMAP.md) is what's open; [`docs/PROJECT_HISTORY.md`](docs/PROJECT_HISTORY.md)
+**Status:** active development. UAT runs at `preview.seqtek.com`, behind an ALB + Cognito gate, and production at
+`www.seqtek.com`, served publicly. `seqtek.com` redirects to www. [`docs/ROADMAP.md`](docs/ROADMAP.md) is what's open; [`docs/PROJECT_HISTORY.md`](docs/PROJECT_HISTORY.md)
 is what shipped.
 
 ## Stack

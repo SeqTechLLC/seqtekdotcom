@@ -21,8 +21,6 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
   proofs than menu items. Status is in the private `WAITING_ON_PEOPLE.md`.
 - **AB-1 — an alternative "what we do" page.** A page that explains everything we do quickly without the full list,
   A/B tested against the menu once there is traffic. Settle how "understood quickly" is measured before building it.
-- **LM-1 — what "soft launch" means.** Either ungate `ww3.seqtek.com` for a named audience, or cut DNS early and
-  treat the hard launch as a content refresh (which pulls most of P3 forward).
 
 ## P1 — Content throughput
 
@@ -94,16 +92,19 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 - **Force a new service deployment after the Edge stack deploys** on a fresh env, or tasks never read the
   Edge-owned `cloudfront_distribution_id` and every invalidation skips.
 - **Snapshot before merging a destructive migration** (`INFRASTRUCTURE_RUNBOOK.md` §2).
-- **Cutover to seqtek.com** (infra engineer, low-traffic window). It has to cover:
-  - ungating ww3 without ungating preview.seqtek.com, since `cognitoAuthEnabled` is env-wide;
-  - `seqtek.com` as the first entry of `secondaryLane.dnsRecordNames`, which drives the CloudFront aliases, the
-    Route 53 records, the ALB host rule, the Cognito callbacks and the lane's `NEXT_PUBLIC_SITE_URL`;
-  - removing the zone's existing `seqtek.com`/`www` records and the older distribution's aliases in the window;
+- **Cutover to www.seqtek.com** (infra engineer, low-traffic window). The lane is configured for it in
+  `infra/cdk.json` (`secondaryLane.dnsRecordNames: ["www.seqtek.com"]`, `gated: false`), so the deploy creates the
+  CloudFront alias, the Route 53 record and the ALB host rule, and leaves preview behind the gate. The window still
+  has to cover:
+  - moving the `www.seqtek.com` alias off the older distribution (CloudFront allows a name on one distribution only),
+    and deleting the zone's existing `www` CNAME so the deploy can create its A-alias. The apex stays on its redirect
+    to www;
   - a by-category HubSpot cookie policy for `seqtek.com` and `www.seqtek.com` (`INTEGRATIONS.md` §4.1), replacing
     www's cookies-without-banner one. Without it HubSpot grants consent to every visitor and the ad tags load
     without asking;
-  - caching: the shared distribution disables CloudFront caching while the env has a gate, because its cache key
-    has no host (`edge-stack.ts`). Public seqtek.com needs a host-aware cache policy or its own distribution.
+  - caching: the shared distribution disables CloudFront caching of `/_next/static/*` while the env has a gate,
+    because its cache key has no host (`edge-stack.ts`) and preview's login redirect would be cached for www. Public
+    www serves those assets from the ALB uncached until there is a host-aware cache policy or its own distribution.
 - **Production's database has no deletion guard.** `seqtek_prod` is on the `preview` env's RDS instance, which has
   no deletion protection and `RemovalPolicy.DESTROY` (`data-stack.ts`).
 - After cutover: submit the sitemap to Search Console, crawl the redirects, check CloudFront cache behavior,

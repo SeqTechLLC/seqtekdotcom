@@ -110,7 +110,7 @@ export interface EnvConfig {
   /**
    * Optional second application lane sharing THIS env's cluster, ALB, and
    * RDS instance instead of standing up a whole separate env's worth of
-   * stacks. Added for the temporary `ww3.seqtek.com` PROD-preview lane
+   * stacks. Added for the temporary `www.seqtek.com` PROD-preview lane
    * (2026-08-11): a second ECS task definition/service/target group behind
    * the same ALB (new host-header-routed listener rule), and a second
    * Postgres DATABASE on the SAME RDS instance (`databaseName` here, NOT a
@@ -125,7 +125,7 @@ export interface EnvConfig {
    * the CloudFront distribution's alias list AND get real Route53 A
    * records, on top of (not replacing) the top-level `dnsRecordNames`.
    * Every entry must already be covered by the top-level `certificateSans`
-   * (e.g. `*.seqtek.com` covers `ww3.seqtek.com` with zero new cert
+   * (e.g. `*.seqtek.com` covers `www.seqtek.com` with zero new cert
    * validation). `null` for every env that doesn't need a second lane.
    */
   secondaryLane: {
@@ -149,7 +149,7 @@ export interface EnvConfig {
    * unless that lane sets `gated: false`, behind a Cognito User Pool
    * federated to Google Workspace — "hide this env from the public
    * internet" without touching the app. Added 2026-08-12 for
-   * preview.seqtek.com + ww3.seqtek.com specifically: both are non-public
+   * preview.seqtek.com + www.seqtek.com specifically: both are non-public
    * (UAT and a temporary PROD-preview), unlike the real seqtek.com/
    * www.seqtek.com, which this never touches (a different distribution
    * entirely, not managed by this env).
