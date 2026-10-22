@@ -701,11 +701,21 @@ describe('ComputeStack', () => {
       expect(actions.map((a) => a.Type)).toEqual(['forward'])
     })
 
-    it('drops the secondary lane health bypass, which only exists to punch through the gate', () => {
-      const priorities = Object.values(t.findResources('AWS::ElasticLoadBalancingV2::ListenerRule'))
-        .map((r) => (r.Properties as { Priority: number }).Priority)
-        .sort((a, b) => a - b)
-      expect(priorities).toEqual([6, 10])
+    it('keeps the host-scoped health bypass, so the primary bypass cannot answer for the lane', () => {
+      // The primary bypass (priority 6) matches /api/health, /_next/image and
+      // /api/media/file/* on ANY host. The lane's own rule at priority 5 is
+      // what keeps those paths on the lane's task and database. Dropping it
+      // because the lane is ungated served www's health check from preview.
+      const rules = t.findResources('AWS::ElasticLoadBalancingV2::ListenerRule')
+      const byPriority = (p: number) =>
+        Object.values(rules).find((r) => (r.Properties as { Priority: number }).Priority === p)
+      expect(Object.keys(rules)).toHaveLength(3)
+      const lane = byPriority(5)
+      expect(lane, 'expected the priority-5 lane bypass').toBeDefined()
+      const conditions = (lane!.Properties as { Conditions: Array<{ Field: string }> }).Conditions
+      expect(conditions.map((c) => c.Field).sort()).toEqual(['http-header', 'path-pattern'])
+      const primary = byPriority(6)!.Properties as { Conditions: Array<{ Field: string }> }
+      expect(primary.Conditions.map((c) => c.Field)).toEqual(['path-pattern'])
     })
 
     it('registers a Cognito callback and logout URL for the primary hostname only', () => {
