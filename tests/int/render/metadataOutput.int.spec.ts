@@ -4,7 +4,12 @@ import { join, relative, resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-import { buildMetadata, type SeoGroup } from '../../../src/lib/metadata'
+import {
+  buildMetadata,
+  DEFAULT_DESCRIPTION,
+  DEFAULT_SHARE_IMAGE,
+  type SeoGroup,
+} from '../../../src/lib/metadata'
 import { siteSettings } from '../../../src/lib/site-content'
 
 /**
@@ -67,28 +72,40 @@ describe('buildMetadata resolved output', () => {
   it('no seo group at all (teamMembers) still emits a description and siteName', () => {
     const md = buildMetadata(null, { title: 'Dana Dudley' })
     expect(md.title).toBe('Dana Dudley')
-    expect(md.description).toBe(TAGLINE)
+    expect(md.description).toBe(DEFAULT_DESCRIPTION)
     expect(md.openGraph?.siteName).toBe(COMPANY_NAME)
   })
 
   it('homepage absolute title bypasses the layout template', () => {
     const md = buildMetadata(null, { title: 'SEQTEK', absoluteTitle: true })
     expect(md.title).toEqual({ absolute: 'SEQTEK' })
-    expect(md.description).toBe(TAGLINE)
+    expect(md.description).toBe(DEFAULT_DESCRIPTION)
   })
 
-  it('the tagline is the last resort before the hard-coded default', () => {
+  it('the site description is the last resort, and the default share image fills the gap', () => {
     const md = buildMetadata(
       { metaTitle: null, metaDescription: null, ogImage: null },
       { title: 'Privacy Policy' },
     )
-    expect(md.description).toBe(TAGLINE)
+    expect(md.description).toBe(DEFAULT_DESCRIPTION)
     expect(md.openGraph).toEqual({
       title: 'Privacy Policy',
-      description: TAGLINE,
+      description: DEFAULT_DESCRIPTION,
       type: 'website',
       siteName: COMPANY_NAME,
+      images: [{ url: DEFAULT_SHARE_IMAGE }],
     })
+    expect((md.twitter as { card?: string; images?: string[] } | undefined)?.card).toBe(
+      'summary_large_image',
+    )
+    expect((md.twitter as { images?: string[] } | undefined)?.images).toEqual([DEFAULT_SHARE_IMAGE])
+  })
+
+  it('the default description is the Marketing wording, not the tagline', () => {
+    expect(DEFAULT_DESCRIPTION).toBe(
+      'Your Localshoring® partner for business consulting. Modernizing organizations through people, process, and technology.',
+    )
+    expect(DEFAULT_DESCRIPTION).not.toBe(TAGLINE)
   })
 })
 

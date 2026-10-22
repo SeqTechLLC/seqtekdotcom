@@ -6,9 +6,9 @@ import { siteSettings } from '@/lib/site-content'
 // spec 004 Phase 2 (T007). Maps a document's `seo` group → Next `Metadata`,
 // with site-level fallbacks.
 //
-// spec 011 T013: the company name and tagline used as fallbacks come from the
+// spec 011 T013: the company name used as a fallback comes from the
 // code-owned `site-content.ts` constant, not from a CMS global. Site chrome is
-// code-owned (ADR 0010) and these two values changed roughly once a decade —
+// code-owned (ADR 0010) and this value changed roughly once a decade —
 // see the Site Settings withdrawal in FR-003/FR-004.
 //
 // The `%s | SEQTEK` title template lives on the root layout's metadata export,
@@ -35,15 +35,17 @@ export interface MetadataFallbacks {
   absoluteTitle?: boolean
 }
 
-// Ultimate description fallback so EVERY page emits a meta description (a
-// missing one fails the Lighthouse SEO gate).
-//
-// Unreachable as written: the fallback ahead of it is `siteSettings.tagline`,
-// a non-empty literal in `site-content.ts`. Kept deliberately — that file
-// invites editing the values freely, and blanking the tagline would otherwise
-// drop the description entirely and fail the SEO gate. No em dashes (project rule).
-const DEFAULT_DESCRIPTION =
-  'SEQTEK is a Tulsa technology consultancy delivering strategy, software delivery, and localshoring across Oklahoma, Northwest Arkansas, and Kansas City.'
+// Site-wide description, used by every page without its own. Wording from Marketing
+// (2026-10-22). It replaced the tagline here: the homepage title already carries the
+// tagline, so the share card and the search result showed it twice. A page whose
+// `seo.metaDescription` or per-page fallback is set still wins. No em dashes (project rule).
+export const DEFAULT_DESCRIPTION =
+  'Your Localshoring® partner for business consulting. Modernizing organizations through people, process, and technology.'
+
+// Share image used when a page has no `seo.ogImage` of its own: the SEQTEK wordmark on
+// white, 1200x630, in `public/`. A relative path, resolved against the root layout's
+// `metadataBase`.
+export const DEFAULT_SHARE_IMAGE = '/share-image.png'
 
 const ogImageUrl = (ogImage: SeoGroup['ogImage']): string | undefined => {
   if (ogImage && typeof ogImage === 'object' && 'url' in ogImage && ogImage.url) {
@@ -72,26 +74,25 @@ export const buildMetadata = (
   const title = firstNonEmpty(seo?.metaTitle, fallbacks.title) ?? fallbacks.title
 
   const description =
-    firstNonEmpty(seo?.metaDescription, fallbacks.description, siteSettings.tagline) ??
-    DEFAULT_DESCRIPTION
+    firstNonEmpty(seo?.metaDescription, fallbacks.description) ?? DEFAULT_DESCRIPTION
 
-  const image = ogImageUrl(seo?.ogImage)
+  const image = ogImageUrl(seo?.ogImage) ?? DEFAULT_SHARE_IMAGE
 
   return {
     title: fallbacks.absoluteTitle ? { absolute: title } : title,
     description,
     openGraph: {
       title,
-      ...(description ? { description } : {}),
+      description,
       type: 'website',
       siteName: siteSettings.companyName,
-      ...(image ? { images: [{ url: image }] } : {}),
+      images: [{ url: image }],
     },
     twitter: {
-      card: image ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title,
-      ...(description ? { description } : {}),
-      ...(image ? { images: [image] } : {}),
+      description,
+      images: [image],
     },
   }
 }
