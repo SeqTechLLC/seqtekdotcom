@@ -283,6 +283,13 @@ automated check enforces it.
 The brand kit's Q-only mark is not among the supplied files. The site's favicon (`src/app/favicon.ico`,
 `src/app/icon.png`) is the Q mark extracted from the wordmark (PR #48).
 
+### 13.2.1 Share image
+
+`public/share-image.png` is the picture Slack, LinkedIn and search previews show for any page without its own
+`seo.ogImage` (`DEFAULT_SHARE_IMAGE` in `src/lib/metadata.ts`). It is the black no-tagline wordmark, centered on
+white at 1200x630, placed from the brand kit file with no redrawing. Marketing chose the logo over a dedicated
+graphic (2026-10-22). Replace the PNG, keeping the size, to change it.
+
 ### 13.3 Tagline
 
 **(brand kit)** "Delivering Transformative Technologies Since 1999", always with "Since 1999". The footer sets it
