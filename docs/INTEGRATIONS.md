@@ -76,9 +76,10 @@ The banner comes with the tracking script, and the portal configures it per host
 ### 2.1 Loading
 
 `GtmScript.tsx` renders the GTM snippet `afterInteractive`, with the request nonce, only when
-`NEXT_PUBLIC_GTM_ID` is set. The container is `GTM-54KBJ2Z3`. **Both deployed lanes build with
-`NEXT_PUBLIC_GTM_ID` empty (`deploy.yml`), so GTM loads on neither.** `deploy.yml`'s reason: the
-container is the one the live Wix site uses.
+`NEXT_PUBLIC_GTM_ID` is set. The container is `GTM-54KBJ2Z3`. **`deploy.yml` builds with
+`NEXT_PUBLIC_GTM_ID=GTM-54KBJ2Z3`, and one image serves both lanes, so GTM loads on preview and on
+production.** Local dev and CI leave it unset, so it loads nowhere there. The container held no tags
+before version 2 (published 2026-10-22), which added the GA4 tag.
 
 ### 2.2 Consent mode
 

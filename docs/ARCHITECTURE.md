@@ -288,7 +288,7 @@ The one list. `.env.example` carries local defaults.
 | `NEXT_PUBLIC_SITE_URL`                                                        | Both   | Public     | Task environment, from `dnsRecordNames[0]` | Canonical URLs, sitemap, media URLs                  |
 | `NEXT_PUBLIC_HUBSPOT_PORTAL_ID`                                               | Client | Public     | Build arg                                  | HubSpot tracking and Forms API                       |
 | `NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID`, `NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID` | Client | Public     | Build arg                                  | HubSpot form GUIDs                                   |
-| `NEXT_PUBLIC_GTM_ID`                                                          | Client | Public     | Build arg, empty in both lanes             | GTM loads only when set                              |
+| `NEXT_PUBLIC_GTM_ID`                                                          | Client | Public     | Build arg, `GTM-54KBJ2Z3` in both lanes    | GTM loads only when set                              |
 | `NEXT_PUBLIC_LINKEDIN_PARTNER_ID`                                             | Client | Public     | Build arg, `3952964` in both lanes         | LinkedIn Insight Tag loads only when set             |
 | `BUILD_COMMIT`, `BUILD_VERSION`                                               | Server | Public     | Build arg                                  | `commit` and `version` in `/api/health`              |
 

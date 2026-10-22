@@ -78,6 +78,10 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
 
 **GTM (container config, not code)**
 
+- The GA4 tag (`G-0NHHQJCPZ6`) is live in `GTM-54KBJ2Z3` (version 2) and loads once a release carries
+  `NEXT_PUBLIC_GTM_ID`. Still to do: restrict it to the production hostnames, because preview loads the
+  container too (`infra/gtm/README.md`); publish the HubSpot cookie policy for `www.seqtek.com` (HS-1)
+  before that release, or GA4 runs for every visitor without a banner.
 - Build the Google Ads conversion tag in `GTM-54KBJ2Z3` (require `ad_storage`; fire on page
   view and `hubspotConsentUpdate`), run the accept/deny/customize matrix, then export and commit
   `infra/gtm/container.json`.
