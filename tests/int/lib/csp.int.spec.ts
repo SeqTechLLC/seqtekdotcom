@@ -79,6 +79,12 @@ describe('buildCspPolicy — directive parity with ARCHITECTURE.md §6', () => {
     }
   })
 
+  it('allowlists the GA4 hosts Google documents for GTM on img-src and connect-src', () => {
+    expect(policy).toMatch(/img-src [^;]*\*\.googletagmanager\.com/)
+    expect(policy).toMatch(/img-src [^;]*\*\.google-analytics\.com/)
+    expect(policy).toMatch(/connect-src [^;]*\*\.google\.com/)
+  })
+
   it('allowlists the LinkedIn Insight Tag beacon host on connect-src and img-src', () => {
     expect(policy).toMatch(/connect-src [^;]*\*\.ads\.linkedin\.com/)
     expect(policy).toMatch(/img-src [^;]*\*\.ads\.linkedin\.com/)

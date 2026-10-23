@@ -54,6 +54,11 @@ const HUBSPOT_IMG = ['*.hubspot.com', '*.hsforms.net'] as const
 // troubleshooting page lists as tag hosts.
 const LINKEDIN_BEACON = ['*.ads.linkedin.com'] as const
 
+// GA4 through GTM (Google's CSP guide for Tag Manager, analytics without Ads
+// features): the tag's pixel loads from these on img-src, its collect calls go
+// to them on connect-src, and connect-src also needs *.google.com.
+const GOOGLE_ANALYTICS = ['*.googletagmanager.com', '*.google-analytics.com'] as const
+
 // Privacy-respecting video embeds (workshop proof sections, the `embed`
 // block). youtube-nocookie defers cookies until playback; Vimeo's player
 // host is its only embed origin. Iframes only — no script/img surface.
@@ -81,7 +86,7 @@ export function buildCspPolicy({
   const isAdmin = pathname.startsWith('/admin')
   const isEnforced = mode === 'enforce'
 
-  const imgSrc = ["'self'", 'data:', ...HUBSPOT_IMG, ...LINKEDIN_BEACON]
+  const imgSrc = ["'self'", 'data:', ...HUBSPOT_IMG, ...LINKEDIN_BEACON, ...GOOGLE_ANALYTICS]
   if (mediaHost) imgSrc.push(mediaHost)
 
   const directives: Record<string, string[]> = {
@@ -93,8 +98,8 @@ export function buildCspPolicy({
     'connect-src': [
       "'self'",
       ...HUBSPOT_CONNECT,
-      '*.googletagmanager.com',
-      '*.google-analytics.com',
+      ...GOOGLE_ANALYTICS,
+      '*.google.com',
       ...LINKEDIN_BEACON,
     ],
     'frame-src': ["'self'", ...HUBSPOT_FRAME, ...VIDEO_FRAME],
