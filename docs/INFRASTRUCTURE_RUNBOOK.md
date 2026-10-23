@@ -49,7 +49,8 @@ aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE --task-definition "$
 
 **Website owner.**
 
-3. Redeploy: re-run the failed Deploy run (preview) or publish the release (production).
+3. Redeploy: re-run the failed Deploy run (preview), or run Deploy with `env: prod`
+   and `target: vX.Y.Z` (production).
    The deploy brings the service back up on the new image.
 4. Sign in to the lane's `/admin` first: on an empty database the first account to
    sign in becomes the only admin. Then load the content JSON with
@@ -57,13 +58,13 @@ aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE --task-definition "$
 
 If the redeploy fails, repeat 1–2 and redeploy. Merge nothing to `main` while
 preview is being rebuilt, since a merge redeploys it. Do production right before
-publishing the release that carries the baseline (#174 or later).
+promoting the release that carries the baseline (#174 or later).
 
 ## 2. Snapshot before a destructive migration
 
-A merge to `main` deploys preview, publishing a release deploys production, and each
+A merge to `main` deploys preview, promoting a version deploys production, and each
 container runs `payload migrate` on start. So a migration that drops columns or
-tables applies with no manual step. Before merging one, and again before publishing
+tables applies with no manual step. Before merging one, and again before promoting
 its release, the account admin snapshots the RDS instance:
 
 ```sh
