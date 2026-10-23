@@ -14,23 +14,26 @@ name: Deploy
 # nothing is compiled, nothing is pushed, a task definition is repointed at a
 # digest that already exists.
 #
-# EVERY BUILD GETS A VERSION; A RELEASE PROMOTES ONE. Each successful `main`
-# build takes the next patch number and tags its image with it:
+# EVERY BUILD IS NAMED; THE BUILD OF A RELEASE COMMIT CARRIES THE RELEASE
+# NUMBER. Release-Please owns the number. Its `chore(main): release X.Y.Z`
+# commit is built like any other `main` commit, and that image is tagged with the
+# `package.json` version the commit bumped:
 #
-#   0.4.0 -> 0.4.1 -> 0.4.2 -> 0.4.3
+#   0.4.0-1 -> 0.4.0-2 -> 0.4.0-3 -> 0.5.0
 #
-# Each names exactly one image, which UAT runs and you test. "0.4.2 looks
-# good" is then a complete instruction: publish `v0.4.2` and production runs
-# that same container. The leading `v` is the only difference between built
-# and released.
+# Every other build is named for what it follows: N commits after `v0.4.0` is
+# `0.4.0-N`. The suffix is deliberate. A bare counter (0.4.1, 0.4.2) can equal a
+# later Release-Please patch release, and ECR tags are immutable.
 #
-# MAJOR.MINOR come from the last release tag; PATCH is that tag's patch plus
-# commits since it — deterministic from git, monotonic, no stored state.
+# So merging the release PR builds the release candidate onto preview under the
+# number that will ship. "0.5.0 looks good" is a complete instruction: run this
+# workflow with `env: prod` and `target: v0.5.0`, and production runs that same
+# container. Release-Please's `vX.Y.Z` release is the record of it.
 #
-# EXACTLY ONE EVENT PROMOTES PRODUCTION: publishing the GitHub Release. It is
-# created as a DRAFT, so a person publishes it — which is also what makes the
-# event fire at all, since GitHub raises no workflow run for a release
-# published by the default GITHUB_TOKEN.
+# A PERSON PROMOTES: the Actions dispatch below, or a release a person
+# publishes. GitHub raises no workflow run for a release published by the
+# default GITHUB_TOKEN, which is how Release-Please publishes, so its release
+# cannot promote anything by itself.
 #
 # RESOLUTION. `v0.4.2` resolves to the image tagged `0.4.2`, and production is
 # deployed by that image's COMMIT tag — both name one digest, but the SHA is
@@ -100,29 +103,27 @@ on:
     # `paths-ignore` skips the workflow entirely only if EVERY changed path
     # matches — a mixed code+docs commit still triggers.
     paths-ignore:
-      # Deliberately NOT package.json / package-lock.json. Release-Please's
-      # bookkeeping commit touches both, but so does a dependency bump — and
-      # that one MUST rebuild and redeploy. Paths cannot tell them apart, so
-      # the release commit is skipped by its MESSAGE on the job below instead.
+      # Deliberately NOT package.json / package-lock.json. A dependency bump
+      # touches both and MUST rebuild, and so does Release-Please's release
+      # commit, which is the release candidate.
       - CHANGELOG.md
       - docs/**
       - specs/**
       - README.md
       - CLAUDE.md
       - LICENSE
-  # THE production trigger — the only one. You create the release yourself,
-  # naming the build to promote:
+  # A production trigger. A person creates the release, naming the build to
+  # promote:
   #
   #     gh release create v0.3.5 --title "v0.3.5" --generate-notes --target <sha>
   #
   # The version is resolved against ECR, NOT against `main`. `main` may be
-  # several builds ahead of whatever production runs; that is the normal state
-  # and neither stream constrains the other.
+  # several builds ahead of whatever production runs; that is the normal state.
   #
-  # Release-Please's own releases deliberately CANNOT reach here: it publishes
-  # as the default GITHUB_TOKEN, and GitHub creates no workflow run from events
-  # raised by that token. It owns `main`/UAT versioning; production promotion
-  # is this, and only this.
+  # Release-Please's own releases cannot reach here: it publishes as the default
+  # GITHUB_TOKEN, and GitHub creates no workflow run from events raised by that
+  # token. Promote its release with the `workflow_dispatch` below instead
+  # (`env: prod`, `target: vX.Y.Z`).
   release:
     types: [published]
   workflow_dispatch:
@@ -180,20 +181,6 @@ concurrency:
 
 jobs:
   deploy:
-    # Release-Please's bookkeeping commit changes a version number and nothing
-    # else, so building and rolling preview for it is pure waste — that second
-    # build is what made one release look like two deployments. It is matched by
-    # commit message rather than by path because `paths-ignore` cannot
-    # distinguish it from a dependency bump, which touches the same files and
-    # must deploy.
-    #
-    # The commit still lands on `main` and Release-Please still cuts the tag
-    # from it. The release resolves back to the last commit that actually built
-    # (see "Resolve the release to a built image" below), so skipping the build
-    # here costs nothing.
-    if: >-
-      ${{ github.event_name != 'push' ||
-      !startsWith(github.event.head_commit.message, 'chore(main): release') }}
     name: Build, push, deploy
     runs-on: ubuntu-latest
     # Two GitHub Environments, ONE CDK/AWS target (the preview account —
@@ -306,30 +293,38 @@ jobs:
             refs/tags/v*) VERSION_TAG="${GITHUB_REF#refs/tags/}" ;;
           esac
 
-          # BUILD VERSION — every successful `main` build gets the next patch
-          # number, and that number IS the thing you choose to release:
+          # BUILD VERSION. See the header: the build of Release-Please's release
+          # commit is named for the release, every other build for its distance
+          # from the last release tag.
           #
-          #   0.4.0 -> 0.4.1 -> 0.4.2 -> 0.4.3
-          #
-          # Each one names exactly one image. "0.4.2 looks good" is a complete
-          # instruction: publish `v0.4.2` and production runs that container.
-          # The leading `v` is what distinguishes "released" from "built".
-          #
-          # MAJOR.MINOR come from the last release tag; PATCH is that tag's
-          # patch plus the number of commits since it. Deterministic from git
-          # alone, monotonic, and needs no stored state.
+          # The release number comes from `package.json`, which that commit
+          # bumped, not from `git describe`: Release-Please creates the tag AFTER
+          # the push that starts this run, so the tag usually does not exist yet
+          # and `git describe` would still report the previous release.
           LAST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo "v0.0.0")
           BASE="${LAST_TAG#v}"
-          MAJOR="${BASE%%.*}"
-          REST="${BASE#*.}"
-          MINOR="${REST%%.*}"
-          PATCH="${BASE##*.}"
           if git rev-parse "$LAST_TAG" >/dev/null 2>&1; then
             BUILD_N=$(git rev-list --count "${LAST_TAG}..HEAD")
           else
             BUILD_N=$(git rev-list --count HEAD)
           fi
-          BUILD_VERSION="${MAJOR}.${MINOR}.$((PATCH + BUILD_N))"
+          case "$(git log -1 --format=%s)" in
+            'chore(main): release '*)
+              BUILD_VERSION=$(jq -r .version package.json)
+              if ! printf '%s' "$BUILD_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+                echo "::error::The release commit's package.json version is '${BUILD_VERSION}', not X.Y.Z."
+                exit 1
+              fi
+              ;;
+            *)
+              # Exactly on a tag cut by hand: the bare version.
+              if [ "$BUILD_N" -eq 0 ]; then
+                BUILD_VERSION="$BASE"
+              else
+                BUILD_VERSION="${BASE}-${BUILD_N}"
+              fi
+              ;;
+          esac
           echo "Build version: ${BUILD_VERSION} (since ${LAST_TAG}, ${BUILD_N} commits)"
 
           {
@@ -830,8 +825,7 @@ jobs:
     # success requires BOTH jobs green. `site-url` (e.g. https://preview.seqtek.com/)
     # flows straight through from the `deploy` job's `Resolve site URL` step —
     # slack-notify.yml renders it as a clickable link in the message.
-    # `!cancelled()` alone would report a FAILURE for the deliberately-skipped
-    # release-bookkeeping commit, since a skipped job is not a success.
+    # A skipped `deploy` has nothing to report.
     if: ${{ !cancelled() && needs.deploy.result != 'skipped' }}
     uses: ./.github/workflows/slack-notify.yml
     with:
