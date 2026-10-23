@@ -17,10 +17,9 @@ import { siteSettings } from '../../../src/lib/site-content'
  * `buildMetadata` call site.
  *
  * US1 withdrew the `siteSettings` CMS global and moved its render-path reads
- * into the hard-coded `site-content.ts` constant. `buildMetadata` consumes two
- * of those values — `tagline` (third description fallback) and `companyName`
- * (`openGraph.siteName`) — which used to be threaded through 14 route files as
- * an argument and are now read directly.
+ * into the hard-coded `site-content.ts` constant. `buildMetadata` consumes one
+ * of those values, `companyName` (`openGraph.siteName`), which used to be
+ * threaded through 14 route files as an argument and is now read directly.
  *
  * `visual:capture` cannot catch a metadata regression: `<meta>` tags do not
  * paint. This file is the gate. The values below were verified byte-identical

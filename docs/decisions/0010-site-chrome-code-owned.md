@@ -43,7 +43,6 @@ Seven chrome values are read on the render path and were relocated rather than d
 
 | Value                                      | Consumer                                      |
 | ------------------------------------------ | --------------------------------------------- |
-| `tagline`                                  | `metadata.ts` — description fallback          |
 | `companyName`                              | `metadata.ts` — `og:siteName`                 |
 | `companyName`, `tagline`, `email`, `phone` | `structured-data.ts` — `Organization` JSON-LD |
 | `address`                                  | `structured-data.ts` — `PostalAddress`        |

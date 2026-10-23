@@ -36,9 +36,8 @@ export interface MetadataFallbacks {
 }
 
 // Site-wide description, used by every page without its own. Wording from Marketing
-// (2026-10-22). It replaced the tagline here: the homepage title already carries the
-// tagline, so the share card and the search result showed it twice. A page whose
-// `seo.metaDescription` or per-page fallback is set still wins. No em dashes (project rule).
+// (2026-10-22). A page whose `seo.metaDescription` or per-page fallback is set still wins.
+// No em dashes (project rule).
 export const DEFAULT_DESCRIPTION =
   'Your Localshoring® partner for business consulting. Modernizing organizations through people, process, and technology.'
 
