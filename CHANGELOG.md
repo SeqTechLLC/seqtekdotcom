@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.5.0...v0.5.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **seo:** move robots.ts to the app root so Next registers it ([#206](https://github.com/SeqTechLLC/seqtekdotcom/issues/206)) ([e5708aa](https://github.com/SeqTechLLC/seqtekdotcom/commit/e5708aa555c0fb4173e3e2a7e8d0c59ae92ea6a4))
+
 ## [0.5.0](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.4.0...v0.5.0) (2026-10-23)
 
 
