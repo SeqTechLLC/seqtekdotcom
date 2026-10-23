@@ -1,7 +1,6 @@
 /**
  * LinkedIn Insight Tag (INTEGRATIONS.md §3). It loads from the code, not GTM,
- * because the only container is the Wix-era one and stays off the lanes until
- * it is rebuilt.
+ * because adding it to the container too would count every page view twice.
  *
  * The partner globals are set up front, but `insight.min.js` loads only once
  * HubSpot reports advertising consent, through a second

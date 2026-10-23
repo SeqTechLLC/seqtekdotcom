@@ -65,9 +65,9 @@ name: Deploy
 # The production lane is a second ECS task/service/target-group inside the SAME
 # `SeqtekPreviewCompute` stack — see compute-stack.ts `secondaryLane`.
 #
-# www.seqtek.com is production: the finished site behind a DNS record, so going
-# live is a Route53 change rather than a deploy. Both lanes are Cognito-gated
-# until then, and that gate is index control — it keeps search engines out.
+# www.seqtek.com is production, served publicly (`gated: false` in infra/cdk.json).
+# preview.seqtek.com is the Cognito-gated lane, and that gate is index control: it
+# keeps search engines out.
 #
 # `workflow_dispatch` exists for the cases a trigger can't cover: the FIRST
 # deploy into a fresh account (no release to replay), a stack-scoped redeploy,
@@ -386,15 +386,15 @@ jobs:
           # The Contact form GUID was verified by a test submit (INTEGRATIONS.md
           # §1.2).
           #
-          # Deliberately EMPTY until its gate clears:
-          #  - NEXT_PUBLIC_GTM_ID: GTM-54KBJ2Z3 is the LIVE Wix-era container;
-          #    loading it on a lane before the container is rebuilt would fire
-          #    its legacy tags uncontrolled (ROADMAP P3, GTM).
+          # NEXT_PUBLIC_GTM_ID is GTM-54KBJ2Z3. It is a build arg, so the one image
+          # carries it to BOTH lanes: preview loads GTM too. The container's GA4
+          # tag must therefore be restricted to the production hostnames
+          # (infra/gtm/README.md), or preview traffic lands in the GA4 property.
           build-args: |
             NEXT_PUBLIC_HUBSPOT_PORTAL_ID=8504846
             NEXT_PUBLIC_HUBSPOT_WORKSHOP_FORM_ID=66dba2bf-f099-44d5-8c6e-f24292cefe53
             NEXT_PUBLIC_HUBSPOT_CONTACT_FORM_ID=8dc61ff4-9f95-46c5-b43e-8c82a394de42
-            NEXT_PUBLIC_GTM_ID=
+            NEXT_PUBLIC_GTM_ID=GTM-54KBJ2Z3
             NEXT_PUBLIC_LINKEDIN_PARTNER_ID=3952964
             BUILD_COMMIT=${{ steps.img.outputs.sha-tag }}
             BUILD_VERSION=${{ steps.img.outputs.build-version }}

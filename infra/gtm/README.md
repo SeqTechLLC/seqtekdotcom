@@ -5,11 +5,16 @@ web UI. Its export belongs in `infra/gtm/container.json` so the configuration ha
 reviewable diff and a rollback target; no export is committed yet.
 
 GTM loads only when `NEXT_PUBLIC_GTM_ID` is set at build time (ARCHITECTURE.md §6).
-Both lanes build with it empty (`.github/workflows/deploy.yml`), and local dev and CI
-leave it unset, so GTM loads nowhere today.
+`.github/workflows/deploy.yml` sets it, and one image serves both lanes, so GTM loads on preview
+and production. Local dev and CI leave it unset, so GTM loads nowhere there.
 
 ## Tag scope
 
+- **Live (version 2, 2026-10-22):** the GA4 Google tag `G-0NHHQJCPZ6` ("Seqtek - GA4"),
+  firing on Initialization - All Pages. It follows the Consent Mode defaults (G1).
+  **Open:** preview loads this container too, so restrict the tag to the production
+  hostnames (a trigger condition on the built-in Page Hostname variable, for example
+  equals `www.seqtek.com`), or preview traffic lands in the production property.
 - **Site-wide (to build):** the Google Ads conversion tag (`AW-810041431`). It
   requires `ad_storage` (G3) and fires on Page View paired with the
   `hubspotConsentUpdate` Custom Event (G2), so it re-evaluates the moment consent
