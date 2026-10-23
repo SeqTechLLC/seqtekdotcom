@@ -65,9 +65,9 @@ name: Deploy
 # The production lane is a second ECS task/service/target-group inside the SAME
 # `SeqtekPreviewCompute` stack — see compute-stack.ts `secondaryLane`.
 #
-# www.seqtek.com is production: the finished site behind a DNS record, so going
-# live is a Route53 change rather than a deploy. Both lanes are Cognito-gated
-# until then, and that gate is index control — it keeps search engines out.
+# www.seqtek.com is production, served publicly (`gated: false` in infra/cdk.json).
+# preview.seqtek.com is the Cognito-gated lane, and that gate is index control: it
+# keeps search engines out.
 #
 # `workflow_dispatch` exists for the cases a trigger can't cover: the FIRST
 # deploy into a fresh account (no release to replay), a stack-scoped redeploy,
