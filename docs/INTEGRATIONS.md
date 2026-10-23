@@ -103,7 +103,8 @@ accept/deny/customize check are in `infra/gtm/README.md`.
 ### 2.3 Pixels
 
 Pixels other than LinkedIn's (§3) live in GTM, not in the code, and each requires `ad_storage`.
-When GTM is enabled, only the Google Ads conversion tag (`AW-810041431`) fires site-wide.
+When GTM is enabled, the GA4 tag (`G-0NHHQJCPZ6`) fires site-wide. The Google Ads conversion tag
+(`AW-810041431`) is still to build (`infra/gtm/README.md`).
 
 The eight Meta browser pixels are staged with no trigger:
 
@@ -125,8 +126,8 @@ catalogue is `docs/contracts/datalayer-events.md`. Payloads carry no personal da
 ## 3. LinkedIn Insight Tag
 
 `LinkedInInsightTag.tsx` renders the tag on every page when `NEXT_PUBLIC_LINKEDIN_PARTNER_ID` is
-set; both lanes build with partner `3952964`. It loads from the code because the GTM container
-stays off the lanes until it is rebuilt (§2.1).
+set; both lanes build with partner `3952964`. It loads from the code and stays out of the GTM
+container, or every page view would count twice (`infra/gtm/README.md`).
 
 - **Consent.** The snippet registers its own `addPrivacyConsentListener` and loads
   `insight.min.js` only when HubSpot reports `consent.allowed` or the `advertisement` category,
