@@ -1,7 +1,10 @@
 // @vitest-environment node
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import robots from '../../src/app/(frontend)/robots'
+import robots from '../../src/app/robots'
 
 describe('robots.txt', () => {
   afterEach(() => {
@@ -20,5 +23,12 @@ describe('robots.txt', () => {
       allow: '/',
       disallow: ['/admin', '/api/'],
     })
+  })
+
+  // Next registers robots.ts only at the root of `app/`. Moved into a route group it is
+  // silently ignored and /robots.txt is answered by the [slug] page with a 404.
+  it('sits at the root of app/, the only place Next registers it', () => {
+    expect(existsSync(resolve(process.cwd(), 'src/app/robots.ts'))).toBe(true)
+    expect(existsSync(resolve(process.cwd(), 'src/app/(frontend)/robots.ts'))).toBe(false)
   })
 })
