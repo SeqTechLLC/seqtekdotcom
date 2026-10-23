@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.4.0...v0.5.0) (2026-10-23)
+
+
+### Features
+
+* **gtm:** load the container, which now holds the GA4 tag ([#204](https://github.com/SeqTechLLC/seqtekdotcom/issues/204)) ([c891a70](https://github.com/SeqTechLLC/seqtekdotcom/commit/c891a70b2972ee671660e58e0eb744fe82ebb137))
+* **infra:** serve production at www.seqtek.com, ungated, while preview stays gated ([#200](https://github.com/SeqTechLLC/seqtekdotcom/issues/200)) ([797ad18](https://github.com/SeqTechLLC/seqtekdotcom/commit/797ad1826e7e074ec8f8eaf5c20271c75d23e889))
+* **seo:** add the SEQTEK logo as the default share image and a real site description ([#205](https://github.com/SeqTechLLC/seqtekdotcom/issues/205)) ([669a79a](https://github.com/SeqTechLLC/seqtekdotcom/commit/669a79aa3d0c36112ab9ec3bf8da0f6e1ef7a7d9))
+* **seo:** serve robots.txt that points at the sitemap and keeps crawlers out of /admin and /api ([#203](https://github.com/SeqTechLLC/seqtekdotcom/issues/203)) ([ebac911](https://github.com/SeqTechLLC/seqtekdotcom/commit/ebac911e918861dbc1b0cf9fc6f659e47c523832))
+
+
+### Bug Fixes
+
+* **infra:** keep the lane's health bypass when the lane is ungated ([#201](https://github.com/SeqTechLLC/seqtekdotcom/issues/201)) ([6c0d55b](https://github.com/SeqTechLLC/seqtekdotcom/commit/6c0d55bf115c7d9d22b48f93bf130c7f2cb93f92))
+
 ## [0.4.0](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.3.1...v0.4.0) (2026-10-20)
 
 
