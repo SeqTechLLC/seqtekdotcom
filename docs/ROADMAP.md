@@ -125,7 +125,9 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
   are hidden with no reader. Un-hide each in the change that ships its consumer.
 - **Regional landing pages.** The footer's four city links point at `/services/localshoring`.
 - **F-6 — AICO baseline.** Spec: [`planning/aico.md`](./planning/aico.md) and `CONTENT-REQUIREMENTS.md` §8.
-- **Deeper SEO:** per-page OG images; a `primaryGroup` on services if a breadcrumb ever needs one parent.
+- **SHARE-1 — per-page share images.** A page without its own `seo.ogImage` shares the SEQTEK logo card
+  (`DEFAULT_SHARE_IMAGE`). Give the pages worth sharing their own image; case studies have none (HYG-1).
+- **Deeper SEO:** a `primaryGroup` on services if a breadcrumb ever needs one parent.
 - **Portfolio polish:** a live link and screenshots in `README.md`; replace the
   `resolveLayout(x.layout as never)) as never` casts in the eight block-rendered routes with a typed adapter.
 - **Vertical rhythm.** `Section` maps `tight`, `default` and `spacious` to flat padding. Making it responsive is a
