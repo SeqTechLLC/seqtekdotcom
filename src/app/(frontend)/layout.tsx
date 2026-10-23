@@ -1,4 +1,5 @@
 import React from 'react'
+import type { Metadata } from 'next'
 import { Nunito_Sans } from 'next/font/google'
 import { SkipToContent } from '@/components/layout/SkipToContent'
 import { SiteHeader } from '@/components/layout/SiteHeader'
@@ -7,14 +8,18 @@ import { ConsentDefault } from '@/components/integrations/ConsentDefault'
 import { GtmScript } from '@/components/integrations/GtmScript'
 import { HubSpotTracking } from '@/components/integrations/HubSpotTracking'
 import { LinkedInInsightTag } from '@/components/integrations/LinkedInInsightTag'
+import { DEFAULT_DESCRIPTION } from '@/lib/metadata'
 import './styles.css'
 
-export const metadata = {
+export const metadata: Metadata = {
+  // Resolves the relative share-image path from the page metadata to an absolute URL, which
+  // crawlers require. Pages render at request time, so the lane's runtime value is read.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3100'),
   title: {
     default: 'SEQTEK',
     template: '%s | SEQTEK',
   },
-  description: 'Delivering Transformative Technologies Since 1999',
+  description: DEFAULT_DESCRIPTION,
 }
 
 // The brand face. next/font downloads it at build time and serves it from this

@@ -12,8 +12,8 @@
  * deploy, not by publish.
  *
  * Seven of these values are also read at render time beyond the chrome:
- * `tagline` and `companyName` by `lib/metadata.ts`, and `companyName`,
- * `tagline`, `email`, `phone`, `address` and `socialLinks` by the
+ * `companyName` by `lib/metadata.ts`, and `companyName`, `tagline`, `email`,
+ * `phone`, `address` and `socialLinks` by the
  * `Organization` JSON-LD in `lib/structured-data.ts`. Both are pinned by tests
  * (`organizationLd.int.spec.ts`, `metadataOutput.int.spec.ts`) — edit the
  * values here freely, but a shape change will fail those.

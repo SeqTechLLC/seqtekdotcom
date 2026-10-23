@@ -39,7 +39,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const { companyName, tagline } = siteSettings
   return buildMetadata(null, {
     title: tagline ? `${companyName}: ${tagline}` : companyName,
-    description: tagline,
     absoluteTitle: true,
   })
 }
