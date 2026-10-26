@@ -281,7 +281,7 @@ describe('items: tags', () => {
 })
 
 describe('items: colour follows the band', () => {
-  it('light bands use accent-strong for meaning-bearing green', () => {
+  it('light bands use accent-strong for marker text', () => {
     const container = draw({ markers: 'numbers', items: make(2) })
     expect(container.innerHTML).toContain('text-accent-strong')
   })

@@ -186,7 +186,7 @@ export function PrimaryNav({ items }: { items: NavItem[] }) {
                                 id={groupId}
                                 href={group.url}
                                 onClick={close}
-                                className="block text-eyebrow font-semibold uppercase text-text-primary transition-colors duration-fast hover:text-text-accent"
+                                className="block text-eyebrow font-semibold uppercase text-text-primary underline-offset-4 hover:underline"
                               >
                                 {group.label}
                               </SmartLink>

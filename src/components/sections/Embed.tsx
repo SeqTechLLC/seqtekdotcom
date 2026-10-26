@@ -85,12 +85,7 @@ export function Embed({
     showEyebrow || heading ? (
       <div className="mb-6">
         {showEyebrow ? (
-          // Green-700 is ~3:1 on the dark band; green-300 is the accent there.
-          <p
-            className={`text-eyebrow uppercase tracking-wide ${inverse ? 'text-brand-green-300' : 'text-accent-strong'}`}
-          >
-            {eyebrow}
-          </p>
+          <p className="text-eyebrow uppercase tracking-wide text-accent-strong">{eyebrow}</p>
         ) : null}
         {heading ? (
           <h2 className={`${showEyebrow ? 'mt-2' : ''} text-h3 font-semibold`}>{heading}</h2>

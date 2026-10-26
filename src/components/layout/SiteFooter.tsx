@@ -68,7 +68,7 @@ export function SiteFooter() {
                 {telHref ? (
                   <SmartLink
                     href={telHref}
-                    className="text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
+                    className="text-body text-text-inverse transition-colors duration-fast hover:text-accent"
                   >
                     {phone}
                   </SmartLink>
@@ -76,7 +76,7 @@ export function SiteFooter() {
                 {email ? (
                   <SmartLink
                     href={`mailto:${email}`}
-                    className="text-body text-text-inverse transition-colors duration-fast hover:text-brand-green-400"
+                    className="text-body text-text-inverse transition-colors duration-fast hover:text-accent"
                   >
                     {email}
                   </SmartLink>
@@ -132,7 +132,7 @@ export function SiteFooter() {
                   <li key={`${item.label}-${item.url}`}>
                     <SmartLink
                       href={item.url}
-                      className="text-body text-text-inverse opacity-90 transition-colors duration-fast hover:text-brand-green-400 hover:opacity-100"
+                      className="text-body text-text-inverse opacity-90 transition-colors duration-fast hover:text-accent hover:opacity-100"
                     >
                       {item.label}
                     </SmartLink>

@@ -42,10 +42,10 @@ export interface ItemsProps {
 }
 
 /**
- * Colour roles, by whether the band behind the block is light or dark. On the
- * light bands meaning-bearing green is `accent-strong` (DESIGN_SYSTEM §2.4, the
- * `text-accent` trap). The dark band is the one place green-500 is the right
- * choice: it clears AA there, where green-700 does not.
+ * Colour roles, by whether the band behind the block is light or dark. Rules,
+ * dots and the spine are the brand green on both. Markers are `accent-strong`:
+ * the brand black on a light band, where the green has too little contrast for
+ * text (DESIGN_SYSTEM §2.4).
  */
 interface Tone {
   marker: string
@@ -64,8 +64,8 @@ interface Tone {
 const LIGHT: Tone = {
   marker: 'text-accent-strong',
   body: 'text-text-secondary',
-  rule: 'border-accent-strong',
-  dot: 'bg-accent-strong',
+  rule: 'border-accent',
+  dot: 'bg-accent',
   spine: 'bg-accent',
   track: 'border-border-strong',
   card: 'border-border-subtle bg-surface shadow-xs',
