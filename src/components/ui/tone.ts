@@ -4,8 +4,8 @@ import type { SectionBackground } from './Section'
  * Text, rule and highlight colours for each `Section` background.
  *
  * `.band-dark` and `.band-brand` re-point the semantic text and border tokens, so
- * those already read on every band. This adds the accent (`accent-strong` is not
- * re-pointed), a highlight panel, and the `inverse`/`brand` flags a block branches on.
+ * those already read on every band. This adds the accent, a highlight panel, and
+ * the `inverse`/`brand` flags a block branches on.
  */
 export interface Tone {
   /** True on the dark and brand bands, where a form needs a light panel of its own. */
@@ -14,7 +14,7 @@ export interface Tone {
   brand: boolean
   secondary: string
   muted: string
-  /** Meaning-bearing green text (DESIGN_SYSTEM §2.4: never `text-accent`). */
+  /** Accent text: the brand black on light bands, the brand green on the dark band (DESIGN_SYSTEM §2.4). */
   accent: string
   rule: string
   ruleStrong: string

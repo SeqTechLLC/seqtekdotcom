@@ -33,9 +33,10 @@ From the brand kit (kept outside this repo). These four values are fixed.
 
 `brand-green-*`, `brand-navy-*` and `neutral-*` run 50–950 in `tailwind.config.mjs`. Each seed sits where its
 luminance falls: green at `500`, navy at `800`, and the brand black at `neutral-900`, so the neutrals carry the same
-navy cast. The brand green, `500`, is the one green: rules, dots and lines on every surface, text on the dark band, and
-solid fills with brand-black text. Text that would be green on a light surface is the brand black, because the green is
-2.40:1 there (§2.5).
+navy cast. The brand green, `500`, draws rules, dots and lines on every surface, text on the dark band, and solid fills
+with brand-black text. Text that would be green on a light surface is the brand black, because the green is 2.40:1
+there (§2.5). Other steps are states and tints: `400` and `600` for fill hover and press, `600` for the focus ring,
+`50` for the accent band, and `200` / `400` on the photo cover (§12.3).
 
 ### 2.3 State colors
 

@@ -50,7 +50,7 @@ const CTA_VARIANT_CLASS: Record<string, string> = {
   ghost: 'rounded-md px-5 py-3 font-medium text-accent-strong underline hover:no-underline',
 }
 
-// On the cover the green-700 text and borders above fall to ~3:1 against the
+// On the cover the brand-black text and borders above would vanish against the
 // scrim, so the outlined and text-only styles turn white. The focus ring moves
 // to green-400: the default green-600 can drop under 3:1 where the scrim sits
 // over a pale patch of photo (DESIGN_SYSTEM §12.3).
@@ -98,8 +98,8 @@ export function Hero({
   const copy = (
     <>
       {eyebrow ? (
-        // green-200 on the cover: accent-strong is ~3:1 on the scrim, and
-        // green-200 clears AA even where the scrim sits over white.
+        // green-200 on the cover: the brand green accent-strong takes on the dark
+        // band can drop under AA where the scrim sits over a pale photo; green-200 clears it.
         <p
           className={`text-eyebrow uppercase tracking-wide ${isCover ? 'text-brand-green-200' : 'text-accent-strong'}`}
         >

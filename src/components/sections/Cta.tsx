@@ -73,7 +73,7 @@ const BUTTON_CLASS: Record<'light' | 'dark' | 'brand', Record<ButtonStyle, strin
       'rounded-md border border-accent-strong px-5 py-3 font-medium text-accent-strong hover:bg-surface-accent',
     ghost: 'rounded-md px-5 py-3 font-medium text-accent-strong underline hover:no-underline',
   },
-  // Green-700 text on neutral-900 fails AA, so the lighter styles go white.
+  // On the dark band the outlined and text-only styles are white.
   dark: {
     primary: 'rounded-md bg-accent-fill px-5 py-3 font-medium text-on-fill',
     secondary: 'rounded-md border border-white px-5 py-3 font-medium text-white hover:bg-white/10',
