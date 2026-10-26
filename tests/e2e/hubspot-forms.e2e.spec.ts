@@ -27,11 +27,13 @@ test.describe('spec 005 — HubSpot contact form', () => {
     await page.getByRole('button', { name: /send message/i }).click()
     await expect(page.getByTestId('form-success')).toHaveCount(0)
     await expect(page.locator('#firstname-error')).toBeVisible()
+    await expect(page.locator('#phone-error')).toBeVisible()
 
     // Fill the required fields and submit.
     await page.fill('#firstname', 'Ada')
     await page.fill('#lastname', 'Lovelace')
     await page.fill('#email', 'ada@example.com')
+    await page.fill('#phone', '918-555-0100')
     await page.selectOption('#inquiry_type', 'new_project')
     await page.fill('#message', 'We need help sequencing an AI roadmap.')
     await page.getByRole('button', { name: /send message/i }).click()

@@ -21,7 +21,7 @@ const CONTACT_FIELDS: FormFieldConfig[] = [
     autoComplete: 'family-name',
   },
   { name: 'email', label: 'Email', type: 'email', required: true, autoComplete: 'email' },
-  { name: 'phone', label: 'Phone', type: 'tel', autoComplete: 'tel' },
+  { name: 'phone', label: 'Phone', type: 'tel', required: true, autoComplete: 'tel' },
   {
     name: 'inquiry_type',
     label: 'How can we help?',
