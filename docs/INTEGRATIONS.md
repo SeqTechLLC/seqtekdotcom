@@ -30,7 +30,7 @@ Field names are HubSpot property internal names:
 
 | Form             | Fields                                                                                                                                               |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Contact          | `firstname`, `lastname`, `email`, `phone`, `inquiry_type` (`new_project`, `general`, `partnership`, `careers`), `message`                            |
+| Contact          | `firstname`, `lastname`, `email`, `phone` (required), `inquiry_type` (`new_project`, `general`, `partnership`, `careers`), `message`                 |
 | Workshop inquiry | `firstname`, `lastname`, `email`, `phone` (required), `company`, `marketing_info` (the workshop type as free text; the form has no message property) |
 
 Every form we submit to through the API needs the portal set up like this:
