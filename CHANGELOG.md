@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.5.1...v0.6.0) (2026-10-26)
+
+
+### Features
+
+* **ui:** brand green for rules and lines, brand black for accent text ([#208](https://github.com/SeqTechLLC/seqtekdotcom/issues/208)) ([07633a7](https://github.com/SeqTechLLC/seqtekdotcom/commit/07633a72a70250c473318c0dda04579e0fc5c61c))
+
 ## [0.5.1](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.5.0...v0.5.1) (2026-10-23)
 
 
