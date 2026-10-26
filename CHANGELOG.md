@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.6.0...v0.6.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* **forms:** require the phone field on the contact form ([#210](https://github.com/SeqTechLLC/seqtekdotcom/issues/210)) ([a4b0bf2](https://github.com/SeqTechLLC/seqtekdotcom/commit/a4b0bf29dce4df37a0568daa83c5f7511b2f697c))
+
 ## [0.6.0](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.5.1...v0.6.0) (2026-10-26)
 
 
