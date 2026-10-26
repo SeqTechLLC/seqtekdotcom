@@ -33,8 +33,9 @@ From the brand kit (kept outside this repo). These four values are fixed.
 
 `brand-green-*`, `brand-navy-*` and `neutral-*` run 50–950 in `tailwind.config.mjs`. Each seed sits where its
 luminance falls: green at `500`, navy at `800`, and the brand black at `neutral-900`, so the neutrals carry the same
-navy cast. Foreground green (text, links, rules) uses `700`. A solid green fill is `500` with brand-black text; white on
-it fails (§2.5).
+navy cast. The brand green, `500`, is the one green: rules, dots and lines on every surface, text on the dark band, and
+solid fills with brand-black text. Text that would be green on a light surface is the brand black, because the green is
+2.40:1 there (§2.5).
 
 ### 2.3 State colors
 
@@ -49,21 +50,22 @@ Components read these, never a ramp step. Values are in `styles.css`.
 | ------------------------------------------------ | -------------------------------------------------------- |
 | `--color-text-primary` / `-secondary` / `-muted` | Body and headings / captions / timestamps, helper text   |
 | `--color-text-inverse`                           | Text on dark surfaces                                    |
-| `--color-text-accent`, `--color-link` (`-hover`) | Meaning-bearing green text, links                        |
+| `--color-text-accent`, `--color-link` (`-hover`) | Accent text, links: brand black; brand green on dark     |
 | `--color-surface`                                | The page: warm paper `#faf8f4`                           |
 | `--color-surface-subtle`                         | Alternating band: `#f6f3ec`                              |
 | `--color-surface-elevated`                       | Cards: white, lifting off the warm page                  |
 | `--color-surface-inverse` / `-accent`            | Dark sections and footer / green-50 callouts             |
 | `--color-border-subtle` / `-strong` / `-focus`   | Dividers / card outlines / the focus ring (green-600)    |
-| `--color-accent`                                 | Green-500, decorative only                               |
-| `--color-accent-strong` / `-hover` / `-pressed`  | Green text, rules and outlines (green-700/800/900)       |
+| `--color-accent`                                 | The brand green: rules, dots and lines                   |
+| `--color-accent-strong` / `-hover` / `-pressed`  | Accent text and outlines (neutral-900/700/950)           |
 | `--color-accent-fill` / `-hover` / `-pressed`    | Solid fills: buttons, the brand band (green-500/400/600) |
 | `--color-on-accent-fill`                         | Text on a fill: brand black (neutral-900), 6.96:1        |
 
-**The `text-accent` trap.** Tailwind flattens the theme, so `text-accent` is `--color-accent`, green-500, which fails
-AA on every light surface. Meaning-bearing green text uses `text-accent-strong` (or `text-text-accent` /
-`text-link`); the same goes for `border-accent` and `bg-accent`. axe `color-contrast` on the in-scope routes is the
-guard.
+**The `text-accent` trap.** Tailwind flattens the theme, so `text-accent` is `--color-accent`, the brand green, which
+fails AA as text on every light surface. Accent text uses `text-accent-strong` (or `text-text-accent` / `text-link`):
+the brand black on a light surface, the brand green on the dark band. `border-accent` and `bg-accent` are for rules,
+dots and lines; outlines that mark a control or a state use `border-accent-strong`. axe `color-contrast` on the
+in-scope routes is the guard.
 
 **Bands.** A block's `background` picks its surface through `ui/Section`: `subtle` → `surface-subtle`, `accent` →
 `surface-accent`, `inverse` → `surface-inverse`, `brand` → `accent-fill`. Only `cta` offers `brand`: brand-black text on
@@ -74,10 +76,11 @@ the bright green is AA, white and green text on it are not. The `inverse` and `b
 | ------------------------------------------------- | ------------------------- | ------------------------ |
 | `--color-text-primary`                            | white                     | neutral-900              |
 | `--color-text-secondary` / `--color-text-muted`   | neutral-200 / neutral-300 | neutral-800              |
-| `--color-text-accent`, `--color-link`             | green-300                 | neutral-900              |
+| `--color-text-accent`, `--color-link`             | green-500                 | neutral-900              |
+| `--color-accent-strong`                           | green-500                 | neutral-900              |
 | `--color-border-subtle` / `--color-border-strong` | neutral-700 / neutral-600 | neutral-900 at 30% / 50% |
 
-`accent-strong` is not re-pointed. A light panel inside a band (`bg-surface`,
+A light panel inside a band (`bg-surface`,
 `bg-surface-elevated`, `bg-surface-subtle`, `bg-white`) gets the page tokens back. Classes that are not tokens come
 from `toneFor(background)` in `src/components/ui/tone.ts`.
 
@@ -92,15 +95,15 @@ Floors: AA is 4.5:1 for body and 3:1 for large text and UI; AAA is 7:1 and 4.5:1
 | `neutral-700` / `navy-700`       | 10.58      | 9.97           | 9.55           | AAA: secondary text        |
 | `navy-600`                       | 7.87       | 7.42           | 7.10           | AAA                        |
 | `--color-text-muted` (`#65656f`) | 5.76       | 5.43           | 5.20           | AA body                    |
-| `brand-green-700`                | 5.20       | 4.90           | 4.69           | AA body: links, green text |
-| `brand-green-600`                | 3.36       | 3.17           | 3.03           | Large text and UI only     |
-| `brand-green-500`                | 2.40       | 2.26           | 2.16           | Fails: decorative only     |
+| `brand-green-700`                | 5.20       | 4.90           | 4.69           | Unused                     |
+| `brand-green-600`                | 3.36       | 3.17           | 3.03           | Focus ring (§12.3)         |
+| `brand-green-500`                | 2.40       | 2.26           | 2.16           | Fails: rules and dots only |
 
 White text on fills: `neutral-900` 16.67, `navy-800` 12.34, `brand-green-700` 5.20, `brand-green-600` 3.36 (large
 only), `brand-green-500` 2.40 (never). Text on the green-500 fill: `neutral-900` 6.96 (the button and band text),
 `neutral-800` 5.94, `navy-800` 5.15, white 2.40. The fill hovers to green-400 (8.02 with `neutral-900`) and presses to
 green-600 (4.96). `accentFillText.int.spec.ts` fails a `bg-accent-fill` line that also sets white text. On the dark band,
-`neutral-200` is 11.86 and `green-300` 9.59 against `neutral-900`.
+`neutral-200` is 11.86 and `green-500` 6.96 against `neutral-900`.
 
 ---
 
