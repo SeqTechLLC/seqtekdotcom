@@ -19,15 +19,16 @@
     --color-text-secondary: #3e3e47; /* neutral-700 */
     --color-text-muted: #65656f; /* neutral-500, nudged darker — clears AA (4.5:1) on the warm band, not just on white */
     --color-text-inverse: #ffffff; /* neutral-0 */
-    --color-text-accent: #46792f; /* brand-green-700 */
+    /* The brand green is 2.40:1 on the light surfaces, so text that would be green is the brand black. */
+    --color-text-accent: #1c1c31; /* neutral-900, the brand black */
 
     /* Link */
-    --color-link: #46792f; /* brand-green-700 */
-    --color-link-hover: #355b24; /* brand-green-800 */
+    --color-link: #1c1c31; /* neutral-900 */
+    --color-link-hover: #3e3e47; /* neutral-700 */
 
     /* Surface */
     --color-surface: #faf8f4; /* warm paper — folksy, kills the wall of white */
-    --color-surface-subtle: #f6f3ec; /* warm band — kept light enough that the green eyebrow (accent-strong) clears AA on it */
+    --color-surface-subtle: #f6f3ec; /* warm band */
     --color-surface-elevated: #ffffff; /* neutral-0 */
     --color-surface-inverse: #1c1c31; /* neutral-900 */
     --color-surface-accent: #f3f9ec; /* brand-green-50 */
@@ -37,11 +38,12 @@
     --color-border-strong: #d6d0c2; /* warm border strong */
     --color-border-focus: #5a9c3b; /* brand-green-600 */
 
-    /* Accent */
+    /* Accent: the brand green for rules, dots and lines; `-strong` for accent text and
+     * outlines, which need contrast the green does not have on a light surface. */
     --color-accent: #72b94d; /* brand-green-500 */
-    --color-accent-strong: #46792f; /* brand-green-700 */
-    --color-accent-hover: #355b24; /* brand-green-800 */
-    --color-accent-pressed: #243f19; /* brand-green-900 */
+    --color-accent-strong: #1c1c31; /* neutral-900, the brand black */
+    --color-accent-hover: #3e3e47; /* neutral-700 */
+    --color-accent-pressed: #0e0e1a; /* neutral-950 */
 
     /* Solid fills (buttons, the brand band): the bright brand green with brand-black
      * text, 6.96:1. White on it is 2.4:1, so a fill never carries white text. */
@@ -60,15 +62,16 @@
   }
 
   /* Dark and brand bands re-point the text, link and border tokens, so a block's
-   * ordinary classes stay legible on them (Section.tsx). `accent-strong` is not
-   * re-pointed: it is green text and rules, which the dark band reads as it is. */
+   * ordinary classes stay legible on them (Section.tsx). On the dark band the
+   * brand green clears AA, so accent text is green there. */
   .band-dark {
     --color-text-primary: #ffffff;
     --color-text-secondary: #d9d9df; /* neutral-200 */
     --color-text-muted: #bababf; /* neutral-300 */
-    --color-text-accent: #a4d27a; /* brand-green-300 */
-    --color-link: #a4d27a;
-    --color-link-hover: #c8e3ab; /* brand-green-200 */
+    --color-text-accent: #72b94d; /* brand-green-500, 6.96:1 on the dark band */
+    --color-accent-strong: #72b94d;
+    --color-link: #72b94d;
+    --color-link-hover: #88c45f; /* brand-green-400 */
     --color-border-subtle: #3e3e47; /* neutral-700 */
     --color-border-strong: #54545d; /* neutral-600 */
   }

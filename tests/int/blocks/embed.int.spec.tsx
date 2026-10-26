@@ -179,7 +179,7 @@ describe('<Embed /> heading and background', () => {
     const video = render(
       <Embed kind="video" videoId="dQw4w9WgXcQ" title="T" eyebrow="Eyebrow" background="inverse" />,
     )
-    expect(video.getByText('Eyebrow').className).toContain('text-brand-green-300')
+    expect(video.getByText('Eyebrow').className).toContain('text-accent-strong')
     const page = render(
       <Embed
         kind="page"

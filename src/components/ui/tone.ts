@@ -37,7 +37,7 @@ const DARK: Tone = {
   brand: false,
   secondary: 'text-neutral-200',
   muted: 'text-neutral-300',
-  accent: 'text-brand-green-300',
+  accent: 'text-accent-strong',
   rule: 'border-neutral-700',
   ruleStrong: 'border-neutral-600',
   highlight: 'bg-neutral-800',
