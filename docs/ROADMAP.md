@@ -127,7 +127,7 @@ content repo (`CONTENT_NEEDS.md`, `WAITING_ON_PEOPLE.md`).
   privacy assessment to purchase. We have no such page.
 - **INERT-1 residual.** `industries.description`, `relevantServices` and `clientLogos`, and every `locations` group,
   are hidden with no reader. Un-hide each in the change that ships its consumer.
-- **Regional landing pages.** The footer's four city links point at `/services/localshoring`.
+- **Regional landing pages.** The footer's city links point at `/services/localshoring`.
 - **F-6 — AICO baseline.** Spec: [`planning/aico.md`](./planning/aico.md) and `CONTENT-REQUIREMENTS.md` §8.
 - **SHARE-1 — per-page share images.** A page without its own `seo.ogImage` shares the SEQTEK logo card
   (`DEFAULT_SHARE_IMAGE`). Give the pages worth sharing their own image; case studies have none (HYG-1).
