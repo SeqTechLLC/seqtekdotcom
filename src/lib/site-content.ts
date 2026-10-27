@@ -271,7 +271,7 @@ export const navigation: Navigation = {
       children: [
         { label: 'Contact', url: '/contact' },
         bookACall,
-        // Interim: the four market landing pages aren't built yet, so the city
+        // Interim: the market landing pages aren't built yet, so the city
         // links point at localshoring (our local-delivery model) rather than
         // 404ing.
         // TODO(stub): build /tulsa-consulting etc. as per-market SEO pages
@@ -280,6 +280,8 @@ export const navigation: Navigation = {
         { label: 'Oklahoma City', url: '/services/localshoring' },
         { label: 'Northwest Arkansas', url: '/services/localshoring' },
         { label: 'Kansas City', url: '/services/localshoring' },
+        { label: 'Houston', url: '/services/localshoring' },
+        { label: 'Dallas', url: '/services/localshoring' },
       ],
     },
   ],
