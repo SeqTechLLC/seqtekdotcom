@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.6.1...v0.7.0) (2026-10-27)
+
+
+### Features
+
+* **footer:** add Houston and Dallas to the Connect city list ([#212](https://github.com/SeqTechLLC/seqtekdotcom/issues/212)) ([c938e4a](https://github.com/SeqTechLLC/seqtekdotcom/commit/c938e4a14c563fadea29227dc3fb9f62b8459611))
+
 ## [0.6.1](https://github.com/SeqTechLLC/seqtekdotcom/compare/v0.6.0...v0.6.1) (2026-10-26)
 
 
